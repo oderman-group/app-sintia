@@ -148,10 +148,25 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 			<h2>Recordaremos tu contraseña</h2>
 			<form action="guardar.php" method="post">
 				<input type="hidden" value="2" name="id">
+				<div class="form-group row">
+					<div class="col-sm-12">
+						<select class="form-control  select2" name="rBd" required>
+							<option value="">Seleccione su Institución</option>
+							<?php
+							$conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
+							$institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_estado = 1");
+							while($instituciones2 = mysqli_fetch_array($institucionesConsulta, MYSQLI_BOTH)){
+							?>
+								<option value="<?=$instituciones2['ins_id'];?>"><?=$instituciones2['ins_siglas'];?></option>
+							<?php }?>
+						</select>
+					</div>
+				</div>
 				<input type="email" name="email" placeholder="Tu email" />
 				<button type="submit">Verificar Email</button>
 			</form>
 		</div>
+		
 
 	</div>
 	<!-- start js include path -->
@@ -171,3 +186,4 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 </body>
 
 </html>
+
