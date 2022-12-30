@@ -25,44 +25,15 @@ if($_POST["id"]==2){
 	$usuario = mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_email='".$_POST["email"]."' OR uss_usuario='".$_POST["email"]."'");
 	$nU = mysqli_num_rows($usuario);
 	$dU = mysqli_fetch_array($usuario, MYSQLI_BOTH);
-	mysqli_query($conexion, "INSERT INTO restaurar_clave(resc_id_usuario, resc_fec_solicitud) VALUES('".$dU['uss_id']."',now())");
 
 	if($nU>0){
-		//INICIO ENVÍO DE MENSAJE
-		$tituloMsj = "¡".strtoupper($dU["uss_nombre"])." TUS CREDENCIALES!";
-		$bgTitulo = "#4086f4";
-		$contenidoMsj = '
-			Hola!<br>
-			<b>'.strtoupper($dU["uss_nombre"]).'</b>, tus credenciales de acceso a la plataforma SINTIA son:<br>
-			Usuario: <b>'.$dU['uss_usuario'].'</b><br>
-			Contraseña: <b>'.$dU['uss_clave'].'</b>';
+		
+		mysqli_query($conexion, "INSERT INTO restaurar_clave(resc_id_usuario, resc_fec_solicitud) VALUES('".$dU['uss_id']."',now())");
+		$idUltimoRegistro = mysqli_insert_id($conexion);
 
-				
-				include("../config-general/plantilla-email-1.php");
-				// Instantiation and passing `true` enables exceptions
-				$mail = new PHPMailer(true);
-				echo '<div style="display:block;">';
-					try {
-						include("../config-general/mail.php");
-
-						$mail->addAddress(strtolower($dU['uss_email']), $dU['uss_nombre']);    
-						$mail->addAddress('tecmejia2010@gmail.com', 'Plataforma SINTIA');
-
-						// Content
-						$mail->isHTML(true);                                  // Set email format to HTML
-						$mail->Subject = 'TUS CREDENCIALES DE ACCESO A SINTIA';
-						$mail->Body = $fin;
-						$mail->CharSet = 'UTF-8';
-
-						$mail->send();
-						echo 'Mensaje enviado correctamente.';
-					} catch (Exception $e) {echo "Error: {$mail->ErrorInfo}"; exit();}
-				echo '</div>';
-				
-				//FIN ENVÍO DE MENSAJE 
-		    exit();
-					
-		echo '<script type="text/javascript">window.location.href="restaurar-contrasena.php?idU='.$dU['uss_id'].'&idI='.$_POST["rBd"].'";</script>';
+		mysqli_query($conexion, "UPDATE restaurar_clave SET resc_id_md5='".md5($idUltimoRegistro)."' WHERE resc_id='".$idUltimoRegistro."'");
+		
+		echo '<script type="text/javascript">window.location.href="restaurar-contrasena.php?idRegistro='.md5($idUltimoRegistro).'";</script>';
 		exit();
 	
 	}else{
@@ -71,11 +42,13 @@ if($_POST["id"]==2){
 	}
 }
 if($_POST["id"]==3){
-	$usuario = mysqli_query($conexion, "SELECT * FROM restaurar_clave WHERE resc_id_usuario='".$_POST["idU"]."'");
-	$dU = mysqli_fetch_array($usuario, MYSQLI_BOTH);
-	/*$resta = $dU['resc_fec_solicitud'] - now();
-	echo $resta;
-	exit();*/
+	//Verificar que las claves ingresadas conincidan.
+
+	$registroConsulta = mysqli_query($conexion, "SELECT * FROM restaurar_clave WHERE resc_id_md5='".$_POST["idRegistro"]."'");
+	$datosRegistro = mysqli_fetch_array($usuario, MYSQLI_BOTH);
+
+	//Verificamos que el link no tenga más de 24 horas.
+
+	mysqli_query($conexion, "UPDATE usuarios SET uss_clave='".$_POST["clave"]."' 
+	WHERE uss_id='".$datosRegistro['resc_id_usuario']."'");
 }
-mysqli_query($conexion, "UPDATE usuarios SET uss_clave='".$_POST["clave"]."' WHERE uss_id='".$_POST["idU"]."'");
-?>

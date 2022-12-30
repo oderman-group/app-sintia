@@ -1,24 +1,4 @@
 <?php
-session_start();
-if (isset($_SESSION["id"]) and $_SESSION["id"] != "") {
-	if (isset($_GET["urlDefault"]) and $_GET["urlDefault"] != "") {
-
-		include("modelo/conexion.php");
-		$sesionAbierta = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='" . $_SESSION["id"] . "'", $conexion));
-
-		
-
-		header("Location:" . $url);
-		exit();
-	} else {
-		echo "
-		<div style='font-family:Arial;'>
-		Ya hay una sesi&oacute;n de SINTIA abierta en este navegador: " . $_SESSION["id"] . "<br>
-		<a href='controlador/salir.php'>[Cerrar la sesi&oacute;n actual]</a>
-		</div>";
-		exit();
-	}
-}
 include("../conexion-datos.php");
 $conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
 $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_estado = 1");
@@ -32,7 +12,7 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 	<meta content="width=device-width, initial-scale=1" name="viewport" />
 	<meta name="description" content="Responsive Admin Template" />
 	<meta name="author" content="SmartUniversity" />
-	<title>Plataforma Educativa SINTIA | Login </title>
+	<title>Plataforma Educativa SINTIA | Restaurar contraseña </title>
 	<!-- google font -->
 	<link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
 	<!-- icons -->
@@ -56,10 +36,9 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 		</div>
 		<div class="form formLogin">
 			<h2>Restablecer contraseña</h2>
-			<form method="post" action="guardar.php">
-			 <input type="hidden" value="3" name="id">
-			 <input type="hidden" value="<?=$_GET['idU']?>" name="idU">
-			 <input type="hidden" value="<?=$_GET['idI']?>" name="rBd">
+			<form method="post" action="restaurar-contrasena-guardar.php">
+			 <input type="hidden" value="<?=$_GET['idRegistro']?>" name="idRegistro">
+			 <input type="hidden" value="22" name="rBd"> <!-- Este dato debe cambiarse por el dinámico de la Insti. -->
 				
 
 				<div id="campos">
