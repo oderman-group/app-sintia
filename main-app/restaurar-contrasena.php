@@ -64,7 +64,7 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 
 				<div id="campos">
 					<input type="password" name="clave2" placeholder="nueva contraseña" />
-					<input type="password" name="Clave" placeholder="vuelve a escribir la contraseña" />
+					<input type="password" name="clave" placeholder="vuelve a escribir la contraseña" />
 
 
 					<button>Guardar contraseña</button>	

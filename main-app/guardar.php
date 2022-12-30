@@ -18,7 +18,6 @@ require '../librerias/phpmailer/PHPMailer.php';
 require '../librerias/phpmailer/SMTP.php';
 ?>
 
-
 <?php
 
 //RECORDAR CLAVE
@@ -59,9 +58,10 @@ if($_POST["id"]==2){
 						echo 'Mensaje enviado correctamente.';
 					} catch (Exception $e) {echo "Error: {$mail->ErrorInfo}"; exit();}
 				echo '</div>';
-				//FIN ENVÍO DE MENSAJE 
 				
-						
+				//FIN ENVÍO DE MENSAJE 
+		    exit();
+					
 		echo '<script type="text/javascript">window.location.href="restaurar-contrasena.php?idU='.$dU['uss_id'].'&idI='.$_POST["rBd"].'";</script>';
 		exit();
 	
@@ -77,5 +77,5 @@ if($_POST["id"]==3){
 	echo $resta;
 	exit();*/
 }
-
+mysqli_query($conexion, "UPDATE usuarios SET uss_clave='".$_POST["clave"]."' WHERE uss_id='".$_POST["idU"]."'");
 ?>
