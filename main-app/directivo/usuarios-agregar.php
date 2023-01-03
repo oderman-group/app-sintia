@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0123';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -99,13 +98,12 @@
                                             <label class="col-sm-2 control-label">Género</label>
                                             <div class="col-sm-4">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
 												?>
                                                 <select class="form-control  select2" name="genero" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['uss_genero']) $select = 'selected';
 													?>
@@ -119,12 +117,12 @@
                                             <label class="col-sm-2 control-label">Tipo de usuario</label>
                                             <div class="col-sm-4">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM perfiles",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM perfiles");
 												?>
                                                 <select class="form-control  select2" name="tipoUsuario" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['uss_tipo']) $select = 'selected';
 													?>
@@ -149,7 +147,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

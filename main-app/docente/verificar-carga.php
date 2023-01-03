@@ -19,25 +19,25 @@ if(!isset($_GET["carga"]) or !isset($_GET["periodo"]) or !is_numeric($_GET["carg
 	$cargaConsultaActual = $_GET["carga"];
 	$periodoConsultaActual = $_GET["periodo"];
 }
+$consultaCargaH=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_id='".$cargaConsultaActual."'");
+$cargaHconsulta = mysqli_fetch_array($consultaCargaH, MYSQLI_BOTH);
 
-$cargaHconsulta = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas WHERE car_id='".$cargaConsultaActual."'",$conexion));
-if(mysql_errno()!=0){echo mysql_error(); exit();}
 if($cargaHconsulta['car_primer_acceso_docente']==""){
-	mysql_query("UPDATE academico_cargas SET car_primer_acceso_docente=now() WHERE car_id='".$cargaConsultaActual."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_primer_acceso_docente=now() WHERE car_id='".$cargaConsultaActual."'");
+	
 }else{
-	mysql_query("UPDATE academico_cargas SET car_ultimo_acceso_docente=now() WHERE car_id='".$cargaConsultaActual."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_ultimo_acceso_docente=now() WHERE car_id='".$cargaConsultaActual."'");
+	
 }
 
-$consultaCargaActual = mysql_query("SELECT * FROM academico_cargas 
+$consultaCargaActual = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 INNER JOIN academico_materias ON mat_id=car_materia
 INNER JOIN academico_grados ON gra_id=car_curso
 INNER JOIN academico_grupos ON gru_id=car_grupo
-WHERE car_id='".$cargaConsultaActual."' AND car_docente='".$_SESSION["id"]."' AND car_activa=1",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-$numCargaActual = mysql_num_rows($consultaCargaActual);
-$datosCargaActual = mysql_fetch_array($consultaCargaActual);
+WHERE car_id='".$cargaConsultaActual."' AND car_docente='".$_SESSION["id"]."' AND car_activa=1");
+
+$numCargaActual = mysqli_num_rows($consultaCargaActual);
+$datosCargaActual = mysqli_fetch_array($consultaCargaActual, MYSQLI_BOTH);
 
 $configCargasArray = array ("Automático","Manual"); 
 $dgArray = array ("NO","SI"); 

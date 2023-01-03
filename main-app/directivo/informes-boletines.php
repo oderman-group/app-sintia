@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0100';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -65,14 +64,13 @@
                                             <label class="col-sm-2 control-label">Curso</label>
                                             <div class="col-sm-8">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grados
-												ORDER BY gra_vocal
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grados
+												ORDER BY gra_vocal");
 												?>
                                                 <select class="form-control  select2" name="curso" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$disabled = '';
 														if($opcionesDatos['gra_estado']=='0') $disabled = 'disabled';
 													?>
@@ -86,13 +84,12 @@
                                             <label class="col-sm-2 control-label">Grupo</label>
                                             <div class="col-sm-4">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grupos
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grupos");
 												?>
                                                 <select class="form-control  select2" name="grupo" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos[0];?>"><?=$opcionesDatos['gru_id'].". ".strtoupper($opcionesDatos['gru_nombre']);?></option>
 													<?php }?>
@@ -151,19 +148,18 @@
                                             <label class="col-sm-2 control-label">Estudiante</label>
                                             <div class="col-sm-8">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_matriculas
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 												INNER JOIN academico_grados ON gra_id=mat_grado
 												INNER JOIN academico_grupos ON gru_id=mat_grupo
 												INNER JOIN usuarios ON uss_id=mat_id_usuario
 												INNER JOIN ".$baseDatosServicios.".opciones_generales ON ogen_id=mat_genero
 												WHERE mat_eliminado=0
-												ORDER BY mat_grado, mat_grupo, mat_primer_apellido
-												",$conexion);
+												ORDER BY mat_grado, mat_grupo, mat_primer_apellido");
 												?>
                                                 <select class="form-control  select2" name="esstudiante" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos[0];?>"><?=strtoupper($opcionesDatos['mat_primer_apellido']." ".$opcionesDatos['mat_segundo_apellido']." ".$opcionesDatos['mat_nombres']);?> - <?=strtoupper($opcionesDatos['gra_nombre']." ".$opcionesDatos['gru_nombre']);?></option>
 													<?php }?>
@@ -213,7 +209,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

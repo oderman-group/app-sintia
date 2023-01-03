@@ -5,8 +5,8 @@
 <?php //include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$tematica = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores 
-WHERE ind_carga='".$cargaConsultaActual."' AND ind_periodo='".$periodoConsultaActual."' AND ind_tematica=1",$conexion));
+$consultaTematica=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_carga='".$cargaConsultaActual."' AND ind_periodo='".$periodoConsultaActual."' AND ind_tematica=1");
+$tematica = mysqli_fetch_array($consultaTematica, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -98,7 +98,7 @@ WHERE ind_carga='".$cargaConsultaActual."' AND ind_periodo='".$periodoConsultaAc
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

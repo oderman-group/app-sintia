@@ -123,12 +123,14 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_actividad_tareas 
-													 WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."' AND tar_estado=1 ",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas 
+													 WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."' AND tar_estado=1 ");
 													$contReg=1; 
-													while($resultado = mysql_fetch_array($consulta)){
-														$fd = mysql_fetch_array(mysql_query("SELECT DATEDIFF('".$resultado[5]."','".date("Y-m-d")."')",$conexion));
-														$sd = mysql_fetch_array(mysql_query("SELECT DATEDIFF('".$resultado[4]."','".date("Y-m-d")."')",$conexion));
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultafd=mysqli_query($conexion, "SELECT DATEDIFF('".$resultado[5]."','".date("Y-m-d")."')");
+														$fd = mysqli_fetch_array($consultafd, MYSQLI_BOTH);
+														$consultasd=mysqli_query($conexion, "SELECT DATEDIFF('".$resultado[4]."','".date("Y-m-d")."')");
+														$sd = mysqli_fetch_array($consultasd, MYSQLI_BOTH);
 														
 														$cheked = '';
 														if($resultado['tar_impedir_retrasos']==1){$cheked = 'checked';}
@@ -191,7 +193,7 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

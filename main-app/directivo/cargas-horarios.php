@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0041';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -24,6 +23,10 @@
                                 <div class="page-title">Horarios</div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)"><?=$frases[12][$datosUsuarioActual[8]];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active">Horarios</li>
+                            </ol>
                         </div>
                     </div>
                     
@@ -72,8 +75,8 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = mysql_query("SELECT * FROM academico_horarios WHERE hor_id_carga=".$_GET["id"]." AND hor_estado=1;",$conexion);
-													while($resultado = mysql_fetch_array($consulta)){
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_horarios WHERE hor_id_carga=".$_GET["id"]." AND hor_estado=1;");
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														switch($resultado[2]){
 															case 1: $dia = 'Domingo'; break;
 
@@ -127,7 +130,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

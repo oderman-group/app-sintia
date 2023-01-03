@@ -36,15 +36,15 @@
 						 <div class="col-sm-12">
 
 							 <?php
-							 $cCargas = mysql_query("SELECT * FROM academico_cargas 
+							 $cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 							 INNER JOIN academico_materias ON mat_id=car_materia
 							 INNER JOIN academico_grados ON gra_id=car_curso
 							 INNER JOIN academico_grupos ON gru_id=car_grupo
 							 WHERE car_docente='".$_SESSION["id"]."'
 							 ORDER BY car_posicion_docente, car_curso, car_grupo, mat_nombre
-							 ",$conexion);
+							 ");
 							  $cargasCont = 1;
-							 $nCargas = mysql_num_rows($cCargas);
+							 $nCargas = mysqli_num_rows($cCargas);
 							 $mensajeCargas = new Cargas;
 							 $mensajeCargas->verificarNumCargas($nCargas);
 							 ?>
@@ -57,7 +57,7 @@
 								 
 								 
 									<?php
-									while($rCargas = mysql_fetch_array($cCargas)){
+									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
 									    $ultimoAcceso = 'Nunca';
 										$fondoCargaActual = '#FFF';
 
@@ -156,7 +156,7 @@
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

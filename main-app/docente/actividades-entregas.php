@@ -12,9 +12,9 @@
 <?php include("../compartido/body.php");?>
 	
 <?php
-$datosConsulta = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_tareas 
-WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1",$conexion));
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1");
+$datosConsulta = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
+
 ?>
 
 	<input type="hidden" id="idR" name="idR" value="<?=$_GET["idR"];?>">
@@ -75,11 +75,11 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 										<header class="panel-heading panel-heading-purple"><?=$frases[112][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$evaluacionesEnComun = mysql_query("SELECT * FROM academico_actividad_tareas
+											$evaluacionesEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas
 											WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."' AND tar_id!='".$_GET["idR"]."' AND tar_estado=1
 											ORDER BY tar_id DESC
-											",$conexion);
-											while($evaComun = mysql_fetch_array($evaluacionesEnComun)){
+											");
+											while($evaComun = mysqli_fetch_array($evaluacionesEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="actividades-entregas.php?idR=<?=$evaComun['tar_id'];?>"><?=$evaComun['tar_nombre'];?></a></p>
 											<?php }?>
@@ -128,13 +128,14 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 													 INNER JOIN usuarios ON uss_id=mat_id_usuario
-													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres",$conexion);
+													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $datos1 = mysql_fetch_array(mysql_query("SELECT ent_fecha, MOD(TIMESTAMPDIFF(MINUTE, ent_fecha, now()),60), MOD(TIMESTAMPDIFF(SECOND, ent_fecha, now()),60), ent_archivo, ent_comentario, ent_archivo2, ent_archivo3 FROM academico_actividad_tareas_entregas 
-														 WHERE ent_id_estudiante='".$resultado['mat_id']."' AND ent_id_actividad='".$_GET["idR"]."'",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaDatos1=mysqli_query($conexion, "SELECT ent_fecha, MOD(TIMESTAMPDIFF(MINUTE, ent_fecha, now()),60), MOD(TIMESTAMPDIFF(SECOND, ent_fecha, now()),60), ent_archivo, ent_comentario, ent_archivo2, ent_archivo3 FROM academico_actividad_tareas_entregas 
+														WHERE ent_id_estudiante='".$resultado['mat_id']."' AND ent_id_actividad='".$_GET["idR"]."'");
+														 $datos1 = mysqli_fetch_array($consultaDatos1, MYSQLI_BOTH);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -174,7 +175,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>    

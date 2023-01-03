@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0106';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -110,14 +109,13 @@
                                             <label class="col-sm-2 control-label">Usuario</label>
                                             <div class="col-sm-10">
 												<?php
-												$datosConsulta = mysql_query("SELECT * FROM usuarios
-												INNER JOIN perfiles ON pes_id=uss_tipo
-												",$conexion);
+												$datosConsulta = mysqli_query($conexion, "SELECT * FROM usuarios
+												INNER JOIN perfiles ON pes_id=uss_tipo");
 												?>
                                                 <select class="form-control  select2" name="usuario" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($resultadosDatos = mysql_fetch_array($datosConsulta)){
+													while($resultadosDatos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$resultadosDatos[0];?>"><?=$resultadosDatos['uss_nombre']." (".$resultadosDatos['pes_nombre'].")"?></option>
 													<?php }?>
@@ -160,7 +158,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

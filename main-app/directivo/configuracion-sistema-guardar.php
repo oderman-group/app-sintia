@@ -6,17 +6,14 @@
 		exit();
 	}
 
-	mysql_query("UPDATE configuracion SET conf_agno='" . $_POST["agno"] . "', conf_periodo='" . $_POST["periodo"] . "', conf_nota_desde='" . $_POST["desde"] . "', conf_nota_hasta='" . $_POST["hasta"] . "', conf_nota_minima_aprobar='" . $_POST["notaMinima"] . "', conf_color_perdida='" . $_POST["perdida"] . "', conf_color_ganada='" . $_POST["ganada"] . "', conf_periodos_maximos='" . $_POST["periodoTrabajar"] . "', conf_num_indicadores='" . $_POST["numIndicadores"] . "', conf_valor_indicadores='" . $_POST["valorIndicadores"] . "', conf_notas_categoria='" . $_POST["estiloNotas"] . "', conf_fecha_parcial='" . $_POST["fechapa"] . "', conf_descripcion_parcial='" . $_POST["descrip"] . "', conf_ancho_imagen='" . $_POST["logoAncho"] . "', conf_alto_imagen='" . $_POST["logoAlto"] . "', conf_mostrar_nombre='" . $_POST["mostrarNombre"] . "', conf_inicio_recibos_ingreso='" . $_POST["iri"] . "', conf_inicio_recibos_egreso='" . $_POST["ire"] . "' WHERE conf_id=1", $conexion);
+	mysqli_query($conexion, "UPDATE configuracion SET conf_agno='" . $_POST["agno"] . "', conf_periodo='" . $_POST["periodo"] . "', conf_nota_desde='" . $_POST["desde"] . "', conf_nota_hasta='" . $_POST["hasta"] . "', conf_nota_minima_aprobar='" . $_POST["notaMinima"] . "', conf_color_perdida='" . $_POST["perdida"] . "', conf_color_ganada='" . $_POST["ganada"] . "', conf_periodos_maximos='" . $_POST["periodoTrabajar"] . "', conf_num_indicadores='" . $_POST["numIndicadores"] . "', conf_valor_indicadores='" . $_POST["valorIndicadores"] . "', conf_notas_categoria='" . $_POST["estiloNotas"] . "', conf_fecha_parcial='" . $_POST["fechapa"] . "', conf_descripcion_parcial='" . $_POST["descrip"] . "', conf_ancho_imagen='" . $_POST["logoAncho"] . "', conf_alto_imagen='" . $_POST["logoAlto"] . "', conf_mostrar_nombre='" . $_POST["mostrarNombre"] . "', conf_inicio_recibos_ingreso='" . $_POST["iri"] . "', conf_inicio_recibos_egreso='" . $_POST["ire"] . "' WHERE conf_id=1");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
 	if ($_POST["claveSeguridad"] == "Oderman2014$") {
-		mysql_query("UPDATE configuracion SET conf_base_datos='" . $_POST["baseDatos"] . "', conf_servidor='" . $_POST["servidorConexion"] . "', conf_usuario='" . $_POST["usuarioConexion"] . "', conf_clave='" . $_POST["claveConexion"] . "', conf_id_institucion='" . $_POST["idColegio"] . "' WHERE conf_id=1", $conexion);
-		if (mysql_errno() != 0) {
-			echo mysql_error();
-			exit();
-		}
+		mysqli_query($conexion, "UPDATE configuracion SET conf_base_datos='" . $_POST["baseDatos"] . "', conf_servidor='" . $_POST["servidorConexion"] . "', conf_usuario='" . $_POST["usuarioConexion"] . "', conf_clave='" . $_POST["claveConexion"] . "', conf_id_institucion='" . $_POST["idColegio"] . "' WHERE conf_id=1");
+		
 	}
 
 	echo '<script type="text/javascript">window.location.href="configuracion-sistema.php";</script>';

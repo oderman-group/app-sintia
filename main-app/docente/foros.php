@@ -92,10 +92,10 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_actividad_foro 
-													 WHERE foro_id_carga='".$cargaConsultaActual."' AND foro_periodo='".$periodoConsultaActual."' AND foro_estado=1",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_foro 
+													 WHERE foro_id_carga='".$cargaConsultaActual."' AND foro_periodo='".$periodoConsultaActual."' AND foro_estado=1");
 													$contReg = 1; 
-													while($resultado = mysql_fetch_array($consulta)){
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													 ?>
 													<tr id="reg<?=$resultado['foro_id'];?>">
                                                         <td><?=$contReg;?></td>
@@ -142,7 +142,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

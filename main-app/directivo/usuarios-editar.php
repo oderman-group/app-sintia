@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0124';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosEditar = mysql_fetch_array(mysql_query("SELECT * FROM usuarios
-WHERE uss_id='".$_GET["id"]."'",$conexion));
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$_GET["id"]."'");
+$datosEditar = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -148,13 +147,12 @@ WHERE uss_id='".$_GET["id"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Género</label>
                                             <div class="col-sm-4">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
 												?>
                                                 <select class="form-control  select2" name="genero" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['uss_genero']) $select = 'selected';
 													?>
@@ -168,12 +166,12 @@ WHERE uss_id='".$_GET["id"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Tipo de usuario</label>
                                             <div class="col-sm-4">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM perfiles",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM perfiles");
 												?>
                                                 <select class="form-control  select2" name="tipoUsuario" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['uss_tipo']) $select = 'selected';
 													?>
@@ -220,7 +218,7 @@ WHERE uss_id='".$_GET["id"]."'",$conexion));
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

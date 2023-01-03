@@ -43,7 +43,7 @@ if(is_numeric($_GET["periodo"])) {$filtro .= " AND car_periodo='".$_GET["periodo
 
 	
 
-$con = mysql_query("SELECT * FROM academico_cargas
+$con = mysqli_query($conexion, "SELECT * FROM academico_cargas
 
 INNER JOIN academico_materias ON mat_id=car_materia 
 
@@ -53,13 +53,11 @@ INNER JOIN academico_grupos ON gru_id=car_grupo
 
 INNER JOIN usuarios ON uss_id=car_docente AND uss_tipo=2
 
-WHERE car_id=car_id $filtro
-
-", $conexion);
+WHERE car_id=car_id $filtro");
 
 
 
-while ( $rCargas = mysql_fetch_array( $con ) ) {
+while ( $rCargas = mysqli_fetch_array($con, MYSQLI_BOTH) ) {
 
     ?>
 
@@ -191,11 +189,11 @@ while ( $rCargas = mysql_fetch_array( $con ) ) {
 
     <?php
 
-    $estudiantes = mysql_query( "SELECT * FROM academico_matriculas WHERE mat_grado='" . $rCargas[ "car_curso" ] . "' AND mat_grupo='" . $rCargas[ "car_grupo" ] . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres", $conexion );
+    $estudiantes = mysqli_query($conexion,  "SELECT * FROM academico_matriculas WHERE mat_grado='" . $rCargas[ "car_curso" ] . "' AND mat_grupo='" . $rCargas[ "car_grupo" ] . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres" );
 
     $n = 1;
 
-    while ( $e = mysql_fetch_array( $estudiantes ) ) {
+    while ( $e = mysqli_fetch_array($estudiantes, MYSQLI_BOTH) ) {
 
 		$fondo = '#FFF';
 

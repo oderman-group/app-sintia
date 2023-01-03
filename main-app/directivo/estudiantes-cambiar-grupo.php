@@ -1,12 +1,7 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0083';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
-<?php
-mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci�n', now())",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-?>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -54,8 +49,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                         <div class="col-sm-9">
                           
                                 <?php
-                                    $consultaE = mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'",$conexion);
-                                    $e = mysql_fetch_array($consultaE);
+                                    $consultaE = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'");
+                                    $e = mysqli_fetch_array($consultaE, MYSQLI_BOTH);
                                 ?>
 
 								<div class="panel">
@@ -81,13 +76,13 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Curso</label>  
                                           	<?php 
-											$consulta_cargas = mysql_query("SELECT * FROM academico_grados WHERE gra_estado=1",$conexion);
+											$consulta_cargas = mysqli_query($conexion, "SELECT * FROM academico_grados WHERE gra_estado=1");
 											?>
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="cursoNuevo" required>
                                                 <option value="0"></option>
                                                  <?php 
-												 while($c = mysql_fetch_array($consulta_cargas)){
+												 while($c = mysqli_fetch_array($consulta_cargas, MYSQLI_BOTH)){
 												 	if($c["gra_id"]==$e[6])
 														echo '<option value="'.$c["gra_id"].'" selected style="color:blue; font-weight:bold;">Actual: '.$c["gra_nombre"].'</option>';	
 													else
@@ -101,13 +96,13 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Grupo</label>
                                           	<?php 
-											$consulta_cargas = mysql_query("SELECT * FROM academico_grupos",$conexion);
+											$consulta_cargas = mysqli_query($conexion, "SELECT * FROM academico_grupos");
 											?>
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="grupoNuevo" required>
                                                 <option value="0"></option>
                                                  <?php 
-												 while($c = mysql_fetch_array($consulta_cargas)){
+												 while($c = mysqli_fetch_array($consulta_cargas, MYSQLI_BOTH)){
 												 	if($c["gru_id"]==$e[7])
 														echo '<option value="'.$c["gru_id"].'" selected style="color:blue; font-weight:bold;">Actual: '.$c["gru_nombre"].'</option>';	
 													else
@@ -128,7 +123,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

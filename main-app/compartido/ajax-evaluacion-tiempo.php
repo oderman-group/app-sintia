@@ -1,11 +1,14 @@
 <?php
 include("../modelo/conexion.php");
-$horas = mysql_fetch_array(mysql_query("SELECT TIMESTAMPDIFF(HOUR, NOW(), eva_hasta) FROM academico_actividad_evaluaciones 
-WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1",$conexion));
-$minutos = mysql_fetch_array(mysql_query("SELECT MOD(TIMESTAMPDIFF(MINUTE, NOW(), eva_hasta),60) FROM academico_actividad_evaluaciones 
-WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1",$conexion));
-$segundos = mysql_fetch_array(mysql_query("SELECT MOD(TIMESTAMPDIFF(SECOND, NOW(), eva_hasta),60) FROM academico_actividad_evaluaciones 
-WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1",$conexion));
+$consultaHoras=mysqli_query($conexion, "SELECT TIMESTAMPDIFF(HOUR, NOW(), eva_hasta) FROM academico_actividad_evaluaciones 
+WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1");
+$horas = mysqli_fetch_array($consultaHoras, MYSQLI_BOTH);
+$consultaMinutos=mysqli_query($conexion, "SELECT MOD(TIMESTAMPDIFF(MINUTE, NOW(), eva_hasta),60) FROM academico_actividad_evaluaciones 
+WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1");
+$minutos = mysqli_fetch_array($consultaMinutos, MYSQLI_BOTH);
+$consultaSegundos=mysqli_query($conexion, "SELECT MOD(TIMESTAMPDIFF(SECOND, NOW(), eva_hasta),60) FROM academico_actividad_evaluaciones 
+WHERE eva_id='".$_POST["eva"]."' AND eva_estado=1");
+$segundos = mysqli_fetch_array($consultaSegundos, MYSQLI_BOTH);
 
 if($horas[0]==0){
 	if($minutos[0]>20){$colorm='green';}

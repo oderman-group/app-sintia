@@ -120,16 +120,18 @@
 </div>
 	
 	<?php
-	$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+	$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 
 	if($evaluacion[0]==""){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=106";</script>';
 		exit();
 	}
 	
-	$fechas = mysql_fetch_array(mysql_query("SELECT DATEDIFF(eva_desde, now()), DATEDIFF(eva_hasta, now()), TIMESTAMPDIFF(SECOND, NOW(), eva_desde), TIMESTAMPDIFF(SECOND, NOW(), eva_hasta) FROM academico_actividad_evaluaciones 
-	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$consultaFecha=mysqli_query($conexion, "SELECT DATEDIFF(eva_desde, now()), DATEDIFF(eva_hasta, now()), TIMESTAMPDIFF(SECOND, NOW(), eva_desde), TIMESTAMPDIFF(SECOND, NOW(), eva_hasta) FROM academico_actividad_evaluaciones 
+	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+	$fechas = mysqli_fetch_array($consultaFecha, MYSQLI_BOTH);
 	if($fechas[2]>0){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=204&fechaD='.$evaluacion['eva_desde'].'&diasF='.$fechas[0].'&segundosF='.$fechas[2].'";</script>';
 		exit();
@@ -140,12 +142,12 @@
 	}
 	
 	//Cantidad de preguntas de la evaluación
-	$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+	$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 	INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 	WHERE evp_id_evaluacion='".$_GET["idE"]."'
-	",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	$cantPreguntas = mysql_num_rows($preguntasConsulta);
+	");
+	
+	$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 
 	//Si la evaluación no tiene preguntas, lo mandamos para la pagina informativa
 	if($cantPreguntas==0){
@@ -154,33 +156,35 @@
 	}
 
 	//SABER SI EL ESTUDIANTE YA HIZO LA EVALUACION
-	$nume = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluaciones_resultados 
-	WHERE res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$datosEstudianteActual[0]."'",$conexion));
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	$consultaNume=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados 
+	WHERE res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$datosEstudianteActual[0]."'");
+	$nume = mysqli_num_rows($consultaNume);
+	
 	if($nume>0){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=200";</script>';
 		exit();
 	}
 	
 	//CONSULTAMOS SI YA TIENE UNA SESIÓN ABIERTA EN ESTA EVALUACIÓN
-	$estadoSesionEvaluacion = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluaciones_estudiantes 
-	WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$datosEstudianteActual[0]."' AND epe_inicio IS NOT NULL AND epe_fin IS NULL",$conexion));
+	$consultaEstadoSesionEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_estudiantes 
+	WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$datosEstudianteActual[0]."' AND epe_inicio IS NOT NULL AND epe_fin IS NULL");
+	$estadoSesionEvaluacion = mysqli_num_rows($consultaEstadoSesionEvaluacion);
 	if($estadoSesionEvaluacion>0){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=201";</script>';
 		exit();
 	}
 	//BORRAMOS SI EXISTE Y LUEGO INSERTAMOS EL DATO DE QUE EL ESTUDIANTE INICIÓ LA EVALUACIÓN
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$datosEstudianteActual[0]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	mysql_query("INSERT INTO academico_actividad_evaluaciones_estudiantes(epe_id_estudiante, epe_id_evaluacion, epe_inicio)VALUES('".$datosEstudianteActual[0]."', '".$_GET["idE"]."', now())",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$datosEstudianteActual[0]."'");
+	
+	mysqli_query($conexion, "INSERT INTO academico_actividad_evaluaciones_estudiantes(epe_id_estudiante, epe_id_evaluacion, epe_inicio)VALUES('".$datosEstudianteActual[0]."', '".$_GET["idE"]."', now())");
+	
 
 	//CUANTOS ESTÁN REALIZANDO LA EVALUACIÓN EN ESTE MOMENTO Y CUANTOS TERMINARON
-	$Numerosevaluados = mysql_fetch_array(mysql_query("SELECT
+	$consultaNumerosEvaluados=mysqli_query($conexion, "SELECT
 	(SELECT count(epe_id) FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_fin IS NULL),
-	(SELECT count(epe_id) FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_inicio IS NOT NULL AND epe_fin IS NOT NULL)
-	",$conexion));
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	(SELECT count(epe_id) FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_inicio IS NOT NULL AND epe_fin IS NOT NULL)");
+	$Numerosevaluados = mysqli_fetch_array($consultaNumerosEvaluados, MYSQLI_BOTH);
+	
 	?>
 
     <div class="page-wrapper">
@@ -286,12 +290,12 @@
                                         <div class="panel-body">
 											<?php
 											$contPreguntas = 1;
-											while($preguntas = mysql_fetch_array($preguntasConsulta)){
-												$respuestasConsulta = mysql_query("SELECT * FROM academico_actividad_respuestas
+											while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
+												$respuestasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_respuestas
 												WHERE resp_id_pregunta='".$preguntas['preg_id']."'
-												",$conexion);
-												if(mysql_errno()!=0){echo mysql_error(); exit();}
-												$cantRespuestas = mysql_num_rows($respuestasConsulta);
+												");
+												
+												$cantRespuestas = mysqli_num_rows($respuestasConsulta);
 												if($cantRespuestas==0) {
 													echo "<hr><span style='color:red';>".$frases[146][$datosUsuarioActual[8]].".</span>";
 													continue;
@@ -302,7 +306,7 @@
 												</div><hr>
 											<?php 
 												$contRespuestas = 1;
-												while($respuestas = mysql_fetch_array($respuestasConsulta)){
+												while($respuestas = mysqli_fetch_array($respuestasConsulta, MYSQLI_BOTH)){
 											?>
 												<p>
 													<label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" for="option-<?=$contPreguntas;?><?=$contRespuestas;?>">
@@ -359,7 +363,7 @@
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>    

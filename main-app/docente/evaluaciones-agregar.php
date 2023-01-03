@@ -137,15 +137,14 @@
                                             <label class="col-sm-2 control-label"><b>Banco de datos</b></label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-												WHERE eva_id_carga='".$cargaConsultaActual."' 
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+												WHERE eva_id_carga='".$cargaConsultaActual."'");
 												?>
                                                 <select class="form-control  select2" name="bancoDatos" onChange="avisoBancoDatos(this)">
                                                     <option value="">Seleccione una opción</option>
 													<option value="0" selected>--Ninguno--</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos['eva_id'];?>"><?=$opcionesDatos['eva_nombre'];?></option>
 													<?php }?>
@@ -170,7 +169,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

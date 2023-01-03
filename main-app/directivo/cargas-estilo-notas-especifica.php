@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0045';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -24,6 +23,10 @@
                                 <div class="page-title">Categoria Notas especificas</div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)">Cargas</a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active">Notas especifica</li>
+                            </ol>
                         </div>
                     </div>
                     
@@ -71,9 +74,9 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = mysql_query("SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_categoria='".$_GET["id"]."'",$conexion);
+													$consulta = mysqli_query($conexion, "SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_categoria='".$_GET["id"]."'");
 													$contReg = 1;
-													while($resultado = mysql_fetch_array($consulta)){
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -89,8 +92,7 @@
 																  </button>
 																  <ul class="dropdown-menu" role="menu">
 																	  <li><a href="cargas-estilo-notas-especifica-editar.php?id=<?=$resultado["notip_id"];?>&idCN=<?=$_GET["id"]?>"><?=$frases[165][$datosUsuarioActual[8]];?></a></li>
-                                        								<?php if($numMaterias[0]==0){?><li><a href="cargas-estilo-notas-especifica-eliminar.php?idN=<?=$resultado["notip_id"];?>&idNC=<?=$_GET["id"]?>" onClick="if(!confirm('Desea eliminar este registro?')){return false;}">Eliminar</a></li><?php }?>	
-																	  <li><a href="#"><?=$frases[104][$datosUsuarioActual[8]];?></a></li>
+                                        								<?php if($numMaterias[0]==0){?><li><a href="cargas-estilo-notas-especifica-eliminar.php?idN=<?=$resultado["notip_id"];?>&idNC=<?=$_GET["id"]?>" onClick="if(!confirm('Desea eliminar este registro?')){return false;}">Eliminar</a></li><?php }?>
 																  </ul>
 															  </div>
 														</td>
@@ -119,7 +121,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

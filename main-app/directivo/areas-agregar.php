@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0019';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -69,13 +68,13 @@
                                             <label class="col-sm-2 control-label">Posición</label>
                                             <div class="col-sm-10">
 												<?php
-                                                    $c_posicionA=mysql_query("SELECT ar_posicion FROM academico_areas;",$conexion);
+                                                    $c_posicionA=mysqli_query($conexion, "SELECT ar_posicion FROM academico_areas;");
 												?>
                                                 <select class="form-control  select2" name="posicionA" required>
                                                     <option value="">Seleccione una opci�n</option>
 													<?php
                                                     $cont=0;
-                                                    while($r_pos=mysql_fetch_array($c_posicionA)){
+                                                    while($r_pos=mysqli_fetch_array($c_posicionA, MYSQLI_BOTH)){
                                                         $cont++;
                                                         $posciones[$cont]=$r_pos["ar_posicion"];
                                                         }
@@ -110,7 +109,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -7,7 +7,7 @@
 			<a href='javascript:history.go(-1)'>[Volver al formulario]</a></samp>";
 		exit();
 	}
-	mysql_query("UPDATE academico_notas_tipos SET notip_nombre='" . $_POST["nombreCN"] . "', notip_desde=" . $_POST["ndesdeCN"] . ", notip_hasta=" . $_POST["nhastaCN"] . " WHERE notip_id=" . $_POST["idN"] . ";", $conexion);
+	mysqli_query($conexion, "UPDATE academico_notas_tipos SET notip_nombre='" . $_POST["nombreCN"] . "', notip_desde=" . $_POST["ndesdeCN"] . ", notip_hasta=" . $_POST["nhastaCN"] . " WHERE notip_id=" . $_POST["idN"] . ";");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

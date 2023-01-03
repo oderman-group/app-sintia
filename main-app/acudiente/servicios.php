@@ -102,16 +102,16 @@
 									if(is_numeric($_GET["emp"])){
 										$consultaVisita = mysqli_query($conexion, "SELECT * FROM ".$baseDatosMarketPlace.".empresas_visitas 
 										WHERE exvis_empresa='".$_GET["emp"]."' AND exvis_usuario='".$_SESSION["id"]."' AND exvis_institucion='".$config['conf_id_institucion']."'");
-										if(mysql_errno()!=0){echo mysql_error(); exit();}
+										
 										$numVisita = mysqli_num_rows($consultaVisita);
 										$datoVisita = mysqli_fetch_array($consultaVisita, MYSQLI_BOTH);
 										if($numVisita>0){
 											mysqli_query($conexion, "UPDATE ".$baseDatosMarketPlace.".empresas_visitas SET exvis_cantidad=exvis_cantidad+1 
 											WHERE exvis_usuario='".$_SESSION["id"]."' AND exvis_institucion='".$config['conf_id_institucion']."'");
-											if(mysql_errno()!=0){echo mysql_error(); exit();}
+											
 										}else{
 											mysqli_query($conexion, "INSERT INTO ".$baseDatosMarketPlace.".empresas_visitas(exvis_empresa, exvis_institucion, exvis_usuario, exvis_fecha, exvis_cantidad)VALUES('".$_GET["emp"]."', '".$config['conf_id_institucion']."', '".$_SESSION["id"]."', now(), 1)");
-											if(mysql_errno()!=0){echo mysql_error(); exit();}
+											
 										}
 									?>
 										<p><span><i class="fa fa-envelope-o"></i> <b><?=$frases[181][$datosUsuarioActual[8]];?>:</b> <?=$datosConsulta['emp_email'];?></span></p>
@@ -143,7 +143,7 @@
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

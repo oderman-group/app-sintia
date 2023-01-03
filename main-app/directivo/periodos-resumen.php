@@ -68,6 +68,10 @@ function niv(enviada){
                             <div class=" pull-left">
                                 <div class="page-title"><?=$frases[84][$datosUsuarioActual['uss_idioma']];?></div>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)"><?=$frases[12][$datosUsuarioActual[8]];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active"><?=$frases[84][$datosUsuarioActual['uss_idioma']];?></li>
+                            </ol>
                         </div>
                     </div>
                     
@@ -119,9 +123,8 @@ function niv(enviada){
 														<?php
 															$p = 1;
 															while($p<=$datosCargaActual['gra_periodos']){
-																$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
-																WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$p."'
-																",$conexion));
+																$consultaPeriodosCursos=mysqli_query($conexion, "SELECT * FROM academico_grados_periodos WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$p."'");
+																$periodosCursos = mysqli_fetch_array($consultaPeriodosCursos, MYSQLI_BOTH);
 																echo '<th style="text-align:center;">'.$p.'P<br>('.$periodosCursos['gvp_valor'].'%)</th>';
 																$p++;
 															}
@@ -133,9 +136,9 @@ function niv(enviada){
                                                 <tbody>
 													<?php
 													$contReg = 1; 
-													$consulta = mysql_query("SELECT * FROM academico_matriculas 
-													WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
-													while($resultado = mysql_fetch_array($consulta)){
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
+													WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
                                                     
 													<tr>
@@ -148,16 +151,14 @@ function niv(enviada){
 														 $decimal = 0;
 														 $n = 0;
 														 for($i=1; $i<=$datosCargaActual['gra_periodos']; $i++){
-															
-															$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
-															WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$i."'
-															",$conexion));
+															$consultaPeriodosCursos=mysqli_query($conexion, "SELECT * FROM academico_grados_periodos WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$i."'");
+															$periodosCursos = mysqli_fetch_array($consultaPeriodosCursos, MYSQLI_BOTH);
 															 $decimal = $periodosCursos['gvp_valor']/100;
 															 
 															//LAS CALIFICACIONES
-															$notasConsulta = mysql_query("SELECT * FROM academico_boletin WHERE bol_estudiante=".$resultado['mat_id']." AND bol_carga=".$cargaConsultaActual." AND bol_periodo=".$i,$conexion);
-															$notasResultado = mysql_fetch_array($notasConsulta);
-															$numN = mysql_num_rows($notasConsulta);
+															$notasConsulta = mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_estudiante=".$resultado['mat_id']." AND bol_carga=".$cargaConsultaActual." AND bol_periodo=".$i);
+															$notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
+															$numN = mysqli_num_rows($notasConsulta);
 															if($numN){
 																$n++;
 																$definitiva += $notasResultado[4]*$decimal;
@@ -176,10 +177,10 @@ function niv(enviada){
 															</td>
 														<?php		
 														 }
-															$consultaN = mysql_query("SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$resultado['mat_id']." AND niv_id_asg=".$cargaConsultaActual,$conexion);
-															if(mysql_errno()!=0){echo mysql_error(); exit();}
-															$numN = mysql_num_rows($consultaN);
-															$rN = mysql_fetch_array($consultaN);
+															$consultaN = mysqli_query($conexion, "SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$resultado['mat_id']." AND niv_id_asg=".$cargaConsultaActual);
+															
+															$numN = mysqli_num_rows($consultaN);
+															$rN = mysqli_fetch_array($consultaN, MYSQLI_BOTH);
 															if($numN==0){
 																if($n>0)
 																	$definitiva = round(($definitiva), $config['conf_decimales_notas']);
@@ -194,9 +195,8 @@ function niv(enviada){
 														 //PREGUNTAMOS SI ESTAMOS EN EL PERIODO PENULTIMO O ULTIMO
 														 if($config[2]==$datosCargaActual['gra_periodos']){
 															 $notaMinima = ($config[5]-$definitiva);
-															 $periodosCursos2 = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
-															 WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$datosCargaActual['gra_periodos']."'
-															 ",$conexion));
+															 $consultaPeriodosCursos2=mysqli_query($conexion, "SELECT * FROM academico_grados_periodos WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$datosCargaActual['gra_periodos']."'");
+															 $periodosCursos2 = mysqli_fetch_array($consultaPeriodosCursos2, MYSQLI_BOTH);
 															 $decimal2 = $periodosCursos2['gvp_valor']/100;
 															 $notaMinima = round(($notaMinima / $decimal2), $config['conf_decimales_notas']);
 															 if($notaMinima<=0){
@@ -239,7 +239,7 @@ function niv(enviada){
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

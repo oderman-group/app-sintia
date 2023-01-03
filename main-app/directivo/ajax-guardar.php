@@ -4,8 +4,8 @@
 $mensajeNot = 'Hubo un error al guardar las cambios';
 //Bloquear y desbloquear
 if($_POST["operacion"]==1){
-	mysql_query("UPDATE usuarios SET uss_bloqueado='".$_POST["valor"]."' WHERE uss_id='".$_POST["idR"]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE usuarios SET uss_bloqueado='".$_POST["valor"]."' WHERE uss_id='".$_POST["idR"]."'");
+	
 	$mensajeNot = 'El usuario ha cambiado de estado correctamente.';
 }
 ?>

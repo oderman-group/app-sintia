@@ -120,8 +120,8 @@ if(!isset($_GET["ref"]) or $_GET["ref"]=="" or !is_numeric($_GET["ref"]) or $_SE
   </head>
   <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
   <?php
-  $consulta = mysql_query("SELECT * FROM academico_matriculas WHERE mat_matricula='".$_GET["ref"]."'",$conexion);
-  $resultado = mysql_fetch_array($consulta);
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_matricula='".$_GET["ref"]."'");
+  $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
   ?>
     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#1fbba6">
       <tbody>

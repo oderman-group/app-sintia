@@ -22,7 +22,7 @@
 				INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 				WHERE evp_id_evaluacion='".$_GET["idE"]."'
 				");
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 				$cantPreguntas = mysql_num_rows($preguntasConsulta);
 
 				//Si la evaluación no tiene preguntas, lo mandamos para la pagina informativa
@@ -34,7 +34,7 @@
 				//SABER SI EL ESTUDIANTE YA HIZO LA EVALUACION
 				$nume = mysql_num_rows(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados 
 				WHERE res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$datosEstudianteActual[0]."'"));
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 				if($nume==0){
 					echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=203";</script>';
 					exit();
@@ -108,7 +108,7 @@
 												//SABER SI EL ESTUDIANTE YA HIZO LA EVALUACION
 												$nume = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados 
 												WHERE res_id_evaluacion='".$evaComun['eva_id']."' AND res_id_estudiante='".$datosEstudianteActual[0]."'"));
-												if(mysql_errno()!=0){echo mysql_error(); exit();}
+												
 												if($nume==0){continue;}
 											?>
 												<p><a href="evaluaciones-ver.php?idE=<?=$evaComun['eva_id'];?>&usrEstud=<?=$datosEstudianteActual['mat_id_usuario'];?>" <?=$estiloResaltado;?>><?=$evaComun['eva_nombre'];?></a></p>
@@ -139,7 +139,7 @@
 												$respuestasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_respuestas
 												WHERE resp_id_pregunta='".$preguntas['preg_id']."'
 												");
-												if(mysql_errno()!=0){echo mysql_error(); exit();}
+												
 												$cantRespuestas = mysql_num_rows($respuestasConsulta);
 												if($cantRespuestas==0) {
 													echo "<hr><span style='color:red';>".$frases[146][$datosUsuarioActual[8]].".</span>";
@@ -339,6 +339,6 @@
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0022';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -85,9 +84,9 @@
                                                 <select class="form-control  select2" name="areaM" required>
                                                     <option value="">Seleccione una opci�n</option>
                                                     <?php
-                                                    $c_areas=mysql_query("SELECT ar_id, ar_nombre, ar_posicion FROM academico_areas;",$conexion);
-                                                    while($r_a=mysql_fetch_array($c_areas)){
-                                                        echo'<option value="'.$r_a["ar_id"].'">'.$r_a["ar_nombre"].'</option>';
+                                                    $cAreas=mysqli_query($conexion, "SELECT ar_id, ar_nombre, ar_posicion FROM academico_areas;");
+                                                    while($rA=mysqli_fetch_array($cAreas, MYSQLI_BOTH)){
+                                                        echo'<option value="'.$rA["ar_id"].'">'.$rA["ar_nombre"].'</option>';
                                                         }
                                                     ?>
                                                 </select>
@@ -105,7 +104,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

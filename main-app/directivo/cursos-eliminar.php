@@ -2,7 +2,7 @@
 	include("session.php");
 	include("../modelo/conexion.php");
 	
-	mysql_query("UPDATE academico_grados SET gra_estado=0 WHERE gra_id='" . $_GET["id"] . "'", $conexion);
+	mysqli_query($conexion, "UPDATE academico_grados SET gra_estado=0 WHERE gra_id='" . $_GET["id"] . "'");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

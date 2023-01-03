@@ -1,5 +1,5 @@
 <?php
-if($_GET["opt"]==2){
+if(isset($_GET["opt"])&&$_GET["opt"]==2){
 	$consulta = mysqli_query($conexion, "SELECT * FROM social_emails
 	INNER JOIN usuarios ON uss_id=ema_para
 	WHERE ema_de='".$_SESSION["id"]."' AND ema_eliminado_de='0'
@@ -31,7 +31,7 @@ $numRenviados = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM social_em
 															<span class="label mail-counter-style label-danger pull-right"><?=$numR;?></span></a>
 				                                        </li>
 														
-				                                        <li <?php if($_GET["opt"]==2){echo 'class="active"';}?>><a href="mensajes.php?opt=2"><i class="fa fa-envelope"></i> Enviados <span class="label mail-counter-style label-danger pull-right"><?=$numRenviados;?></span></a></li>
+				                                        <li <?php if(isset($_GET["opt"])&&$_GET["opt"]==2){echo 'class="active"';}?>><a href="mensajes.php?opt=2"><i class="fa fa-envelope"></i> Enviados <span class="label mail-counter-style label-danger pull-right"><?=$numRenviados;?></span></a></li>
 				                                    </ul>
 				                                </div>
 				                            </div>
@@ -104,7 +104,7 @@ $numRenviados = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM social_em
 				                                                        </a>
 				                                                    </td>
 				                                                    <td class="view-message  dont-show"><?=$resultado['uss_nombre'];?></td>
-				                                                    <td class="view-message"><a href="mensajes-ver.php?idR=<?=$resultado['ema_id'];?>&opt=<?=$opt;?>"><?=$resultado['ema_asunto'];?></a></td>
+				                                                    <td class="view-message"><a href="mensajes-ver.php?idR=<?=$resultado['ema_id'];?>&opt=<?php if(isset($opt)){ echo $opt;}?>"><?=$resultado['ema_asunto'];?></a></td>
 				                                                    <td class="view-message  text-right"><?=$resultado['ema_fecha'];?></td>
 																	
 																	<?php if($resultado['ema_de']==$_SESSION["id"]){?>

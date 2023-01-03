@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0037';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -36,7 +35,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="areas.php" onClick="deseaRegresar(this)"><?=$frases[93][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="cargas-indicadores-obligatorios.php" onClick="deseaRegresar(this)">Indicadores Obligatorios</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Editar Indicadores</li>
                             </ol>
                         </div>
@@ -55,7 +54,8 @@
 									<header class="panel-heading panel-heading-purple">Editar Indicadores</header>
                                 	<div class="panel-body">
                                     <?php 
-                                    $r_cargas=mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores WHERE ind_id='".$_GET["id"]."'",$conexion));
+                                    $consultarCargas=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_id='".$_GET["id"]."'");
+                                    $rCargas=mysqli_fetch_array($consultarCargas, MYSQLI_BOTH);
                                     ?>
 
                                    
@@ -65,13 +65,13 @@
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nombre</label>
                                             <div class="col-sm-10">
-                                                <input type="text" name="nombre" class="form-control" value="<?=$r_cargas[1];?>">
+                                                <input type="text" name="nombre" class="form-control" value="<?=$rCargas[1];?>">
                                             </div>
                                         </div>	
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Valor</label>
                                             <div class="col-sm-2">
-                                                <input type="text" name="valor" class="form-control" value="<?=$r_cargas[3];?>">
+                                                <input type="text" name="valor" class="form-control" value="<?=$rCargas[3];?>">
                                             </div>
                                             <span style="color:#F06; font-size:11px;">Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.</span>
                                         </div>	
@@ -87,7 +87,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

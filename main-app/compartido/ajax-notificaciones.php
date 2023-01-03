@@ -1,8 +1,8 @@
 <?php
 include("../../config-general/config.php");
 //include("../modelo/conexion.php");
-$notificacionesConsulta = mysql_query("SELECT * FROM general_alertas WHERE alr_usuario='".$_POST["usuario"]."' AND alr_vista=0 ORDER BY alr_id DESC",$conexion);
-$notificacionesNumero = mysql_num_rows($notificacionesConsulta);
+$notificacionesConsulta = mysqli_query($conexion, "SELECT * FROM general_alertas WHERE alr_usuario='".$_POST["usuario"]."' AND alr_vista=0 ORDER BY alr_id DESC");
+$notificacionesNumero = mysqli_num_rows($notificacionesConsulta);
 ?>
 
 							<a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
@@ -18,7 +18,7 @@ $notificacionesNumero = mysql_num_rows($notificacionesConsulta);
                                     <ul class="dropdown-menu-list small-slimscroll-style" data-handle-color="#637283">
                                         <?php
 										$i=1;
-										while($notificacionesDatos = mysql_fetch_array($notificacionesConsulta)){
+										while($notificacionesDatos = mysqli_fetch_array($notificacionesConsulta, MYSQLI_BOTH)){
 											if($i==6) break;
 										?>
 											<li>

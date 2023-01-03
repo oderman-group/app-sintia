@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta =mysql_query("SELECT * FROM carga_academica, usuarios, aulas, grupos WHERE usuarios.id=carga_academica.id_docente AND aulas.id=carga_academica.id_aula AND grupos.id=carga_academica.id_grupo",$conexion);
+$consulta =mysqli_query($conexion, "SELECT * FROM carga_academica, usuarios, aulas, grupos WHERE usuarios.id=carga_academica.id_docente AND aulas.id=carga_academica.id_aula AND grupos.id=carga_academica.id_grupo");
 ?>
 <head>
 	<title>REPORTES - WolfSyetem</title>
@@ -33,12 +33,12 @@ $consulta =mysql_query("SELECT * FROM carga_academica, usuarios, aulas, grupos W
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
-	$consultaAdicional = mysql_query("SELECT * FROM asignaturas, programas WHERE programas.id='".$resultado[24]."' AND asignaturas.id='".$resultado[23]."'",$conexion);
-	$resultadoAdicional = mysql_fetch_array($consultaAdicional);
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+	$consultaAdicional = mysqli_query($conexion, "SELECT * FROM asignaturas, programas WHERE programas.id='".$resultado[24]."' AND asignaturas.id='".$resultado[23]."'");
+	$resultadoAdicional = mysqli_fetch_array($consultaAdicional, MYSQLI_BOTH);
 	//==========================================================
-	$consultaAdicional2 = mysql_query("SELECT * FROM matriculas WHERE id_grupo='".$resultado[2]."'");
-	$numAdicional2 = mysql_num_rows($consultaAdicional2);
+	$consultaAdicional2 = mysqli_query($conexion, "SELECT * FROM matriculas WHERE id_grupo='".$resultado[2]."'");
+	$numAdicional2 = mysqli_num_rows($consultaAdicional2);
 ?>
     <tr style="font-size:8px;">
         <td align="center"><?=$con;?></td>

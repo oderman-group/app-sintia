@@ -54,8 +54,7 @@ for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 		
 		$nombreCompleto = $data->sheets[0]['cells'][$i][1]." ".$data->sheets[0]['cells'][$i][2]." ".$data->sheets[0]['cells'][$i][3];
 
-		mysql_query("INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro)VALUES('".$data->sheets[0]['cells'][$i][9]."', '".$data->sheets[0]['cells'][$i][9]."', 4, '".$nombreCompleto."', 1, 0, now(), '".$_SESSION["id"]."')
-		",$conexion);
+		mysqli_query($conexion, "INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro)VALUES('".$data->sheets[0]['cells'][$i][9]."', '".$data->sheets[0]['cells'][$i][9]."', 4, '".$nombreCompleto."', 1, 0, now(), '".$_SESSION["id"]."')");
 		$lineaError = __LINE__;
 		include("../compartido/reporte-errores.php");
 		$idRegistro = mysql_insert_id();
@@ -91,9 +90,8 @@ for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 
 $datosInsert = substr($datosInsert,0,-1);
 		
-mysql_query("INSERT INTO academico_matriculas(mat_fecha, mat_estado_matricula, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_email, mat_inclusion, mat_extranjero, mat_id_usuario)VALUES
-".$datosInsert."
-",$conexion);
+mysqli_query($conexion, "INSERT INTO academico_matriculas(mat_fecha, mat_estado_matricula, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_email, mat_inclusion, mat_extranjero, mat_id_usuario)VALUES
+".$datosInsert."");
 $lineaError = __LINE__;
 include("../compartido/reporte-errores.php");	
 

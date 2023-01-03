@@ -41,12 +41,12 @@
 											<?php
 											$porcentaje = 0;
 											for($i=1; $i<=$datosEstudianteActual['gra_periodos']; $i++){
-												$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
+												$periodosCursos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_grados_periodos
 												WHERE gvp_grado='".$datosEstudianteActual['mat_grado']."' AND gvp_periodo='".$i."'
-												",$conexion));
+												"), MYSQLI_BOTH);
 												
-												$notapp = mysql_fetch_array(mysql_query("SELECT bol_nota FROM academico_boletin 
-												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."'",$conexion));
+												$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM academico_boletin 
+												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."'"), MYSQLI_BOTH);
 												if($i==$periodoConsultaActual) $estiloResaltadoP = 'style="color: orange;"'; else $estiloResaltadoP = '';
 											?>
 												<p>
@@ -90,12 +90,12 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_actividad_tareas 
-													 WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."' AND tar_estado=1 ",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas 
+													 WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."' AND tar_estado=1 ");
 													$contReg=1; 
-													while($resultado = mysql_fetch_array($consulta)){
-														$fd = mysql_fetch_array(mysql_query("SELECT DATEDIFF('".$resultado[5]."','".date("Y-m-d")."')",$conexion));
-														$sd = mysql_fetch_array(mysql_query("SELECT DATEDIFF('".$resultado[4]."','".date("Y-m-d")."')",$conexion));
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$fd = mysqli_fetch_array(mysqli_query($conexion, "SELECT DATEDIFF('".$resultado[5]."','".date("Y-m-d")."')"), MYSQLI_BOTH);
+														$sd = mysqli_fetch_array(mysqli_query($conexion, "SELECT DATEDIFF('".$resultado[4]."','".date("Y-m-d")."')"), MYSQLI_BOTH);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -141,7 +141,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

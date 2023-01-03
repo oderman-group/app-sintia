@@ -1,22 +1,22 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_resultados", $conexion);
-	mysql_query("DELETE FROM academico_actividad_foro_comentarios", $conexion);
-	mysql_query("DELETE FROM academico_actividad_foro_respuestas", $conexion);
-	mysql_query("DELETE FROM academico_actividad_tareas_entregas", $conexion);
-	mysql_query("DELETE FROM academico_ausencias", $conexion);
-	mysql_query("DELETE FROM academico_boletin", $conexion);
-	mysql_query("DELETE FROM academico_calificaciones", $conexion);
-	mysql_query("DELETE FROM academico_matriculas", $conexion); //ELIMINA TODO
-	mysql_query("DELETE FROM academico_nivelaciones", $conexion);
-	mysql_query("DELETE FROM academico_recuperaciones_notas", $conexion);
-	mysql_query("DELETE FROM disciplina_matricula_condicional", $conexion);
-	mysql_query("DELETE FROM disciplina_reportes", $conexion);
-	mysql_query("DELETE FROM disiplina_nota", $conexion);
-	mysql_query("DELETE FROM general_resultados", $conexion);
-	mysql_query("DELETE FROM usuarios WHERE uss_tipo=4", $conexion);
-	mysql_query("DELETE FROM usuarios_por_estudiantes", $conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_resultados");
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_comentarios");
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_respuestas");
+	mysqli_query($conexion, "DELETE FROM academico_actividad_tareas_entregas");
+	mysqli_query($conexion, "DELETE FROM academico_ausencias");
+	mysqli_query($conexion, "DELETE FROM academico_boletin");
+	mysqli_query($conexion, "DELETE FROM academico_calificaciones");
+	mysqli_query($conexion, "DELETE FROM academico_matriculas"); //ELIMINA TODO
+	mysqli_query($conexion, "DELETE FROM academico_nivelaciones");
+	mysqli_query($conexion, "DELETE FROM academico_recuperaciones_notas");
+	mysqli_query($conexion, "DELETE FROM disciplina_matricula_condicional");
+	mysqli_query($conexion, "DELETE FROM disciplina_reportes");
+	mysqli_query($conexion, "DELETE FROM disiplina_nota");
+	mysqli_query($conexion, "DELETE FROM general_resultados");
+	mysqli_query($conexion, "DELETE FROM usuarios WHERE uss_tipo=4");
+	mysqli_query($conexion, "DELETE FROM usuarios_por_estudiantes");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

@@ -1,7 +1,7 @@
 <?php include("../modelo/conexion.php");?>
 <?php
-$consultaAyuda = mysql_query("SELECT * FROM ayuda",$conexion);
-while($ayuda = mysql_fetch_array($consultaAyuda)){
+$consultaAyuda = mysqli_query($conexion, "SELECT * FROM ayuda");
+while($ayuda = mysqli_fetch_array($consultaAyuda, MYSQLI_BOTH)){
 ?>
     <!-- sample modal content -->
     <aside id="ayuda<?=$ayuda[0];?>" class="modal panoramic hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">

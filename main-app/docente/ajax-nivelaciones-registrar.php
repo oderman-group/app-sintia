@@ -6,18 +6,18 @@ if(trim($_POST["nota"])==""){
 }
 if($_POST["nota"]>$config[4]) $_POST["nota"] = $config[4]; if($_POST["nota"]<1) $_POST["nota"] = 1;
 include("../modelo/conexion.php");
-$consulta = mysql_query("SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$_POST["codEst"]." AND niv_id_asg=".$_COOKIE["carga"],$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+$consulta = mysqli_query($conexion, "SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$_POST["codEst"]." AND niv_id_asg=".$_COOKIE["carga"]);
+
 $num = mysql_num_rows($consulta);
 $rB = mysql_fetch_array($consulta);
 if($num==0){
-	mysql_query("DELETE FROM academico_nivelaciones WHERE niv_id='".$rB[0]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	mysql_query("INSERT INTO academico_nivelaciones(niv_id_asg, niv_cod_estudiante, niv_definitiva, niv_fecha)VALUES('".$_COOKIE["carga"]."','".$_POST["codEst"]."','".$_POST["nota"]."',now())",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "DELETE FROM academico_nivelaciones WHERE niv_id='".$rB[0]."'");
+	
+	mysqli_query($conexion, "INSERT INTO academico_nivelaciones(niv_id_asg, niv_cod_estudiante, niv_definitiva, niv_fecha)VALUES('".$_COOKIE["carga"]."','".$_POST["codEst"]."','".$_POST["nota"]."',now())");
+	
 }else{
-	mysql_query("UPDATE academico_nivelaciones SET niv_definitiva='".$_POST["nota"]."', niv_fecha=now() WHERE niv_id=".$rB[0],$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_nivelaciones SET niv_definitiva='".$_POST["nota"]."', niv_fecha=now() WHERE niv_id=".$rB[0]);
+	
 }	
 
 

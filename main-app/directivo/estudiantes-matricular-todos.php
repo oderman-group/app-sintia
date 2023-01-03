@@ -1,7 +1,7 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("UPDATE academico_matriculas SET mat_estado_matricula=1", $conexion);
+	mysqli_query($conexion, "UPDATE academico_matriculas SET mat_estado_matricula=1");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

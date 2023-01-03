@@ -12,17 +12,20 @@ switch($_POST["documento"]){
 	case 7: $titulo = "OBSERVADOR DEL ESTUDIANTE 2018"; break;
 }
 
-$datos = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_matriculas
 INNER JOIN academico_grados ON gra_id=mat_grado
 INNER JOIN academico_grupos ON gru_id=mat_grupo
 INNER JOIN usuarios ON uss_id=mat_acudiente
-WHERE mat_id='".$_POST["estudiante"]."'"));
+WHERE mat_id='".$_POST["estudiante"]."'");
+$datos = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 
-$dg = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas
+$consultaDg=mysqli_query($conexion, "SELECT * FROM academico_cargas
 INNER JOIN usuarios ON uss_id=car_docente
-WHERE car_curso='".$datos['mat_grado']."' AND car_grupo='".$datos['mat_grupo']."' AND car_director_grupo=1"));
+WHERE car_curso='".$datos['mat_grado']."' AND car_grupo='".$datos['mat_grupo']."' AND car_director_grupo=1");
+$dg = mysqli_fetch_array($consultaDg, MYSQLI_BOTH);
 
-$acudiente2 = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$datos["mat_acudiente2"]."'",$conexion));
+$consultaAcudiente2=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$datos["mat_acudiente2"]."'");
+$acudiente2 = mysqli_fetch_array($consultaAcudiente2, MYSQLI_BOTH);
 
 $meses=array("","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
 ?>

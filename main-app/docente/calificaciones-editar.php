@@ -5,14 +5,16 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."' AND act_estado=1",$conexion));
+$consultaCalificacion=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."' AND act_estado=1");
+$calificacion = mysqli_fetch_array($consultaCalificacion, MYSQLI_BOTH);
 
-$valores = mysql_fetch_array(mysql_query("SELECT
+$consultaValor=mysqli_query($conexion, "SELECT
 (SELECT sum(act_valor) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1),
 (SELECT count(*) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)
-",$conexion));
+");
+$valores = mysqli_fetch_array($consultaValor, MYSQLI_BOTH);
 $porcentajeRestante = 100 - $valores[0];
 ?>
 
@@ -64,10 +66,10 @@ $porcentajeRestante = 100 - $valores[0];
 								<header class="panel-heading panel-heading-purple"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?> </header>
 								<div class="panel-body">
 										<?php
-										$enComun = mysql_query("SELECT * FROM academico_actividades
+										$enComun = mysqli_query($conexion, "SELECT * FROM academico_actividades
 										WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id!='".$_GET["idR"]."' AND act_estado=1
-										",$conexion);
-										while($regComun = mysql_fetch_array($enComun)){
+										");
+										while($regComun = mysqli_fetch_array($enComun, MYSQLI_BOTH)){
 										?>
 										<p><a href="calificaciones-editar.php?idR=<?=$regComun['act_id'];?>"><?=$regComun['act_descripcion'];?></a></p>
 										<?php }?>
@@ -108,15 +110,15 @@ $porcentajeRestante = 100 - $valores[0];
                                             <label class="col-sm-2 control-label">Indicador</label>
                                             <div class="col-sm-10">
 												<?php
-												$indicadoresConsulta = mysql_query("SELECT * FROM academico_indicadores_carga
+												$indicadoresConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 												INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 												WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'
-												",$conexion);
+												");
 												?>
                                                 <select class="form-control  select2" name="indicador" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($indicadoresDatos = mysql_fetch_array($indicadoresConsulta)){
+													while($indicadoresDatos = mysqli_fetch_array($indicadoresConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($indicadoresDatos['ind_id']==$calificacion['act_id_tipo']) $select = 'selected';
 													?>
@@ -131,13 +133,13 @@ $porcentajeRestante = 100 - $valores[0];
                                             <label class="col-sm-2 control-label">Evidencia</label>
                                             <div class="col-sm-10">
 												<?php
-												$evidenciasConsulta = mysql_query("SELECT * FROM academico_evidencias
-												",$conexion);
+												$evidenciasConsulta = mysqli_query($conexion, "SELECT * FROM academico_evidencias
+												");
 												?>
                                                 <select class="form-control  select2" name="evidencia" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($evidenciasDatos = mysql_fetch_array($evidenciasConsulta)){
+													while($evidenciasDatos = mysqli_fetch_array($evidenciasConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($evidenciasDatos[0]==$calificacion['act_id_evidencia']) $select = 'selected';
 													?>
@@ -183,7 +185,7 @@ $porcentajeRestante = 100 - $valores[0];
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

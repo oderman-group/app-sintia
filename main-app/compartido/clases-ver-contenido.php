@@ -1,6 +1,7 @@
 <?php
-$datosConsultaBD = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_clases 
-WHERE cls_id='".$_GET["idR"]."' AND cls_estado=1"), MYSQLI_BOTH);
+$consultaDatosBD=mysqli_query($conexion, "SELECT * FROM academico_clases 
+WHERE cls_id='".$_GET["idR"]."' AND cls_estado=1");
+$datosConsultaBD = mysqli_fetch_array($consultaDatosBD, MYSQLI_BOTH);
 ?>
 					<div class="page-bar">
                         <div class="page-title-breadcrumb">
@@ -29,20 +30,19 @@ WHERE cls_id='".$_GET["idR"]."' AND cls_estado=1"), MYSQLI_BOTH);
 													INNER JOIN usuarios ON uss_id=mat_id_usuario
 													WHERE mat_grado='".$datosCargaActual[2]."' AND mat_grupo='".$datosCargaActual[3]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 
 													GROUP BY mat_id_usuario
-													ORDER BY mat_primer_apellido
-													");
+													ORDER BY mat_primer_apellido");
 													$contReg = 1;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														$genero = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM opciones_generales WHERE ogen_id='".$resultado[8]."'"), MYSQLI_BOTH);
-														
-														$ingresoClase = mysqli_fetch_array(mysqli_query($conexion, "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
+														$consultaGenero=mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales WHERE ogen_id='".$resultado[8]."'");
+														$genero = mysqli_fetch_array($consultaGenero, MYSQLI_BOTH);
+														$consultaIngresoClase=mysqli_query($conexion, "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
 														FROM seguridad_historial_acciones 
 														WHERE hil_url LIKE '%".$urlClase."%' AND hil_usuario='".$resultado['uss_id']."'
 														UNION 
 														SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha 
 														FROM ".$baseDatosServicios.".seguridad_historial_acciones 
-														WHERE hil_url LIKE '%".$urlClase."%' AND hil_usuario='".$resultado['uss_id']."' AND hil_institucion='".$config['conf_id_institucion']."'
-														"), MYSQLI_BOTH);
+														WHERE hil_url LIKE '%".$urlClase."%' AND hil_usuario='".$resultado['uss_id']."' AND hil_institucion='".$config['conf_id_institucion']."'");
+														$ingresoClase = mysqli_fetch_array($consultaIngresoClase, MYSQLI_BOTH);
 														
 														if($ingresoClase[0]==""){continue;}
 													?>

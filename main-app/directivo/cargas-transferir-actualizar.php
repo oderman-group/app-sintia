@@ -1,7 +1,7 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("UPDATE academico_cargas SET car_docente='" . $_POST["para"] . "' WHERE car_docente='" . $_POST["de"] . "'", $conexion);
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_docente='" . $_POST["para"] . "' WHERE car_docente='" . $_POST["de"] . "'");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

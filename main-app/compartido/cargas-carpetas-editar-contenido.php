@@ -114,7 +114,7 @@
 													");
 													while($infoDatos = mysqli_fetch_array($infoConsulta, MYSQLI_BOTH)){
 														$existe = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM general_folders_usuarios_compartir WHERE fxuc_folder='".$_GET["idR"]."' AND fxuc_usuario='".$infoDatos['uss_id']."'"));
-														if(mysql_errno()!=0){echo mysql_error(); exit();}
+														
 													?>	
 													  <option value="<?=$infoDatos['uss_id'];?>" <?php if($existe>0){echo "selected";}?>><?=strtoupper($infoDatos['uss_nombre'])." - ".$infoDatos['pes_nombre'];?></option>
 													<?php }?>	

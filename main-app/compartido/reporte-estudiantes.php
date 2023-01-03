@@ -2,16 +2,6 @@
 session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");?>
-<?php
-/*
- $conf_reporte=mysql_query("SELECT * FROM configuracion WHERE conf_id=2",$conexion);
-  $num_config_reporte=mysql_num_rows($conf_reporte);
-		  if($num_config_reporte>0){
-		  $config_reporte_actual=mysql_fetch_array($conf_reporte);
-		  $nom_boton="Actualizar";
-		  }
-*/
-?>
 <head>
 	<title>Estudiantes</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -36,10 +26,12 @@ include("../../config-general/consulta-usuario-actual.php");?>
   <?php
   if(isset($_GET["grado"]) and isset($_GET["grupo"])) $adicional = "mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND "; else $adicional = "";
   $cont=1;
-  $consulta = mysql_query("SELECT * FROM academico_matriculas WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
-  while($resultado = mysql_fetch_array($consulta)){
-	$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado[26]."'",$conexion));
-	$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'",$conexion));	
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+  $consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado[26]."'");
+	$acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
+  $consultaGrado=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'");
+	$grados = mysqli_fetch_array($consultaGrado, MYSQLI_BOTH);	
   ?>
   <tr style="font-size:13px;">
       <td><?=$resultado[1];?></td>

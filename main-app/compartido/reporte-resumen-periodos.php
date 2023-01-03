@@ -34,10 +34,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                     <!-- BEGIN -->
                                     <tbody>
                                     <?php
-									$cCargas = mysql_query("SELECT * FROM academico_cargas WHERE car_curso=5 AND car_grupo=3",$conexion);
-									while($rCargas = mysql_fetch_array($cCargas)){
-										$cDatos = mysql_query("SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM academico_materias, academico_grados, usuarios WHERE mat_id='".$rCargas[4]."' AND gra_id='".$rCargas[2]."' AND uss_id='".$rCargas[1]."'",$conexion);
-										$rDatos = mysql_fetch_array($cDatos);
+									$cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso=5 AND car_grupo=3");
+									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
+										$cDatos = mysqli_query($conexion, "SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM academico_materias, academico_grados, usuarios WHERE mat_id='".$rCargas[4]."' AND gra_id='".$rCargas[2]."' AND uss_id='".$rCargas[1]."'");
+										$rDatos = mysqli_fetch_array($cDatos, MYSQLI_BOTH);
 									?>
                                     <tr id="data1" class="odd gradeX">
                                         <td style="text-align:center;"><?=$rCargas[0];?></td>
@@ -48,9 +48,9 @@ include("../../config-general/consulta-usuario-actual.php");?>
 										 $n = 0;
 										 for($i=1; $i<=$config[19]; $i++){
 										 	//LAS CALIFICACIONES
-										 	$notasConsulta = mysql_query("SELECT * FROM academico_boletin WHERE bol_estudiante=".$_GET["estudiante"]." AND bol_carga=".$rCargas[0]." AND bol_periodo=".$i,$conexion);
-										 	$notasResultado = mysql_fetch_array($notasConsulta);
-											$numN = mysql_num_rows($notasConsulta);
+										 	$notasConsulta = mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_estudiante=".$_GET["estudiante"]." AND bol_carga=".$rCargas[0]." AND bol_periodo=".$i);
+										 	$notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
+											$numN = mysqli_num_rows($notasConsulta);
 											if($numN){
 												$n++;
 												$definitiva += $notasResultado[4];
@@ -64,10 +64,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                             </td>
                                         <?php		
 										 }
-											$consultaN = mysql_query("SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$_GET["estudiante"]." AND niv_id_asg=".$rCargas[0],$conexion);
-											if(mysql_errno()!=0){echo mysql_error(); exit();}
-											$numN = mysql_num_rows($consultaN);
-											$rN = mysql_fetch_array($consultaN);
+											$consultaN = mysqli_query($conexion, "SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$_GET["estudiante"]." AND niv_id_asg=".$rCargas[0]);
+											
+											$numN = mysqli_num_rows($consultaN);
+											$rN = mysqli_fetch_array($consultaN, MYSQLI_BOTH);
 											if($numN==0){
 										 		if($n>0)
 													$definitiva = round(($definitiva/$n), 1);

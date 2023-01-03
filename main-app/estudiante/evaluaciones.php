@@ -39,12 +39,12 @@
 											<?php
 											$porcentaje = 0;
 											for($i=1; $i<=$datosEstudianteActual['gra_periodos']; $i++){
-												$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
+												$periodosCursos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_grados_periodos
 												WHERE gvp_grado='".$datosEstudianteActual['mat_grado']."' AND gvp_periodo='".$i."'
-												",$conexion));
+												"), MYSQLI_BOTH);
 												
-												$notapp = mysql_fetch_array(mysql_query("SELECT bol_nota FROM academico_boletin 
-												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."'",$conexion));
+												$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM academico_boletin 
+												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."'"), MYSQLI_BOTH);
 												if($i==$periodoConsultaActual) $estiloResaltadoP = 'style="color: orange;"'; else $estiloResaltadoP = '';
 											?>
 												<p>
@@ -73,25 +73,25 @@
 										<div class="card-body" id="line-parent">
 											<div class="panel-group accordion" id="accordion3">
 												<?php
-												  $consulta = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+												  $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 												  WHERE eva_id_carga='".$cargaConsultaActual."' AND eva_periodo='".$periodoConsultaActual."' AND eva_estado=1
 												  ORDER BY eva_id DESC
-												  ",$conexion);
-												  while($resultado = mysql_fetch_array($consulta)){
+												  ");
+												  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													  if($resultado['eva_clave']!="") $ulrEva = 'evaluaciones-clave.php'; else $ulrEva = 'evaluaciones-realizar.php';
 													
 													//Cantidad de preguntas de la evaluación
-													$cantPreguntas = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+													$cantPreguntas = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 													WHERE evp_id_evaluacion='".$resultado['eva_id']."'
-													",$conexion));
+													"));
 													  
 													  //Obtener los datos si ya ha realizado la evaluación
-													  $datosTerminada = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones_estudiantes
+													  $datosTerminada = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_estudiantes
 													  WHERE epe_id_evaluacion='".$resultado['eva_id']."' AND epe_id_estudiante='".$datosEstudianteActual['mat_id']."' AND epe_inicio IS NOT NULL AND epe_fin IS NOT NULL
-													  ",$conexion));
+													  "), MYSQLI_BOTH);
 													  
 													  //respuestas
-													  $respuestasEvaluacion = mysql_fetch_array(mysql_query("SELECT
+													  $respuestasEvaluacion = mysqli_fetch_array(mysqli_query($conexion, "SELECT
 													  (SELECT count(res_id) FROM academico_actividad_evaluaciones_resultados 
 													  INNER JOIN academico_actividad_respuestas ON resp_id_pregunta=res_id_pregunta AND resp_id=res_id_respuesta AND resp_correcta=1 
 													  WHERE res_id_evaluacion='".$resultado['eva_id']."' AND res_id_estudiante='".$datosEstudianteActual['mat_id']."'),
@@ -100,7 +100,7 @@
 													  WHERE res_id_evaluacion='".$resultado['eva_id']."' AND res_id_estudiante='".$datosEstudianteActual['mat_id']."'),
 													  (SELECT count(res_id) FROM academico_actividad_evaluaciones_resultados 
 													  WHERE res_id_evaluacion='".$resultado['eva_id']."' AND res_id_estudiante='".$datosEstudianteActual['mat_id']."' AND res_id_respuesta=0)
-													  ",$conexion));
+													  "), MYSQLI_BOTH);
 												 ?>
 												  <div class="panel panel-default">
 													  <div class="panel-heading panel-heading-gray">
@@ -158,7 +158,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

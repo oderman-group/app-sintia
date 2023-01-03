@@ -40,7 +40,7 @@
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>
@@ -74,6 +74,13 @@
     <script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
      <!-- end js include path -->
+    <script src="../ckeditor/ckeditor.js"></script>
+
+<script>
+    // Replace the <textarea id="editor1"> with a CKEditor 4
+    // instance, using default configuration.
+    CKEDITOR.replace( 'editor1' );
+</script>
 </body>
 
 <!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/email_compose.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:31:39 GMT -->

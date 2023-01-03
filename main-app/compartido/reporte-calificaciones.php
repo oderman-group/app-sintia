@@ -22,11 +22,11 @@ include("../../config-general/consulta-usuario-actual.php");?>
   </tr>
   <?php
 									 $con = 1;
-									 $consulta = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
-									 while($resultado = mysql_fetch_array($consulta)){
+									 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 										 //LAS CALIFICACIONES A MODIFICAR Y LAS OBSERVACIONES
-										 $notasConsulta = mysql_query("SELECT * FROM academico_calificaciones WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad=".$_GET["idActividad"],$conexion);
-										 $notasResultado = mysql_fetch_array($notasConsulta);
+										 $notasConsulta = mysqli_query($conexion, "SELECT * FROM academico_calificaciones WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad=".$_GET["idActividad"]);
+										 $notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
 									 ?>
   <tr style="font-size:13px;">
       <td class="center"><?=$resultado[0];?></td>

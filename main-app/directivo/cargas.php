@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0032';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -51,10 +50,8 @@
 										if(is_numeric($_GET["docente"])){$filtro .= " AND car_docente='".$_GET["docente"]."'";}
 										if(is_numeric($_GET["asignatura"])){$filtro .= " AND car_materia='".$_GET["asignatura"]."'";}
 										
-										$estadisticasCargas = mysql_fetch_array(mysql_query("
-										SELECT
-										(SELECT count(car_id) FROM academico_cargas)
-										",$conexion));
+										$consultaEstadisticaCarga=mysqli_query($conexion, "SELECT (SELECT count(car_id) FROM academico_cargas)");
+										$estadisticasCargas = mysqli_fetch_array($consultaEstadisticaCarga, MYSQLI_BOTH);
 										?>
 									
 									<h4 align="center"><?=strtoupper($frases[205][$datosUsuarioActual[8]]);?></h4>
@@ -63,14 +60,13 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[5][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$cursos = mysql_query("SELECT * FROM academico_grados
+											$cursos = mysqli_query($conexion, "SELECT * FROM academico_grados
 											WHERE gra_estado=1
 											ORDER BY gra_vocal
-											",$conexion);
-											while($curso = mysql_fetch_array($cursos)){
-												$estudiantesPorGrado = mysql_fetch_array(mysql_query("
-												SELECT count(car_id) FROM academico_cargas WHERE car_curso='".$curso['gra_id']."'
-												",$conexion));
+											");
+											while($curso = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
+												$consultaEstudianteGrado=mysqli_query($conexion, "SELECT count(car_id) FROM academico_cargas WHERE car_curso='".$curso['gra_id']."'");
+												$estudiantesPorGrado = mysqli_fetch_array($consultaEstudianteGrado, MYSQLI_BOTH);
 												$porcentajePorGrado = round(($estudiantesPorGrado[0]/$estadisticasCargas[0])*100,2);
 												if($curso['gra_id']==$_GET["curso"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
@@ -98,9 +94,9 @@
 										<header class="panel-heading panel-heading-purple">Grupos </header>
 										<div class="panel-body">
 											<?php
-											$grupos = mysql_query("SELECT * FROM academico_grupos
-											",$conexion);
-											while($grupo = mysql_fetch_array($grupos)){
+											$grupos = mysqli_query($conexion, "SELECT * FROM academico_grupos
+											");
+											while($grupo = mysqli_fetch_array($grupos, MYSQLI_BOTH)){
 												if($grupo['gru_id']==$_GET["grupo"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
 												<p><a href="<?=$_SERVER['PHP_SELF'];?>?grupo=<?=$grupo['gru_id'];?>&curso=<?=$_GET["curso"];?>&docente=<?=$_GET["docente"];?>&asignatura=<?=$_GET["asignatura"];?>" <?=$estiloResaltado;?>><?=strtoupper($grupo['gru_nombre']);?></a></p>
@@ -115,14 +111,13 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[28][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$docentes = mysql_query("SELECT * FROM usuarios
+											$docentes = mysqli_query($conexion, "SELECT * FROM usuarios
 											WHERE uss_tipo=2 AND uss_bloqueado=0
 											ORDER BY uss_nombre
-											",$conexion);
-											while($docente = mysql_fetch_array($docentes)){
-												$cargasPorDocente = mysql_fetch_array(mysql_query("
-												SELECT count(car_id) FROM academico_cargas WHERE car_docente='".$docente['uss_id']."'
-												",$conexion));
+											");
+											while($docente = mysqli_fetch_array($docentes, MYSQLI_BOTH)){
+												$consultaCargaDocente=mysqli_query($conexion, "SELECT count(car_id) FROM academico_cargas WHERE car_docente='".$docente['uss_id']."'");
+												$cargasPorDocente = mysqli_fetch_array($consultaCargaDocente, MYSQLI_BOTH);
 												$porcentajePorGrado = round(($cargasPorDocente[0]/$estadisticasCargas[0])*100,2);
 												if($docente['uss_id']==$_GET["docente"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
@@ -151,13 +146,12 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[73][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$docentes = mysql_query("SELECT * FROM academico_materias
+											$docentes = mysqli_query($conexion, "SELECT * FROM academico_materias
 											ORDER BY mat_nombre
-											",$conexion);
-											while($docente = mysql_fetch_array($docentes)){
-												$cargasPorDocente = mysql_fetch_array(mysql_query("
-												SELECT count(car_id) FROM academico_cargas WHERE car_materia='".$docente['mat_id']."'
-												",$conexion));
+											");
+											while($docente = mysqli_fetch_array($docentes, MYSQLI_BOTH)){
+												$consultaCargaDocente=mysqli_query($conexion, "SELECT count(car_id) FROM academico_cargas WHERE car_materia='".$docente['mat_id']."'");
+												$cargasPorDocente = mysqli_fetch_array($consultaCargaDocente, MYSQLI_BOTH);
 												$porcentajePorGrado = round(($cargasPorDocente[0]/$estadisticasCargas[0])*100,2);
 												if($docente['mat_id']==$_GET["asignatura"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
@@ -250,19 +244,19 @@
 													$filtroLimite = '';
 													if(is_numeric($_GET["cantidad"])){$filtroLimite = "LIMIT 0,".$_GET["cantidad"];}
 													
-													 $consulta = mysql_query("SELECT * FROM academico_cargas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_cargas
 													 INNER JOIN academico_grados ON gra_id=car_curso
 													 INNER JOIN academico_grupos ON gru_id=car_grupo
 													 INNER JOIN academico_materias ON mat_id=car_materia
 													 INNER JOIN usuarios ON uss_id=car_docente
 													 WHERE car_id=car_id $filtro
 													 ORDER BY car_id
-													 $filtroLimite
-													 ",$conexion);
+													 $filtroLimite");
 													 $contReg = 1;
 													$estadosMatriculas = array("","Matriculado","Asistente","Cancelado","No Matriculado");
-													 while($resultado = mysql_fetch_array($consulta)){
-													$cargaAcademica = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas WHERE car_id='".$resultado[0]."'",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+													$consultaCargaAcademica=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_id='".$resultado[0]."'");
+													$cargaAcademica = mysqli_fetch_array($consultaCargaAcademica, MYSQLI_BOTH);
 													$cargaSP = $resultado[0];
 													$periodoSP = $resultado['car_periodo'];
 													include("../suma-porcentajes.php");
@@ -280,10 +274,11 @@
 														//PERIODOS DE CADA MATERIA
 														$p=1;
 														while($p<=$config[19]){
-														$numeroNotasBoletin = mysql_num_rows(mysql_query("SELECT * FROM academico_boletin WHERE bol_carga='".$resultado[0]."' AND bol_periodo='".$p."'",$conexion));
-														$promedioPeriodo = mysql_fetch_array(mysql_query("SELECT avg(bol_nota) FROM academico_boletin WHERE bol_carga='".$resultado[0]."' AND bol_periodo='".$p."'",$conexion));
+														$ConsultaNumeroNotasBoletin=mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_carga='".$resultado[0]."' AND bol_periodo='".$p."'");
+														$numeroNotasBoletin = mysqli_num_rows($ConsultaNumeroNotasBoletin);
+														$consultaPromedioPeriodo=mysqli_query($conexion, "SELECT avg(bol_nota) FROM academico_boletin WHERE bol_carga='".$resultado[0]."' AND bol_periodo='".$p."'");
+														$promedioPeriodo = mysqli_fetch_array($consultaPromedioPeriodo, MYSQLI_BOTH);
 														if($promedioPeriodo[0]<$config[5] and $promedioPeriodo[0]!="")$color = $config[6]; elseif($promedioPeriodo[0]>=$config[5]) $color = $config[7];
-														//$numDisciplina = mysql_num_rows(mysql_query("SELECT * FROM disiplina_nota WHERE dn_id_carga='".$resultado[0]."' AND dn_periodo='".$p."'",$conexion));
 														echo '<td style="text-align:center; color:'.$color.'"><a href="../compartido/reportes-sabanas.php?curso='.$cargaAcademica["car_curso"].'&grupo='.$cargaAcademica["car_grupo"].'&per='.$p.'" target="_blank" style="text-decoration:underline; color:#00F;" data-toggle="popover" data-placement="top" title="Imprimir sabanas">'.$numeroNotasBoletin." - <b>".round($promedioPeriodo[0],2).'</b></a><br><br><a href="cargas-comportamiento.php?carga='.$resultado[0].'&periodo='.$p.'&grado='.$cargaAcademica[2].'&grupo='.$cargaAcademica[3].'" style="text-decoration:underline; color:red;">Comp.</a></td>';
 														$p++;
 														} ?>
@@ -314,17 +309,13 @@
                                         </div>
                                     </div>
                                 </div>
-								
-								
-								
-							
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

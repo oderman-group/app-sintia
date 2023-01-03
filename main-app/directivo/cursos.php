@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0062';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -87,13 +86,13 @@
                                                 </thead>
                                                 <tbody>
 													<?php													
-													 $consulta = mysql_query("SELECT * FROM academico_grados AS g1
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_grados AS g1
 													 INNER JOIN academico_grados AS g2 ON g2.gra_id=g1.gra_grado_siguiente
 													 WHERE g1.gra_estado=1
 													 ORDER BY g1.gra_vocal
-													 ",$conexion);
+													 ");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -106,9 +105,9 @@
 														<td><?=$resultado[14];?></td>
 														<td>
 															<?php													
-															$consultaGrupo = mysql_query("SELECT * FROM academico_grupos",$conexion);
+															$consultaGrupo = mysqli_query($conexion, "SELECT * FROM academico_grupos");
 															$contReg = 1;
-															while($resultadoG = mysql_fetch_array($consultaGrupo)){
+															while($resultadoG = mysqli_fetch_array($consultaGrupo, MYSQLI_BOTH)){
 															?>
 															<!-- Estos datos están quemados para no hacer un mientras que por cada curso. Lo ideal es consultar la tabla academico_grupos -->
 															<a href="../compartido/informe-consolidado-perdidos.php?curso=<?=$resultado[0];?>&grupo=<?=$resultadoG[0];?>" style="text-decoration:underline;" target="_blank"><?=$resultadoG[2];?></a>
@@ -154,7 +153,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

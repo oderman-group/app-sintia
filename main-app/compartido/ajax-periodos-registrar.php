@@ -1,16 +1,7 @@
-<?php //include("session.php");
-/*
-echo "Carga:". $_POST["carga"]."<br>";
-echo "codEst:". $_POST["codEst"]."<br>";
-echo "per:". $_POST["per"]."<br>";
-echo "Nota:". $_POST["nota"]."<br>";
-exit();
-*/
-
-?>
 <?php include("../../config-general/config.php");?>
 <?php
-$datosCargaActual = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas WHERE car_id='".$_POST["carga"]."' AND car_activa=1",$conexion));
+$consultaDatosCargas=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_id='".$_POST["carga"]."' AND car_activa=1");
+$datosCargaActual = mysqli_fetch_array($consultaDatosCargas, MYSQLI_BOTH);
 ?>
 <?php
 if(trim($_POST["nota"])==""){
@@ -19,31 +10,35 @@ if(trim($_POST["nota"])==""){
 }
 if($_POST["nota"]>$config[4]) $_POST["nota"] = $config[4]; if($_POST["nota"]<1) $_POST["nota"] = 1;
 include("../modelo/conexion.php");
-$consulta = mysql_query("SELECT * FROM academico_boletin WHERE bol_estudiante=".$_POST["codEst"]." AND bol_carga=".$_POST["carga"]." AND bol_periodo=".$_POST["per"],$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-$num = mysql_num_rows($consulta);
-$rB = mysql_fetch_array($consulta);
+$consulta = mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_estudiante=".$_POST["codEst"]." AND bol_carga=".$_POST["carga"]." AND bol_periodo=".$_POST["per"]);
+
+$num = mysqli_num_rows($consulta);
+$rB = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 //echo $num; exit();
 if($num==0){
-	mysql_query("DELETE FROM academico_boletin WHERE bol_id='".$rB[0]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	mysql_query("INSERT INTO academico_boletin(bol_carga, bol_estudiante, bol_periodo, bol_nota, bol_tipo, bol_observaciones)VALUES('".$_POST["carga"]."','".$_POST["codEst"]."','".$_POST["per"]."','".$_POST["nota"]."',1, 'Colocada desde la parte Directiva.')",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "DELETE FROM academico_boletin WHERE bol_id='".$rB[0]."'");
+	
+	mysqli_query($conexion, "INSERT INTO academico_boletin(bol_carga, bol_estudiante, bol_periodo, bol_nota, bol_tipo, bol_observaciones)VALUES('".$_POST["carga"]."','".$_POST["codEst"]."','".$_POST["per"]."','".$_POST["nota"]."',1, 'Colocada desde la parte Directiva.')");
+	
 }else{
-	mysql_query("UPDATE academico_boletin SET bol_nota='".$_POST["nota"]."', bol_observaciones='Colocada desde la parte Directiva', bol_tipo=1 WHERE bol_id=".$rB[0],$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_boletin SET bol_nota='".$_POST["nota"]."', bol_observaciones='Colocada desde la parte Directiva', bol_tipo=1 WHERE bol_id=".$rB[0]);
+	
 }	
-if(mysql_errno()!=0){echo "ERROR: ".mysql_errno()." - ".mysql_error();exit();}
-else{
+
+
 	if($_POST["nota"]>$config[5]){
-		$usuarioResponsable = mysql_fetch_array(mysql_query("SELECT * FROM usuarios_por_estudiantes WHERE upe_id_estudiante='".$_POST["codEst"]."'",$conexion));
+		$consultaUsuarioResponsable=mysqli_query($conexion, "SELECT * FROM usuarios_por_estudiantes WHERE upe_id_estudiante='".$_POST["codEst"]."'");
+		$usuarioResponsable = mysqli_fetch_array($consultaUsuarioResponsable, MYSQLI_BOTH);
 		if($usuarioResponsable[1]=="") $usuarioResponsable[1]=0;
-		mysql_query("INSERT INTO general_alertas(alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_vista, alr_categoria, alr_importancia)VALUES('Recuperación de periodo','El estudiante ".$_POST["codEst"]." ha obtenido una nota de recuperacion de ".$_POST["nota"]."',1,'".$usuarioResponsable[1]."',now(),0,1,2)",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
-		$estudiante = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_POST["codEst"]."'",$conexion));
+		mysqli_query($conexion, "INSERT INTO general_alertas(alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_vista, alr_categoria, alr_importancia)VALUES('Recuperación de periodo','El estudiante ".$_POST["codEst"]." ha obtenido una nota de recuperacion de ".$_POST["nota"]."',1,'".$usuarioResponsable[1]."',now(),0,1,2)");
+		
+		$consultaEstudiantes=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_POST["codEst"]."'");
+		$estudiante = mysqli_fetch_array($consultaEstudiantes, MYSQLI_BOTH);
 		$nombreCompleto = strtoupper($estudiante[3]." ".$estudiante[4]." ".$estudiante[5]);
-		$materia = mysql_fetch_array(mysql_query("SELECT car_id, car_materia, mat_id, mat_nombre FROM academico_cargas, academico_materias WHERE car_id='".$datosCargaActual[0]."' AND mat_id=car_materia",$conexion));
-		$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$usuarioResponsable[1]."'",$conexion));
+		$consultaMateria=mysqli_query($conexion, "SELECT car_id, car_materia, mat_id, mat_nombre FROM academico_cargas, academico_materias WHERE car_id='".$datosCargaActual[0]."' AND mat_id=car_materia");
+		$materia = mysqli_fetch_array($consultaMateria, MYSQLI_BOTH);
+		$consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$usuarioResponsable[1]."'");
+		$acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
 		//include("../compartido/email-alertas.php");
 		$fin =  '<html><body>';
 						$fin .= '
@@ -141,5 +136,5 @@ else{
 	</div>
 <?php	
 	exit();
-}
+
 ?>

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0036';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -45,17 +44,17 @@
                                 <div class="page-title">Grados por asignatura: <b><?=$_GET["indNombre"];?></b></div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas-indicadores-obligatorios.php" onClick="deseaRegresar(this)">Indicadores Obligatorios</a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active">Grados por asignatura</li>
+                            </ol>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-12">
                             <div class="row">
-
-								<div class="col-md-4 col-lg-3">
-									<?php include("../compartido/publicidad-lateral.php");?>
-								</div>
-								<div class="col-md-8 col-lg-9">
+								<div class="col-md-8 col-lg-12">
                                     <div class="card card-topline-purple">
                                         <div class="card-head">
                                             <header>Grados por asignatura: <b><?=$_GET["indNombre"];?></b></header>
@@ -71,10 +70,10 @@
                                     		<table id="example1" class="display" style="width:100%;">
                                                 <thead>
                                                     <tr>
-                                                        <th width="50%">Materia</th>
+                                                        <th width="20%">Materia</th>
                                                         <?php
-                                                        $cursos = mysql_query("SELECT * FROM academico_grados",$conexion); 
-                                                        while($c = mysql_fetch_array($cursos)){
+                                                        $cursos = mysqli_query($conexion, "SELECT * FROM academico_grados"); 
+                                                        while($c = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
                                                         ?>
                                                             <th style="font-size:8px; text-align:center;"><?=$c[2];?></th>
                                                         <?php
@@ -86,22 +85,26 @@
                                                 <!-- BEGIN -->
                                                 <tbody>
                                                 <?php
-                                                $materias = mysql_query("SELECT * FROM academico_materias",$conexion);
-                                                while($m = mysql_fetch_array($materias)){
+                                                $materias = mysqli_query($conexion, "SELECT * FROM academico_materias");
+                                                while($m = mysqli_fetch_array($materias, MYSQLI_BOTH)){
                                                 ?>
                                                 <tr id="data1" class="odd gradeX">
                                                     <td><?=$m[2];?></td>
                                                     <?php
-                                                    $curso = mysql_query("SELECT * FROM academico_grados",$conexion); 
-                                                    while($c = mysql_fetch_array($curso)){
-                                                        $carga = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas WHERE car_curso=".$c[0]." AND car_materia=".$m[0]."",$conexion));
-                                                        $ipc = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$carga[0]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_creado=0",$conexion));
+                                                    $curso = mysqli_query($conexion, "SELECT * FROM academico_grados"); 
+                                                    while($c = mysqli_fetch_array($curso, MYSQLI_BOTH)){
+                                                        $consultaCarga=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso=".$c[0]." AND car_materia=".$m[0]."");
+                                                        $carga = mysqli_fetch_array($consultaCarga, MYSQLI_BOTH);
+                                                        $consultaIpc=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$carga[0]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_creado=0");
+                                                        $ipc = mysqli_fetch_array($consultaIpc, MYSQLI_BOTH);
                                                         
-                                                        $cargas = mysql_query("SELECT * FROM academico_cargas WHERE car_curso=".$c[0]." AND car_materia=".$m[0]."",$conexion);
+                                                        $cargas = mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso=".$c[0]." AND car_materia=".$m[0]."");
                                                         $indCreados=0;
-                                                        while($cgs = mysql_fetch_array($cargas)){
-                                                            $ipcC = mysql_num_rows(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_creado=1",$conexion));
-                                                            $calC = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$cgs[0]."' AND act_estado=1",$conexion));
+                                                        while($cgs = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
+                                                            $consultaNumIpcC=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_creado=1");
+                                                            $ipcC = mysqli_num_rows($consultaNumIpcC);
+                                                            $consultaCalC=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$cgs[0]."' AND act_estado=1");
+                                                            $calC = mysqli_num_rows($consultaCalC);
                                                             if($ipcC>0 or $calC>0) $indCreados=1;
                                                         }
                                                         
@@ -138,7 +141,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

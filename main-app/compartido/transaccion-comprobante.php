@@ -14,8 +14,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
     COMPROBANTE DE TRANSACCIÓN</br>
 </div>   
 <?php
-	$comprobante = mysql_fetch_array(mysql_query("SELECT * FROM finanzas_cuentas WHERE fcu_id='".$_GET["id"]."'",$conexion));
-	$u = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$comprobante[6]."'",$conexion));
+    $consultaComprobante=mysqli_query($conexion, "SELECT * FROM finanzas_cuentas WHERE fcu_id='".$_GET["id"]."'");
+	$comprobante = mysqli_fetch_array($consultaComprobante, MYSQLI_BOTH);
+    $consultaU=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$comprobante[6]."'");
+	$u = mysqli_fetch_array($consultaU, MYSQLI_BOTH);
 	$nombreCompleto = strtoupper($u[4]);
 	switch($comprobante[4]){case 1: $tipo = "Ingreso"; break; case 2: $tipo = "Egreso"; break; case 3: $tipo = "Cuenta por cobrar"; break; case 4: $tipo = "Cuenta por pagar"; break;}
 	switch($comprobante[8]){case 1: $forma = "Efectivo"; break; case 2: $forma = "Cheque"; break; case 3: $forma = "T. D&eacute;bito"; break; case 4: $forma = "T. Cr&eacute;dito"; break; case 5: $forma = "N/A"; break; default: $forma = "N/A"; break;}

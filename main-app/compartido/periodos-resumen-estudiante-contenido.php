@@ -138,7 +138,7 @@ if(($datosUsuarioActual[3]==3 or $datosUsuarioActual[3]==4) and $config['conf_si
 														 }
 															@$definitiva = ($definitiva / $sumaPorcentaje);
 															$consultaN = mysqli_query($conexion, "SELECT * FROM academico_nivelaciones WHERE niv_cod_estudiante=".$datosEstudianteActual[0]." AND niv_id_asg=".$rCargas[0]);
-															if(mysql_errno()!=0){echo mysql_error(); exit();}
+															
 															$numN = mysqli_num_rows($consultaN);
 															$rN = mysqli_fetch_array($consultaN, MYSQLI_BOTH);
 															if($numN==0){

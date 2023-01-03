@@ -3,7 +3,9 @@ $numOPMF = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM ".$baseDatosSe
 INNER JOIN ".$baseDatosServicios.".general_categorias ON gcat_id=pub_categoria_especifica
 WHERE pub_estado=1 AND pub_tipo=2 AND pub_tipo_usuario='".$datosUsuarioActual['uss_tipo']."'
 "));
-$numOPMF --;
+if($numOP>0){
+	$numOP --;
+}
 $empezarMF = rand(0,$numOPMF);
 
 $publicidadLateralMF = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad
@@ -12,10 +14,10 @@ WHERE pub_estado=1 AND pub_tipo=2 AND pub_tipo_usuario='".$datosUsuarioActual['u
 LIMIT ".$empezarMF.",1
 "), MYSQLI_BOTH);
 ?>
-<?php if($publicidadLateralMF['pub_id']!=""){
+<?php if(isset($publicidadLateralMF['pub_id']) AND $publicidadLateralMF['pub_id']!=""){
 	mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".publicidad_estadisticas(pest_publicidad, pest_institucion, pest_usuario, pest_pagina, pest_ubicacion, pest_fecha, pest_ip, pest_accion)
 	VALUES('".$publicidadLateralMF['pub_id']."', '".$config['conf_id_institucion']."', '".$_SESSION["id"]."', '".$idPaginaInterna."', 1, now(), '".$_SERVER["REMOTE_ADDR"]."', 1)");
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 	
 	$guardadaNum = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_guardadas
 	WHERE psave_publicidad='".$publicidadLateralMF['pub_id']."' AND psave_institucion='".$config['conf_id_institucion']."' AND psave_usuario='".$_SESSION["id"]."'"));

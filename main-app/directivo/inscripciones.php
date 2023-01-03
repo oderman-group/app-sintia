@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0102';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -43,28 +42,19 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[5][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$cursos = mysql_query("SELECT * FROM academico_grados
+											$cursos = mysqli_query($conexion, "SELECT * FROM academico_grados
 											WHERE gra_estado=1
-											ORDER BY gra_vocal
-											",$conexion);
-											while($curso = mysql_fetch_array($cursos)){
-												$estudiantesPorGrado = mysql_fetch_array(mysql_query("
-												SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_grado='".$curso['gra_id']."'
-												",$conexion));
-												$porcentajePorGrado = round(($estudiantesPorGrado[0]/$estadisticasEstudiantes[0])*100,2);
-												if($curso['gra_id']==$_GET["curso"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
+											ORDER BY gra_vocal");
+											while($curso = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
+                                                $consultaEstudianteGrado=mysqli_query($conexion, "SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_grado='".$curso['gra_id']."'");
+												$estudiantesPorGrado = mysqli_fetch_array($consultaEstudianteGrado, MYSQLI_BOTH);
+												if(isset($_GET["curso"])&&$curso['gra_id']==$_GET["curso"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
 											
 												<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
 																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$curso['gra_id'];?>" <?=$estiloResaltado;?>><?=strtoupper($curso['gra_nombre']);?></a></div>
-																</div>
-
-																<div class="progress progress-xs">
-																	<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: <?=$porcentajePorGrado;?>%">
-																		<span class="sr-only">90% </span>
-																	</div>
 																</div>
 															</div>
 														</div>
@@ -146,12 +136,11 @@
                                                 8 => 'yellow',
                                                 9 => '#00FAB5'
                                                 );
-                                                $consulta = mysql_query("SELECT * FROM academico_matriculas
+                                                $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
                                                 INNER JOIN ".$baseDatosAdmisiones.".aspirantes ON asp_id=mat_solicitud_inscripcion
                                                 LEFT JOIN academico_grados ON gra_id=asp_grado
-                                                WHERE mat_estado_matricula=5 ORDER BY mat_primer_apellido
-                                                ", $conexion);
-                                                while ($resultado = mysql_fetch_array($consulta)) {
+                                                WHERE mat_estado_matricula=5 ORDER BY mat_primer_apellido");
+                                                while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                 ?>
                                                 <tr id="data1" class="odd gradeX" style="color: ;">
                                                     <td><?= $resultado["mat_id"]; ?></td>
@@ -200,7 +189,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

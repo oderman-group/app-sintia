@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0017';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -71,14 +70,11 @@
                                                 </thead>
                                                 <tbody>
 													<?php													
-													 $consulta = mysql_query("SELECT * FROM academico_areas
-													 ORDER BY ar_posicion
-													 ",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_areas ORDER BY ar_posicion");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $numMaterias = mysql_fetch_array(mysql_query("SELECT COUNT(mat_id) FROM academico_materias
-														 WHERE mat_area='".$resultado['ar_id']."'
-														 ",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaNumMaterias=mysqli_query($conexion, "SELECT COUNT(mat_id) FROM academico_materias WHERE mat_area='".$resultado['ar_id']."'");
+														 $numMaterias = mysqli_fetch_array($consultaNumMaterias, MYSQLI_BOTH);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -124,7 +120,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

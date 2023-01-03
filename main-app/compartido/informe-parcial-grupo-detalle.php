@@ -17,11 +17,11 @@ include("../../config-general/consulta-usuario-actual.php");?>
 </div> 
 
 <?php
-$matriculadosPorCurso = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."' AND mat_grupo='".$_REQUEST["grupo"]."' AND mat_eliminado=0 AND (mat_estado_matricula=1) ORDER BY mat_primer_apellido",$conexion);
+$matriculadosPorCurso = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."' AND mat_grupo='".$_REQUEST["grupo"]."' AND mat_eliminado=0 AND (mat_estado_matricula=1) ORDER BY mat_primer_apellido");
 ?>
 
 <?php
-while($matriculadosDatos = mysql_fetch_array($matriculadosPorCurso)){
+while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)){
 	$nombre = strtoupper($matriculadosDatos[3]." ".$matriculadosDatos[4]." ".$matriculadosDatos[5]);	  
 ?>
 <div align="center" style="margin-bottom:20px;">
@@ -44,15 +44,15 @@ while($matriculadosDatos = mysql_fetch_array($matriculadosPorCurso)){
                                     <!-- BEGIN -->
                                     <tbody>
                                     <?php
-									$cCargas = mysql_query("SELECT * FROM academico_cargas 
+									$cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 									INNER JOIN academico_materias ON mat_id=car_materia
 									INNER JOIN academico_grados ON gra_id=car_curso
 									INNER JOIN usuarios ON uss_id=car_docente
-									WHERE car_curso='".$matriculadosDatos[6]."' AND car_grupo='".$matriculadosDatos[7]."'",$conexion);
-									$nCargas = mysql_num_rows($cCargas);
+									WHERE car_curso='".$matriculadosDatos[6]."' AND car_grupo='".$matriculadosDatos[7]."'");
+									$nCargas = mysqli_num_rows($cCargas);
 									$materiasDividir = 0;
 									$promedioG = 0;
-									while($rCargas = mysql_fetch_array($cCargas)){
+									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
 										//DEFINITIVAS
 										$carga = $rCargas[0];
 										$periodo = $config[2];

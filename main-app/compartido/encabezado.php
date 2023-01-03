@@ -5,7 +5,7 @@ if(isset($_GET["idNotify"]) and is_numeric($_GET["idNotify"])){
 	include("../compartido/reporte-errores.php");
 }
 $institucionConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_bd='".$_SESSION["inst"]."'");
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 $institucion = mysqli_fetch_array($institucionConsulta, MYSQLI_BOTH);
 $institucionNombre = $institucion['ins_siglas'];
 ?>
@@ -31,7 +31,7 @@ $institucionNombre = $institucion['ins_siglas'];
 				
                  <form class="search-form-opened" action="paginas-buscador.php" method="GET" name="busqueda">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="<?=$frases[8][$datosUsuarioActual[8]];?>..." value="<?php if(isset($_GET["query"])){ echo $_GET["query"];}?>" name="query">
+                        <input type="text" class="form-control" placeholder="Busca cualquier pagina..." value="<?php if(isset($_GET["query"])){ echo $_GET["query"];}?>" name="query">
                         <span class="input-group-btn">
                         <span class="input-group-btn">
                           <a href="javascript:;" onclick="document.forms.busqueda.submit()" class="btn submit">

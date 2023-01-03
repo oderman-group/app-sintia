@@ -66,15 +66,16 @@ $grados = "";
 
 while($i<=$restaAgnos){
 
-	mysql_select_db($config['conf_base_datos']."_".$inicio, $conexion);
+	mysqli_select_db($conexion, $config['conf_base_datos']."_".$inicio);
 
-	$estudiante = mysql_fetch_array(mysql_query("SELECT mat_id, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, gra_nombre, gru_nombre FROM academico_matriculas
+    $consultaEstudiante=mysqli_query($conexion, "SELECT mat_id, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, gra_nombre, gru_nombre FROM academico_matriculas
 
-												INNER JOIN academico_grados ON gra_id=mat_grado
+    INNER JOIN academico_grados ON gra_id=mat_grado
 
-												INNER JOIN academico_grupos ON gru_id=mat_grupo 
+    INNER JOIN academico_grupos ON gru_id=mat_grupo 
 
-												WHERE mat_id='".$_POST["id"]."' AND mat_eliminado=0",$conexion));
+    WHERE mat_id='".$_POST["id"]."' AND mat_eliminado=0");
+	$estudiante = mysqli_fetch_array($consultaEstudiante, MYSQLI_BOTH);
 
 	if($i<$restaAgnos)
 
@@ -108,17 +109,18 @@ $inicio = $_POST["desde"];
 
 while($i<=$restaAgnos){
 
-	mysql_select_db($config['conf_base_datos']."_".$inicio, $conexion);
+	mysqli_select_db($conexion, $config['conf_base_datos']."_".$inicio);
 
 	//SELECCIONO EL ESTUDIANTE, EL GRADO Y EL GRUPO
 
-	$matricula = mysql_fetch_array(mysql_query("SELECT mat_id, mat_matricula, mat_folio, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, gra_nombre, gru_nombre FROM academico_matriculas
+    $consultaMatricula=mysqli_query($conexion, "SELECT mat_id, mat_matricula, mat_folio, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, gra_nombre, gru_nombre FROM academico_matriculas
 
-												INNER JOIN academico_grados ON gra_id=mat_grado
+    INNER JOIN academico_grados ON gra_id=mat_grado
 
-												INNER JOIN academico_grupos ON gru_id=mat_grupo 
+    INNER JOIN academico_grupos ON gru_id=mat_grupo 
 
-												WHERE mat_id='".$_POST["id"]."' AND mat_eliminado=0",$conexion));
+    WHERE mat_id='".$_POST["id"]."' AND mat_eliminado=0");
+	$matricula = mysqli_fetch_array($consultaMatricula, MYSQLI_BOTH);
 
 ?>
 
@@ -154,21 +156,22 @@ while($i<=$restaAgnos){
 
             //SELECCION LAS CARGAS DEL ESTUDIANTE, MATERIAS, AREAS
 
-            $cargasAcademicas = mysql_query("SELECT car_id, car_materia, car_ih, mat_id, mat_nombre, mat_area FROM academico_cargas 
+            $cargasAcademicas = mysqli_query($conexion, "SELECT car_id, car_materia, car_ih, mat_id, mat_nombre, mat_area FROM academico_cargas 
 
                                             INNER JOIN academico_materias ON mat_id=car_materia
 
                                             INNER JOIN academico_areas ON ar_id=mat_area
 
-                                            WHERE car_curso='".$matricula["mat_grado"]."' AND car_grupo='".$matricula["mat_grupo"]."'",$conexion);
+                                            WHERE car_curso='".$matricula["mat_grado"]."' AND car_grupo='".$matricula["mat_grupo"]."'");
 
             $materiasPerdidas = 0;
 
-            while($cargas=mysql_fetch_array($cargasAcademicas)){	
+            while($cargas=mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)){	
 
                 //OBTENEMOS EL PROMEDIO DE LAS CALIFICACIONES
 
-                $boletin = mysql_fetch_array(mysql_query("SELECT avg(bol_nota) FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' and bol_carga='".$cargas["car_id"]."'",$conexion));
+                $consultaBoletin=mysqli_query($conexion, "SELECT avg(bol_nota) FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' and bol_carga='".$cargas["car_id"]."'");
+                $boletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH);
 
                 $nota = round($boletin[0],1);
 
@@ -206,23 +209,23 @@ while($i<=$restaAgnos){
 
     	<?php
 
-		$nivelaciones = mysql_query("SELECT niv_definitiva, niv_acta, niv_fecha_nivelacion, mat_nombre FROM academico_nivelaciones 
+		$nivelaciones = mysqli_query($conexion, "SELECT niv_definitiva, niv_acta, niv_fecha_nivelacion, mat_nombre FROM academico_nivelaciones 
 
 									INNER JOIN academico_cargas ON car_id=niv_id_asg
 
 									INNER JOIN academico_materias ON mat_id=car_materia
 
-									WHERE niv_cod_estudiante='".$_POST["id"]."'",$conexion);
+									WHERE niv_cod_estudiante='".$_POST["id"]."'");
 
-		if(mysql_errno()!=0){echo mysql_error(); exit();}							
+									
 
-		$numNiv = mysql_num_rows($nivelaciones);
+		$numNiv = mysqli_num_rows($nivelaciones);
 
 		if($numNiv>0){	
 
 			echo "El(la) Estudiante niveló las siguientes materias:<br>";						
 
-			while($niv=mysql_fetch_array($nivelaciones)){
+			while($niv=mysqli_fetch_array($nivelaciones, MYSQLI_BOTH)){
 
 				echo "<b>".strtoupper($niv["mat_nombre"])." (".$niv["niv_definitiva"].")</b> Segun acta ".$niv["niv_acta"]." en la fecha de ".$niv["niv_fecha_nivelacion"]."<br>";
 
@@ -239,10 +242,6 @@ while($i<=$restaAgnos){
            if($materiasPerdidas==0)
 
                 $msj = "<center>EL (LA) ESTUDIANTE ".strtoupper($datos_usr[3]." ".$datos_usr[4]." ".$datos_usr["mat_nombres"])." FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>"; 
-
-            /*elseif($materiasPerdidas<$config["conf_num_materias_perder_agno"] and $materiasPerdidas>0)
-
-                $msj = "<center>EL (LA) ESTUDIANTE ".strtoupper($datos_usr[3]." ".$datos_usr[4]." ".$datos_usr["mat_nombres"])." DEBE NIVELAR LAS MATERIAS PERDIDAS</center>";*/
 
             else
 
@@ -294,23 +293,25 @@ while($i<=$restaAgnos){
 
             //SELECCION LAS CARGAS DEL ESTUDIANTE, MATERIAS, AREAS
 
-            $cargasAcademicas = mysql_query("SELECT car_id, car_materia, car_ih, mat_id, mat_nombre, mat_area FROM academico_cargas 
+            $cargasAcademicas = mysqli_query($conexion, "SELECT car_id, car_materia, car_ih, mat_id, mat_nombre, mat_area FROM academico_cargas 
 
                                             INNER JOIN academico_materias ON mat_id=car_materia
 
                                             INNER JOIN academico_areas ON ar_id=mat_area
 
-                                            WHERE car_curso='".$matricula["mat_grado"]."' AND car_grupo='".$matricula["mat_grupo"]."'",$conexion);
+                                            WHERE car_curso='".$matricula["mat_grado"]."' AND car_grupo='".$matricula["mat_grupo"]."'");
 
-			while($cargas=mysql_fetch_array($cargasAcademicas)){	
+			while($cargas=mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)){	
 
                 //OBTENEMOS EL PROMEDIO DE LAS CALIFICACIONES
 
-                $boletin = mysql_fetch_array(mysql_query("SELECT avg(bol_nota) FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' AND bol_carga='".$cargas["car_id"]."'",$conexion));
+                $consultaBoletin=mysqli_query($conexion, "SELECT avg(bol_nota) FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' AND bol_carga='".$cargas["car_id"]."'");
+                $boletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH);
 
                 $nota = round($boletin[0],1);
 
-				$desempeno = mysql_fetch_array(mysql_query("SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config[22]."' AND ".$nota.">=notip_desde AND ".$nota."<=notip_hasta",$conexion));					   
+                $consultaDesempeno=mysqli_query($conexion, "SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config[22]."' AND ".$nota.">=notip_desde AND ".$nota."<=notip_hasta");
+				$desempeno = mysqli_fetch_array($consultaDesempeno, MYSQLI_BOTH);					   
 
             ?>
 
@@ -328,7 +329,8 @@ while($i<=$restaAgnos){
 
                     while($p<=$config[19]){
 
-                        $notasPeriodo = mysql_fetch_array(mysql_query("SELECT bol_nota FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' AND bol_carga='".$cargas["car_id"]."' AND bol_periodo='".$p."'",$conexion));
+                        $consultaNotasPeriodos=mysqli_query($conexion, "SELECT bol_nota FROM academico_boletin WHERE bol_estudiante='".$_POST["id"]."' AND bol_carga='".$cargas["car_id"]."' AND bol_periodo='".$p."'");
+                        $notasPeriodo = mysqli_fetch_array($consultaNotasPeriodos, MYSQLI_BOTH);
 
 						echo '<td>'.$notasPeriodo[0].'</td>';
 

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0033';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -64,8 +63,8 @@
                                                 <select class="form-control  select2" name="de" required>
                                                     <option value="">Seleccione una opci�n</option>
                                                     <?php
-                                                    $docen=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=2",$conexion);
-                                                    while($nDocen=mysql_fetch_array($docen))
+                                                    $docen=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=2");
+                                                    while($nDocen=mysqli_fetch_array($docen, MYSQLI_BOTH))
                                                     {
                                                         echo "<option value='".$nDocen["uss_id"]."'>".$nDocen["uss_nombre"]."</option>";
                                                     }
@@ -80,8 +79,8 @@
                                                 <select class="form-control  select2" name="para" required>
                                                     <option value="">Seleccione una opci�n</option>
                                                     <?php
-                                                    $docen=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=2",$conexion);
-                                                    while($nDocen=mysql_fetch_array($docen))
+                                                    $docen=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=2");
+                                                    while($nDocen=mysqli_fetch_array($docen, MYSQLI_BOTH))
                                                     {
                                                         echo "<option value='".$nDocen["uss_id"]."'>".$nDocen["uss_nombre"]."</option>";
                                                     }
@@ -102,7 +101,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

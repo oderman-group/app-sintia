@@ -5,8 +5,8 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosConsultaBD = mysql_fetch_array(mysql_query("SELECT * FROM academico_formatos 
-WHERE form_id='".$_GET["idF"]."'",$conexion));
+$consultaDatosBD=mysqli_query($conexion, "SELECT * FROM academico_formatos WHERE form_id='".$_GET["idF"]."'");
+$datosConsultaBD = mysqli_fetch_array($consultaDatosBD, MYSQLI_BOTH);
 ?>
 
 <!--bootstrap -->
@@ -61,11 +61,9 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
 										<div class="panel-body">
 											<p>Puedes cambiar a otro formato rápidamente para monitorear a los evaluados.</p>
 											<?php
-											$registrosEnComun = mysql_query("SELECT * FROM academico_formatos 
-											WHERE form_id!='".$_GET["idF"]."'
-											ORDER BY form_id DESC
-											",$conexion);
-											while($regComun = mysql_fetch_array($registrosEnComun)){
+											$registrosEnComun = mysqli_query($conexion, "SELECT * FROM academico_formatos 
+											WHERE form_id!='".$_GET["idF"]."' ORDER BY form_id DESC");
+											while($regComun = mysqli_fetch_array($registrosEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="<?=$_SERVER['PHP_SELF'];?>?idF=<?=$regComun['form_id'];?>"><?=$regComun['form_nombre'];?></a></p>
 											<?php }?>
@@ -91,14 +89,13 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Evaluado</label>
                                             <div class="col-sm-10">
 												<?php
-												$datosConsulta = mysql_query("SELECT * FROM usuarios
-												WHERE uss_tipo=4
-												",$conexion);
+												$datosConsulta = mysqli_query($conexion, "SELECT * FROM usuarios
+												WHERE uss_tipo=4");
 												?>
                                                 <select class="form-control  select2" name="evaluado" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($datos = mysql_fetch_array($datosConsulta)){
+													while($datos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$datos['uss_id'];?>" <?php if($datos['uss_id']==$_GET["idUsr"]){echo "selected";}?>><?=$datos['uss_nombre']?></option>
 													<?php }?>
@@ -131,27 +128,27 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consultaCat = mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-													 WHERE eva_formato='".$_GET["idF"]."'
-													 ",$conexion);
+													 $consultaCat = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+													 WHERE eva_formato='".$_GET["idF"]."'");
 													 $contCat = 1;
 													 $contReg = 1;
-													 while($resultadoCat = mysql_fetch_array($consultaCat)){
+													 while($resultadoCat = mysqli_fetch_array($consultaCat, MYSQLI_BOTH)){
 													 ?>
 													<tr>
                                                         <td colspan="3" style="text-align: center; font-weight: bold;"><?=$resultadoCat['eva_nombre'];?></td>
                                                     </tr>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_actividad_preguntas 
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_preguntas 
 													 INNER JOIN academico_actividad_evaluacion_preguntas ON evp_id_pregunta=preg_id AND evp_id_evaluacion='".$resultadoCat['eva_id']."'
-													 ORDER BY preg_id DESC",$conexion);
-													 while($resultado = mysql_fetch_array($consulta)){
+													 ORDER BY preg_id DESC");
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 $colorDefault = 'blue';
 														 if($resultado['preg_critica']==1) $colorDefault = 'red';
 														 if($calificacion['act_registrada']==1){
 															 //Consulta de calificaciones si ya la tienen puestas.
-															 $notas = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones_resultados
-															 WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad='".$_GET["idR"]."'",$conexion));
+                                                             $consultaNotas=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados
+															 WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad='".$_GET["idR"]."'");
+															 $notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 														 }
 													 ?>
                                                     
@@ -185,7 +182,7 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

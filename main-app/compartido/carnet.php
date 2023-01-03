@@ -2,8 +2,10 @@
 session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");
-$resultado = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'",$conexion));
-$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'",$conexion));
+$consultaResultado=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'");
+$resultado = mysqli_fetch_array($consultaResultado, MYSQLI_BOTH);
+$consultaGrados=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'");
+$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 ?>
 <head>
 	<title>SINTIA | Carnet Estudiantil</title>

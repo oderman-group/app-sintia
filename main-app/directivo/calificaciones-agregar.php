@@ -5,12 +5,12 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$valores = mysql_fetch_array(mysql_query("SELECT
+$consultaValores=mysqli_query($conexion, "SELECT
 (SELECT sum(act_valor) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1),
 (SELECT count(*) FROM academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)
-",$conexion));
+WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)");
+$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
 $porcentajeRestante = 100 - $valores[0];
 
 if(
@@ -117,15 +117,15 @@ if(
                                             <label class="col-sm-2 control-label">Indicador</label>
                                             <div class="col-sm-10">
 												<?php
-												$indicadoresConsulta = mysql_query("SELECT * FROM academico_indicadores_carga
+												$indicadoresConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 												INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 												WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'
-												",$conexion);
+												");
 												?>
                                                 <select class="form-control  select2" name="indicador" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($indicadoresDatos = mysql_fetch_array($indicadoresConsulta)){
+													while($indicadoresDatos = mysqli_fetch_array($indicadoresConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$indicadoresDatos['ind_id'];?>"><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
 													<?php }?>
@@ -163,15 +163,15 @@ if(
                                             <label class="col-sm-2 control-label"><b>Banco de datos</b></label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_actividades 
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividades 
 												WHERE act_estado=1 AND ((act_compartir=1 AND act_id_carga!='".$cargaConsultaActual."') OR (act_id_carga='".$cargaConsultaActual."' AND act_periodo!='".$periodoConsultaActual."')) 
-												",$conexion);
+												");
 												?>
                                                 <select class="form-control  select2" name="bancoDatos" onChange="avisoBancoDatos(this)">
                                                     <option value="">Seleccione una opción</option>
 													<option value="0" selected>--Ninguno--</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$recursoPropio = '';
 														if($opcionesDatos['act_id_carga']==$cargaConsultaActual)$recursoPropio = ' - MIO';
 													?>
@@ -194,7 +194,7 @@ if(
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

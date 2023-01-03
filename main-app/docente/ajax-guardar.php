@@ -5,27 +5,27 @@ $mensajeNot = 'Hubo un error al guardar las cambios';
 
 //Actualizar respuesta de una pregunta
 if($_POST["operacion"]==1){
-	mysql_query("UPDATE academico_actividad_respuestas SET resp_descripcion='".$_POST["valor"]."' WHERE resp_id='".$_POST["idR"]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_actividad_respuestas SET resp_descripcion='".$_POST["valor"]."' WHERE resp_id='".$_POST["idR"]."'");
+	
 	$mensajeNot = 'La respuesta se ha actualizado correctamente.';
 }
 
 //Agregar respuesta a una pregunta
 if($_POST["operacion"]==2){
-	mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES('".$_POST["valor"]."', 0, '".$_POST["pregunta"]."')",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES('".$_POST["valor"]."', 0, '".$_POST["pregunta"]."')");
+	
 	$mensajeNot = 'La respuesta se ha agregado correctamente.';
 }
 //Clase disponible o no
 if($_POST["operacion"]==3){
-	mysql_query("UPDATE academico_clases SET cls_disponible='".$_POST["valor"]."' WHERE cls_id='".$_POST["idR"]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_clases SET cls_disponible='".$_POST["valor"]."' WHERE cls_id='".$_POST["idR"]."'");
+	
 	$mensajeNot = 'La clase ha cambiado de estado correctamente.';
 }
 //Impedir retrasos o no en las actividades
 if($_POST["operacion"]==4){
-	mysql_query("UPDATE academico_actividad_tareas SET tar_impedir_retrasos='".$_POST["valor"]."' WHERE tar_id='".$_POST["idR"]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	mysqli_query($conexion, "UPDATE academico_actividad_tareas SET tar_impedir_retrasos='".$_POST["valor"]."' WHERE tar_id='".$_POST["idR"]."'");
+	
 	$mensajeNot = 'La actividad ha cambiado de estado correctamente.';
 }
 ?>

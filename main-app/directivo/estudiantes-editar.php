@@ -1,14 +1,13 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0078';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
 //ESTUDIANTE ACTUAL
-$consultaEstudianteActual = mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-$numEstudianteActual = mysql_num_rows($consultaEstudianteActual);
-$datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
+$consultaEstudianteActual = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'");
+
+$numEstudianteActual = mysqli_num_rows($consultaEstudianteActual);
+$datosEstudianteActual = mysqli_fetch_array($consultaEstudianteActual, MYSQLI_BOTH);
 ?>
     <!-- Material Design Lite CSS -->
 	<link rel="stylesheet" href="../../config-general/assets/plugins/material/material.min.css">
@@ -119,13 +118,13 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Tipo de documento</label>
 												<div class="col-sm-2">
 													<?php
-													$opcionesConsulta = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales
+													$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales
 													WHERE ogen_grupo=1
-													",$conexion);
+													");
 													?>
 													<select class="form-control  select2" name="tipoD">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($opcionesConsulta)){
+														<?php while($o = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 															if($o[0]==$datosEstudianteActual[11])
 															echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 														else
@@ -146,11 +145,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 													<select class="form-control  select2" name="lugarD">
 														<option value="">Seleccione una opción</option>
 														<?php
-														$opcionesG = mysql_query("SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+														$opcionesG = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
 														INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento 
 														ORDER BY ciu_nombre
-														",$conexion);
-														while($opg = mysql_fetch_array($opcionesG)){
+														");
+														while($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)){
 														?>
 														<option value="<?=$opg['ciu_id'];?>" <?php if($opg['ciu_id']==$datosEstudianteActual["mat_lugar_expedicion"]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
 														<?php }?>
@@ -218,11 +217,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 													<select class="form-control  select2" name="lNac">
 														<option value="">Seleccione una opción</option>
 														<?php
-														$opcionesG = mysql_query("SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+														$opcionesG = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
 														INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento 
 														ORDER BY ciu_nombre
-														",$conexion);
-														while($opg = mysql_fetch_array($opcionesG)){
+														");
+														while($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)){
 														?>
 														<option value="<?=$opg['ciu_id'];?>" <?php if($opg['ciu_id']==$datosEstudianteActual[10]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
 														<?php }?>
@@ -233,12 +232,12 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Genero</label>
 												<?php
-												$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4",$conexion);
+												$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
 												?>
 												<div class="col-sm-4">
 													<select class="form-control  select2" name="genero">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$datosEstudianteActual[8])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -285,12 +284,12 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Religi&oacute;n</label>
 												<?php
-												$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2",$conexion);
+												$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2");
 												?>
 												<div class="col-sm-2">
 													<select class="form-control  select2" name="religion">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$datosEstudianteActual[14])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -316,10 +315,10 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 													<select class="form-control  select2" name="ciudadR">
 														<option value="">Seleccione una opción</option>
 														<?php
-														$opcionesG = mysql_query("SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+														$opcionesG = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
 														INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento 
-														ORDER BY ciu_nombre ",$conexion);
-														while($opg = mysql_fetch_array($opcionesG)){
+														ORDER BY ciu_nombre ");
+														while($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)){
 														$selected='';
 														$opg['ciu_codigo'] = trim($opg['ciu_codigo']);
 														if($opg['ciu_codigo']==$datosEstudianteActual['mat_ciudad_residencia']){
@@ -336,12 +335,12 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Estrato</label>
 												<?php
-												$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3",$conexion);
+												$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3");
 												?>
 												<div class="col-sm-2">
 													<select class="form-control  select2" name="estrato">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$datosEstudianteActual[19])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -524,11 +523,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Curso</label>
 												<div class="col-sm-4">
 													<?php
-													$cv = mysql_query("SELECT * FROM academico_grados",$conexion);
+													$cv = mysqli_query($conexion, "SELECT * FROM academico_grados");
 													?>
 													<select class="form-control" name="grado">
 														<option value="">Seleccione una opción</option>
-														<?php while($rv = mysql_fetch_array($cv)){
+														<?php while($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)){
 															if($rv[0]==$datosEstudianteActual[6])
 																echo '<option value="'.$rv[0].'" selected>'.$rv[2].'</option>';
 															else
@@ -542,10 +541,10 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Grupo</label>
 												<div class="col-sm-2">
 													<?php
-													$cv = mysql_query("SELECT gru_id, gru_nombre FROM academico_grupos",$conexion);
+													$cv = mysqli_query($conexion, "SELECT gru_id, gru_nombre FROM academico_grupos");
 													?>
 													<select class="form-control" name="grupo">
-													<?php while($rv = mysql_fetch_array($cv)){
+													<?php while($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)){
 														if($rv[0]==$datosEstudianteActual[7])
 															echo '<option value="'.$rv[0].'" selected>'.$rv[1].'</option>';
 														else
@@ -559,11 +558,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Tipo estudiante</label>
 												<div class="col-sm-4">
 													<?php
-													$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=5",$conexion);
+													$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=5");
 													?>
 													<select class="form-control" name="tipoEst">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$datosEstudianteActual[21])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -610,28 +609,29 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 										<fieldset>
    
    
-											<?php if($acudiente[0]==""){?>
+											<?php if(isset($acudiente[0])&&$acudiente[0]==""){?>
 												<span style="color:#F03;">Si este estudiante no tiene acudiente, primero debe crearlo desde la opción <b>Usuarios->Acudientes</b> y asociarlo allá mismo.</span>
 											<?php }else{?>
 												<span style="color:#009;">Esta opción es solo para actualizar los datos del acudiente.<br>
 												En caso de que el acudiente de este estudiante sea otro, debe hacerlo desde la opción <b>Usuarios->Acudientes</b> en el icono correspondiente.</span>
 											<?php }
-											$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente"]."'",$conexion));
+											$consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente"]."'");
+											$acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
 											?>
                                                           
 											<h2><b>ACUDIENTE 1</b></h2>
 											<p>
-												<a href="usuarios-editar.php?id=<?=$acudiente[0]?>" target="_blank" class="btn btn-info">Editar información del acudiente</a>
+												<a href="usuarios-editar.php?id=<?php if(isset($acudiente[0])){ echo $acudiente[0];}?>" target="_blank" class="btn btn-info">Editar información del acudiente</a>
 											</p>
 
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Tipo de documento</label>
 												<div class="col-sm-3">
 													<?php
-													$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1",$conexion);
+													$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1");
 													?>
 													<select class="form-control" name="tipoDAcudiente">
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$acudiente["uss_tipo_documento"])
 															echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 														else
@@ -642,7 +642,7 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												
 												<label class="col-sm-2 control-label">ID Acudiente</label>
 												<div class="col-sm-3">
-													<input type="text" name="documentoA" class="form-control" autocomplete="off" value="<?=$acudiente['uss_usuario']?>">
+													<input type="text" name="documentoA" class="form-control" autocomplete="off" value="<?php if(isset($acudiente['uss_usuario'])){ echo $acudiente['uss_usuario'];}?>">
 												</div>
 											</div>
 												
@@ -652,44 +652,44 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 													<select class="form-control" name="lugardA">
 														<option value="">Seleccione una opción</option>
 														<?php
-														$opcionesG = mysql_query("SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+														$opcionesG = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
 														INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento 
 														ORDER BY ciu_nombre
-														",$conexion);
-														while($opg = mysql_fetch_array($opcionesG)){
+														");
+														while($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)){
 														?>
-														<option value="<?=$opg['ciu_id'];?>" <?php if($opg['ciu_id']==$acudiente["uss_lugar_expedicion"]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
+														<option value="<?=$opg['ciu_id'];?>" <?php if(isset($acudiente["uss_lugar_expedicion"])&&$opg['ciu_id']==$acudiente["uss_lugar_expedicion"]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
 														<?php }?>
 													</select>
 												</div>	
 
 												<label class="col-sm-2 control-label">Ocupaci&oacute;n</label>
 												<div class="col-sm-3">
-													<input type="text" name="ocupacionA" class="form-control" autocomplete="off" value="<?=$acudiente["uss_ocupacion"];?>">
+													<input type="text" name="ocupacionA" class="form-control" autocomplete="off" value="<?php if(isset($acudiente["uss_ocupacion"])){ echo $acudiente["uss_ocupacion"];}?>">
 												</div>
 											</div>
 
 											<div class="form-group row">												
 												<label class="col-sm-2 control-label">Primer Apellido</label>
 												<div class="col-sm-3">
-													<input type="text" name="apellido1A" class="form-control" autocomplete="off" value="<?=$acudiente["uss_apellido1"];?>">
+													<input type="text" name="apellido1A" class="form-control" autocomplete="off" value="<?php if(isset($acudiente["uss_apellido1"])){ echo $acudiente["uss_apellido1"];}?>">
 												</div>
 																							
 												<label class="col-sm-2 control-label">Segundo Apellido</label>
 												<div class="col-sm-3">
-													<input type="text" name="apellido2A" class="form-control" autocomplete="off" value="<?=$acudiente["uss_apellido2"];?>">
+													<input type="text" name="apellido2A" class="form-control" autocomplete="off" value="<?php if(isset($acudiente["uss_apellido2"])){ echo $acudiente["uss_apellido2"];}?>">
 												</div>
 											</div>
 
 											<div class="form-group row">												
 												<label class="col-sm-2 control-label">Nombre</label>
 												<div class="col-sm-3">
-													<input type="text" name="nombreA" class="form-control" autocomplete="off" value="<?=$acudiente["uss_nombre"];?>">
+													<input type="text" name="nombreA" class="form-control" autocomplete="off" value="<?php if(isset($acudiente["uss_nombre"])){ echo $acudiente["uss_nombre"];}?>">
 												</div>
 																								
 												<label class="col-sm-2 control-label">Otro Nombre</label>
 												<div class="col-sm-3">
-													<input type="text" name="nombre2A" class="form-control" autocomplete="off" value="<?=$acudiente["uss_nombre2"];?>">
+													<input type="text" name="nombre2A" class="form-control" autocomplete="off" value="<?php if(isset($acudiente["uss_nombre2"])){ echo $acudiente["uss_nombre2"];}?>">
 												</div>
 											</div>	
 												
@@ -697,11 +697,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Genero</label>
 												<div class="col-sm-3">
 													<?php
-													$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4",$conexion);
+													$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
 													?>
 													<select class="form-control" name="generoA">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$acudiente[16])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -715,7 +715,8 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 											<hr>
                                             
 											<?php
-												$acudiente2 = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente2"]."'",$conexion));
+												$consultaAcudiente2=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente2"]."'");
+												$acudiente2 = mysqli_fetch_array($consultaAcudiente2, MYSQLI_BOTH);
 											?>  
 											<h2><b>ACUDIENTE 2</b></h2>
 
@@ -723,10 +724,10 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Tipo de documento</label>
 												<div class="col-sm-3">
 													<?php
-													$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1",$conexion);
+													$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1");
 													?>
 													<select class="form-control" name="tipoDAcudiente2">
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$acudiente2["uss_tipo_documento"])
 															echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 														else
@@ -737,7 +738,7 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												
 												<label class="col-sm-2 control-label">ID Acudiente</label>
 												<div class="col-sm-3">
-													<input type="text" name="documentoA2" class="form-control" autocomplete="off" value="<?=$acudiente2[0]?>">
+													<input type="text" name="documentoA2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2[0])){ echo $acudiente2[0];}?>">
 												</div>
 											</div>
 												
@@ -747,44 +748,44 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 													<select class="form-control" name="lugardA2">
 														<option value="">Seleccione una opción</option>
 														<?php
-														$opcionesG = mysql_query("SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+														$opcionesG = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
 														INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento 
 														ORDER BY ciu_nombre
-														",$conexion);
-														while($opg = mysql_fetch_array($opcionesG)){
+														");
+														while($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)){
 														?>
-														<option value="<?=$opg['ciu_id'];?>" <?php if($opg['ciu_id']==$acudiente2["uss_lugar_expedicion"]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
+														<option value="<?=$opg['ciu_id'];?>" <?php if(isset($acudiente2["uss_lugar_expedicion"])&&$opg['ciu_id']==$acudiente2["uss_lugar_expedicion"]){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
 														<?php }?>
 													</select>
 												</div>	
 
 												<label class="col-sm-2 control-label">Ocupaci&oacute;n</label>
 												<div class="col-sm-3">
-													<input type="text" name="ocupacionA2" class="form-control" autocomplete="off" value="<?=$acudiente2["uss_ocupacion"];?>">
+													<input type="text" name="ocupacionA2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2["uss_ocupacion"])){ echo $acudiente2["uss_ocupacion"];}?>">
 												</div>
 											</div>
 
 											<div class="form-group row">												
 												<label class="col-sm-2 control-label">Primer Apellido</label>
 												<div class="col-sm-3">
-													<input type="text" name="apellido1A2" class="form-control" autocomplete="off" value="<?=$acudiente2["uss_apellido1"];?>">
+													<input type="text" name="apellido1A2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2["uss_apellido1"])){ echo $acudiente2["uss_apellido1"];}?>">
 												</div>
 																							
 												<label class="col-sm-2 control-label">Segundo Apellido</label>
 												<div class="col-sm-3">
-													<input type="text" name="apellido2A2" class="form-control" autocomplete="off" value="<?=$acudiente2["uss_apellido2"];?>">
+													<input type="text" name="apellido2A2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2["uss_apellido2"])){ echo $acudiente2["uss_apellido2"];}?>">
 												</div>
 											</div>
 
 											<div class="form-group row">												
 												<label class="col-sm-2 control-label">Nombre</label>
 												<div class="col-sm-3">
-													<input type="text" name="nombreA2" class="form-control" autocomplete="off" value="<?=$acudiente2["uss_nombre"];?>">
+													<input type="text" name="nombreA2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2["uss_nombre"])){ echo $acudiente2["uss_nombre"];}?>">
 												</div>
 																								
 												<label class="col-sm-2 control-label">Otro Nombre</label>
 												<div class="col-sm-3">
-													<input type="text" name="nombre2A2" class="form-control" autocomplete="off" value="<?=$acudiente2["uss_nombre2"];?>">
+													<input type="text" name="nombre2A2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2["uss_nombre2"])){ echo $acudiente2["uss_nombre2"];}?>">
 												</div>
 											</div>	
 												
@@ -792,11 +793,11 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
 												<label class="col-sm-2 control-label">Genero</label>
 												<div class="col-sm-3">
 													<?php
-													$op = mysql_query("SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4",$conexion);
+													$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
 													?>
 													<select class="form-control" name="generoA2">
 														<option value="">Seleccione una opción</option>
-														<?php while($o = mysql_fetch_array($op)){
+														<?php while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
 															if($o[0]==$acudiente2[16])
 																echo '<option value="'.$o[0].'" selected>'.$o[1].'</option>';
 															else
@@ -819,7 +820,7 @@ $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <!-- start footer -->

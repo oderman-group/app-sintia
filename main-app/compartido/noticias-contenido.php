@@ -182,7 +182,7 @@
 																	<?php
 																	 $rName = array("","Me gusta","Me encanta","Me divierte","Me entristece");
 																	 $rIcons = array("","fa-thumbs-o-up","fa-heart","fa-smile-o","fa-frown-o");
-																	 if($usrReacciones['npr_reaccion']!=""){$reaccionP = $usrReacciones['npr_reaccion'];}
+																	 if(isset($usrReacciones['npr_reaccion']) AND $usrReacciones['npr_reaccion']!=""){$reaccionP = $usrReacciones['npr_reaccion'];}
 																	 else{$reaccionP = 1;}
 																	?>
 																	<a id="panel-<?=$resultado['not_id'];?>1" class = "pull-left"><i class="fa <?=$rIcons[$reaccionP];?>"></i> <?=$rName[$reaccionP];?></a>
@@ -242,10 +242,10 @@
 													LIMIT $inicioPublicidad, 1
 													"), MYSQLI_BOTH);
 												?>
-													<?php if($publicidadNoticias['pubxub_id']!=""){
+													<?php if(isset($publicidadNoticias['pubxub_id']) AND $publicidadNoticias['pubxub_id']!=""){
 														mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".publicidad_estadisticas(pest_publicidad, pest_institucion, pest_usuario, pest_pagina, pest_ubicacion, pest_fecha, pest_ip, pest_accion)
 														VALUES('".$publicidadNoticias['pub_id']."', '".$config['conf_id_institucion']."', '".$_SESSION["id"]."', '".$idPaginaInterna."', 5, now(), '".$_SERVER["REMOTE_ADDR"]."', 1)");
-														if(mysql_errno()!=0){echo mysql_error(); exit();}
+														
 													?>
 														<div align="center" style="padding-top: 5px; padding-bottom: 10px;">
 															<span style="color: blue; font-size: 10px;">Promociado</span>

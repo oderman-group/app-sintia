@@ -4,9 +4,9 @@ if($_SERVER['HTTP_REFERER']==""){
 	exit();
 }
 ?>
-<?php include("../../config-general/config.php");?>
 <?php include("../directivo/session.php");?>
-<?php include("../head.php");?>
+<?php include("../../config-general/config.php");?>
+<?php include("head.php");?>
 <style>
 #saltoPagina
 {
@@ -16,16 +16,17 @@ if($_SERVER['HTTP_REFERER']==""){
   </head>
   <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0" style="font-family:Arial, Helvetica, sans-serif;">
   <?php
-  $curso = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."'",$conexion);
-  while($c = mysql_fetch_array($curso)){
+  $curso = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."'");
+  while($c = mysqli_fetch_array($curso, MYSQLI_BOTH)){
 	  
-  $consulta = mysql_query("SELECT * FROM academico_matriculas 
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
   INNER JOIN academico_grados ON gra_id=mat_grado
   INNER JOIN academico_grupos ON gru_id=mat_grupo
-  INNER JOIN opciones_generales ON ogen_id=mat_genero
-  WHERE mat_id='".$c[0]."'",$conexion);
-  $resultado = mysql_fetch_array($consulta);
-  $tipo = mysql_fetch_array(mysql_query("SELECT * FROM opciones_generales WHERE ogen_id='".$resultado['mat_tipo']."'",$conexion));
+  INNER JOIN $baseDatosServicios.opciones_generales ON ogen_id=mat_genero
+  WHERE mat_id='".$c[0]."'");
+  $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+  $consultaTipo=mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales WHERE ogen_id='".$resultado['mat_tipo']."'");
+  $tipo = mysqli_fetch_array($consultaTipo, MYSQLI_BOTH);
   ?>
 <table width="80%" cellpadding="5" cellspacing="0" border="0" align="center" style="font-size:15px;">
  	<tr>

@@ -124,21 +124,21 @@ include("../../config-general/consulta-usuario-actual.php");?>
 	if($condicion!=""){
 		$condicionw="WHERE ";
 		}
-		$c_matricEst=mysql_query("SELECT mat_matricula,mat_primer_apellido,mat_segundo_apellido,mat_nombres,mat_inclusion,mat_extranjero,mat_documento,uss_usuario,uss_email,uss_celular,uss_telefono,gru_nombre,gra_nombre,og.ogen_nombre as Tipo_est,
+		$c_matricEst=mysqli_query($conexion, "SELECT mat_matricula,mat_primer_apellido,mat_segundo_apellido,mat_nombres,mat_inclusion,mat_extranjero,mat_documento,uss_usuario,uss_email,uss_celular,uss_telefono,gru_nombre,gra_nombre,og.ogen_nombre as Tipo_est,
 IF(mat_acudiente is null,'No',uss_nombre)as nom_acudiente,IF(mat_foto is null,'No','Si')as foto,og2.ogen_nombre as genero,og3.ogen_nombre as religion,og4.ogen_nombre as estrato,og5.ogen_nombre as tipoDoc,
 CASE mat_estado_matricula WHEN 1 THEN 'Matriculado' WHEN 2 THEN 'Asistente' WHEN 3 THEN 'Cancelado' WHEN 4 THEN 'No matriculado' END AS estado
 FROM academico_matriculas am INNER JOIN academico_grupos ag ON am.mat_grupo=ag.gru_id
 INNER JOIN academico_grados agr ON agr.gra_id=am.mat_grado
-INNER JOIN opciones_generales og ON og.ogen_id=am.mat_tipo
-INNER JOIN opciones_generales og2 ON og2.ogen_id=am.mat_genero
-INNER JOIN opciones_generales og3 ON og3.ogen_id=am.mat_religion
-INNER JOIN opciones_generales og4 ON og4.ogen_id=am.mat_estrato
-INNER JOIN opciones_generales og5 ON og5.ogen_id=am.mat_tipo_documento
+INNER JOIN $baseDatosServicios.opciones_generales og ON og.ogen_id=am.mat_tipo
+INNER JOIN $baseDatosServicios.opciones_generales og2 ON og2.ogen_id=am.mat_genero
+INNER JOIN $baseDatosServicios.opciones_generales og3 ON og3.ogen_id=am.mat_religion
+INNER JOIN $baseDatosServicios.opciones_generales og4 ON og4.ogen_id=am.mat_estrato
+INNER JOIN $baseDatosServicios.opciones_generales og5 ON og5.ogen_id=am.mat_tipo_documento
 INNER JOIN usuarios u ON u.uss_id=am.mat_acudiente or am.mat_acudiente is null
 ".$condicionw.$condicion."
 GROUP BY mat_id
-ORDER BY mat_primer_apellido,mat_estado_matricula;",$conexion);
- $numE=mysql_num_rows($c_matricEst);
+ORDER BY mat_primer_apellido,mat_estado_matricula;");
+ $numE=mysqli_num_rows($c_matricEst);
  ?>
  <div style="width:80%; margin-left:auto; margin-right:auto;">
  Total Estudiantes: <?=$numE;?>
@@ -166,7 +166,7 @@ ORDER BY mat_primer_apellido,mat_estado_matricula;",$conexion);
         <th>Correo</th>
   </tr>
 <?php
- while($resultado=mysql_fetch_array($c_matricEst)){
+ while($resultado=mysqli_fetch_array($c_matricEst, MYSQLI_BOTH)){
 	switch ($resultado["mat_inclusion"]) {
     	case 0:
         	$inclusion="No";

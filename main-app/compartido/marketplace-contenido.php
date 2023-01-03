@@ -145,16 +145,16 @@
 									if(is_numeric($_GET["prod"])){
 										$consultaVisita = mysqli_query($conexion, "SELECT * FROM ".$baseDatosMarketPlace.".productos_visitas 
 										WHERE pxvis_producto='".$_GET["prod"]."' AND pxvis_usuario='".$_SESSION["id"]."' AND pxvis_institucion='".$config['conf_id_institucion']."'");
-										if(mysql_errno()!=0){echo mysql_error(); exit();}
+										
 										$numVisita = mysqli_num_rows($consultaVisita);
 										$datoVisita = mysqli_fetch_array($consultaVisita, MYSQLI_BOTH);
 										if($numVisita>0){
 											mysqli_query($conexion, "UPDATE ".$baseDatosMarketPlace.".productos_visitas SET pxvis_cantidad=pxvis_cantidad+1 
 											WHERE pxvis_usuario='".$_SESSION["id"]."' AND pxvis_institucion='".$config['conf_id_institucion']."' AND pxvis_producto='".$_GET["prod"]."'");
-											if(mysql_errno()!=0){echo mysql_error(); exit();}
+											
 										}else{
 											mysqli_query($conexion, "INSERT INTO ".$baseDatosMarketPlace.".productos_visitas(pxvis_producto, pxvis_institucion, pxvis_usuario, pxvis_fecha, pxvis_cantidad)VALUES('".$_GET["prod"]."', '".$config['conf_id_institucion']."', '".$_SESSION["id"]."', now(), 1)");
-											if(mysql_errno()!=0){echo mysql_error(); exit();}
+											
 										}
 									?>
 										

@@ -2,10 +2,10 @@
 include("../../config-general/config.php");
 //include("../modelo/conexion.php");
 
-$mensajesConsulta = mysql_query("SELECT * FROM social_emails 
+$mensajesConsulta = mysqli_query($conexion, "SELECT * FROM social_emails 
 INNER JOIN usuarios ON uss_id=ema_de
-WHERE ema_para='".$_POST["usuario"]."' AND ema_visto=0 ORDER BY ema_id DESC",$conexion);
-$mensajesNumero = mysql_num_rows($mensajesConsulta);
+WHERE ema_para='".$_POST["usuario"]."' AND ema_visto=0 ORDER BY ema_id DESC");
+$mensajesNumero = mysqli_num_rows($mensajesConsulta);
 ?>
 
 							<a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">

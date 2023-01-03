@@ -36,19 +36,23 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                         <th>Clics Total</th>
   </tr>
   <?php
-									 $consulta = mysql_query($SQL,$conexion);
-									 while($resultado = mysql_fetch_array($consulta)){
+									 $consulta = mysqli_query($conexion, $SQL);
+									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 										 if($resultado[5]==1) $s='<img src="../files/iconos/on.png">'; elseif($resultado[5]==0) $s='<img src="../files/iconos/off.png">'; else $s="-";
-										 $clics = mysql_fetch_array(mysql_query("SELECT ROUND(((SELECT count(hil_id) FROM seguridad_historial_acciones where hil_usuario='".$resultado[0]."')/(SELECT count(hil_id) FROM seguridad_historial_acciones))*100,2)",$conexion));
-										 $clics2 = mysql_fetch_array(mysql_query("SELECT (SELECT count(hil_id) FROM seguridad_historial_acciones where hil_usuario='".$resultado[0]."'),(SELECT count(hil_id) FROM seguridad_historial_acciones)",$conexion));
-										 $entrada = mysql_fetch_array(mysql_query("SELECT (DATEDIFF(uss_ultimo_ingreso, now())*-1) FROM usuarios WHERE uss_id='".$resultado[0]."'",$conexion));
+                     $consultaClics=mysqli_query($conexion, "SELECT ROUND(((SELECT count(hil_id) FROM seguridad_historial_acciones where hil_usuario='".$resultado[0]."')/(SELECT count(hil_id) FROM seguridad_historial_acciones))*100,2)");
+										 $clics = mysqli_fetch_array($consultaClics, MYSQLI_BOTH);
+                     $consultaClics2=mysqli_query($conexion, "SELECT (SELECT count(hil_id) FROM seguridad_historial_acciones where hil_usuario='".$resultado[0]."'),(SELECT count(hil_id) FROM seguridad_historial_acciones)");
+										 $clics2 = mysqli_fetch_array($consultaClics2, MYSQLI_BOTH);
+                     $consultaEntrada=mysqli_query($conexion, "SELECT (DATEDIFF(uss_ultimo_ingreso, now())*-1) FROM usuarios WHERE uss_id='".$resultado[0]."'");
+										 $entrada = mysqli_fetch_array($consultaEntrada, MYSQLI_BOTH);
 										 if($entrada[0]==0 and $entrada[0]!="") $entradaTexto = "Hoy";
 										 elseif($entrada[0]>0 and $entrada[0]<7) $entradaTexto = "Hace ".$entrada[0]." d&iacute;a(s)";
 										 elseif($entrada[0]>=7 and $entrada[0]<31) $entradaTexto = "Hace ".round(($entrada[0]/7),0)." semana(s)";
 										 elseif($entrada[0]>=31 and $entrada[0]<365) $entradaTexto = "Hace ".round(($entrada[0]/31),0)." mes(es)";
 										 else $entradaTexto = $entrada[0];
 										 
-										 $salida = mysql_fetch_array(mysql_query("SELECT (DATEDIFF(uss_ultima_salida, now())*-1) FROM usuarios WHERE uss_id='".$resultado[0]."'",$conexion));
+                     $consultaSalida=mysqli_query($conexion, "SELECT (DATEDIFF(uss_ultima_salida, now())*-1) FROM usuarios WHERE uss_id='".$resultado[0]."'");
+										 $salida = mysqli_fetch_array($consultaSalida, MYSQLI_BOTH);
 										 if($salida[0]==0 and $salida[0]!="") $salidaTexto = "Hoy";
 										 elseif($salida[0]>0 and $salida[0]<7) $salidaTexto = "Hace ".$salida[0]." d&iacute;a(s)";
 										 elseif($salida[0]>=7 and $salida[0]<31) $salidaTexto = "Hace ".round(($salida[0]/7),0)." semana(s)";

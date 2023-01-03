@@ -7,7 +7,7 @@
 		echo "<span style='font-family:Arial; color:red;'>Debe llenar todos los campos.</samp>";
 		exit();
 	}
-	mysql_query("UPDATE academico_grados SET 
+	mysqli_query($conexion, "UPDATE academico_grados SET 
 	gra_codigo='" . $_POST["codigoC"] . "', 
 	gra_nombre='" . $_POST["nombreC"] . "', 
 	gra_formato_boletin='" . $_POST["formatoB"] . "', 
@@ -19,7 +19,7 @@
 	gra_periodos='" . $_POST["periodosC"] . "', 
 	gra_nivel='" . $_POST["nivel"] . "', 
 	gra_estado='" . $_POST["estado"] . "' 
-	WHERE gra_id='" . $_POST["id_curso"] . "'", $conexion);
+	WHERE gra_id='" . $_POST["id_curso"] . "'");
 
 
 	echo '<script type="text/javascript">window.location.href="' . $_SERVER['HTTP_REFERER'] . '";</script>';

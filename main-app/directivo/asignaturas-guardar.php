@@ -6,7 +6,7 @@
         echo "<span style='font-family:Arial; color:red;'>Debe llenar todos los campos.</samp>";
         exit();
     }
-    mysql_query("INSERT INTO academico_materias(mat_codigo, mat_nombre, mat_siglas, mat_area, mat_oficial) VALUES ('".$_POST["codigoM"]."','".$_POST["nombreM"]."','".$_POST["siglasM"]."','".$_POST["areaM"]."',1);",$conexion);
-    if(mysql_errno()!=0){echo mysql_error(); exit();}
+    mysqli_query($conexion, "INSERT INTO academico_materias(mat_codigo, mat_nombre, mat_siglas, mat_area, mat_oficial) VALUES ('".$_POST["codigoM"]."','".$_POST["nombreM"]."','".$_POST["siglasM"]."','".$_POST["areaM"]."',1);");
+    
     echo '<script type="text/javascript">window.location.href="'.$_SERVER['HTTP_REFERER'].'";</script>';
     exit();

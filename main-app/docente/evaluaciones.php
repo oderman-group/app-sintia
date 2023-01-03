@@ -61,16 +61,16 @@
 											
 											<div class="panel-group accordion" id="accordion3">
 												<?php
-												  $consulta = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+												  $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 												  WHERE eva_id_carga='".$cargaConsultaActual."' AND eva_periodo='".$periodoConsultaActual."' AND eva_estado=1
 												  ORDER BY eva_id DESC
-												  ",$conexion);
-												  while($resultado = mysql_fetch_array($consulta)){
+												  ");
+												  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													
 													//Cantidad de preguntas de la evaluación
-													$cantPreguntas = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
-													WHERE evp_id_evaluacion='".$resultado['eva_id']."'
-													",$conexion));
+													$consultaCantPreguntas=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
+													WHERE evp_id_evaluacion='".$resultado['eva_id']."'");
+													$cantPreguntas = mysqli_num_rows($consultaCantPreguntas);
 												 ?>
 												  <div class="panel panel-default" id="reg<?=$resultado['eva_id'];?>">
 													  <div class="panel-heading panel-heading-gray">
@@ -126,7 +126,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

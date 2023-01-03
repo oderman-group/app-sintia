@@ -69,18 +69,17 @@
                                             <label class="col-sm-2 control-label"><?=$frases[12][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-10">
 												<?php
-												$consulta = mysql_query("SELECT * FROM academico_cargas 
+												$consulta = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 												INNER JOIN academico_materias ON mat_id=car_materia
 												INNER JOIN academico_grados ON gra_id=car_curso
 												INNER JOIN academico_grupos ON gru_id=car_grupo
 												WHERE car_docente='".$_SESSION["id"]."'
-												ORDER BY car_curso, car_grupo, mat_nombre
-												",$conexion);
+												ORDER BY car_curso, car_grupo, mat_nombre");
 												?>
                                                 <select class="form-control  select2" name="cargaImportar" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($datos = mysql_fetch_array($consulta)){
+													while($datos = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$infoActual = '';
 														if($datos['car_id']==$cargaConsultaActual) $infoActual = ' - Actualmente estás en esta carga.';
 													?>
@@ -185,7 +184,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

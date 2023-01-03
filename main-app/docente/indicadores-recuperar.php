@@ -7,9 +7,10 @@
 include("verificar-periodos-iguales.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores
+$consultaCalificaciones=mysqli_query($conexion, "SELECT * FROM academico_indicadores
 INNER JOIN academico_indicadores_carga ON ipc_indicador=ind_id
-WHERE ind_id='".$_GET["idR"]."'",$conexion));
+WHERE ind_id='".$_GET["idR"]."'");
+$calificacion = mysqli_fetch_array($consultaCalificaciones, MYSQLI_BOTH);
 ?>
 <!-- Theme Styles -->
 <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
@@ -135,8 +136,8 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 												</thead>
 												<tbody>
 												 <?php
-												 $TablaNotas = mysql_query("SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'",$conexion);
-												 while($tabla = mysql_fetch_array($TablaNotas)){
+												 $TablaNotas = mysqli_query($conexion, "SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'");
+												 while($tabla = mysqli_fetch_array($TablaNotas, MYSQLI_BOTH)){
 												 ?>
 												  <tr id="data1" class="odd grade">
 
@@ -145,7 +146,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 													<td><?=$tabla["notip_nombre"];?></td>
 												  </tr>
 												  <?php }
-													mysql_free_result($TablaNotas);
+													mysqli_free_result($TablaNotas);
 													?>
 												</tbody>
 											  </table>
@@ -158,16 +159,16 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 										<div class="panel-body">
 											<p>Puedes cambiar a otro indicador rápidamente para calificar a tus estudiantes o hacer modificaciones de notas.</p>
 											<?php
-											$registrosEnComun = mysql_query("SELECT * FROM academico_indicadores_carga
+											$registrosEnComun = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 											INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 											WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_indicador!='".$_GET["idR"]."'
 											ORDER BY ipc_id DESC
-											",$conexion);
-											while($regComun = mysql_fetch_array($registrosEnComun)){
+											");
+											while($regComun = mysqli_fetch_array($registrosEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="<?=$_SERVER['PHP_SELF'];?>?idR=<?=$regComun['ipc_indicador'];?>"><?=$regComun['ind_nombre']." (".$regComun['ipc_valor']."%)";?></a></p>
 											<?php }
-											mysql_free_result($registrosEnComun);
+											mysqli_free_result($registrosEnComun);
 											?>
 										</div>
                                     </div>
@@ -210,21 +211,23 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 													 INNER JOIN usuarios ON uss_id=mat_id_usuario
-													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
+													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
 													 $contReg = 1;
 													 $colorNota = "black";
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 
 														//Consulta de recuperaciones si ya la tienen puestas.
-														$notas = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_recuperacion WHERE rind_estudiante=".$resultado[0]." AND rind_indicador='".$_GET["idR"]."' AND rind_periodo='".$periodoConsultaActual."' AND rind_carga='".$cargaConsultaActual."'",$conexion));
+														$consultaNotas=mysqli_query($conexion, "SELECT * FROM academico_indicadores_recuperacion WHERE rind_estudiante=".$resultado[0]." AND rind_indicador='".$_GET["idR"]."' AND rind_periodo='".$periodoConsultaActual."' AND rind_carga='".$cargaConsultaActual."'");
+														$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 														
 
 														//Promedio nota indicador según nota de actividades relacionadas
-														$notaIndicador = mysql_fetch_array(mysql_query("SELECT ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) FROM academico_calificaciones
+														$consultaNotaIndicador=mysqli_query($conexion, "SELECT ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) FROM academico_calificaciones
 														INNER JOIN academico_actividades ON act_id=cal_id_actividad AND act_estado=1 AND act_id_tipo='".$_GET["idR"]."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."'
-														WHERE cal_id_estudiante='".$resultado['mat_id']."'",$conexion));
+														WHERE cal_id_estudiante='".$resultado['mat_id']."'");
+														$notaIndicador = mysqli_fetch_array($consultaNotaIndicador, MYSQLI_BOTH);
 														 
 														$notaRecuperacion = "";
 														if($notas['rind_nota']>$notas['rind_nota_original'] and $notas['rind_nota']>$notaIndicador[0]){
@@ -233,8 +236,8 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 															//Color nota
 															if($notaRecuperacion<$config[5] and $notaRecuperacion!="") $colorNota = $config[6]; elseif($notaRecuperacion>=$config[5]) $colorNota = $config[7];
 														}
-														 
-														$notasResultado = mysql_fetch_array(mysql_query("SELECT * FROM academico_boletin WHERE bol_estudiante=".$resultado['mat_id']." AND bol_carga=".$cargaConsultaActual." AND bol_periodo=".$periodoConsultaActual,$conexion));
+														 $consultaNotasResultado=mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_estudiante=".$resultado['mat_id']." AND bol_carga=".$cargaConsultaActual." AND bol_periodo=".$periodoConsultaActual);
+														$notasResultado = mysqli_fetch_array($consultaNotasResultado, MYSQLI_BOTH);
 														 
 														if($notasResultado[4]<$config[5] and $notasResultado[4]!="")$color = $config[6]; elseif($notasResultado[4]>=$config[5]) $color = $config[7]; 
 														 
@@ -285,7 +288,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 													<?php 
 														 $contReg++;
 													  }
-													mysql_free_result($consulta);
+													mysqli_free_result($consulta);
 															
 													  ?>
                                                 </tbody>
@@ -302,7 +305,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

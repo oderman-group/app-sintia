@@ -38,12 +38,12 @@
 										<?php
 										$porcentaje = 0;
 										for ($i = 1; $i <= $datosEstudianteActual['gra_periodos']; $i++) {
-											$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
+											$periodosCursos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_grados_periodos
 												WHERE gvp_grado='" . $datosEstudianteActual['mat_grado'] . "' AND gvp_periodo='" . $i . "'
-												", $conexion));
+												"), MYSQLI_BOTH);
 
-											$notapp = mysql_fetch_array(mysql_query("SELECT bol_nota FROM academico_boletin 
-												WHERE bol_estudiante='" . $datosEstudianteActual['mat_id'] . "' AND bol_carga='" . $cargaConsultaActual . "' AND bol_periodo='" . $i . "'", $conexion));
+											$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM academico_boletin 
+												WHERE bol_estudiante='" . $datosEstudianteActual['mat_id'] . "' AND bol_carga='" . $cargaConsultaActual . "' AND bol_periodo='" . $i . "'"), MYSQLI_BOTH);
 											$porcentaje = ($notapp[0] / $config['conf_nota_hasta']) * 100;
 											if ($notapp[0] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger';
 											else $colorGrafico = 'info';
@@ -112,28 +112,28 @@
 												</thead>
 												<tbody>
 													<?php
-													$consulta = mysql_query("SELECT * FROM academico_indicadores_carga 
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 													 INNER JOIN academico_indicadores ON ind_id=ipc_indicador
-													 WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'", $conexion);
+													 WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'");
 													$contReg = 1;
-													while ($resultado = mysql_fetch_array($consulta)) {
+													while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 
-														$sumaNotas = mysql_fetch_array(mysql_query("SELECT SUM(cal_nota * (act_valor/100)), SUM(act_valor) FROM academico_calificaciones
+														$sumaNotas = mysqli_fetch_array(mysqli_query($conexion, "SELECT SUM(cal_nota * (act_valor/100)), SUM(act_valor) FROM academico_calificaciones
 														INNER JOIN academico_actividades ON act_id=cal_id_actividad AND act_id_tipo='" . $resultado['ipc_indicador'] . "' AND act_periodo='" . $periodoConsultaActual . "' AND act_id_carga='" . $cargaConsultaActual . "' AND act_estado=1
-														WHERE cal_id_estudiante=" . $datosEstudianteActual['mat_id'], $conexion));
+														WHERE cal_id_estudiante=" . $datosEstudianteActual['mat_id']), MYSQLI_BOTH);
 
 														$notasResultado = round($sumaNotas[0] / ($sumaNotas[1] / 100), $config['conf_decimales_notas']);
 
 
 
 														//Consulta de recuperaciones si ya la tienen puestas.
-														$notas = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_recuperacion WHERE rind_estudiante=".$datosEstudianteActual['mat_id']." AND rind_indicador='".$resultado['ipc_indicador']."' AND rind_periodo='".$periodoConsultaActual."' AND rind_carga='".$cargaConsultaActual."'",$conexion));
+														$notas = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_indicadores_recuperacion WHERE rind_estudiante=".$datosEstudianteActual['mat_id']." AND rind_indicador='".$resultado['ipc_indicador']."' AND rind_periodo='".$periodoConsultaActual."' AND rind_carga='".$cargaConsultaActual."'"), MYSQLI_BOTH);
 														
 
 														//Promedio nota indicador según nota de actividades relacionadas
-														$notaIndicador = mysql_fetch_array(mysql_query("SELECT ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) FROM academico_calificaciones
+														$notaIndicador = mysqli_fetch_array(mysqli_query($conexion, "SELECT ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) FROM academico_calificaciones
 														INNER JOIN academico_actividades ON act_id=cal_id_actividad AND act_estado=1 AND act_id_tipo='".$resultado['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."'
-														WHERE cal_id_estudiante='".$datosEstudianteActual['mat_id']."'",$conexion));
+														WHERE cal_id_estudiante='".$datosEstudianteActual['mat_id']."'"), MYSQLI_BOTH);
 														 
 														$notaRecuperacion = "";
 														if($notas['rind_nota']>$notas['rind_nota_original'] and $notas['rind_nota']>$notaIndicador[0]){
@@ -176,7 +176,7 @@
 			</div>
 		</div>
 		<!-- end page content -->
-		<?php include("../compartido/panel-configuracion.php"); ?>
+		<?php // include("../compartido/panel-configuracion.php"); ?>
 	</div>
 	<!-- end page container -->
 	<?php include("../compartido/footer.php"); ?>

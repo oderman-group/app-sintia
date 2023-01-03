@@ -5,18 +5,18 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$indicador = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga
+$consultaIndicador=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 INNER JOIN academico_indicadores ON ind_id=ipc_indicador
-WHERE ipc_id='".$_GET["idR"]."'",$conexion));
-
-$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
+WHERE ipc_id='".$_GET["idR"]."'");
+$indicador = mysqli_fetch_array($consultaIndicador, MYSQLI_BOTH);
+$consultaSumaIndicadores=mysqli_query($conexion, "SELECT
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
 (SELECT count(*) FROM academico_indicadores_carga 
-WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-",$conexion));
+WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)");
+$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicadores, MYSQLI_BOTH);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 $porcentajeRestante = ($porcentajeRestante + $indicador['ipc_valor']);
@@ -70,11 +70,11 @@ $porcentajeRestante = ($porcentajeRestante + $indicador['ipc_valor']);
 								<header class="panel-heading panel-heading-purple"><?=$frases[63][$datosUsuarioActual['uss_idioma']];?> </header>
 								<div class="panel-body">
 										<?php
-										$indicadoresEnComun = mysql_query("SELECT * FROM academico_indicadores_carga
+										$indicadoresEnComun = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 										INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 										WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_id!='".$_GET["idR"]."'
-										",$conexion);
-										while($indComun = mysql_fetch_array($indicadoresEnComun)){
+										");
+										while($indComun = mysqli_fetch_array($indicadoresEnComun, MYSQLI_BOTH)){
 										?>
 										<p><a href="indicadores-editar.php?idR=<?=$indComun['ipc_id'];?>"><?=$indComun['ind_nombre'];?></a></p>
 										<?php }?>
@@ -150,7 +150,7 @@ $porcentajeRestante = ($porcentajeRestante + $indicador['ipc_valor']);
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

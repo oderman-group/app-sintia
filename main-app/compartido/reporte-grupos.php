@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta = mysql_query("SELECT * FROM grupos, programas, asignaturas WHERE asignaturas.id=grupos.id_asignatura AND programas.id=grupos.id_programa",$conexion);
+$consulta = mysqli_query($conexion, "SELECT * FROM grupos, programas, asignaturas WHERE asignaturas.id=grupos.id_asignatura AND programas.id=grupos.id_programa");
 ?>
 <head>
 	<title>REPORTES - WolfSyetem</title>
@@ -28,9 +28,9 @@ $consulta = mysql_query("SELECT * FROM grupos, programas, asignaturas WHERE asig
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
-	$consultaAdicional = mysql_query("SELECT * FROM matriculas WHERE id_grupo='".$resultado[0]."'");
-	$numAdicional = mysql_num_rows($consultaAdicional);
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+	$consultaAdicional = mysqli_query($conexion, "SELECT * FROM matriculas WHERE id_grupo='".$resultado[0]."'");
+	$numAdicional = mysqli_num_rows($consultaAdicional);
 ?>
     <tr style="font-size:10px;">
         <td align="center"><?=$con;?></td>

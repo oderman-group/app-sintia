@@ -62,24 +62,23 @@
                                                 <tbody>
 													<?php
 													$contReg = 1; 
-													$consulta = mysql_query("SELECT * FROM academico_cargas 
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 													INNER JOIN academico_materias ON mat_id=car_materia
 													INNER JOIN academico_grados ON gra_id=car_curso
 													INNER JOIN academico_grupos ON gru_id=car_grupo
 													WHERE car_docente='".$_SESSION["id"]."'
 													ORDER BY car_posicion_docente, car_curso, car_grupo, mat_nombre
-													",$conexion);
-													while($resultado = mysql_fetch_array($consulta)){
-														$numerosCargas = mysql_fetch_array(mysql_query("
-														SELECT
+													");
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaNumerosCargas=mysqli_query($conexion, "SELECT
 														(SELECT COUNT(ipc_id) FROM academico_indicadores_carga WHERE ipc_carga='".$resultado['car_id']."' AND ipc_periodo='".$resultado['car_periodo']."'),
 														(SELECT COUNT(act_id) FROM academico_actividades WHERE act_id_carga='".$resultado['car_id']."' AND act_periodo='".$resultado['car_periodo']."' AND act_estado=1),
 														(SELECT COUNT(eva_id) FROM academico_actividad_evaluaciones WHERE eva_id_carga='".$resultado['car_id']."' AND eva_periodo='".$resultado['car_periodo']."' AND eva_estado=1),
 														(SELECT COUNT(cls_id) FROM academico_clases WHERE cls_id_carga='".$resultado['car_id']."' AND cls_periodo='".$resultado['car_periodo']."' AND cls_estado=1),
 														(SELECT COUNT(cro_id) FROM academico_cronograma WHERE cro_id_carga='".$resultado['car_id']."' AND cro_periodo='".$resultado['car_periodo']."'),
 														(SELECT COUNT(foro_id) FROM academico_actividad_foro WHERE foro_id_carga='".$resultado['car_id']."' AND foro_periodo='".$resultado['car_periodo']."' AND foro_estado=1),
-														(SELECT COUNT(tar_id) FROM academico_actividad_tareas WHERE tar_id_carga='".$resultado['car_id']."' AND tar_periodo='".$resultado['car_periodo']."' AND tar_estado=1)
-														"));
+														(SELECT COUNT(tar_id) FROM academico_actividad_tareas WHERE tar_id_carga='".$resultado['car_id']."' AND tar_periodo='".$resultado['car_periodo']."' AND tar_estado=1)");
+														$numerosCargas = mysqli_fetch_array($consultaNumerosCargas, MYSQLI_BOTH);
 													?>
                                                     
 													<tr>
@@ -112,7 +111,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0059';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -36,7 +35,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="asignaturas.php" onClick="deseaRegresar(this)"><?=$frases[73][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="configuracion-opciones-generales.php" onClick="deseaRegresar(this)">Opciones Generales</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Crear Opciones</li>
                             </ol>
                         </div>
@@ -60,14 +59,14 @@
                                         <?php
                                         if($_GET["a"]==1){
                                             echo '<input type="hidden" name="id" value="46">';
-                                            $consulta = mysql_query("SELECT * FROM opciones_generales;",$conexion);
-                                            $n = mysql_num_rows($consulta);
+                                            $consulta = mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales;");
+                                            $n = mysqli_num_rows($consulta);
                                         }	
                                         elseif($_GET["a"]==2){
                                             echo '<input type="hidden" name="id" value="47">';
                                             echo '<input type="hidden" name="idogen" value="'.$_GET["idogen"].'">';
-                                            $consulta = mysql_query("SELECT * FROM opciones_generales WHERE ogen_id='".$_GET["idogen"]."'",$conexion);
-                                            $resultado = mysql_fetch_array($consulta);
+                                            $consulta = mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales WHERE ogen_id='".$_GET["idogen"]."'");
+                                            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
                                         }	
                                         ?>
 										
@@ -104,7 +103,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

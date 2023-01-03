@@ -5,7 +5,8 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."' AND act_estado=1",$conexion));
+$consultaCalificaciones=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."' AND act_estado=1");
+$calificacion = mysqli_fetch_array($consultaCalificaciones, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -68,10 +69,10 @@ $calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad
 								<header class="panel-heading panel-heading-purple"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?> </header>
 								<div class="panel-body">
 										<?php
-										$enComun = mysql_query("SELECT * FROM academico_actividades
+										$enComun = mysqli_query($conexion, "SELECT * FROM academico_actividades
 										WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id!='".$_GET["idR"]."' AND act_estado=1
-										",$conexion);
-										while($regComun = mysql_fetch_array($enComun)){
+										");
+										while($regComun = mysqli_fetch_array($enComun, MYSQLI_BOTH)){
 										?>
 										<p><a href="calificaciones-editar.php?idR=<?=$regComun['act_id'];?>"><?=$regComun['act_descripcion'];?></a></p>
 										<?php }?>
@@ -131,7 +132,7 @@ $calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

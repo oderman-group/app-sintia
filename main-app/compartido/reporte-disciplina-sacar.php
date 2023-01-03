@@ -5,10 +5,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
 <?php include("../compartido/head.php");?>
 
 <?php
-$datos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_grados
 LEFT JOIN academico_grupos ON gru_id='".$_POST["grupo"]."'
-WHERE gra_id='".$_POST["grado"]."'
-",$conexion));
+WHERE gra_id='".$_POST["grado"]."'");
+$datos = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
 
 <head>
@@ -49,7 +49,7 @@ WHERE gra_id='".$_POST["grado"]."'
 
   //if($datosUsuarioActual[3]!=5){$filtro .= " AND dr_usuario='".$_SESSION["id"]."'";}
 													
-  $consulta = mysql_query("SELECT * FROM disciplina_reportes
+  $consulta = mysqli_query($conexion, "SELECT * FROM disciplina_reportes
   INNER JOIN disciplina_faltas ON dfal_id=dr_falta
   INNER JOIN disciplina_categorias ON dcat_id=dfal_id_categoria
   INNER JOIN academico_matriculas ON mat_id_usuario=dr_estudiante $filtroMat
@@ -57,8 +57,8 @@ WHERE gra_id='".$_POST["grado"]."'
   LEFT JOIN academico_grupos ON gru_id=mat_grupo
   INNER JOIN usuarios ON uss_id=dr_usuario
   WHERE dr_fecha>='".$_POST["desde"]."' AND dr_fecha<='".$_POST["hasta"]."' $filtro
-  ",$conexion);
-  while($resultado = mysql_fetch_array($consulta)){
+  ");
+  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
   ?>
   <tr style="font-size:13px;">
     <td><?=$cont;?></td>

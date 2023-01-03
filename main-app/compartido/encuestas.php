@@ -1,6 +1,6 @@
 							<?php
 							$encuesta = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".encuestas WHERE adenc_estado=1"), MYSQLI_BOTH);
-							if($encuesta['adenc_id']!=""){
+							if(isset($encuesta['adenc_id']) AND $encuesta['adenc_id']!=""){
 								$numRespUsuario = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".comentarios 
 								WHERE adcom_institucion='".$config['conf_id_institucion']."' AND adcom_usuario='".$_SESSION["id"]."' AND adcom_id_encuesta='".$encuesta['adenc_id']."'
 								"));

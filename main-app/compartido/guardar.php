@@ -70,13 +70,15 @@ if ($_POST["id"] == 2) {
 	mysqli_query($conexion, "DELETE FROM social_noticias_cursos WHERE notpc_noticia='" . $idRegistro . "'");
 	$lineaError = __LINE__;
 	include("../compartido/reporte-errores.php");
-	$cont = count($_POST["cursos"]);
-	$i = 0;
-	while ($i < $cont) {
-		mysqli_query($conexion, "INSERT INTO social_noticias_cursos(notpc_noticia, notpc_curso)VALUES('" . $idRegistro . "','" . $_POST["cursos"][$i] . "')");
-		$lineaError = __LINE__;
-		include("../compartido/reporte-errores.php");
-		$i++;
+	if($_POST["cursos"]>0){
+		$cont = count($_POST["cursos"]);
+		$i = 0;
+		while ($i < $cont) {
+			mysqli_query($conexion, "INSERT INTO social_noticias_cursos(notpc_noticia, notpc_curso)VALUES('" . $idRegistro . "','" . $_POST["cursos"][$i] . "')");
+			$lineaError = __LINE__;
+			include("../compartido/reporte-errores.php");
+			$i++;
+		}
 	}
 
 	echo '<script type="text/javascript">window.location.href="' . $_SERVER["HTTP_REFERER"] . '";</script>';
@@ -676,10 +678,7 @@ if ($_POST["id"] == 16) {
 	$i = 0;
 	while ($i < $cont) {
 		mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".empresas_categorias(excat_empresa, excat_categoria)VALUES('" . $idRegistro . "', '" . $_POST["sector"][$i] . "')");
-		if (mysql_errno() != 0) {
-			echo mysql_error();
-			exit();
-		}
+		
 		$i++;
 	}
 
@@ -893,7 +892,7 @@ if ($_POST["id"] == 29) {
 
 	if($numD==0){
 		mysqli_query($conexion, "DELETE FROM disiplina_nota WHERE dn_cod_estudiante='".$_POST["estudiante"]."' AND dn_periodo='".$_POST["periodo"]."'");
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 		mysqli_query($conexion, "INSERT INTO disiplina_nota(dn_cod_estudiante, dn_aspecto_academico, dn_aspecto_convivencial, dn_periodo, dn_id_carga)VALUES('".$_POST["estudiante"]."','".$_POST["academicos"]."','".$_POST["convivenciales"]."', '".$_POST["periodo"]."', '".$carga['car_id']."')");
 		$lineaError = __LINE__;
 		include("../compartido/reporte-errores.php");

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0020';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -73,15 +72,13 @@
 													<?php
 													 $filtro = '';
 													 if(is_numeric($_GET["area"])){$filtro .= " AND mat_area='".$_GET["area"]."'";}
-													 $consulta = mysql_query("SELECT * FROM academico_materias
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_materias
 													 INNER JOIN academico_areas ON ar_id=mat_area
-													 WHERE mat_id=mat_id $filtro
-													 ",$conexion);
+													 WHERE mat_id=mat_id $filtro");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $numeros = mysql_fetch_array(mysql_query("SELECT COUNT(car_id) FROM academico_cargas
-														 WHERE car_materia='".$resultado['mat_id']."'
-														 ",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaNumeros=mysqli_query($conexion, "SELECT COUNT(car_id) FROM academico_cargas WHERE car_materia='".$resultado['mat_id']."'");
+														 $numeros = mysqli_fetch_array($consultaNumeros, MYSQLI_BOTH);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -128,7 +125,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

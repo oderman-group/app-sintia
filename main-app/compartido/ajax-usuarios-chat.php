@@ -5,19 +5,18 @@ include("../compartido/sintia-funciones.php");
 //Instancia de Clases generales
 $usuariosClase = new Usuarios();
 
-										$datosConsultaChat = mysql_query("SELECT * FROM usuarios 
+										$datosConsultaChat = mysqli_query($conexion, "SELECT * FROM usuarios 
 										INNER JOIN perfiles ON pes_id=uss_tipo
 										WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!='".$_POST["usuario"]."' 
 										AND YEAR(uss_ultimo_ingreso)='".date("Y")."' AND MONTH(uss_ultimo_ingreso)='".date("m")."' AND DAY(uss_ultimo_ingreso)='".date("d")."'
 										ORDER BY uss_nombre
-										LIMIT 0, 200
-										",$conexion);
-										while($datosChat = mysql_fetch_array($datosConsultaChat)){
+										LIMIT 0, 200");
+										while($datosChat = mysqli_fetch_array($datosConsultaChat, MYSQLI_BOTH)){
 											
-											$sinLeer = mysql_num_rows(mysql_query("SELECT * FROM mobiliar_sintia_social.chat 
+											$consultaSinLeer=mysqli_query($conexion, "SELECT * FROM mobiliar_sintia_social.chat 
 											WHERE chat_destino_usuario='".$_POST["usuario"]."' AND chat_remite_usuario='".$datosChat["uss_id"]."'
-											AND chat_remite_institucion='".$_POST["institucion"]."' AND chat_destino_institucion='".$_POST["institucion"]."' AND chat_visto='0'
-											",$conexion));
+											AND chat_remite_institucion='".$_POST["institucion"]."' AND chat_destino_institucion='".$_POST["institucion"]."' AND chat_visto='0'");
+											$sinLeer = mysqli_num_rows($consultaSinLeer);
 											
 											$nombreSeparado = explode(" ", $datosChat["uss_nombre"]);
 											

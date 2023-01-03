@@ -1,22 +1,22 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0039';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php include("verificar-carga.php");?>
 <?php
-$indicador = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga
+$consultaIndicadores=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 INNER JOIN academico_indicadores ON ind_id=ipc_indicador
-WHERE ipc_id='".$_GET["idR"]."'",$conexion));
+WHERE ipc_id='".$_GET["idR"]."'");
+$indicador = mysqli_fetch_array($consultaIndicadores, MYSQLI_BOTH);
 
-$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
+$consultaSumaIndicadores=mysqli_query($conexion, "SELECT
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
 (SELECT count(*) FROM academico_indicadores_carga 
-WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-",$conexion));
+WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)");
+$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicadores, MYSQLI_BOTH);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 $porcentajeRestante = ($porcentajeRestante + $indicador['ipc_valor']);
@@ -149,7 +149,7 @@ $porcentajeRestante = ($porcentajeRestante + $indicador['ipc_valor']);
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

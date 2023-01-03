@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0120';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci n', now())",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+mysqli_query($conexion, "INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci n', now())");
+
 ?>
 
 	<!--bootstrap -->
@@ -66,8 +65,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="cursosR">
                                                 <option value=""></option>
                                                 <?php
-                                                $c_cursos=mysql_query("SELECT gra_id, gra_codigo, gra_nombre, gra_formato_boletin, gra_valor_matricula, gra_valor_pension, gra_estado FROM academico_grados ORDER BY gra_codigo;",$conexion);
-                                                while($r_cursos=mysql_fetch_array($c_cursos)){
+                                                $c_cursos=mysqli_query($conexion, "SELECT gra_id, gra_codigo, gra_nombre, gra_formato_boletin, gra_valor_matricula, gra_valor_pension, gra_estado FROM academico_grados ORDER BY gra_codigo;");
+                                                while($r_cursos=mysqli_fetch_array($c_cursos, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_cursos["gra_id"].'">'.$r_cursos["gra_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -81,8 +80,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="gruposR">
                                                 <option value=""></option>
                                                 <?php 
-                                                $c_grupos=mysql_query("SELECT gru_id, gru_codigo, gru_nombre FROM academico_grupos ORDER BY gru_nombre;",$conexion);
-                                                while($r_grupos=mysql_fetch_array($c_grupos)){
+                                                $c_grupos=mysqli_query($conexion, "SELECT gru_id, gru_codigo, gru_nombre FROM academico_grupos ORDER BY gru_nombre;");
+                                                while($r_grupos=mysqli_fetch_array($c_grupos, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_grupos["gru_id"].'">'.$r_grupos["gru_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -110,8 +109,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <option value=""></option>
                                                 <?php 
                                                 //SELECT ogen_id, ogen_nombre, ogen_grupo FROM opciones_generales WHERE ogen_grupo=5;
-                                                    $c_testudiante=mysql_query("SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=5;",$conexion);
-                                                while($r_testudiante=mysql_fetch_array($c_testudiante)){
+                                                    $c_testudiante=mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=5;");
+                                                while($r_testudiante=mysqli_fetch_array($c_testudiante, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_testudiante["ogen_id"].'">'.$r_testudiante["ogen_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -169,8 +168,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="generoR">
                                                 <option value=""></option>
                                                 <?php 
-                                                    $c_testudiante=mysql_query("SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4;",$conexion);
-                                                while($r_testudiante=mysql_fetch_array($c_testudiante)){
+                                                    $c_testudiante=mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4;");
+                                                while($r_testudiante=mysqli_fetch_array($c_testudiante, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_testudiante["ogen_id"].'">'.$r_testudiante["ogen_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -184,8 +183,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="religionR">
                                                 <option value=""></option>
                                                 <?php 
-                                                    $c_testudiante=mysql_query("SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2;",$conexion);
-                                                while($r_testudiante=mysql_fetch_array($c_testudiante)){
+                                                    $c_testudiante=mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2;");
+                                                while($r_testudiante=mysqli_fetch_array($c_testudiante, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_testudiante["ogen_id"].'">'.$r_testudiante["ogen_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -200,8 +199,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <option value=""></option>
                                                 <?php 
                                                 //SELECT ogen_id, ogen_nombre, ogen_grupo FROM opciones_generales WHERE ogen_grupo=5;
-                                                    $c_testudiante=mysql_query("SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3;",$conexion);
-                                                while($r_testudiante=mysql_fetch_array($c_testudiante)){
+                                                    $c_testudiante=mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3;");
+                                                while($r_testudiante=mysqli_fetch_array($c_testudiante, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_testudiante["ogen_id"].'">'.$r_testudiante["ogen_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -216,8 +215,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <option value=""></option>
                                                 <?php 
                                                 //SELECT ogen_id, ogen_nombre, ogen_grupo FROM opciones_generales WHERE ogen_grupo=5;
-                                                    $c_testudiante=mysql_query("SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1;",$conexion);
-                                                while($r_testudiante=mysql_fetch_array($c_testudiante)){
+                                                    $c_testudiante=mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1;");
+                                                while($r_testudiante=mysqli_fetch_array($c_testudiante, MYSQLI_BOTH)){
                                                     echo '<option value="'.$r_testudiante["ogen_id"].'">'.$r_testudiante["ogen_nombre"].'</option>';
                                                 }
                                                 ?>
@@ -235,7 +234,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

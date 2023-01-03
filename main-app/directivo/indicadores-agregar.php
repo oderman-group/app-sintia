@@ -5,14 +5,14 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
+$consultaSumaIndicacores=mysqli_query($conexion, "SELECT
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
 (SELECT sum(ipc_valor) FROM academico_indicadores_carga 
 WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
 (SELECT count(*) FROM academico_indicadores_carga 
-WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-",$conexion));
+WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)");
+$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicacores, MYSQLI_BOTH);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 
@@ -138,16 +138,15 @@ if(
                                             <label class="col-sm-2 control-label"><b>Banco de datos</b></label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_indicadores
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores
 												INNER JOIN academico_indicadores_carga ON ipc_indicador=ind_id
-												WHERE ind_obligatorio=0
-												",$conexion);
+												WHERE ind_obligatorio=0");
 												?>
                                                 <select class="form-control  select2" name="bancoDatos" onChange="avisoBancoDatos(this)">
                                                     <option value="">Seleccione una opción</option>
 													<option value="0" selected>--Ninguno--</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														if(($opcionesDatos['ind_publico']==0 and $opcionesDatos['ipc_carga']!=$cargaConsultaActual) or ($opcionesDatos['ipc_carga']==$cargaConsultaActual and $opcionesDatos['ipc_periodo']==$periodoConsultaActual)) continue;
 														$recursoPropio = '';
 														if($opcionesDatos['ipc_carga']==$cargaConsultaActual)$recursoPropio = ' - MIO';
@@ -171,7 +170,7 @@ if(
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -61,15 +61,15 @@
 													 $filtro = '';
 													 if($_GET["new"]==1){$filtro .= " AND dr_aprobacion_estudiante=0";}
 													
-													 $consulta = mysql_query("SELECT * FROM disciplina_reportes
+													 $consulta = mysqli_query($conexion, "SELECT * FROM disciplina_reportes
 													 INNER JOIN disciplina_faltas ON dfal_id=dr_falta
 													 INNER JOIN disciplina_categorias ON dcat_id=dfal_id_categoria
 													 INNER JOIN usuarios ON uss_id=dr_usuario
 													 WHERE dr_estudiante='".$datosEstudianteActual['mat_id_usuario']."'
 													 $filtro
-													 ",$conexion);
+													 ");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -113,7 +113,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

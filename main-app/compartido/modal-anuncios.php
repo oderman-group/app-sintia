@@ -1,7 +1,7 @@
-<?php if($publicidadPopUp['pubxub_id']!="" and $numMostrarPopUp<$publicidadPopUp['pubxub_muestras_popup']){
+<?php if(isset($publicidadPopUp['pubxub_id']) AND $publicidadPopUp['pubxub_id']!="" and $numMostrarPopUp<$publicidadPopUp['pubxub_muestras_popup']){
 	mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".publicidad_estadisticas(pest_publicidad, pest_institucion, pest_usuario, pest_pagina, pest_ubicacion, pest_fecha, pest_ip, pest_accion)
 	VALUES('".$publicidadPopUp['pub_id']."', '".$config['conf_id_institucion']."', '".$_SESSION["id"]."', '".$idPaginaInterna."', 3, now(), '".$_SERVER["REMOTE_ADDR"]."', 1)");
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 ?>
 <div class="modal fade" id="modalAnuncios" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
 	   <div class="modal-dialog">
@@ -108,7 +108,7 @@ if($datosUsuarioActual['uss_solicitar_datos']==1){
 
 <?php
 //felicitar por el cumpleaños
-if($cumpleUsuario['agno']!=""){
+if(isset($cumpleUsuario['agno']) AND $cumpleUsuario['agno']!=""){
 ?>
 
 <div class="modal fade" id="modalCumple" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">

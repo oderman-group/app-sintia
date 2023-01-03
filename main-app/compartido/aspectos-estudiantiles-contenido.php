@@ -3,15 +3,15 @@ $datosEditar = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academi
 LEFT JOIN usuarios ON uss_id=mat_acudiente
 INNER JOIN academico_grados ON gra_id=mat_grado
 WHERE mat_id_usuario='".$_GET["idR"]."'"), MYSQLI_BOTH);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 $usuarioEstudiante = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM usuarios
 WHERE uss_id='".$_GET["idR"]."'"), MYSQLI_BOTH);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 $agnoNacimiento = mysqli_fetch_array(mysqli_query($conexion, "SELECT YEAR(mat_fecha_nacimiento) FROM academico_matriculas
 WHERE mat_id_usuario='".$_GET["idR"]."'"), MYSQLI_BOTH);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 $edad = date("Y") - $agnoNacimiento[0];
 

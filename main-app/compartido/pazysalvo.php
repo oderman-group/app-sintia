@@ -33,9 +33,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
 </div>   
 <?php
  $meses = array("","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
- $usuario = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas
+ $consultaUsuario=mysqli_query($conexion, "SELECT * FROM academico_matriculas
  INNER JOIN academico_grados ON gra_id=mat_grado
- WHERE mat_id_usuario='".$_GET["id"]."'"));
+ WHERE mat_id_usuario='".$_GET["id"]."'");
+ $usuario = mysqli_fetch_array($consultaUsuario, MYSQLI_BOTH);
 ?>
     <div align="justify">
     <p>Certificamos que <b><?=strtoupper($usuario['mat_primer_apellido']." ".$usuario['mat_segundo_apellido']." ".$usuario['mat_nombres']." ".$usuario['mat_nombre2']);?></b> del grado <b><?=$usuario['gra_nombre'];?></b> se encuentra a PAZ y SALVO por todo concepto en el colegio <?=$informacion_inst["info_nombre"]?>.</p>

@@ -1,24 +1,27 @@
-<?php include("../../config-general/config.php");?>
 <?php
+include("../../config-general/config.php");
 include("../modelo/conexion.php");
-$indicadorObg = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores WHERE ind_id='".$_POST["indicador"]."'",$conexion));
+$consultaIndicadorObg=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_id='".$_POST["indicador"]."'");
+$indicadorObg = mysqli_fetch_array($consultaIndicadorObg, MYSQLI_BOTH);
 
-$cargaEjemplo = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas WHERE car_id='".$_POST["carga"]."'",$conexion));
+$consultaCargasEjemplo=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_id='".$_POST["carga"]."'");
+$cargaEjemplo = mysqli_fetch_array($consultaCargasEjemplo, MYSQLI_BOTH);
 
-$cargas = mysql_query("SELECT * FROM academico_cargas WHERE car_curso='".$cargaEjemplo['car_curso']."' AND car_materia='".$cargaEjemplo['car_materia']."'",$conexion);
+$cargas = mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso='".$cargaEjemplo['car_curso']."' AND car_materia='".$cargaEjemplo['car_materia']."'");
 
-while($cgs = mysql_fetch_array($cargas)){
-	$ipc = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_creado=0",$conexion));
+while($cgs = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
+	$consultaIpc=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_creado=0");
+	$ipc = mysqli_fetch_array($consultaIpc, MYSQLI_BOTH);
 	if($ipc[0]==""){
 		$p=1;
 		while($p<=$config['conf_periodos_maximos']){
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$cgs[0]."','".$_POST["indicador"]."','".$indicadorObg['ind_valor']."','".$p."',0)",$conexion);
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$cgs[0]."','".$_POST["indicador"]."','".$indicadorObg['ind_valor']."','".$p."',0)");
+			
 			$p++;
 		}
 	}else{
-		mysql_query("DELETE FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_creado=0",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "DELETE FROM academico_indicadores_carga WHERE ipc_carga='".$cgs[0]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_creado=0");
+		
 	}
 }
 

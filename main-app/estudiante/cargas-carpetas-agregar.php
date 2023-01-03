@@ -44,7 +44,7 @@
 									$i=0;
 									$vectorDatos = array();
 									while($var==1){
-										$carpetaActual = mysql_fetch_array(mysql_query("SELECT fold_id, fold_padre FROM general_folders WHERE fold_id='".$idFolderActual."' AND fold_estado=1",$conexion));
+										$carpetaActual = mysqli_fetch_array(mysqli_query($conexion, "SELECT fold_id, fold_padre FROM general_folders WHERE fold_id='".$idFolderActual."' AND fold_estado=1"), MYSQLI_BOTH);
 										$vectorDatos[$i] = $carpetaActual['fold_id'];
 										if($carpetaActual['fold_padre']!="" and $carpetaActual['fold_padre']!='0'){
 											$idFolderActual = $carpetaActual['fold_padre'];
@@ -58,7 +58,7 @@
 									$cont = count($vectorDatos);
 									$cont = $cont - 1;
 									while($cont>=0){
-										$carpetaActual = mysql_fetch_array(mysql_query("SELECT * FROM general_folders WHERE fold_id='".$vectorDatos[$cont]."' AND fold_estado=1",$conexion));
+										$carpetaActual = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM general_folders WHERE fold_id='".$vectorDatos[$cont]."' AND fold_estado=1"), MYSQLI_BOTH);
 
 									?>
 											<li><a class="parent-item" href="cargas-carpetas.php?carpeta=<?=$carpetaActual['fold_id'];?>"><?=$carpetaActual['fold_nombre'];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
@@ -75,7 +75,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -25,13 +25,16 @@ include("../../config-general/consulta-usuario-actual.php");?>
   </tr>
   <?php
   //ESTUDIANTES ACTUALES
-	$numEstudiantes = mysql_num_rows(mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion));
+  $consultaNumEstudiantes=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+	$numEstudiantes = mysqli_num_rows($consultaNumEstudiantes);
   $cont=1;
-  $consulta = mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_estado=1 AND act_periodo='".$_GET["per"]."'",$conexion);
-  while($resultado = mysql_fetch_array($consulta)){
-	$ind = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores WHERE ind_id='".$resultado[4]."'",$conexion));
-	if($resultado[6]==1) $estado = "REGISTRADA"; else $estado = "PENDIENTE";	
-	$numCalificados = mysql_num_rows(mysql_query("SELECT * FROM academico_calificaciones WHERE cal_id_actividad='".$resultado[0]."'",$conexion));
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_estado=1 AND act_periodo='".$_GET["per"]."'");
+  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+  $consultaInd=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_id='".$resultado[4]."'");
+	$ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);
+	if($resultado[6]==1) $estado = "REGISTRADA"; else $estado = "PENDIENTE";
+  $consultaNumCalificados=mysqli_query($conexion, "SELECT * FROM academico_calificaciones WHERE cal_id_actividad='".$resultado[0]."'");
+	$numCalificados = mysqli_num_rows($consultaNumCalificados);
 	if($numEstudiantes!=$numCalificados) $bg = '#FCC'; else $bg = '#FFF';
   ?>
   <tr style="font-size:13px;">

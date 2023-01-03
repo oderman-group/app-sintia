@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0044';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -69,9 +68,9 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = mysql_query("SELECT catn_id, catn_nombre FROM academico_categorias_notas;",$conexion);
+													$consulta = mysqli_query($conexion, "SELECT catn_id, catn_nombre FROM academico_categorias_notas;");
 													$contReg = 1;
-													while($resultado = mysql_fetch_array($consulta)){
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -85,8 +84,7 @@
 																  </button>
 																  <ul class="dropdown-menu" role="menu">
 																	  <li><a href="cargas-estilo-notas-especifica.php?id=<?php echo $resultado[0];?>"><?=$frases[165][$datosUsuarioActual[8]];?></a></li>
-                                        								<?php if($numMaterias[0]==0){?><li><a href="cargas-estilo-notas-eliminar.php?idR=<?=$resultado["catn_id"];?>" onClick="if(!confirm('Desea eliminar este registro?')){return false;}">Eliminar</a></li><?php }?>	
-																	  <li><a href="#"><?=$frases[104][$datosUsuarioActual[8]];?></a></li>
+                                        								<?php if($numMaterias[0]==0){?><li><a href="cargas-estilo-notas-eliminar.php?idR=<?=$resultado["catn_id"];?>" onClick="if(!confirm('Desea eliminar este registro?')){return false;}">Eliminar</a></li><?php }?>
 																  </ul>
 															  </div>
 														</td>
@@ -115,7 +113,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

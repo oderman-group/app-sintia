@@ -4,12 +4,13 @@
 <?php include("verificar-carga.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$valores = mysql_fetch_array(mysql_query("SELECT
+$consultaValores=mysqli_query($conexion, "SELECT
 (SELECT sum(act_valor) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1),
 (SELECT count(*) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)
-",$conexion));
+");
+$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
 $porcentajeRestante = 100 - $valores[0];
 ?>
 </head>
@@ -134,27 +135,29 @@ $porcentajeRestante = 100 - $valores[0];
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_actividades
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividades
 													 INNER JOIN academico_indicadores ON ind_id=act_id_tipo
 													 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1
-													 ",$conexion);
+													 ");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$bg = '';
-														$numerosEstudiantes = mysql_fetch_array(mysql_query("SELECT
+														$consultaNumEstudiante=mysqli_query($conexion, "SELECT
 														(SELECT count(*) FROM academico_calificaciones 
 														INNER JOIN academico_matriculas ON mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 AND mat_id=cal_id_estudiante
 														WHERE cal_id_actividad='".$resultado[0]."'),
 														(SELECT count(*) FROM academico_matriculas
 														INNER JOIN usuarios ON uss_id=mat_id_usuario
 														WHERE mat_grado='".$datosCargaActual[2]."' AND mat_grupo='".$datosCargaActual[3]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido)
-														",$conexion));
+														");
+														$numerosEstudiantes = mysqli_fetch_array($consultaNumEstudiante, MYSQLI_BOTH);
 														if($numerosEstudiantes[0]<$numerosEstudiantes[1]) $bg = '#FCC';
 														 
 														 $porcentajeActual +=$resultado['act_valor'];
 														 
 														 if($datosCargaActual['car_evidencia']==1){
-														 	$evidencia = mysql_fetch_array(mysql_query("SELECT * FROM academico_evidencias WHERE evid_id='".$resultado['act_id_evidencia']."'",$conexion));
+															$consultaEvidencia=mysqli_query($conexion, "SELECT * FROM academico_evidencias WHERE evid_id='".$resultado['act_id_evidencia']."'");
+														 	$evidencia = mysqli_fetch_array($consultaEvidencia, MYSQLI_BOTH);
 														 }
 													 ?>
                                                     
@@ -225,7 +228,7 @@ $porcentajeRestante = 100 - $valores[0];
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

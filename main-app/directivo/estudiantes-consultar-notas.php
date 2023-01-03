@@ -24,14 +24,8 @@ if(isset($_POST["consultas"])){
 ?>
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0079';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
-<?php
-mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci�n', now())",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-?>
-
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
     <link href="../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
@@ -79,8 +73,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                           
                                 <?php
                                 if(isset($_POST["idE"]) or isset($_GET["idE"])){
-                                    $consultaE = mysql_query("SELECT * FROM academico_matriculas WHERE mat_matricula='".$_POST["idE"]."' OR mat_id='".$_GET["idE"]."'",$conexion);
-                                    $e = mysql_fetch_array($consultaE);
+                                    $consultaE = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_matricula='".$_POST["idE"]."' OR mat_id='".$_GET["idE"]."'");
+                                    $e = mysqli_fetch_array($consultaE, MYSQLI_BOTH);
                                 }
                                 ?>
 
@@ -123,13 +117,13 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Carga Acad&eacute;mica</label> 
                                           	<?php 
-											$consulta_cargas = mysql_query("SELECT * FROM academico_cargas, academico_materias WHERE car_curso='".$e[6]."' AND car_grupo='".$e[7]."' AND mat_id=car_materia",$conexion);
+											$consulta_cargas = mysqli_query($conexion, "SELECT * FROM academico_cargas, academico_materias WHERE car_curso='".$e[6]."' AND car_grupo='".$e[7]."' AND mat_id=car_materia");
 											?>
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="carga" required>
                                                 <option value="0"></option>
                                                 <?php 
-                                                    while($c = mysql_fetch_array($consulta_cargas)){
+                                                    while($c = mysqli_fetch_array($consulta_cargas, MYSQLI_BOTH)){
                                                         echo '<option value="'.$c[0].'">COD. '.$c[0].' - '.$c["mat_nombre"].'</option>';	
                                                     }
 												 ?>
@@ -163,7 +157,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

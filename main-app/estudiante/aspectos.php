@@ -43,12 +43,12 @@
                 <div class="row">
 
                     <?php
-                    $aspectos = mysql_fetch_array(mysql_query("SELECT * FROM disiplina_nota 
-                    WHERE dn_cod_estudiante=" . $datosEstudianteActual['mat_id'] . " AND dn_periodo='" . $periodoConsultaActual . "'", $conexion));
+                    $aspectos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM disiplina_nota 
+                    WHERE dn_cod_estudiante=" . $datosEstudianteActual['mat_id'] . " AND dn_periodo='" . $periodoConsultaActual . "'"), MYSQLI_BOTH);
                        
                     if($aspectos[0]!=""){
-                        mysql_query("UPDATE disiplina_nota SET dn_ultima_lectura=now()
-                        WHERE dn_cod_estudiante=" . $datosEstudianteActual['mat_id'] . " AND dn_periodo='" . $periodoConsultaActual . "'", $conexion);
+                        mysqli_query($conexion, "UPDATE disiplina_nota SET dn_ultima_lectura=now()
+                        WHERE dn_cod_estudiante=" . $datosEstudianteActual['mat_id'] . " AND dn_periodo='" . $periodoConsultaActual . "'");
                     }   
                     
                     ?>
@@ -95,12 +95,12 @@
 										<?php
 										$porcentaje = 0;
 										for ($i = 1; $i <= $datosEstudianteActual['gra_periodos']; $i++) {
-											$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
+											$periodosCursos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_grados_periodos
 												WHERE gvp_grado='" . $datosEstudianteActual['mat_grado'] . "' AND gvp_periodo='" . $i . "'
-												", $conexion));
+												"), MYSQLI_BOTH);
 
-											$notapp = mysql_fetch_array(mysql_query("SELECT bol_nota FROM academico_boletin 
-												WHERE bol_estudiante='" . $datosEstudianteActual['mat_id'] . "' AND bol_carga='" . $cargaConsultaActual . "' AND bol_periodo='" . $i . "'", $conexion));
+											$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM academico_boletin 
+												WHERE bol_estudiante='" . $datosEstudianteActual['mat_id'] . "' AND bol_carga='" . $cargaConsultaActual . "' AND bol_periodo='" . $i . "'"), MYSQLI_BOTH);
 											$porcentaje = ($notapp[0] / $config['conf_nota_hasta']) * 100;
 											if ($notapp[0] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger';
 											else $colorGrafico = 'info';
@@ -142,7 +142,7 @@
             </div>
         </div>
         <!-- end page content -->
-        <?php include("../compartido/panel-configuracion.php"); ?>
+        <?php // include("../compartido/panel-configuracion.php"); ?>
     </div>
     <!-- end page container -->
     <?php include("../compartido/footer.php"); ?>

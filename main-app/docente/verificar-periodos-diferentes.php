@@ -8,7 +8,8 @@ if($periodoConsultaActual!=$datosCargaActual['car_periodo'] and $datosCargaActua
 $URL = 'calificaciones-registrar.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['act_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -18,7 +19,8 @@ if($existeURL != false){
 $URL = 'calificaciones-editar.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id='".$_GET["idR"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['act_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -29,7 +31,8 @@ if($existeURL != false){
 $URL = 'indicadores-editar.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_id='".$_GET["idR"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_id='".$_GET["idR"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['ipc_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -40,7 +43,8 @@ if($existeURL != false){
 $URL = 'evaluaciones-editar.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idR"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idR"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['eva_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -50,7 +54,8 @@ if($existeURL != false){
 $URL = 'evaluaciones-preguntas.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['eva_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -60,7 +65,8 @@ if($existeURL != false){
 $URL = 'preguntas-editar.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'"));
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 	if($datosHistoricos['eva_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
 		exit();	
@@ -70,12 +76,7 @@ if($existeURL != false){
 $URL = 'evaluaciones-resultados.php';
 $existeURL = strpos($_SERVER['PHP_SELF'], $URL);
 if($existeURL != false){
-	$datosHistoricos = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'"));
-	/* Ya está siendo evaluado en la misma pagina para NO mostrar algunas opciones de edición.
-	if($datosHistoricos['eva_periodo']!=$periodoConsultaActual and $datosCargaActual['car_permiso2']!=1){
-		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=208";</script>';
-		exit();	
-	}
-	*/
+	$consultaDatosHistoricos=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."'");
+	$datosHistoricos = mysqli_fetch_array($consultaDatosHistoricos, MYSQLI_BOTH);
 }
 ?>

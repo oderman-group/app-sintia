@@ -1,22 +1,27 @@
 <?php
-$numOPConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_ubicacion
-INNER JOIN ".$baseDatosServicios.".publicidad ON pub_id=pubxub_id_publicidad AND pub_estado=1
-WHERE pubxub_ubicacion=3 AND pubxub_id_institucion='".$config['conf_id_institucion']."' AND pubxub_id_pagina='".$idPaginaInterna."'");
-$numOP = mysqli_num_rows($numOPConsulta);
-$numOP --;
-$empezar = rand(0,$numOP);
+if(isset($idPaginaInterna)){
+	$numOPConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_ubicacion
+	INNER JOIN ".$baseDatosServicios.".publicidad ON pub_id=pubxub_id_publicidad AND pub_estado=1
+	WHERE pubxub_ubicacion=3 AND pubxub_id_institucion='".$config['conf_id_institucion']."' AND pubxub_id_pagina='".$idPaginaInterna."'");
+	$numOP = mysqli_num_rows($numOPConsulta);
+	if($numOP>0){
+		$numOP --;
+	}
+	$empezar = rand(0,$numOP);
 
-$publicidadPopUpConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_ubicacion
-INNER JOIN ".$baseDatosServicios.".publicidad ON pub_id=pubxub_id_publicidad AND pub_estado=1
-WHERE pubxub_ubicacion=3 AND pubxub_id_institucion='".$config['conf_id_institucion']."' AND pubxub_id_pagina='".$idPaginaInterna."'
-LIMIT ".$empezar.",1
-");
-$publicidadPopUp = mysqli_fetch_array($publicidadPopUpConsulta, MYSQLI_BOTH);
+	$publicidadPopUpConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_ubicacion
+	INNER JOIN ".$baseDatosServicios.".publicidad ON pub_id=pubxub_id_publicidad AND pub_estado=1
+	WHERE pubxub_ubicacion=3 AND pubxub_id_institucion='".$config['conf_id_institucion']."' AND pubxub_id_pagina='".$idPaginaInterna."'
+	LIMIT ".$empezar.",1
+	");
+	$publicidadPopUp = mysqli_fetch_array($publicidadPopUpConsulta, MYSQLI_BOTH);
 
-$numMostrarPopUpConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_estadisticas 
-WHERE pest_publicidad='".$publicidadPopUp['pub_id']."' AND pest_institucion='".$config['conf_id_institucion']."' AND pest_usuario='".$_SESSION["id"]."' AND pest_ubicacion=3");
-$numMostrarPopUp = mysqli_num_rows($numMostrarPopUpConsulta);
-
+	if(isset($publicidadPopUp['pub_id'])){
+		$numMostrarPopUpConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".publicidad_estadisticas 
+		WHERE pest_publicidad='".$publicidadPopUp['pub_id']."' AND pest_institucion='".$config['conf_id_institucion']."' AND pest_usuario='".$_SESSION["id"]."' AND pest_ubicacion=3");
+		$numMostrarPopUp = mysqli_num_rows($numMostrarPopUpConsulta);
+	}
+}
 
 ?>
 <!DOCTYPE html>

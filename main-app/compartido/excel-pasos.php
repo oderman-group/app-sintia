@@ -3,7 +3,9 @@ header("Content-Type: application/vnd.ms-excel");
 header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 header("content-disposition: attachment;filename=MatriculasPasoAPaso_" . date("d/m/Y") . "-SINTIA.xls");
-include("../modelo/conexion.php");
+session_start();
+include("../../config-general/config.php");
+include("../../config-general/consulta-usuario-actual.php");
 ?>
 
 <html>
@@ -41,10 +43,10 @@ include("../modelo/conexion.php");
             $modalidadEstudio = array("", "Virtual", "Presencial- alternancia");
             $estadoMatricula = array("", "Matriculado", "No matriculado", "No matriculado", "No matriculado");
             $cont = 1;
-            $consulta = mysql_query("SELECT * FROM academico_matriculas 
+            $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
   LEFT JOIN academico_grados ON gra_id=mat_grado
-  WHERE  mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido", $conexion);
-            while ($resultado = mysql_fetch_array($consulta)) {
+  WHERE  mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido");
+            while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                 $colorProceso = 'tomato';
                 if ($resultado["mat_iniciar_proceso"] == 1) {
                     $colorProceso = '';

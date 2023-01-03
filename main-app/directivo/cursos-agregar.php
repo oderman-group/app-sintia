@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0065';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -76,12 +75,12 @@
                                             <label class="col-sm-2 control-label">Curso Siguiente</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grados ORDER BY gra_vocal ",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grados ORDER BY gra_vocal ");
 												?>
                                                 <select class="form-control  select2" name="graSiguiente" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos[0];?>"><?=strtoupper($opcionesDatos['gra_nombre']);?></option>
 													<?php }?>
@@ -116,7 +115,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

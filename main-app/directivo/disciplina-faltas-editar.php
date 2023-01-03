@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0067';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosEditar = mysql_fetch_array(mysql_query("SELECT * FROM disciplina_faltas
-WHERE dfal_id='".$_GET["idR"]."'",$conexion));
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM disciplina_faltas WHERE dfal_id='".$_GET["idR"]."'");
+$datosEditar = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -84,13 +83,12 @@ WHERE dfal_id='".$_GET["idR"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Categoría</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM disciplina_categorias
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM disciplina_categorias");
 												?>
                                                 <select class="form-control  select2" name="categoria" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos[0]==$datosEditar['dfal_id_categoria']) $select = 'selected';
@@ -106,7 +104,7 @@ WHERE dfal_id='".$_GET["idR"]."'",$conexion));
 
 										<input type="submit" class="btn btn-primary" value="Guardar cambios">&nbsp;
 										
-										<a href="#" name="cargas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+										<a href="#" name="disciplina-faltas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
                                     </form>
                                 </div>
                             </div>
@@ -116,7 +114,7 @@ WHERE dfal_id='".$_GET["idR"]."'",$conexion));
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

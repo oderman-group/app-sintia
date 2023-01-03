@@ -20,8 +20,8 @@ if(isset($_GET["carga"]) and $_GET["carga"]!="" and is_numeric($_GET["carga"])){
 
 <?php
 if($config['conf_activar_encuesta']==1){
-	$respuesta = mysql_num_rows(mysql_query("SELECT * FROM general_encuestas 
-	WHERE genc_estudiante='".$datosEstudianteActual['mat_id']."'",$conexion));
+	$respuesta = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM general_encuestas 
+	WHERE genc_estudiante='".$datosEstudianteActual['mat_id']."'"));
 	if($respuesta==0 and $datosEstudianteActual[6]!=11){
 		echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=214";</script>';
 		exit();	
@@ -56,12 +56,12 @@ if($config['conf_activar_encuesta']==1){
                     </div>
                    
 						<?php
-						$cCargas = mysql_query("SELECT * FROM academico_cargas 
+						$cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 						INNER JOIN academico_materias ON mat_id=car_materia
 						INNER JOIN academico_grados ON gra_id=car_curso
 						INNER JOIN usuarios ON uss_id=car_docente
-						WHERE car_curso='".$datosEstudianteActual[6]."' AND car_grupo='".$datosEstudianteActual[7]."'",$conexion);
-						$nCargas = mysql_num_rows($cCargas);
+						WHERE car_curso='".$datosEstudianteActual[6]."' AND car_grupo='".$datosEstudianteActual[7]."'");
+						$nCargas = mysqli_num_rows($cCargas);
 						$mensajeCargas = new Cargas;
 						$mensajeCargas->verificarNumCargas($nCargas);
 						?>
@@ -71,17 +71,17 @@ if($config['conf_activar_encuesta']==1){
                      <!-- start course list -->
                      <div class="row">
 									<?php
-									while($rCargas = mysql_fetch_array($cCargas)){
+									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
 										//Verificar si el estudiante está matriculado en cursos de extensión o complementarios
 										if($rCargas['car_curso_extension']==1){
-											$cursoExt = mysql_num_rows(mysql_query("SELECT * FROM academico_cargas_estudiantes WHERE carpest_carga='".$rCargas['car_id']."' AND carpest_estudiante='".$datosEstudianteActual['mat_id']."' AND carpest_estado=1",$conexion));
+											$cursoExt = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM academico_cargas_estudiantes WHERE carpest_carga='".$rCargas['car_id']."' AND carpest_estudiante='".$datosEstudianteActual['mat_id']."' AND carpest_estado=1"));
 											if($cursoExt==0){continue;}
 										}
 									    
 										$ultimoAcceso = 'Nunca';
 										$fondoCargaActual = '#FFF';
-										$cargaHistorial = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas_acceso 
-										WHERE carpa_id_carga='".$rCargas[0]."' AND carpa_id_estudiante='".$datosEstudianteActual['mat_id']."'",$conexion));
+										$cargaHistorial = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_cargas_acceso 
+										WHERE carpa_id_carga='".$rCargas[0]."' AND carpa_id_estudiante='".$datosEstudianteActual['mat_id']."'"), MYSQLI_BOTH);
 										if($cargaHistorial['carpa_id']!=""){
 											$ultimoAcceso = "(".$cargaHistorial['carpa_cantidad'].") ".$cargaHistorial['carpa_ultimo_acceso'];
 										}
@@ -89,9 +89,9 @@ if($config['conf_activar_encuesta']==1){
 											$fondoCargaActual = 'cornsilk';
 										}
 										//PLAN DE CLASE
-										$Cpc = mysql_query("SELECT * FROM academico_pclase WHERE pc_id_carga='".$rCargas[0]."' AND pc_periodo='".$_COOKIE["periodoE"]."'",$conexion);
-									    $Rpc = mysql_fetch_array($Cpc);
-									    $Npc = mysql_num_rows($Cpc);
+										$Cpc = mysqli_query($conexion, "SELECT * FROM academico_pclase WHERE pc_id_carga='".$rCargas[0]."' AND pc_periodo='".$_COOKIE["periodoE"]."'");
+									    $Rpc = mysqli_fetch_array($Cpc, MYSQLI_BOTH);
+									    $Npc = mysqli_num_rows($Cpc);
 										//DEFINITIVAS
 										$carga = $rCargas[0];
 										$periodo = $rCargas['car_periodo'];
@@ -131,7 +131,7 @@ if($config['conf_activar_encuesta']==1){
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

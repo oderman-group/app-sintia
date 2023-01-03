@@ -60,15 +60,14 @@ include("../../config-general/consulta-usuario-actual.php");?>
 	if($condicion!=""){
 		$condicionw="WHERE ";
 		}
-		$c_matricEst=mysql_query("SELECT mat_matricula,mat_primer_apellido,mat_segundo_apellido,mat_nombres,gru_nombre,gra_nombre,ogen_nombre,dr_fecha, dr_estudiante, dr_falta,
+		$c_matricEst=mysqli_query($conexion, "SELECT mat_matricula,mat_primer_apellido,mat_segundo_apellido,mat_nombres,gru_nombre,gra_nombre,ogen_nombre,dr_fecha, dr_estudiante, dr_falta,
 CASE dr_tipo WHEN 1 THEN 'Leve' WHEN 2 THEN 'Grave' WHEN 3 THEN 'Gravísima' END as tipo_falta
 FROM academico_matriculas am INNER JOIN academico_grupos ag ON am.mat_grupo=ag.gru_id
 INNER JOIN academico_grados agr ON agr.gra_id=am.mat_grado
 INNER JOIN opciones_generales og ON og.ogen_id=am.mat_tipo
 INNER JOIN disciplina_reportes dr ON dr.dr_estudiante=am.mat_id ".$condicionw.$condicion."
-ORDER BY mat_primer_apellido
-;",$conexion);
- while($resultado=mysql_fetch_array($c_matricEst)){
+ORDER BY mat_primer_apellido;");
+ while($resultado=mysqli_fetch_array($c_matricEst)){
   ?>
   <tr style="font-size:13px;">
       <td><?=$resultado["mat_matricula"];?></td>

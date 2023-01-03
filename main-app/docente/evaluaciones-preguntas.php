@@ -79,18 +79,19 @@ function mostrarNuevaRespuesta(datos){
 <?php include("../compartido/body.php");?>
 	
 	<?php
-	$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+	$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 
 	
 	//Cantidad de preguntas de la evaluación
-	$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+	$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 	INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 	WHERE evp_id_evaluacion='".$_GET["idE"]."'
 	ORDER BY preg_id DESC
-	",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	$cantPreguntas = mysql_num_rows($preguntasConsulta);
+	");
+	
+	$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 
 	?>
 
@@ -134,11 +135,11 @@ function mostrarNuevaRespuesta(datos){
 										<header class="panel-heading panel-heading-purple"><?=$frases[114][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$evaluacionesEnComun = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+											$evaluacionesEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 											WHERE eva_id_carga='".$cargaConsultaActual."' AND eva_periodo='".$periodoConsultaActual."' AND eva_id!='".$_GET["idE"]."' AND eva_estado=1
 											ORDER BY eva_id DESC
-											",$conexion);
-											while($evaComun = mysql_fetch_array($evaluacionesEnComun)){
+											");
+											while($evaComun = mysqli_fetch_array($evaluacionesEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="evaluaciones-preguntas.php?idE=<?=$evaComun['eva_id'];?>"><?=$evaComun['eva_nombre'];?></a></p>
 											<?php }?>
@@ -177,12 +178,12 @@ function mostrarNuevaRespuesta(datos){
 											$puntosSumados = 0;
 											$totalPuntos = 0;
 											$contPreguntas = 1;
-											while($preguntas = mysql_fetch_array($preguntasConsulta)){
-												$respuestasConsulta = mysql_query("SELECT * FROM academico_actividad_respuestas
+											while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
+												$respuestasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_respuestas
 												WHERE resp_id_pregunta='".$preguntas['preg_id']."'
-												",$conexion);
-												if(mysql_errno()!=0){echo mysql_error(); exit();}
-												$cantRespuestas = mysql_num_rows($respuestasConsulta);
+												");
+												
+												$cantRespuestas = mysqli_num_rows($respuestasConsulta);
 												
 												$totalPuntos +=$preguntas['preg_valor'];
 											?>
@@ -240,7 +241,7 @@ function mostrarNuevaRespuesta(datos){
 														
 											<?php 
 												$contRespuestas = 1;
-												while($respuestas = mysql_fetch_array($respuestasConsulta)){
+												while($respuestas = mysqli_fetch_array($respuestasConsulta, MYSQLI_BOTH)){
 													if($respuestas['resp_correcta']==1) {$colorRespuesta = 'green';} else {$colorRespuesta = 'red';}
 													if($respuestas['resp_correcta']==1 and $compararRespuestas[0]!=""){
 														$puntosSumados += $preguntas['preg_valor'];
@@ -296,7 +297,7 @@ function mostrarNuevaRespuesta(datos){
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>    

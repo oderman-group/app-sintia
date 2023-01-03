@@ -5,7 +5,8 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosConsulta = mysql_fetch_array(mysql_query("SELECT * FROM academico_clases WHERE cls_id='".$_GET["idR"]."' AND cls_estado=1",$conexion));
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_clases WHERE cls_id='".$_GET["idR"]."' AND cls_estado=1");
+$datosConsulta = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
 <!-- Theme Styles -->
 <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
@@ -78,11 +79,11 @@ $('#respRA').empty().hide().html("Guardando información, espere por favor...").
 										<div class="panel-body">
 											<p>Puedes cambiar a otra clases rápidamente para registrar la asistencia a tus estudiantes o hacer modificaciones de las mismas.</p>
 											<?php
-											$registrosEnComun = mysql_query("SELECT * FROM academico_clases 
+											$registrosEnComun = mysqli_query($conexion, "SELECT * FROM academico_clases 
 											WHERE cls_id_carga='".$cargaConsultaActual."' AND cls_periodo='".$periodoConsultaActual."' AND cls_estado=1 AND cls_id!='".$_GET["idR"]."'
 											ORDER BY cls_id DESC
-											",$conexion);
-											while($regComun = mysql_fetch_array($registrosEnComun)){
+											");
+											while($regComun = mysqli_fetch_array($registrosEnComun)){
 											?>
 												<p><a href="<?=$_SERVER['PHP_SELF'];?>?idR=<?=$regComun['cls_id'];?>"><?=$regComun['cls_tema'];?></a></p>
 											<?php }?>
@@ -130,14 +131,15 @@ $('#respRA').empty().hide().html("Guardando información, espere por favor...").
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas 
-													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
+													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
 													 $contReg = 1;
 													 $colorNota = "black";
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 if($datosConsulta['cls_registrada']==1){
 															 //Consulta de calificaciones si ya la tienen puestas.
-															 $notas = mysql_fetch_array(mysql_query("SELECT * FROM academico_ausencias WHERE aus_id_estudiante=".$resultado[0]." AND aus_id_clase='".$_GET["idR"]."'",$conexion));
+															 $consultaNotas=mysqli_query($conexion, "SELECT * FROM academico_ausencias WHERE aus_id_estudiante=".$resultado[0]." AND aus_id_clase='".$_GET["idR"]."'");
+															 $notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 														 }
 													 ?>
                                                     
@@ -170,7 +172,7 @@ $('#respRA').empty().hide().html("Guardando información, espere por favor...").
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

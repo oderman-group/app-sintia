@@ -2,7 +2,7 @@
  			<div class="sidebar-container" >
  				<div class="sidemenu-container navbar-collapse collapse fixed-menu">
 	                <div id="remove-scroll">
-						
+				
 						<?php
 						//Mostrar a los directivos si tiene deuda
 						if($config['conf_deuda']==1 and $datosUsuarioActual['uss_tipo']==5){
@@ -206,7 +206,11 @@
 									<li><a href="configuracion-importar-informacion.php">Importar información</a></li>
 	                            </ul>
 	                        </li>
-							
+
+							<div class="nav-item">
+							<?php include("../compartido/peso.php");?>
+							</div>
+												
 							<!--
 							<li class="nav-item active" data-step="11" data-intro="<b><?=$frases[175][$datosUsuarioActual[8]];?>:</b> Encuentra los mejores productos y servicios complementarios." data-position='left'>
 	                            <a href="marketplace.php" class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>

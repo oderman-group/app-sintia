@@ -79,8 +79,9 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
 												<input type="submit" class="btn btn-primary" value="Guardar cambios">
 											</form>
 											<?php
-											$pclase = mysql_fetch_array(mysql_query("SELECT * FROM academico_pclase 
-											WHERE pc_id_carga='".$cargaConsultaActual."' AND pc_periodo='".$periodoConsultaActual."'",$conexion));
+											$consultaPclase=mysqli_query($conexion, "SELECT * FROM academico_pclase 
+											WHERE pc_id_carga='".$cargaConsultaActual."' AND pc_periodo='".$periodoConsultaActual."'");
+											$pclase = mysqli_fetch_array($consultaPclase, MYSQLI_BOTH);
 											if($pclase['pc_plan']!=""){
 											?>
 											<hr>
@@ -163,19 +164,19 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
 														<td colspan="7">Unidad 1: Todos los temas.</td>
 													</tr>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_clases
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_clases
 													 WHERE cls_id_carga='".$cargaConsultaActual."' AND cls_periodo='".$periodoConsultaActual."' AND cls_estado=1
-													 ",$conexion);
+													 ");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$bg = '';
-														$numerosEstudiantes = mysql_fetch_array(mysql_query("SELECT
+														$consultaNumerosEstudiantes=mysqli_query($conexion, "SELECT
 														(SELECT count(*) FROM academico_ausencias 
 														INNER JOIN academico_matriculas ON mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 AND mat_id=aus_id_estudiante
 														WHERE aus_id_clase='".$resultado[0]."'),
 														(SELECT count(*) FROM academico_matriculas 
-														WHERE mat_grado='".$datosCargaActual[2]."' AND mat_grupo='".$datosCargaActual[3]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido)
-														",$conexion));
+														WHERE mat_grado='".$datosCargaActual[2]."' AND mat_grupo='".$datosCargaActual[3]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido)");
+														$numerosEstudiantes = mysqli_fetch_array($consultaNumerosEstudiantes, MYSQLI_BOTH);
 														if($numerosEstudiantes[0]<$numerosEstudiantes[1]) $bg = '#FCC';
 														 
 														$cheked = '';
@@ -241,7 +242,7 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

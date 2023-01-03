@@ -1,0 +1,11 @@
+MÓDULO DE INSCRIPCIONES
+
+Directorio ./admisiones
+
+bd-conexion.php
+$dbName = 'mobiliar_sintia_admisiones';
+$dbNameInstitucion = 'mobiliar_icolven_2022';
+
+
+Tablas de BD en ICOLVEN
+academico_matriculas_documentos

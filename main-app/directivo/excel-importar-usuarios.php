@@ -44,7 +44,7 @@ for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 	}	
 	
 
-		mysql_query("INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro, uss_email)VALUES(
+		mysqli_query($conexion, "INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro, uss_email)VALUES(
 			'".$data->sheets[0]['cells'][$i][1]."', 
 			'".$data->sheets[0]['cells'][$i][1]."', 
 			'".$data->sheets[0]['cells'][$i][6]."', 
@@ -54,11 +54,10 @@ for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 			now(), 
 			'".$_SESSION["id"]."', 
 			'".$data->sheets[0]['cells'][$i][3]."'
-			)
-		",$conexion);
+			)");
 		$lineaError = __LINE__;
 		include("../compartido/reporte-errores.php");
-		$idRegistro = mysql_insert_id();
+		$idRegistro = mysqli_insert_id($conexion);
 
 
 }

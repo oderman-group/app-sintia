@@ -2,16 +2,6 @@
 session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");?>
-<?php
-/*
- $conf_reporte=mysql_query("SELECT * FROM configuracion WHERE conf_id=2",$conexion);
-  $num_config_reporte=mysql_num_rows($conf_reporte);
-		  if($num_config_reporte>0){
-		  $config_reporte_actual=mysql_fetch_array($conf_reporte);
-		  $nom_boton="Actualizar";
-		  }
-*/
-?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
 
 <head>
@@ -71,11 +61,11 @@ include("../../config-general/consulta-usuario-actual.php");?>
       $ordenado = $_GET["orden"]." DESC";
     }
 
-    $consulta = mysql_query("SELECT * FROM academico_matriculas 
+    $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
   LEFT JOIN academico_grados ON gra_id=mat_grado
   WHERE  mat_eliminado=0 $filtro
-  ORDER BY $ordenado", $conexion);
-    while ($resultado = mysql_fetch_array($consulta)) {
+  ORDER BY $ordenado");
+    while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
       $colorProceso = 'tomato';
       if ($resultado["mat_informe_parcial"] >= 1) {
         $colorProceso = '';

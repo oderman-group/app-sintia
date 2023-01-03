@@ -1,14 +1,7 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0060';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
-<?php
-$datosEditar = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas
-LEFT JOIN usuarios ON uss_id=mat_acudiente
-WHERE mat_id_usuario='".$_GET["idR"]."'",$conexion));
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-?>
     <!-- Material Design Lite CSS -->
 	<link rel="stylesheet" href="../../config-general/assets/plugins/material/material.min.css">
 	<link rel="stylesheet" href="../../config-general/assets/css/material_style.css">
@@ -67,7 +60,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                  	<form name="example_advanced_form" id="example-advanced-form" action="configuracion-institucion-guardar.php" method="post" enctype="multipart/form-data">
                                         
                                        <?php 
-									   $datosinf= mysql_fetch_array(mysql_query("SELECT info_id, info_rector, info_secretaria_academica, info_logo, info_nit, info_nombre, info_direccion, info_telefono, info_clase, info_caracter, info_calendario, info_jornada, info_horario, info_niveles, info_modalidad, info_propietario, info_coordinador_academico, info_tesorero FROM general_informacion;",$conexion));
+                                       $consultaDatosInf=mysqli_query($conexion, "SELECT info_id, info_rector, info_secretaria_academica, info_logo, info_nit, info_nombre, info_direccion, info_telefono, info_clase, info_caracter, info_calendario, info_jornada, info_horario, info_niveles, info_modalidad, info_propietario, info_coordinador_academico, info_tesorero FROM general_informacion;");
+									   $datosinf= mysqli_fetch_array($consultaDatosInf, MYSQLI_BOTH);
 									   ?>
 									  
 										<h3>Información Basica</h3>
@@ -180,12 +174,12 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                             <label class="col-sm-2 control-label">Rector(a)</label>
                                             <div class="col-sm-4">
 												<?php
-												$consulta=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0",$conexion);
+												$consulta=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0");
 												?>
                                                 <select class="form-control" name="rectorI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
-                                                    while($r=mysql_fetch_array($consulta)){
+                                                    while($r=mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                     if($datosinf["info_rector"]==$r["uss_id"]){
                                                     ?>
                                                     <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo $r["uss_nombre"];?></option>
@@ -207,8 +201,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control" name="secretarioI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
-                                                    $consulta=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0",$conexion);
-                                                    while($r=mysql_fetch_array($consulta)){
+                                                    $consulta=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0");
+                                                    while($r=mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                     if($datosinf["info_secretaria_academica"]==$r["uss_id"]){
                                                     ?>
                                                     <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo $r["uss_nombre"];?></option>
@@ -230,8 +224,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control" name="coordinadorI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
-                                                    $consulta=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0",$conexion);
-                                                    while($r=mysql_fetch_array($consulta)){
+                                                    $consulta=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0");
+                                                    while($r=mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                     if($datosinf["info_coordinador_academico"]==$r["uss_id"]){
                                                     ?>
                                                     <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo $r["uss_nombre"];?></option>
@@ -253,8 +247,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control" name="tesoreroI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
-                                                    $consulta=mysql_query("SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0",$conexion);
-                                                    while($r=mysql_fetch_array($consulta)){
+                                                    $consulta=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=5 and uss_bloqueado=0");
+                                                    while($r=mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                     if($datosinf["info_tesorero"]==$r["uss_id"]){
                                                     ?>
                                                     <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo $r["uss_nombre"];?></option>
@@ -283,7 +277,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <!-- start footer -->

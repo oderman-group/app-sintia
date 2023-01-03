@@ -2,16 +2,6 @@
 session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");?>
-<?php
-/*
- $conf_reporte=mysql_query("SELECT * FROM configuracion WHERE conf_id=2",$conexion);
-  $num_config_reporte=mysql_num_rows($conf_reporte);
-		  if($num_config_reporte>0){
-		  $config_reporte_actual=mysql_fetch_array($conf_reporte);
-		  $nom_boton="Actualizar";
-		  }
-*/
-?>
 <head>
 	<title>Movimientos Financieros</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -36,10 +26,12 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                         <th>Cerrado</th>
   </tr>
   <?php
-									 $consulta = mysql_query("SELECT * FROM finanzas_cuentas WHERE fcu_anulado=0",$conexion);
-									 while($resultado = mysql_fetch_array($consulta)){
-										 $u = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado[6]."'",$conexion));
-										 $cerrado = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado[11]."'",$conexion));
+									 $consulta = mysqli_query($conexion, "SELECT * FROM finanzas_cuentas WHERE fcu_anulado=0");
+									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                    $consultaU=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado[6]."'");
+										 $u = mysqli_fetch_array($consultaU, MYSQLI_BOTH);
+                     $consultaCerrado=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado[11]."'");
+										 $cerrado = mysqli_fetch_array($consultaCerrado, MYSQLI_BOTH);
 										 $nombreCompleto = strtoupper($u[4]);
 										 switch($resultado[4]){case 1: $tipo = "Ingreso"; break; case 2: $tipo = "Egreso"; break; case 3: $tipo = "Cuenta por cobrar"; break; case 4: $tipo = "Cuenta por pagar"; break;}
 										 switch($resultado[8]){case 1: $forma = "Efectivo"; break; case 2: $forma = "Cheque"; break; case 3: $forma = "T. D&eacute;bito"; break; case 4: $forma = "T. Cr&eacute;dito"; break; case 5: $forma = "N/A"; break; default: $forma = "N/A"; break;}

@@ -1,12 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0049';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosEditar = mysql_fetch_array(mysql_query("SELECT * FROM academico_cargas
-INNER JOIN usuarios ON uss_id=car_responsable
-WHERE car_id='".$_GET["idR"]."'",$conexion));
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_cargas INNER JOIN usuarios ON uss_id=car_responsable WHERE car_id='".$_GET["idR"]."'");
+$datosEditar = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -76,15 +74,12 @@ WHERE car_id='".$_GET["idR"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Docente</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM usuarios
-												WHERE uss_tipo=2
-												ORDER BY uss_nombre
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_tipo=2 ORDER BY uss_nombre");
 												?>
                                                 <select class="form-control  select2" name="docente" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos[0]==$datosEditar['car_docente']) $select = 'selected';
@@ -100,14 +95,12 @@ WHERE car_id='".$_GET["idR"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Curso</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grados
-												ORDER BY gra_vocal
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grados ORDER BY gra_vocal");
 												?>
                                                 <select class="form-control  select2" name="curso" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos[0]==$datosEditar['car_curso']) $select = 'selected';
@@ -123,13 +116,12 @@ WHERE car_id='".$_GET["idR"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Grupo</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grupos
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grupos");
 												?>
                                                 <select class="form-control  select2" name="grupo" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['car_grupo']) $select = 'selected';
 													?>
@@ -143,15 +135,12 @@ WHERE car_id='".$_GET["idR"]."'",$conexion));
                                             <label class="col-sm-2 control-label">Asignatura - Área</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_materias
-												INNER JOIN academico_areas ON ar_id=mat_area
-												ORDER BY mat_nombre
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_materias INNER JOIN academico_areas ON ar_id=mat_area ORDER BY mat_nombre");
 												?>
                                                 <select class="form-control  select2" name="asignatura" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos[0]==$datosEditar['car_materia']) $select = 'selected';
 													?>
@@ -325,7 +314,7 @@ WHERE car_id='".$_GET["idR"]."'",$conexion));
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

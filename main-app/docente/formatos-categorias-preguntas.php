@@ -8,18 +8,18 @@
 <?php include("../compartido/body.php");?>
 	
 	<?php
-	$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+	$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 
 	
 	//Cantidad de preguntas de la evaluación
-	$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+	$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 	INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 	WHERE evp_id_evaluacion='".$_GET["idE"]."'
-	ORDER BY preg_id DESC
-	",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	$cantPreguntas = mysql_num_rows($preguntasConsulta);
+	ORDER BY preg_id DESC");
+	
+	$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 
 	?>
 
@@ -61,11 +61,10 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[222][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$evaluacionesEnComun = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+											$evaluacionesEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 											WHERE eva_formato='".$_GET["idF"]."' AND eva_id!='".$_GET["idE"]."' AND eva_estado=1
-											ORDER BY eva_id DESC
-											",$conexion);
-											while($evaComun = mysql_fetch_array($evaluacionesEnComun)){
+											ORDER BY eva_id DESC");
+											while($evaComun = mysqli_fetch_array($evaluacionesEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="formatos-categorias-preguntas.php?idE=<?=$evaComun['eva_id'];?>&idF=<?=$_GET["idF"];?>"><?=$evaComun['eva_nombre'];?></a></p>
 											<?php }?>
@@ -91,7 +90,7 @@
 
 											<?php
 											$contPreguntas = 1;
-											while($preguntas = mysql_fetch_array($preguntasConsulta)){
+											while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
 												$colorDefault = 'blue';
 												if($preguntas['preg_critica']==1) $colorDefault = 'red';
 											?>
@@ -133,7 +132,7 @@
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>    

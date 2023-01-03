@@ -7,8 +7,8 @@
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
 <?php
-$datosConsulta = mysql_fetch_array(mysql_query("SELECT * FROM academico_formatos 
-WHERE form_id='".$_GET["idF"]."'",$conexion));
+$consultaDatos=mysqli_query($conexion, "SELECT * FROM academico_formatos WHERE form_id='".$_GET["idF"]."'");
+$datosConsulta = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
 ?>
     <div class="page-wrapper">
         <?php include("../compartido/encabezado.php");?>
@@ -67,16 +67,15 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
 											
 											<div class="panel-group accordion" id="accordion3">
 												<?php
-												  $consulta = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+												  $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 												  WHERE eva_formato='".$_GET["idF"]."' AND eva_estado=1
 												  ORDER BY eva_id DESC
-												  ",$conexion);
-												  while($resultado = mysql_fetch_array($consulta)){
-													
+												  ");
+												  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){											
 													//Cantidad de preguntas de la evaluación
-													$cantPreguntas = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
-													WHERE evp_id_evaluacion='".$resultado['eva_id']."'
-													",$conexion));
+													$consultaCantPreguntas=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
+													WHERE evp_id_evaluacion='".$resultado['eva_id']."'");
+													$cantPreguntas = mysqli_num_rows($consultaCantPreguntas);
 												 ?>
 												  <div class="panel panel-default">
 													  <div class="panel-heading panel-heading-gray">
@@ -121,7 +120,7 @@ WHERE form_id='".$_GET["idF"]."'",$conexion));
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

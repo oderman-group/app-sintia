@@ -5,7 +5,8 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idR"]."'",$conexion));
+$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idR"]."'");
+$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -55,11 +56,10 @@ $evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_e
 										<header class="panel-heading panel-heading-purple"><?=$frases[222][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$evaluacionesEnComun = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+											$evaluacionesEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 											WHERE eva_formato='".$_GET["idF"]."' AND eva_id!='".$_GET["idR"]."' AND eva_estado=1
-											ORDER BY eva_id DESC
-											",$conexion);
-											while($evaComun = mysql_fetch_array($evaluacionesEnComun)){
+											ORDER BY eva_id DESC");
+											while($evaComun = mysqli_fetch_array($evaluacionesEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="formatos-categorias-editar.php?idR=<?=$evaComun['eva_id'];?>&idF=<?=$_GET["idF"];?>"><?=$evaComun['eva_nombre'];?></a></p>
 											<?php }?>
@@ -106,7 +106,7 @@ $evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_e
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

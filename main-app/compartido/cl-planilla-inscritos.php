@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta = mysql_query("SELECT * FROM cl_estudiantes_cursos WHERE estcur_id_curso='".$_GET["cursoId"]."' AND estcur_id_estado=2",$conexion);
+$consulta = mysqli_query($conexion, "SELECT * FROM cl_estudiantes_cursos WHERE estcur_id_curso='".$_GET["cursoId"]."' AND estcur_id_estado=2");
 ?>
 <head>
 	<title>PLANILLA DE ASISTENCIA - WolfSyetem</title>
@@ -34,9 +34,9 @@ $consulta = mysql_query("SELECT * FROM cl_estudiantes_cursos WHERE estcur_id_cur
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
-	$consultaAdicional = mysql_query("SELECT * FROM cl_estudiantes WHERE est_usuario='".$resultado[1]."'",$conexion);
-	$resultadoAdicional = mysql_fetch_array($consultaAdicional);
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+	$consultaAdicional = mysqli_query($conexion, "SELECT * FROM cl_estudiantes WHERE est_usuario='".$resultado[1]."'");
+	$resultadoAdicional = mysqli_fetch_array($consultaAdicional, MYSQLI_BOTH);
 ?>
     <tr style="font-size:10px;">
         <td align="center"><?=$con;?></td>

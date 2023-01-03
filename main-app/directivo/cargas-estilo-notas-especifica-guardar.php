@@ -7,7 +7,7 @@
 			<a href='javascript:history.go(-1)'>[Volver al formulario]</a></samp>";
 		exit();
 	}
-	mysql_query("INSERT INTO academico_notas_tipos (notip_nombre, notip_desde, notip_hasta,notip_categoria)VALUES('" . $_POST["nombreCN"] . "'," . $_POST["ndesdeCN"] . "," . $_POST["nhastaCN"] . "," . $_POST["idCN"] . ");", $conexion);
+	mysqli_query($conexion, "INSERT INTO academico_notas_tipos (notip_nombre, notip_desde, notip_hasta,notip_categoria)VALUES('" . $_POST["nombreCN"] . "'," . $_POST["ndesdeCN"] . "," . $_POST["nhastaCN"] . "," . $_POST["idCN"] . ");");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

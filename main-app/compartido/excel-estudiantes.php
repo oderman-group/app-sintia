@@ -3,7 +3,9 @@ header("Content-Type: application/vnd.ms-excel");
 header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 header("content-disposition: attachment;filename=Estudiantes_".date("d/m/Y")."-SINTIA.xls");
-include("../modelo/conexion.php");
+session_start();
+include("../../config-general/config.php");
+include("../../config-general/consulta-usuario-actual.php");
 ?>
 
 <head>
@@ -12,7 +14,7 @@ include("../modelo/conexion.php");
 </head>
 
 <?php
-$consulta=mysql_query("SELECT * FROM academico_matriculas WHERE mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
+$consulta=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_eliminado=0 ORDER BY mat_primer_apellido");
 ?>
 <div align="center">  
 <table  width="100%" border="1" rules="all">
@@ -46,9 +48,10 @@ $consulta=mysql_query("SELECT * FROM academico_matriculas WHERE mat_eliminado=0 
     <tbody>
 <?php 
 $conta=1;
-while($resultado=mysql_fetch_array($consulta))
+while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
 {
-	$datosA = mysql_fetch_array(mysql_query("SELECT gra_nombre, gru_nombre, uss_usuario, uss_nombre FROM academico_grados, usuarios, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."' AND uss_id='".$resultado['mat_acudiente']."'",$conexion));
+    $consultaDatosA=mysqli_query($conexion, "SELECT gra_nombre, gru_nombre, uss_usuario, uss_nombre FROM academico_grados, usuarios, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."' AND uss_id='".$resultado['mat_acudiente']."'");
+	$datosA = mysqli_fetch_array($consultaDatosA, MYSQLI_BOTH);
 	switch($resultado['mat_estado_matricula']){
 		case 1:
 		$estadoM='Matriculado';

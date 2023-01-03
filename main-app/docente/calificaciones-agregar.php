@@ -5,12 +5,13 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$valores = mysql_fetch_array(mysql_query("SELECT
+$consultaValores=mysqli_query($conexion, "SELECT
 (SELECT sum(act_valor) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1),
 (SELECT count(*) FROM academico_actividades 
 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)
-",$conexion));
+");
+$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
 $porcentajeRestante = 100 - $valores[0];
 
 if(
@@ -103,18 +104,19 @@ if(
 											
 											<?php 
 											if($datosCargaActual['car_indicador_automatico']==1){
-												
-												$indDef = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores WHERE ind_definitivo=1",$conexion));
+												$consultaIndDef=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_definitivo=1");
+												$indDef = mysqli_fetch_array($consultaIndDef, MYSQLI_BOTH);
 												$indicadorAuto = $indDef['ind_id'];
 												
-												$indicadorDefitnivo = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga
+												$consultaIndicadorDefinitivo=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 												INNER JOIN academico_indicadores ON ind_id=ipc_indicador AND ind_definitivo=1
 												WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'
-												",$conexion));
+												");
+												$indicadorDefitnivo = mysqli_fetch_array($consultaIndicadorDefinitivo, MYSQLI_BOTH);
 
 												//Si no existe el indicador definitivo en la carga lo asociamos.
 												if($indicadorDefitnivo[0]==""){	
-													mysql_query("INSERT INTO academico_indicadores_carga (ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$cargaConsultaActual."', '".$indDef['ind_id']."', '".$indDef['ind_valor']."', '".$periodoConsultaActual."', 1)",$conexion);	
+													mysqli_query($conexion, "INSERT INTO academico_indicadores_carga (ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$cargaConsultaActual."', '".$indDef['ind_id']."', '".$indDef['ind_valor']."', '".$periodoConsultaActual."', 1)");	
 												}
 											?>
 											<input type="hidden" name="indicador" class="form-control" value="<?=$indicadorAuto;?>">
@@ -123,15 +125,15 @@ if(
                                             <label class="col-sm-2 control-label">Indicador</label>
                                             <div class="col-sm-10">
 												<?php
-												$indicadoresConsulta = mysql_query("SELECT * FROM academico_indicadores_carga
+												$indicadoresConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 												INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 												WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'
-												",$conexion);
+												");
 												?>
                                                 <select class="form-control  select2" name="indicador" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($indicadoresDatos = mysql_fetch_array($indicadoresConsulta)){
+													while($indicadoresDatos = mysqli_fetch_array($indicadoresConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$indicadoresDatos['ind_id'];?>"><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
 													<?php }?>
@@ -145,13 +147,13 @@ if(
                                             <label class="col-sm-2 control-label">Evidencia</label>
                                             <div class="col-sm-10">
 												<?php
-												$evidenciasConsulta = mysql_query("SELECT * FROM academico_evidencias
-												",$conexion);
+												$evidenciasConsulta = mysqli_query($conexion, "SELECT * FROM academico_evidencias
+												");
 												?>
                                                 <select class="form-control  select2" name="evidencia" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($evidenciasDatos = mysql_fetch_array($evidenciasConsulta)){
+													while($evidenciasDatos = mysqli_fetch_array($evidenciasConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$evidenciasDatos[0];?>"><?=$evidenciasDatos['evid_nombre']." (".$evidenciasDatos['evid_valor']."%)"?></option>
 													<?php }?>
@@ -189,7 +191,7 @@ if(
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

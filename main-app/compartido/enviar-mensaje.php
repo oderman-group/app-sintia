@@ -182,28 +182,28 @@ if(isset($_POST["enviar"]))
 
 switch($_GET["opcion"]){
 	case 0:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id='".$_GET["para"]."'",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id='".$_GET["para"]."'");
 	break;
 	
 	case 1:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE email!=''");
 	break;
 	
 	case 2:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id_perfil=2 AND email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id_perfil=2 AND email!=''");
 	break;
 	
 	case 3:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id_perfil=3 AND email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id_perfil=3 AND email!=''");
 	break;
 }
 
-while($resultado = mysql_fetch_array($consulta)){
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	if($resultado[6]=="")
 		continue;
 	else{	
-		mysql_query("INSERT INTO emails(ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto)VALUES('".$_GET["de"]."', '".$resultado[0]."', '".$_POST["asunto"]."', '".$_POST["mensaje"]."', now(), 0)",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "INSERT INTO emails(ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto)VALUES('".$_GET["de"]."', '".$resultado[0]."', '".$_POST["asunto"]."', '".$_POST["mensaje"]."', now(), 0)");
+		
 	}	
 }
 	
@@ -255,7 +255,7 @@ while($resultado = mysql_fetch_array($consulta)){
     
     <tr>
     	<td style="background:#FFFFFF; color:#000000; text-align:center; font-size:10px;" colspan="2">
-        	© 2013 WolfSystem - SGPA de <span style="color:#FF6600; font-weight:bold;">jAcad&eacute;mico, Soluci&oacute;n integral</span><br>
+        	ï¿½ 2013 WolfSystem - SGPA de <span style="color:#FF6600; font-weight:bold;">jAcad&eacute;mico, Soluci&oacute;n integral</span><br>
 			Sistema Gestor de Procesos Acad&eacute;micos<br>
 			Universidades | Colegios | Institutos<br>
 			info@wolfsystem.co<br>
@@ -300,29 +300,30 @@ while($resultado = mysql_fetch_array($consulta)){
 		exit();
 
 }
-$remite = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE id='".$_GET["de"]."'",$conexion));
+$consultaRemite=mysqli_query($conexion, "SELECT * FROM usuarios WHERE id='".$_GET["de"]."'");
+$remite = mysqli_fetch_array($consultaRemite, MYSQLI_BOTH);
 
 switch($_GET["opcion"]){
 	case 0:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id='".$_GET["para"]."'",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id='".$_GET["para"]."'");
 	break;
 	
 	case 1:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE email!=''");
 	break;
 	
 	case 2:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id_perfil=2 AND email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id_perfil=2 AND email!=''");
 	break;
 	
 	case 3:
-	$consulta = mysql_query("SELECT * FROM usuarios WHERE id_perfil=3 AND email!=''",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE id_perfil=3 AND email!=''");
 	break;
 }
 
 $num = mysql_num_rows($consulta);
 $con=1;
-while($resultado = mysql_fetch_array($consulta)){
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	if($resultado[6]=="")
 		continue;
 	else{	
@@ -333,7 +334,6 @@ while($resultado = mysql_fetch_array($consulta)){
 	}	
 	$con++;
 }
-//$destino = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE id='".$_GET["para"]."'",$conexion));
 ?>         
 
 			<div class="row-fluid">

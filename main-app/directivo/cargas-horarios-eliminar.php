@@ -1,7 +1,7 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("UPDATE academico_horarios SET hor_estado=0 WHERE hor_id=" . $_GET["idH"] . ";", $conexion);
+	mysqli_query($conexion, "UPDATE academico_horarios SET hor_estado=0 WHERE hor_id=" . $_GET["idH"] . ";");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

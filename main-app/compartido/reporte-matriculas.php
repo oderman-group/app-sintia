@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta = mysql_query("SELECT * FROM matriculas, inscripciones WHERE inscripciones.id=matriculas.id_estudiante",$conexion);
+$consulta = mysqli_query($conexion, "SELECT * FROM matriculas, inscripciones WHERE inscripciones.id=matriculas.id_estudiante");
 ?>
 <head>
 	<title>REPORTES - WolfSystem</title>
@@ -28,18 +28,18 @@ $consulta = mysql_query("SELECT * FROM matriculas, inscripciones WHERE inscripci
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
-$consultaA1 = mysql_query("SELECT * FROM programas WHERE programas.id='".$resultado[11]."'",$conexion);
-									$resultadoA1 = mysql_fetch_array($consultaA1);
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+$consultaA1 = mysqli_query($conexion, "SELECT * FROM programas WHERE programas.id='".$resultado[11]."'");
+									$resultadoA1 = mysqli_fetch_array($consultaA1, MYSQLI_BOTH);
 									//===========================
-									$consultaAdicional = mysql_query("SELECT * FROM grupos, asignaturas, programas WHERE grupos.id='".$resultado[3]."' AND programas.id=grupos.id_programa AND asignaturas.id=grupos.id_asignatura",$conexion);
-									$resultadoAdicional = mysql_fetch_array($consultaAdicional);
+									$consultaAdicional = mysqli_query($conexion, "SELECT * FROM grupos, asignaturas, programas WHERE grupos.id='".$resultado[3]."' AND programas.id=grupos.id_programa AND asignaturas.id=grupos.id_asignatura");
+									$resultadoAdicional = mysqli_fetch_array($consultaAdicional, MYSQLI_BOTH);
 									//============================================================
-									$consultaAdicional2 = mysql_query("SELECT * FROM carga_academica, usuarios WHERE carga_academica.id_grupo='".$resultadoAdicional[0]."' AND usuarios.id=carga_academica.id_docente",$conexion);
-									$resultadoAdicional2 = mysql_fetch_array($consultaAdicional2);
+									$consultaAdicional2 = mysqli_query($conexion, "SELECT * FROM carga_academica, usuarios WHERE carga_academica.id_grupo='".$resultadoAdicional[0]."' AND usuarios.id=carga_academica.id_docente");
+									$resultadoAdicional2 = mysqli_fetch_array($consultaAdicional2, MYSQLI_BOTH);
 									//============================================================
-									$consultaAdicional3 = mysql_query("SELECT * FROM estados_matriculas WHERE id='".$resultado[4]."'",$conexion);
-									$resultadoAdicional3 = mysql_fetch_array($consultaAdicional3);
+									$consultaAdicional3 = mysqli_query($conexion, "SELECT * FROM estados_matriculas WHERE id='".$resultado[4]."'");
+									$resultadoAdicional3 = mysqli_fetch_array($consultaAdicional3, MYSQLI_BOTH);
 ?>
     <tr style="font-size:8px;">
         <td align="center"><?=$con;?></td>

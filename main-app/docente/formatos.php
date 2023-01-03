@@ -59,14 +59,10 @@
 											
 											<div class="panel-group accordion" id="accordion3">
 												<?php
-												  $consulta = mysql_query("SELECT * FROM academico_formatos
-												  WHERE form_carga='".$cargaConsultaActual."'
-												  ",$conexion);
-												  while($resultado = mysql_fetch_array($consulta)){
-													
-													$cantCategorias = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluaciones	
-													WHERE eva_formato='".$resultado['form_id']."'
-													",$conexion));
+												  $consulta = mysqli_query($conexion, "SELECT * FROM academico_formatos WHERE form_carga='".$cargaConsultaActual."'");
+												  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+													$consultaCantCategoria=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_formato='".$resultado['form_id']."'");
+													$cantCategorias = mysqli_num_rows($consultaCantCategoria);
 												 ?>
 												  <div class="panel panel-default">
 													  <div class="panel-heading panel-heading-gray">
@@ -110,7 +106,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

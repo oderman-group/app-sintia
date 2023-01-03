@@ -30,19 +30,18 @@
 	                                    </li>
 										-->
 										<?php
-										$datosConsultaChat = mysql_query("SELECT * FROM usuarios 
+										$datosConsultaChat = mysqli_query($conexion, "SELECT * FROM usuarios 
 										INNER JOIN perfiles ON pes_id=uss_tipo
 										WHERE uss_estado=1 AND uss_bloqueado=0
 										AND YEAR(uss_ultimo_ingreso)='".date("Y")."' AND MONTH(uss_ultimo_ingreso)='".date("m")."'
 										ORDER BY uss_nombre
-										LIMIT 0, 800
-										",$conexion);
-										while($datosChat = mysql_fetch_array($datosConsultaChat)){
+										LIMIT 0, 800");
+										while($datosChat = mysqli_fetch_array($datosConsultaChat, MYSQLI_BOTH)){
 											
-											$sinLeer = mysql_num_rows(mysql_query("SELECT * FROM mobiliar_sintia_social.chat 
+											$consultaSinLeer=mysqli_query($conexion, "SELECT * FROM mobiliar_sintia_social.chat 
 											WHERE chat_destino_usuario='".$_SESSION["id"]."' AND chat_remite_usuario='".$datosChat["uss_id"]."'
-											AND chat_remite_institucion='".$config['conf_id_institucion']."' AND chat_destino_institucion='".$config['conf_id_institucion']."' AND chat_visto='0'
-											",$conexion));
+											AND chat_remite_institucion='".$config['conf_id_institucion']."' AND chat_destino_institucion='".$config['conf_id_institucion']."' AND chat_visto='0'");
+											$sinLeer = mysqli_num_rows($consultaSinLeer);
 											
 											$nombreSeparado = explode(" ", $datosChat["uss_nombre"]);
 											

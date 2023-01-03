@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0063';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -83,8 +82,8 @@
 													<tr>
 														<th width="50%">Materia</th>
 														<?php
-														$cursos = mysql_query("SELECT * FROM academico_grados",$conexion); 
-														while($c = mysql_fetch_array($cursos)){
+														$cursos = mysqli_query($conexion, "SELECT * FROM academico_grados"); 
+														while($c = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
 														?>
 														<th style="font-size:8px; text-align:center;"><?=$c[2];?></th>
 														<?php
@@ -94,15 +93,16 @@
 												</thead>
 												<tbody>
 													<?php
-													$materias = mysql_query("SELECT * FROM academico_materias",$conexion);
-													while($m = mysql_fetch_array($materias)){
+													$materias = mysqli_query($conexion, "SELECT * FROM academico_materias");
+													while($m = mysqli_fetch_array($materias, MYSQLI_BOTH)){
 													?>
 													<tr id="data1">
 														<td><?=$m[2];?></td>
 														<?php
-														$curso = mysql_query("SELECT * FROM academico_grados",$conexion); 
-														while($c = mysql_fetch_array($curso)){
-															$ipc = mysql_fetch_array(mysql_query("SELECT * FROM academico_intensidad_curso WHERE ipc_curso=".$c[0]." AND ipc_materia=".$m[0]."",$conexion)); 
+														$curso = mysqli_query($conexion, "SELECT * FROM academico_grados"); 
+														while($c = mysqli_fetch_array($curso, MYSQLI_BOTH)){
+															$consultaIpc=mysqli_query($conexion, "SELECT * FROM academico_intensidad_curso WHERE ipc_curso=".$c[0]." AND ipc_materia=".$m[0]."");
+															$ipc = mysqli_fetch_array($consultaIpc, MYSQLI_BOTH); 
 														?>
 															<td><input type="text" style="width:20px; text-align:center;" maxlength="2" value="<?=$ipc['ipc_intensidad'];?>" id="<?=$c[0];?>" name="<?=$m[0];?>" onChange="ipc(this)" title="<?=$c[2];?>"></td>
 														<?php
@@ -123,7 +123,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

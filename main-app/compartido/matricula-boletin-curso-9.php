@@ -21,21 +21,21 @@ if (is_numeric($_REQUEST["curso"])) {
     $filtro .= " AND mat_grado='" . $_REQUEST["curso"] . "'";
 }
 
-$matriculadosPorCurso = mysql_query("SELECT * FROM academico_matriculas 
+$matriculadosPorCurso = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
 WHERE mat_eliminado=0 AND mat_estado_matricula=1 $filtro 
 GROUP BY mat_id
-ORDER BY mat_grupo, mat_primer_apellido", $conexion);
-while($matriculadosDatos = mysql_fetch_array($matriculadosPorCurso)){
+ORDER BY mat_grupo, mat_primer_apellido");
+while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)){
 //contador materias
 $cont_periodos=0;
 $contador_indicadores=0;
 $materiasPerdidas=0;
 //======================= DATOS DEL ESTUDIANTE MATRICULADO =========================
-$usr=mysql_query("SELECT * FROM academico_matriculas am
+$usr=mysqli_query($conexion, "SELECT * FROM academico_matriculas am
 INNER JOIN academico_grupos ON mat_grupo=gru_id
-INNER JOIN academico_grados ON mat_grado=gra_id WHERE mat_id=".$matriculadosDatos[0],$conexion);
-$num_usr=mysql_num_rows($usr);
-$datos_usr=mysql_fetch_array($usr);
+INNER JOIN academico_grados ON mat_grado=gra_id WHERE mat_id=".$matriculadosDatos[0]);
+$num_usr=mysqli_num_rows($usr);
+$datos_usr=mysqli_fetch_array($usr, MYSQLI_BOTH);
 if($num_usr==0)
 {
 ?>
@@ -93,19 +93,19 @@ $contador_periodos=0;
 	</tr>
 	
 	<?php
-	$cargasConsulta = mysql_query("SELECT * FROM academico_cargas
+	$cargasConsulta = mysqli_query($conexion, "SELECT * FROM academico_cargas
 	INNER JOIN academico_materias ON mat_id=car_materia
-	WHERE car_curso='".$datos_usr["mat_grado"]."' AND car_grupo='".$datos_usr["mat_grupo"]."'",$conexion);
+	WHERE car_curso='".$datos_usr["mat_grado"]."' AND car_grupo='".$datos_usr["mat_grupo"]."'");
 	$i=1;
-	while($cargas = mysql_fetch_array($cargasConsulta)){
-		$indicadores = mysql_query("SELECT * FROM academico_indicadores_carga
+	while($cargas = mysqli_fetch_array($cargasConsulta, MYSQLI_BOTH)){
+		$indicadores = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 		INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 		WHERE ipc_carga='".$cargas['car_id']."' AND ipc_periodo='".$_GET["periodo"]."'
-		",$conexion);
+		");
 		
-		$observacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_boletin
-		WHERE bol_carga='".$cargas['car_id']."' AND bol_periodo='".$_GET["periodo"]."' AND bol_estudiante='".$datos_usr["mat_id"]."'
-		",$conexion));
+		$consultaObservacion=mysqli_query($conexion, "SELECT * FROM academico_boletin
+		WHERE bol_carga='".$cargas['car_id']."' AND bol_periodo='".$_GET["periodo"]."' AND bol_estudiante='".$datos_usr["mat_id"]."'");
+		$observacion = mysqli_fetch_array($consultaObservacion, MYSQLI_BOTH);
 		
 		$colorFondo = '#FFF;';
 		if($i%2==0){$colorFondo = '#e0e0153b';}
@@ -115,7 +115,7 @@ $contador_periodos=0;
 		<td width="92%">
 			<b><?=$cargas['mat_nombre'];?></b><br>
 			<?php
-			while($ind = mysql_fetch_array($indicadores)){
+			while($ind = mysqli_fetch_array($indicadores, MYSQLI_BOTH)){
 				echo "- ".$ind['ind_nombre']."<br>";
 			}
 			?>
@@ -131,12 +131,12 @@ $contador_periodos=0;
 </table>
 	<p>&nbsp;</p>
 <?php 
-$cndisiplina = mysql_query("SELECT * FROM disiplina_nota 
+$cndisiplina = mysqli_query($conexion, "SELECT * FROM disiplina_nota 
 WHERE dn_cod_estudiante='".$matriculadosDatos[0]."' AND dn_periodo<='".$_GET["periodo"]."'
 GROUP BY dn_cod_estudiante, dn_periodo
 ORDER BY dn_id
-",$conexion);
-if(@mysql_num_rows($cndisiplina)>0){
+");
+if(@mysqli_num_rows($cndisiplina)>0){
 ?>
 <table width="100%" id="tblBoletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
 
@@ -149,8 +149,9 @@ if(@mysql_num_rows($cndisiplina)>0){
         <!--<td width="8%">Nota</td>-->
         <td>Observaciones</td>
     </tr>
-<?php while($rndisiplina=mysql_fetch_array($cndisiplina)){
-$desempenoND = mysql_fetch_array(mysql_query("SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config[22]."' AND ".$rndisiplina["dn_nota"].">=notip_desde AND ".$rndisiplina["dn_nota"]."<=notip_hasta",$conexion));
+<?php while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
+$consultaDesempenoND=mysqli_query($conexion, "SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config[22]."' AND ".$rndisiplina["dn_nota"].">=notip_desde AND ".$rndisiplina["dn_nota"]."<=notip_hasta");
+$desempenoND = mysqli_fetch_array($consultaDesempenoND, MYSQLI_BOTH);
 ?>
     <tr align="center" style="font-weight:bold; font-size:12px; height:20px;">
         <td><?=$rndisiplina["dn_periodo"]?></td>

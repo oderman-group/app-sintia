@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0046';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -36,7 +35,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="areas.php" onClick="deseaRegresar(this)"><?=$frases[93][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="cargas-estilo-notas-especifica.php?id=<?=$_GET["id"]?>" onClick="deseaRegresar(this)">Estilio Notas Especifica</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Editar Categoria Notas especifica</li>
                             </ol>
                         </div>
@@ -56,7 +55,8 @@
                                 	<div class="panel-body">
 
                                     <?php 
-                                    $r_categoriaN=mysql_fetch_array(mysql_query("SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_id=".$_GET["id"].";",$conexion));
+                                    $consultaCategoriaNota=mysqli_query($conexion, "SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_id=".$_GET["id"].";");
+                                    $rCategoriaN=mysqli_fetch_array($consultaCategoriaNota, MYSQLI_BOTH);
                                     ?>
 
                                    
@@ -67,21 +67,21 @@
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nombre</label>
                                             <div class="col-sm-10">
-                                                <input type="text" name="nombreCN" class="form-control" value="<?=$r_categoriaN["notip_nombre"]?>">
+                                                <input type="text" name="nombreCN" class="form-control" value="<?=$rCategoriaN["notip_nombre"]?>">
                                             </div>
                                         </div>	
 										
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nota Desde</label>
                                             <div class="col-sm-3">
-                                                <input type="text" name="ndesdeCN" class="form-control" value="<?=$r_categoriaN["notip_desde"]?>">
+                                                <input type="text" name="ndesdeCN" class="form-control" value="<?=$rCategoriaN["notip_desde"]?>">
                                             </div>
                                         </div>	
 										
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nota Hasta</label>
                                             <div class="col-sm-3">
-                                                <input type="text" name="nhastaCN" class="form-control" value="<?=$r_categoriaN["notip_hasta"]?>">
+                                                <input type="text" name="nhastaCN" class="form-control" value="<?=$rCategoriaN["notip_hasta"]?>">
                                             </div>
                                         </div>	
 
@@ -96,7 +96,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

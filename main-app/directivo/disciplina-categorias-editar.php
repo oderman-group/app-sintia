@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0070';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosEditar = mysql_fetch_array(mysql_query("SELECT * FROM disciplina_categorias
-WHERE dcat_id='".$_GET["idR"]."'",$conexion));
+$consultaDatosEditar=mysqli_query($conexion, "SELECT * FROM disciplina_categorias WHERE dcat_id='".$_GET["idR"]."'");
+$datosEditar = mysqli_fetch_array($consultaDatosEditar, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -76,7 +75,7 @@ WHERE dcat_id='".$_GET["idR"]."'",$conexion));
 
 										<input type="submit" class="btn btn-primary" value="Guardar cambios">&nbsp;
 										
-										<a href="#" name="cargas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+										<a href="#" name="disciplina-categorias.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
                                     </form>
                                 </div>
                             </div>
@@ -86,7 +85,7 @@ WHERE dcat_id='".$_GET["idR"]."'",$conexion));
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

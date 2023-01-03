@@ -2,7 +2,7 @@
 include("session.php");
 include("../modelo/conexion.php");
 
-	mysql_query("UPDATE academico_matriculas SET mat_compromiso=1 WHERE mat_id='" . $_GET["id"] . "'", $conexion);
+	mysqli_query($conexion, "UPDATE academico_matriculas SET mat_compromiso=1 WHERE mat_id='" . $_GET["id"] . "'");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

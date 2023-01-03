@@ -14,7 +14,7 @@ $operacionBD = new BaseDatos;
 
 if(isset($_POST["id"])){
 
-	mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones POST - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones POST - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')");
 
 	$lineaError = __LINE__;
 
@@ -22,7 +22,7 @@ if(isset($_POST["id"])){
 
 }elseif(isset($_GET["get"])){
 
-	mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones GET - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones GET - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')");
 
 	$lineaError = __LINE__;
 
@@ -30,7 +30,7 @@ if(isset($_POST["id"])){
 
 }else{
 
-	mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones DESCONOCIDA - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha, hil_ip, hil_so)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Acciones DESCONOCIDA - ".$_SERVER['HTTP_REFERER']."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SERVER['HTTP_USER_AGENT']."')");
 
 	$lineaError = __LINE__;
 
@@ -86,7 +86,7 @@ if($_POST["id"]==1){
 
 	
 
-	mysql_query("UPDATE academico_cargas SET car_valor_indicador='".$_POST["indicadores"]."', car_configuracion='".$_POST["calificaciones"]."', car_fecha_generar_informe_auto='".$_POST["fechaInforme"]."', car_posicion_docente='".$_POST["posicion"]."' WHERE car_id='".$cargaConsultaActual."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_valor_indicador='".$_POST["indicadores"]."', car_configuracion='".$_POST["calificaciones"]."', car_fecha_generar_informe_auto='".$_POST["fechaInforme"]."', car_posicion_docente='".$_POST["posicion"]."' WHERE car_id='".$cargaConsultaActual."'");
 
 	$lineaError = __LINE__;
 
@@ -104,7 +104,7 @@ if($_POST["id"]==1){
 
 if($_POST["id"]==6){
 
-	mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES('".mysql_real_escape_string($_POST["respuesta"])."',0,'".$_POST["idPregunta"]."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES('".mysqli_real_escape_string($conexion,$_POST["respuesta"])."',0,'".$_POST["idPregunta"]."')");
 
 	$lineaError = __LINE__;
 
@@ -150,15 +150,15 @@ if($_POST["id"]==7){
 
 		
 
-		mysql_query("INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_valor, preg_id_carga, preg_tipo_pregunta, preg_archivo)VALUES('".mysql_real_escape_string($_POST["contenido"])."','".$_POST["valor"]."','".$_COOKIE["carga"]."', '".$_POST["opcionR"]."', '".$archivo."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_valor, preg_id_carga, preg_tipo_pregunta, preg_archivo)VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."','".$_POST["valor"]."','".$_COOKIE["carga"]."', '".$_POST["opcionR"]."', '".$archivo."')");
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		$idPregunta = mysql_insert_id();
+		$idPregunta = mysqli_insert_id($conexion);
 
-		mysql_query("INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."','".$idPregunta."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."','".$idPregunta."')");
 
 		$lineaError = __LINE__;
 
@@ -178,7 +178,7 @@ if($_POST["id"]==7){
 
 					if($_POST["c$cont"]==""){$_POST["c$cont"]=0;}
 
-					$datosInsert .="('".mysql_real_escape_string($_POST["r$cont"])."','".$_POST["c$cont"]."','".$idPregunta."'),";
+					$datosInsert .="('".mysqli_real_escape_string($conexion,$_POST["r$cont"])."','".$_POST["c$cont"]."','".$idPregunta."'),";
 
 					$cont++;
 
@@ -190,11 +190,11 @@ if($_POST["id"]==7){
 
 				$datosInsert = substr($datosInsert,0,-1);
 
-				mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
+				mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
 
 				".$datosInsert."
 
-				",$conexion);
+				");
 
 				$lineaError = __LINE__;
 
@@ -216,7 +216,7 @@ if($_POST["id"]==7){
 
 					if($_POST["cv$cont"]==""){$_POST["cv$cont"]=0;}
 
-					$datosInsert .="('".mysql_real_escape_string($_POST["rv$cont"])."','".$_POST["cv$cont"]."','".$idPregunta."'),";
+					$datosInsert .="('".mysqli_real_escape_string($conexion,$_POST["rv$cont"])."','".$_POST["cv$cont"]."','".$idPregunta."'),";
 
 					$cont++;
 
@@ -228,11 +228,11 @@ if($_POST["id"]==7){
 
 				$datosInsert = substr($datosInsert,0,-1);
 
-				mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
+				mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
 
 				".$datosInsert."
 
-				",$conexion);
+				");
 
 				$lineaError = __LINE__;
 
@@ -254,11 +254,11 @@ if($_POST["id"]==7){
 
 				$datosInsert = substr($datosInsert,0,-1);
 
-				mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
+				mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta)VALUES
 
 				".$datosInsert."
 
-				",$conexion);
+				");
 
 				$lineaError = __LINE__;
 
@@ -271,32 +271,28 @@ if($_POST["id"]==7){
 
 
 	}else{
-
-		$preguntaBD = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_preguntas
-
-		WHERE preg_id='".$_POST["bancoDatos"]."'",$conexion));
+		$consultaPreguntaBD=mysqli_query($conexion, "SELECT * FROM academico_actividad_preguntas WHERE preg_id='".$_POST["bancoDatos"]."'");
+		$preguntaBD = mysqli_fetch_array($consultaPreguntaBD, MYSQLI_BOTH);
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		mysql_query("INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_valor, preg_id_carga, preg_imagen1, preg_imagen2, preg_tipo_pregunta, preg_archivo)VALUES('".$preguntaBD['preg_descripcion']."', '".$preguntaBD['preg_valor']."', '".$cargaConsultaActual."', '".$preguntaBD['preg_imagen1']."', '".$preguntaBD['preg_imagen2']."', '".$preguntaBD['preg_tipo_pregunta']."', '".$preguntaBD['preg_archivo']."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_valor, preg_id_carga, preg_imagen1, preg_imagen2, preg_tipo_pregunta, preg_archivo)VALUES('".$preguntaBD['preg_descripcion']."', '".$preguntaBD['preg_valor']."', '".$cargaConsultaActual."', '".$preguntaBD['preg_imagen1']."', '".$preguntaBD['preg_imagen2']."', '".$preguntaBD['preg_tipo_pregunta']."', '".$preguntaBD['preg_archivo']."')");
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		$idPregunta = mysql_insert_id();
+		$idPregunta = mysqli_insert_id($conexion);
 
 		
 
-		$respuestasPreguntaConsulta = mysql_query("SELECT * FROM academico_actividad_respuestas
+		$respuestasPreguntaConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_respuestas WHERE resp_id_pregunta='".$_POST["bancoDatos"]."'");
 
-		WHERE resp_id_pregunta='".$_POST["bancoDatos"]."'",$conexion);
+		while($respuestasPreguntaDatos = mysqli_fetch_array($respuestasPreguntaConsulta, MYSQLI_BOTH)){
 
-		while($respuestasPreguntaDatos = mysql_fetch_array($respuestasPreguntaConsulta)){
-
-			mysql_query("INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta, resp_imagen)VALUES('".$respuestasPreguntaDatos['resp_descripcion']."', '".$respuestasPreguntaDatos['resp_correcta']."', '".$idPregunta."', '".$respuestasPreguntaDatos['resp_imagen']."')",$conexion);
+			mysqli_query($conexion, "INSERT INTO academico_actividad_respuestas(resp_descripcion, resp_correcta, resp_id_pregunta, resp_imagen)VALUES('".$respuestasPreguntaDatos['resp_descripcion']."', '".$respuestasPreguntaDatos['resp_correcta']."', '".$idPregunta."', '".$respuestasPreguntaDatos['resp_imagen']."')");
 
 			$lineaError = __LINE__;
 
@@ -306,7 +302,7 @@ if($_POST["id"]==7){
 
 		
 
-		mysql_query("INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."', '".$idPregunta."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."', '".$idPregunta."')");
 
 		$lineaError = __LINE__;
 
@@ -328,7 +324,7 @@ if($_POST["id"]==7){
 
 if($_POST["id"]==8){
 
-	mysql_query("UPDATE academico_actividad_preguntas SET preg_descripcion='".mysql_real_escape_string($_POST["contenido"])."', preg_valor='".$_POST["valor"]."' WHERE preg_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_preguntas SET preg_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', preg_valor='".$_POST["valor"]."' WHERE preg_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -354,7 +350,7 @@ if($_POST["id"]==8){
 
 		
 
-		mysql_query("UPDATE academico_actividad_preguntas SET preg_archivo='".$archivo."' WHERE preg_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividad_preguntas SET preg_archivo='".$archivo."' WHERE preg_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -379,22 +375,15 @@ if($_POST["id"]==9){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
-
+	$consultaSumaIndicadores=mysqli_query($conexion, "SELECT
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
-
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
-
 	(SELECT count(*) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-
-	",$conexion));
+	");
+	$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicadores, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -424,13 +413,13 @@ if($_POST["id"]==9){
 
 	if($_POST["bancoDatos"]==0){
 
-		mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_publico) VALUES('".mysql_real_escape_string($_POST["contenido"])."', 0, '".$infoCompartir."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_publico) VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', 0, '".$infoCompartir."')");
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		$idRegistro = mysql_insert_id();
+		$idRegistro = mysqli_insert_id($conexion);
 
 		//Si decide poner los valores porcentuales de los indicadores de forma manual
 
@@ -450,9 +439,9 @@ if($_POST["id"]==9){
 
 			if($_POST["valor"]>$porcentajeRestante and $porcentajeRestante>0){$_POST["valor"] = $porcentajeRestante;}
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_evaluacion)
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_evaluacion)
 
-			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$_POST["valor"]."', '".$periodoConsultaActual."', 1, '".$_POST["saberes"]."')",$conexion);
+			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$_POST["valor"]."', '".$periodoConsultaActual."', 1, '".$_POST["saberes"]."')");
 
 			$lineaError = __LINE__;
 
@@ -466,9 +455,9 @@ if($_POST["id"]==9){
 
 			$valorIgualIndicador = ($porcentajePermitido/($sumaIndicadores[2]+1));
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_periodo, ipc_creado, ipc_evaluacion)
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_periodo, ipc_creado, ipc_evaluacion)
 
-			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$periodoConsultaActual."', 1, '".$_POST["saberes"]."')",$conexion);
+			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$periodoConsultaActual."', 1, '".$_POST["saberes"]."')");
 
 			$lineaError = __LINE__;
 
@@ -476,9 +465,9 @@ if($_POST["id"]==9){
 
 			//Actualiza todos valores de la misma carga y periodo; incluyendo el que acaba de crear.
 
-			mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
+			mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
 
-			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1",$conexion);
+			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1");
 
 			$lineaError = __LINE__;
 
@@ -491,24 +480,22 @@ if($_POST["id"]==9){
 	//Si escoge del banco de datos
 
 	else{
-
-		$indicadorBD = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores
-
+		$consultaIndicadorBD=mysqli_query($conexion, "SELECT * FROM academico_indicadores
 		INNER JOIN academico_indicadores_carga ON ipc_indicador=ind_id
-
-		WHERE ind_id='".$_POST["bancoDatos"]."'",$conexion));
-
-		$lineaError = __LINE__;
-
-		include("../compartido/reporte-errores.php");
-
-		mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_publico) VALUES('".$indicadorBD['ind_nombre']."', 0, 1)",$conexion);
+		WHERE ind_id='".$_POST["bancoDatos"]."'");
+		$indicadorBD = mysqli_fetch_array($consultaIndicadorBD, MYSQLI_BOTH);
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		$idRegistro = mysql_insert_id();
+		mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_publico) VALUES('".$indicadorBD['ind_nombre']."', 0, 1)");
+
+		$lineaError = __LINE__;
+
+		include("../compartido/reporte-errores.php");
+
+		$idRegistro = mysqli_insert_id($conexion);
 
 		//Si decide poner los valores porcentuales de los indicadores de forma manual
 
@@ -526,9 +513,9 @@ if($_POST["id"]==9){
 
 			if($indicadorBD['ipc_valor']>$porcentajeRestante and $porcentajeRestante>0){$indicadorBD['ipc_valor'] = $porcentajeRestante;}
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion)
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion)
 
-			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$indicadorBD['ipc_valor']."', '".$periodoConsultaActual."', 1, '".$indicadorBD['ind_id']."', '".$indicadorBD['ipc_evaluacion']."')",$conexion);
+			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$indicadorBD['ipc_valor']."', '".$periodoConsultaActual."', 1, '".$indicadorBD['ind_id']."', '".$indicadorBD['ipc_evaluacion']."')");
 
 			$lineaError = __LINE__;
 
@@ -542,9 +529,9 @@ if($_POST["id"]==9){
 
 			$valorIgualIndicador = ($porcentajePermitido/($sumaIndicadores[2]+1));
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion)
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion)
 
-			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$periodoConsultaActual."', 1, '".$indicadorBD['ind_id']."', '".$indicadorBD['ipc_evaluacion']."')",$conexion);
+			VALUES('".$cargaConsultaActual."', '".$idRegistro."', '".$periodoConsultaActual."', 1, '".$indicadorBD['ind_id']."', '".$indicadorBD['ipc_evaluacion']."')");
 
 			$lineaError = __LINE__;
 
@@ -552,9 +539,9 @@ if($_POST["id"]==9){
 
 			//Actualiza todos valores de la misma carga y periodo; incluyendo el que acaba de crear.
 
-			mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
+			mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
 
-			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1",$conexion);
+			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1");
 
 			$lineaError = __LINE__;
 
@@ -574,17 +561,16 @@ if($_POST["id"]==9){
 
 		//Repetimos la consulta de los indicadores porque los valores fueron actualizados
 
-		$indicadoresConsultaActualizado = mysql_query("SELECT * FROM academico_indicadores_carga 
+		$indicadoresConsultaActualizado = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 
-		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1",$conexion);
+		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1");
 
 		//Actualizamos todas las actividades por cada indicador
 
-		while($indicadoresDatos = mysql_fetch_array($indicadoresConsultaActualizado)){
-
-			$actividadesNum = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades 
-
-			WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion));
+		while($indicadoresDatos = mysqli_fetch_array($indicadoresConsultaActualizado, MYSQLI_BOTH)){
+			$consultaActividadesNum=mysqli_query($conexion, "SELECT * FROM academico_actividades 
+			WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
+			$actividadesNum = mysqli_num_rows($consultaActividadesNum);
 
 			$lineaError = __LINE__;
 
@@ -596,9 +582,9 @@ if($_POST["id"]==9){
 
 				$valorIgualActividad = ($indicadoresDatos['ipc_valor']/$actividadesNum);
 
-				mysql_query("UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
+				mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
 
-				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion);
+				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
 
 				$lineaError = __LINE__;
 
@@ -627,28 +613,22 @@ if($_POST["id"]==10){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$indicadoresDatos = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga 
-
-	WHERE ipc_indicador='".$_POST["indicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion));
+	$consultaIndicadoresDatos=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
+	WHERE ipc_indicador='".$_POST["indicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
+	$indicadoresDatos = mysqli_fetch_array($consultaIndicadoresDatos, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
 	
-
-	$valores = mysql_fetch_array(mysql_query("SELECT
-
+	$consultaValores=mysqli_query($conexion, "SELECT
 	(SELECT sum(act_valor) FROM academico_actividades 
-
 	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id_tipo='".$_POST["indicador"]."' AND act_estado=1),
-
 	(SELECT count(*) FROM academico_actividades 
-
 	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1)
-
-	",$conexion));
+	");
+	$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -686,15 +666,15 @@ if($_POST["id"]==10){
 
 			//Insertamos la calificación
 
-			mysql_query("INSERT INTO academico_actividades(act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_fecha_creacion, act_id_evidencia)"." VALUES('".mysql_real_escape_string($_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', now(),'".$_POST["evidencia"]."')",$conexion);
+			mysqli_query($conexion, "INSERT INTO academico_actividades(act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_fecha_creacion, act_id_evidencia)"." VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', now(),'".$_POST["evidencia"]."')");
 
 			$lineaError = __LINE__;
 
 			include("../compartido/reporte-errores.php");
 
 			//Actualizamos el valor de todas las actividades del indicador
-
-			$actividadesNum = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1",$conexion));
+			$consultaActividadesNum=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1");
+			$actividadesNum = mysqli_num_rows($consultaActividadesNum);
 
 			$lineaError = __LINE__;
 
@@ -706,7 +686,7 @@ if($_POST["id"]==10){
 
 				$valorIgualActividad = ($indicadoresDatos['ipc_valor']/$actividadesNum);
 
-				mysql_query("UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1",$conexion);
+				mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1");
 
 				$lineaError = __LINE__;
 
@@ -736,7 +716,7 @@ if($_POST["id"]==10){
 
 			//Insertamos la calificación
 
-			mysql_query("INSERT INTO academico_actividades(act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_valor, act_fecha_creacion)"." VALUES('".mysql_real_escape_string($_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', '".$_POST["valor"]."', now())",$conexion);
+			mysqli_query($conexion, "INSERT INTO academico_actividades(act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_valor, act_fecha_creacion)"." VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', '".$_POST["valor"]."', now())");
 
 			$lineaError = __LINE__;
 
@@ -846,7 +826,7 @@ if($_POST["id"]==11){
 
 		
 
-		mysql_query("INSERT INTO academico_clases(cls_tema, cls_fecha, cls_id_carga, cls_estado, cls_periodo, cls_video, cls_video_url, cls_archivo, cls_archivo2, cls_archivo3, cls_nombre_archivo1, cls_nombre_archivo2, cls_nombre_archivo3, cls_descripcion, cls_disponible, cls_meeting, cls_clave_docente, cls_clave_estudiante)"." VALUES('".mysql_real_escape_string($_POST["contenido"])."', '".$date."', '".$cargaConsultaActual."', 1, '".$periodoConsultaActual."', '".$video."', '".$_POST["video"]."', '".$archivo."', '".$archivo2."', '".$archivo3."', '".$_POST["archivo1"]."', '".$_POST["archivo2"]."', '".$_POST["archivo3"]."', '".mysql_real_escape_string($_POST["descripcion"])."', '".$disponible."', '".$_POST["idMeeting"]."', '".$_POST["claveDocente"]."', '".$_POST["claveEstudiante"]."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_clases(cls_tema, cls_fecha, cls_id_carga, cls_estado, cls_periodo, cls_video, cls_video_url, cls_archivo, cls_archivo2, cls_archivo3, cls_nombre_archivo1, cls_nombre_archivo2, cls_nombre_archivo3, cls_descripcion, cls_disponible, cls_meeting, cls_clave_docente, cls_clave_estudiante)"." VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$date."', '".$cargaConsultaActual."', 1, '".$periodoConsultaActual."', '".$video."', '".$_POST["video"]."', '".$archivo."', '".$archivo2."', '".$archivo3."', '".$_POST["archivo1"]."', '".$_POST["archivo2"]."', '".$_POST["archivo3"]."', '".mysqli_real_escape_string($conexion,$_POST["descripcion"])."', '".$disponible."', '".$_POST["idMeeting"]."', '".$_POST["claveDocente"]."', '".$_POST["claveEstudiante"]."')");
 
 		$lineaError = __LINE__;
 
@@ -869,24 +849,20 @@ if($_POST["id"]==12){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$indicadoresDatosC = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga 
-
-	WHERE ipc_indicador='".$_POST["indicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion));
+	$consultaIndicadoresDatosC=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
+	WHERE ipc_indicador='".$_POST["indicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
+	$indicadoresDatosC = mysqli_fetch_array($consultaIndicadoresDatosC, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
 	
-
-	$valores = mysql_fetch_array(mysql_query("SELECT
-
+	$consultaValores=mysqli_query($conexion, "SELECT
 	(SELECT sum(act_valor) FROM academico_actividades 
-
 	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id_tipo='".$_POST["indicador"]."' AND act_estado=1)
-
-	",$conexion));
+	");
+	$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -908,9 +884,9 @@ if($_POST["id"]==12){
 
 	if($datosCargaActual['car_configuracion']==0){
 
-		mysql_query("UPDATE academico_actividades SET act_descripcion='".mysql_real_escape_string($_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_fecha_modificacion=now(), act_id_evidencia='".$_POST["evidencia"]."' 
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_fecha_modificacion=now(), act_id_evidencia='".$_POST["evidencia"]."' 
 
-		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1",$conexion);
+		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -918,17 +894,16 @@ if($_POST["id"]==12){
 
 		//Repetimos la consulta de los indicadores porque los valores fueron actualizados
 
-		$indicadoresConsultaActualizado = mysql_query("SELECT * FROM academico_indicadores_carga 
+		$indicadoresConsultaActualizado = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 
-		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
 
 		//Actualizamos todas las actividades por cada indicador
 
-		while($indicadoresDatos = mysql_fetch_array($indicadoresConsultaActualizado)){
-
-			$actividadesNum = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades 
-
-			WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion));
+		while($indicadoresDatos = mysqli_fetch_array($indicadoresConsultaActualizado, MYSQLI_BOTH)){
+			$consultaActividadesNum=mysqli_query($conexion, "SELECT * FROM academico_actividades 
+			WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
+			$actividadesNum = mysqli_num_rows($consultaActividadesNum);
 
 			$lineaError = __LINE__;
 
@@ -940,9 +915,9 @@ if($_POST["id"]==12){
 
 				$valorIgualActividad = ($indicadoresDatos['ipc_valor']/$actividadesNum);
 
-				mysql_query("UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
+				mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
 
-				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion);
+				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
 
 				$lineaError = __LINE__;
 
@@ -972,9 +947,9 @@ if($_POST["id"]==12){
 
 		if($_POST["valor"]>$porcentajeRestante and $porcentajeRestante>0){$_POST["valor"] = $porcentajeRestante;}
 
-		mysql_query("UPDATE academico_actividades SET act_descripcion='".mysql_real_escape_string($_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_valor='".$_POST["valor"]."', act_fecha_modificacion=now() 
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_valor='".$_POST["valor"]."', act_fecha_modificacion=now() 
 
-		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1",$conexion);
+		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -1024,7 +999,7 @@ if($_POST["id"]==13){
 
 		
 
-		mysql_query("UPDATE academico_clases SET cls_archivo='".$archivo."' WHERE cls_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_clases SET cls_archivo='".$archivo."' WHERE cls_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1050,7 +1025,7 @@ if($_POST["id"]==13){
 
 		
 
-		mysql_query("UPDATE academico_clases SET cls_archivo2='".$archivo2."' WHERE cls_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_clases SET cls_archivo2='".$archivo2."' WHERE cls_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1076,7 +1051,7 @@ if($_POST["id"]==13){
 
 		
 
-		mysql_query("UPDATE academico_clases SET cls_archivo3='".$archivo3."' WHERE cls_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_clases SET cls_archivo3='".$archivo3."' WHERE cls_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1102,9 +1077,9 @@ if($_POST["id"]==13){
 
 	$date = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
 
-	mysql_query("UPDATE academico_clases SET cls_tema='".mysql_real_escape_string($_POST["contenido"])."', cls_fecha='".$date."', cls_video='".$video."', cls_video_url='".$_POST["video"]."', cls_descripcion='".mysql_real_escape_string($_POST["descripcion"])."', cls_nombre_archivo1='".$_POST["archivo1"]."', cls_nombre_archivo2='".$_POST["archivo2"]."', cls_nombre_archivo3='".$_POST["archivo3"]."', cls_disponible='".$disponible."'
+	mysqli_query($conexion, "UPDATE academico_clases SET cls_tema='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', cls_fecha='".$date."', cls_video='".$video."', cls_video_url='".$_POST["video"]."', cls_descripcion='".mysqli_real_escape_string($conexion,$_POST["descripcion"])."', cls_nombre_archivo1='".$_POST["archivo1"]."', cls_nombre_archivo2='".$_POST["archivo2"]."', cls_nombre_archivo3='".$_POST["archivo3"]."', cls_disponible='".$disponible."'
 
-	WHERE cls_id='".$_POST["idR"]."'",$conexion);
+	WHERE cls_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1128,7 +1103,7 @@ if($_POST["id"]==14){
 
 	$date = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
 
-	mysql_query("INSERT INTO academico_cronograma(cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color)"." VALUES('".mysql_real_escape_string($_POST["contenido"])."', '".$date."', '".$cargaConsultaActual."', '".$_POST["recursos"]."', '".$periodoConsultaActual."', '".$_POST["colorFondo"]."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_cronograma(cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color)"." VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$date."', '".$cargaConsultaActual."', '".$_POST["recursos"]."', '".$periodoConsultaActual."', '".$_POST["colorFondo"]."')");
 
 	$lineaError = __LINE__;
 
@@ -1152,9 +1127,9 @@ if($_POST["id"]==15){
 
 	$date = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
 
-	mysql_query("UPDATE academico_cronograma SET cro_tema='".mysql_real_escape_string($_POST["contenido"])."', cro_fecha='".$date."', cro_recursos='".$_POST["recursos"]."', cro_color='".$_POST["colorFondo"]."' 
+	mysqli_query($conexion, "UPDATE academico_cronograma SET cro_tema='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', cro_fecha='".$date."', cro_recursos='".$_POST["recursos"]."', cro_color='".$_POST["colorFondo"]."' 
 
-	WHERE cro_id='".$_POST["idR"]."'",$conexion);
+	WHERE cro_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1192,7 +1167,7 @@ if($_POST["id"]==16){
 
 	
 
-	mysql_query("DELETE FROM academico_pclase WHERE pc_id_carga='".$cargaConsultaActual."' AND pc_periodo='".$periodoConsultaActual."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_pclase WHERE pc_id_carga='".$cargaConsultaActual."' AND pc_periodo='".$periodoConsultaActual."'");
 
 	$lineaError = __LINE__;
 
@@ -1200,7 +1175,7 @@ if($_POST["id"]==16){
 
 	
 
-	mysql_query("INSERT INTO academico_pclase(pc_plan, pc_id_carga, pc_periodo, pc_fecha_subido)VALUES('".$archivo."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', now())",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_pclase(pc_plan, pc_id_carga, pc_periodo, pc_fecha_subido)VALUES('".$archivo."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', now())");
 
 	$lineaError = __LINE__;
 
@@ -1216,7 +1191,7 @@ if($_POST["id"]==16){
 
 if($_POST["id"]==17){
 
-	mysql_query("INSERT INTO academico_actividad_foro_comentarios(com_id_foro, com_descripcion, com_id_estudiante, com_fecha)VALUES('".$_POST["idForo"]."', '".mysql_real_escape_string($_POST["com"])."', '".$idSession."', now())",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_foro_comentarios(com_id_foro, com_descripcion, com_id_estudiante, com_fecha)VALUES('".$_POST["idForo"]."', '".mysqli_real_escape_string($conexion,$_POST["com"])."', '".$idSession."', now())");
 
 	$lineaError = __LINE__;
 
@@ -1296,7 +1271,7 @@ if($_POST["id"]==17){
 
 if($_POST["id"]==18){
 
-	mysql_query("INSERT INTO academico_actividad_foro_respuestas(fore_id_comentario, fore_respuesta, fore_id_estudiante, fore_fecha)VALUES('".$_POST["idCom"]."', '".mysql_real_escape_string($_POST["respu"])."', '".$idSession."', now())",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_foro_respuestas(fore_id_comentario, fore_respuesta, fore_id_estudiante, fore_fecha)VALUES('".$_POST["idCom"]."', '".mysqli_real_escape_string($conexion,$_POST["respu"])."', '".$idSession."', now())");
 
 	$lineaError = __LINE__;
 
@@ -1382,7 +1357,7 @@ if($_POST["id"]==19){
 
 	
 
-	mysql_query("INSERT INTO academico_actividad_foro(foro_nombre, foro_descripcion, foro_id_carga, foro_periodo, foro_estado)VALUES('".mysql_real_escape_string($_POST["titulo"])."', '".mysql_real_escape_string($_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1)",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_foro(foro_nombre, foro_descripcion, foro_id_carga, foro_periodo, foro_estado)VALUES('".mysqli_real_escape_string($conexion,$_POST["titulo"])."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1)");
 
 	$lineaError = __LINE__;
 
@@ -1406,7 +1381,7 @@ if($_POST["id"]==20){
 
 	
 
-	mysql_query("UPDATE academico_actividad_foro SET foro_nombre='".mysql_real_escape_string($_POST["titulo"])."', foro_descripcion='".mysql_real_escape_string($_POST["contenido"])."' WHERE foro_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_foro SET foro_nombre='".mysqli_real_escape_string($conexion,$_POST["titulo"])."', foro_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."' WHERE foro_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1452,9 +1427,9 @@ if($_POST["id"]==21){
 
 	if($_POST["retrasos"]!=1) $_POST["retrasos"]='0';
 
-	mysql_query("INSERT INTO academico_actividad_tareas(tar_titulo, tar_descripcion, tar_id_carga, tar_periodo, tar_estado, tar_fecha_disponible, tar_fecha_entrega, tar_impedir_retrasos, tar_archivo, tar_peso1)
+	mysqli_query($conexion, "INSERT INTO academico_actividad_tareas(tar_titulo, tar_descripcion, tar_id_carga, tar_periodo, tar_estado, tar_fecha_disponible, tar_fecha_entrega, tar_impedir_retrasos, tar_archivo, tar_peso1)
 
-	VALUES('".mysql_real_escape_string($_POST["titulo"])."', '".mysql_real_escape_string($_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1, '".$_POST["desde"]."', '".$_POST["hasta"]."', '".$_POST["retrasos"]."', '".$archivo."', '".$pesoMB."')",$conexion);
+	VALUES('".mysqli_real_escape_string($conexion,$_POST["titulo"])."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1, '".$_POST["desde"]."', '".$_POST["hasta"]."', '".$_POST["retrasos"]."', '".$archivo."', '".$pesoMB."')");
 
 	$lineaError = __LINE__;
 
@@ -1488,7 +1463,7 @@ if($_POST["id"]==22){
 
 		$archivoSubido->subirArchivo($destino, $archivo, $nombreInputFile); 
 
-		mysql_query("UPDATE academico_actividad_tareas SET tar_archivo='".$archivo."' WHERE tar_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividad_tareas SET tar_archivo='".$archivo."' WHERE tar_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1500,7 +1475,7 @@ if($_POST["id"]==22){
 
 	if($_POST["retrasos"]!=1) $_POST["retrasos"]='0';
 
-	mysql_query("UPDATE academico_actividad_tareas SET tar_titulo='".mysql_real_escape_string($_POST["titulo"])."', tar_descripcion='".mysql_real_escape_string($_POST["contenido"])."', tar_fecha_disponible='".$_POST["desde"]."', tar_fecha_entrega='".$_POST["hasta"]."', tar_impedir_retrasos='".$_POST["retrasos"]."' WHERE tar_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_tareas SET tar_titulo='".mysqli_real_escape_string($conexion,$_POST["titulo"])."', tar_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', tar_fecha_disponible='".$_POST["desde"]."', tar_fecha_entrega='".$_POST["hasta"]."', tar_impedir_retrasos='".$_POST["retrasos"]."' WHERE tar_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1522,13 +1497,13 @@ if($_POST["id"]==23){
 
 	if($_POST["bancoDatos"]==0){
 
-		mysql_query("INSERT INTO academico_actividad_evaluaciones(eva_nombre, eva_descripcion, eva_id_carga, eva_periodo, eva_estado, eva_desde, eva_hasta, eva_clave)"." VALUES('".mysql_real_escape_string($_POST["titulo"])."', '".mysql_real_escape_string($_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1, '".$_POST["desde"]."', '".$_POST["hasta"]."', '".mysql_real_escape_string($_POST["clave"])."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_evaluaciones(eva_nombre, eva_descripcion, eva_id_carga, eva_periodo, eva_estado, eva_desde, eva_hasta, eva_clave)"." VALUES('".mysqli_real_escape_string($conexion,$_POST["titulo"])."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1, '".$_POST["desde"]."', '".$_POST["hasta"]."', '".mysqli_real_escape_string($conexion,$_POST["clave"])."')");
 
 		$lineaError = __LINE__;
 
 		include("../compartido/reporte-errores.php");
 
-		$idRegistro = mysql_insert_id();
+		$idRegistro = mysqli_insert_id($conexion);
 
 	}else{
 
@@ -1548,7 +1523,7 @@ if($_POST["id"]==23){
 
 if($_POST["id"]==24){
 
-	mysql_query("UPDATE academico_actividad_evaluaciones SET eva_nombre='".mysql_real_escape_string($_POST["titulo"])."', eva_descripcion='".mysql_real_escape_string($_POST["contenido"])."', eva_desde='".$_POST["desde"]."', eva_hasta='".$_POST["hasta"]."', eva_clave='".mysql_real_escape_string($_POST["clave"])."' WHERE eva_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_evaluaciones SET eva_nombre='".mysqli_real_escape_string($conexion,$_POST["titulo"])."', eva_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', eva_desde='".$_POST["desde"]."', eva_hasta='".$_POST["hasta"]."', eva_clave='".mysqli_real_escape_string($conexion,$_POST["clave"])."' WHERE eva_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1571,22 +1546,15 @@ if($_POST["id"]==25){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
-
+	$consultaSumaIndicadores=mysqli_query($conexion, "SELECT
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
-
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
-
 	(SELECT count(*) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-
-	",$conexion));
+	");
+	$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicadores, MYSQLI_BOTH);
 
 	$porcentajePermitido = 100 - $sumaIndicadores[0];
 
@@ -1598,7 +1566,7 @@ if($_POST["id"]==25){
 
 	
 
-	mysql_query("UPDATE academico_indicadores SET ind_nombre='".mysql_real_escape_string($_POST["contenido"])."' WHERE ind_id='".$_POST["idInd"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores SET ind_nombre='".mysqli_real_escape_string($conexion,$_POST["contenido"])."' WHERE ind_id='".$_POST["idInd"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1610,7 +1578,7 @@ if($_POST["id"]==25){
 
 	if($datosCargaActual['car_saberes_indicador']==1){
 
-		mysql_query("UPDATE academico_indicadores_carga SET ipc_evaluacion='".$_POST["saberes"]."' WHERE ipc_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_evaluacion='".$_POST["saberes"]."' WHERE ipc_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1630,7 +1598,7 @@ if($_POST["id"]==25){
 
 		if($_POST["valor"]>$porcentajeRestante and $porcentajeRestante>0){$_POST["valor"] = $porcentajeRestante;}
 
-		mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$_POST["valor"]."' WHERE ipc_id='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$_POST["valor"]."' WHERE ipc_id='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1650,7 +1618,7 @@ if($_POST["id"]==25){
 
 if($_POST["id"]==26){
 
-	mysql_query("INSERT INTO academico_clases_preguntas(cpp_usuario, cpp_fecha, cpp_id_clase, cpp_contenido)VALUES('".$idSession."', now(), '".$_POST["idClase"]."', '".mysql_real_escape_string($_POST["contenido"])."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_clases_preguntas(cpp_usuario, cpp_fecha, cpp_id_clase, cpp_contenido)VALUES('".$idSession."', now(), '".$_POST["idClase"]."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."')");
 
 	$lineaError = __LINE__;
 
@@ -1734,7 +1702,7 @@ if($_POST["id"]==26){
 
 if($_POST["id"]==29){	
 
-	mysql_query("UPDATE academico_cargas SET car_configuracion='".$_POST["config"]."' WHERE car_id='".$datosCargaActual[0]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_configuracion='".$_POST["config"]."' WHERE car_id='".$datosCargaActual[0]."'");
 
 	$lineaError = __LINE__;
 
@@ -1750,9 +1718,9 @@ if($_POST["id"]==29){
 
 if($_POST["id"]==30){
 
-	$consultaI = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo=1 AND ipc_creado=1",$conexion);
+	$consultaI = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo=1 AND ipc_creado=1");
 
-	$numI = mysql_num_rows($consultaI);
+	$numI = mysqli_num_rows($consultaI);
 
 	if($numI>=$config[20]){
 
@@ -1768,21 +1736,21 @@ if($_POST["id"]==30){
 
 	}
 
-	mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio) VALUES('".mysql_real_escape_string($_POST["contenido"])."', 0)",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio) VALUES('".mysqli_real_escape_string($conexion,$_POST["contenido"])."', 0)");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	$Id = mysql_insert_id();
+	$Id = mysqli_insert_id($conexion);
 
-	mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado) VALUES('".$_COOKIE["carga"]."', '".$Id."', '".$valor."',1,1)",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado) VALUES('".$_COOKIE["carga"]."', '".$Id."', '".$valor."',1,1)");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$valor."' WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo=1 AND ipc_creado=1",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$valor."' WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo=1 AND ipc_creado=1");
 
 	$lineaError = __LINE__;
 
@@ -1798,7 +1766,7 @@ if($_POST["id"]==30){
 
 if($_POST["id"]==31){
 
-	mysql_query("UPDATE academico_indicadores SET ind_nombre='".mysql_real_escape_string($_POST["contenido"])."' WHERE ind_id='".$_POST["idInd"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores SET ind_nombre='".mysqli_real_escape_string($conexion,$_POST["contenido"])."' WHERE ind_id='".$_POST["idInd"]."'");
 
 	$lineaError = __LINE__;
 
@@ -1817,12 +1785,12 @@ if($_POST["id"]==31){
 if($_POST["id"]==34){	
 
 	$date = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
-
-	$registroActual = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades WHERE act_id='".$_POST["idActividad"]."'",$conexion));
+	$consultaRegistroActual=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id='".$_POST["idActividad"]."'");
+	$registroActual = mysqli_fetch_array($consultaRegistroActual, MYSQLI_BOTH);
 
 	if($_POST["indicador"]==$registroActual[4]){
 
-		mysql_query("UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."' WHERE act_id='".$_POST["idActividad"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."' WHERE act_id='".$_POST["idActividad"]."'");
 
 		$lineaError = __LINE__;
 
@@ -1831,14 +1799,14 @@ if($_POST["id"]==34){
 	}else{
 
 		//INDICADOR Y PORCENTAJES ANTERIORES
-
-		$indicadorAntes = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$registroActual[4]."' AND ipc_periodo=1",$conexion));
+		$consultaIndicadorAntes=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$registroActual[4]."' AND ipc_periodo=1");
+		$indicadorAntes = mysqli_fetch_array($consultaIndicadorAntes, MYSQLI_BOTH);
 
 		$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
-
-		$numActividadesAntes = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$registroActual[4]."' AND act_periodo=1  AND act_estado=1",$conexion));
+		$consultaNumActividadesAntes=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$registroActual[4]."' AND act_periodo=1  AND act_estado=1");
+		$numActividadesAntes = mysqli_num_rows($consultaNumActividadesAntes);
 
 		$lineaError = __LINE__;
 
@@ -1850,7 +1818,7 @@ if($_POST["id"]==34){
 
 			$valorActividadAntes = ($indicadorAntes[3]/$numActividadesAntes);
 
-			mysql_query("UPDATE academico_actividades SET act_valor='".$valorActividadAntes."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$registroActual[4]."' AND act_periodo=1  AND act_estado=1",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorActividadAntes."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$registroActual[4]."' AND act_periodo=1  AND act_estado=1");
 
 			$lineaError = __LINE__;
 
@@ -1859,14 +1827,14 @@ if($_POST["id"]==34){
 		}
 
 		//INDICADOR Y PORCENTAJES NUEVOS
-
-		$indicadorNuevo = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_periodo=1",$conexion));
+		$consultaIndicadorNuevo=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_periodo=1");
+		$indicadorNuevo = mysqli_fetch_array($consultaIndicadorNuevo, MYSQLI_BOTH);
 
 		$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
-
-		$numActividadesNuevo = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1 AND act_estado=1",$conexion));
+		$consultaNumActividadesNuevo=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1 AND act_estado=1");
+		$numActividadesNuevo = mysqli_num_rows($consultaNumActividadesNuevo);
 
 		$lineaError = __LINE__;
 
@@ -1878,7 +1846,7 @@ if($_POST["id"]==34){
 
 			$valorActividadNuevo = ($indicadorNuevo[3]/$numActividadesNuevo);
 
-			mysql_query("UPDATE academico_actividades SET act_valor='".$valorActividadNuevo."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1  AND act_estado=1",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorActividadNuevo."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1  AND act_estado=1");
 
 			$lineaError = __LINE__;
 
@@ -1886,7 +1854,7 @@ if($_POST["id"]==34){
 
 		}
 
-		mysql_query("UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."', act_valor='".$valorActividadNuevo."', act_id_tipo='".$_POST["indicador"]."' WHERE act_id='".$_POST["idActividad"]."'  AND act_estado=1",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."', act_valor='".$valorActividadNuevo."', act_id_tipo='".$_POST["indicador"]."' WHERE act_id='".$_POST["idActividad"]."'  AND act_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -1904,13 +1872,13 @@ if($_POST["id"]==34){
 
 if($_POST["id"]==35){	
 
-	$tipos = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_periodo=1",$conexion);
+	$tipos = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_POST["indicador"]."' AND ipc_periodo=1");
 
-    $tipo = mysql_fetch_array($tipos);
+    $tipo = mysqli_fetch_array($tipos, MYSQLI_BOTH);
 
 	//============================================= VERIFICAMOS CUANTAS NOTAS EXISTEN DEL MISMO TIPO ================================================
-
-	$sumaN = mysql_fetch_array(mysql_query("SELECT sum(act_valor) FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1 AND act_estado=1 AND act_id!='".$_POST["idActividad"]."'",$conexion));
+	$consultaSumaN=mysqli_query($conexion, "SELECT sum(act_valor) FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_POST["indicador"]."' AND act_periodo=1 AND act_estado=1 AND act_id!='".$_POST["idActividad"]."'");
+	$sumaN = mysqli_fetch_array($consultaSumaN, MYSQLI_BOTH);
 
 	$sumaTotal = ($sumaN[0]+$_POST["valor"]);
 
@@ -1926,7 +1894,7 @@ if($_POST["id"]==35){
 
 	$date = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
 
-	mysql_query("UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."', act_valor='".$_POST["valor"]."', act_id_tipo='".$_POST["indicador"]."' WHERE act_id='".$_POST["idActividad"]."'  AND act_estado=1",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividades SET act_descripcion='".$_POST["contenido"]."', act_fecha='".$date."', act_valor='".$_POST["valor"]."', act_id_tipo='".$_POST["indicador"]."' WHERE act_id='".$_POST["idActividad"]."'  AND act_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -1941,16 +1909,16 @@ if($_POST["id"]==35){
 //AGREGAR INDICADORES CON VALOR MANUAL
 
 if($_POST["id"]==36){
-
-	$sumaIndObg = mysql_fetch_array(mysql_query("SELECT sum(ipc_valor) FROM academico_indicadores_carga WHERE ipc_carga='".$datosCargaActual[0]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=0",$conexion));
+	$consultaSumaIndObg=mysqli_query($conexion, "SELECT sum(ipc_valor) FROM academico_indicadores_carga WHERE ipc_carga='".$datosCargaActual[0]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=0");
+	$sumaIndObg = mysqli_fetch_array($consultaSumaIndObg, MYSQLI_BOTH);
 
 	$porcentajeRestante = 100 - $sumaIndObg[0];
 
 	
 
-	$consultaI = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1",$conexion);
+	$consultaI = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1");
 
-	$numI = mysql_num_rows($consultaI);
+	$numI = mysqli_num_rows($consultaI);
 
 	if($numI>=$config[20] and $datosCargaActual[2]<40){
 
@@ -1968,15 +1936,15 @@ if($_POST["id"]==36){
 
 	}
 
-	mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio) VALUES('".$_POST["contenido"]."', 0)",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio) VALUES('".$_POST["contenido"]."', 0)");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	$Id = mysql_insert_id();
+	$Id = mysqli_insert_id($conexion);
 
-	mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado) VALUES('".$_COOKIE["carga"]."', '".$Id."', '".$valor."', '".$datosCargaActual[5]."',1)",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado) VALUES('".$_COOKIE["carga"]."', '".$Id."', '".$valor."', '".$datosCargaActual[5]."',1)");
 
 	$lineaError = __LINE__;
 
@@ -1992,9 +1960,9 @@ if($_POST["id"]==36){
 
 if($_POST["id"]==37){
 
-	mysql_query("UPDATE academico_indicadores SET ind_nombre='".$_POST["contenido"]."' WHERE ind_id='".$_POST["idInd"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores SET ind_nombre='".$_POST["contenido"]."' WHERE ind_id='".$_POST["idInd"]."'");
 
-	mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$_POST["valor"]."' WHERE ipc_indicador='".$_POST["idInd"]."' AND ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$_POST["valor"]."' WHERE ipc_indicador='".$_POST["idInd"]."' AND ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."'");
 
 	$lineaError = __LINE__;
 
@@ -2010,7 +1978,7 @@ if($_POST["id"]==37){
 
 if($_POST["id"]==38){	
 
-	mysql_query("UPDATE academico_cargas SET car_valor_indicador='".$_POST["config"]."' WHERE car_id='".$datosCargaActual[0]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_cargas SET car_valor_indicador='".$_POST["config"]."' WHERE car_id='".$datosCargaActual[0]."'");
 
 	$lineaError = __LINE__;
 
@@ -2029,16 +1997,15 @@ if($_POST["id"]==39){
 	include("verificar-carga.php");
 
 
-
-	$numTema = mysql_num_rows(mysql_query("SELECT * FROM academico_indicadores 
-
-	WHERE ind_periodo='".$periodoConsultaActual."' AND ind_carga='".$cargaConsultaActual."' AND ind_tematica=1",$conexion));
+	$consultaNumTema=mysqli_query($conexion, "SELECT * FROM academico_indicadores 
+	WHERE ind_periodo='".$periodoConsultaActual."' AND ind_carga='".$cargaConsultaActual."' AND ind_tematica=1");
+	$numTema = mysqli_num_rows($consultaNumTema);
 
 
 
 	if($numTema>0){
 
-		mysql_query("UPDATE academico_indicadores SET ind_nombre='".$_POST["contenido"]."', ind_fecha_modificacion=now() WHERE ind_periodo='".$periodoConsultaActual."' AND ind_carga='".$cargaConsultaActual."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_indicadores SET ind_nombre='".$_POST["contenido"]."', ind_fecha_modificacion=now() WHERE ind_periodo='".$periodoConsultaActual."' AND ind_carga='".$cargaConsultaActual."'");
 
 		$lineaError = __LINE__;
 
@@ -2046,7 +2013,7 @@ if($_POST["id"]==39){
 
 	}else{
 
-		mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_periodo, ind_carga, ind_fecha_creacion, ind_tematica) VALUES('".$_POST["contenido"]."', 0, '".$periodoConsultaActual."', '".$cargaConsultaActual."', now(), 1)",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio, ind_periodo, ind_carga, ind_fecha_creacion, ind_tematica) VALUES('".$_POST["contenido"]."', 0, '".$periodoConsultaActual."', '".$cargaConsultaActual."', now(), 1)");
 
 		$lineaError = __LINE__;
 
@@ -2074,25 +2041,25 @@ if($_POST["id"]==40){
 
 	if($_POST["indicadores"]==1 and $_POST["calificaciones"]==0){
 
-		mysql_query("DELETE FROM academico_indicadores_carga
+		mysqli_query($conexion, "DELETE FROM academico_indicadores_carga
 
-		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
 
 		
 
-		mysql_query("UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Importar indicadores de carga: ".$cargaConsultaActual.", del P: ".$_POST["periodoImportar"]." al P: ".$periodoConsultaActual."'
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Importar indicadores de carga: ".$cargaConsultaActual.", del P: ".$_POST["periodoImportar"]." al P: ".$periodoConsultaActual."'
 
-		WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'");
 
 		
 
 		//Consultamos los indicadores a importar
 
-		$indImpConsulta = mysql_query("SELECT * FROM academico_indicadores_carga
+		$indImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 
 		INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 
-		WHERE ipc_carga='".$_POST["cargaImportar"]."' AND ipc_periodo='".$_POST["periodoImportar"]."'",$conexion);
+		WHERE ipc_carga='".$_POST["cargaImportar"]."' AND ipc_periodo='".$_POST["periodoImportar"]."'");
 
 		$lineaError = __LINE__;
 
@@ -2102,7 +2069,7 @@ if($_POST["id"]==40){
 
 		$datosInsert = '';
 
-		while($indImpDatos = mysql_fetch_array($indImpConsulta)){
+		while($indImpDatos = mysqli_fetch_array($indImpConsulta, MYSQLI_BOTH)){
 
 			$idRegInd = $indImpDatos['ind_id'];
 
@@ -2110,13 +2077,13 @@ if($_POST["id"]==40){
 
 			if($indImpDatos['ind_obligatorio']==0){
 
-				mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_periodo, ind_carga, ind_publico)VALUES('".mysql_real_escape_string($indImpDatos['ind_nombre'])."', '".$periodoConsultaActual."', '".$cargaConsultaActual."', '".$indImpDatos['ind_publico']."')",$conexion);
+				mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_periodo, ind_carga, ind_publico)VALUES('".mysqli_real_escape_string($conexion,$indImpDatos['ind_nombre'])."', '".$periodoConsultaActual."', '".$cargaConsultaActual."', '".$indImpDatos['ind_publico']."')");
 
 				$lineaError = __LINE__;
 
 				include("../compartido/reporte-errores.php");
 
-				$idRegInd = mysql_insert_id();
+				$idRegInd = mysqli_insert_id($conexion);
 
 			}
 
@@ -2132,11 +2099,11 @@ if($_POST["id"]==40){
 
 			$datosInsert = substr($datosInsert,0,-1);
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado)VALUES
 
 			".$datosInsert."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2156,25 +2123,25 @@ if($_POST["id"]==40){
 
 	if($_POST["calificaciones"]==1){
 
-		mysql_query("DELETE FROM academico_indicadores_carga
+		mysqli_query($conexion, "DELETE FROM academico_indicadores_carga
 
-		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
 
 		
 
-		mysql_query("UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Importar de calificaciones de carga: ".$cargaConsultaActual.", del P: ".$_POST["periodoImportar"]." al P: ".$periodoConsultaActual."'
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Importar de calificaciones de carga: ".$cargaConsultaActual.", del P: ".$_POST["periodoImportar"]." al P: ".$periodoConsultaActual."'
 
-		WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'");
 
 		
 
 		//Consultamos los indicadores a importar
 
-		$indImpConsulta = mysql_query("SELECT * FROM academico_indicadores_carga
+		$indImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 
 		INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 
-		WHERE ipc_carga='".$_POST["cargaImportar"]."' AND ipc_periodo='".$_POST["periodoImportar"]."'",$conexion);
+		WHERE ipc_carga='".$_POST["cargaImportar"]."' AND ipc_periodo='".$_POST["periodoImportar"]."'");
 
 		$lineaError = __LINE__;
 
@@ -2182,7 +2149,7 @@ if($_POST["id"]==40){
 
 		$datosInsertInd = '';
 
-		while($indImpDatos = mysql_fetch_array($indImpConsulta)){
+		while($indImpDatos = mysqli_fetch_array($indImpConsulta, MYSQLI_BOTH)){
 
 			$idRegInd = $indImpDatos['ind_id'];
 
@@ -2190,13 +2157,13 @@ if($_POST["id"]==40){
 
 			if($indImpDatos['ind_obligatorio']==0){
 
-				mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_periodo, ind_carga, ind_publico)VALUES('".mysql_real_escape_string($indImpDatos['ind_nombre'])."', '".$periodoConsultaActual."', '".$cargaConsultaActual."', '".$indImpDatos['ind_publico']."')",$conexion);
+				mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_periodo, ind_carga, ind_publico)VALUES('".mysqli_real_escape_string($conexion,$indImpDatos['ind_nombre'])."', '".$periodoConsultaActual."', '".$cargaConsultaActual."', '".$indImpDatos['ind_publico']."')");
 
 				$lineaError = __LINE__;
 
 				include("../compartido/reporte-errores.php");
 
-				$idRegInd = mysql_insert_id();
+				$idRegInd = mysqli_insert_id($conexion);
 
 			}
 
@@ -2210,9 +2177,9 @@ if($_POST["id"]==40){
 
 			//Consultamos las calificaciones del indicador a Importar
 
-			$calImpConsulta = mysql_query("SELECT * FROM academico_actividades
+			$calImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividades
 
-			WHERE act_id_carga='".$_POST["cargaImportar"]."' AND act_periodo='".$_POST["periodoImportar"]."' AND act_id_tipo='".$indImpDatos['ind_id']."' AND act_estado=1",$conexion);
+			WHERE act_id_carga='".$_POST["cargaImportar"]."' AND act_periodo='".$_POST["periodoImportar"]."' AND act_id_tipo='".$indImpDatos['ind_id']."' AND act_estado=1");
 
 			$lineaError = __LINE__;
 
@@ -2222,9 +2189,9 @@ if($_POST["id"]==40){
 
 
 
-			while($calImpDatos = mysql_fetch_array($calImpConsulta)){
+			while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 
-				$datosInsert .="('".mysql_real_escape_string($calImpDatos['act_descripcion'])."', '".$calImpDatos['act_fecha']."', '".$calImpDatos['act_valor']."', '".$idRegInd."', '".$cargaConsultaActual."', 0, now(), 1, '".$periodoConsultaActual."','".$calImpDatos['act_compartir']."'),";
+				$datosInsert .="('".mysqli_real_escape_string($conexion,$calImpDatos['act_descripcion'])."', '".$calImpDatos['act_fecha']."', '".$calImpDatos['act_valor']."', '".$idRegInd."', '".$cargaConsultaActual."', 0, now(), 1, '".$periodoConsultaActual."','".$calImpDatos['act_compartir']."'),";
 
 			}
 
@@ -2234,11 +2201,11 @@ if($_POST["id"]==40){
 
 				$datosInsert = substr($datosInsert,0,-1);
 
-				mysql_query("INSERT INTO academico_actividades(act_descripcion, act_fecha, act_valor, act_id_tipo, act_id_carga, act_registrada, act_fecha_creacion, act_estado, act_periodo, act_compartir)VALUES
+				mysqli_query($conexion, "INSERT INTO academico_actividades(act_descripcion, act_fecha, act_valor, act_id_tipo, act_id_carga, act_registrada, act_fecha_creacion, act_estado, act_periodo, act_compartir)VALUES
 
 				".$datosInsert."
 
-				",$conexion);
+				");
 
 				$lineaError = __LINE__;
 
@@ -2256,11 +2223,11 @@ if($_POST["id"]==40){
 
 			$datosInsertInd = substr($datosInsertInd,0,-1);
 
-			mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado)VALUES
 
 			".$datosInsertInd."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2280,17 +2247,17 @@ if($_POST["id"]==40){
 
 	if($_POST["clases"]==1){	
 
-		mysql_query("UPDATE academico_clases SET cls_estado=0
+		mysqli_query($conexion, "UPDATE academico_clases SET cls_estado=0
 
-		WHERE cls_id_carga='".$cargaConsultaActual."' AND cls_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE cls_id_carga='".$cargaConsultaActual."' AND cls_periodo='".$periodoConsultaActual."'");
 
 			
 
 		//Consultamos las clases a Importar
 
-		$calImpConsulta = mysql_query("SELECT * FROM academico_clases
+		$calImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_clases
 
-		WHERE cls_id_carga='".$_POST["cargaImportar"]."' AND cls_periodo='".$_POST["periodoImportar"]."' AND cls_estado=1",$conexion);
+		WHERE cls_id_carga='".$_POST["cargaImportar"]."' AND cls_periodo='".$_POST["periodoImportar"]."' AND cls_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -2298,7 +2265,7 @@ if($_POST["id"]==40){
 
 		$datosInsert = '';
 
-		while($calImpDatos = mysql_fetch_array($calImpConsulta)){
+		while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 
 			$datosInsert .="('".$calImpDatos['cls_tema']."', now(), '".$cargaConsultaActual."', 0, now(), 1, '".$periodoConsultaActual."', '".$calImpDatos['cls_archivo']."', '".$calImpDatos['cls_video_url']."', '".$calImpDatos['cls_descripcion']."', '".$calImpDatos['cls_archivo2']."', '".$calImpDatos['cls_archivo3']."', '".$calImpDatos['cls_nombre_archivo1']."', '".$calImpDatos['cls_nombre_archivo2']."', '".$calImpDatos['cls_nombre_archivo3']."', '".$calImpDatos['cls_disponible']."'),";
 
@@ -2308,11 +2275,11 @@ if($_POST["id"]==40){
 
 			$datosInsert = substr($datosInsert,0,-1);
 
-			mysql_query("INSERT INTO academico_clases(cls_tema, cls_fecha, cls_id_carga, cls_registrada, cls_fecha_creacion, cls_estado, cls_periodo, cls_archivo, cls_video, cls_video_url, cls_descripcion, cls_archivo2, cls_archivo3, cls_nombre_archivo1, cls_nombre_archivo2, cls_nombre_archivo3, cls_disponible)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_clases(cls_tema, cls_fecha, cls_id_carga, cls_registrada, cls_fecha_creacion, cls_estado, cls_periodo, cls_archivo, cls_video, cls_video_url, cls_descripcion, cls_archivo2, cls_archivo3, cls_nombre_archivo1, cls_nombre_archivo2, cls_nombre_archivo3, cls_disponible)VALUES
 
 			".$datosInsert."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2330,17 +2297,17 @@ if($_POST["id"]==40){
 
 	if($_POST["actividades"]==1){		
 
-		mysql_query("UPDATE academico_actividad_tareas SET tar_estado=0
+		mysqli_query($conexion, "UPDATE academico_actividad_tareas SET tar_estado=0
 
-		WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE tar_id_carga='".$cargaConsultaActual."' AND tar_periodo='".$periodoConsultaActual."'");
 
 			
 
 		//Consultamos las actividades a Importar
 
-		$calImpConsulta = mysql_query("SELECT * FROM academico_actividad_tareas
+		$calImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas
 
-		WHERE tar_id_carga='".$_POST["cargaImportar"]."' AND tar_periodo='".$_POST["periodoImportar"]."' AND tar_estado=1",$conexion);
+		WHERE tar_id_carga='".$_POST["cargaImportar"]."' AND tar_periodo='".$_POST["periodoImportar"]."' AND tar_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -2348,7 +2315,7 @@ if($_POST["id"]==40){
 
 		$datosInsert = '';
 
-		while($calImpDatos = mysql_fetch_array($calImpConsulta)){
+		while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 
 			$datosInsert .="('".$calImpDatos['tar_titulo']."', '".$calImpDatos['tar_descripcion']."', '".$cargaConsultaActual."', '".$calImpDatos['tar_fecha_disponible']."', '".$calImpDatos['tar_fecha_entrega']."', '".$calImpDatos['tar_archivo']."', '".$calImpDatos['tar_impedir_retrasos']."', '".$periodoConsultaActual."', 1, '".$calImpDatos['tar_archivo2']."', '".$calImpDatos['ar_archivo3']."'),";	
 
@@ -2358,11 +2325,11 @@ if($_POST["id"]==40){
 
 			$datosInsert = substr($datosInsert,0,-1);
 
-			mysql_query("INSERT INTO academico_actividad_tareas(tar_titulo, tar_descripcion, tar_id_carga, tar_fecha_disponible, tar_fecha_entrega, tar_archivo, tar_impedir_retrasos, tar_periodo, tar_estado, tar_archivo2, ar_archivo3)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_actividad_tareas(tar_titulo, tar_descripcion, tar_id_carga, tar_fecha_disponible, tar_fecha_entrega, tar_archivo, tar_impedir_retrasos, tar_periodo, tar_estado, tar_archivo2, ar_archivo3)VALUES
 
 			".$datosInsert."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2382,17 +2349,17 @@ if($_POST["id"]==40){
 
 	if($_POST["foros"]==1){		
 
-		mysql_query("UPDATE academico_actividad_foro SET foro_estado=0
+		mysqli_query($conexion, "UPDATE academico_actividad_foro SET foro_estado=0
 
-		WHERE foro_id_carga='".$cargaConsultaActual."' AND foro_periodo='".$periodoConsultaActual."'",$conexion);
+		WHERE foro_id_carga='".$cargaConsultaActual."' AND foro_periodo='".$periodoConsultaActual."'");
 
 			
 
 		//Consultamos las foros a Importar
 
-		$calImpConsulta = mysql_query("SELECT * FROM academico_actividad_foro
+		$calImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_foro
 
-		WHERE foro_id_carga='".$_POST["cargaImportar"]."' AND foro_periodo='".$_POST["periodoImportar"]."' AND foro_estado=1",$conexion);
+		WHERE foro_id_carga='".$_POST["cargaImportar"]."' AND foro_periodo='".$_POST["periodoImportar"]."' AND foro_estado=1");
 
 		$lineaError = __LINE__;
 
@@ -2400,7 +2367,7 @@ if($_POST["id"]==40){
 
 		$datosInsert = '';
 
-		while($calImpDatos = mysql_fetch_array($calImpConsulta)){
+		while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 
 			$datosInsert .="('".$calImpDatos['foro_nombre']."', '".$calImpDatos['foro_descripcion']."', '".$cargaConsultaActual."', '".$periodoConsultaActual."', 1),";
 
@@ -2410,11 +2377,11 @@ if($_POST["id"]==40){
 
 			$datosInsert = substr($datosInsert,0,-1);
 
-			mysql_query("INSERT INTO academico_actividad_foro(foro_nombre, foro_descripcion, foro_id_carga, foro_periodo, foro_estado)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_actividad_foro(foro_nombre, foro_descripcion, foro_id_carga, foro_periodo, foro_estado)VALUES
 
 			".$datosInsert."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2438,9 +2405,9 @@ if($_POST["id"]==40){
 
 		//Consultamos la información del cronograma a Importar
 
-		$calImpConsulta = mysql_query("SELECT * FROM academico_cronograma
+		$calImpConsulta = mysqli_query($conexion, "SELECT * FROM academico_cronograma
 
-		WHERE cro_id_carga='".$_POST["cargaImportar"]."' AND cro_periodo='".$_POST["periodoImportar"]."'",$conexion);
+		WHERE cro_id_carga='".$_POST["cargaImportar"]."' AND cro_periodo='".$_POST["periodoImportar"]."'");
 
 		$lineaError = __LINE__;
 
@@ -2448,7 +2415,7 @@ if($_POST["id"]==40){
 
 		$datosInsert = '';
 
-		while($calImpDatos = mysql_fetch_array($calImpConsulta)){
+		while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 
 			$datosInsert .="('".$calImpDatos['cro_tema']."', '".$calImpDatos['cro_fecha']."', '".$cargaConsultaActual."', '".$calImpDatos['cro_recursos']."', '".$periodoConsultaActual."', '".$calImpDatos['cro_color']."'),";
 
@@ -2458,11 +2425,11 @@ if($_POST["id"]==40){
 
 			$datosInsert = substr($datosInsert,0,-1);
 
-			mysql_query("INSERT INTO academico_cronograma(cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color)VALUES
+			mysqli_query($conexion, "INSERT INTO academico_cronograma(cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color)VALUES
 
 			".$datosInsert."
 
-			",$conexion);
+			");
 
 			$lineaError = __LINE__;
 
@@ -2498,15 +2465,15 @@ if($_POST["id"]==41){
 
 	if($_POST["critica"]!=1) $_POST["critica"]='0';
 
-	mysql_query("INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_critica)VALUES('".$_POST["contenido"]."','".$_POST["critica"]."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_preguntas(preg_descripcion, preg_critica)VALUES('".$_POST["contenido"]."','".$_POST["critica"]."')");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	$idPregunta = mysql_insert_id();
+	$idPregunta = mysqli_insert_id($conexion);
 
-	mysql_query("INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."','".$idPregunta."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_evaluacion_preguntas(evp_id_evaluacion, evp_id_pregunta)VALUES('".$_POST["idE"]."','".$idPregunta."')");
 
 	$lineaError = __LINE__;
 
@@ -2530,35 +2497,35 @@ if($_POST["id"]==42){
 
 	
 
-	mysql_query("INSERT INTO academico_monitoreo(moni_fecha, moni_evaluador, moni_evaluado, moni_id_formato)
+	mysqli_query($conexion, "INSERT INTO academico_monitoreo(moni_fecha, moni_evaluador, moni_evaluado, moni_id_formato)
 
-	VALUES(now(), '".$_SESSION["id"]."','".$_POST["evaluado"]."','".$_POST["idF"]."')",$conexion);
+	VALUES(now(), '".$_SESSION["id"]."','".$_POST["evaluado"]."','".$_POST["idF"]."')");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	$idRegistro = mysql_insert_id();
+	$idRegistro = mysqli_insert_id($conexion);
 
 	
 
-	$consultaCat = mysql_query("SELECT * FROM academico_actividad_evaluaciones 
+	$consultaCat = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
 
 	WHERE eva_formato='".$_POST["idF"]."'
 
-	",$conexion);
+	");
 
 	$contReg = 1;
 
-	while($resultadoCat = mysql_fetch_array($consultaCat)){
+	while($resultadoCat = mysqli_fetch_array($consultaCat, MYSQLI_BOTH)){
 
-		$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+		$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 
 		INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 
 		WHERE evp_id_evaluacion='".$resultadoCat['eva_id']."'
 
-		",$conexion);
+		");
 
 		$lineaError = __LINE__;
 
@@ -2566,15 +2533,15 @@ if($_POST["id"]==42){
 
 
 
-		while($preguntas = mysql_fetch_array($preguntasConsulta)){
+		while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
 
 			//GUARDAR RESPUESTAS
 
 			if($_POST["P$contReg"]=="") $_POST["P$contReg"] = 0;
 
-			mysql_query("INSERT INTO academico_actividad_evaluaciones_resultados(res_id_pregunta, res_id_respuesta, res_id_estudiante, res_id_evaluacion, res_id_monitoreo)
+			mysqli_query($conexion, "INSERT INTO academico_actividad_evaluaciones_resultados(res_id_pregunta, res_id_respuesta, res_id_estudiante, res_id_evaluacion, res_id_monitoreo)
 
-			VALUES('".$preguntas['preg_id']."', '".$_POST["P$contReg"]."', '".$_POST["evaluado"]."', '".$resultadoCat['eva_id']."', '".$idRegistro."')",$conexion);
+			VALUES('".$preguntas['preg_id']."', '".$_POST["P$contReg"]."', '".$_POST["evaluado"]."', '".$resultadoCat['eva_id']."', '".$idRegistro."')");
 
 			$lineaError = __LINE__;
 
@@ -2588,9 +2555,9 @@ if($_POST["id"]==42){
 
 	
 
-	mysql_query("INSERT INTO general_alertas (alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_categoria, alr_importancia, alr_url_acceso, alr_vista)
+	mysqli_query($conexion, "INSERT INTO general_alertas (alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_categoria, alr_importancia, alr_url_acceso, alr_vista)
 
-	VALUES('Nuevo monitoreo', 'Acaban de hacerte un nuevo monitoreo', 2, '".$_POST["evaluado"]."', now(), 3, 2, '', 0)",$conexion);
+	VALUES('Nuevo monitoreo', 'Acaban de hacerte un nuevo monitoreo', 2, '".$_POST["evaluado"]."', now(), 3, 2, '', 0)");
 
 	$lineaError = __LINE__;
 
@@ -2616,7 +2583,7 @@ if($_POST["id"]==43){
 
 
 
-	mysql_query("INSERT INTO academico_actividad_evaluaciones(eva_nombre, eva_estado, eva_formato)VALUES('".$_POST["titulo"]."', 1, '".$_POST["idF"]."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_evaluaciones(eva_nombre, eva_estado, eva_formato)VALUES('".$_POST["titulo"]."', 1, '".$_POST["idF"]."')");
 
 	$lineaError = __LINE__;
 
@@ -2636,7 +2603,7 @@ if($_POST["id"]==43){
 
 if($_POST["id"]==44){
 
-	mysql_query("UPDATE academico_actividad_evaluaciones SET eva_nombre='".$_POST["titulo"]."' WHERE eva_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_evaluaciones SET eva_nombre='".$_POST["titulo"]."' WHERE eva_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2664,7 +2631,7 @@ if($_POST["id"]==45){
 
 	if($_POST["critica"]!=1) $_POST["critica"]='0';
 
-	mysql_query("UPDATE academico_actividad_preguntas SET preg_descripcion='".$_POST["contenido"]."', preg_critica='".$_POST["critica"]."' WHERE preg_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_preguntas SET preg_descripcion='".$_POST["contenido"]."', preg_critica='".$_POST["critica"]."' WHERE preg_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2690,7 +2657,7 @@ if($_POST["id"]==46){
 
 
 
-	mysql_query("INSERT INTO academico_formatos(form_nombre, form_carga)VALUES('".$_POST["titulo"]."', '".$cargaConsultaActual."')",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_formatos(form_nombre, form_carga)VALUES('".$_POST["titulo"]."', '".$cargaConsultaActual."')");
 
 	$lineaError = __LINE__;
 
@@ -2710,7 +2677,7 @@ if($_POST["id"]==46){
 
 if($_POST["id"]==47){
 
-	mysql_query("UPDATE academico_formatos SET form_nombre='".$_POST["titulo"]."' WHERE form_id='".$_POST["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_formatos SET form_nombre='".$_POST["titulo"]."' WHERE form_id='".$_POST["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2732,13 +2699,13 @@ if($_POST["id"]==47){
 
 if($_GET["get"]==1){
 
-	$consulta = mysql_query("SELECT * FROM social_noticias WHERE not_id='".$_GET["id"]."'",$conexion);
+	$consulta = mysqli_query($conexion, "SELECT * FROM social_noticias WHERE not_id='".$_GET["id"]."'");
 
-	$resultado = mysql_fetch_array($consulta);
+	$resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
 	if($resultado[5]==0) $estado=1; else $estado=0;
 
-	mysql_query("UPDATE social_noticias SET not_estado='".$estado."' WHERE not_id='".$_GET["id"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE social_noticias SET not_estado='".$estado."' WHERE not_id='".$_GET["id"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2754,7 +2721,7 @@ if($_GET["get"]==1){
 
 if($_GET["get"]==2){
 
-	mysql_query("UPDATE social_noticias SET not_estado=2 WHERE not_id='".$_GET["id"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE social_noticias SET not_estado=2 WHERE not_id='".$_GET["id"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2770,7 +2737,7 @@ if($_GET["get"]==2){
 
 if($_GET["get"]==3){
 
-	mysql_query("UPDATE social_noticias SET not_estado=1 WHERE not_usuario='".$idSession."' AND not_estado!=2",$conexion);
+	mysqli_query($conexion, "UPDATE social_noticias SET not_estado=1 WHERE not_usuario='".$idSession."' AND not_estado!=2");
 
 	$lineaError = __LINE__;
 
@@ -2786,7 +2753,7 @@ if($_GET["get"]==3){
 
 if($_GET["get"]==4){
 
-	mysql_query("UPDATE social_noticias SET not_estado=0 WHERE not_usuario='".$idSession."' AND not_estado!=2",$conexion);
+	mysqli_query($conexion, "UPDATE social_noticias SET not_estado=0 WHERE not_usuario='".$idSession."' AND not_estado!=2");
 
 	$lineaError = __LINE__;
 
@@ -2802,7 +2769,7 @@ if($_GET["get"]==4){
 
 if($_GET["get"]==5){
 
-	mysql_query("UPDATE social_noticias SET not_estado=2 WHERE not_usuario='".$idSession."'",$conexion);
+	mysqli_query($conexion, "UPDATE social_noticias SET not_estado=2 WHERE not_usuario='".$idSession."'");
 
 	$lineaError = __LINE__;
 
@@ -2818,7 +2785,7 @@ if($_GET["get"]==5){
 
 if($_GET["get"]==6){
 
-	mysql_query("UPDATE social_amigos SET ams_estado=1 WHERE ams_usuario='".$_GET["usuario"]."' AND ams_amigo='".$idSession."'",$conexion);
+	mysqli_query($conexion, "UPDATE social_amigos SET ams_estado=1 WHERE ams_usuario='".$_GET["usuario"]."' AND ams_amigo='".$idSession."'");
 
 	$lineaError = __LINE__;
 
@@ -2834,7 +2801,7 @@ if($_GET["get"]==6){
 
 if($_GET["get"]==7){
 
-	mysql_query("INSERT INTO social_amigos(ams_usuario, ams_amigo, ams_estado, ams_destacado)VALUES('".$idSession."', '".$_GET["usuario"]."', 0, 0)",$conexion);
+	mysqli_query($conexion, "INSERT INTO social_amigos(ams_usuario, ams_amigo, ams_estado, ams_destacado)VALUES('".$idSession."', '".$_GET["usuario"]."', 0, 0)");
 
 	$lineaError = __LINE__;
 
@@ -2852,7 +2819,7 @@ if($_GET["get"]==8){
 
 	if($_GET["estado"]==0) $estado=1; else $estado=0;
 
-	mysql_query("UPDATE academico_actividad_respuestas SET resp_correcta='".$estado."' WHERE resp_id='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_respuestas SET resp_correcta='".$estado."' WHERE resp_id='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2868,7 +2835,7 @@ if($_GET["get"]==8){
 
 if($_GET["get"]==9){
 
-	mysql_query("DELETE FROM academico_actividad_respuestas WHERE resp_id='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_respuestas WHERE resp_id='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -2892,19 +2859,19 @@ if($_GET["get"]==10){
 
 	
 
-	$actividadesRelacionadasConsulta = mysql_query("SELECT * FROM academico_actividades 
+	$actividadesRelacionadasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividades 
 
-	WHERE act_id_tipo='".$_GET["idIndicador"]."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1",$conexion);
+	WHERE act_id_tipo='".$_GET["idIndicador"]."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	while($actividadesRelacionadasDatos = mysql_fetch_array($actividadesRelacionadasConsulta)){
+	while($actividadesRelacionadasDatos = mysqli_fetch_array($actividadesRelacionadasConsulta, MYSQLI_BOTH)){
 
 		/*
 
-		mysql_query("DELETE FROM academico_calificaciones WHERE cal_id_actividad='".$actividadesRelacionadasDatos['act_id']."'",$conexion);
+		mysqli_query($conexion, "DELETE FROM academico_calificaciones WHERE cal_id_actividad='".$actividadesRelacionadasDatos['act_id']."'");
 
 		$lineaError = __LINE__;
 
@@ -2912,7 +2879,7 @@ if($_GET["get"]==10){
 
 		*/
 
-		mysql_query("UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar indicadores de carga: ".$cargaConsultaActual.", del P: ".$periodoConsultaActual."' WHERE act_id='".$actividadesRelacionadasDatos['act_id']."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar indicadores de carga: ".$cargaConsultaActual.", del P: ".$periodoConsultaActual."' WHERE act_id='".$actividadesRelacionadasDatos['act_id']."'");
 
 		$lineaError = __LINE__;
 
@@ -2922,29 +2889,22 @@ if($_GET["get"]==10){
 
 	
 
-	mysql_query("DELETE FROM academico_indicadores_carga WHERE ipc_id='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_indicadores_carga WHERE ipc_id='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
 	
-
-	$sumaIndicadores = mysql_fetch_array(mysql_query("SELECT
-
+	$consultaSumaIndicadores=mysqli_query($conexion, "SELECT
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=0),
-
 	(SELECT sum(ipc_valor) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1),
-
 	(SELECT count(*) FROM academico_indicadores_carga 
-
 	WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1)
-
-	",$conexion));
+	");
+	$sumaIndicadores = mysqli_fetch_array($consultaSumaIndicadores, MYSQLI_BOTH);
 
 	$porcentajePermitido = 100 - $sumaIndicadores[0];
 
@@ -2970,9 +2930,9 @@ if($_GET["get"]==10){
 
 		//Actualiza todos valores de la misma carga y periodo.
 
-		mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
+		mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$valorIgualIndicador."' 
 
-		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1",$conexion);
+		WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1");
 
 		$lineaError = __LINE__;
 
@@ -2986,17 +2946,16 @@ if($_GET["get"]==10){
 
 			//Repetimos la consulta de los indicadores porque los valores fueron actualizados
 
-			$indicadoresConsultaActualizado = mysql_query("SELECT * FROM academico_indicadores_carga 
+			$indicadoresConsultaActualizado = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 
-			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1",$conexion);
+			WHERE ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."' AND ipc_creado=1");
 
 			//Actualizamos todas las actividades por cada indicador
 
-			while($indicadoresDatos = mysql_fetch_array($indicadoresConsultaActualizado)){
-
-				$actividadesNum = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades 
-
-				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion));
+			while($indicadoresDatos = mysqli_fetch_array($indicadoresConsultaActualizado, MYSQLI_BOTH)){
+				$consultaActividadesNum=mysqli_query($conexion, "SELECT * FROM academico_actividades 
+				WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
+				$actividadesNum = mysqli_num_rows($consultaActividadesNum);
 
 				$lineaError = __LINE__;
 
@@ -3008,9 +2967,9 @@ if($_GET["get"]==10){
 
 					$valorIgualActividad = ($indicadoresDatos['ipc_valor']/$actividadesNum);
 
-					mysql_query("UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
+					mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' 
 
-					WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1",$conexion);
+					WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_periodo='".$periodoConsultaActual."' AND act_id_carga='".$cargaConsultaActual."' AND act_estado=1");
 
 					$lineaError = __LINE__;
 
@@ -3043,8 +3002,8 @@ if($_GET["get"]==11){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$registro = mysql_fetch_array(mysql_query("SELECT * FROM academico_clases WHERE cls_id='".$_GET["idR"]."'",$conexion));
+	$consultaRegistro=mysqli_query($conexion, "SELECT * FROM academico_clases WHERE cls_id='".$_GET["idR"]."'");
+	$registro = mysqli_fetch_array($consultaRegistro, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -3078,7 +3037,7 @@ if($_GET["get"]==11){
 
 	
 
-	mysql_query("UPDATE academico_clases SET cls_estado=0 WHERE cls_id=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "UPDATE academico_clases SET cls_estado=0 WHERE cls_id=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3086,7 +3045,7 @@ if($_GET["get"]==11){
 
 	
 
-	mysql_query("DELETE FROM academico_ausencias WHERE aus_id_clase=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_ausencias WHERE aus_id_clase=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3113,10 +3072,9 @@ if($_GET["get"]==12){
 	include("verificar-periodos-diferentes.php");
 
 	
-
-	$indicadoresDatos = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores_carga 
-
-	WHERE ipc_indicador='".$_GET["idIndicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'",$conexion));
+	$consultaIndicadoresDatos=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
+	WHERE ipc_indicador='".$_GET["idIndicador"]."' AND ipc_carga='".$cargaConsultaActual."' AND ipc_periodo='".$periodoConsultaActual."'");
+	$indicadoresDatos = mysqli_fetch_array($consultaIndicadoresDatos, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -3126,7 +3084,7 @@ if($_GET["get"]==12){
 
 	//"Borramos" la actividad
 
-	mysql_query("UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar la actividad de carga: ".$cargaConsultaActual.", del P: ".$periodoConsultaActual."' WHERE act_id=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar la actividad de carga: ".$cargaConsultaActual.", del P: ".$periodoConsultaActual."' WHERE act_id=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3136,7 +3094,7 @@ if($_GET["get"]==12){
 
 	/*
 
-	mysql_query("DELETE FROM academico_calificaciones WHERE cal_id_actividad=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_calificaciones WHERE cal_id_actividad=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3151,8 +3109,8 @@ if($_GET["get"]==12){
 	if($datosCargaActual['car_configuracion']==0){
 
 		//Actualizamos el valor de todas las actividades del indicador
-
-		$actividadesNum = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1",$conexion));
+		$consultaActividadesNum=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1");
+		$actividadesNum = mysqli_num_rows($consultaActividadesNum);
 
 		$lineaError = __LINE__;
 
@@ -3164,7 +3122,7 @@ if($_GET["get"]==12){
 
 			$valorIgualActividad = ($indicadoresDatos['ipc_valor']/($actividadesNum));
 
-			mysql_query("UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valorIgualActividad."' WHERE act_id_tipo='".$indicadoresDatos['ipc_indicador']."' AND act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1");
 
 			$lineaError = __LINE__;
 
@@ -3188,7 +3146,7 @@ if($_GET["get"]==12){
 
 if($_GET["get"]==13){
 
-	mysql_query("DELETE FROM academico_cronograma WHERE cro_id=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_cronograma WHERE cro_id=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3204,13 +3162,13 @@ if($_GET["get"]==13){
 
 if($_GET["get"]==14){
 
-	mysql_query("DELETE FROM academico_actividad_foro_respuestas WHERE fore_id_comentario=".$_GET["idCom"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_respuestas WHERE fore_id_comentario=".$_GET["idCom"]);
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	mysql_query("DELETE FROM academico_actividad_foro_comentarios WHERE com_id=".$_GET["idCom"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_comentarios WHERE com_id=".$_GET["idCom"]);
 
 	$lineaError = __LINE__;
 
@@ -3226,7 +3184,7 @@ if($_GET["get"]==14){
 
 if($_GET["get"]==15){
 
-	mysql_query("DELETE FROM academico_actividad_foro_respuestas WHERE fore_id=".$_GET["idRes"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_respuestas WHERE fore_id=".$_GET["idRes"]);
 
 	$lineaError = __LINE__;
 
@@ -3242,11 +3200,11 @@ if($_GET["get"]==15){
 
 if($_GET["get"]==16){
 
-	$foroC = mysql_query("SELECT * FROM academico_actividad_foro_comentarios WHERE com_id_foro='".$_GET["idR"]."'",$conexion);
+	$foroC = mysqli_query($conexion, "SELECT * FROM academico_actividad_foro_comentarios WHERE com_id_foro='".$_GET["idR"]."'");
 
-	while($foro=mysql_fetch_array($foroC)){
+	while($foro=mysqli_fetch_array($foroC, MYSQLI_BOTH)){
 
-		mysql_query("DELETE FROM academico_actividad_foro_respuestas WHERE fore_id_comentario='".$foro[0]."'",$conexion);
+		mysqli_query($conexion, "DELETE FROM academico_actividad_foro_respuestas WHERE fore_id_comentario='".$foro[0]."'");
 
 		$lineaError = __LINE__;
 
@@ -3254,13 +3212,13 @@ if($_GET["get"]==16){
 
 	}
 
-	mysql_query("DELETE FROM academico_actividad_foro_comentarios WHERE com_id_foro='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro_comentarios WHERE com_id_foro='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	mysql_query("DELETE FROM academico_actividad_foro WHERE foro_id='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_foro WHERE foro_id='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3278,7 +3236,7 @@ if($_GET["get"]==17){
 
 	
 
-	$rEntregas = mysql_query("SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."'",$conexion);
+	$rEntregas = mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3288,7 +3246,7 @@ if($_GET["get"]==17){
 
 	$rutaEntregas = '../files/tareas-entregadas';
 
-	while($registroEntregas = mysql_fetch_array($rEntregas)){
+	while($registroEntregas = mysqli_fetch_array($rEntregas, MYSQLI_BOTH)){
 
 		
 
@@ -3314,7 +3272,7 @@ if($_GET["get"]==17){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3323,8 +3281,8 @@ if($_GET["get"]==17){
 	
 
 	
-
-	$registro = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_tareas WHERE tar_id='".$_GET["idR"]."'",$conexion));
+	$consultaRegistro=mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas WHERE tar_id='".$_GET["idR"]."'");
+	$registro = mysqli_fetch_array($consultaRegistro, MYSQLI_BOTH);
 
 	$lineaError = __LINE__;
 
@@ -3354,7 +3312,7 @@ if($_GET["get"]==17){
 
 	
 
-	mysql_query("UPDATE academico_actividad_tareas SET tar_estado=0 WHERE tar_id='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividad_tareas SET tar_estado=0 WHERE tar_id='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3374,7 +3332,7 @@ if($_GET["get"]==18){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_evaluacion_preguntas WHERE evp_id_evaluacion='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluacion_preguntas WHERE evp_id_evaluacion='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3386,7 +3344,7 @@ if($_GET["get"]==18){
 
 	//Eliminamos los archivos de respuestas de las preguntas de esta evaluacion.
 
-	$rEntregas = mysql_query("SELECT * FROM academico_actividad_evaluaciones_resultados WHERE res_id_evaluacion='".$_GET["idR"]."'",$conexion);
+	$rEntregas = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados WHERE res_id_evaluacion='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3396,7 +3354,7 @@ if($_GET["get"]==18){
 
 	$rutaEntregas = '../files/evaluaciones';
 
-	while($registroEntregas = mysql_fetch_array($rEntregas)){
+	while($registroEntregas = mysqli_fetch_array($rEntregas, MYSQLI_BOTH)){
 
 		if(file_exists($ruta."/".$registro['res_archivo'])){
 
@@ -3408,7 +3366,7 @@ if($_GET["get"]==18){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_resultados WHERE res_id_evaluacion='".$_GET["idR"]."'",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_resultados WHERE res_id_evaluacion='".$_GET["idR"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3416,7 +3374,7 @@ if($_GET["get"]==18){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_estudiantes WHERE epe_id_evaluacion=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3424,7 +3382,7 @@ if($_GET["get"]==18){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones WHERE eva_id=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones WHERE eva_id=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3442,17 +3400,17 @@ if($_GET["get"]==18){
 
 if($_GET["get"]==19){
 
-	$consultaI = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1",$conexion);
+	$consultaI = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1");
 
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");
 
-	$numI = mysql_num_rows($consultaI);
+	$numI = mysqli_num_rows($consultaI);
 
 	$valor = ($config[21]/$numI);
 
-	mysql_query("UPDATE academico_indicadores_carga SET ipc_valor='".$valor."' WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1",$conexion);
+	mysqli_query($conexion, "UPDATE academico_indicadores_carga SET ipc_valor='".$valor."' WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1");
 
 	$lineaError = __LINE__;
 
@@ -3468,19 +3426,16 @@ if($_GET["get"]==19){
 
 if($_GET["get"]==20){
 
-	$tipos = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_periodo='".$datosCargaActual[5]."'",$conexion);
+	$tipos = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_periodo='".$datosCargaActual[5]."'");
 
-	if(mysql_errno()!=0){echo mysql_error()." Linea 452"; exit();}
-
-    $tipo = mysql_fetch_array($tipos);
+    $tipo = mysqli_fetch_array($tipos, MYSQLI_BOTH);
 
 	//============================================= VERIFICAMOS CUANTAS NOTAS EXISTEN DEL MISMO TIPO ================================================
 
-	$registros = mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo='".$datosCargaActual[5]."' AND act_estado=1",$conexion);
+	$registros = mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo='".$datosCargaActual[5]."' AND act_estado=1");
 
-	if(mysql_errno()!=0){echo mysql_error()." Linea 469"; exit();}
 
-   	$num_reg = mysql_num_rows($registros);
+   	$num_reg = mysqli_num_rows($registros);
 
 	//================== VALOR INDIVIDUAL DE CADA NOTA QUE PERTENECE AL MISMO TIPO ======================================
 
@@ -3490,11 +3445,10 @@ if($_GET["get"]==20){
 
 		$valnota = 0;
 
-	mysql_query("UPDATE academico_actividades SET act_valor='".$valnota."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo='".$datosCargaActual[5]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valnota."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo='".$datosCargaActual[5]."'");
 
 	//echo $valnota; exit();
 
-	if(mysql_errno()!=0){echo mysql_error()." Linea 466"; exit();}
 
 	echo '<script type="text/javascript">window.location.href="calificaciones.php";</script>';
 
@@ -3524,7 +3478,7 @@ if($_GET["get"]==21){
 
 if($_GET["get"]==22){
 
-	mysql_query("DELETE FROM disiplina_nota WHERE dn_id=".$_GET["id"],$conexion);
+	mysqli_query($conexion, "DELETE FROM disiplina_nota WHERE dn_id=".$_GET["id"]);
 
 	$lineaError = __LINE__;
 
@@ -3544,19 +3498,15 @@ if($_GET["get"]==22){
 
 if($_GET["get"]==25){
 
-	$tipos = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_periodo=1",$conexion);
+	$tipos = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$_COOKIE["carga"]."' AND ipc_indicador='".$_GET["ind"]."' AND ipc_periodo=1");
 
-	if(mysql_errno()!=0){echo mysql_error()." Linea 452"; exit();}
-
-    $tipo = mysql_fetch_array($tipos);
+    $tipo = mysqli_fetch_array($tipos, MYSQLI_BOTH);
 
 	//============================================= VERIFICAMOS CUANTAS NOTAS EXISTEN DEL MISMO TIPO ================================================
 
-	$registros = mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo=1 AND act_estado=1",$conexion);
+	$registros = mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo=1 AND act_estado=1");
 
-	if(mysql_errno()!=0){echo mysql_error()." Linea 469"; exit();}
-
-   	$num_reg = mysql_num_rows($registros);
+   	$num_reg = mysqli_num_rows($registros);
 
 	//================== VALOR INDIVIDUAL DE CADA NOTA QUE PERTENECE AL MISMO TIPO ======================================
 
@@ -3566,11 +3516,7 @@ if($_GET["get"]==25){
 
 		$valnota = 0;
 
-	mysql_query("UPDATE academico_actividades SET act_valor='".$valnota."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo=1",$conexion);
-
-	//echo $valnota; exit();
-
-	if(mysql_errno()!=0){echo mysql_error()." Linea 466"; exit();}
+	mysqli_query($conexion, "UPDATE academico_actividades SET act_valor='".$valnota."' WHERE act_id_carga='".$_COOKIE["carga"]."' AND act_id_tipo='".$_GET["ind"]."' AND act_periodo=1");
 
 	echo '<script type="text/javascript">window.location.href="calificaciones1.php";</script>';
 
@@ -3584,31 +3530,24 @@ if($_GET["get"]==26){
 
 	$cont=1;
 
-	$asignacionT = mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$datosCargaActual[0]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1",$conexion);
+	$asignacionT = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_carga='".$datosCargaActual[0]."' AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_creado=1");
 
-	while($asgT = mysql_fetch_array($asignacionT)){
+	while($asgT = mysqli_fetch_array($asignacionT, MYSQLI_BOTH)){
+		$consultaNInd=mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_id='".$asgT[2]."'");
+		$nInd = mysqli_fetch_array($consultaNInd, MYSQLI_BOTH);
 
-		$nInd = mysql_fetch_array(mysql_query("SELECT * FROM academico_indicadores WHERE ind_id='".$asgT[2]."'",$conexion));
+		mysqli_query($conexion, "INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio)VALUES('".$nInd[1]."',0)");
 
-		if(mysql_errno()!=0){echo mysql_error();exit();}
+		$idInd = mysqli_insert_id($conexion);
 
-		mysql_query("INSERT INTO academico_indicadores(ind_nombre, ind_obligatorio)VALUES('".$nInd[1]."',0)",$conexion);
 
-		$idInd = mysql_insert_id();
+		mysqli_query($conexion, "INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$_COOKIE["carga"]."','".$idInd."','".$asgT[3]."','".$datosCargaActual[5]."','".$asgT[5]."')");
 
-		if(mysql_errno()!=0){echo mysql_error();exit();} 
 
-		mysql_query("INSERT INTO academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$_COOKIE["carga"]."','".$idInd."','".$asgT[3]."','".$datosCargaActual[5]."','".$asgT[5]."')",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividades SET act_id_tipo='".$idInd."' WHERE act_id_tipo='".$asgT[2]."' AND act_id_carga='".$_COOKIE["carga"]."' AND act_periodo='".$datosCargaActual[5]."'");
 
-		if(mysql_errno()!=0){echo mysql_error();exit();}
 
-		mysql_query("UPDATE academico_actividades SET act_id_tipo='".$idInd."' WHERE act_id_tipo='".$asgT[2]."' AND act_id_carga='".$_COOKIE["carga"]."' AND act_periodo='".$datosCargaActual[5]."'",$conexion);
-
-		if(mysql_errno()!=0){echo mysql_error();exit();}
-
-		mysql_query("DELETE FROM academico_indicadores_carga WHERE ipc_carga=".$_COOKIE["carga"]." AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_indicador='".$asgT[2]."'",$conexion);
-
-		if(mysql_errno()!=0){echo mysql_error();exit();}
+		mysqli_query($conexion, "DELETE FROM academico_indicadores_carga WHERE ipc_carga=".$_COOKIE["carga"]." AND ipc_periodo='".$datosCargaActual[5]."' AND ipc_indicador='".$asgT[2]."'");
 
 		$cont++;
 
@@ -3624,9 +3563,9 @@ if($_GET["get"]==26){
 
 if($_GET["get"]==27){
 
-	mysql_query("DELETE FROM academico_actividad_evaluacion_preguntas 
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluacion_preguntas 
 
-	WHERE evp_id_evaluacion='".$_GET["idE"]."' AND evp_id_pregunta='".$_GET["idP"]."'",$conexion);
+	WHERE evp_id_evaluacion='".$_GET["idE"]."' AND evp_id_pregunta='".$_GET["idP"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3644,9 +3583,9 @@ if($_GET["get"]==27){
 
 if($_GET["get"]==28){
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_estudiantes 
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_estudiantes 
 
-	WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$_GET["idEstudiante"]."'",$conexion);
+	WHERE epe_id_evaluacion='".$_GET["idE"]."' AND epe_id_estudiante='".$_GET["idEstudiante"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3654,9 +3593,9 @@ if($_GET["get"]==28){
 
 	
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_resultados 
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_resultados 
 
-	WHERE res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$_GET["idEstudiante"]."'",$conexion);
+	WHERE res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$_GET["idEstudiante"]."'");
 
 	$lineaError = __LINE__;
 
@@ -3690,7 +3629,7 @@ if($_GET["get"]==29){
 
 if($_GET["get"]==30){
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones WHERE eva_formato=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones WHERE eva_formato=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 
@@ -3698,7 +3637,7 @@ if($_GET["get"]==30){
 
 	
 
-	mysql_query("DELETE FROM academico_formatos WHERE form_id=".$_GET["idR"],$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_formatos WHERE form_id=".$_GET["idR"]);
 
 	$lineaError = __LINE__;
 

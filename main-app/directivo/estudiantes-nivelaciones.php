@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0075';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci�n', now())",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+mysqli_query($conexion, "INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci�n', now())");
+
 ?>
 
 	<!--bootstrap -->
@@ -67,8 +66,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="curso" required>
                                                 <option value=""></option>
                                                 <?php 
-                                                $c=mysql_query("SELECT * FROM academico_grados",$conexion) ;
-                                                while($r=mysql_fetch_array($c)){
+                                                $c=mysqli_query($conexion, "SELECT * FROM academico_grados") ;
+                                                while($r=mysqli_fetch_array($c, MYSQLI_BOTH)){
                                                 ?>
                                                     <option value="<?php echo $r[0]; ?>"><?php echo $r[2];?></option>
                                                 <?php 
@@ -84,8 +83,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                                                 <select class="form-control  select2" name="grupo" required>
                                                 <option value=""></option>
                                                 <?php 
-                                                $c=mysql_query("SELECT * FROM academico_grupos",$conexion) ;
-                                                while($r=mysql_fetch_array($c)){
+                                                $c=mysqli_query($conexion, "SELECT * FROM academico_grupos") ;
+                                                while($r=mysqli_fetch_array($c, MYSQLI_BOTH)){
                                                 ?>
                                                     <option value="<?php echo $r[0]; ?>"><?php echo $r[2];?></option>
                                                 <?php 
@@ -104,7 +103,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

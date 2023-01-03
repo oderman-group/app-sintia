@@ -1,11 +1,10 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0093';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$consultaE = mysql_query("SELECT * FROM academico_matriculas WHERE mat_id_usuario='".$_GET["id"]."'",$conexion);
-$e = mysql_fetch_array($consultaE);
+$consultaE = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id_usuario='".$_GET["id"]."'");
+$e = mysqli_fetch_array($consultaE, MYSQLI_BOTH);
 ?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
@@ -99,8 +98,8 @@ $e = mysql_fetch_array($consultaE);
 												</thead>
 												<tbody>
 												<?php
-												$consulta = mysql_query("SELECT * FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 ORDER BY fcu_id DESC",$conexion);
-													while($resultado = mysql_fetch_array($consulta)){
+												$consulta = mysqli_query($conexion, "SELECT * FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 ORDER BY fcu_id DESC");
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>		
 															<!-- BEGIN PRODUCT INFO -->
 															<tr>
@@ -113,8 +112,10 @@ $e = mysql_fetch_array($consultaE);
 															<!-- END PRODUCT INFO -->
 													<?php 
 													}
-														$c = mysql_fetch_array(mysql_query("SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 AND fcu_tipo=3",$conexion));
-														$a = mysql_fetch_array(mysql_query("SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 AND fcu_tipo=1",$conexion));
+														$consultaC=mysqli_query($conexion, "SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 AND fcu_tipo=3");
+														$c = mysqli_fetch_array($consultaC, MYSQLI_BOTH);
+														$consultaA=mysqli_query($conexion, "SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_usuario='".$_GET["id"]."' AND fcu_anulado=0 AND fcu_tipo=1");
+														$a = mysqli_fetch_array($consultaA, MYSQLI_BOTH);
 														$t = $a[0] - $c[0];
 														if($t>=0) $color = 'blue'; else $color = 'red';
 													?>
@@ -148,17 +149,13 @@ $e = mysql_fetch_array($consultaE);
                                         </div>
                                     </div>
                                 </div>
-								
-								
-								
-							
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

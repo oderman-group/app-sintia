@@ -3,7 +3,9 @@ header("Content-Type: application/vnd.ms-excel");
 header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 header("content-disposition: attachment;filename=Inscripciones_" . date("d/m/Y") . "-SINTIA.xls");
-include("../modelo/conexion.php");
+session_start();
+include("../../config-general/config.php");
+include("../../config-general/consulta-usuario-actual.php");
 ?>
 
 <html>
@@ -34,10 +36,9 @@ $fondoSolicitud = array(
     7 => 'red'
 );
 
-$consulta = mysql_query("SELECT * FROM academico_matriculas
+$consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 INNER JOIN ".$baseDatosAdmisiones.".aspirantes ON asp_id=mat_solicitud_inscripcion
-  WHERE mat_estado_matricula=5 ORDER BY mat_primer_apellido
-  ", $conexion);
+  WHERE mat_estado_matricula=5 ORDER BY mat_primer_apellido");
 ?>
 <div align="center">
     <table width="100%" border="1" rules="all">
@@ -64,7 +65,7 @@ INNER JOIN ".$baseDatosAdmisiones.".aspirantes ON asp_id=mat_solicitud_inscripci
         <tbody>
             <?php
             $conta = 1;
-            while ($resultado = mysql_fetch_array($consulta)) {
+            while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
             ?>
                 <tr>
                     <td><?= $resultado["mat_id"]; ?></td>

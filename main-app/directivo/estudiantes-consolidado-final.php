@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0080';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -37,7 +36,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="areas.php" onClick="deseaRegresar(this)"><?=$frases[93][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="estudiantes.php?cantidad=10" onClick="deseaRegresar(this)">Estudiantes</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Consolidado Final</li>
                             </ol>
                         </div>
@@ -67,8 +66,8 @@
                                                 <select class="form-control  select2" name="curso" required>
                                                     <option value="">Seleccione una opci n</option>
                                                     <?php 
-                                                    $c=mysql_query("SELECT * FROM academico_grados",$conexion) ;
-                                                    while($r=mysql_fetch_array($c)){
+                                                    $c=mysqli_query($conexion, "SELECT * FROM academico_grados") ;
+                                                    while($r=mysqli_fetch_array($c, MYSQLI_BOTH)){
                                                     ?>
                                                         <option value="<?php echo $r[0]; ?>"><?php echo $r[2];?></option>
                                                     <?php 
@@ -84,8 +83,8 @@
                                                 <select class="form-control  select2" name="grupo" required>
                                                     <option value="">Seleccione una opci n</option>
                                                     <?php 
-                                                    $c=mysql_query("SELECT * FROM academico_grupos",$conexion) ;
-                                                    while($r=mysql_fetch_array($c)){
+                                                    $c=mysqli_query($conexion, "SELECT * FROM academico_grupos") ;
+                                                    while($r=mysqli_fetch_array($c, MYSQLI_BOTH)){
                                                     ?>
                                                         <option value="<?php echo $r[0]; ?>"><?php echo $r[2];?></option>
                                                     <?php 
@@ -106,7 +105,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

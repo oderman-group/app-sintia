@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0051';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -61,7 +60,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="cursos.php" onClick="deseaRegresar(this)"><?=$frases[5][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)">Cargas</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Nota de Comportamiento</li>
                             </ol>
                         </div>
@@ -82,7 +81,7 @@
 											<div class="table-scrollable">
 												
 												<?php
-												$TablaNotas = mysql_query("SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'",$conexion);
+												$TablaNotas = mysqli_query($conexion, "SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'");
 												?>
 
 												<table class="display" style="width:100%;">
@@ -95,7 +94,7 @@
 													</thead>
 													<tbody>
 														<?php
-														while($tabla = mysql_fetch_array($TablaNotas)){
+														while($tabla = mysqli_fetch_array($TablaNotas, MYSQLI_BOTH)){
 														?>
 														<tr>
 														  <td><?=$tabla["notip_desde"];?></td>
@@ -146,13 +145,14 @@
 													<tbody>
 														<?php
 														$con = 1;
-														$consulta = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
+														$consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_GET["grado"]."' AND mat_grupo='".$_GET["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
 														//carga $_SESSION["carga"]
 														//codigo $resultado[0];
 														//periodo $datosCargaActual[5]
 														
-														while($resultado = mysql_fetch_array($consulta)){
-															$rndisiplina=mysql_fetch_array(mysql_query("SELECT * FROM disiplina_nota WHERE dn_cod_estudiante='".$resultado[0]."' AND dn_id_carga='".$_GET["carga"]."' AND dn_periodo='".$_GET["periodo"]."'",$conexion));
+														while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+															$consultaRnDisiplina=mysqli_query($conexion, "SELECT * FROM disiplina_nota WHERE dn_cod_estudiante='".$resultado[0]."' AND dn_id_carga='".$_GET["carga"]."' AND dn_periodo='".$_GET["periodo"]."'");
+															$rndisiplina=mysqli_fetch_array($consultaRnDisiplina, MYSQLI_BOTH);
 															//LAS CALIFICACIONES A MODIFICAR Y LAS OBSERVACIONES
 														?>
 														<tr id="data1">
@@ -181,7 +181,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

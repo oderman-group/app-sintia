@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0104';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -49,14 +48,12 @@
 										if(is_numeric($_GET["tipo"])){$filtro .= " AND fcu_tipo='".$_GET["tipo"]."'";}
 										if(is_numeric($_GET["usuario"])){$filtro .= " AND fcu_usuario='".$_GET["usuario"]."'";}
 										if($_GET["fecha"]!=""){$filtro .= " AND fcu_fecha='".$_GET["fecha"]."'";}
-										
-										$estadisticasCuentas = mysql_fetch_array(mysql_query("
-										SELECT
+										$consultaEstadisticas=mysqli_query($conexion, "SELECT
 										(SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=1 AND fcu_anulado='0'),
 										(SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=2 AND fcu_anulado='0'),
 										(SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=3 AND fcu_anulado='0'),
-										(SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=4 AND fcu_anulado='0')
-										",$conexion));
+										(SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=4 AND fcu_anulado='0')");
+										$estadisticasCuentas = mysqli_fetch_array($consultaEstadisticas, MYSQLI_BOTH);
 										@$porcentajeIngreso = round(($estadisticasCuentas[0]/$estadisticasCuentas[2])*100,2);
 										@$porcentajeEgreso = round(($estadisticasCuentas[1]/$estadisticasCuentas[3])*100,2);
 										?>
@@ -165,15 +162,14 @@
 													$filtroLimite = '';
 													if(is_numeric($_GET["cantidad"])){$filtroLimite = "LIMIT 0,".$_GET["cantidad"];}
 													
-													 $consulta = mysql_query("SELECT * FROM finanzas_cuentas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM finanzas_cuentas
 													 INNER JOIN usuarios ON uss_id=fcu_usuario
 													 WHERE fcu_id=fcu_id $filtro
 													 ORDER BY fcu_id
-													 $filtroLimite
-													 ",$conexion);
+													 $filtroLimite");
 													 $contReg = 1;
 													$estadosCuentas = array("","Ingreso","Egreso","Cobro (CPC)","Deuda (CPP)");
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 $bgColor = '';
 														 if($resultado['fcu_anulado']==1) $bgColor = 'sandybrown';
 													 ?>
@@ -225,7 +221,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

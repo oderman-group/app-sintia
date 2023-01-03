@@ -4,7 +4,8 @@
 <?php include("verificar-carga.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$datosConsultaBD = mysql_fetch_array(mysql_query("SELECT * FROM academico_formatos WHERE form_id='".$_GET["idR"]."'",$conexion));
+$consultaDatosBD=mysqli_query($conexion, "SELECT * FROM academico_formatos WHERE form_id='".$_GET["idR"]."'");
+$datosConsultaBD = mysqli_fetch_array($consultaDatosBD, MYSQLI_BOTH);
 ?>
 
 	<!--bootstrap -->
@@ -89,7 +90,7 @@ $datosConsultaBD = mysql_fetch_array(mysql_query("SELECT * FROM academico_format
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

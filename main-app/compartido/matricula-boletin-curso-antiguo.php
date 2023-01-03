@@ -30,9 +30,9 @@ if($periodoActual==4) $periodoActuales = "Final";?>
 
 <?php
 
-$matriculadosPorCurso = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."' AND mat_eliminado=0 AND mat_estado_matricula!=3 ORDER BY mat_grupo, mat_primer_apellido",$conexion);
+$matriculadosPorCurso = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_grado='".$_REQUEST["curso"]."' AND mat_eliminado=0 AND mat_estado_matricula!=3 ORDER BY mat_grupo, mat_primer_apellido");
 
-while($matriculadosDatos = mysql_fetch_array($matriculadosPorCurso)){
+while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)){
 
 //contador materias
 
@@ -44,15 +44,15 @@ $materiasPerdidas=0;
 
 //======================= DATOS DEL ESTUDIANTE MATRICULADO =========================
 
-$usr=mysql_query("SELECT * FROM academico_matriculas am
+$usr=mysqli_query($conexion, "SELECT * FROM academico_matriculas am
 
 INNER JOIN academico_grupos ON mat_grupo=gru_id
 
-INNER JOIN academico_grados ON mat_grado=gra_id WHERE mat_id=".$matriculadosDatos[0],$conexion);
+INNER JOIN academico_grados ON mat_grado=gra_id WHERE mat_id=".$matriculadosDatos[0]);
 
-$num_usr=mysql_num_rows($usr);
+$num_usr=mysqli_num_rows($usr);
 
-$datos_usr=mysql_fetch_array($usr);
+$datos_usr=mysqli_fetch_array($usr, MYSQLI_BOTH);
 
 if($num_usr==0)
 
@@ -116,17 +116,17 @@ $contador_periodos=0;
 
 //CONSULTA QUE ME TRAE EL DESEMPEÑO
 
-$consulta_desempeno=mysql_query("SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_categoria=".$config["conf_notas_categoria"].";",$conexion);	
+$consulta_desempeno=mysqli_query($conexion, "SELECT notip_id, notip_nombre, notip_desde, notip_hasta FROM academico_notas_tipos WHERE notip_categoria=".$config["conf_notas_categoria"].";");	
 
 //CONSULTA QUE ME TRAE LAS areas DEL ESTUDIANTE
 
-$consulta_mat_area_est=mysql_query("SELECT ar_id, car_ih FROM academico_cargas ac
+$consulta_mat_area_est=mysqli_query($conexion, "SELECT ar_id, car_ih FROM academico_cargas ac
 
 INNER JOIN academico_materias am ON am.mat_id=ac.car_materia
 
 INNER JOIN academico_areas ar ON ar.ar_id= am.mat_area
 
-WHERE  car_curso=".$datos_usr["mat_grado"]." AND car_grupo=".$datos_usr["mat_grupo"]." GROUP BY ar.ar_id ORDER BY ar.ar_posicion ASC;",$conexion);
+WHERE  car_curso=".$datos_usr["mat_grado"]." AND car_grupo=".$datos_usr["mat_grupo"]." GROUP BY ar.ar_id ORDER BY ar.ar_posicion ASC;");
 
 $numero_periodos=$config["conf_periodos_maximos"];
 
@@ -206,7 +206,7 @@ $numero_periodos=$config["conf_periodos_maximos"];
 
         <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
 
-        <?php while($fila = mysql_fetch_array($consulta_mat_area_est)){
+        <?php while($fila = mysqli_fetch_array($consulta_mat_area_est, MYSQLI_BOTH)){
 
 		
 
@@ -246,7 +246,7 @@ $numero_periodos=$config["conf_periodos_maximos"];
 
 //CONSULTA QUE ME EL NOMBRE Y EL PROMEDIO DEL AREA
 
-$consulta_notdef_area=mysql_query("SELECT (SUM(bol_nota)/COUNT(bol_nota)) as suma,ar_nombre FROM academico_materias am
+$consulta_notdef_area=mysqli_query($conexion, "SELECT (SUM(bol_nota)/COUNT(bol_nota)) as suma,ar_nombre FROM academico_materias am
 
 INNER JOIN academico_areas a ON a.ar_id=am.mat_area
 
@@ -256,11 +256,11 @@ INNER JOIN academico_boletin ab ON ab.bol_carga=ac.car_id
 
 WHERE bol_estudiante='".$matriculadosDatos[0]."' and a.ar_id=".$fila["ar_id"]." and bol_periodo in (".$condicion.")
 
-GROUP BY ar_id;",$conexion);
+GROUP BY ar_id;");
 
 //CONSULTA QUE ME TRAE LA DEFINITIVA POR MATERIA Y NOMBRE DE LA MATERIA
 
-$consulta_a_mat=mysql_query("SELECT (SUM(bol_nota)/COUNT(bol_nota)) as suma,ar_nombre,mat_nombre,mat_id FROM academico_materias am
+$consulta_a_mat=mysqli_query($conexion, "SELECT (SUM(bol_nota)/COUNT(bol_nota)) as suma,ar_nombre,mat_nombre,mat_id FROM academico_materias am
 
 INNER JOIN academico_areas a ON a.ar_id=am.mat_area
 
@@ -272,11 +272,11 @@ WHERE bol_estudiante='".$matriculadosDatos[0]."' and a.ar_id=".$fila["ar_id"]." 
 
 GROUP BY mat_id
 
-ORDER BY mat_id;",$conexion);
+ORDER BY mat_id;");
 
 //CONSULTA QUE ME TRAE LAS DEFINITIVAS POR PERIODO
 
-$consulta_a_mat_per=mysql_query("SELECT bol_nota,bol_periodo,ar_nombre,mat_nombre,mat_id FROM academico_materias am
+$consulta_a_mat_per=mysqli_query($conexion, "SELECT bol_nota,bol_periodo,ar_nombre,mat_nombre,mat_id FROM academico_materias am
 
 INNER JOIN academico_areas a ON a.ar_id=am.mat_area
 
@@ -288,7 +288,7 @@ WHERE bol_estudiante='".$matriculadosDatos[0]."' and a.ar_id=".$fila["ar_id"]." 
 
 ORDER BY mat_id,bol_periodo
 
-;",$conexion);
+;");
 
 
 
@@ -296,7 +296,7 @@ ORDER BY mat_id,bol_periodo
 
 //CONSULTA QUE ME TRAE LOS INDICADORES DE CADA MATERIA
 
-$consulta_a_mat_indicadores=mysql_query("SELECT mat_nombre,mat_area,mat_id,ind_nombre,ipc_periodo,(SUM(cal_nota)/COUNT(cal_nota))as nota FROM academico_materias am
+$consulta_a_mat_indicadores=mysqli_query($conexion, "SELECT mat_nombre,mat_area,mat_id,ind_nombre,ipc_periodo,(SUM(cal_nota)/COUNT(cal_nota))as nota FROM academico_materias am
 
 INNER JOIN academico_areas a ON a.ar_id=am.mat_area
 
@@ -314,17 +314,17 @@ WHERE car_curso=".$datos_usr["mat_grado"]."  and car_grupo=".$datos_usr["mat_gru
 
 group by act_id_tipo, act_id_carga
 
-order by mat_id,ipc_periodo,ind_id;",$conexion);
+order by mat_id,ipc_periodo,ind_id;");
 
 
 
-$numIndicadores=mysql_num_rows($consulta_a_mat_indicadores);
+$numIndicadores=mysqli_num_rows($consulta_a_mat_indicadores);
 
 
 
-$resultado_not_area=mysql_fetch_array($consulta_notdef_area);
+$resultado_not_area=mysqli_fetch_array($consulta_notdef_area, MYSQLI_BOTH);
 
-$numfilas_not_area=mysql_num_rows($consulta_notdef_area);
+$numfilas_not_area=mysqli_num_rows($consulta_notdef_area);
 
 $total_promedio=round( $resultado_not_area["suma"],1);
 
@@ -364,15 +364,15 @@ if($total_promedio==1)	$total_promedio="1.0";	if($total_promedio==2)	$total_prom
 
 
 
-while($fila2=mysql_fetch_array($consulta_a_mat)){ 
+while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){ 
 
 $contador_periodos=0;
 
-	  mysql_data_seek($consulta_a_mat_per,0);
+	  mysqli_data_seek($consulta_a_mat_per,0);
 
 	 //CONSULTAR NOTA POR PERIODO
 
-while($fila3=mysql_fetch_array($consulta_a_mat_per)){
+while($fila3=mysqli_fetch_array($consulta_a_mat_per, MYSQLI_BOTH)){
 
 	
 
@@ -428,7 +428,7 @@ while($fila3=mysql_fetch_array($consulta_a_mat_per)){
 
         <td align="center" style="font-weight:bold; background:#FFF;"><?php //DESEMPEÑO
 
-		while($r_desempeno=mysql_fetch_array($consulta_desempeno)){
+		while($r_desempeno=mysqli_fetch_array($consulta_desempeno, MYSQLI_BOTH)){
 
 			if($total_promedio2>=$r_desempeno["notip_desde"] && $total_promedio2<=$r_desempeno["notip_hasta"]){
 
@@ -438,7 +438,7 @@ while($fila3=mysql_fetch_array($consulta_a_mat_per)){
 
 			}
 
-			mysql_data_seek($consulta_desempeno,0);
+			mysqli_data_seek($consulta_desempeno,0);
 
 		 ?></td>
 
@@ -450,11 +450,11 @@ while($fila3=mysql_fetch_array($consulta_a_mat_per)){
 
 if($numIndicadores>0){
 
-	 mysql_data_seek($consulta_a_mat_indicadores,0);
+	 mysqli_data_seek($consulta_a_mat_indicadores,0);
 
 	 $contador_indicadores=0;
 
-	while($fila4=mysql_fetch_array($consulta_a_mat_indicadores)){
+	while($fila4=mysqli_fetch_array($consulta_a_mat_indicadores, MYSQLI_BOTH)){
 
 	if($fila4["mat_id"]==$fila2["mat_id"]){
 
@@ -542,9 +542,9 @@ if($numIndicadores>0){
 
 <?php 
 
-$cndisiplina = mysql_query("SELECT * FROM disiplina_nota WHERE dn_cod_estudiante='".$matriculadosDatos[0]."' AND dn_periodo in(".$condicion.");",$conexion);
+$cndisiplina = mysqli_query($conexion, "SELECT * FROM disiplina_nota WHERE dn_cod_estudiante='".$matriculadosDatos[0]."' AND dn_periodo in(".$condicion.");");
 
-if(@mysql_num_rows($cndisiplina)>0){
+if(@mysqli_num_rows($cndisiplina)>0){
 
 ?>
 
@@ -570,7 +570,7 @@ if(@mysql_num_rows($cndisiplina)>0){
 
     </tr>
 
-<?php while($rndisiplina=mysql_fetch_array($cndisiplina)){?>
+<?php while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){?>
 
     <tr align="center" style="font-weight:bold; font-size:12px; height:20px;">
 

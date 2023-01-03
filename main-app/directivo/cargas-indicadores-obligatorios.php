@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0035';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -24,6 +23,10 @@
                                 <div class="page-title">Indicadores Obligatorios</div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)">Cargas</a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active">Indicadores Obligatorios</li>
+                            </ol>
                         </div>
                     </div>
                     
@@ -36,8 +39,10 @@
 								</div>
 								  
                                 <?php
-                                $ind = mysql_fetch_array(mysql_query("SELECT sum(ind_valor) FROM academico_indicadores WHERE ind_obligatorio=1",$conexion));
-                                $indGenerados = mysql_num_rows(mysql_query("SELECT * FROM academico_indicadores_carga WHERE ipc_creado=0",$conexion));
+                                $consultaInd=mysqli_query($conexion, "SELECT sum(ind_valor) FROM academico_indicadores WHERE ind_obligatorio=1");
+                                $ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);
+                                $consultaIndGenerados=mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga WHERE ipc_creado=0");
+                                $indGenerados = mysqli_num_rows($consultaIndGenerados);
                                 ?>
 								<div class="col-md-8 col-lg-9">
                                     <div class="alert alert-block alert-warning">
@@ -78,9 +83,9 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = mysql_query("SELECT * FROM academico_indicadores WHERE ind_obligatorio=1",$conexion);
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores WHERE ind_obligatorio=1");
 													$contReg = 1;
-													while($resultado = mysql_fetch_array($consulta)){
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                         $sumaP = $sumaP + $resultado[3];
 													?>
 													<tr>
@@ -126,7 +131,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

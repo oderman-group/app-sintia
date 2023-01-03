@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0001';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -49,7 +48,7 @@
 											<p><a href="../compartido/reporte-ver-observador.php" target="_blank">Reporte vista observador</a></p>
 											<p><a href="../compartido/excel-estudiantes.php" target="_blank">Exportar Excel</a></p>
 											<?php if(isset($_GET["curso"]) and is_numeric($_GET["curso"]) and isset($_GET["grupo"]) and is_numeric($_GET["grupo"])){?>
-												<p><a href="../compartido/planilla-estudiantes.php?grado=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>" target="_blank">Imprimir Planilla</a></p>
+												<p><a href="../compartido/planilla-estudiantes.php?grado=<?=$_GET["curso"];?>&grupo=<?=$fgrupo;?>" target="_blank">Imprimir Planilla</a></p>
 											<?php }elseif(isset($_GET["curso"]) and is_numeric($_GET["curso"])){ ?>
 												<p><a href="../compartido/planilla-estudiantes.php?grado=<?=$_GET["curso"];?>" target="_blank">Imprimir Planilla</a></p>
 											<?php }?>
@@ -73,20 +72,19 @@
 									<div class="panel">
 										<?php
 										$filtro = '';
-										if(is_numeric($_GET["curso"])){$filtro .= " AND mat_grado='".$_GET["curso"]."'";}
-										if(is_numeric($_GET["grupo"])){$filtro .= " AND mat_grupo='".$_GET["grupo"]."'";}
-										if(is_numeric($_GET["genero"])){$filtro .= " AND mat_genero='".$_GET["genero"]."'";}
+										if(isset($_GET["curso"]) AND is_numeric($_GET["curso"])){$filtro .= " AND mat_grado='".$_GET["curso"]."'";$fcurso=$_GET["curso"];}
+										if(isset($_GET["grupo"]) AND is_numeric($_GET["grupo"])){$filtro .= " AND mat_grupo='".$_GET["grupo"]."'";$fgrupo=$_GET["grupo"];}
+										if(isset($_GET["genero"]) AND is_numeric($_GET["genero"])){$filtro .= " AND mat_genero='".$_GET["genero"]."'";$fgenero=$_GET["genero"];}
 										
-										$estadisticasEstudiantes = mysql_fetch_array(mysql_query("
-										SELECT
+										$consultaEstadisticasEstudiantes=mysqli_query($conexion, "SELECT
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0),
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_estado_matricula=1 $filtro),
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_estado_matricula=2 $filtro),
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_estado_matricula=3 $filtro),
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_estado_matricula=4 $filtro),
 										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_genero=126),
-										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_genero=127)
-										",$conexion));
+										(SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_genero=127)");
+										$estadisticasEstudiantes = mysqli_fetch_array($consultaEstadisticasEstudiantes, MYSQLI_BOTH);
 										$porcentajeMatriculados = round(($estadisticasEstudiantes[1]/$estadisticasEstudiantes[0])*100,2);
 										$porcentajeAsistentes = round(($estadisticasEstudiantes[2]/$estadisticasEstudiantes[0])*100,2);
 										$porcentajeCancelados = round(($estadisticasEstudiantes[3]/$estadisticasEstudiantes[0])*100,2);
@@ -100,7 +98,7 @@
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=1&genero=<?=$_GET["genero"];?>">Matrículados: <b><?=$estadisticasEstudiantes[1];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=1&genero=<?=$fgenero;?>">Matrículados: <b><?=$estadisticasEstudiantes[1];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeMatriculados;?>%</div>
 																</div>
 
@@ -115,7 +113,7 @@
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=2&genero=<?=$_GET["genero"];?>">Asistentes: <b><?=$estadisticasEstudiantes[2];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=2&genero=<?=$fgenero;?>">Asistentes: <b><?=$estadisticasEstudiantes[2];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeAsistentes;?>%</div>
 																</div>
 
@@ -130,7 +128,7 @@
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=3&genero=<?=$_GET["genero"];?>">Cancelados: <b><?=$estadisticasEstudiantes[3];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=3&genero=<?=$fgenero;?>">Cancelados: <b><?=$estadisticasEstudiantes[3];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeCancelados;?>%</div>
 																</div>
 
@@ -145,7 +143,7 @@
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=4&genero=<?=$_GET["genero"];?>">No matrículados: <b><?=$estadisticasEstudiantes[4];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=4&genero=<?=$fgenero;?>">No matrículados: <b><?=$estadisticasEstudiantes[4];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeNoMatriculados;?>%</div>
 																</div>
 
@@ -161,13 +159,13 @@
 									
 									
 									<div class="panel">
-
+												<?php if(isset($_GET["estadoM"])){$festadoM=$_GET["estadoM"];}?>
 										<header class="panel-heading panel-heading-yellow">GÉNEROS</header>
 										<div class="panel-body">
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=<?=$_GET["estadoM"];?>&genero=126">Hombres: <b><?=$estadisticasEstudiantes[5];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=<?=$festadoM;?>&genero=126">Hombres: <b><?=$estadisticasEstudiantes[5];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeHombres;?>%</div>
 																</div>
 
@@ -182,7 +180,7 @@
 													<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET["curso"];?>&grupo=<?=$_GET["grupo"];?>&estadoM=<?=$_GET["estadoM"];?>&genero=127">Mujeres: <b><?=$estadisticasEstudiantes[6];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>&estadoM=<?=$festadoM;?>&genero=127">Mujeres: <b><?=$estadisticasEstudiantes[6];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajeMujeres;?>%</div>
 																</div>
 
@@ -201,22 +199,20 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[5][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$cursos = mysql_query("SELECT * FROM academico_grados
+											$cursos = mysqli_query($conexion, "SELECT * FROM academico_grados
 											WHERE gra_estado=1
-											ORDER BY gra_vocal
-											",$conexion);
-											while($curso = mysql_fetch_array($cursos)){
-												$estudiantesPorGrado = mysql_fetch_array(mysql_query("
-												SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_grado='".$curso['gra_id']."'
-												",$conexion));
+											ORDER BY gra_vocal");
+											while($curso = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
+												$consultaEstudianteGrado=mysqli_query($conexion, "SELECT count(mat_id) FROM academico_matriculas WHERE mat_eliminado=0 AND mat_grado='".$curso['gra_id']."'");
+												$estudiantesPorGrado = mysqli_fetch_array($consultaEstudianteGrado, MYSQLI_BOTH);
 												$porcentajePorGrado = round(($estudiantesPorGrado[0]/$estadisticasEstudiantes[0])*100,2);
-												if($curso['gra_id']==$_GET["curso"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
+												if(isset($fcurso) AND $curso['gra_id']==$fcurso) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
 											
 												<div class="work-monitor work-progress">
 															<div class="states">
 																<div class="info">
-																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$curso['gra_id'];?>&grupo=<?=$_GET["grupo"];?>&genero=<?=$_GET["genero"];?>&estadoM=<?=$_GET["estadoM"];?>" <?=$estiloResaltado;?>><?=strtoupper($curso['gra_nombre']);?>: <b><?=$estudiantesPorGrado[0];?></b></a></div>
+																	<div class="desc pull-left"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$curso['gra_id'];?>&grupo=<?=$fgrupo;?>&genero=<?=$fgenero;?>&estadoM=<?=$festadoM;?>" <?=$estiloResaltado;?>><?=strtoupper($curso['gra_nombre']);?>: <b><?=$estudiantesPorGrado[0];?></b></a></div>
 																	<div class="percent pull-right"><?=$porcentajePorGrado;?>%</div>
 																</div>
 
@@ -236,12 +232,11 @@
 										<header class="panel-heading panel-heading-purple">Grupos </header>
 										<div class="panel-body">
 											<?php
-											$grupos = mysql_query("SELECT * FROM academico_grupos
-											",$conexion);
-											while($grupo = mysql_fetch_array($grupos)){
-												if($grupo['gru_id']==$_GET["grupo"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
+											$grupos = mysqli_query($conexion, "SELECT * FROM academico_grupos");
+											while($grupo = mysqli_fetch_array($grupos, MYSQLI_BOTH)){
+												if(isset($_GET["grupo"]) AND $grupo['gru_id']==$_GET["grupo"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
-												<p><a href="<?=$_SERVER['PHP_SELF'];?>?grupo=<?=$grupo['gru_id'];?>&curso=<?=$_GET["curso"];?>&genero=<?=$_GET["genero"];?>&estadoM=<?=$_GET["estadoM"];?>" <?=$estiloResaltado;?>><?=strtoupper($grupo['gru_nombre']);?></a></p>
+												<p><a href="<?=$_SERVER['PHP_SELF'];?>?grupo=<?=$grupo['gru_id'];?>&curso=<?=$fcurso;?>&genero=<?=$fgenero;?>&estadoM=<?=$festadoM;?>" <?=$estiloResaltado;?>><?=strtoupper($grupo['gru_nombre']);?></a></p>
 											<?php }?>
 											<p align="center"><a href="estudiantes.php">VER TODOS</a></p>
 										</div>
@@ -252,11 +247,11 @@
 										<div class="panel-body">
 											<?php
 											for($i=10; $i<=100; $i=$i+10){
-												if($i==$_GET["cantidad"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
+												if(isset($_GET["cantidad"]) AND $i==$_GET["cantidad"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
-												<p><a href="<?=$_SERVER['PHP_SELF'];?>?grupo=<?=$_GET['grupo'];?>&curso=<?=$_GET["curso"];?>&cantidad=<?=$i;?>&genero=<?=$_GET["genero"];?>&estadoM=<?=$_GET["estadoM"];?>" <?=$estiloResaltado;?>><?=$i." estudiantes";?></a></p>
+												<p><a href="<?=$_SERVER['PHP_SELF'];?>?grupo=<?=$fgrupo;?>&curso=<?=$fcurso;?>&cantidad=<?=$i;?>&genero=<?=$fgenero;?>&estadoM=<?=$festadoM;?>" <?=$estiloResaltado;?>><?=$i." estudiantes";?></a></p>
 											<?php }?>
-											<p align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$_GET['curso'];?>&grupo=<?=$_GET["grupo"];?>">VER TODOS</a></p>
+											<p align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?curso=<?=$fcurso;?>&grupo=<?=$fgrupo;?>">VER TODOS</a></p>
 										</div>
                                     </div>
 									
@@ -343,25 +338,25 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													if(is_numeric($_GET["estadoM"])){$filtro .= " AND mat_estado_matricula='".$_GET["estadoM"]."'";}
+													if(isset($_GET["estadoM"]) AND is_numeric($_GET["estadoM"])){$filtro .= " AND mat_estado_matricula='".$_GET["estadoM"]."'";}
 													
 													$filtroLimite = '';
 													if(is_numeric($_GET["cantidad"])){$filtroLimite = "LIMIT 0,".$_GET["cantidad"];}
 													
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 													 INNER JOIN academico_grados ON gra_id=mat_grado
 													 INNER JOIN academico_grupos ON gru_id=mat_grupo
 													 INNER JOIN usuarios ON uss_id=mat_id_usuario
 													 LEFT JOIN ".$baseDatosServicios.".opciones_generales ON ogen_id=mat_genero
 													 WHERE mat_eliminado=0 $filtro
 													 ORDER BY mat_primer_apellido
-													 $filtroLimite
-													 ",$conexion);
+													 $filtroLimite");
 													 $contReg = 1;
 													$estadosMatriculas = array("","Matriculado","Asistente","Cancelado","No Matriculado");
 													$estadosEtiquetas = array("","text-success","text-warning","text-danger","text-warning");
-													 while($resultado = mysql_fetch_array($consulta)){
-														$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado["mat_acudiente"]."'",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaAcudientes=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado["mat_acudiente"]."'");
+														$acudiente = mysqli_fetch_array($consultaAcudientes, MYSQLI_BOTH);
 														$bgColor = '';
 														if($resultado['uss_bloqueado']==1) $bgColor = '#ff572238';
 													 ?>
@@ -386,8 +381,9 @@
 															$color=$config[5];
 															echo '<td style="color:'.$color.';"><a href="../compartido/carnet.php?id='.$resultado["mat_id"].'" target="_blank" style="text-decoration:underline;"><b>'.$nombre.'</b></a><br><a href="mensajes-redactar.php?destino='.$resultado[23].'" style="text-decoration:underline;">Enviar mensaje</a></td>';
 														}
+														if(isset($acudiente[0]) AND $acudiente[4]!=''){$nombreAcudiente=strtoupper($acudiente[4].' '.$acudiente["uss_nombre2"].' '.$acudiente["uss_apellido1"].' '.$acudiente["uss_apellido2"]); $idAcudiente=$acudiente[0];}
 														?>
-														<td><a href="usuarios-editar.php?id=<?=$acudiente[0];?>" style="text-decoration:underline; color:#0C0;"><?=strtoupper($acudiente[4].' '.$acudiente["uss_nombre2"].' '.$acudiente["uss_apellido1"].' '.$acudiente["uss_apellido2"]);?></a><?php if($acudiente[4]!=""){?><br><a href="mensajes-redactar.php?destino=<?=$acudiente[0];?>" style="text-decoration:underline;">Enviar mensaje</a><?php }?></td>
+														<td><a href="usuarios-editar.php?id=<?=$idAcudiente;?>" style="text-decoration:underline; color:#0C0;"><?=$nombreAcudiente;?></a><?php if(isset($acudiente[4]) AND $acudiente[4]!=""){?><br><a href="mensajes-redactar.php?destino=<?=$acudiente[0];?>" style="text-decoration:underline;">Enviar mensaje</a><?php }?></td>
 														<td><?=strtoupper($resultado['gra_nombre']." ".$resultado['gru_nombre']);?></td>
 														<td>
 															<?=$resultado['uss_usuario'];?>
@@ -440,7 +436,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

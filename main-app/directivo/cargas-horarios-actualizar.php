@@ -6,7 +6,7 @@
 		echo "<span style='font-family:Arial; color:red;'>Debe llenar todos los campos.</samp>";
 		exit();
 	}
-	mysql_query("UPDATE academico_horarios SET hor_dia=" . $_POST["diaH"] . ", hor_desde='" . $_POST["inicioH"] . "', hor_hasta='" . $_POST["finH"] . "' WHERE hor_id=" . $_POST["idH"] . ";", $conexion);
+	mysqli_query($conexion, "UPDATE academico_horarios SET hor_dia=" . $_POST["diaH"] . ", hor_desde='" . $_POST["inicioH"] . "', hor_hasta='" . $_POST["finH"] . "' WHERE hor_id=" . $_POST["idH"] . ";");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

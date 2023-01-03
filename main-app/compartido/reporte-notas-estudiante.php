@@ -26,9 +26,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                         <th>Observaciones</th>
                                       </tr>
                                      <?php
-									 $consulta = mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_registrada=1 AND act_estado=1 AND act_periodo='".$_GET["periodo"]."'",$conexion);
-									 while($resultado = mysql_fetch_array($consulta)){
-									 	$nota = mysql_fetch_array(mysql_query("SELECT * FROM academico_calificaciones WHERE cal_id_actividad='".$resultado[0]."' AND cal_id_estudiante='".$_GET["estudiante"]."'",$conexion));
+									 $consulta = mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_registrada=1 AND act_estado=1 AND act_periodo='".$_GET["periodo"]."'");
+									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                    $consultaNotas=mysqli_query($conexion, "SELECT * FROM academico_calificaciones WHERE cal_id_actividad='".$resultado[0]."' AND cal_id_estudiante='".$_GET["estudiante"]."'");
+									 	$nota = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 										$porNuevo = ($resultado[3] / 100);
 										$acumulaValor = ($acumulaValor + $porNuevo);
 										$notaMultiplicada = ($nota[3] * $porNuevo);

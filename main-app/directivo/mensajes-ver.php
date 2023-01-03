@@ -18,11 +18,11 @@
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
-                                <div class="page-title"><?=$datosConsulta['ema_asunto'];?></div>
+                                <div class="page-title"><?php if(isset($datosConsulta['ema_asunto'])){ echo $datosConsulta['ema_asunto'];}?></div>
                             </div>
                             <ol class="breadcrumb page-breadcrumb pull-right">
                                 <li><a class="parent-item" href="mensajes.php">Mensajes</a>&nbsp;<i class="fa fa-angle-right"></i></li>
-                                <li class="active"><?=$datosConsulta['ema_asunto'];?></li>
+                                <li class="active"><?php if(isset($datosConsulta['ema_asunto'])){ echo $datosConsulta['ema_asunto'];}?></li>
                             </ol>
                         </div>
                     </div>
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

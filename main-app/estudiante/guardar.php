@@ -16,11 +16,11 @@ $archivoSubido = new Archivos;
 
 if($_POST["id"]==1000){
 
-	mysql_query("UPDATE academico_matriculas SET mat_tipo_documento='".$_POST["tipoD"]."', mat_documento='".$_POST["nDoc"]."', mat_religion='".$_POST["religion"]."', mat_email='".$_POST["email"]."', mat_direccion='".$_POST["direccion"]."', mat_barrio='".$_POST["barrio"]."', mat_telefono='".$_POST["telefono"]."', mat_celular='".$_POST["celular"]."', mat_estrato='".$_POST["estrato"]."', mat_genero='".$_POST["genero"]."', mat_fecha_nacimiento='".$_POST["fNac"]."', mat_primer_apellido='".$_POST["apellido1"]."', mat_segundo_apellido='".$_POST["apellido2"]."', mat_nombres='".$_POST["nombres"]."', mat_grado='".$_POST["grado"]."', mat_tipo='".$_POST["tipoEst"]."' WHERE mat_id_usuario='".$_SESION["id"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE academico_matriculas SET mat_tipo_documento='".$_POST["tipoD"]."', mat_documento='".$_POST["nDoc"]."', mat_religion='".$_POST["religion"]."', mat_email='".$_POST["email"]."', mat_direccion='".$_POST["direccion"]."', mat_barrio='".$_POST["barrio"]."', mat_telefono='".$_POST["telefono"]."', mat_celular='".$_POST["celular"]."', mat_estrato='".$_POST["estrato"]."', mat_genero='".$_POST["genero"]."', mat_fecha_nacimiento='".$_POST["fNac"]."', mat_primer_apellido='".$_POST["apellido1"]."', mat_segundo_apellido='".$_POST["apellido2"]."', mat_nombres='".$_POST["nombres"]."', mat_grado='".$_POST["grado"]."', mat_tipo='".$_POST["tipoEst"]."' WHERE mat_id_usuario='".$_SESION["id"]."'");
 
-	mysql_query("UPDATE usuarios SET uss_usuario='".$_POST["nDoc"]."', uss_email='".$_POST["email"]."' WHERE uss_id='".$_SESION["id"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE usuarios SET uss_usuario='".$_POST["nDoc"]."', uss_email='".$_POST["email"]."' WHERE uss_id='".$_SESION["id"]."'");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	echo '<script type="text/javascript">window.location.href="matricula.php";</script>';
 
@@ -38,9 +38,9 @@ if($_POST["id"]==1000){
 
 if($_POST["id"]==7){
 
-	mysql_query("INSERT INTO academico_actividad_foro_comentarios(com_id_foro, com_descripcion, com_id_estudiante, com_fecha)VALUES('".$_POST["idForo"]."', '".$_POST["com"]."', '".$_SESION["id"]."', now())",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_foro_comentarios(com_id_foro, com_descripcion, com_id_estudiante, com_fecha)VALUES('".$_POST["idForo"]."', '".$_POST["com"]."', '".$_SESION["id"]."', now())");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 ?>
 
@@ -116,9 +116,9 @@ if($_POST["id"]==7){
 
 if($_POST["id"]==8){
 
-	mysql_query("INSERT INTO academico_actividad_foro_respuestas(fore_id_comentario, fore_respuesta, fore_id_estudiante, fore_fecha)VALUES('".$_POST["idCom"]."', '".$_POST["respu"]."', '".$_SESION["id"]."', now())",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_actividad_foro_respuestas(fore_id_comentario, fore_respuesta, fore_id_estudiante, fore_fecha)VALUES('".$_POST["idCom"]."', '".$_POST["respu"]."', '".$_SESION["id"]."', now())");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 ?>
 
@@ -198,9 +198,9 @@ if($_POST["id"]==9){
 
 	//SABER SI EL ESTUDIANTE YA HIZO LA EVALUACION
 
-	$nume = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_evaluaciones_resultados 
+	$nume = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones_resultados 
 
-	WHERE res_id_evaluacion='".$_POST["idE"]."' AND res_id_estudiante='".$datosEstudianteActual[0]."'",$conexion));
+	WHERE res_id_evaluacion='".$_POST["idE"]."' AND res_id_estudiante='".$datosEstudianteActual[0]."'"));
 
 	
 
@@ -218,41 +218,41 @@ if($_POST["id"]==9){
 
 	//BORRAR LAS RESPUESTAS ANTES DE VOLVER A GUARDAR
 
-	mysql_query("DELETE FROM academico_actividad_evaluaciones_resultados
+	mysqli_query($conexion, "DELETE FROM academico_actividad_evaluaciones_resultados
 
-	WHERE res_id_estudiante='".$datosEstudianteActual[0]."' AND res_id_evaluacion='".$_POST["idE"]."'",$conexion);
+	WHERE res_id_estudiante='".$datosEstudianteActual[0]."' AND res_id_evaluacion='".$_POST["idE"]."'");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	
 
 	//Cantidad de preguntas de la evaluación
 
-	$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+	$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 
 	INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 
 	WHERE evp_id_evaluacion='".$_POST["idE"]."'
 
-	",$conexion);
+	");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
-	$cantPreguntas = mysql_num_rows($preguntasConsulta);
+	$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 
 	$contPreguntas = 1;
 
-	while($preguntas = mysql_fetch_array($preguntasConsulta)){
+	while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
 
-		$respuestasConsulta = mysql_query("SELECT * FROM academico_actividad_respuestas
+		$respuestasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_respuestas
 
 		WHERE resp_id_pregunta='".$preguntas['preg_id']."'
 
-		",$conexion);
+		");
 
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 
-		$cantRespuestas = mysql_num_rows($respuestasConsulta);
+		$cantRespuestas = mysqli_num_rows($respuestasConsulta);
 
 		if($cantRespuestas==0) {
 
@@ -292,11 +292,11 @@ if($_POST["id"]==9){
 
 		if($_POST["R$contPreguntas"]=="") $_POST["R$contPreguntas"] = 0;
 
-		mysql_query("INSERT INTO academico_actividad_evaluaciones_resultados(res_id_pregunta, res_id_respuesta, res_id_estudiante, res_id_evaluacion, res_archivo)
+		mysqli_query($conexion, "INSERT INTO academico_actividad_evaluaciones_resultados(res_id_pregunta, res_id_respuesta, res_id_estudiante, res_id_evaluacion, res_archivo)
 
-		VALUES('".$_POST["P$contPreguntas"]."', '".$_POST["R$contPreguntas"]."', '".$datosEstudianteActual[0]."', '".$_POST["idE"]."', '".$archivo."')",$conexion);
+		VALUES('".$_POST["P$contPreguntas"]."', '".$_POST["R$contPreguntas"]."', '".$datosEstudianteActual[0]."', '".$_POST["idE"]."', '".$archivo."')");
 
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 
 		
 
@@ -312,11 +312,11 @@ if($_POST["id"]==9){
 
 	//ACTUALIZAR QUE EL ESTUDIANTE TERMINÓ
 
-	mysql_query("UPDATE academico_actividad_evaluaciones_estudiantes SET epe_fin=now() 
+	mysqli_query($conexion, "UPDATE academico_actividad_evaluaciones_estudiantes SET epe_fin=now() 
 
-	WHERE epe_id_estudiante='".$datosEstudianteActual[0]."' AND epe_id_evaluacion='".$_POST["idE"]."'",$conexion);
+	WHERE epe_id_estudiante='".$datosEstudianteActual[0]."' AND epe_id_evaluacion='".$_POST["idE"]."'");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	
 
@@ -332,9 +332,9 @@ if($_POST["id"]==10){
 
 	
 
-	$fechas = mysql_fetch_array(mysql_query("SELECT DATEDIFF(tar_fecha_disponible, now()), DATEDIFF(tar_fecha_entrega, now()), tar_fecha_entrega, tar_impedir_retrasos FROM academico_actividad_tareas 
+	$fechas = mysqli_fetch_array(mysqli_query($conexion, "SELECT DATEDIFF(tar_fecha_disponible, now()), DATEDIFF(tar_fecha_entrega, now()), tar_fecha_entrega, tar_impedir_retrasos FROM academico_actividad_tareas 
 
-	WHERE tar_id='".$_POST["idR"]."' AND tar_estado=1",$conexion));
+	WHERE tar_id='".$_POST["idR"]."' AND tar_estado=1"), MYSQLI_BOTH);
 
 	
 
@@ -352,7 +352,7 @@ if($_POST["id"]==10){
 
 	
 
-	$num = mysql_num_rows(mysql_query("SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion));
+	$num = mysqli_num_rows(mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'"));
 
 	
 
@@ -412,7 +412,7 @@ if($_POST["id"]==10){
 
 		}
 
-		mysql_query("DELETE FROM academico_actividad_tareas_entregas WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "DELETE FROM academico_actividad_tareas_entregas WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -420,7 +420,7 @@ if($_POST["id"]==10){
 
 
 
-		mysql_query("INSERT INTO academico_actividad_tareas_entregas (ent_id_estudiante, ent_id_actividad, ent_archivo, ent_fecha, ent_comentario, ent_archivo2, ent_archivo3, ent_peso1, ent_peso2, ent_peso3) VALUES(".$datosEstudianteActual[0].", '".$_POST["idR"]."', '".$archivo."', now(), '".mysql_real_escape_string($_POST["comentario"])."', '".$archivo2."', '".$archivo3."', '".$pesoMB1."', '".$pesoMB2."', '".$pesoMB3."')",$conexion);
+		mysqli_query($conexion, "INSERT INTO academico_actividad_tareas_entregas (ent_id_estudiante, ent_id_actividad, ent_archivo, ent_fecha, ent_comentario, ent_archivo2, ent_archivo3, ent_peso1, ent_peso2, ent_peso3) VALUES(".$datosEstudianteActual[0].", '".$_POST["idR"]."', '".$archivo."', now(), '".mysqli_real_escape_string($conexion,$_POST["comentario"])."', '".$archivo2."', '".$archivo3."', '".$pesoMB1."', '".$pesoMB2."', '".$pesoMB3."')");
 
 		$lineaError = __LINE__;
 
@@ -442,7 +442,7 @@ if($_POST["id"]==10){
 
 			$archivoSubido->subirArchivo($destino, $archivo, $nombreInputFile);
 
-			mysql_query("UPDATE academico_actividad_tareas_entregas SET ent_archivo='".$archivo."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividad_tareas_entregas SET ent_archivo='".$archivo."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'");
 
 			$lineaError = __LINE__;
 
@@ -464,7 +464,7 @@ if($_POST["id"]==10){
 
 			$archivoSubido->subirArchivo($destino, $archivo2, $nombreInputFile);
 
-			mysql_query("UPDATE academico_actividad_tareas_entregas SET ent_archivo2='".$archivo2."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividad_tareas_entregas SET ent_archivo2='".$archivo2."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'");
 
 			$lineaError = __LINE__;
 
@@ -486,7 +486,7 @@ if($_POST["id"]==10){
 
 			$archivoSubido->subirArchivo($destino, $archivo3, $nombreInputFile);
 
-			mysql_query("UPDATE academico_actividad_tareas_entregas SET ent_archivo3='".$archivo3."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion);
+			mysqli_query($conexion, "UPDATE academico_actividad_tareas_entregas SET ent_archivo3='".$archivo3."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'");
 
 			$lineaError = __LINE__;
 
@@ -494,7 +494,7 @@ if($_POST["id"]==10){
 
 		}
 
-		mysql_query("UPDATE academico_actividad_tareas_entregas SET ent_comentario='".mysql_real_escape_string($_POST["comentario"])."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'",$conexion);
+		mysqli_query($conexion, "UPDATE academico_actividad_tareas_entregas SET ent_comentario='".mysqli_real_escape_string($conexion,$_POST["comentario"])."' WHERE ent_id_estudiante='".$datosEstudianteActual[0]."' AND ent_id_actividad='".$_POST["idR"]."'");
 
 		$lineaError = __LINE__;
 
@@ -513,10 +513,10 @@ if($_POST["id"]==10){
 //FIRMAR ASPECTOS
 if($_POST["id"]==11){
 
-	mysql_query("UPDATE disiplina_nota SET dn_aprobado=1, dn_fecha_aprobado=now()
-    WHERE dn_cod_estudiante=" . $_POST["estudiante"] . " AND dn_periodo='" . $_POST["periodo"] . "'", $conexion);
+	mysqli_query($conexion, "UPDATE disiplina_nota SET dn_aprobado=1, dn_fecha_aprobado=now()
+    WHERE dn_cod_estudiante=" . $_POST["estudiante"] . " AND dn_periodo='" . $_POST["periodo"] . "'");
 
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	echo '<script type="text/javascript">window.location.href="aspectos.php";</script>';
 
@@ -534,7 +534,7 @@ if($_POST["id"]==11){
 
 if($_GET["get"]==1){
 
-	mysql_query("UPDATE disciplina_reportes SET dr_aprobacion_estudiante=1, dr_aprobacion_estudiante_fecha=now() WHERE dr_id='".$_GET["id"]."'",$conexion);
+	mysqli_query($conexion, "UPDATE disciplina_reportes SET dr_aprobacion_estudiante=1, dr_aprobacion_estudiante_fecha=now() WHERE dr_id='".$_GET["id"]."'");
 
 	$lineaError = __LINE__;
 

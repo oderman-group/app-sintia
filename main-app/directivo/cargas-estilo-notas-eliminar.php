@@ -1,8 +1,8 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("DELETE FROM academico_notas_tipos WHERE notip_categoria='" . $_GET["idR"] . "'", $conexion);
-	mysql_query("DELETE FROM academico_categorias_notas WHERE catn_id='" . $_GET["idR"] . "'", $conexion);
+	mysqli_query($conexion, "DELETE FROM academico_notas_tipos WHERE notip_categoria='" . $_GET["idR"] . "'");
+	mysqli_query($conexion, "DELETE FROM academico_categorias_notas WHERE catn_id='" . $_GET["idR"] . "'");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

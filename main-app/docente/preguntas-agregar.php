@@ -5,17 +5,17 @@
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 
 //Cantidad de preguntas de la evaluación
-$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 WHERE evp_id_evaluacion='".$_GET["idE"]."'
-ORDER BY preg_id DESC
-",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-$cantPreguntas = mysql_num_rows($preguntasConsulta);
+ORDER BY preg_id DESC");
+
+$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 ?>
 
 	<!--bootstrap -->
@@ -159,15 +159,14 @@ $cantPreguntas = mysql_num_rows($preguntasConsulta);
                                             <label class="col-sm-2 control-label"><b>Banco de datos</b></label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_actividad_preguntas 
-												WHERE preg_id_carga='".$cargaConsultaActual."' 
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_preguntas 
+												WHERE preg_id_carga='".$cargaConsultaActual."'");
 												?>
                                                 <select class="form-control  select2" name="bancoDatos" onChange="avisoBancoDatos(this)">
                                                     <option value="">Seleccione una opción</option>
 													<option value="0" selected>--Ninguno--</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos['preg_id'];?>"><?=$opcionesDatos['preg_descripcion']." (".$opcionesDatos['preg_valor']."Ptos.)";?></option>
 													<?php }?>
@@ -306,7 +305,7 @@ $cantPreguntas = mysql_num_rows($preguntasConsulta);
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -3,14 +3,16 @@ header("Content-Type: application/vnd.ms-excel");
 header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 header("content-disposition: attachment;filename=Usuarios_".date("d/m/Y")."-SINTIA.xls");
-include("../modelo/conexion.php");
+session_start();
+include("../../config-general/config.php");
+include("../../config-general/consulta-usuario-actual.php");
 ?>
 
 
 <?php
-$consulta=mysql_query("SELECT * FROM usuarios
+$consulta=mysqli_query($conexion, "SELECT * FROM usuarios
 	INNER JOIN perfiles ON pes_id=uss_tipo
-	ORDER BY uss_tipo",$conexion);
+	ORDER BY uss_tipo");
 ?>
 <div align="center">  
 <table  width="100%" border="1" rules="all">
@@ -28,7 +30,7 @@ $consulta=mysql_query("SELECT * FROM usuarios
     <tbody>
 <?php 
 $conta=1;
-while($resultado=mysql_fetch_array($consulta))
+while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
 {	
 ?>    
     	<tr>	

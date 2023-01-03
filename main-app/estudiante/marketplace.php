@@ -5,7 +5,7 @@
 
 <?php
 if($_SESSION["empresa"] == ""){
-	$empresa = mysql_fetch_array(mysql_query("SELECT * FROM ".$baseDatosMarketPlace.".empresas WHERE emp_usuario='".$_SESSION["id"]."' AND emp_institucion='".$config['conf_id_institucion']."'",$conexion));
+	$empresa = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$baseDatosMarketPlace.".empresas WHERE emp_usuario='".$_SESSION["id"]."' AND emp_institucion='".$config['conf_id_institucion']."'"));
 	
 	if($empresa[0]!=""){
 		$_SESSION["empresa"] = $empresa[0];
@@ -46,7 +46,7 @@ if($_SESSION["empresa"] == ""){
                 </div>
             </div>
             <!-- end page content -->
-            <?php include("../compartido/panel-configuracion.php");?>
+            <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -123,15 +123,15 @@ include("../../config-general/consulta-usuario-actual.php");?>
   </head>
   <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
   <?php
-  $consulta = mysql_query("SELECT * FROM negocios_pedidos WHERE ped_id='".$_GET["ref"]."'",$conexion);
-  $resultado = mysql_fetch_array($consulta);
+  $consulta = mysqli_query($conexion, "SELECT * FROM negocios_pedidos WHERE ped_id='".$_GET["ref"]."'");
+  $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
   //DATOS DEL USUARIO
-  $consulta2 = mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado[2]."'",$conexion);
-  $resultado2 = mysql_fetch_array($consulta2);
+  $consulta2 = mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado[2]."'");
+  $resultado2 = mysqli_fetch_array($consulta2, MYSQLI_BOTH);
   if($resultado2[15]=='F') $g = 'a'; else $g = 'o';
   //DATOS DEL USUARIO
-  $consulta3 = mysql_query("SELECT * FROM negocios_items_pedidos WHERE item_codigo_pedido='".$resultado[0]."'",$conexion);
-  $num3 = mysql_num_rows($consulta3);
+  $consulta3 = mysqli_query($conexion, "SELECT * FROM negocios_items_pedidos WHERE item_codigo_pedido='".$resultado[0]."'");
+  $num3 = mysqli_num_rows($consulta3);
   ?>
     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#0099CC">
       <tbody>

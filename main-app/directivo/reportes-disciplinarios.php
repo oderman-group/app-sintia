@@ -52,10 +52,10 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM disciplina_reportes
-													 WHERE dr_estudiante='".$datosEstudianteActual['mat_id']."'",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM disciplina_reportes
+													 WHERE dr_estudiante='".$datosEstudianteActual['mat_id']."'");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -92,7 +92,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

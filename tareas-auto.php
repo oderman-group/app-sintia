@@ -14,7 +14,7 @@ $correosDemo = mysql_query("SELECT DATEDIFF(now(), demo_fecha_ingreso), demo_usu
 INNER JOIN mobiliar_sintiademo.usuarios ON uss_id=demo_usuario
 WHERE (demo_correo_enviado<5 AND demo_nocorreos=0)
 ",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 
 
@@ -253,7 +253,7 @@ WHERE corr_estado=0 AND corr_usuario IS NOT NULL
 GROUP BY corr_institucion, corr_usuario
 ORDER BY corr_institucion, corr_usuario
 ",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 $mensajesEnviados = 0;
 $mensajesTotales = 0;
@@ -266,7 +266,7 @@ while($cProg = mysql_fetch_array($correosProg)){
 	(SELECT COUNT(corr_id) FROM correos WHERE corr_institucion='".$cProg['corr_institucion']."' AND corr_usuario='".$cProg['corr_usuario']."' AND corr_tipo=3 AND corr_estado=0),
 	(SELECT COUNT(corr_id) FROM correos WHERE corr_institucion='".$cProg['corr_institucion']."' AND corr_usuario='".$cProg['corr_usuario']."' AND corr_tipo=4 AND corr_estado=0)
 	",$conexion));
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 	
 	$institucionAgno = $cProg['ins_bd']."_".date("Y");
 	
@@ -309,7 +309,7 @@ while($cProg = mysql_fetch_array($correosProg)){
 	WHERE corr_institucion='".$cProg['corr_institucion']."' AND corr_usuario='".$cProg['corr_usuario']."' AND corr_estado=0
 	ORDER BY corr_tipo
 	",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 	
 	$novedades = 0; 
 	//Recorrer por institución y por usuario
@@ -326,10 +326,9 @@ while($cProg = mysql_fetch_array($correosProg)){
 			INNER JOIN ".$institucionAgno.".academico_grados AS gra ON gra.gra_id=matri.mat_grado
 			WHERE act_id='".$cDat["corr_actividad"]."'
 			",$conexion));
-			if(mysql_errno()!=0){echo mysql_error()." - Linea 242"; exit();}
 			
 			$docente = mysql_fetch_array(mysql_query("SELECT * FROM ".$institucionAgno.".usuarios WHERE uss_id='".$datosRelacionados['car_docente']."'",$conexion));
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			
 			
 			if($datosRelacionados[0]!=""){
 				if($cDat['corr_tipo']==1){
@@ -383,13 +382,13 @@ while($cProg = mysql_fetch_array($correosProg)){
 				}
 				
 				mysql_query("UPDATE correos SET corr_estado=1, corr_fecha_envio=now() WHERE corr_id='".$cDat["corr_id"]."'",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 				$novedades ++;
 				$mensajesTotales++;
 				
 			}else{
 				mysql_query("UPDATE correos SET corr_observacion='No hay datos relacionados en correos tipo 1, 2, 3.' WHERE corr_id='".$cDat["corr_id"]."'",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 			}
 		}
 		
@@ -402,10 +401,10 @@ while($cProg = mysql_fetch_array($correosProg)){
 			INNER JOIN ".$institucionAgno.".academico_grados AS gra ON gra.gra_id=matri.mat_grado
 			WHERE car_id='".$cDat["corr_carga"]."'
 			",$conexion));
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			
 			
 			$docente = mysql_fetch_array(mysql_query("SELECT * FROM ".$institucionAgno.".usuarios WHERE uss_id='".$datosRelacionados['car_docente']."'",$conexion));
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			
 			
 			if($datosRelacionados[0]!=""){
 
@@ -424,13 +423,13 @@ while($cProg = mysql_fetch_array($correosProg)){
 				';
 			
 				mysql_query("UPDATE correos SET corr_estado=1, corr_fecha_envio=now() WHERE corr_id='".$cDat["corr_id"]."'",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 				$novedades ++;
 				$mensajesTotales++;
 				
 			}else{
 				mysql_query("UPDATE correos SET corr_observacion='No hay datos relacionados en correos tipo 4.' WHERE corr_id='".$cDat["corr_id"]."'",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 			}
 		}
 
@@ -468,14 +467,14 @@ while($cProg = mysql_fetch_array($correosProg)){
 				echo 'Mensaje enviado correctamente.';
 			} catch (Exception $e) {
 				mysql_query("INSERT INTO correos_enviados(cenv_fecha, cenv_cantidad, cenv_novedades)VALUES(now(), '".$mensajesEnviados."', '".$mensajesTotales."')",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 				
 				echo "Error: {$mail->ErrorInfo}"; exit();
 			}
 		echo '</div>';
 	}else{
 		mysql_query("UPDATE correos SET corr_observacion='El acudiente no tiene email registrado.' WHERE corr_id='".$cDat["corr_id"]."'",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 	}
 	//FIN ENVÍO DE MENSAJE
 	

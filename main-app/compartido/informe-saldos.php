@@ -31,13 +31,15 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                         <th>Saldo</th>
   </tr>
   <?php
-									 $consulta = mysql_query($SQL,$conexion);
-									 while($resultado = mysql_fetch_array($consulta)){
+									 $consulta = mysqli_query($conexion, $SQL);
+									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 										 if($resultado[5]==1) $s='<img src="../files/iconos/on.png">'; elseif($resultado[5]==0) $s='<img src="../files/iconos/off.png">'; else $s="-";
 										 if($resultado[3]==5) $b = "bold"; else $b="";
 										 if($resultado['uss_bloqueado']==1) $c = "#F00"; else $c="";
-										 $cobros = mysql_fetch_array(mysql_query("SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=3 and fcu_anulado=0 AND fcu_usuario=".$resultado[0]."",$conexion));
-										 $pagos = mysql_fetch_array(mysql_query("SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=1 and fcu_anulado=0 AND fcu_usuario=".$resultado[0]."",$conexion));
+                     $consultaCobros=mysqli_query($conexion, "SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=3 and fcu_anulado=0 AND fcu_usuario=".$resultado[0]."");
+										 $cobros = mysqli_fetch_array($consultaCobros, MYSQLI_BOTH);
+                     $consultaPagos=mysqli_query($conexion, "SELECT sum(fcu_valor) FROM finanzas_cuentas WHERE fcu_tipo=1 and fcu_anulado=0 AND fcu_usuario=".$resultado[0]."");
+										 $pagos = mysqli_fetch_array($consultaPagos, MYSQLI_BOTH);
 										 $estadoC = $pagos[0] - $cobros[0];
 										 if($estadoC==0){continue;}
 										 if($estadoC<0){$color = '#F00';}else{$color = '#090';}

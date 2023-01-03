@@ -1,12 +1,7 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0074';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
-<?php
-mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$_SESSION["id"]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Importar Informaci n', now())",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
-?>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -54,7 +49,8 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                         <div class="col-sm-9">
                           
                                 <?php
-										$e = mysql_fetch_array(mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'",$conexion));
+                                        $consultaE=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'");
+										$e = mysqli_fetch_array($consultaE, MYSQLI_BOTH);
                                 ?>
 
 								<div class="panel">
@@ -91,7 +87,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

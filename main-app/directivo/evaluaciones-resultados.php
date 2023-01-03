@@ -12,18 +12,18 @@
 <?php include("../compartido/body.php");?>
 	
 	<?php
-	$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones 
-	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$consultaEvaluacion=mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones 
+	WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1");
+	$evaluacion = mysqli_fetch_array($consultaEvaluacion, MYSQLI_BOTH);
 
 	
 	//Cantidad de preguntas de la evaluación
-	$preguntasConsulta = mysql_query("SELECT * FROM academico_actividad_evaluacion_preguntas
+	$preguntasConsulta = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluacion_preguntas
 	INNER JOIN academico_actividad_preguntas ON preg_id=evp_id_pregunta
 	WHERE evp_id_evaluacion='".$_GET["idE"]."'
-	ORDER BY preg_id DESC
-	",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	$cantPreguntas = mysql_num_rows($preguntasConsulta);
+	ORDER BY preg_id DESC");
+	
+	$cantPreguntas = mysqli_num_rows($preguntasConsulta);
 
 	?>
 
@@ -99,11 +99,11 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[114][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$evaluacionesEnComun = mysql_query("SELECT * FROM academico_actividad_evaluaciones
+											$evaluacionesEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones
 											WHERE eva_id_carga='".$cargaConsultaActual."' AND eva_periodo='".$periodoConsultaActual."' AND eva_id!='".$_GET["idE"]."' AND eva_estado=1
 											ORDER BY eva_id DESC
-											",$conexion);
-											while($evaComun = mysql_fetch_array($evaluacionesEnComun)){
+											");
+											while($evaComun = mysqli_fetch_array($evaluacionesEnComun, MYSQLI_BOTH)){
 											?>
 												<p><a href="evaluaciones-resultados.php?idE=<?=$evaComun['eva_id'];?>"><?=$evaComun['eva_nombre'];?></a></p>
 											<?php }?>
@@ -156,25 +156,26 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas 
-													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas 
+													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $datos1 = mysql_fetch_array(mysql_query("SELECT epe_inicio, epe_fin, MOD(TIMESTAMPDIFF(MINUTE, epe_inicio, epe_fin),60), MOD(TIMESTAMPDIFF(SECOND, epe_inicio, epe_fin),60) FROM academico_actividad_evaluaciones_estudiantes 
-														 WHERE epe_id_estudiante='".$resultado['mat_id']."' AND epe_id_evaluacion='".$_GET["idE"]."'",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaDatos1=mysqli_query($conexion, "SELECT epe_inicio, epe_fin, MOD(TIMESTAMPDIFF(MINUTE, epe_inicio, epe_fin),60), MOD(TIMESTAMPDIFF(SECOND, epe_inicio, epe_fin),60) FROM academico_actividad_evaluaciones_estudiantes 
+														WHERE epe_id_estudiante='".$resultado['mat_id']."' AND epe_id_evaluacion='".$_GET["idE"]."'");
+														 $datos1 = mysqli_fetch_array($consultaDatos1, MYSQLI_BOTH);
 														 
-														 $datos2 = mysql_fetch_array(mysql_query("SELECT
-														(SELECT sum(preg_valor) FROM academico_actividad_preguntas
-														INNER JOIN academico_actividad_evaluacion_preguntas ON evp_id_pregunta=preg_id AND evp_id_evaluacion='".$_GET["idE"]."'),
-
-														(SELECT sum(preg_valor) FROM academico_actividad_preguntas
-														INNER JOIN academico_actividad_evaluaciones_resultados ON res_id_pregunta=preg_id AND res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$resultado['mat_id']."'
-														INNER JOIN academico_actividad_respuestas ON resp_id=res_id_respuesta AND resp_correcta=1),
-														
-														(SELECT count(preg_id) FROM academico_actividad_preguntas
-														INNER JOIN academico_actividad_evaluaciones_resultados ON res_id_pregunta=preg_id AND res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$resultado['mat_id']."'
-														INNER JOIN academico_actividad_respuestas ON resp_id=res_id_respuesta AND resp_correcta=1)
-														"));
+														 $consultaDatos2=mysqli_query($conexion, "SELECT
+														 (SELECT sum(preg_valor) FROM academico_actividad_preguntas
+														 INNER JOIN academico_actividad_evaluacion_preguntas ON evp_id_pregunta=preg_id AND evp_id_evaluacion='".$_GET["idE"]."'),
+ 
+														 (SELECT sum(preg_valor) FROM academico_actividad_preguntas
+														 INNER JOIN academico_actividad_evaluaciones_resultados ON res_id_pregunta=preg_id AND res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$resultado['mat_id']."'
+														 INNER JOIN academico_actividad_respuestas ON resp_id=res_id_respuesta AND resp_correcta=1),
+														 
+														 (SELECT count(preg_id) FROM academico_actividad_preguntas
+														 INNER JOIN academico_actividad_evaluaciones_resultados ON res_id_pregunta=preg_id AND res_id_evaluacion='".$_GET["idE"]."' AND res_id_estudiante='".$resultado['mat_id']."'
+														 INNER JOIN academico_actividad_respuestas ON resp_id=res_id_respuesta AND resp_correcta=1)");
+														 $datos2 = mysqli_fetch_array($consultaDatos2, MYSQLI_BOTH);
 														 
 														 @$porcentaje = round(($datos2[1]/$datos2[0])*100,$config['conf_decimales_notas']);
 														 $nota = round(($config['conf_nota_hasta']*($porcentaje/100)),$config['conf_decimales_notas']);
@@ -220,7 +221,7 @@
                         </div>
                     </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>    

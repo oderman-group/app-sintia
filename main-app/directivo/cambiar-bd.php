@@ -10,8 +10,6 @@ if(isset($_POST["cambiar"]))
 }
 ?>
 <?php include("../modelo/conexion.php");?>
-<?php $idPaginaInterna = 1;?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -97,7 +95,7 @@ if(isset($_POST["cambiar"]))
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0052';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -63,15 +62,13 @@
                                             <label class="col-sm-2 control-label">Docente</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM usuarios
-												WHERE uss_tipo=2
-												ORDER BY uss_nombre
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM usuarios
+												WHERE uss_tipo=2 ORDER BY uss_nombre");
 												?>
                                                 <select class="form-control  select2" name="docente" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$disabled = '';
 														if($opcionesDatos['uss_bloqueado']==1) $disabled = 'disabled';
 													?>
@@ -85,14 +82,12 @@
                                             <label class="col-sm-2 control-label">Curso</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grados
-												ORDER BY gra_vocal
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grados ORDER BY gra_vocal");
 												?>
                                                 <select class="form-control  select2" name="curso" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$disabled = '';
 														if($opcionesDatos['gra_estado']=='0') $disabled = 'disabled';
 													?>
@@ -106,13 +101,12 @@
                                             <label class="col-sm-2 control-label">Grupo</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_grupos
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_grupos");
 												?>
                                                 <select id="multiple" class="form-control select2-multiple" name="grupo[]" multiple>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos[0];?>"><?=$opcionesDatos['gru_id'].". ".strtoupper($opcionesDatos['gru_nombre']);?></option>
 													<?php }?>
@@ -124,15 +118,13 @@
                                             <label class="col-sm-2 control-label">Asignatura - Área</label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_materias
-												INNER JOIN academico_areas ON ar_id=mat_area
-												ORDER BY mat_nombre
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_materias
+												INNER JOIN academico_areas ON ar_id=mat_area ORDER BY mat_nombre");
 												?>
                                                 <select class="form-control  select2" name="asignatura" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 													?>
                                                     	<option value="<?=$opcionesDatos[0];?>"><?=$opcionesDatos['mat_id'].". ".strtoupper($opcionesDatos['mat_nombre']." - ".$opcionesDatos['ar_nombre']);?></option>
 													<?php }?>
@@ -271,7 +263,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

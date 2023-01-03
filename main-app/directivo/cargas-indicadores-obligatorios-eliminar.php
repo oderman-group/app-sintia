@@ -1,7 +1,7 @@
 <?php include("session.php"); ?>
 <?php include("../modelo/conexion.php"); ?>
 <?php
-	mysql_query("DELETE FROM academico_indicadores WHERE ind_id=" . $_GET["idN"] . ";", $conexion);
+	mysqli_query($conexion, "DELETE FROM academico_indicadores WHERE ind_id=" . $_GET["idN"] . ";");
 	$lineaError = __LINE__;
 
 	include("../compartido/reporte-errores.php");

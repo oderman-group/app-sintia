@@ -5,16 +5,16 @@
     include("../compartido/config.php");
         
     //ESTUDIANTE ACTUAL
-    $consultaEstudianteActual = mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'",$conexion);
-    if(mysql_errno()!=0){echo mysql_error(); exit();}
-    $numEstudianteActual = mysql_num_rows($consultaEstudianteActual);
-    $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
+    $consultaEstudianteActual = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["id"]."'");
+    
+    $numEstudianteActual = mysqli_num_rows($consultaEstudianteActual);
+    $datosEstudianteActual = mysqli_fetch_array($consultaEstudianteActual, MYSQLI_BOTH);
     
     $datosEstudianteActual["mat_ciudad_residencia"]=trim($datosEstudianteActual["mat_ciudad_residencia"]);
     
     //ACUDIENTE
-    $consultaAcudiente=mysql_query("SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente"]."'",$conexion);
-    $acudiente = mysql_fetch_array($consultaAcudiente);
+    $consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$datosEstudianteActual["mat_acudiente"]."'");
+    $acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
 
 
     // API CREAR ESTUDIANTE

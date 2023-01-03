@@ -123,15 +123,14 @@ if(
                                             <label class="col-sm-2 control-label"><b>Banco de datos</b></label>
                                             <div class="col-sm-10">
 												<?php
-												$opcionesConsulta = mysql_query("SELECT * FROM academico_clases 
-												WHERE cls_estado=1 AND ((cls_compartir=1 AND cls_id_carga!='".$cargaConsultaActual."') OR (cls_id_carga='".$cargaConsultaActual."' AND cls_periodo!='".$periodoConsultaActual."')) 
-												",$conexion);
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM academico_clases 
+												WHERE cls_estado=1 AND ((cls_compartir=1 AND cls_id_carga!='".$cargaConsultaActual."') OR (cls_id_carga='".$cargaConsultaActual."' AND cls_periodo!='".$periodoConsultaActual."'))");
 												?>
                                                 <select class="form-control  select2" name="bancoDatos" onChange="avisoBancoDatos(this)">
                                                     <option value="">Seleccione una opción</option>
 													<option value="0" selected>--Ninguno--</option>
 													<?php
-													while($opcionesDatos = mysql_fetch_array($opcionesConsulta)){
+													while($opcionesDatos = mysql_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$recursoPropio = '';
 														if($opcionesDatos['act_id_carga']==$cargaConsultaActual)$recursoPropio = ' - MIO';
 													?>
@@ -154,7 +153,7 @@ if(
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

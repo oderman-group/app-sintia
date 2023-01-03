@@ -1,6 +1,6 @@
 								<?php
 								mysqli_query($conexion, "UPDATE general_alertas SET alr_vista=1 WHERE alr_usuario='".$_SESSION["id"]."' AND alr_vista=0");
-								if(mysql_errno()!=0){echo mysql_error(); exit();}
+								
 								?>
 								<div class="col-md-9">
                                     <div class="card card-topline-purple">

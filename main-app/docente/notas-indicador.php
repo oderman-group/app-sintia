@@ -62,7 +62,21 @@
 
 
 
-							<div class="col-md-12 col-lg-12">
+								<div class="col-md-6 col-lg-4">
+
+								<?php include("info-carga-actual.php"); ?>
+
+								<?php include("filtros-cargas.php"); ?>
+
+								<?php include("../compartido/publicidad-lateral.php"); ?>
+
+
+
+								</div>
+
+
+
+							<div class="col-md-12 col-lg-8">
 
 								<div class="card card-topline-purple">
 
@@ -102,11 +116,11 @@
 
 														<?php
 
-														$cA = mysql_query("SELECT * FROM academico_indicadores_carga 
+														$cA = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 														INNER JOIN academico_indicadores ON ind_id=ipc_indicador
-														WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'", $conexion);
+														WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'");
 
-														while ($rA = mysql_fetch_array($cA)) {
+														while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
 
 															echo '<th style="text-align:center; font-size:11px; width:100px;"><a href="indicadores-editar.php?idR=' . $rA['ipc_id'] . '">' . $rA['ind_nombre'] . '<br>
 
@@ -133,13 +147,13 @@
 
 													$contReg = 1;
 
-													$consulta = mysql_query("SELECT * FROM academico_matriculas
+													$consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 
 													INNER JOIN usuarios ON uss_id=mat_id_usuario
 
-													WHERE mat_grado='" . $datosCargaActual['car_curso'] . "' AND mat_grupo='" . $datosCargaActual['car_grupo'] . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres", $conexion);
+													WHERE mat_grado='" . $datosCargaActual['car_curso'] . "' AND mat_grupo='" . $datosCargaActual['car_grupo'] . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres");
 
-													while ($resultado = mysql_fetch_array($consulta)) {
+													while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 
 														//DEFINITIVAS
 
@@ -179,17 +193,17 @@
 
 															<?php
 
-															$cA = mysql_query("SELECT * FROM academico_indicadores_carga 
+															$cA = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga 
 															INNER JOIN academico_indicadores ON ind_id=ipc_indicador
-															WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'", $conexion);
+															WHERE ipc_carga='" . $cargaConsultaActual . "' AND ipc_periodo='" . $periodoConsultaActual . "'");
 
-															while ($rA = mysql_fetch_array($cA)) {
+															while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
 
 																//LAS CALIFICACIONES
-
-																$sumaNotas = mysql_fetch_array(mysql_query("SELECT SUM(cal_nota * (act_valor/100)) FROM academico_calificaciones
+																$consultaSumaNotas=mysqli_query($conexion, "SELECT SUM(cal_nota * (act_valor/100)) FROM academico_calificaciones
 																INNER JOIN academico_actividades ON act_id=cal_id_actividad AND act_id_tipo='" . $rA['ipc_indicador'] . "' AND act_periodo='" . $periodoConsultaActual . "' AND act_id_carga='" . $cargaConsultaActual . "' AND act_estado=1
-																WHERE cal_id_estudiante=" . $resultado[0], $conexion));
+																WHERE cal_id_estudiante=" . $resultado[0]);
+																$sumaNotas = mysqli_fetch_array($consultaSumaNotas, MYSQLI_BOTH);
 
 																$notasResultado = round($sumaNotas[0] / ($rA['ipc_valor'] / 100), $config['conf_decimales_notas']);
 
@@ -248,46 +262,6 @@
 
 
 
-						<div class="row">
-
-
-
-							<div class="col-md-6 col-lg-4">
-
-
-
-								<?php include("filtros-cargas.php"); ?>
-
-
-
-							</div>
-
-
-
-							<div class="col-md-6 col-lg-4">
-
-
-
-								<?php include("info-carga-actual.php"); ?>
-
-
-
-								<?php include("../compartido/publicidad-lateral.php"); ?>
-
-
-
-							</div>
-
-
-
-
-
-
-
-						</div>
-
-
-
 
 
 					</div>
@@ -300,7 +274,7 @@
 
 		<!-- end page content -->
 
-		<?php include("../compartido/panel-configuracion.php"); ?>
+		<?php // include("../compartido/panel-configuracion.php"); ?>
 
 	</div>
 

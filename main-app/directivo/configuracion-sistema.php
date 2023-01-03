@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0057';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -49,7 +48,8 @@
 						
                         <div class="col-sm-9">
                                 <?php
-                                $cfg = mysql_fetch_array(mysql_query("SELECT * FROM configuracion WHERE conf_id=1",$conexion));
+                                $consultaCfg=mysqli_query($conexion, "SELECT * FROM configuracion WHERE conf_id=1");
+                                $cfg = mysqli_fetch_array($consultaCfg, MYSQLI_BOTH);
                                 ?>
                                 
                                 <script type="application/javascript">
@@ -97,8 +97,8 @@
                                                 <select class="form-control  select2" name="estiloNotas" required>
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
-                                                        $opcionesGeneralesConsulta = mysql_query("SELECT * FROM academico_categorias_notas",$conexion);
-                                                        while($opcionesGeneralesDatos = mysql_fetch_array($opcionesGeneralesConsulta)){
+                                                        $opcionesGeneralesConsulta = mysqli_query($conexion, "SELECT * FROM academico_categorias_notas");
+                                                        while($opcionesGeneralesDatos = mysqli_fetch_array($opcionesGeneralesConsulta, MYSQLI_BOTH)){
                                                             if($cfg[22]==$opcionesGeneralesDatos[0])
                                                                 echo '<option value="'.$opcionesGeneralesDatos[0].'" selected>'.$opcionesGeneralesDatos[1].'</option>';
                                                             else
@@ -199,7 +199,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

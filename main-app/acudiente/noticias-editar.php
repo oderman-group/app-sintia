@@ -4,7 +4,7 @@
 <?php include("../compartido/head.php");?>
 <?php
 $datosConsulta = mysql_fetch_array(mysql_query("SELECT * FROM social_noticias WHERE not_id='".$_GET["idR"]."' AND not_usuario='".$_SESSION["id"]."' AND not_estado!=2",$conexion));
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 ?>
 
 	<!--bootstrap -->
@@ -46,7 +46,7 @@ if(mysql_errno()!=0){echo mysql_error(); exit();}
                 </div>
 			</div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

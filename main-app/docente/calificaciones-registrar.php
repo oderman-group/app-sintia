@@ -11,12 +11,10 @@
 <?php include("../compartido/head.php");?>
 
 <?php
-
-$calificacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividades 
-
+$consultaCalificaciones=mysqli_query($conexion, "SELECT * FROM academico_actividades 
 INNER JOIN academico_indicadores ON ind_id=act_id_tipo
-
-WHERE act_id='".$_GET["idR"]."' AND act_estado=1",$conexion));
+WHERE act_id='".$_GET["idR"]."' AND act_estado=1");
+$calificacion = mysqli_fetch_array($consultaCalificaciones, MYSQLI_BOTH);
 
 ?>
 
@@ -188,9 +186,9 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 												 <?php
 
-												 $TablaNotas = mysql_query("SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'",$conexion);
+												 $TablaNotas = mysqli_query($conexion, "SELECT * FROM academico_notas_tipos WHERE notip_categoria='".$config["conf_notas_categoria"]."'");
 
-												 while($tabla = mysql_fetch_array($TablaNotas)){
+												 while($tabla = mysqli_fetch_array($TablaNotas, MYSQLI_BOTH)){
 
 												 ?>
 
@@ -208,7 +206,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 												  <?php }
 
-													mysql_free_result($TablaNotas);
+													mysqli_free_result($TablaNotas);
 
 													?>
 
@@ -234,15 +232,15 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 											<?php
 
-											$registrosEnComun = mysql_query("SELECT * FROM academico_actividades 
+											$registrosEnComun = mysqli_query($conexion, "SELECT * FROM academico_actividades 
 
 											WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND act_id!='".$_GET["idR"]."'
 
 											ORDER BY act_id DESC
 
-											",$conexion);
+											");
 
-											while($regComun = mysql_fetch_array($registrosEnComun)){
+											while($regComun = mysqli_fetch_array($registrosEnComun, MYSQLI_BOTH)){
 
 											?>
 
@@ -250,7 +248,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 											<?php }
 
-											mysql_free_result($registrosEnComun);
+											mysqli_free_result($registrosEnComun);
 
 											?>
 
@@ -346,23 +344,23 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 													<?php
 
-													 $consulta = mysql_query("SELECT * FROM academico_matriculas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas
 
 													 INNER JOIN usuarios ON uss_id=mat_id_usuario
 
-													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres",$conexion);
+													 WHERE mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido, mat_segundo_apellido, mat_nombres");
 
 													 $contReg = 1;
 
 													 $colorNota = "black";
 
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
 														 if($calificacion['act_registrada']==1){
 
 															 //Consulta de calificaciones si ya la tienen puestas.
-
-															 $notas = mysql_fetch_array(mysql_query("SELECT * FROM academico_calificaciones WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad='".$_GET["idR"]."'",$conexion));
+															$consultaNotas=mysqli_query($conexion, "SELECT * FROM academico_calificaciones WHERE cal_id_estudiante=".$resultado[0]." AND cal_id_actividad='".$_GET["idR"]."'");
+															 $notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 
 															 if($notas[3]<$config[5] and $notas[3]!="") $colorNota = $config[6]; elseif($notas[3]>=$config[5]) $colorNota = $config[7];
 
@@ -432,7 +430,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
 													  }
 
-													mysql_free_result($consulta);
+													mysqli_free_result($consulta);
 
 															
 
@@ -466,7 +464,7 @@ $('#respRC').empty().hide().html("Guardando información, espere por favor...").
 
             <!-- end page content -->
 
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
 
         </div>
 

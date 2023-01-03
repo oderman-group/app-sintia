@@ -27,7 +27,7 @@
 </head>
 <body>
     <?php
-	$evaluacion = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1",$conexion));
+	$evaluacion = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_actividad_evaluaciones WHERE eva_id='".$_GET["idE"]."' AND eva_estado=1"), MYSQLI_BOTH);
 	//Si la evaluación no tiene clave, lo mandamos de una vez a realizarla.
 	if($evaluacion['eva_clave']==""){
 		echo '<script type="text/javascript">window.location.href="evaluaciones-realizar.php?idE='.$_GET["idE"].'";</script>';

@@ -35,14 +35,14 @@
 																while($datos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
 																	
 																?>
-																  <option value="<?=$datos['uss_id'];?>" <?php if($datos['uss_id']==$_GET["para"]){echo "selected";}?>><?=strtoupper($datos['uss_nombre']." (".$datos['pes_nombre']." ".$datos['gra_nombre'].")");?></option>	
+																  <option value="<?=$datos['uss_id'];?>" <?php if(isset($_GET["para"])&&$datos['uss_id']==$_GET["para"]){echo "selected";}?>><?=strtoupper($datos['uss_nombre']." (".$datos['pes_nombre']." ".$datos['gra_nombre'].")");?></option>	
 																<?php }?>
 																</select>
 		                                                        
 		                                                    </div>
 															<label>Asunto:</label>
 		                                                    <div class="form-group">
-		                                                        <input type="text" tabindex="1" class="form-control" name="asunto" value="<?=$_GET["asunto"];?>" required>
+		                                                        <input type="text" tabindex="1" class="form-control" name="asunto" value="<?php if(isset($_GET["asunto"])){ echo $_GET["asunto"];}?>" required>
 		                                                    </div>
 		                                                    <div class="form-group">
 																<textarea cols="80" id="editor1" name="contenido" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" required>

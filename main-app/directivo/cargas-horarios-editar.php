@@ -1,8 +1,11 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0042';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
+<?php 
+$consultaHorario=mysqli_query($conexion, "SELECT hor_id_carga, hor_dia, hor_desde, hor_hasta FROM academico_horarios WHERE hor_id=".$_GET["id"].";");
+$rHorario=mysqli_fetch_array($consultaHorario, MYSQLI_BOTH);
+?>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -36,7 +39,7 @@
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)"><?=$frases[12][$datosUsuarioActual[8]];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="#" name="cargas-horarios.php?id=<?=$_GET["id"];?>" onClick="deseaRegresar(this)">Horarios</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Editar Horarios</li>
                             </ol>
                         </div>
@@ -58,21 +61,20 @@
                                    
 									<form name="formularioGuardar" action="cargas-horarios-actualizar.php" method="post">
                                         <input type="hidden" name="idH" value="<?=$_GET["id"];?>">
-                                        <?php $r_horario=mysql_fetch_array(mysql_query("SELECT hor_id_carga, hor_dia, hor_desde, hor_hasta FROM academico_horarios WHERE hor_id=".$_GET["id"].";",$conexion)) ?>
-                                        <input type="hidden" name="idC" value="<?=$r_horario["hor_id_carga"];?>">
+                                        <input type="hidden" name="idC" value="<?=$rHorario["hor_id_carga"];?>">
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Dia</label>
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="diaH" required>
                                                     <option value="">Seleccione una opci n</option>
-                                                    <option value="1" <?php if($r_horario["hor_dia"]==1){echo "selected";}?>>Domingos</option>
-                                                    <option value="2" <?php if($r_horario["hor_dia"]==2){echo "selected";}?>>Lunes</option>
-                                                    <option value="3" <?php if($r_horario["hor_dia"]==3){echo "selected";}?>>Martes</option>
-                                                    <option value="4" <?php if($r_horario["hor_dia"]==4){echo "selected";}?>>Miercoles</option>
-                                                    <option value="5" <?php if($r_horario["hor_dia"]==5){echo "selected";}?>>Jueves</option>
-                                                    <option value="6" <?php if($r_horario["hor_dia"]==6){echo "selected";}?>>Viernes</option>
-                                                    <option value="7" <?php if($r_horario["hor_dia"]==7){echo "selected";}?>>Sabados</option>
+                                                    <option value="1" <?php if($rHorario["hor_dia"]==1){echo "selected";}?>>Domingos</option>
+                                                    <option value="2" <?php if($rHorario["hor_dia"]==2){echo "selected";}?>>Lunes</option>
+                                                    <option value="3" <?php if($rHorario["hor_dia"]==3){echo "selected";}?>>Martes</option>
+                                                    <option value="4" <?php if($rHorario["hor_dia"]==4){echo "selected";}?>>Miercoles</option>
+                                                    <option value="5" <?php if($rHorario["hor_dia"]==5){echo "selected";}?>>Jueves</option>
+                                                    <option value="6" <?php if($rHorario["hor_dia"]==6){echo "selected";}?>>Viernes</option>
+                                                    <option value="7" <?php if($rHorario["hor_dia"]==7){echo "selected";}?>>Sabados</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -80,21 +82,21 @@
 										<div class="form-group row">
 											<label class="col-sm-2 control-label">Inicio</label>
 											<div class="col-sm-2">
-                                                <input name="inicioH" data-format="hh:mm:ss" type="time" class="form-control" value="<?=$r_horario["hor_desde"]?>">
+                                                <input name="inicioH" data-format="hh:mm:ss" type="time" class="form-control" value="<?=$rHorario["hor_desde"]?>">
 											</div>
 										</div>
 										
 										<div class="form-group row">
 											<label class="col-sm-2 control-label">Fin</label>
 											<div class="col-sm-2">
-                                                <input name="finH" data-format="hh:mm:ss" type="time" class="form-control" value="<?=$r_horario["hor_hasta"]?>">
+                                                <input name="finH" data-format="hh:mm:ss" type="time" class="form-control" value="<?=$rHorario["hor_hasta"]?>">
 											</div>
 										</div>
 
 
 										<input type="submit" class="btn btn-primary" value="Guardar cambios">&nbsp;
 										
-										<a href="#" name="cargas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+										<a href="#" name="cargas-horarios.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
                                     </form>
                                 </div>
                             </div>
@@ -104,7 +106,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

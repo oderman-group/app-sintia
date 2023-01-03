@@ -7,7 +7,7 @@ $aceptacion= mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".term
 $datosAceptacion = mysqli_fetch_array($aceptacion, MYSQLI_BOTH);
 
 //Condición para mostrar o no el modal de T&C
-if($datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
+if(isset($datosAceptacion['ttpxu_fecha_aceptacion']) AND $datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
 ?>
 
 <div class="modal fade" id="modalTerminos" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
@@ -48,7 +48,7 @@ $aceptacion= mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".term
 $datosAceptacion = mysqli_fetch_array($aceptacion, MYSQLI_BOTH);
 
 //Condición para mostrar o no el modal de TRATAMIENTO DE DATOS
-if($datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
+if(isset($datosAceptacion['ttpxu_fecha_aceptacion']) AND $datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
 ?>
 
 <div class="modal fade" id="modalTratamientos" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
@@ -89,7 +89,7 @@ $aceptacion= mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".term
 $datosAceptacion = mysqli_fetch_array($aceptacion, MYSQLI_BOTH);
 
 //Condición para mostrar o no el modal de POLITICAS
-if($datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
+if(isset($datosAceptacion['ttpxu_fecha_aceptacion']) AND $datosTerminos['ttp_fecha_modificacion'] > $datosAceptacion['ttpxu_fecha_aceptacion'] and $datosTerminos['ttp_visible']==='SI'){
 ?>
 
 <div class="modal fade" id="modalPoliticas" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">

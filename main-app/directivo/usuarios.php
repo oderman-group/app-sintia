@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0126';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <!-- Theme Styles -->
@@ -77,10 +76,8 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
 										if(is_numeric($_GET["docente"])){$filtro .= " AND car_docente='".$_GET["docente"]."'";}
 										if(is_numeric($_GET["asignatura"])){$filtro .= " AND car_materia='".$_GET["asignatura"]."'";}
 										
-										$estadisticasCargas = mysql_fetch_array(mysql_query("
-										SELECT
-										(SELECT count(uss_id) FROM usuarios)
-										",$conexion));
+										$consultaEstadisticasCargas=mysqli_query($conexion, "SELECT (SELECT count(uss_id) FROM usuarios)");
+										$estadisticasCargas = mysqli_fetch_array($consultaEstadisticasCargas, MYSQLI_BOTH);
 										?>
 									
 									<div class="card card-topline-yellow">
@@ -107,13 +104,10 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
                                         </div>
 										<div class="card-body">
 											<?php
-											$docentes = mysql_query("SELECT * FROM perfiles
-											ORDER BY pes_id
-											",$conexion);
-											while($docente = mysql_fetch_array($docentes)){
-												$cargasPorDocente = mysql_fetch_array(mysql_query("
-												SELECT count(uss_id) FROM usuarios WHERE uss_tipo='".$docente['pes_id']."'
-												",$conexion));
+											$docentes = mysqli_query($conexion, "SELECT * FROM perfiles ORDER BY pes_id");
+											while($docente = mysqli_fetch_array($docentes, MYSQLI_BOTH)){
+												$consultaCargaDocente=mysqli_query($conexion, "SELECT count(uss_id) FROM usuarios WHERE uss_tipo='".$docente['pes_id']."'");
+												$cargasPorDocente = mysqli_fetch_array($consultaCargaDocente, MYSQLI_BOTH);
 												$porcentajePorGrado = round(($cargasPorDocente[0]/$estadisticasCargas[0])*100,2);
 												if($docente['pes_id']==$_GET["tipo"]) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 											?>
@@ -224,22 +218,22 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
 													$filtroLimite = '';
 													if(is_numeric($_GET["cantidad"])){$filtroLimite = "LIMIT 0,".$_GET["cantidad"];}
 													
-													 $consulta = mysql_query("SELECT * FROM usuarios
+													 $consulta = mysqli_query($conexion, "SELECT * FROM usuarios
 													 INNER JOIN perfiles ON pes_id=uss_tipo
 													 WHERE uss_id=uss_id $filtro
 													 ORDER BY uss_id
-													 $filtroLimite
-													 ",$conexion);
+													 $filtroLimite");
 													 $contReg = 1;
 													$bloqueado = array("NO","SI");
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 $bgColor = '';
 														 if($resultado['uss_bloqueado']==1) $bgColor = '#ff572238';
 														 
 														$cheked = '';
 														if($resultado['uss_bloqueado']==1){$cheked = 'checked';}
 
-														$numCarga = mysql_num_rows(mysql_query("SELECT * FROM academico_cargas WHERE car_docente='".$resultado[0]."'",$conexion));
+														$consultaNumCarga=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_docente='".$resultado[0]."'");
+														$numCarga = mysqli_num_rows($consultaNumCarga);
 													 ?>
 													<tr id="Reg<?=$resultado['uss_id'];?>" style="background-color:<?=$bgColor;?>;">
                                                         <td><?=$contReg;?></td>
@@ -309,7 +303,7 @@ $('#respuestaGuardar').empty().hide().html("").show(1);
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

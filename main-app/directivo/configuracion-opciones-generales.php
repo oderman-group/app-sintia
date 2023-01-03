@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0058';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -72,9 +71,9 @@
                                                 </thead>
                                                 <tbody>
 													<?php
-                                                    $consulta = mysql_query("SELECT * FROM opciones_generales",$conexion);
-								                    $num_registros = mysql_num_rows($consulta);
-                                                    while($resultado = mysql_fetch_array($consulta)){
+                                                    $consulta = mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales");
+								                    $num_registros = mysqli_num_rows($consulta);
+                                                    while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                     switch($resultado["ogen_grupo"]){
                                                               case 1;
                                                                   $tipo = 'T. Documento';
@@ -130,7 +129,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

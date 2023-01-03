@@ -22,9 +22,6 @@ $consulta = mysql_query("SELECT * FROM ".$bdSelect.".academico_matriculas
 	WHERE mat_estado_matricula=1 AND mat_eliminado=0 
 	ORDER BY gra_vocal, mat_grupo, mat_primer_apellido, mat_segundo_apellido, mat_nombres
 	",$conexion);
-if(mysql_errno()!=0){
-	echo mysql_error(); exit();
-}
 
 $folio = 1;
 while($datos = mysql_fetch_array($consulta)){
@@ -61,7 +58,7 @@ $i=0;
 
 while($i<=5){
 	mysql_query("INSERT INTO ".$bdSelect.".academico_indicadores(ind_nombre, ind_obligatorio, ind_fecha_creacion, ind_valor)VALUES('".$indicadores[$i]."', 1, now(), '".$valoresIndicadores[$i]."')",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	$i++;
 }
@@ -71,12 +68,12 @@ while($i<=5){
 $actividades = array('[Nombre de la actividad]', 'Acceso', 'Interés', 'Cumplimiento', 'Respeto', 'Participación');
 
 $cargasAcademicas = mysql_query("SELECT * FROM ".$bdSelect.".academico_cargas LIMIT 300, 300",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 
 while($carga = mysql_fetch_array($cargasAcademicas)){
 
 	$indicadores = mysql_query("SELECT * FROM ".$bdSelect.".academico_indicadores WHERE ind_obligatorio=1",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 
 	$i=0;
 	
@@ -84,12 +81,12 @@ while($carga = mysql_fetch_array($cargasAcademicas)){
 
 		//Relacionamos los indicadores
 		mysql_query("INSERT INTO ".$bdSelect.".academico_indicadores_carga(ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado)VALUES('".$carga['car_id']."', '".$ind['ind_id']."', '".$ind['ind_valor']."', 4, 0)",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 		$idIndicador = mysql_insert_id();
 
 		//Insertamos las actividades
 		mysql_query("INSERT INTO ".$bdSelect.".academico_actividades(act_descripcion, act_fecha, act_valor, act_id_tipo, act_id_carga, act_registrada, act_fecha_creacion, act_estado, act_periodo)VALUES('".$actividades[$i]."', now(), '".$ind['ind_valor']."', '".$ind['ind_id']."', '".$carga['car_id']."', 0, now(), 1, 4)",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		
 
 		$i++;
 	}
@@ -124,7 +121,7 @@ while($datos = mysql_fetch_array($consulta)){
 $consulta = mysql_query("SELECT * FROM academico_cargas WHERE car_docente=3959",$conexion);
 while($datos = mysql_fetch_array($consulta)){
 	$estudiantesConsulta = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$datos['car_curso']."' AND mat_grupo='".$datos['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
- 	if(mysql_errno()!=0){echo mysql_error(); exit();}
+ 	
 	
 	while($estudiante = mysql_fetch_array($estudiantesConsulta)){
 		$periodo = 3;
@@ -139,18 +136,18 @@ while($datos = mysql_fetch_array($consulta)){
 			while($notInd = mysql_fetch_array($notasPorIndicador)){
 				$num = mysql_num_rows(mysql_query("SELECT * FROM academico_indicadores_recuperacion 
 				WHERE rind_carga='".$datos['car_id']."' AND rind_estudiante='".$estudiante[0]."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."'",$conexion));
-				if(mysql_errno()!=0){echo mysql_error(); exit();}
+				
 
 				$sumaNotaIndicador  += $notInd[0];
 
 				if($num==0){
 					mysql_query("DELETE FROM academico_indicadores_recuperacion WHERE rind_carga='".$datos['car_id']."' AND rind_estudiante='".$estudiante[0]."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."'",$conexion);
-					if(mysql_errno()!=0){echo mysql_error(); exit();}
+					
 					mysql_query("INSERT INTO academico_indicadores_recuperacion(rind_fecha_registro, rind_estudiante, rind_carga, rind_nota, rind_indicador, rind_periodo, rind_actualizaciones, rind_nota_original)VALUES(now(), '".$estudiante[0]."', '".$datos['car_id']."', '".$notInd[0]."', '".$notInd[1]."', '".$periodo."', 0, '".$notInd[0]."')",$conexion);
-					if(mysql_errno()!=0){echo mysql_error(); exit();}
+					
 				}else{
 					mysql_query("UPDATE academico_indicadores_recuperacion SET rind_nota_original='".$notInd[0]."' WHERE rind_carga='".$datos['car_id']."' AND rind_estudiante='".$estudiante[0]."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."'",$conexion);
-					if(mysql_errno()!=0){echo mysql_error(); exit();}
+					
 				}
 			}
 			
@@ -159,7 +156,7 @@ while($datos = mysql_fetch_array($consulta)){
 			$boletinNum = mysql_num_rows(mysql_query("SELECT * FROM academico_boletin WHERE bol_carga='".$datos['car_id']."' AND bol_periodo='".$periodo."' AND bol_estudiante='".$estudiante[0]."' AND bol_tipo=1",$conexion));
 			if($boletinNum>0){
 				mysql_query("UPDATE academico_boletin SET bol_nota_indicadores='".$sumaNotaIndicador."' WHERE bol_carga='".$datos['car_id']."' AND bol_periodo='".$periodo."' AND bol_estudiante='".$estudiante[0]."' AND bol_tipo=1",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}	
+					
 			}
 			
 			//$periodo++;
@@ -174,7 +171,7 @@ while($datos = mysql_fetch_array($consulta)){
 $consulta = mysql_query("SELECT * FROM academico_cargas WHERE car_docente=3959",$conexion);
 while($datos = mysql_fetch_array($consulta)){
 	$estudiantesConsulta = mysql_query("SELECT * FROM academico_matriculas WHERE mat_grado='".$datos['car_curso']."' AND mat_grupo='".$datos['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
- 	if(mysql_errno()!=0){echo mysql_error(); exit();}
+ 	
 	
 	while($estudiante = mysql_fetch_array($estudiantesConsulta)){
 		$periodo = 1;
@@ -183,14 +180,14 @@ while($datos = mysql_fetch_array($consulta)){
 
 			$notaRecuperadaInd = mysql_fetch_array(mysql_query("SELECT AVG(rind_nota), SUM(rind_nota_original) FROM academico_indicadores_recuperacion 
 			WHERE rind_carga='".$datos['car_id']."' AND rind_estudiante='".$estudiante[0]."' AND rind_periodo='".$periodo."'",$conexion));
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			
 			
 			$notaRecup = round($notaRecuperadaInd[0],1);
 			
 			$boletinNum = mysql_num_rows(mysql_query("SELECT * FROM academico_boletin WHERE bol_carga='".$datos['car_id']."' AND bol_periodo='".$periodo."' AND bol_estudiante='".$estudiante[0]."' AND bol_tipo=1 AND bol_nota<'".$notaRecup."'",$conexion));
 			if($boletinNum>0){
 				mysql_query("UPDATE academico_boletin SET bol_nota='".$notaRecup."', bol_tipo=2, bol_ultima_actualizacion=now(), bol_observaciones='Recuperada con los indicadores' WHERE bol_carga='".$datos['car_id']."' AND bol_periodo='".$periodo."' AND bol_estudiante='".$estudiante[0]."' AND bol_tipo=1",$conexion);
-				if(mysql_errno()!=0){echo mysql_error(); exit();}	
+					
 			}
 			
 			$periodo++;
@@ -209,24 +206,24 @@ INNER JOIN academico_indicadores_carga ON ipc_carga=rind_carga AND ipc_indicador
 WHERE rind_nota>rind_nota_original
 order by rind_periodo
 ",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 while($recupInd = mysql_fetch_array($recuperacionesInd)){
 	mysql_query("UPDATE academico_indicadores_recuperacion SET rind_nota_actual='".$recupInd[14]."' WHERE rind_id='".$recupInd[0]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 }
 */
 
 
 /*
 $indRecup = mysql_query("SELECT * FROM academico_indicadores_recuperacion WHERE rind_actualizaciones>=1 AND rind_nota>rind_nota_original",$conexion);
-if(mysql_errno()!=0){echo mysql_error(); exit();}
+
 while($indR = mysql_fetch_array($indRecup)){
 	
 	$notaRecup = mysql_fetch_array(mysql_query("SELECT sum(rind_nota_actual) FROM academico_indicadores_recuperacion WHERE rind_periodo='".$indR['rind_periodo']."' AND rind_carga='".$indR['rind_carga']."' and rind_estudiante='".$indR['rind_estudiante']."'",$conexion));
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
+	
 	
 	mysql_query("UPDATE academico_boletin SET bol_nota_anterior=bol_nota, bol_nota='".$notaRecup[0]."', bol_nota_indicadores='".$notaRecup[0]."', bol_tipo=3, bol_ultima_actualizacion=now(), bol_observaciones='Recuperada con los indicadores', bol_actualizaciones=bol_actualizaciones+1
 	WHERE bol_carga='".$indR['rind_carga']."' AND bol_periodo='".$indR['rind_periodo']."' AND bol_estudiante='".$indR['rind_estudiante']."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}	
+		
 }
 */

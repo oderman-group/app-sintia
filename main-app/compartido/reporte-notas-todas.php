@@ -19,9 +19,9 @@ include("../../config-general/consulta-usuario-actual.php");?>
 
                                   <?php
 								  //ESTUDIANTE ACTUAL
-								  $consultaEstudianteActual = mysql_query("SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["estudiante"]."'",$conexion);
-								  if(mysql_errno()!=0){echo mysql_error(); exit();}
-								  $datosEstudianteActual = mysql_fetch_array($consultaEstudianteActual);
+								  $consultaEstudianteActual = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id='".$_GET["estudiante"]."'");
+								  
+								  $datosEstudianteActual = mysqli_fetch_array($consultaEstudianteActual, MYSQLI_BOTH);
 								  ?>
                                   <!-- BEGIN TABLE DATA -->
                                   <table bgcolor="#FFFFFF" width="80%" cellspacing="5" cellpadding="5" rules="all" border="<?php echo $config[13] ?>" style="border:solid; border-color:<?php echo $config[11] ?>;" align="center">
@@ -36,15 +36,15 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                     <!-- BEGIN -->
                                     <tbody>
                                     <?php
-									$cCargas = mysql_query("SELECT * FROM academico_cargas WHERE car_curso='".$datosEstudianteActual[6]."' AND car_grupo='".$datosEstudianteActual[7]."'",$conexion);
-									$nCargas = mysql_num_rows($cCargas);
-									while($rCargas = mysql_fetch_array($cCargas)){
-										$cDatos = mysql_query("SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM academico_materias, academico_grados, usuarios WHERE mat_id='".$rCargas[4]."' AND gra_id='".$rCargas[2]."' AND uss_id='".$rCargas[1]."'",$conexion);
-										$rDatos = mysql_fetch_array($cDatos);
+									$cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso='".$datosEstudianteActual[6]."' AND car_grupo='".$datosEstudianteActual[7]."'");
+									$nCargas = mysqli_num_rows($cCargas);
+									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
+										$cDatos = mysqli_query($conexion, "SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM academico_materias, academico_grados, usuarios WHERE mat_id='".$rCargas[4]."' AND gra_id='".$rCargas[2]."' AND uss_id='".$rCargas[1]."'");
+										$rDatos = mysqli_fetch_array($cDatos, MYSQLI_BOTH);
 									    //PLAN DE CLASE
-										$Cpc = mysql_query("SELECT * FROM academico_pclase WHERE pc_id_carga='".$rCargas[0]."' AND pc_periodo='".$_GET["periodo"]."'",$conexion);
-									    $Rpc = mysql_fetch_array($Cpc);
-									    $Npc = mysql_num_rows($Cpc);
+										$Cpc = mysqli_query($conexion, "SELECT * FROM academico_pclase WHERE pc_id_carga='".$rCargas[0]."' AND pc_periodo='".$_GET["periodo"]."'");
+									    $Rpc = mysqli_fetch_array($Cpc, MYSQLI_BOTH);
+									    $Npc = mysqli_num_rows($Cpc);
 										//DEFINITIVAS
 										$carga = $rCargas[0];
 										$periodo = $_GET["periodo"];

@@ -8,15 +8,14 @@ if(is_numeric($_GET["docente"])){$filtro .=" AND car_docente='".$_GET["docente"]
 if(is_numeric($_GET["grado"])){$filtro .=" AND car_curso='".$_GET["grado"]."'";}
 if(is_numeric($_GET["asignatura"])){$filtro .=" AND car_materia='".$_GET["asignatura"]."'";}
 
-$consulta = mysql_query("SELECT car_id, uss_nombre, gra_nombre, gru_nombre, mat_nombre, car_director_grupo, car_ih FROM academico_cargas
+$consulta = mysqli_query($conexion, "SELECT car_id, uss_nombre, gra_nombre, gru_nombre, mat_nombre, car_director_grupo, car_ih FROM academico_cargas
 INNER JOIN usuarios ON uss_id=car_docente
 INNER JOIN academico_grados ON gra_id=car_curso
 INNER JOIN academico_grupos ON gru_id=car_grupo
 INNER JOIN academico_materias ON mat_id=car_materia
 WHERE car_id=car_id $filtro
 GROUP BY car_id
-ORDER BY car_docente
-");
+ORDER BY car_docente");
 ?>
 <!doctype html>
 <html>
@@ -46,7 +45,7 @@ ORDER BY car_docente
 			</tr> 
 			<?php
 			$i=1;
-			while($datos = mysql_fetch_array($consulta)){
+			while($datos = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 				$colorFondo = '';
 				if($datos[5]==1) $colorFondo = '#4086f48a';
 			?>	

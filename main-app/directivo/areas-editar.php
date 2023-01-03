@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0018';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -55,7 +54,8 @@
 									<header class="panel-heading panel-heading-purple"><?=$frases[119][$datosUsuarioActual[8]];?> </header>
                                 	<div class="panel-body">
                                     <?php 
-                                    $r_cargas=mysql_fetch_array(mysql_query("SELECT ar_id, ar_nombre, ar_posicion FROM academico_areas WHERE ar_id=".$_GET["id"].";",$conexion));
+                                    $consultaCarga=mysqli_query($conexion, "SELECT ar_id, ar_nombre, ar_posicion FROM academico_areas WHERE ar_id=".$_GET["id"].";");
+                                    $rCargas=mysqli_fetch_array($consultaCarga, MYSQLI_BOTH);
                                     ?>
 									<form name="formularioGuardar" action="areas-actualizar.php" method="post" enctype="multipart/form-data">
                                         <input type="hidden" value="<?=$_GET["id"]?>" name="idA">
@@ -63,7 +63,7 @@
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nombre del Areas</label>
                                             <div class="col-sm-10">
-                                                <input type="text" name="nombreA" class="form-control" value="<?=$r_cargas["ar_nombre"] ?>">
+                                                <input type="text" name="nombreA" class="form-control" value="<?=$rCargas["ar_nombre"] ?>">
                                             </div>
                                         </div>	
 										
@@ -71,15 +71,15 @@
                                             <label class="col-sm-2 control-label">Posición</label>
                                             <div class="col-sm-10">
 												<?php
-                                                $c_posicionA=mysql_query("SELECT ar_posicion FROM academico_areas WHERE ar_id NOT IN (".$r_cargas["ar_id"].");",$conexion);
+                                                $cPosicionA=mysqli_query($conexion, "SELECT ar_posicion FROM academico_areas WHERE ar_id NOT IN (".$rCargas["ar_id"].");");
 												?>
                                                 <select class="form-control  select2" name="posicionA" required>
                                                     <option value="">Seleccione una opci n</option>
 													<?php
                                                     $cont=0;
-                                                    while($r_pos=mysql_fetch_array($c_posicionA)){
+                                                    while($rPos=mysqli_fetch_array($cPosicionA, MYSQLI_BOTH)){
                                                         $cont++;
-                                                        $posciones[$cont]=$r_pos["ar_posicion"];
+                                                        $posciones[$cont]=$rPos["ar_posicion"];
                                                         }
                                                     $cond=0;
                                                     $exist=0;
@@ -90,7 +90,7 @@
                                                             } 
                                                         }
                                                         if($exist!=1){
-                                                            if($r_cargas["ar_posicion"]==$i){
+                                                            if($rCargas["ar_posicion"]==$i){
                                                             echo '<option value="'.$i.'" selected>'.$i.'</option>';	
                                                             }else{
                                                                echo '<option value="'.$i.'">'.$i.'</option>';  
@@ -116,7 +116,7 @@
 
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

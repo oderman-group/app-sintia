@@ -10,11 +10,14 @@ include("../../config-general/consulta-usuario-actual.php");?>
 <body style="font-family:Arial;">
 <?php
 	if(isset($_GET["grado"]) and isset($_GET["grupo"])){
-		$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$_GET["grado"]."' AND gru_id='".$_GET["grupo"]."'",$conexion));
+    $consultaGrados=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$_GET["grado"]."' AND gru_id='".$_GET["grupo"]."'");
+		$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 	}elseif(isset($_GET["grado"])){
-		$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$_GET["grado"]."'",$conexion));
+    $consultaGrados=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$_GET["grado"]."'")
+		$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 	}else{
-		$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos",$conexion));
+    $consultaGrados=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos")
+		$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 	}
 ?>
 <div align="center" style="margin-bottom:20px;">
@@ -48,10 +51,10 @@ include("../../config-general/consulta-usuario-actual.php");?>
 		$adicional = "";
 	}
   $cont=1;
-  $consulta = mysql_query("SELECT * FROM academico_matriculas am INNER JOIN academico_grados ag ON am.mat_grado=ag.gra_id
-	INNER JOIN academico_grupos agr ON am.mat_grupo=agr.gru_id WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
-  $numE=mysql_num_rows($consulta);
-  while($resultado = mysql_fetch_array($consulta)){
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas am INNER JOIN academico_grados ag ON am.mat_grado=ag.gra_id
+	INNER JOIN academico_grupos agr ON am.mat_grupo=agr.gru_id WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+  $numE=mysqli_num_rows($consulta);
+  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
   ?>
   <tr style="font-size:13px;">
       <td><?=$resultado[12];?></td>

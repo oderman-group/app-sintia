@@ -7,16 +7,16 @@
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
 <?php
-$actividad = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_tareas 
-WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1",$conexion));
+$actividad = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas 
+WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1"), MYSQLI_BOTH);
 
 if($actividad[0]==""){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=105";</script>';
 	exit();
 }
 
-$fechas = mysql_fetch_array(mysql_query("SELECT TIMESTAMPDIFF(MINUTE, tar_fecha_disponible, now()), TIMESTAMPDIFF(MINUTE, tar_fecha_entrega, now()) FROM academico_actividad_tareas 
-WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1",$conexion));
+$fechas = mysqli_fetch_array(mysqli_query($conexion, "SELECT TIMESTAMPDIFF(MINUTE, tar_fecha_disponible, now()), TIMESTAMPDIFF(MINUTE, tar_fecha_entrega, now()) FROM academico_actividad_tareas 
+WHERE tar_id='".$_GET["idR"]."' AND tar_estado=1"), MYSQLI_BOTH);
 if($fechas[0]<0){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=206&fechaD='.$actividad['tar_fecha_disponible'].'&diasF='.$fechas[0].'";</script>';
 	exit();
@@ -187,7 +187,7 @@ if($fechas[0]<0){
 																		}?>
 		                                                            </div>
 																	<?php
-																	$enviada = mysql_fetch_array(mysql_query("SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."' AND ent_id_estudiante='".$datosEstudianteActual['mat_id']."'",$conexion));
+																	$enviada = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM academico_actividad_tareas_entregas WHERE ent_id_actividad='".$_GET["idR"]."' AND ent_id_estudiante='".$datosEstudianteActual['mat_id']."'"), MYSQLI_BOTH);
 																	if($enviada[0]!=""){
 																	?>
 																		<div class="panel">
@@ -235,7 +235,7 @@ if($fechas[0]<0){
                     </div>
                 <!-- end page content -->
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

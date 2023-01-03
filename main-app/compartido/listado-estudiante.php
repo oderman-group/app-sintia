@@ -28,10 +28,12 @@ include("../../config-general/consulta-usuario-actual.php");
   <?php
   if(isset($_GET["grado"])) $adicional = "mat_grado='".$_GET["grado"]."' AND "; else $adicional = "";
   $cont=1;
-  $consulta = mysql_query("SELECT * FROM academico_matriculas WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido",$conexion);
-  while($resultado = mysql_fetch_array($consulta)){
-	$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_id='".$resultado[26]."'",$conexion));
-	$grados = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'",$conexion));	
+  $consulta = mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE ".$adicional." (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 ORDER BY mat_primer_apellido");
+  while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+  $consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$resultado[26]."'");
+	$acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
+  $consultaGrados=mysqli_query($conexion, "SELECT * FROM academico_grados, academico_grupos WHERE gra_id='".$resultado[6]."' AND gru_id='".$resultado[7]."'");
+	$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);	
   ?>
   <tr style="font-size:13px;">
       <td><?=$resultado[1];?></td>

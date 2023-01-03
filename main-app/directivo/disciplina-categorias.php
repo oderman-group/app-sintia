@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0069';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -66,13 +65,12 @@
                                                 </thead>
                                                 <tbody>
 													<?php													
-													 $consulta = mysql_query("SELECT * FROM disciplina_categorias
-													 ",$conexion);
+													 $consulta = mysqli_query($conexion, "SELECT * FROM disciplina_categorias");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $numFaltas = mysql_fetch_array(mysql_query("SELECT COUNT(dfal_id) FROM disciplina_faltas
-														 WHERE dfal_id_categoria='".$resultado['dcat_id']."'
-														 ",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                                                        $consultaNumFaltas=mysqli_query($conexion, "SELECT COUNT(dfal_id) FROM disciplina_faltas
+                                                        WHERE dfal_id_categoria='".$resultado['dcat_id']."'");
+														 $numFaltas = mysqli_fetch_array($consultaNumFaltas, MYSQLI_BOTH);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -116,7 +114,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta = mysql_query("SELECT * FROM inscripciones",$conexion);
+$consulta = mysqli_query($conexion, "SELECT * FROM inscripciones");
 ?>
 <head>
 	<title>REPORTES - WolfSystem</title>
@@ -28,11 +28,11 @@ $consulta = mysql_query("SELECT * FROM inscripciones",$conexion);
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
-$consultaA1 = mysql_query("SELECT * FROM programas WHERE programas.id='".$resultado[5]."'",$conexion);
-									$resultadoA1 = mysql_fetch_array($consultaA1);
-									$consultaA2 = mysql_query("SELECT * FROM estados_inscripciones, estados_programa, estados_estudiante WHERE estados_inscripciones.id='".$resultado[6]."' AND estados_programa.id='".$resultado[7]."' AND estados_estudiante.id='".$resultado[8]."'",$conexion);
-									$resultadoA2 = mysql_fetch_array($consultaA2);
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+$consultaA1 = mysqli_query($conexion, "SELECT * FROM programas WHERE programas.id='".$resultado[5]."'");
+									$resultadoA1 = mysqli_fetch_array($consultaA1, MYSQLI_BOTH);
+									$consultaA2 = mysqli_query($conexion, "SELECT * FROM estados_inscripciones, estados_programa, estados_estudiante WHERE estados_inscripciones.id='".$resultado[6]."' AND estados_programa.id='".$resultado[7]."' AND estados_estudiante.id='".$resultado[8]."'");
+									$resultadoA2 = mysqli_fetch_array($consultaA2, MYSQLI_BOTH);
 ?>
     <tr style="font-size:8px;">
         <td align="center"><?=$con;?></td>

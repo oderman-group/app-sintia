@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0031';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 
@@ -59,7 +58,7 @@
                                     <header><?=$frases[10][$datosUsuarioActual[8]];?></header>
                                 </div>
                                 <div class="card-body " id="bar-parent6">
-                                    <form action="#../compartido/guardar.php" method="post" enctype="multipart/form-data">
+                                    <form action="../compartido/guardar.php" method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="id" value="6">
                                         <input type="hidden" name="tipoUsuario" value="<?=$datosUsuarioActual['uss_tipo'];?>">
                                         
@@ -102,7 +101,7 @@
 					</div>
                 </div>
                 <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

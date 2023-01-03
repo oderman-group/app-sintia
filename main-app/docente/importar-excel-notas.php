@@ -38,8 +38,8 @@ $datosUpdate = '';
 $datosDelete = '';
 for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 	if(trim($data->sheets[0]['cells'][$i][2])!="" and trim($data->sheets[0]['cells'][$i][4])!=""){
-		$numE = mysql_num_rows(mysql_query("SELECT academico_calificaciones.cal_id_actividad, academico_calificaciones.cal_id_estudiante FROM academico_calificaciones 
-		WHERE academico_calificaciones.cal_id_actividad='".$_POST["idR"]."' AND academico_calificaciones.cal_id_estudiante='".$data->sheets[0]['cells'][$i][2]."'",$conexion));
+		$consultaNumE=mysqli_query($conexion, "SELECT academico_calificaciones.cal_id_actividad, academico_calificaciones.cal_id_estudiante FROM academico_calificaciones WHERE academico_calificaciones.cal_id_actividad='".$_POST["idR"]."' AND academico_calificaciones.cal_id_estudiante='".$data->sheets[0]['cells'][$i][2]."'");
+		$numE = mysqli_num_rows($consultaNumE);
 		$lineaError = __LINE__;
 		include("../compartido/reporte-errores.php");
 		if($numE==0){
@@ -47,7 +47,7 @@ for ($i = 2; $i <= $data->sheets[0]['numRows']; $i++) {
 			$datosDelete .="cal_id_estudiante='".$data->sheets[0]['cells'][$i][2]."' OR ";
 			$datosInsert .="('".$data->sheets[0]['cells'][$i][2]."','".$data->sheets[0]['cells'][$i][4]."','".$_POST["idR"]."', now(), 0, '".$data->sheets[0]['cells'][$i][5]."'),";
 		}else{
-			mysql_query("UPDATE academico_calificaciones SET cal_nota='".$data->sheets[0]['cells'][$i][4]."', cal_fecha_modificada=now(), cal_cantidad_modificaciones=cal_cantidad_modificaciones+1 WHERE cal_id_actividad='".$_POST["idR"]."' AND cal_id_estudiante='".$data->sheets[0]['cells'][$i][2]."'",$conexion);
+			mysqli_query($conexion, "UPDATE academico_calificaciones SET cal_nota='".$data->sheets[0]['cells'][$i][4]."', cal_fecha_modificada=now(), cal_cantidad_modificaciones=cal_cantidad_modificaciones+1 WHERE cal_id_actividad='".$_POST["idR"]."' AND cal_id_estudiante='".$data->sheets[0]['cells'][$i][2]."'");
 			$lineaError = __LINE__;
 			include("../compartido/reporte-errores.php");
 		}
@@ -58,18 +58,16 @@ if($accionBD==1){
 	$datosInsert = substr($datosInsert,0,-1);
 	$datosDelete = substr($datosDelete,0,-4);
 		
-	mysql_query("DELETE FROM academico_calificaciones WHERE cal_id_actividad='".$_POST["idR"]."' AND (".$datosDelete.")",$conexion);
+	mysqli_query($conexion, "DELETE FROM academico_calificaciones WHERE cal_id_actividad='".$_POST["idR"]."' AND (".$datosDelete.")");
 	$lineaError = __LINE__;
 	include("../compartido/reporte-errores.php");
 		
-	mysql_query("INSERT INTO academico_calificaciones(cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, cal_observaciones)VALUES
-	".$datosInsert."
-	",$conexion);
+	mysqli_query($conexion, "INSERT INTO academico_calificaciones(cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, cal_observaciones)VALUES ".$datosInsert."");
 	$lineaError = __LINE__;
 	include("../compartido/reporte-errores.php");	
 }
 
-mysql_query("UPDATE academico_actividades SET act_registrada=1 WHERE act_id='".$_POST["idR"]."'",$conexion);
+mysqli_query($conexion, "UPDATE academico_actividades SET act_registrada=1 WHERE act_id='".$_POST["idR"]."'");
 $lineaError = __LINE__;
 include("../compartido/reporte-errores.php");
 

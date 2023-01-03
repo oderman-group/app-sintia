@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0034';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("verificar-carga.php");?>
 <?php include("../compartido/head.php");?>
@@ -25,6 +24,10 @@
                                 <div class="page-title"><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
+							<ol class="breadcrumb page-breadcrumb pull-right">
+                                <li><a class="parent-item" href="#" name="cargas.php" onClick="deseaRegresar(this)"><?=$frases[12][$datosUsuarioActual[8]];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active"><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></li>
+                            </ol>
                         </div>
                     </div>
                     
@@ -42,10 +45,8 @@
                                         <div class="panel-body">
 											<?php
 											for($i=1; $i<=$datosCargaActual['gra_periodos']; $i++){
-												
-												$periodosCursos = mysql_fetch_array(mysql_query("SELECT * FROM academico_grados_periodos
-												WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$i."'
-												",$conexion));
+												$consultaPeriodosCursos=mysqli_query($conexion, "SELECT * FROM academico_grados_periodos WHERE gvp_grado='".$datosCargaActual['car_curso']."' AND gvp_periodo='".$i."'");
+												$periodosCursos = mysqli_fetch_array($consultaPeriodosCursos, MYSQLI_BOTH);
 
 												if($i==$datosCargaActual['car_periodo']) $msjPeriodoActual = '- ACTUAL'; else $msjPeriodoActual = '';
 												if($i==$periodoConsultaActual) $estiloResaltadoP = 'style="color: orange;"'; else $estiloResaltadoP = '';
@@ -63,15 +64,14 @@
 										<header class="panel-heading panel-heading-purple"><?=$frases[73][$datosUsuarioActual['uss_idioma']];?> </header>
 										<div class="panel-body">
 											<?php
-											$cCargas = mysql_query("SELECT * FROM academico_cargas 
+											$cCargas = mysqli_query($conexion, "SELECT * FROM academico_cargas 
 											INNER JOIN academico_materias ON mat_id=car_materia
 											INNER JOIN academico_grados ON gra_id=car_curso
 											INNER JOIN academico_grupos ON gru_id=car_grupo
 											WHERE car_docente='".$datosCargaActual['car_docente']."'
-											ORDER BY car_posicion_docente, car_curso, car_grupo, mat_nombre
-											",$conexion);
-											$nCargas = mysql_num_rows($cCargas);
-											while($rCargas = mysql_fetch_array($cCargas)){
+											ORDER BY car_posicion_docente, car_curso, car_grupo, mat_nombre");
+											$nCargas = mysqli_num_rows($cCargas);
+											while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
 												if($rCargas['car_id']==$cargaConsultaActual) $estiloResaltado = 'style="color: orange;"'; else $estiloResaltado = '';
 												if($rCargas['car_director_grupo']==1) {$estiloDG = 'style="font-weight: bold;"'; $msjDG = ' - D.G';} else {$estiloDG = ''; $msjDG = '';}
 											?>
@@ -125,15 +125,15 @@
 													<?php
 													 $filtro = '';
 													 if(is_numeric($_GET["periodo"])){$filtro .= " AND ipc_periodo='".$_GET["periodo"]."'";}
-													 $consulta = mysql_query("SELECT * FROM academico_indicadores_carga
+													 $consulta = mysqli_query($conexion, "SELECT * FROM academico_indicadores_carga
 													 INNER JOIN academico_indicadores ON ind_id=ipc_indicador
 													 WHERE ipc_carga='".$_GET["carga"]."' $filtro
-													 ORDER BY ipc_periodo
-													 ",$conexion);
+													 ORDER BY ipc_periodo");
 													 $contReg = 1;
 													 $sino = array("NO","SI");
-													 while($resultado = mysql_fetch_array($consulta)){
-														 $numActividades = mysql_num_rows(mysql_query("SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_id_tipo='".$resultado['ipc_indicador']."' AND act_periodo='".$resultado['ipc_periodo']."' AND act_estado=1",$conexion));
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$consultaNumActividades=mysqli_query($conexion, "SELECT * FROM academico_actividades WHERE act_id_carga='".$_GET["carga"]."' AND act_id_tipo='".$resultado['ipc_indicador']."' AND act_periodo='".$resultado['ipc_periodo']."' AND act_estado=1");
+														 $numActividades = mysqli_num_rows($consultaNumActividades);
 														 
 														 $sumaPorcentaje += $resultado['ipc_valor'];
 													 ?>
@@ -191,7 +191,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

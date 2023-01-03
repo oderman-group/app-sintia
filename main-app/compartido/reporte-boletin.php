@@ -12,10 +12,10 @@ include("../../config-general/config.php");
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 <?php
 //======================= DATOS DEL ESTUDIANTE MATRICULADO =========================
-$usr=mysql_query("SELECT * FROM academico_matriculas WHERE mat_id=".$_GET["id"],$conexion);
-if(mysql_errno()!=0){echo mysql_errno(); exit();}
-$num_usr=mysql_num_rows($usr);
-$datos_usr=mysql_fetch_array($usr);
+$usr=mysqli_query($conexion, "SELECT * FROM academico_matriculas WHERE mat_id=".$_GET["id"]);
+
+$num_usr=mysqli_num_rows($usr);
+$datos_usr=mysqli_fetch_array($usr, MYSQLI_BOTH);
 if($num_usr==0)
 {
 ?>
@@ -25,11 +25,10 @@ if($num_usr==0)
 <?php
 	exit();
 }
-//$fila_usr=mysql_fetch_array($usr);
 //=============================== MATERIAS DEL ESTUDIANTE =================
-$mat=mysql_query("SELECT * FROM academico_cargas WHERE car_curso=".$datos_usr[6]." AND car_grupo='".$datos_usr[7]."' ORDER BY car_materia",$conexion);
-if(mysql_errno()!=0){echo mysql_errno(); exit();}
-$num_mat=mysql_num_rows($mat);
+$mat=mysqli_query($conexion, "SELECT * FROM academico_cargas WHERE car_curso=".$datos_usr[6]." AND car_grupo='".$datos_usr[7]."' ORDER BY car_materia");
+
+$num_mat=mysqli_num_rows($mat);
 if($num_mat==0)
 {
 	header("Location:cargas.php");
@@ -90,25 +89,25 @@ $cont=1;
 $contador = 0;  //para que solo halla un while en area
 $totalDefini=0;
 $materiasPerdidas=0;
-$materia=mysql_query("SELECT  ar_id, ar_nombre, mat_nombre, mat_id, mat_area, car_id, car_materia, car_periodo FROM academico_areas, academico_materias, academico_cargas WHERE (ar_id=mat_area AND mat_id=car_materia) AND (car_curso=".$datos_usr[6]." AND car_grupo=".$datos_usr[7].") AND ar_id=mat_area GROUP BY ar_id ORDER BY ar_posicion");
-if(mysql_errno()!=0){echo mysql_errno(); exit();}
+$materia=mysqli_query($conexion, "SELECT  ar_id, ar_nombre, mat_nombre, mat_id, mat_area, car_id, car_materia, car_periodo FROM academico_areas, academico_materias, academico_cargas WHERE (ar_id=mat_area AND mat_id=car_materia) AND (car_curso=".$datos_usr[6]." AND car_grupo=".$datos_usr[7].") AND ar_id=mat_area GROUP BY ar_id ORDER BY ar_posicion");
+
 $ii = 1;
-while($fila_mat=mysql_fetch_array($materia)){
+while($fila_mat=mysqli_fetch_array($materia, MYSQLI_BOTH)){
 if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 ?>
     <tr style="background:#F3F3F3;">
     	<td class="area" id="<?=$fila_mat[0]?>" colspan="9" style="font-size:10px; font-weight:bold;"><?php if(strtoupper(substr($fila_mat[1],0,4))=='ESPA') echo "ESPA&Ntilde;OL"; else echo strtoupper($fila_mat[1]);?></td>
     </tr>
 <?php 
-	$consulta = mysql_query("SELECT  mat_nombre, mat_area, mat_id, car_id FROM academico_areas, academico_materias, academico_cargas WHERE (ar_id=mat_area AND mat_id=car_materia)AND(car_curso=".$datos_usr[6]." AND car_grupo=".$datos_usr[7].") and ar_id=mat_area and mat_area=".$fila_mat[4]);
-	if(mysql_errno()!=0){echo mysql_errno(); exit();}
-	while($fila = mysql_fetch_array($consulta)){	
+	$consulta = mysqli_query($conexion, "SELECT  mat_nombre, mat_area, mat_id, car_id FROM academico_areas, academico_materias, academico_cargas WHERE (ar_id=mat_area AND mat_id=car_materia)AND(car_curso=".$datos_usr[6]." AND car_grupo=".$datos_usr[7].") and ar_id=mat_area and mat_area=".$fila_mat[4]);
+	
+	while($fila = mysqli_fetch_array($consulta, MYSQLI_BOTH)){	
 
 		$periodo=$fila_mat[7]-1; //asperiodo
-		$datos=mysql_query("SELECT * FROM academico_boletin WHERE bol_carga=".$fila[3]." AND bol_estudiante=".$_GET["id"]." AND  bol_periodo=".$periodoActual,$conexion);//asmat
-		if(mysql_errno()!=0){echo mysql_errno(); exit();}
-		$dato=mysql_fetch_array($datos);
-		$numero=mysql_num_rows($datos);
+		$datos=mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_carga=".$fila[3]." AND bol_estudiante=".$_GET["id"]." AND  bol_periodo=".$periodoActual);//asmat
+		
+		$dato=mysqli_fetch_array($datos, MYSQLI_BOTH);
+		$numero=mysqli_num_rows($datos);
 		if($numero>0)$acumu=$acumu+1;
 ?>
         <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
@@ -123,8 +122,8 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 		while($per<=4){
 			
 			//============================ NOTA DE CADA UNO DE LOS PERIODOS  POR SEPARADO =====================================================
-			$notas=mysql_query("SELECT * FROM academico_boletin WHERE bol_carga=".$fila[3]." AND bol_estudiante=".$_GET["id"]." AND bol_periodo=".$per,$conexion);
-			$nota=mysql_fetch_array($notas);
+			$notas=mysqli_query($conexion, "SELECT * FROM academico_boletin WHERE bol_carga=".$fila[3]." AND bol_estudiante=".$_GET["id"]." AND bol_periodo=".$per);
+			$nota=mysqli_fetch_array($notas, MYSQLI_BOTH);
 			//============================ FIN DE LAS NOTAS POR SEPARADO ======================================================================	
 ?>
 			<td class="<?=$per;?>"  align="center" style="font-weight:bold; border:groove;"><?php  echo $nota[4]; $defini = $defini + $nota[4]; $prome = $nota[4];?></td>
@@ -150,9 +149,9 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 		}//FIN MIENTRAS QUE DE PERIODOS (1-4)
 		$defini = ($defini/$periodoActual);
 		$defini = round($defini,1);
-		$nivelaciones = mysql_query("SELECT * FROM academico_nivelaciones WHERE niv_id_asg=".$fila_mat[5]." AND niv_cod_estudiante=".$_GET["id"],$conexion);
-		$numNivelaciones = mysql_num_rows($nivelaciones);
-		$notasNivelaciones = mysql_fetch_array($nivelaciones);
+		$nivelaciones = mysqli_query($conexion, "SELECT * FROM academico_nivelaciones WHERE niv_id_asg=".$fila_mat[5]." AND niv_cod_estudiante=".$_GET["id"]);
+		$numNivelaciones = mysqli_num_rows($nivelaciones);
+		$notasNivelaciones = mysqli_fetch_array($nivelaciones, MYSQLI_BOTH);
 		if($numNivelaciones>0){
 			if($notasNivelaciones[3]>$defini){
 				$defini = $notasNivelaciones[3];
@@ -181,12 +180,12 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
     	<td align="center"><?php if($aus[0]>0){ echo $aus[0]."/".$fila_mat[3];} else{ echo "0.0/".$fila_mat[3];};?></td>
 	</tr>
 <?php
-  	$consulta_2 =  mysql_query("SELECT ind_id, ind_nombre, ipc_valor, ipc_periodo FROM academico_indicadores, academico_indicadores_carga WHERE ind_id=ipc_indicador AND ipc_periodo=".$periodoActual." AND ipc_carga=".$fila[3]);
-	$num = mysql_num_rows($consulta);
+  	$consulta_2 =  mysqli_query($conexion, "SELECT ind_id, ind_nombre, ipc_valor, ipc_periodo FROM academico_indicadores, academico_indicadores_carga WHERE ind_id=ipc_indicador AND ipc_periodo=".$periodoActual." AND ipc_carga=".$fila[3]);
+	$num = mysqli_num_rows($consulta);
 	if ($num>0) // si tiene indicadores 
 	{
 		$ind = 1;
-		while ($indicador = mysql_fetch_array($consulta_2)){ //While indicador
+		while ($indicador = mysqli_fetch_array($consulta_2, MYSQLI_BOTH)){ //While indicador
 ?>  
 	 <tr style="font-size:8px; text-align:justify; background:<?=$bgC;?>;"> 
          <td align="justify"><?php echo $ind.". ".$indicador[1];?></td>
@@ -202,10 +201,10 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 <?php 
 		$ind ++;
 		$a = $_GET['id'];
-		$reg = mysql_query("SELECT * FROM academico_calificaciones, academico_actividades WHERE cal_id_actividad in(SELECT act_id FROM academico_actividades WHERE act_id_carga=".$fila[3]." and act_id_tipo=".$indicador[0]." and act_periodo=".$periodoActual.") and cal_id_estudiante=".$_GET['id']." and cal_id_actividad=act_id");
-		$num = mysql_num_rows($reg);
+		$reg = mysqli_query($conexion, "SELECT * FROM academico_calificaciones, academico_actividades WHERE cal_id_actividad in(SELECT act_id FROM academico_actividades WHERE act_id_carga=".$fila[3]." and act_id_tipo=".$indicador[0]." and act_periodo=".$periodoActual.") and cal_id_estudiante=".$_GET['id']." and cal_id_actividad=act_id");
+		$num = mysqli_num_rows($reg);
     	$contador = 0;
-		while ($nota = mysql_fetch_array($reg)){ //While de notas
+		while ($nota = mysqli_fetch_array($reg, MYSQLI_BOTH)){ //While de notas
 		?>
            <tr bgcolor="#E0E0E0" class="nota" bgcolor="AliceBlue" style="font-size:8px;"> <!-- Para ls notas pero en este caso no se mostrara, con esto se procesara y se utilizara el prev() -->
                 <td colspan="9"></td>                  

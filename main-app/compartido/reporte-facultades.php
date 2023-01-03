@@ -1,7 +1,7 @@
 <?php
 //include("../modell/conexion.php");
 include("informacion.php");
-$consulta = mysql_query("SELECT * FROM facultades",$conexion);
+$consulta = mysqli_query($conexion, "SELECT * FROM facultades");
 ?>
 <head>
 	<title>REPORTES - WolfSyetem</title>
@@ -27,7 +27,7 @@ $consulta = mysql_query("SELECT * FROM facultades",$conexion);
     </tr>
 <?php
 $con = 1;
-while($resultado = mysql_fetch_array($consulta)){
+while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 ?>
     <tr style="font-size:8px;">
         <td align="center"><?=$con;?></td>

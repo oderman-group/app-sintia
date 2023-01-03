@@ -9,7 +9,8 @@ include("../modelo/conexion.php");
 		echo "<span style='font-family:Arial; color:red;'>Debe llenar todos los campos del estudiante.</samp>";
 		exit();
 	}
-	$res_consultaid_acu=mysql_fetch_array(mysql_query("SELECT MAX(uss_id)+1 as iduss FROM usuarios;",$conexion));
+	$consultaRes=mysqli_query($conexion, "SELECT MAX(uss_id)+1 as iduss FROM usuarios;");
+	$res_consultaid_acu=mysqli_fetch_array($consultaRes, MYSQLI_BOTH);
 
 	require_once("apis-sion-modify-student.php");
 
@@ -17,7 +18,7 @@ include("../modelo/conexion.php");
 	if($_POST["va_matricula"]==""){$_POST["va_matricula"]=0;}
 
 
-	mysql_query("UPDATE academico_matriculas SET 
+	mysqli_query($conexion, "UPDATE academico_matriculas SET 
 	mat_tipo_documento='".$_POST["tipoD"]."', 
 	mat_documento='".$_POST["nDoc"]."', 
 	mat_religion='".$_POST["religion"]."', 
@@ -64,29 +65,30 @@ include("../modelo/conexion.php");
 	mat_ciudad_residencia='".$_POST["ciudadR"]."', 
 	mat_nombre2='".$_POST["nombre2"]."'
 
-	WHERE mat_id=".$_POST["id"].";",$conexion);
-	if(mysql_errno()!=0){echo mysql_error(); exit();}
-	mysql_query("UPDATE usuarios SET uss_usuario='".$_POST["nDoc"]."' WHERE uss_id='".$_POST["idU"]."'",$conexion);
+	WHERE mat_id=".$_POST["id"].";");
+	
+	mysqli_query($conexion, "UPDATE usuarios SET uss_usuario='".$_POST["nDoc"]."' WHERE uss_id='".$_POST["idU"]."'");
 
 	//ACTUALIZAR EL ACUDIENTE 1	
 	if($_POST["documentoA"]!=""){
 
 
-		$acudiente = mysql_fetch_array(mysql_query("SELECT * FROM usuarios WHERE uss_usuario='".$_POST["documentoA"]."'"));
-		if(mysql_errno()!=0){echo mysql_error(); exit();} 
+		$consultaAcudiente=mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_usuario='".$_POST["documentoA"]."'");
+		$acudiente = mysqli_fetch_array($consultaAcudiente, MYSQLI_BOTH);
+		 
 
-		mysql_query("UPDATE academico_matriculas SET mat_acudiente='".$acudiente['uss_id']."' WHERE mat_id='".$_POST["id"]."'",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "UPDATE academico_matriculas SET mat_acudiente='".$acudiente['uss_id']."' WHERE mat_id='".$_POST["id"]."'");
+		
 
 
-		mysql_query("DELETE FROM usuarios_por_estudiantes WHERE upe_id_estudiante='".$_POST["id"]."'",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "DELETE FROM usuarios_por_estudiantes WHERE upe_id_estudiante='".$_POST["id"]."'");
+		
 
-		mysql_query("INSERT INTO usuarios_por_estudiantes(upe_id_usuario, upe_id_estudiante)VALUES('".$acudiente['uss_id']."', '".$_POST["id"]."')",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "INSERT INTO usuarios_por_estudiantes(upe_id_usuario, upe_id_estudiante)VALUES('".$acudiente['uss_id']."', '".$_POST["id"]."')");
+		
 
-		mysql_query("UPDATE usuarios SET uss_usuario='".$_POST["documentoA"]."', uss_nombre='".$_POST["nombreA"]."', uss_email='".$_POST["email"]."', uss_ocupacion='".$_POST["ocupacionA"]."', uss_genero='".$_POST["generoA"]."', uss_celular='".$_POST["celular"]."', uss_lugar_expedicion='".$_POST["lugardA"]."', uss_tipo_documento='".$_POST["tipoDAcudiente"]."', uss_direccion='".$_POST["direccion"]."', uss_apellido1='".$_POST["apellido1A"]."', uss_apellido2='".$_POST["apellido2A"]."', uss_nombre2='".$_POST["nombre2A"]."' WHERE uss_id='".$_POST["documentoA"]."'",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "UPDATE usuarios SET uss_usuario='".$_POST["documentoA"]."', uss_nombre='".$_POST["nombreA"]."', uss_email='".$_POST["email"]."', uss_ocupacion='".$_POST["ocupacionA"]."', uss_genero='".$_POST["generoA"]."', uss_celular='".$_POST["celular"]."', uss_lugar_expedicion='".$_POST["lugardA"]."', uss_tipo_documento='".$_POST["tipoDAcudiente"]."', uss_direccion='".$_POST["direccion"]."', uss_apellido1='".$_POST["apellido1A"]."', uss_apellido2='".$_POST["apellido2A"]."', uss_nombre2='".$_POST["nombre2A"]."' WHERE uss_id='".$_POST["documentoA"]."'");
+		
 
 
 	}
@@ -94,16 +96,16 @@ include("../modelo/conexion.php");
 
 	//ACTUALIZAR EL ACUDIENTE 2
 	if($_POST["idAcudiente2"]!=""){
-		mysql_query("UPDATE usuarios SET uss_usuario='".$_POST["documentoA2"]."', uss_nombre='".$_POST["nombreA2"]."', uss_email='".$_POST["email"]."', uss_ocupacion='".$_POST["ocupacionA2"]."', uss_genero='".$_POST["generoA2"]."', uss_celular='".$_POST["celular"]."', uss_lugar_expedicion='".$_POST["lugardA2"]."', uss_direccion='".$_POST["direccion"]."', uss_apellido1='".$_POST["apellido1A2"]."', uss_apellido2='".$_POST["apellido2A2"]."', uss_nombre2='".$_POST["nombre2A2"]."' WHERE uss_id='".$_POST["documentoA2"]."'",$conexion);
-		if(mysql_errno()!=0){echo mysql_error(); exit();}
+		mysqli_query($conexion, "UPDATE usuarios SET uss_usuario='".$_POST["documentoA2"]."', uss_nombre='".$_POST["nombreA2"]."', uss_email='".$_POST["email"]."', uss_ocupacion='".$_POST["ocupacionA2"]."', uss_genero='".$_POST["generoA2"]."', uss_celular='".$_POST["celular"]."', uss_lugar_expedicion='".$_POST["lugardA2"]."', uss_direccion='".$_POST["direccion"]."', uss_apellido1='".$_POST["apellido1A2"]."', uss_apellido2='".$_POST["apellido2A2"]."', uss_nombre2='".$_POST["nombre2A2"]."' WHERE uss_id='".$_POST["documentoA2"]."'");
+		
 	}else{
 		if($_POST["documentoA2"]!=""){
-			mysql_query("INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_portada, uss_idioma, uss_tema, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2)VALUES('".$_POST["documentoA2"]."','1234',3,'".$_POST["nombreA2"]."',0,'".$_POST["ocupacionA2"]."','".$_POST["email"]."',0,'".$_POST["generoA2"]."','".$_POST["celular"]."', 'default.png', 'default.png', 1, 'green', '".$_POST["lugardA2"]."', '".$_POST["direccion"]."', '".$_POST["apellido1A2"]."', '".$_POST["apellido2A2"]."', '".$_POST["nombre2A2"]."')",$conexion);
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			mysqli_query($conexion, "INSERT INTO usuarios(uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_portada, uss_idioma, uss_tema, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2)VALUES('".$_POST["documentoA2"]."','1234',3,'".$_POST["nombreA2"]."',0,'".$_POST["ocupacionA2"]."','".$_POST["email"]."',0,'".$_POST["generoA2"]."','".$_POST["celular"]."', 'default.png', 'default.png', 1, 'green', '".$_POST["lugardA2"]."', '".$_POST["direccion"]."', '".$_POST["apellido1A2"]."', '".$_POST["apellido2A2"]."', '".$_POST["nombre2A2"]."')");
+			
 			$idAcudiente2 = mysql_insert_id();
 			
-			mysql_query("UPDATE academico_matriculas SET mat_acudiente2='".$idAcudiente2."'WHERE mat_id=".$_POST["id"].";",$conexion);
-			if(mysql_errno()!=0){echo mysql_error(); exit();}
+			mysqli_query($conexion, "UPDATE academico_matriculas SET mat_acudiente2='".$idAcudiente2."'WHERE mat_id=".$_POST["id"].";");
+			
 		}
 	}
 

@@ -1,6 +1,5 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DT0066';?>
-<?php include("verificar-permiso-pagina.php");?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
@@ -69,12 +68,11 @@
                                                     $filtro = '';
                                                     if(isset($_GET["cat"])){$filtro .=" AND dfal_id_categoria='".$_GET["cat"]."'";}
 
-													 $consulta = mysql_query("SELECT * FROM disciplina_faltas
+													 $consulta = mysqli_query($conexion, "SELECT * FROM disciplina_faltas
                                                      INNER JOIN disciplina_categorias ON dcat_id=dfal_id_categoria
-                                                     WHERE dfal_id=dfal_id $filtro
-													 ",$conexion);
+                                                     WHERE dfal_id=dfal_id $filtro");
 													 $contReg = 1;
-													 while($resultado = mysql_fetch_array($consulta)){
+													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -118,7 +116,7 @@
                 </div>
             </div>
             <!-- end page content -->
-             <?php include("../compartido/panel-configuracion.php");?>
+             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>

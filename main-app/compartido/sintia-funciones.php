@@ -128,7 +128,7 @@ class BaseDatos {
 
 		
 
-		mysql_query("DELETE FROM ".$tabla." WHERE ".$clave."='".$id."'",$conexion);
+		mysqli_query($conexion, "DELETE FROM ".$tabla." WHERE ".$clave."='".$id."'");
 
 		$lineaError = __LINE__;
 

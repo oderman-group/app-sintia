@@ -2,9 +2,9 @@
 /*session_start();
 $_SESSION["bd"] = date("Y");*/
 include("../modelo/conexion.php");
-$rst_usr = mysql_query("SELECT * FROM usuarios WHERE uss_id='".$_GET["usuario"]."'",$conexion);
-$num = mysql_num_rows($rst_usr);
-$fila = mysql_fetch_array($rst_usr);
+$rst_usr = mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_id='".$_GET["usuario"]."'");
+$num = mysqli_num_rows($rst_usr);
+$fila = mysqli_fetch_array($rst_usr, MYSQLI_BOTH);
 if($num>0)
 {
 	//session_destroy();
@@ -33,11 +33,6 @@ if($num>0)
 		  $url = '../directivo';
 		break;
 	}
-	/*include("navegador.php");
-	include("ip.php");
-	mysql_query("UPDATE usuarios SET uss_estado=1 WHERE uss_id='".$fila[0]."'",$conexion);
-	if(mysql_errno()!=0){echo mysql_error();exit();}
-	mysql_query("INSERT INTO seguridad_historial_acciones(hil_usuario, hil_url, hil_titulo, hil_fecha)VALUES('".$fila[0]."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', 'Ingreso al sistema', now())",$conexion);*/	
 	header("Location:".$url);	
 	exit();
 }else{
