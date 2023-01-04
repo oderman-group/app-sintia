@@ -125,10 +125,6 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 					<div class="forgetPassword"><a href="javascript:void(0)">Olvidaste tu contraseña?</a> </div>
 				</div>
 
-
-
-
-
 			</form>
 		</div>
 

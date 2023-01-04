@@ -6,7 +6,8 @@ $institucionConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM 
 
 $institucion = mysqli_fetch_array($institucionConsulta, MYSQLI_BOTH);
 
-$conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $institucion['ins_bd']."_".date("Y"));
+$conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $institucion['ins_bd']."_2022");
+
 ?>
 
 <?php
@@ -28,10 +29,10 @@ if($_POST["id"]==2){
 
 	if($nU>0){
 		
-		mysqli_query($conexion, "INSERT INTO restaurar_clave(resc_id_usuario, resc_fec_solicitud) VALUES('".$dU['uss_id']."',now())");
+		mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".restaurar_clave(resc_id_usuario, resc_fec_solicitud) VALUES('".$dU['uss_id']."',now())");
 		$idUltimoRegistro = mysqli_insert_id($conexion);
 
-		mysqli_query($conexion, "UPDATE restaurar_clave SET resc_id_md5='".md5($idUltimoRegistro)."' WHERE resc_id='".$idUltimoRegistro."'");
+		mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".restaurar_clave SET resc_id_md5='".md5($idUltimoRegistro)."' WHERE resc_id='".$idUltimoRegistro."'");
 		
 		echo '<script type="text/javascript">window.location.href="restaurar-contrasena.php?idRegistro='.md5($idUltimoRegistro).'";</script>';
 		exit();
