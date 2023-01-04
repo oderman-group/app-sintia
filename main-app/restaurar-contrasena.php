@@ -2,6 +2,15 @@
 include("../conexion-datos.php");
 $conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
 $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_estado = 1");
+
+//Verificamos que el link no tenga más de 24 horas.
+$consultaTiempo = mysqli_query($conexion, "SELECT TIMESTAMPDIFF(HOUR, resc_fec_solicitud, NOW()) as horas FROM ".$baseDatosServicios.".restaurar_clave WHERE resc_id_md5 = '".$_GET['idRegistro']."'");
+$datosTiempo = mysqli_fetch_array($consultaTiempo, MYSQLI_BOTH);
+
+if($datosTiempo['horas'] > 24){
+    echo "Este link ya expiró, por favor genere uno nuevo."; 
+    exit();  
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -40,13 +49,10 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 			 <input type="hidden" value="<?=$_GET['idRegistro']?>" name="idRegistro">
 			 <input type="hidden" value="22" name="rBd"> <!-- Este dato debe cambiarse por el dinámico de la Insti. -->
 				
-
 				<div id="campos">
-					<input type="password" name="clave2" placeholder="nueva contraseña" />
-					<input type="password" name="clave" placeholder="vuelve a escribir la contraseña" />
-
-
-					<button>Guardar contraseña</button>	
+					<input type="password" name="clave2" placeholder="Nueva contraseña" />
+					<input type="password" name="clave" placeholder="Vuelva a escribir la contraseña" />
+					<button>Restaurar contraseña</button>	
 				</div>
 			</form>
 		</div>
@@ -58,14 +64,6 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 	<script src="../config-general/assets/js/pages/extra-pages/pages.js"></script>
 	<!-- end js include path -->
 
-	<script>
-		function mostrar(data) {
-			if (data.value == "")
-				document.getElementById("campos").style.display = "none";
-			else
-				document.getElementById("campos").style.display = "block";
-		}
-	</script>
 </body>
 
 </html>

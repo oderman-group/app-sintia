@@ -128,22 +128,10 @@ $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FRO
 			</form>
 		</div>
 
-		<div class="form formRegister">
-			<h2>Create an account</h2>
-			<form>
-				<input type="text" placeholder="Username" />
-				<input type="password" placeholder="Password" />
-				<input type="email" placeholder="Email Address" />
-				<input type="text" placeholder="Full Name" />
-				<input type="tel" placeholder="Phone Number" />
-				<button>Register</button>
-			</form>
-		</div>
 
 		<div class="form formReset">
 			<h2>Recordaremos tu contraseña</h2>
 			<form action="guardar.php" method="post">
-				<input type="hidden" value="2" name="id">
 				<div class="form-group row">
 					<div class="col-sm-12">
 						<select class="form-control  select2" name="rBd" required>
