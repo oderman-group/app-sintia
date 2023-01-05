@@ -13,6 +13,8 @@ $saldoEC = ($resumenEC[0] - $resumenEC[1]) * -1;
 	
 <div class="loader"></div>
 
+<?php include("../compartido/modal-licencia.php");?>
+
 <?php include("../compartido/modal-anuncios.php");?>
 	
 <?php include("../compartido/modal-acciones.php");?>
