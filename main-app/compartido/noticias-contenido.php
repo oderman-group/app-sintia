@@ -31,6 +31,21 @@
 											<p data-hint="Se eliminarán todas tus publicaciones realizadas."><a href="../compartido/guardar.php?get=7&e=2" onClick="if(!confirm('Deseas eliminar todas tus publicaciones?')){return false;}"><i class="fa fa-trash"></i> <?=$frases[137][$datosUsuarioActual[8]];?></a></p>
 										</div>
 									</div>
+
+									<?php include("../compartido/datos-fechas.php");?>
+
+									<?php if(($datosUsuarioActual[3]==5) && ($datosUnicosInstitucion['ins_deuda']==1 || $dfDias<=1)){?>
+										<div class="panel">
+											<header class="panel-heading panel-heading-red">Pagos</header>
+											<div class="panel-body">
+												<p><b><?=strtoupper($datosUnicosInstitucion['ins_nombre'])?></b>, le recordamos tiene un pago pendiente con la plataforma SINTIA.<br>
+												Puede hacer el pago en el siguiente boton.</p>
+												<div class="col-sm-4">
+													<a href="#" class="btn btn-danger">PAGA AQUI</a>
+												</div>
+											</div>
+										</div>
+									<?php }?>
 									
 									<?php if($datosUsuarioActual[3]==2 or $datosUsuarioActual[3]==5){?>
 										<?php include("../compartido/progreso-docentes.php");?>
