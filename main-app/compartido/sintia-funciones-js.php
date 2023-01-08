@@ -810,6 +810,21 @@ if($config['conf_deuda']==1 and $datosUsuarioActual['uss_tipo']==5){
 
 <?php }?>	
 
+	
+
+<?php
+
+/* Mostrar renovacion de licencia */
+
+if($datosUsuarioActual['uss_tipo']==5){
+
+?>	
+
+	function mostrarModalLicencia(){$("#modalLicencia").modal("show");}
+
+	setTimeout('mostrarModalLicencia()', 2000);
+
+<?php }?>
 
 
 
