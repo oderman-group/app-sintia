@@ -23,7 +23,13 @@ require_once("../class/Estudiantes.php");
     <?=$informacion_inst["info_nombre"]?><br>
     INFORME PARCIAL - PERIODO: <?php echo $config[2];?><br>
     <?php echo $config["conf_fecha_parcial"];?><br>
-    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" height="100" width="150"><br>
+    <?php 
+      $tamano='height="100" width="150"';
+      if($config['conf_id_institucion'] == 1){
+        $tamano='width="100%"';
+      }
+    ?>
+    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" <?=$tamano?>><br>
     <?php echo $config["conf_descripcion_parcial"];?><br>
     ESTUDIANTE: <?=$nombre;?></br>
 </div>  

@@ -3,6 +3,7 @@ include("session.php");
 include("../modelo/conexion.php");
 require_once("../class/Estudiantes.php");
 
+
 $_POST["ciudadR"] = trim($_POST["ciudadR"]);
 
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
@@ -22,6 +23,8 @@ if($valiEstudiante > 0){
 $result_numMat = strtotime("now");
 
 //Establecer valores por defecto cuando los campos vengan vacíos
+$_POST["email"]    = strtolower($_POST["email"]);
+$_POST["result_numMat"]    =$result_numMat;
 if($_POST["va_matricula"]=="") $_POST["va_matricula"] = 0;
 if($_POST["grupo"]=="")        $_POST["grupo"]        = 4;
 if($_POST["tipoEst"]=="")      $_POST["tipoEst"]      = 128;
@@ -43,6 +46,7 @@ $procedencia=$_POST["lNacM"];
 if(!empty($_POST["ciudadPro"]) && !is_numeric($_POST["ciudadPro"])){
 	$procedencia=$_POST["ciudadPro"];
 }
+$_POST["procedencia"]=$procedencia;
 
 try{
 	$acudienteConsulta = mysqli_query($conexion, "SELECT * FROM usuarios WHERE uss_usuario='".$_POST["documentoA"]."'");
@@ -55,167 +59,21 @@ $acudienteDatos = mysqli_fetch_array($acudienteConsulta, MYSQLI_BOTH);
 if ($acudienteNum > 0) {	
 	$idAcudiente = $acudienteDatos[0];
 } else {
-	//COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
+	// //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 	if(trim($_POST["documentoA"])=="" or trim($_POST["nombresA"])==""){
 
 		echo '<script type="text/javascript">window.location.href="estudiantes-agregar.php?error=ER_DT_6&tipoD='.$_POST["tipoD"].'&documento='.$_POST["nDoc"].'&religion='.$_POST["religion"].'&email='.$_POST["email"].'&direcion='.$_POST["direccion"].'&barrio='.$_POST["barrio"].'&telefono='.$_POST["telefono"].'&celular='.$_POST["celular"].'&estrato='.$_POST["estrato"].'&genero='.$_POST["genero"].'&nacimiento='.$_POST["fNac"].'&apellido1='.$_POST["apellido1"].'&apellido2='.$_POST["apellido2"].'&nombre='.$_POST["nombres"].'&grado='.$_POST["grado"].'&grupo='.$_POST["grupo"].'&tipoE='.$_POST["tipoEst"].'&lugarEx='.$_POST["lugarD"].'&lugarNac='.$_POST["lNac"].'&matricula='.$_POST["matricula"].'&folio='.$_POST["folio"].'&tesoreria='.$_POST["codTesoreria"].'&vaMatricula='.$_POST["va_matricula"].'&inclusion='.$_POST["inclusion"].'&extran='.$_POST["extran"].'&tipoSangre='.$_POST["tipoSangre"].'&eps='.$_POST["eps"].'&celular2='.$_POST["celular2"].'&ciudadR='.$_POST["ciudadR"].'&nombre2='.$_POST["nombre2"].'&documentoA='.$_POST["documentoA"].'&nombreA='.$_POST["nombreA"].'&ocupacionA='.$_POST["ocupacionA"].'&generoA='.$_POST["generoA"].'&expedicionA='.$_POST["lugardA"].'&tipoDocA='.$_POST["tipoDAcudiente"].'&apellido1A='.$_POST["apellido1A"].'&apellido2A='.$_POST["apellido2A"].'&nombre2A='.$_POST["nombre2A"].'&matestM='.$_POST["matestM"].'";</script>';
 		exit();
 	}
+}
 
-	if($_POST["generoA"]=="")       $_POST["generoA"]       = 126;
-	
-	//CREAMOS AL ACUDIENTE
-	try{
-		mysqli_query($conexion, "INSERT INTO usuarios(
-			uss_usuario, 
-			uss_clave, 
-			uss_tipo, 
-			uss_nombre, 
-			uss_estado, 
-			uss_ocupacion, 
-			uss_email, 
-			uss_fecha_nacimiento, 
-			uss_permiso1, 
-			uss_genero, 
-			uss_celular, 
-			uss_foto,
-			uss_idioma,
-			uss_tipo_documento, 
-			uss_lugar_expedicion, 
-			uss_direccion, 
-			uss_apellido1, 
-			uss_apellido2, 
-			uss_nombre2,
-			uss_documento, 
-			uss_tema_sidebar,
-			uss_tema_header,
-			uss_tema_logo
-			)VALUES(
-			'".$_POST["documentoA"]."',
-			'12345678',
-			3,
-			'".$_POST["nombresA"]."',
-			0,
-			'".$_POST["ocupacionA"]."',
-			'".$_POST["email"]."',
-			'".$_POST["fechaNA"]."',
-			0,
-			'".$_POST["generoA"]."',
-			'".$_POST["celular"]."', 
-			'default.png',
-			1,
-			'".$_POST["tipoDAcudiente"]."',
-			'".$_POST["lugarDa"]."', 
-			'".$_POST["direccion"]."', 
-			'".$_POST["apellido1A"]."', 
-			'".$_POST["apellido2A"]."', 
-			'".$_POST["nombre2A"]."',
-			'".	$_POST["documentoA"]."',
-			'cyan-sidebar-color',
-			'header-indigo',
-			'logo-indigo'
-			)");
+
+//CREAMOS EL REGISTRO
+try{
+	Estudiantes::guardarDatos($_POST);
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}
-	
-	$idAcudiente = mysqli_insert_id($conexion);
-}
-
-//INSERTAMOS EL USUARIO ESTUDIANTE
-try{
-	mysqli_query($conexion, "INSERT INTO usuarios(
-		uss_usuario, 
-		uss_clave, 
-		uss_tipo, 
-		uss_nombre, 
-		uss_estado, 
-		uss_email, 
-		uss_fecha_nacimiento, 
-		uss_permiso1, 
-		uss_genero, 
-		uss_celular, 
-		uss_foto, 
-		uss_idioma, 
-		uss_tipo_documento, 
-		uss_lugar_expedicion, 
-		uss_direccion, 
-		uss_apellido1, 
-		uss_apellido2, 
-		uss_nombre2,
-		uss_documento, 
-		uss_tema_sidebar,
-		uss_tema_header,
-		uss_tema_logo
-		)VALUES(
-		'".	$_POST["nDoc"]."',
-		'12345678',
-		4,
-		'".$_POST["nombres"]."',
-		0,
-		'".strtolower($_POST["email"])."',
-		'".$_POST["fNac"]."',
-		0,
-		'".$_POST["genero"]."',
-		'".$_POST["celular"]."', 
-		'default.png', 
-		1, 
-		'".$_POST["tipoD"]."',
-		'".$_POST["lugarD"]."', 
-		'".$_POST["direccion"]."', 
-		'".$_POST["apellido1"]."', 
-		'".$_POST["apellido2"]."', 
-		'".$_POST["nombre2"]."',
-		'".	$_POST["nDoc"]."',
-		'cyan-sidebar-color',
-		'header-indigo',
-		'logo-indigo'
-		)");
-		$idEstudianteU = mysqli_insert_id($conexion);
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-
-//Insertamos la matrícula
-try{
-	mysqli_query($conexion, "INSERT INTO academico_matriculas(
-		mat_matricula, mat_fecha, mat_tipo_documento, 
-		mat_documento, mat_religion, mat_email, 
-		mat_direccion, mat_barrio, mat_telefono, 
-		mat_celular, mat_estrato, mat_genero, 
-		mat_fecha_nacimiento, mat_primer_apellido, mat_segundo_apellido, 
-		mat_nombres, mat_grado, mat_grupo, 
-		mat_tipo, mat_lugar_nacimiento, mat_lugar_expedicion, 
-		mat_acudiente, mat_estado_matricula, mat_id_usuario, 
-		mat_folio, mat_codigo_tesoreria, mat_valor_matricula, 
-		mat_inclusion, mat_extranjero, mat_tipo_sangre, 
-		mat_eps, mat_celular2, mat_ciudad_residencia, 
-		mat_nombre2)
-		VALUES(
-		".$result_numMat.", now(), ".$_POST["tipoD"].",
-		".$_POST["nDoc"].", ".$_POST["religion"].", '".strtolower($_POST["email"])."',
-		'".$_POST["direccion"]."', '".$_POST["barrio"]."', '".$_POST["telefono"]."',
-		'".$_POST["celular"]."', ".$_POST["estrato"].", ".$_POST["genero"].", 
-		'".$_POST["fNac"]."', '".$_POST["apellido1"]."', '".$_POST["apellido2"]."', 
-		'".$_POST["nombres"]."', '".$_POST["grado"]."', '".$_POST["grupo"]."',
-		'".$_POST["tipoEst"]."', '".$procedencia."', '".$_POST["lugarD"]."',
-		".$idAcudiente.", '".$_POST["matestM"]."', '".$idEstudianteU."', 
-		'".$_POST["folio"]."', '".$_POST["codTesoreria"]."', '".$_POST["va_matricula"]."', 
-		'".$_POST["inclusion"]."', '".$_POST["extran"]."', '".$_POST["tipoSangre"]."', 
-		'".$_POST["eps"]."', '".$_POST["celular2"]."', '".$_POST["ciudadR"]."', 
-		'".$_POST["nombre2"]."'
-		)");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-$idEstudiante = mysqli_insert_id($conexion);
-
-try{
-	mysqli_query($conexion, "INSERT INTO usuarios_por_estudiantes(upe_id_usuario, upe_id_estudiante)VALUES('".$idAcudiente."', '".$idEstudiante."')");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-
 if(!isset($estado) AND !isset($mensaje)){
 	$estado="";
 	$mensaje="";

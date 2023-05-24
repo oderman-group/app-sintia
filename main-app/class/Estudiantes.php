@@ -1,4 +1,6 @@
 <?php
+require_once("../class/servicios/UsuarioServicios.php");
+require_once("../class/servicios/MatriculaServicios.php");
 class Estudiantes {
 
     public static function listarEstudiantes(
@@ -331,6 +333,20 @@ class Estudiantes {
 
         return $num;
 
+    }
+    public static function guardarDatos($post)
+    {
+        try{
+        UsuarioServicios::iniciarTransacion();
+        $idAcudiente= UsuarioServicios::guardarAcudiente($post,true);
+        $idEstudiante= UsuarioServicios::guardarEstudiante($post,true);
+        $idMatricula= MatriculaServicios::guardar($post,$idAcudiente,$idEstudiante,true);
+        $result= UsuarioServicios::guardarUsuarioEstudiante($idAcudiente,$idEstudiante,true);
+        UsuarioServicios::finalizarTransacion();
+        } catch (Exception $e) {
+            echo "Excepción catpurada: ".$e->getMessage();
+            exit();
+        }
     }
 
 }
