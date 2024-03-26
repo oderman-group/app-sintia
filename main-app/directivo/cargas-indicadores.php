@@ -5,6 +5,7 @@
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -147,11 +148,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													$sino = array("NO","SI");
 													$sumaPorcentaje = 0;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														try{
-															$consultaNumActividades=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$cargaConsultaActual."' AND act_id_tipo='".$resultado['ipc_indicador']."' AND act_periodo='".$resultado['ipc_periodo']."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-														} catch (Exception $e) {
-															include("../compartido/error-catch-to-report.php");
-														}
+														$consultaNumActividades = Actividades::consultaActividadesCargaIndicador($config, $resultado['ipc_indicador'], $cargaConsultaActual, $resultado['ipc_periodo']);
 														$numActividades = mysqli_num_rows($consultaNumActividades);
 														
 														$sumaPorcentaje += $resultado['ipc_valor'];

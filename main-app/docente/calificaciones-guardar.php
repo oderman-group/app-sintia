@@ -10,20 +10,12 @@ include("verificar-periodos-diferentes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 $codigoACT=null;
 
 $indicadoresDatos = Indicadores::consultaIndicadorPeriodo($conexion, $config, $_POST['indicador'], $cargaConsultaActual, $periodoConsultaActual);
 
-try{
-	$consultaValores=mysqli_query($conexion, "SELECT
-	(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades 
-	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id_tipo='".$_POST["indicador"]."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-	(SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades 
-	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})");
-} catch (Exception $e) {
-	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
-$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
+$valores = Actividades::consultarValoresIndicador($config, $cargaConsultaActual, $_POST["indicador"], $periodoConsultaActual);
 
 $porcentajeRestante = $indicadoresDatos['ipc_valor'] - $valores[0];
 
@@ -41,12 +33,7 @@ if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 	//Si los valores de las calificaciones son de forma automática.
 	if($datosCargaActual['car_configuracion']==0){
 		//Insertamos la calificación
-		try{
-			mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_actividades(act_id, act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_fecha_creacion, act_id_evidencia, institucion, year)"." VALUES('".$codigoACT."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', now(),'".$_POST["evidencia"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-			$idRegistro = mysqli_insert_id($conexion);
-		} catch (Exception $e) {
-			include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-		}
+		Actividades::guardarCalificacionAutomatica($conexionPDO, $config, mysqli_real_escape_string($conexion,$_POST["contenido"]), $fecha, $cargaConsultaActual, $_POST["indicador"], $periodoConsultaActual, $infoCompartir, $_POST["evidencia"]);
 
 		//Actualizamos el valor de todas las actividades del indicador
 		Calificaciones::actualizarValorCalificacionesDeUnIndicador($conexion, $config, $cargaConsultaActual, $periodoConsultaActual, $indicadoresDatos);	
@@ -63,11 +50,7 @@ if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 		if($_POST["valor"]>$porcentajeRestante and $porcentajeRestante>0){$_POST["valor"] = $porcentajeRestante;}
 
 		//Insertamos la calificación
-		try{
-			mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_actividades(act_id, act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_valor, act_fecha_creacion, institucion, year)"." VALUES('".$codigoACT."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', '".$fecha."', '".$periodoConsultaActual."','".$_POST["indicador"]."','".$cargaConsultaActual."', 1, '".$infoCompartir."', '".$_POST["valor"]."', now(), {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-		} catch (Exception $e) {
-			include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-		}
+		Actividades::guardarCalificacionManual($conexionPDO, $config, mysqli_real_escape_string($conexion,$_POST["contenido"]), $fecha, $cargaConsultaActual, $_POST["indicador"], $periodoConsultaActual, $infoCompartir, $_POST["valor"]);
 	}
 }
 //Si escoge del banco de datos

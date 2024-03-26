@@ -9,6 +9,7 @@ include("../compartido/head.php");
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 
 
 $idE="";
@@ -27,8 +28,7 @@ $idE="";
 	}
 	if(!empty($id_actividad)){
 		$ocultarExportacion="hidden";
-		$consultaActividad=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id='".$id_actividad."'  AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		$actividad = mysqli_fetch_array($consultaActividad, MYSQLI_BOTH);
+		$actividad = Actividades::consultarDatosActividades($config, $id_actividad);
 	}
 	
 	//Cantidad de preguntas de la evaluación
@@ -160,8 +160,7 @@ $idE="";
 												<label class="col-sm-2 control-label">Actividades</label>
 												<div class="col-sm-10">
 													<?php
-													$actividadesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades
-													WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND (act_registrada=0 OR act_registrada IS NULL)");
+													$actividadesConsulta = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
 													?>
 													<select class="form-control  select2" name="actividad" required>
 														<option value="">Seleccione una opción</option>
@@ -239,7 +238,7 @@ $idE="";
 															
 															 //Solo actuliza una vez que la actividad fue registrada.
 															 if($registroNotas<1){
-																mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() WHERE act_id='".$_POST["actividad"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+																Actividades::marcarActividadRegistrada($config, $_POST["actividad"]);
 																mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividad_evaluaciones SET eva_actividad='".$_POST["actividad"]."' WHERE eva_id='".$idE."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 																
 															}

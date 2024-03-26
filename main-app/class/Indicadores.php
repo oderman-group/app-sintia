@@ -2,6 +2,7 @@
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once ROOT_PATH."/main-app/class/Conexion.php";
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Indicadores {
 
@@ -345,6 +346,145 @@ class Indicadores {
 		} catch (Exception $e) {
 			include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 		}
+    }
+
+    /**
+     * Este metodo me trae la recuperacion del indicador de una carga en un periodo para un estudiante
+     * @param array             $config
+     * @param string            $idIndicador
+     * @param string            $estudiante
+     * @param string            $idCarga
+     * @param int               $periodo
+     * @param string            $yearBd
+     * 
+     * @return mysqli_result    $resultado
+    **/
+    public static function consultaRecuperacionIndicadorPeriodo ( 
+        array   $config,  
+        string  $idIndicador,  
+        string  $estudiante,  
+        string  $idCarga,  
+        int     $periodo,  
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
+            WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $estudiante, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae la recuperacion del indicador de una carga en un periodo para un estudiante
+     * @param array             $config
+     * @param string            $estudiante
+     * @param string            $idCarga
+     * @param string            $yearBd
+     * 
+     * @return mysqli_result    $resultado
+    **/
+    public static function traerDatosIndicadorPerdidos ( 
+        array   $config,  
+        string  $estudiante,  
+        string  $idCarga,  
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion rind
+		INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON ai.ind_id=rind.rind_indicador AND ai.institucion=? AND ai.year=?
+		WHERE rind.rind_carga=? AND rind.rind_estudiante=? AND rind.rind_nota>rind.rind_nota_original AND rind.institucion=? AND rind.year=?";
+
+        $parametros = [$config['conf_id_institucion'], $year, $idCarga, $estudiante, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me elimina la recuperacion del indicador de una carga en un periodo para un estudiante
+     * @param array             $config
+     * @param string            $idIndicador
+     * @param string            $estudiante
+     * @param string            $idCarga
+     * @param int               $periodo
+     * @param string            $yearBd
+    **/
+    public static function eliminarRecuperacionIndicadorPeriodo ( 
+        array   $config,  
+        string  $idIndicador,  
+        string  $estudiante,  
+        string  $idCarga,  
+        int     $periodo,  
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $estudiante, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me guarda la recuperación de un indicador
+     * @param PDO       $conexionPDO
+     * @param array     $config
+    **/
+    public static function guardarRecuperacionIndicador (
+        PDO     $conexionPDO, 
+        array   $config,
+        string  $estudiante,  
+        string  $carga,
+        string  $nota,
+        string  $idIndicador,
+        int     $periodo,
+        string  $valor,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_indicadores_recuperacion');
+
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_indicadores_recuperacion(rind_id, rind_fecha_registro, rind_estudiante, rind_carga, rind_nota, rind_indicador, rind_periodo, rind_actualizaciones, rind_nota_original, rind_nota_actual, rind_valor_indicador_registro, institucion, year)VALUES(?, now(), ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)";
+
+        $parametros = [$codigo, $estudiante, $carga, $nota, $idIndicador, $periodo, $nota, $nota, $valor, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me actualiza la recuperación de un indicador
+     * @param array     $config
+    **/
+    public static function actualizarRecuperacionIndicador (
+        array   $config,
+        string  $estudiante,  
+        string  $carga,
+        string  $nota,
+        string  $idIndicador,
+        int     $periodo,
+        string  $valor,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota_anterior=rind_nota, rind_nota=?, rind_actualizaciones=rind_actualizaciones+1, rind_ultima_actualizacion=now(), rind_nota_actual=?, rind_tipo_ultima_actualizacion=1, rind_valor_indicador_actualizacion=? WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
+
+        $parametros = [$nota, $nota, $valor, $carga, $estudiante, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 
 }

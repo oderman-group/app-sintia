@@ -111,7 +111,7 @@ $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 					}
 					while ($act = mysqli_fetch_array($activivdades, MYSQLI_BOTH)) {
 						//Consulta de recuperaciones si ya la tienen puestas.
-						$consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_estudiante=" . $fila['mat_id'] . " AND rind_indicador='" . $act['ipc_indicador'] . "' AND rind_periodo='" . $per . "' AND rind_carga='" . $mat1['car_id'] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+						$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $act['ipc_indicador'], $fila['mat_id'], $mat1['car_id'], $per);
 						$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 
 						$notaRecuperacion = 0;

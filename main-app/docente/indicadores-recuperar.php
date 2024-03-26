@@ -149,7 +149,7 @@ $calificacion = mysqli_fetch_array($consultaCalificaciones, MYSQLI_BOTH);
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 
 														//Consulta de recuperaciones si ya la tienen puestas.
-														$consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_estudiante='".$resultado['mat_id']."' AND rind_indicador='".$idR."' AND rind_periodo='".$periodoConsultaActual."' AND rind_carga='".$cargaConsultaActual."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+														$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $idR, $resultado['mat_id'], $cargaConsultaActual, $periodoConsultaActual);
 														$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 														
 

@@ -7,6 +7,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 
@@ -18,11 +19,8 @@ if (!empty($_GET['idIndicador'])) {
 $indicadoresDatos = Indicadores::consultaIndicadorPeriodo($conexion, $config, $idIndicador, $cargaConsultaActual, $periodoConsultaActual);
 
 //"Borramos" la actividad
-try{
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar la actividad de carga: ".$cargaConsultaActual.", del P: ".$periodoConsultaActual."' WHERE act_id='".base64_decode($_GET["idR"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
+Actividades::eliminarActividadCalificaciones($config, $cargaConsultaActual, $periodoConsultaActual, base64_decode($_GET["idR"]));
+
 //Si los valores de las calificaciones son de forma automática.
 
 if($datosCargaActual['car_configuracion']==0){

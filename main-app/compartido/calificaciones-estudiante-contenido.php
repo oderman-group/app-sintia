@@ -2,6 +2,7 @@
 	require_once(ROOT_PATH."/main-app/class/Boletin.php");
 	require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 	require_once(ROOT_PATH."/main-app/class/Grados.php");
+	require_once(ROOT_PATH."/main-app/class/Actividades.php");
 	$usrEstud="";
 	if(!empty($_GET["usrEstud"])){ $usrEstud=base64_decode($_GET["usrEstud"]);}
 ?>
@@ -301,18 +302,10 @@
                                                 <tbody>
 
 													<?php
-
-													 $filtro = '';
-
-													 if(!empty($_GET["indicador"])){$filtro .= " AND act_id_tipo='".base64_decode($_GET["indicador"])."'";}
-
-													 $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades 
-
-													 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'
-
-													 AND act_registrada=1 AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} $filtro
-
-													 ");
+													$consulta = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+													if(!empty($_GET["indicador"])){
+														$consulta = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+													}
 
 													 $contReg = 1;
 

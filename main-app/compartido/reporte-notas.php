@@ -7,7 +7,8 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 	exit();
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 $carga='';
 $grado='';
 $grupo='';
@@ -52,7 +53,7 @@ include("../compartido/head-informes.php") ?>
   $consultaNumEstudiantes =Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"",$cursoActual,$grupo);
 	$numEstudiantes = mysqli_num_rows($consultaNumEstudiantes);
   $cont=1;
-  $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$carga."' AND act_estado=1 AND act_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+  $consulta = Actividades::consultaActividadesCarga($config, $carga, $periodo);
   while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
   $consultaInd=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_id='".$resultado['act_id_tipo']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 	$ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);

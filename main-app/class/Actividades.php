@@ -1,6 +1,7 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 require_once(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 
 class Actividades {
@@ -541,5 +542,533 @@ class Actividades {
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }
+    }
+
+    /**
+     * Este metodo me trae la información generar de las actividades, estudiante, carga y acudientes para el envio de correos informativos automaticos
+     */
+    public static function consultaGenerarParaCorreos(
+        string $idEstudiante, 
+        string $idActivida,
+        int    $idInstitucion,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades ac 
+			INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=ac.act_id_carga AND car.institucion=? AND car.year=?
+			INNER JOIN ".BD_ACADEMICA.".academico_materias AS mate ON mate.mat_id=car_materia AND mate.institucion=? AND mate.year=?
+			INNER JOIN ".BD_ACADEMICA.".academico_matriculas AS matri ON matri.mat_id=? AND matri.institucion=? AND matri.year=?
+			INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat_acudiente AND uss.institucion=? AND uss.year=?
+			INNER JOIN ".BD_ACADEMICA.".academico_grados AS gra ON gra.gra_id=matri.mat_grado AND gra.institucion=? AND gra.year=?
+			WHERE ac.act_id=? AND ac.institucion=? AND ac.year=?";
+
+        $parametros = [$idInstitucion, $year, $idInstitucion, $year, $idEstudiante, $idInstitucion, $year, $idInstitucion, $year, $idInstitucion, $year, $idActivida, $idInstitucion, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae la actividad registrada del indicador de una carga
+     */
+    public static function consultaActividadesCargaIndicador(
+        array  $config,
+        string $idIndicador, 
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_registrada=1 AND act_estado=1 AND act_periodo=? AND act_id_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae todas la actividad del indicador de una carga
+     */
+    public static function traerActividadesCargaIndicador(
+        array  $config,
+        string $idIndicador, 
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND act_periodo=? AND act_id_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae las actividad registradas de una carga en un periodo
+     */
+    public static function consultaActividadesCarga(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_registrada=1 AND act_estado=1 AND act_periodo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae todas la actividad de una carga en un periodo
+     */
+    public static function traerActividadesCarga(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND act_periodo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae todas la actividad diferentes de la actual en una carga en un periodo
+     */
+    public static function consultaActividadesDiferentesCarga(
+        array  $config,
+        string $idActividad,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_periodo=? AND act_id!=? AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae todas la actividad de una carga
+     */
+    public static function consultaActividadesTodasCarga(
+        array  $config,
+        string $idCarga,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae el porcentaje de todas las actividades de una carga
+     */
+    public static function consultarPorcentajeActividades(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND act_periodo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae el porcentaje de las actividades registradas de una carga
+     */
+    public static function consultarPorcentajeActividadesRegistradas(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND act_periodo=? AND act_registrada=1 AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae el porcentaje de todas las actividades de una carga
+     */
+    public static function consultarValores(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT
+        (SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_periodo=? AND act_estado=1 AND institucion=? AND year=?),
+        (SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_periodo=? AND act_estado=1 AND institucion=? AND year=?)";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year, $idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae el porcentaje de todas las actividades de una carga
+     */
+    public static function consultarValoresIndicador(
+        array  $config,
+        string $idCarga,
+        string $idIndicador,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT
+        (SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_periodo=? AND act_id_tipo=? AND act_estado=1 AND institucion=? AND year=?),
+        (SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_periodo=? AND act_estado=1 AND institucion=? AND year=?)";
+
+        $parametros = [$idCarga, $periodo, $idIndicador, $config['conf_id_institucion'], $year, $idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae el porcentaje de todas las actividades del indicador de una carga
+     */
+    public static function consultarPorcentajeActividadesIndicador(
+        array  $config,
+        string $idCarga,
+        string $idIndicador,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga=? AND act_estado=1 AND act_periodo=? AND act_id_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me marca una actividad como registrada
+     */
+    public static function marcarActividadRegistrada(
+        array  $config,
+        string $idActivida,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() WHERE act_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idActivida, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina una actividad desde directivos
+     */
+    public static function eliminarActividadDirectivo(
+        array  $config,
+        string $idActivida,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='DIRECTIVO " . $_SESSION["id"] . ": Eliminar indicadores de carga: " . $idCarga . ", del P: " . $periodo . "' WHERE act_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idActivida, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me me actualiza el valor de las actividades de un indicador
+     */
+    public static function actualizarValorActividadesIndicador(
+        array  $config,
+        string $valor,
+        string $idIndicador,
+        string $idCarga,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_valor=? 
+        WHERE act_id_tipo=? AND act_periodo=? AND act_id_carga=? AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$valor, $idIndicador, $periodo, $idCarga, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me me actualiza una actividad automatica
+     */
+    public static function actualizarActividadesCalificacionAutomatica(
+        array  $config,
+        string $contenido,
+        string $fecha,
+        string $evidencia,
+        string $idIndicador,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_descripcion=?, act_fecha=?, act_id_tipo=?, act_fecha_modificacion=now(), act_id_evidencia=? 
+		WHERE act_id=?  AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$contenido, $fecha, $idIndicador, $evidencia, $idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me me actualiza una actividad manual
+     */
+    public static function actualizarActividadesCalificacionManual(
+        array  $config,
+        string $contenido,
+        string $fecha,
+        string $valor,
+        string $idIndicador,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_descripcion=?, act_fecha=?, act_id_tipo=?, act_valor=?, act_fecha_modificacion=now() 
+		WHERE act_id=?  AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$contenido, $fecha, $idIndicador, $valor, $idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me trae los datos de una actividad
+     */
+    public static function consultarDatosActividades(
+        array  $config,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id=? AND act_estado=1 AND institucion=? AND year=?";
+
+        $parametros = [$idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae los datos de una actividad y un indicador
+     */
+    public static function consultarDatosActividadesIndicador(
+        array  $config,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_actividades aa 
+        INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON ai.ind_id=aa.act_id_tipo AND ai.institucion=? AND ai.year=?
+        WHERE aa.act_id=? AND aa.act_estado=1 AND aa.institucion=? AND aa.year=?";
+
+        $parametros = [$config['conf_id_institucion'], $year, $idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me elimina una actividad
+     */
+    public static function eliminarActividadCalificaciones(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar la actividad de carga: ".$idCarga.", del P: ".$periodo."' WHERE act_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina una actividad al imortar informacion
+     */
+    public static function eliminarActividadImportarCalificaciones(
+        array  $config,
+        string $idCarga,
+        int    $periodoImportar,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Importar indicadores de carga: ".$idCarga.", del P: ".$periodoImportar." al P: ".$periodo."' WHERE act_id_carga=? AND act_periodo=? AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina una actividad al eliminar un indicador
+     */
+    public static function eliminarActividadCalificacionesIndicador(
+        array  $config,
+        string $idCarga,
+        string $idActivida,
+        int    $periodo,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=0, act_fecha_eliminacion=now(), act_motivo_eliminacion='Eliminar indicadores de carga: ".$idCarga.", del P: ".$periodo."' WHERE act_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idActivida, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me guarda una actividad automatica
+    **/
+    public static function guardarCalificacionAutomatica (
+        PDO     $conexionPDO, 
+        array   $config,
+        string  $contenido,  
+        string  $fecha,
+        string  $carga,
+        string  $idIndicador,
+        int     $periodo,
+        string  $compartir,
+        string  $evidencia,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_actividades');
+
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividades(act_id, act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_fecha_creacion, act_id_evidencia, institucion, year)"." VALUES(?, ?, ?, ?, ?, ?, 1, ?, now(), ?, ?, ?)";
+
+        $parametros = [$codigo, $contenido, $fecha, $periodo, $idIndicador, $carga, $compartir, $evidencia, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me guarda una actividad manual
+    **/
+    public static function guardarCalificacionManual (
+        PDO     $conexionPDO, 
+        array   $config,
+        string  $contenido,  
+        string  $fecha,
+        string  $carga,
+        string  $idIndicador,
+        int     $periodo,
+        string  $compartir,
+        string  $valor,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_actividades');
+
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividades(act_id, act_descripcion, act_fecha, act_periodo, act_id_tipo, act_id_carga, act_estado, act_compartir, act_valor, act_fecha_creacion, institucion, year)"." VALUES(?, ?, ?, ?, ?, ?, 1, ?, ?, now(), ?, ?)";
+
+        $parametros = [$codigo, $contenido, $fecha, $periodo, $idIndicador, $carga, $compartir, $valor, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 }

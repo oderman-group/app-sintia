@@ -6,20 +6,14 @@ include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 
 $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
 
-$consultaCalificacion=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id='".$idR."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-$calificacion = mysqli_fetch_array($consultaCalificacion, MYSQLI_BOTH);
+$calificacion = Actividades::consultarDatosActividades($config, $idR);
 
-$consultaValor=mysqli_query($conexion, "SELECT
-(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-(SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})
-");
-$valores = mysqli_fetch_array($consultaValor, MYSQLI_BOTH);
+$valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
 ?>
 
@@ -71,9 +65,7 @@ $porcentajeRestante = 100 - $valores[0];
 								<header class="panel-heading panel-heading-purple"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?> </header>
 								<div class="panel-body">
 										<?php
-										$enComun = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades
-										WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id!='".$idR."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-										");
+										$enComun = Actividades::consultaActividadesDiferentesCarga($config, $idR, $cargaConsultaActual, $periodoConsultaActual);
 										while($regComun = mysqli_fetch_array($enComun, MYSQLI_BOTH)){
 										?>
 										<p><a href="calificaciones-editar.php?idR=<?=base64_encode($regComun['act_id']);?>"><?=$regComun['act_descripcion'];?></a></p>

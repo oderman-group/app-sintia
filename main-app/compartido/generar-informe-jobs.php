@@ -11,6 +11,7 @@ require_once(ROOT_PATH."/main-app/class/Sysjobs.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/servicios/GradoServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 $parametrosBuscar = array(
 	"tipo" =>JOBS_TIPO_GENERAR_INFORMES,
 	"estado" =>JOBS_ESTADO_PENDIENTE
@@ -141,27 +142,19 @@ $mensaje="";
 			WHERE aac.cal_id_estudiante='".$estudiante."' AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$anio}
 			GROUP BY aa.act_id_tipo");
 			$sumaNotaIndicador = 0; 
-			$cont=1;
 			while($notInd = mysqli_fetch_array($notasPorIndicador, MYSQLI_BOTH)){
-				$consultaNum=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
-				WHERE rind_carga='".$carga."' AND rind_estudiante='".$estudiante."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."' AND institucion={$config['conf_id_institucion']} AND year={$anio}");
+				$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $notInd[1], $estudiante, $carga, $periodo, $anio);
 				$num = mysqli_num_rows($consultaNum);
 
 				
 				$sumaNotaIndicador  += $notInd[0];
 				
 				if($num==0){
-					$codigo=Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_indicadores_recuperacion').$cont;
-
-					mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_carga='".$carga."' AND rind_estudiante='".$estudiante."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."' AND institucion={$config['conf_id_institucion']} AND year={$anio}");
+					Indicadores::eliminarRecuperacionIndicadorPeriodo($config, $notInd[1], $estudiante, $carga, $periodo, $anio);				
 					
-					
-					mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_indicadores_recuperacion(rind_id, rind_fecha_registro, rind_estudiante, rind_carga, rind_nota, rind_indicador, rind_periodo, rind_actualizaciones, rind_nota_original, rind_nota_actual, rind_valor_indicador_registro, institucion, year)VALUES('".$codigo."', now(), '".$estudiante."', '".$carga."', '".$notInd[0]."', '".$notInd[1]."', '".$periodo."', 0, '".$notInd[0]."', '".$notInd[0]."', '".$notInd[2]."', {$config['conf_id_institucion']}, {$anio})");
-					
-					$cont++;
+					Indicadores::guardarRecuperacionIndicador($conexionPDO, $config, $estudiante, $carga, $notInd[0], $notInd[1], $periodo, $notInd[2], $anio);
 				}else{
-					mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota_anterior=rind_nota, rind_nota='".$notInd[0]."', rind_actualizaciones=rind_actualizaciones+1, rind_ultima_actualizacion=now(), rind_nota_actual='".$notInd[0]."', rind_tipo_ultima_actualizacion=1, rind_valor_indicador_actualizacion='".$notInd[2]."' WHERE rind_carga='".$carga."' AND rind_estudiante='".$estudiante."' AND rind_periodo='".$periodo."' AND rind_indicador='".$notInd[1]."' AND institucion={$config['conf_id_institucion']} AND year={$anio}");
-					
+					Indicadores::actualizarRecuperacionIndicador($config, $estudiante, $carga, $notInd[0], $notInd[1], $periodo, $notInd[2], $anio);
 				}
 			}
 			$sumaNotaIndicador = round($sumaNotaIndicador,1); 
