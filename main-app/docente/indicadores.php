@@ -80,7 +80,79 @@
 											
 										});
 									</script>
-								
+									<script type="text/javascript">
+									function recargarInclude() {
+										var xhr = new XMLHttpRequest();
+										xhr.open("GET", "listar-indicadores-tbody.php", true);
+										xhr.onreadystatechange = function() {
+											if (xhr.readyState == 4 && xhr.status == 200) {
+												document.getElementById("contenido-dinamico").innerHTML = xhr.responseText;
+											}
+										};
+										xhr.send();
+									}
+
+									function generarIndicadores() {
+										var cantidad = document.getElementById('maxidicadores').value;
+										var asignatura = document.getElementById('asignatura').value;
+										var curso = document.getElementById('curso').value;
+										if (parseInt(cantidad) > 0 && parseInt(cantidad) < 8) {
+											var buscar = "regalame una lista de " + cantidad + " indicadores para la asignatura " + asignatura + " del curso " + curso + " en colombia el resultado en formato JSON, con un nodo con nombre indicadores y cada indicador en un nodo con nombre descripcion";
+											document.getElementById("gifCarga").style.display = "block";
+											var data = {
+												'metodo': '<?php echo TEXT_TO_TEXT ?>',
+												'valor': buscar
+											};
+											console.log(buscar);
+											fetch('../openAi/metodos.php', {
+													method: 'POST', // or 'PUT'
+													body: JSON.stringify(data), // data can be `string` or {object}!
+													headers: {
+														'Content-Type': 'application/json'
+													},
+												})
+												.then((res) => res.json())
+												.catch((error) => console.error('Error:', error))
+												.then(
+													function(response) {
+														{
+															console.log(response);
+															if (response["ok"]) {
+																var data = {
+																	'valor': response["valor"]
+																};
+																fetch('indicadores-guardar-fetch.php', {
+																	method: 'POST', // or 'PUT'
+																	body: JSON.stringify(data), // data can be `string` or {object}!
+																	headers: {
+																		'Content-Type': 'text/html'
+																	},
+																}).then(
+																	function(response) {
+																		console.log(response);
+																		recargarInclude();
+																																			
+																		document.getElementById("porcentajeActual").innerText= "100%";
+																		document.getElementById("gifCarga").style.display = "none";
+																	}
+																);
+															}
+														};
+													});
+
+										}else{
+											Swal.fire({
+													position: "top-end",
+													icon: "warning",
+													title: 'El rango  para crear indicadores es de una cantidad entre 0 a 8',
+													showConfirmButton: false,
+													timer: 150000
+												});
+										}
+
+
+									}
+								</script>
 							
                             </div>
                         </div>

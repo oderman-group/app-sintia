@@ -67,6 +67,11 @@ if (!empty($_POST["imagenCursoAi"])) {
 	$cloudFilePath = FILE_CURSOS.$archivo;// Ruta en el almacenamiento en la nube de Firebase donde deseas almacenar el archivo
 	file_put_contents($destino, $imagen);
 	$storage->getBucket()->upload(fopen($destino, 'r'), ['name' => $cloudFilePath	]);
+	try{
+        mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_grados SET gra_cover_image = '" . $archivo. "' WHERE gra_id='" . $_POST["id_curso"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+    } catch (Exception $e) {
+        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+    }
 	unlink($destino);
 }
 if (!empty($_FILES['imagenCurso']['name'])) {

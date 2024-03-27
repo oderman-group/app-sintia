@@ -209,30 +209,10 @@ require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php"); ?>
 			}
 		}
 	}
-
-	.gif-carga {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-color: rgba(255, 255, 255, 0.7);
-		/* Fondo semitransparente */
-		z-index: 9999;
-		/* Asegura que esté por encima de otros elementos */
-		display: none;
-		/* Por defecto oculto */
-	}
-
-	.gif-carga img {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-	}
 </style>
+<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 <div id="gifCarga" class="gif-carga">
-	<img  height="200px" width="200px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+	<img alt="Cargando...">
 </div>
 <!-- END HEAD -->
 <?php include("../compartido/body.php"); ?>
@@ -388,7 +368,6 @@ require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php"); ?>
 		?>
 	</div>
 	<script type="application/javascript">
-		
 		function buscarCurso(valor) {
 			document.getElementById("gifCarga").style.display = "block";
 			var url = "fetch-buscar-curso.php";
