@@ -11,7 +11,7 @@ require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
     }
     $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
-    $imgModulo = !empty($resultado['mod_imagen']) ? "../files/modulos/".$resultado['mod_imagen'] : "../files/modulos/default.png";
+    $imgModulo = !empty($resultado['mod_imagen']) && file_exists("../files/modulos/".$resultado['mod_imagen']) ? "../files/modulos/".$resultado['mod_imagen'] : "../files/modulos/default.png";
     $descripcionModulo = !empty($resultado['mod_description']) ? $resultado['mod_description'] : "";
 
     try {

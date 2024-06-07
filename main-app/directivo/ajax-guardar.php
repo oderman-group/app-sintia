@@ -5,15 +5,12 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0178';
 
 include("../compartido/historial-acciones-guardar.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 $mensajeNot = 'Hubo un error al guardar las cambios';
 //Bloquear y desbloquear
 if($_POST["operacion"]==1){
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado='".$_POST["valor"]."' WHERE uss_id='".$_POST["idR"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	UsuariosPadre::bloquearUsuario($config, $_POST["idR"], $_POST["valor"]);
 
 	$mensajeNot = 'El usuario ha cambiado de estado correctamente.';
 }

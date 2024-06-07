@@ -4,7 +4,6 @@ require_once(ROOT_PATH."/main-app/class/Clases.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'CM0015';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 $usuariosClase = new Usuarios;
 $idCom = !empty($_GET['idCom']) ? base64_decode($_GET['idCom']) : "";
 

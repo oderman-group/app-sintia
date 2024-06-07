@@ -8,11 +8,9 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
-$consultaDatos = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra
-LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id='" . $_POST["grupo"] . "' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-WHERE gra_id='" . $_POST["grado"] . "' AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}");
-$datos = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
+$datos = Grados::traerGradosGrupos($config, $_REQUEST["grado"], $_REQUEST["grupo"]);
 ?>
 
 <head>

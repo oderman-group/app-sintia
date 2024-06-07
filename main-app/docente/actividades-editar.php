@@ -140,11 +140,9 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
 
 										
 										
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+											 <?php 
+                            				$botones = new botonesGuardar("actividades.php",Modulos::validarPermisoEdicion()); ?>
 
-										<a href="#" name="actividades.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 										</form>
 
 

@@ -82,13 +82,7 @@ if(!Modulos::validarPermisoEdicion()){
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" id="select_usuario" name="usuario" required <?=$disabledPermiso;?>>
                                                     <?php
-                                                        try{
-                                                            $datosConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss
-                                                            INNER JOIN ".BD_ADMIN.".general_perfiles ON pes_id=uss_tipo
-                                                            WHERE uss_id='".$resultado['user']."' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}");
-                                                        } catch (Exception $e) {
-                                                            include("../compartido/error-catch-to-report.php");
-                                                        }
+                                                        $datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['user']."'");
                                                         while($resultadosDatos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
                                                     ?>
                                                             <option value="<?=$resultadosDatos['uss_id'];?>" <?php if($resultado['user']==$resultadosDatos['uss_id']){ echo "selected";}?>><?=UsuariosPadre::nombreCompletoDelUsuario($resultadosDatos)." (".$resultadosDatos['pes_nombre'].")";?></option>
@@ -361,13 +355,8 @@ if(!Modulos::validarPermisoEdicion()){
                                             </div>
                                         </div>
 										
-                                        <div class="text-right">
-                                            <a href="javascript:void(0);" name="factura-recurrente.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                            <?php if(Modulos::validarPermisoEdicion()){?>
-                                                <button type="submit" class="btn  btn-info">
-                                                    <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                                                </button>
-                                            <?php }?>
+                                        <div class="text-left">
+                                            <?php $botones = new botonesGuardar("factura-recurrente.php",Modulos::validarPermisoEdicion()); ?>
                                         </div>
                                     </form>
                                 </div>

@@ -2,6 +2,7 @@
 <?php $idPaginaInterna = 'DT0022';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -92,11 +93,7 @@ if(!Modulos::validarPermisoEdicion()){
                                                 <select class="form-control  select2" name="areaM" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
-                                                    try{
-                                                        $cAreas=mysqli_query($conexion, "SELECT ar_id, ar_nombre, ar_posicion FROM ".BD_ACADEMICA.".academico_areas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]};");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $cAreas = Areas::traerAreasInstitucion($config);
                                                     while($rA=mysqli_fetch_array($cAreas, MYSQLI_BOTH)){
                                                         echo'<option value="'.$rA["ar_id"].'">'.$rA["ar_nombre"].'</option>';
                                                         }
@@ -115,11 +112,7 @@ if(!Modulos::validarPermisoEdicion()){
                                         <?php } ?>
 
 
-                                        <?php if(Modulos::validarPermisoEdicion()){?>
-                                            <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-                                        <?php }?>
+                                        <?php $botones = new botonesGuardar("asignaturas.php",Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

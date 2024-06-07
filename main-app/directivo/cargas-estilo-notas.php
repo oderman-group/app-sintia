@@ -2,6 +2,7 @@
 <?php $idPaginaInterna = 'DT0044';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -75,12 +76,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </thead>
                                                 <tbody>
 													<?php
-                                                    try{
-                                                        $consulta = mysqli_query($conexion, "SELECT catn_id, catn_nombre FROM ".BD_ACADEMICA.".academico_categorias_notas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]};");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
 													$contReg = 1;
+                                                    $consulta = categoriasNota::traerCategoriasNotasInstitucion($config);
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
 													<tr>
@@ -96,7 +93,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0045'])){?>
-                                                                        <li><a href="cargas-estilo-notas-especifica.php?id=<?=base64_encode($resultado[0]);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                        <li><a href="cargas-estilo-notas-especifica.php?id=<?=base64_encode($resultado['catn_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
 																		<?php } if(Modulos::validarSubRol(['DT0154'])){?>
                                                                         <li>
                                                                             <a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','cargas-estilo-notas-eliminar.php?idR=<?=base64_encode($resultado["catn_id"]);?>')">Eliminar</a>                                                                            
@@ -114,7 +111,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </tbody>
                                             </table>
                                             </div>
-                                        </div>
+                                            <?php $botones = new botonesGuardar("cargas.php",false); ?>
+                                        </div>                                       
                                     </div>
                                 </div>
 								

@@ -1,29 +1,16 @@
-<?php include("session.php");?>
-<?php include("../../config-general/config.php");?>
 <?php
-include("../modelo/conexion.php");
+include("session.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Ausencias.php");
 
-try{
-	$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_ausencias WHERE aus_id_clase='".$_POST["codNota"]."' AND aus_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}	
-
-$num = mysqli_num_rows($consulta);
-$rC = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-if($num==0){
-	$codigo=Utilidades::generateCode("AUS");
-	try{
-		mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_ausencias WHERE aus_id_clase='".$_POST["codNota"]."' AND aus_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
+$rC = Ausencias::traerAusenciasClaseEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
+if(empty($rC)){
+	if(!empty($rC['aus_id'])){
+		Ausencias::eliminarAusenciasID($config, $rC['aus_id']);
 	}
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_ausencias(aus_id, aus_id_estudiante, aus_ausencias, aus_id_clase, institucion, year)VALUES('".$codigo."', '".$_POST["codEst"]."','".$_POST["nota"]."','".$_POST["codNota"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}	
+
+	Ausencias::guardarAusencia($conexionPDO, "aus_id_estudiante, aus_ausencias, aus_id_clase, institucion, year, aus_id", [$_POST["codEst"],$_POST["nota"],$_POST["codNota"], $config['conf_id_institucion'], $_SESSION["bd"]]);
+	
 	try{
 		mysqli_query($conexion, "UPDATE academico_clases SET cls_registrada=1, cls_fecha_registro=now() WHERE cls_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 	} catch (Exception $e) {
@@ -31,11 +18,9 @@ if($num==0){
 	}	
 	
 }else{
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_ausencias SET aus_ausencias='".$_POST["nota"]."' WHERE aus_id='".$rC['aus_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}	
+	$update = "aus_ausencias=".$_POST["nota"]."";
+	Ausencias::actualizarAusencia($config, $rC['aus_id'], $update);
+	
 	try{
 		mysqli_query($conexion, "UPDATE academico_clases SET cls_registrada=1, cls_fecha_modificacion=now() WHERE cls_id='".$_POST["codNota"]."'");
 	} catch (Exception $e) {

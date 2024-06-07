@@ -5,14 +5,10 @@
 <?php include("../compartido/head.php");?>
 <?php
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
-$consultaValores=mysqli_query($conexion, "SELECT
-(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-(SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})
-");
-$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
+$valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
 ?>
 </head>
@@ -94,35 +90,19 @@ $porcentajeRestante = 100 - $valores[0];
 			</thead>
 			<tbody>
 				<?php
-					$consulta = mysqli_query($conexion, "SELECT aa.id_nuevo AS id_nuevo_act, aa.*, ai.* FROM ".BD_ACADEMICA.".academico_actividades aa
-					INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON ai.ind_id=aa.act_id_tipo AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$_SESSION["bd"]}
-					WHERE aa.act_id_carga='".$cargaConsultaActual."' AND aa.act_periodo='".$periodoConsultaActual."' AND aa.act_estado=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}
-					");
+					$consulta = Calificaciones::consultarActividadesIndicador($config, $cargaConsultaActual, $periodoConsultaActual);
 					$contReg = 1;
 					$porcentajeActual = 0;
 					$cantidadEstudiantes = Estudiantes::contarEstudiantesParaDocentes($filtroDocentesParaListarEstudiantes);
 					while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 					$bg = '';
-					if($datosCargaActual['gra_tipo'] == GRADO_INDIVIDUAL) {
-						$consultaNumEstudiante=mysqli_query($conexion, "SELECT count(*) FROM ".BD_ACADEMICA.".academico_calificaciones aac
-						INNER JOIN ".$baseDatosServicios.".mediatecnica_matriculas_cursos ON matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."'
-						INNER JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat_eliminado=0 AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_id=aac.cal_id_estudiante AND mat_id=matcur_id_matricula AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-						WHERE aac.cal_id_actividad='".$resultado['act_id']."' AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]}
-						");
-					} else {
-						$consultaNumEstudiante=mysqli_query($conexion, "SELECT count(*) FROM ".BD_ACADEMICA.".academico_calificaciones aac
-						INNER JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 AND mat_id=aac.cal_id_estudiante AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-						WHERE aac.cal_id_actividad='".$resultado['act_id']."' AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]}
-						");
-					}
-					$numerosEstudiantes = mysqli_fetch_array($consultaNumEstudiante, MYSQLI_BOTH);
+					$numerosEstudiantes = Calificaciones::consultaNumEstudiantesCalificados($config, $datosCargaActual, $resultado['act_id']);
 					if($numerosEstudiantes[0]<$cantidadEstudiantesParaDocentes) $bg = '#FCC';
 						
 						$porcentajeActual +=$resultado['act_valor'];
 						
 						if($datosCargaActual['car_evidencia']==1){
-						$consultaEvidencia=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_evidencias WHERE evid_id='".$resultado['act_id_evidencia']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-						$evidencia = mysqli_fetch_array($consultaEvidencia, MYSQLI_BOTH);
+							$evidencia = Calificaciones::traerDatosEvidencias($config, $resultado['act_id_evidencia']);
 						}
 					?>
 				

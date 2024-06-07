@@ -32,7 +32,7 @@ include("head.php");
     }
     $resultado = Estudiantes::obtenerDatosEstudiante($ref, $year);
     $acudiente1 = UsuariosPadre::sesionUsuario($resultado['mat_acudiente']);
-    $acudiente2 = UsuariosPadre::sesionUsuario($resultado['mat_acudiente2']);
+    $acudiente2 = !empty($resultado['mat_acudiente2']) ? UsuariosPadre::sesionUsuario($resultado['mat_acudiente2']) : array();
     $consultaTipo=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_id='".$resultado['mat_tipo']."'");
     $tipo = mysqli_fetch_array($consultaTipo, MYSQLI_BOTH);
 ?>

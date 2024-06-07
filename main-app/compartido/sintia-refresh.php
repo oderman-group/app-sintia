@@ -19,14 +19,8 @@ WHERE ins_id='".$config['conf_id_institucion']."' AND ins_enviroment='".ENVIROME
 $datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
 $_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
 
-$arregloModulos = array();
-$modulosSintia = mysqli_query($conexion, "SELECT mod_id, mod_nombre FROM ".$baseDatosServicios.".modulos
-INNER JOIN ".$baseDatosServicios.".instituciones_modulos ON ipmod_institucion='".$config['conf_id_institucion']."' AND ipmod_modulo=mod_id
-WHERE mod_estado=1");
-while($modI = mysqli_fetch_array($modulosSintia, MYSQLI_BOTH)){
-    $arregloModulos [$modI['mod_id']] = $modI['mod_nombre'];
-}
-
+    
+$arregloModulos = Modulos::consultarModulosIntitucion($conexion, $config['conf_id_institucion']);
 $_SESSION["modulos"] = $arregloModulos;
 
 $rst_usr = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_id='".$_SESSION["id"]."'");

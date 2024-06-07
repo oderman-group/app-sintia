@@ -18,6 +18,8 @@ require_once(ROOT_PATH."/main-app/class/Sysjobs.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 require ROOT_PATH.'/librerias/Excel/vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 $parametrosBuscar = array(
@@ -83,6 +85,7 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 		$acudientesCreados       = array();
 		$acudientesExistentes    = array();
 		$acudientesNoCreados     = array();
+		$contE=1;
 		while ($f <= $numFilas) {
 			/*
 			***************ACUDIENTE********************
@@ -105,9 +108,8 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 					$acudientesExistentes["FILA_".$f] = $datosAcudienteExistente['uss_usuario'];
 				} else {
 					if(!empty($datosAcudiente['uss_nombre'])) {
-						$idAcudiente=Utilidades::generateCode("USS");
 						try{
-							mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, institucion, year) VALUES ('".$idAcudiente."', '".$datosAcudiente['uss_usuario']."', '".$datosAcudiente['uss_clave']."', '".$datosAcudiente['uss_tipo']."', '".$datosAcudiente['uss_nombre']."', 1, {$config['conf_id_institucion']}, {$anio})");
+							$idAcudiente=UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_idioma, institucion, year, uss_id", [$datosAcudiente['uss_usuario'], $datosAcudiente['uss_clave'], $datosAcudiente['uss_tipo'], $datosAcudiente['uss_nombre'], 1, $config['conf_id_institucion'], $anio]);
 						} catch (Exception $e) {
 							SysJobs::actualizarMensaje($resultadoJobs['job_id'],$intento,$e->getMessage());
 						}
@@ -155,16 +157,11 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 			$genero = $tiposGenero[$arrayIndividual['mat_genero']];
 			$grado = "";
 			if(!empty($arrayIndividual['mat_grado'])) {
-				try{
-					$consulta= mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados 
-								WHERE gra_nombre='".$arrayIndividual['mat_grado']."' AND institucion={$config['conf_id_institucion']} AND year={$anio}");
-				} catch (Exception $e) {
-					SysJobs::actualizarMensaje($resultadoJobs['job_id'],$intento,$e->getMessage());
-				}
-				$num = mysqli_num_rows($consulta);
-				if($num > 0){
-					$datos=mysqli_fetch_array($consulta, MYSQLI_BOTH);
+				$datos = Grados::obtenerGradoPorNombre($config, $arrayIndividual['mat_grado'], $anio);
+				if(!empty($datos['gra_id'])){
 					$grado = $datos['gra_id'];
+				}else{
+					SysJobs::actualizarMensaje($resultadoJobs['job_id'],$intento,"No se encontro el curso");
 				}
 			}
 			$grupo = 1;
@@ -229,8 +226,8 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 						}
 						//Actualizamos el acudiente y los datos del formulario
 						try{
-							mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_matricula=mat_matricula $camposActualizar
-									WHERE mat_id='".$datosEstudianteExistente['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$anio}");
+							$update = "mat_matricula=mat_matricula {$camposActualizar}";
+							Estudiantes::actualizarMatriculasPorId($config, $datosEstudianteExistente['mat_id'], $update, $anio);
 						} catch (Exception $e) {
 							SysJobs::actualizarMensaje($resultadoJobs['job_id'],$intento,$e->getMessage());
 						}
@@ -275,20 +272,21 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 						$email = strtolower($arrayIndividual['mat_email']);
 					}
 					$arrayTodos[$f] = $arrayIndividual;
-
-					$idUsuarioEstudiante = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'usuarios');
+					
 					try{
 						$responsableRegistro = 0;
 						if(!empty($_SESSION["id"])) {
 							$responsableRegistro = $_SESSION["id"];
 						}
-						mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro, uss_intentos_fallidos, uss_tipo_documento, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, institucion, year) VALUES ('".$idUsuarioEstudiante."', '".$arrayIndividual['mat_documento']."', '".$clavePorDefectoUsuarios."', 4, '".$arrayIndividual['mat_nombres']."', 0, 1, 0, now(), '".$responsableRegistro."', 0, '".$tipoDocumento."', '".$arrayIndividual['mat_primer_apellido']."', '".$arrayIndividual['mat_segundo_apellido']."', '".$arrayIndividual['mat_nombre2']."', '".$arrayIndividual['mat_documento']."', {$config['conf_id_institucion']}, {$anio})");
+						$idUsuarioEstudiante = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_idioma, uss_bloqueado, uss_fecha_registro, uss_responsable_registro, uss_intentos_fallidos, uss_tipo_documento, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, institucion, year, uss_id", [$arrayIndividual['mat_documento'], $clavePorDefectoUsuarios, 4, $arrayIndividual['mat_nombres'], 0, 1, 0, date("Y-m-d H:i:s"), $responsableRegistro, 0, $tipoDocumento, $arrayIndividual['mat_primer_apellido'], $arrayIndividual['mat_segundo_apellido'], $arrayIndividual['mat_nombre2'], $arrayIndividual['mat_documento'], $config['conf_id_institucion'], $anio]);
 					} catch (Exception $e) {
 						SysJobs::actualizarMensaje($resultadoJobs['job_id'],$intento,$e->getMessage());
 					}
 					
-					$codigoMAT = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas');
+					$codigoMAT = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas').$contE;
 					$sql .= "('".$codigoMAT."', '".$arrayIndividual['mat_matricula']."', NOW(), '".$arrayIndividual['mat_primer_apellido']."', '".$arrayIndividual['mat_segundo_apellido']."', '".$arrayIndividual['mat_nombres']."', '".$grado."', '".$idUsuarioEstudiante."', '".$idAcudiente."', '".$arrayIndividual['mat_documento']."', '".$tipoDocumento."', '".$grupo."', '".$arrayIndividual['mat_direccion']."', '".$genero."', '".$fNacimiento."', '".$arrayIndividual['mat_barrio']."', '".$arrayIndividual['mat_celular']."', '".$email."', '".$estrato."', '".$arrayIndividual['mat_tipo_sangre']."', '".$arrayIndividual['mat_eps']."', '".$arrayIndividual['mat_nombre2']."', {$config['conf_id_institucion']}, {$anio}),";
+
+					$contE++;
 					
 					//Borramos si hay alguna asociación igual y creamos la nueva
 					try{

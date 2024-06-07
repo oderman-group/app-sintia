@@ -3,19 +3,15 @@ include("session-compartida.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'CM0042';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
-try{
-    mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
+$update = "
     uss_celular='" . $_POST["celular"] . "', 
     uss_institucion='" . $_POST["institucion"] . "', 
     uss_institucion_municipio='" . $_POST["instMunicipio"] . "',
-    uss_solicitar_datos=0, 
-    uss_ultima_actualizacion=now()
-
-    WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
+    uss_solicitar_datos=0
+";
+UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 
 try{
     $datosUsuario = UsuariosPadre::sesionUsuario($_SESSION["id"]);

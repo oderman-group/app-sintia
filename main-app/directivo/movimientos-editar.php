@@ -82,18 +82,10 @@ if(!Modulos::validarPermisoEdicion() || $resultado['fcu_anulado']==1 || $resulta
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Usuario</label>
                                             <div class="col-sm-4">
-                                                <?php
-                                                try{
-                                                    $datosConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss
-                                                    INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo
-                                                    WHERE uss_id='".$resultado['fcu_usuario']."' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}");
-                                                } catch (Exception $e) {
-                                                    include("../compartido/error-catch-to-report.php");
-                                                }
-                                                ?>
                                                 <select class="form-control  select2" id="select_usuario" name="usuario" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
+                                                    $datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['fcu_usuario']."'");
                                                     while($resultadosDatos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
                                                     ?>
                                                         <option value="<?=$resultadosDatos['uss_id'];?>" <?php if($resultado['fcu_usuario']==$resultadosDatos['uss_id']){ echo "selected";}?>><?=UsuariosPadre::nombreCompletoDelUsuario($resultadosDatos)." (".$resultadosDatos['pes_nombre'].")";?></option>
@@ -367,13 +359,9 @@ if(!Modulos::validarPermisoEdicion() || $resultado['fcu_anulado']==1 || $resulta
                                             </div>
                                         </div>
 										
-                                        <div class="text-right">
-                                            <a href="javascript:void(0);" name="movimientos.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                            <?php if(Modulos::validarPermisoEdicion() && $resultado['fcu_anulado']==0 && $resultado['fcu_status']==POR_COBRAR && $abonos==0){?>
-                                                <button type="submit" class="btn  btn-info">
-                                                    <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                                                </button>
-                                            <?php }?>
+                                        <div class="text-left" >                                            
+                                            <?php                                             
+                            				$botones = new botonesGuardar("movimientos.php",Modulos::validarPermisoEdicion() && $resultado['fcu_anulado']==0 && $resultado['fcu_status']==POR_COBRAR && $abonos==0,"Importar saldos"); ?>
                                         </div>
                                     </form>
                                 </div>

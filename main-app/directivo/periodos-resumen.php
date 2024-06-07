@@ -6,6 +6,7 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Boletin.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -192,14 +193,8 @@ function niv(enviada){
 															 $decimal = $porcentajeGrado/100;
 															 
 															//LAS CALIFICACIONES
-															try{
-																$notasConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_estudiante='".$resultado['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-															} catch (Exception $e) {
-																include("../compartido/error-catch-to-report.php");
-															}
-															$notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
-															$numN = mysqli_num_rows($notasConsulta);
-															if($numN){
+															$notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $resultado['mat_id'], $cargaConsultaActual);
+															if(!empty($notasResultado)){
 																$n++;
 																$definitiva += $notasResultado['bol_nota']*$decimal;
 															}

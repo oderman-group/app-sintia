@@ -171,10 +171,8 @@ require_once(ROOT_PATH."/main-app/class/Actividades.php");?>
                                             </div>
                                         </div>
 										
-										<a href="#" name="actividades.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-										<button type="submit" class="btn  btn-info">
-											<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-										</button>
+										<?php 
+                            				$botones = new botonesGuardar("actividades.php",Modulos::validarPermisoEdicion()); ?>
 
 										
 										</form>

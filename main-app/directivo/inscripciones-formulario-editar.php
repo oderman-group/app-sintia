@@ -217,10 +217,7 @@ $datosAsp = $asp->fetch();
                                             </div>
                                         </div>
 
-                                        <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-										<a href="javascript:void(0);" name="inscripciones.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+                                        <?php $botones = new botonesGuardar("inscripciones.php",Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

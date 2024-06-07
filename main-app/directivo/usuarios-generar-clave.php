@@ -1,33 +1,21 @@
 <?php
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 $numUsuarios = (count($_POST["usuario"]));
 $contUsuarios = 0;
 
 while ($contUsuarios < $numUsuarios) {
     if($_POST["tipo"]==1){
-
         $validarClave = Usuarios::validarClave($_POST["clave"]);
         if(!$validarClave){
             echo '<script type="text/javascript">window.location.href="usuarios-generar-clave-filtros.php?error=5";</script>';
             exit();
         }
-        
-        try{
-            mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1('".$_POST["clave"]."') WHERE uss_tipo='".$_POST["usuario"][$contUsuarios]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-
+        UsuariosPadre::actualizarUsuariosClaveManualPorTipoUsuario($config, $_POST["clave"], $_POST["usuario"][$contUsuarios]);
     }elseif($_POST["tipo"]==2){
-
-        try{
-            mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1(uss_usuario) WHERE uss_tipo='".$_POST["usuario"][$contUsuarios]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-
+        UsuariosPadre::actualizarUsuariosClavePorTipoUsuario($config, $_POST["usuario"][$contUsuarios]);
     }
     $contUsuarios++;
 }

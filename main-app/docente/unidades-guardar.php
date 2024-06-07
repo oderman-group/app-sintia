@@ -17,7 +17,7 @@
 	}
 	require_once(ROOT_PATH."/main-app/class/Unidades.php");
 
-	Unidades::guardarUnidades($conexion, $config, $cargaConsultaActual, $periodoConsultaActual, $_POST);
+	Unidades::guardarUnidades($conexion, $conexionPDO, $config, $cargaConsultaActual, $periodoConsultaActual, $_POST);
 	
 	include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="clases.php?carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'&tab=2";</script>';

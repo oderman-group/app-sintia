@@ -9,6 +9,8 @@ if(isset($_SESSION["id"]) and $_SESSION["id"]!=""){
 	$_SESSION["id"] = $_SESSION["id"];
 }
 
+date_default_timezone_set("America/Bogota");//Zona horaria
+
 //seleccionamos la base de datos
 if (empty($_SESSION["inst"])) {
 	session_destroy();

@@ -50,8 +50,7 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
                     $contReg = 1;
                     $colorNota = "black";
                     while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                        $consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_estudiante='".$resultado['mat_id']."' AND bol_periodo='".$periodoConsultaActual."' AND bol_carga='".$cargaConsultaActual."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                    $notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
+                    $notas = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoConsultaActual, $resultado['mat_id'], $cargaConsultaActual);
                     $definitiva = isset($notas['bol_nota']) ? $notas['bol_nota'] : null;
                     if($definitiva<$config[5] and $definitiva!="") $colorNota = $config[6]; elseif($definitiva>=$config[5]) $colorNota = $config[7]; else {$colorNota = 'black'; $definitiva='';} 
 

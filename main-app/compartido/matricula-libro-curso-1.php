@@ -7,14 +7,15 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 	exit();
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-require_once("../class/Estudiantes.php");
-require_once("../class/Plataforma.php");
-require_once("../class/Usuarios.php");
-require_once("../class/UsuariosPadre.php");
-require_once("../class/servicios/GradoServicios.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Plataforma.php");
+require_once(ROOT_PATH."/main-app/class/Usuarios.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/servicios/GradoServicios.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $Plataforma = new Plataforma;
 
 $year=$_SESSION["bd"];
@@ -131,10 +132,7 @@ $contadorPeriodos=0;
 //CONSULTA QUE ME TRAE EL DESEMPEÑO
 $consultaDesempeno = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year);
 //CONSULTA QUE ME TRAE LAS areas DEL ESTUDIANTE
-$consultaMatAreaEst=mysqli_query($conexion, "SELECT ar_id, car_ih FROM ".BD_ACADEMICA.".academico_cargas car
-INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car.car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id= am.mat_area AND ar.institucion={$config['conf_id_institucion']} AND ar.year={$year}
-WHERE car_curso='".$idGrado."' AND car_grupo='".$idGrupo."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year} GROUP BY ar.ar_id ORDER BY ar.ar_posicion ASC;");
+$consultaMatAreaEst = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $idGrado, $idGrupo, $year);
 $numeroPeriodos=$config["conf_periodo"];
 
 $nombreInforme = "REGISTRO DE VALORACIÓN";
@@ -334,10 +332,7 @@ if (array_key_exists(10, $_SESSION["modulos"]) && $matriculadosDatos["mat_tipo_m
 		if(!empty($datosEstudianteActualMT)){
 
 //CONSULTA QUE ME TRAE LAS areas DEL ESTUDIANTE
-$consultaMatAreaEst=mysqli_query($conexion, "SELECT ar_id, car_ih FROM ".BD_ACADEMICA.".academico_cargas car
-INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car.car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id= am.mat_area AND ar.institucion={$config['conf_id_institucion']} AND ar.year={$year}
-WHERE  car_curso='" . $datosEstudianteActualMT["matcur_id_curso"] . "' AND car_grupo='" . $datosEstudianteActualMT["matcur_id_grupo"] . "' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year} GROUP BY ar.ar_id ORDER BY ar.ar_posicion ASC;");
+$consultaMatAreaEst = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $year);
 while($fila = mysqli_fetch_array($consultaMatAreaEst, MYSQLI_BOTH)){
 
 $condicion="1,2,3,4";
@@ -510,9 +505,7 @@ if($periodoActual==4 && $numfilasNotArea > 0){
 	<tr>
 		<td align="center">
 			<?php
-				$consultaRector= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$informacion_inst["info_rector"]."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-				$rector = mysqli_fetch_array($consultaRector, MYSQLI_BOTH);
-				// $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+				$rector = UsuariosPadre::sesionUsuario($informacion_inst["info_rector"], "", $config['conf_id_institucion'], $year);
 				$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
 				if(!empty($rector["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $rector['uss_firma'])){
 					echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="200"><br>';
@@ -529,9 +522,7 @@ if($periodoActual==4 && $numfilasNotArea > 0){
 		</td>
 		<td align="center">
 			<?php
-				$consultaSecretario= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$informacion_inst["info_secretaria_academica"]."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-				$secretario = mysqli_fetch_array($consultaSecretario, MYSQLI_BOTH);
-				// $secretario = Usuarios::obtenerDatosUsuario($informacion_inst["info_secretaria_academica"]);
+				$secretario = UsuariosPadre::sesionUsuario($informacion_inst["info_secretaria_academica"], "", $config['conf_id_institucion'], $year);
 				$nombreScretario = UsuariosPadre::nombreCompletoDelUsuario($secretario);
 				if(!empty($secretario["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $secretario['uss_firma'])){
 					echo '<img src="../files/fotos/'.$secretario["uss_firma"].'" width="100"><br>';

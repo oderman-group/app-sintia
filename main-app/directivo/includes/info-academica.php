@@ -4,13 +4,11 @@
 			<div class="form-group row">
 				<label class="col-sm-3 control-label">Curso <span style="color: red;">(*)</span></label>
 				<div class="col-sm-9">
-					<?php
-					$cv = mysqli_query($conexion, "SELECT * FROM " . BD_ACADEMICA . ".academico_grados
-													WHERE gra_estado=1 AND gra_tipo='" . GRADO_GRUPAL . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-					?>
 					<select class="form-control" name="grado" <?= $disabledPermiso; ?>>
 						<option value="">Seleccione una opción</option>
-						<?php while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
+						<?php 
+						$cv = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
+						while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
 							if ($rv['gra_id'] == $datosEstudianteActual['mat_grado'])
 								echo '<option value="' . $rv['gra_id'] . '" selected>' . $rv['gra_nombre'] . '</option>';
 							else

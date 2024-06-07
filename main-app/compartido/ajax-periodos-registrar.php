@@ -1,11 +1,13 @@
 <?php
 session_start();
 include("../../config-general/config.php");
-require_once("../class/Estudiantes.php");
-require_once("../class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
-$consultaDatosCargas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_id='".$_POST["carga"]."' AND car_activa=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-$datosCargaActual = mysqli_fetch_array($consultaDatosCargas, MYSQLI_BOTH);
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/Boletin.php");
+
+$datosCargaActual = CargaAcademica::traerCargaMateriaPorID($config, $_POST["carga"]);
 ?>
 <?php
 if(trim($_POST["nota"])==""){
@@ -14,19 +16,19 @@ if(trim($_POST["nota"])==""){
 }
 if($_POST["nota"]>$config[4]) $_POST["nota"] = $config[4]; if($_POST["nota"]<1) $_POST["nota"] = 1;
 include("../modelo/conexion.php");
-$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_estudiante='".$_POST["codEst"]."' AND bol_carga='".$_POST["carga"]."' AND bol_periodo='".$_POST["per"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 
-$num = mysqli_num_rows($consulta);
-$rB = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-//echo $num; exit();
-if($num==0){
-	mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_id='".$rB['bol_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$rB = Boletin::traerNotaBoletinCargaPeriodo($config, $_POST["per"], $_POST["codEst"], $_POST["carga"]);
+
+if(empty($rB['bol_id'])){
+	if(!empty($rB['bol_id'])){
+		Boletin::eliminarNotaBoletinID($config, $rB['bol_id']);
+	}
 	
-	$codigoBOL=Utilidades::generateCode("BOL");
-	mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_boletin(bol_id, bol_carga, bol_estudiante, bol_periodo, bol_nota, bol_tipo, bol_observaciones, institucion, year)VALUES('".$codigoBOL."', '".$_POST["carga"]."','".$_POST["codEst"]."','".$_POST["per"]."','".$_POST["nota"]."',1, 'Colocada desde la parte Directiva.', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+	Boletin::guardarNotaBoletin($conexionPDO, "bol_carga, bol_estudiante, bol_periodo, bol_nota, bol_tipo, bol_observaciones, institucion, year, bol_id", [$_POST["carga"],$_POST["codEst"],$_POST["per"],$_POST["nota"], 1, 'Colocada desde la parte Directiva.', $config['conf_id_institucion'], $_SESSION["bd"]]);
 	
 }else{
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_boletin SET bol_nota='".$_POST["nota"]."', bol_observaciones='Colocada desde la parte Directiva', bol_tipo=1 WHERE bol_id='".$rB['bol_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	$update = "bol_nota_anterior=bol_nota, bol_nota='".$_POST["nota"]."', bol_observaciones='Colocada desde la parte Directiva.', bol_tipo=1";
+	Boletin::actualizarNotaBoletin($config, $rB['bol_id'], $update);
 	
 }	
 
@@ -39,14 +41,12 @@ if($num==0){
 		
 		$estudiante = Estudiantes::obtenerDatosEstudiante($_POST["codEst"]);
 		$nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($estudiante);
-		$consultaMateria=mysqli_query($conexion, "SELECT car_id, car_materia, mat_id, mat_nombre FROM ".BD_ACADEMICA.".academico_cargas car, ".BD_ACADEMICA.".academico_materias am WHERE car_id='".$datosCargaActual['car_id']."' AND am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]} AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]}");
-		$materia = mysqli_fetch_array($consultaMateria, MYSQLI_BOTH);
 
 		$acudiente = UsuariosPadre::sesionUsuario($usuarioResponsable['upe_id_usuario']);
 		//include("../compartido/email-alertas.php");
 		$fin =  '<html><body>';
 						$fin .= '
-						Nos complace informarle que su acudido <b>'.$nombreCompleto.'</b>, ha recuperado el periodo '.$_POST["per"].' de la asignatura de <b>'.$materia[3].'</b>. Por favor ingrese a la plataforma SINTIA&reg; para revisarla.<br>
+						Nos complace informarle que su acudido <b>'.$nombreCompleto.'</b>, ha recuperado el periodo '.$_POST["per"].' de la asignatura de <b>'.$datosCargaActual['mat_nombre'].'</b>. Por favor ingrese a la plataforma SINTIA&reg; para revisarla.<br>
 						Le sugerimos que felicite a su acudido y lo motive para siga obteniendo buenas calificaciones.<br>
 						<b>RESALATAR LAS COSAS BUENAS DE LAS PERSONAS AUNQUE SEAN POCAS LOS MOTIVA A MEJORAR INCONSCIENTEMENTE</b>.<br>
 						<table width="80%" align="center" border="1" style="font-family:Verdana, Arial, Helvetica, sans-serif;" rules="groups" cellpadding="3" cellspacing="3">
@@ -74,7 +74,7 @@ if($num==0){
 					
 					<tr>
 						<td style="background:#ffd300; color:#FFFFFF; text-align:right;">ASIGNATURA</td>
-						<td style="background:#F6F6F6; color:#000000; text-align:left;">&nbsp;'.$materia[3].'</td>
+						<td style="background:#F6F6F6; color:#000000; text-align:left;">&nbsp;'.$datosCargaActual['mat_nombre'].'</td>
 					</tr>
 					
 					<tr>

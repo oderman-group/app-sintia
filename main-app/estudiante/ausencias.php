@@ -6,7 +6,8 @@
 require_once(ROOT_PATH."/main-app/class/Boletin.php");?>
 <?php //include("verificar-pagina-bloqueada.php");?>
 <?php include("../compartido/head.php");
-require_once(ROOT_PATH."/main-app/class/Grados.php");?>
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/Ausencias.php");?>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -48,24 +49,23 @@ require_once(ROOT_PATH."/main-app/class/Grados.php");?>
 													$porcentajeGrado=$periodosCursos['gvp_valor'];
 												}
 												
-												$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM ".BD_ACADEMICA.".academico_boletin 
-												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
+												$notapp = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $datosEstudianteActual['mat_id'], $cargaConsultaActual);
 												$porcentaje=0;
-												if(!empty($notapp[0])){
-													$porcentaje = ($notapp[0]/$config['conf_nota_hasta'])*100;
+												if(!empty($notapp['bol_nota'])){
+													$porcentaje = ($notapp['bol_nota']/$config['conf_nota_hasta'])*100;
 												}
-												if(!empty($notapp[0]) && $notapp[0] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger'; else $colorGrafico = 'info';
+												if(!empty($notapp['bol_nota']) && $notapp['bol_nota'] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger'; else $colorGrafico = 'info';
 												if($i==$periodoConsultaActual) $estiloResaltadoP = 'style="color: orange;"'; else $estiloResaltadoP = '';
 											?>
 												<p>
 													<a href="<?=$_SERVER['PHP_SELF'];?>?carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($i);?>" <?=$estiloResaltadoP;?>><?=strtoupper($frases[27][$datosUsuarioActual['uss_idioma']]);?> <?=$i;?> (<?=$porcentajeGrado;?>%)</a>
 													
 													<?php
-														if(!empty($notapp[0]) and $config['conf_sin_nota_numerica']!=1){
+														if(!empty($notapp['bol_nota']) and $config['conf_sin_nota_numerica']!=1){
 
-														$notaPorPeriodo=$notapp[0];
+														$notaPorPeriodo=$notapp['bol_nota'];
 														if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp[0]);
+															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp['bol_nota']);
 															$notaPorPeriodo= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 														}
 													?>
@@ -127,8 +127,7 @@ require_once(ROOT_PATH."/main-app/class/Grados.php");?>
 													 WHERE cls_id_carga='".$cargaConsultaActual."' AND cls_periodo='".$periodoConsultaActual."' AND  cls_estado=1 AND cls_disponible=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 														$contReg=1;
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														$ausencia = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_ausencias 
-														WHERE aus_id_clase='".$resultado['cls_id']."' AND aus_id_estudiante='".$datosEstudianteActual['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
+														$ausencia = Ausencias::traerAusenciasClaseEstudiante($config, $resultado['cls_id'], $datosEstudianteActual['mat_id']);
 														$totalAusencia=0;
 														if(!empty($ausencia['aus_ausencias'])){
 															$totalAusencia=$ausencia['aus_ausencias'];

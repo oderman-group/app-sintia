@@ -7,6 +7,7 @@ if($_GET["periodo"]==""){
 include("../directivo/session.php");
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 ?>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 <?php
@@ -178,7 +179,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
     	<td align="center"><?php if($aus[0]>0){ echo $aus[0]."/".$fila_mat[3];} else{ echo "0.0/".$fila_mat[3];};?></td>
 	</tr>
 <?php
-  	$consulta_2 =  mysqli_query($conexion, "SELECT ind_id, ind_nombre, ipc_valor, ipc_periodo FROM ".BD_ACADEMICA.".academico_indicadores ai, ".BD_ACADEMICA.".academico_indicadores_carga aic WHERE ai.ind_id=aic.ipc_indicador AND aic.ipc_periodo='".$periodoActual."' AND aic.ipc_carga='".$fila[3]."' AND aic.institucion={$config['conf_id_institucion']} AND aic.year={$_SESSION["bd"]} AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$_SESSION["bd"]}");
+	$consulta_2 = Indicadores::traerIndicadoresCargaPeriodo($fila[3], $periodoActual);
 	$num = mysqli_num_rows($consulta);
 	if ($num>0) // si tiene indicadores 
 	{
@@ -186,7 +187,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 		while ($indicador = mysqli_fetch_array($consulta_2, MYSQLI_BOTH)){ //While indicador
 ?>  
 	 <tr style="font-size:8px; text-align:justify; background:<?=$bgC;?>;"> 
-         <td align="justify"><?php echo $ind.". ".$indicador[1];?></td>
+         <td align="justify"><?php echo $ind.". ".$indicador['ind_nombre'];?></td>
          <td></td>
          <td class="a"></td>
          <td></td>
@@ -199,7 +200,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 <?php 
 		$ind ++;
 		$a = $_GET['id'];
-		$reg = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones aac, ".BD_ACADEMICA.".academico_actividades aa WHERE aac.cal_id_actividad in(SELECT act_id FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$fila[3]."' and act_id_tipo='".$indicador[0]."' and act_periodo=".$periodoActual." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}) and aac.cal_id_estudiante=".$_GET['id']." and aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]} AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}");
+		$reg = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones aac, ".BD_ACADEMICA.".academico_actividades aa WHERE aac.cal_id_actividad in(SELECT act_id FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$fila[3]."' and act_id_tipo='".$indicador['ind_id']."' and act_periodo=".$periodoActual." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}) and aac.cal_id_estudiante=".$_GET['id']." and aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]} AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}");
 		$num = mysqli_num_rows($reg);
     	$contador = 0;
 		while ($nota = mysqli_fetch_array($reg, MYSQLI_BOTH)){ //While de notas

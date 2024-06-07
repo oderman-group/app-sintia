@@ -279,13 +279,8 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                             </div>
                                         </div>
 										
-                                        <div class="text-right">
-                                            <a href="javascript:void(0);" name="factura-recurrente.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                            <?php if(Modulos::validarPermisoEdicion()){?>
-                                                <button type="submit" class="btn  btn-info">
-                                                    <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                                                </button>
-                                            <?php }?>
+                                        <div class="text-left">
+                                            <?php $botones = new botonesGuardar("factura-recurrente.php",Modulos::validarPermisoEdicion()); ?>
                                         </div>
                                     </form>
                                 </div>

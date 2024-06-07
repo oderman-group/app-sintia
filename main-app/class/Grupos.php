@@ -1,6 +1,7 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 class Grupos {
 
     /**
@@ -21,14 +22,14 @@ class Grupos {
      * ```
      */
     public static function obtenerDatosGrupos($grupo = ''){
-        global $conexion, $config;
-        $resultado = [];
-        try {
-            $resultado = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE gru_id='".$grupo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");            
-        } catch (Exception $e){
-            echo "Excepción capturada: ".$e->getMessage();
-            exit();
-        }
+        global $config;
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE gru_id=? AND institucion=? AND year=?";
+
+        $parametros = [$grupo, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
         return $resultado;
     }
 
@@ -71,14 +72,14 @@ class Grupos {
      * ```
      */
     public static function listarGrupos(){
-        global $conexion, $config;
-        $resultado = null;
-        try {
-            $resultado = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e){
-            echo "Excepción capturada: ".$e->getMessage();
-            exit();
-        }
+        global $config;
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion=? AND year=?";
+
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
         return $resultado;
     }
     
@@ -90,14 +91,13 @@ class Grupos {
      * @return mysqli_result $consulta
      */
     public static function traerGrupos(mysqli $conexion, array $config){
-        try{
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion=? AND year=?";
 
-        return $consulta;
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
     
     /**
@@ -109,28 +109,12 @@ class Grupos {
      */
     public static function guardarGrupos(mysqli $conexion, PDO $conexionPDO, array $config, array $POST){
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_grupos');
-        try{
-            mysqli_query(
-                $conexion,
-                "INSERT INTO ".BD_ACADEMICA.".academico_grupos (
-                    gru_id, 
-                    gru_codigo, 
-                    gru_nombre, 
-                    institucion, 
-                    year
-                )	
-                VALUES(
-                    '".$codigo."', 
-                    '" . $POST["codigoG"] . "',
-                    '" . $POST["nombreG"] . "', 
-                    {$config['conf_id_institucion']}, 
-                    {$_SESSION["bd"]}
-                )"
-            );
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_grupos (gru_id, gru_codigo, gru_nombre, institucion, year) VALUES (?, ?, ?, ?, ?)";
+
+        $parametros = [$codigo, $POST["codigoG"], $POST["nombreG"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
     
     /**
@@ -140,18 +124,30 @@ class Grupos {
      * @param array $POST
      */
     public static function actualizarGrupos(mysqli $conexion, array $config, array $POST){
-        try{
-            mysqli_query(
-                $conexion,
-                "UPDATE ".BD_ACADEMICA.".academico_grupos SET
-                    gru_codigo =".$POST['codigoG'].", 
-                    gru_nombre  ='".$POST['nombreG']."'
-                    WHERE gru_id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"
-            );
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_grupos SET gru_codigo=?, gru_nombre=? WHERE gru_id=? AND institucion=? AND year=?";
+
+        $parametros = [$POST['codigoG'], $POST['nombreG'], $POST["id"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina todos los grupos de una institucion
+     * @param string $idInstitucion
+     * @param string $yearBd
+    **/
+    public static function eliminarTodosGrupos (
+        string  $idInstitucion,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion=? AND year=?";
+
+        $parametros = [$idInstitucion, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 
 }

@@ -3,9 +3,14 @@ session_start();
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 
 $conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
-$institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones
-INNER JOIN instituciones_modulos ON ipmod_institucion=ins_id AND ipmod_modulo=8 
-INNER JOIN {$baseDatosAdmisiones}.config_instituciones ON cfgi_id_institucion=ins_id AND cfgi_inscripciones_activas=1 AND cfgi_year = ".date("Y")." 
+$institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT ins.*, cfgi.* FROM instituciones ins
+INNER JOIN instituciones_modulos ON ipmod_institucion=ins_id AND ipmod_modulo=".MODULO_ADMISIONES." 
+INNER JOIN ".BD_ADMISIONES.".config_instituciones cfgi ON cfgi_id_institucion=ins_id AND cfgi_inscripciones_activas=1 AND cfgi_year = ".date("Y")." 
+WHERE ins_estado = 1 AND ins_enviroment='".ENVIROMENT."'
+UNION
+SELECT ins.*, cfgi.* FROM instituciones ins
+INNER JOIN instituciones_paquetes_extras ON paqext_institucion=ins_id AND paqext_id_paquete=".MODULO_ADMISIONES." AND paqext_tipo='".MODULOS."'
+INNER JOIN ".BD_ADMISIONES.".config_instituciones cfgi ON cfgi_id_institucion=ins_id AND cfgi_inscripciones_activas=1 AND cfgi_year = ".date("Y")." 
 WHERE ins_estado = 1 AND ins_enviroment='".ENVIROMENT."'");
 $institucionesCantidad = mysqli_num_rows($institucionesConsulta);
 ?>

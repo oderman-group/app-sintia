@@ -35,8 +35,9 @@
 							</thead>
 							<tbody>
 								<?php
+									require_once(ROOT_PATH."/main-app/class/Areas.php");
 									if (!empty($_GET['asignacion'])){
-										require_once(ROOT_PATH . "/main-app/class/PreguntaGeneral.php");
+										require_once(ROOT_PATH."/main-app/class/PreguntaGeneral.php");
 										
 										$idA= base64_decode($_GET['asignacion']);
 										$obligatorias= base64_decode($_GET['obligatorias']);
@@ -62,16 +63,13 @@
 											
 											switch ($resultado['epag_tipo']) {
 												case CURSO:
-													$consultaEvaluado = mysqli_query($conexion, "SELECT gra_nombre FROM ".BD_ACADEMICA.".academico_grados
-													WHERE gra_id='".$resultado['epag_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-													$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+													require_once(ROOT_PATH."/main-app/class/Grados.php");
+													$datosEvaluado = Grados::obtenerGrado($resultado['epag_id_evaluado']);
 													$nombreEvaluado = $datosEvaluado['gra_nombre'];
 												break;
 
 												case AREA:
-													$consultaEvaluado = mysqli_query($conexion, "SELECT ar_nombre FROM ".BD_ACADEMICA.".academico_areas
-													WHERE ar_id='".$resultado['epag_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-													$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+													$datosEvaluado = Areas::traerDatosArea($config, $resultado['epag_id_evaluado']);
 													$nombreEvaluado = $datosEvaluado['ar_nombre'];
 												break;
 
@@ -83,9 +81,7 @@
 
 												default:
 													if($resultado['epag_tipo'] == DIRECTIVO || $resultado['epag_tipo'] == DOCENTE) {
-														$consultaEvaluado = mysqli_query($conexion, "SELECT uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 FROM ".BD_GENERAL.".usuarios
-														WHERE uss_id='".$resultado['epag_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-														$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+														$datosEvaluado = UsuariosPadre::sesionUsuario($resultado['epag_id_evaluado']);
 														$nombreEvaluado = UsuariosPadre::nombreCompletoDelUsuario($datosEvaluado);
 													}
 												break;

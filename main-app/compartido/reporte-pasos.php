@@ -1,5 +1,6 @@
 <?php
 include("session-compartida.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 $idPaginaInterna = 'DT0221';
 
 if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol([$idPaginaInterna])){
@@ -79,10 +80,7 @@ include("../compartido/head-informes.php");
       $ordenado = $_GET["orden"]." DESC";
     }
 
-    $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat 
-    LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-    WHERE mat_eliminado=0 AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]} $filtro
-    ORDER BY $ordenado");
+    $consulta = Estudiantes::listarPasosMatricula($config, $filtro, $ordenado);
     while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
       $colorProceso = 'tomato';
       if ($resultado["mat_iniciar_proceso"] == 1) {

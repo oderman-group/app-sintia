@@ -59,7 +59,7 @@ class Servicios
      *
      * @param string $sql Consulta SQL de inserción.
      *
-     * @return int|false ID del último registro insertado o false si hay un error.
+     * @return int|null ID del último registro insertado o false si hay un error.
      */
     public static function insertSql($sql) { // funcion para insertar en una tabla 
         global $conexion;
@@ -67,8 +67,8 @@ class Servicios
             mysqli_query($conexion, $sql);
             return mysqli_insert_id($conexion);
         } catch (Exception $e) {
-            echo "Excepción catpurada: " . $e->getMessage();
-            exit();
+            echo "Excepción catpurada: " . $e->getMessage(); 
+            return null;
         }        
     }
 
@@ -124,23 +124,23 @@ class Servicios
     public static function concatenarWhereAnd($sqlInicial,$parametrosValidos,$parametrosArray)// funcion para concatenar los parametros WHERE o AND en una Consulta
     {
         $contador=0;//contará cuantos parametros validos existen
-        foreach($parametrosValidos as $clave => $parametro){
-            $valor=!empty($parametrosArray[$parametro]) ? $parametrosArray[$parametro] : NULL;
-            if(!is_null($valor)){
-               $contador++;
-               if(is_numeric($valor)) 
-                    $condicion=$parametro." = ".$valor;
-                else
-                    $condicion=$parametro." = '".$valor."'";
-
-                if ($contador == 1) {
-                    $sqlInicial = $sqlInicial . " WHERE ";
-                } else {
-                    $sqlInicial = $sqlInicial . " AND ";
-                }
-                $sqlInicial = $sqlInicial . $condicion;
+        foreach($parametrosArray as $parametro => $valor){
+            if (in_array($parametro, $parametrosValidos)) {
+                if(!is_null($valor)){
+                    $contador++;
+                    if(is_numeric($valor)) 
+                         $condicion=$parametro." = ".$valor;
+                     else
+                         $condicion=$parametro." = '".$valor."'";
+     
+                     if ($contador == 1) {
+                         $sqlInicial = $sqlInicial . " WHERE ";
+                     } else {
+                         $sqlInicial = $sqlInicial . " AND ";
+                     }
+                     $sqlInicial = $sqlInicial . $condicion;
+                 }
             }
-            
         }
         return $sqlInicial." ";
     }

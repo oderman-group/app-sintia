@@ -6,6 +6,7 @@ header("content-disposition: attachment;filename=MatriculasPasoAPaso_" . date("d
 session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 ?>
 
 <html>
@@ -43,10 +44,7 @@ include("../../config-general/consulta-usuario-actual.php");
             $modalidadEstudio = array("", "Virtual", "Presencial- alternancia");
             $estadoMatricula = array("", "Matriculado", "No matriculado", "No matriculado", "No matriculado");
             $cont = 1;
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat 
-            LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=mat.mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-            WHERE  mat.mat_eliminado=0 AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]} 
-            ORDER BY mat.mat_primer_apellido, mat.mat_segundo_apellido");
+            $consulta = Estudiantes::listarPasosMatricula($config);
             while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                 $colorProceso = 'tomato';
                 if ($resultado["mat_iniciar_proceso"] == 1) {

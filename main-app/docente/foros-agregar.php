@@ -72,11 +72,8 @@
 											
 											
 										
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-
-										<a href="#" name="foros.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+                                            <?php 
+                            				$botones = new botonesGuardar("foros.php",Modulos::validarPermisoEdicion()); ?>
 										</form>
 
 

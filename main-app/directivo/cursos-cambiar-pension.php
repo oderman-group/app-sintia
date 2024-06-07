@@ -1,5 +1,6 @@
 <?php
 	include("session.php");
+	require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 	Modulos::validarAccesoDirectoPaginas();
 	$idPaginaInterna = 'DT0211';
@@ -10,11 +11,8 @@
 	}
 	include("../compartido/historial-acciones-guardar.php");
 	
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_grados SET gra_valor_pension=0 WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$update = "gra_valor_pension=0";
+	Grados::actualizarTodosCursos($config, $update);
 	
 	include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="'.$_SERVER['HTTP_REFERER'].'";</script>';

@@ -114,7 +114,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 																	</button>
 																	<ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0042'])){?>
-																		<li><a href="cargas-horarios-editar.php?id=<?=base64_encode($resultado['hor_id']);?>" data-toggle="popover" data-placement="top" data-content="Modificar los datos de la carga" title="Editar Horarios">Editar</a></li>
+																		<li><a href="cargas-horarios-editar.php?id=<?=base64_encode($resultado['hor_id']);?>&idGH=<?=$_GET["id"]?>" data-toggle="popover" data-placement="top" data-content="Modificar los datos de la carga" title="Editar Horarios">Editar</a></li>
 																		<?php } if(Modulos::validarSubRol(['DT0156'])){?>
 																		<li><a href="cargas-horarios-eliminar.php?idH=<?=base64_encode($resultado['hor_id']);?>&idC=<?=base64_encode($resultado['hor_id_carga']);?>" data-toggle="popover" data-placement="top" data-content="Deshabilitar los datos de la carga" title="Eliminar Horarios">Eliminar</a></li>
                                                         				<?php }?>
@@ -127,6 +127,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </tbody>
                                             </table>
                                             </div>
+											<?php $botones = new botonesGuardar("cargas.php",false); ?>
                                         </div>
                                     </div>
                                 </div>

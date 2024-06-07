@@ -2,8 +2,11 @@
 <?php $idPaginaInterna = 'DT0036';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -89,11 +92,7 @@ if(!Modulos::validarPermisoEdicion()){
                                                     <tr>
                                                         <th width="20%">Materia</th>
                                                         <?php
-                                                        try{
-                                                            $cursos = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"); 
-                                                        } catch (Exception $e) {
-                                                            include("../compartido/error-catch-to-report.php");
-                                                        }
+                                                        $cursos = Grados::traerGradosInstitucion($config);
                                                         while($c = mysqli_fetch_array($cursos, MYSQLI_BOTH)){
                                                         ?>
                                                             <th style="font-size:8px; text-align:center;"><?=$c['gra_nombre'];?></th>
@@ -112,27 +111,15 @@ if(!Modulos::validarPermisoEdicion()){
                                                 <tr id="data1" class="odd gradeX">
                                                     <td><?=$m['mat_nombre'];?></td>
                                                     <?php
-                                                    try{
-                                                        $curso = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"); 
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $curso = Grados::traerGradosInstitucion($config);
                                                     while($c = mysqli_fetch_array($curso, MYSQLI_BOTH)){
-                                                        try{
-                                                            $consultaCarga=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$c['gra_id']."' AND car_materia='".$m['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                                        } catch (Exception $e) {
-                                                            include("../compartido/error-catch-to-report.php");
-                                                        }
+                                                        $consultaCarga = CargaAcademica::traerCargasMateriasPorCursoMateria($config, $c['gra_id'], $m['mat_id']);
                                                         $carga = mysqli_fetch_array($consultaCarga, MYSQLI_BOTH);
                                                         if(!empty($carga['car_id'])){
                                                             $ipc = Indicadores::traerRelacionCargaIndicador($conexion, $config, $carga['car_id'], $ind);
                                                         }
                                                         
-                                                        try{
-                                                            $cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$c['gra_id']."' AND car_materia='".$m['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                                        } catch (Exception $e) {
-                                                            include("../compartido/error-catch-to-report.php");
-                                                        }
+                                                        $cargas = CargaAcademica::traerCargasMateriasPorCursoMateria($config, $c['gra_id'], $m['mat_id']);
                                                         $indCreados=0;
                                                         while($cgs = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
                                                             try{
@@ -141,11 +128,8 @@ if(!Modulos::validarPermisoEdicion()){
                                                                 include("../compartido/error-catch-to-report.php");
                                                             }
                                                             $ipcC = mysqli_num_rows($consultaNumIpcC);
-                                                            try{
-                                                                $consultaCalC=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$cgs['car_id']."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
+                                                            
+                                                            $consultaCalC = Actividades::consultaActividadesTodasCarga($config, $cgs['car_id']);
                                                             $calC = mysqli_num_rows($consultaCalC);
                                                             if($ipcC>0 or $calC>0) $indCreados=1;
                                                         }

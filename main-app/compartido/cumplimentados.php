@@ -1,10 +1,10 @@
 <?php
 include("../modelo/conexion.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 ?>
 
 											<?php
-											$cumpleU = mysqli_query($conexion, "SELECT uss_nombre, YEAR(uss_fecha_nacimiento) AS agno, uss_foto, uss_id, uss_mostrar_edad FROM ".BD_GENERAL.".usuarios 
-											WHERE MONTH(uss_fecha_nacimiento)='".date("m")."' AND DAY(uss_fecha_nacimiento)='".date("d")."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
+											$cumpleU = UsuariosPadre::consultarCumplimentados();
 											while($cumple = mysqli_fetch_array($cumpleU, MYSQLI_BOTH)){
 												$edad = date("Y") - $cumple['agno'];
 											?>

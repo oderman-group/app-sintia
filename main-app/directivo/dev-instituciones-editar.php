@@ -27,6 +27,8 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 <link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
 <!--tagsinput-->
 <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
+<!-- data tables -->
+<link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
@@ -57,7 +59,7 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
                 </div>
                 <div class="row">
 
-                    <div class="col-sm-12">
+                    <div class="col-sm-7">
 
                         <div class="panel">
                             <header class="panel-heading panel-heading-purple">Institución</header>
@@ -203,32 +205,13 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
                                                 <option value="">Seleccione una opción</option>
                                                 <?php
                                                 try{
-                                                    $consultaPlan = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".planes_sintia");
+                                                    $consultaPlan = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".planes_sintia WHERE plns_tipo='".PLANES."'");
                                                 } catch (Exception $e) {
                                                     include("../compartido/error-catch-to-report.php");
                                                 }
                                                 while($plan = mysqli_fetch_array($consultaPlan, MYSQLI_BOTH)){
                                                 ?>
                                                 <option value="<?=$plan['plns_id'];?>" <?php if($plan['plns_id']==$datosInstitucion['ins_id_plan']){echo "selected";}?>><?=$plan['plns_nombre']." (".$plan['plns_espacio_gb']."GB)"?></option>
-                                                <?php }?>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group row">
-                                        <label class="col-sm-2 control-label"><?=$frases[402][$datosUsuarioActual['uss_idioma']];?></label>
-                                        <div class="col-sm-10">
-                                            <select class="form-control  select2-multiple" name="modulos[]" multiple>
-                                                <option value="">Seleccione una opción</option>
-                                                <?php
-                                                    try{
-                                                        $consultaModulos = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".modulos");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
-                                                    while($modulos = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)){
-                                                ?>
-                                                <option value="<?=$modulos['mod_id'];?>" <?php if(Modulos::verificarModulosDeInstitucion(base64_decode($_GET["id"]),$modulos['mod_id'])){echo "selected";}?>><?="[{$modulos['mod_id']}] - ".$modulos['mod_nombre'];?></option>
                                                 <?php }?>
                                             </select>
                                         </div>
@@ -258,11 +241,85 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
                                             <textarea cols="80" id="editor1" name="conceptoDeuda" rows="10"><?= $datosInstitucion['ins_concepto_deuda']; ?></textarea>
                                         </div>
                                     </div>
+                                    <select id="moduloSeleccionados" style="width: 100% !important" name="modulos[]" multiple hidden>
+                                        <?php
+                                            try{
+                                                $consultaModulosInstitucion = mysqli_query($conexion, "SELECT ipmod_modulo FROM ".BD_ADMIN.".instituciones_modulos WHERE ipmod_institucion={$datosInstitucion['ins_id']}");
+                                            } catch (Exception $e) {
+                                                include("../compartido/error-catch-to-report.php");
+                                            }
+                                            $checkActivas = mysqli_num_rows($consultaModulosInstitucion);
+                                            while($modulosInstitucion = mysqli_fetch_array($consultaModulosInstitucion, MYSQLI_BOTH)){
+                                        ?>
+                                        <option value="<?=$modulosInstitucion['ipmod_modulo'];?>" id="modulo<?=$modulosInstitucion['ipmod_modulo'];?>" selected><?=$modulosInstitucion['ipmod_modulo'];?></option>
+                                        <?php }?>
+                                    </select>
 
-                                    <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+                                    <?php $botones = new botonesGuardar("dev-modulos.php",Modulos::validarPermisoEdicion()); ?>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-sm-5">
+
+                        <div class="panel">
+                            <header class="panel-heading panel-heading-purple">Modulos</header>
+                            <div class="panel-body">
+                                <div class="card card-topline-purple">
+                                    <div class="card-head">
+                                        <?php
+                                            try{
+                                                $consultaModulos = mysqli_query($conexion, "SELECT * FROM ".BD_ADMIN.".modulos");
+                                            } catch (Exception $e) {
+                                                include("../compartido/error-catch-to-report.php");
+                                            }
+                                        ?>
+                                        <header>Modulos Disponibles ( <label style="font-weight: bold;" id="cantSeleccionadas"></label>/<?= mysqli_num_rows($consultaModulos) ?> )
+                                        </header>
+                                    </div>
+                                    <div class="card-body">
+                                        <div>
+                                            <table id="example3" class="display" name="tabla1" style="width:100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Cod</th>
+                                                        <th>
+                                                            <div class="input-group spinner col-sm-10">
+                                                                <label class="switchToggle">
+                                                                    <input type="checkbox" id="all">
+                                                                    <span class="slider green round"></span>
+                                                                </label>
+                                                            </div>
+                                                        </th>
+                                                        <th>Modulo</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php
+                                                    while ($modulos = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {
+                                                        if (Modulos::validarModulosExtras($conexion, $modulos['mod_id'], base64_decode($_GET["id"]))) { continue; }
+                                                        $cheked = Modulos::verificarModulosDeInstitucion(base64_decode($_GET["id"]),$modulos['mod_id']) ? "checked" : "";
+                                                    ?>
+                                                        <tr>
+                                                            <td><?= $modulos['mod_id']; ?></td>
+                                                            <td>
+                                                                <div class="input-group spinner col-sm-10">
+                                                                    <label class="switchToggle">
+                                                                        <input type="checkbox" class="check" onchange="seleccionarModulo(this)" value="<?= $modulos['mod_id']; ?>" <?= $cheked; ?>>
+                                                                        <span class="slider green round"></span>
+                                                                    </label>
+                                                                </div>
+                                                            </td>
+                                                            <td><?= $modulos['mod_nombre']; ?></td>
+
+                                                        </tr>
+                                                    <?php } ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -275,8 +332,9 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
             ?>
         </div>
         <!-- end page container -->
-        <?php include("../compartido/footer.php"); ?>
     </div>
+    <?php include("../compartido/footer.php"); ?>
+    <script src="../js/Modulos.js" ></script>
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js"></script>
     <script src="../../config-general/assets/plugins/popper/popper.js"></script>
@@ -290,6 +348,10 @@ $datosInstitucion = mysqli_fetch_array($consulta, MYSQLI_BOTH);
     <script src="../../config-general/assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker-init.js" charset="UTF-8"></script>
     <script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
     <script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker-init.js" charset="UTF-8"></script>
+    <!-- data tables -->
+    <script src="../../config-general/assets/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.js"></script>
+    <script src="../../config-general/assets/js/pages/table/table_data.js"></script>
     <!-- Common js-->
     <script src="../../config-general/assets/js/app.js"></script>
     <script src="../../config-general/assets/js/layout.js"></script>

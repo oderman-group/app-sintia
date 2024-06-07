@@ -8,13 +8,23 @@ if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol
 	exit();
 }
 include(ROOT_PATH . "/main-app/compartido/historial-acciones-guardar.php");
-require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/Boletin.php");
 require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
 require_once(ROOT_PATH . "/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $Plataforma = new Plataforma;
+
+$id="";
+if(isset($_REQUEST["id"])){$id=base64_decode($_REQUEST["id"]);}
+$desde="";
+if(isset($_REQUEST["desde"])){$desde=base64_decode($_REQUEST["desde"]);}
+$hasta="";
+if(isset($_REQUEST["hasta"])){$hasta=base64_decode($_REQUEST["hasta"]);}
+$estampilla="";
+if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 ?>
 <!doctype html>
 
@@ -49,18 +59,18 @@ $Plataforma = new Plataforma;
 	$horas[8] = 'OCHO';
 	$horas[9] = 'NUEVE';
 	$horas[10] = 'DIEZ';
-	$restaAgnos = ($_POST["hasta"] - $_POST["desde"]) + 1;
+	$restaAgnos = ($hasta - $desde) + 1;
 	$i = 1;
 
-	$inicio = $_POST["desde"];
+	$inicio = $desde;
 	?>
 	<?php
-	$restaAgnos = ($_POST["hasta"] - $_POST["desde"]) + 1;
+	$restaAgnos = ($hasta - $desde) + 1;
 	$i = 1;
-	$inicio = $_POST["desde"];
+	$inicio = $desde;
 	while ($i <= $restaAgnos) {
 		//SELECCIONO EL ESTUDIANTE, EL GRADO Y EL GRUPO
-		$matricula = Estudiantes::obtenerDatosEstudiante($_POST["id"], $inicio);
+		$matricula = Estudiantes::obtenerDatosEstudiante($id, $inicio);
 		$nombre = Estudiantes::NombreCompletoDelEstudiante($matricula);
 
         $gradoActual = $matricula['mat_grado'];
@@ -112,16 +122,7 @@ $Plataforma = new Plataforma;
 					$materiasPerdidas = 0;
                     while($datosAreas = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)){
 
-                        $consultaMaterias= mysqli_query($conexion,"SELECT car_id, car_ih, car_materia, car_docente, car_director_grupo,
-                        mat_nombre, mat_area, mat_valor,
-                        ar_nombre, ar_posicion
-                        bol_estudiante, bol_periodo, bol_nota,
-                        bol_nota * (mat_valor/100) AS notaArea
-                        FROM ".BD_ACADEMICA.".academico_cargas car
-                        INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$inicio}
-                        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$inicio}
-                        LEFT JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo ='".$config["conf_periodos_maximos"]."' AND bol_estudiante = '".$matricula['mat_id']."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$inicio}
-                        WHERE car_curso = '".$datosAreas['car_curso']."' AND car_grupo = '".$datosAreas['car_grupo']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$inicio} AND am.mat_area = '".$datosAreas['ar_id']."'");
+						$consultaMaterias = CargaAcademica::consultaMaterias($config, $config["conf_periodos_maximos"], $matricula['mat_id'], $datosAreas['car_curso'], $datosAreas['car_grupo'], $datosAreas['ar_id'], $inicio);
                         $notaArea=0;
                         $notaAreasPeriodos=0;
                         while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
@@ -142,8 +143,7 @@ $Plataforma = new Plataforma;
                                         $notaMateriasPeriodosTotal=0;
                                         $ultimoPeriodo = $config["conf_periodos_maximos"];
                                         for($i=1;$i<=$config["conf_periodos_maximos"];$i++){
-											$consultaPeriodos=mysqli_query($conexion,"SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$datosMaterias['car_id']."' AND bol_periodo='".$i."' AND bol_estudiante = '".$matricula['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$inicio}");
-											$datosPeriodos=mysqli_fetch_array($consultaPeriodos, MYSQLI_BOTH);
+											$datosPeriodos = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $matricula['mat_id'], $datosMaterias["car_id"], $inicio);
 											$notaMateriasPeriodos=$datosPeriodos['bol_nota'];
 											$notaMateriasPeriodos=round($notaMateriasPeriodos, 1);
 											$notaMateriasPeriodosTotal+=$notaMateriasPeriodos;
@@ -189,14 +189,7 @@ $Plataforma = new Plataforma;
 								$notaAreasPeriodosTotal=0;
 								$ultimoPeriodoAreas = $config["conf_periodos_maximos"];
 								for($i=1;$i<=$config["conf_periodos_maximos"];$i++){
-									$consultaAreasPeriodos=mysqli_query($conexion,"SELECT mat_valor,
-									bol_estudiante, bol_periodo, bol_nota,
-									SUM(bol_nota * (mat_valor/100)) AS notaArea
-									FROM ".BD_ACADEMICA.".academico_cargas car
-									INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$inicio}
-									INNER JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo='".$i."' AND bol_estudiante = '".$matricula['mat_id']."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$inicio}
-									WHERE am.mat_area = '".$datosAreas['ar_id']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$inicio}
-									GROUP BY am.mat_area");
+									$consultaAreasPeriodos = CargaAcademica::consultaAreasPeriodos($config, $i, $matricula['mat_id'], $datosAreas['ar_id'], $inicio);
 									$datosAreasPeriodos=mysqli_fetch_array($consultaAreasPeriodos, MYSQLI_BOTH);
 									if(!empty($datosAreasPeriodos['notaArea'])) $notaAreasPeriodos=round($datosAreasPeriodos['notaArea'], 1);
 									$notaAreasPeriodosTotal+=$notaAreasPeriodos;
@@ -249,18 +242,7 @@ $Plataforma = new Plataforma;
 									$i++;
 								}
 
-								$consultaMaterias = mysqli_query($conexion, "SELECT mat_valor, mat_nombre, mat_area
-								FROM ".BD_ACADEMICA.".academico_cargas ac
-								INNER JOIN ".BD_ACADEMICA.".academico_materias am ON mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$inicio}
-								WHERE ac.institucion={$config['conf_id_institucion']} AND ac.year={$inicio} AND car_curso='".$gradoActual."' AND car_grupo='".$grupoActual."'
-								AND mat_area IN (
-									SELECT mat_area
-									FROM ".BD_ACADEMICA.".academico_materias
-									WHERE institucion={$config['conf_id_institucion']} AND year={$inicio}
-									GROUP BY mat_area
-									HAVING COUNT(DISTINCT mat_id) > 1
-								)
-								ORDER BY mat_area, mat_valor");
+								$consultaMaterias = CargaAcademica::consultaMateriasAreas($config, $gradoActual, $grupoActual, $inicio);
 								$numMaterias=mysqli_num_rows($consultaMaterias);
 								$areaAnterior = null;
 								$valorAreas = "PORCENTAJES ÁREAS:";
@@ -287,7 +269,7 @@ $Plataforma = new Plataforma;
         </table>
 
 		<?php
-		$nivelaciones = Calificaciones::consultarNivelacionesEstudiante($conexion, $config, $_POST["id"], $inicio);
+		$nivelaciones = Calificaciones::consultarNivelacionesEstudiante($conexion, $config, $id, $inicio);
 		$numNiv = mysqli_num_rows($nivelaciones);
 		if ($numNiv > 0) {
 			echo "El(la) Estudiante niveló las siguientes materias:<br>";
@@ -296,14 +278,13 @@ $Plataforma = new Plataforma;
 			}
 		}
 		// SABER QUE MATERIAS TIENE PERDIDAS
-		$cargasAcademicasC = mysqli_query($conexion, "SELECT car_id FROM " . BD_ACADEMICA . ".academico_cargas WHERE car_curso='" . $matricula["mat_grado"] . "' AND car_grupo='" . $matricula["mat_grupo"] . "' AND institucion={$config['conf_id_institucion']} AND year={$inicio}");
+		$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
 		$materiasPerdidas = 0;
 		$vectorMP = array();
 		$periodoFinal = $config['conf_periodos_maximos'];
 		while ($cargasC = mysqli_fetch_array($cargasAcademicasC, MYSQLI_BOTH)) {
 			//OBTENEMOS EL PROMEDIO DE LAS CALIFICACIONES
-			$consultaBoletinC = mysqli_query($conexion, "SELECT avg(bol_nota) AS promedio, MAX(bol_periodo) AS periodo FROM " . BD_ACADEMICA . ".academico_boletin WHERE bol_estudiante='" . $_POST["id"] . "' AND bol_carga='" . $cargasC["car_id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$inicio}");
-			$boletinC = mysqli_fetch_array($consultaBoletinC, MYSQLI_BOTH);
+			$boletinC = Boletin::traerDefinitivaBoletinCarga($config, $cargasC["car_id"], $id, $inicio);
 			$notaC = round($boletinC['promedio'], 1);
 			if ($notaC < $config[5]) {
 				$vectorMP[$materiasPerdidas] = $cargasC["car_id"];
@@ -319,7 +300,7 @@ $Plataforma = new Plataforma;
 			$m = 0;
 			$niveladas = 0;
 			while ($m < $materiasPerdidas) {
-				$nMP = Calificaciones::validarMateriaNivelada($conexion, $config, $_POST["id"], $vectorMP[$m], $inicio);
+				$nMP = Calificaciones::validarMateriaNivelada($conexion, $config, $id, $vectorMP[$m], $inicio);
 				$numNivMP = mysqli_num_rows($nMP);
 				if ($numNivMP > 0) {
 					$niveladas++;
@@ -353,7 +334,7 @@ $Plataforma = new Plataforma;
 	} ?>
 	<span style="font-size:16px; text-align:justify;">
 		Se expide en <?= ucwords(strtolower($informacion_inst["ciu_nombre"])) ?> el <?= date("d"); ?> de <?= $meses[$mes]; ?> de <?= date("Y"); ?>, con destino al
-		interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark>".$_REQUEST["estampilla"]."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
+		interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark>".$estampilla."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
 	</span>
 
 	<p>&nbsp;</p>

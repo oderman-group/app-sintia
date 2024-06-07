@@ -2,6 +2,7 @@
 <?php $idPaginaInterna = 'DT0200'; ?>
 <?php include("../compartido/historial-acciones-guardar.php"); ?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -56,16 +57,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                       <div class="form-group row">
                                         <label class="col-sm-2 control-label">Curso</label>
                                         <div class="col-sm-8">
-                                            <?php
-                                            try{
-                                                $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal");
-                                            } catch (Exception $e) {
-                                                include("../compartido/error-catch-to-report.php");
-                                            }
-                                            ?>
                                             <select class="form-control  select2" style="width: 810.666px;" name="grado" id="grado" required onchange="habilitarGrupoPeriodo()">
                                                 <option value="">Seleccione una opción</option>
                                                 <?php
+                                                $opcionesConsulta = Grados::traerGradosInstitucion($config);
                                                 while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
                                                     $disabled = '';
                                                     if($opcionesDatos['gra_estado']=='0') $disabled = 'disabled';

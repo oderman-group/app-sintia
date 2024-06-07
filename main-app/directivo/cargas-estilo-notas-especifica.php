@@ -116,6 +116,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </tbody>
                                             </table>
                                             </div>
+                                            <?php $botones = new botonesGuardar("cargas-estilo-notas.php",false); ?>
                                         </div>
                                     </div>
                                 </div>

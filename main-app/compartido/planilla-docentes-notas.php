@@ -10,6 +10,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
 require_once("../class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 ?>
 
 <head>
@@ -50,13 +51,7 @@ require_once(ROOT_PATH."/main-app/class/Boletin.php");
   if (!empty($_REQUEST["periodo"])) {
     $filtro .= " AND car_periodo='" . $_REQUEST["periodo"] . "'";
   }
-  $consultaCargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car
-  INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]} 
-  INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=car_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-  INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=car_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-  INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_docente AND uss_tipo=2 AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-  WHERE car_id=car_id AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]} $filtro");
-
+  $consultaCargas = CargaAcademica::listarCargas($conexion, $config, "", $filtro);
   while ($resultadoCargas = mysqli_fetch_array($consultaCargas, MYSQLI_BOTH)) {
     $materia=strtoupper($resultadoCargas['mat_nombre']);
     $materiaSiglas=strtoupper($resultadoCargas['mat_siglas']);
@@ -150,8 +145,7 @@ require_once(ROOT_PATH."/main-app/class/Boletin.php");
       <?php
         $acomuladoNota=0;
         for($i=1;$i<=4;$i++){
-          $consultaNotas=mysqli_query($conexion,"SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$resultadoCargas['car_id']."' AND bol_estudiante='".$e['mat_id']."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-          $nota=mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
+          $nota = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $e['mat_id'], $resultadoCargas['car_id']);
 
           $notaEstudiante="";
           if(!empty($nota['bol_nota'])){

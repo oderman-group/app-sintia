@@ -179,6 +179,14 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 										<header class="panel-heading panel-heading-green">INFORMES FINANCIEROS</header>
 										<div class="panel-body">
 											<p><a href="../compartido/reporte-movimientos.php" target="_blank">1. Informe de movimientos financieros</a></p>
+											<?php
+												if(Modulos::validarSubRol(['DT0331'])){
+											?>
+												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modalFin2">2. Paz y salvo</a></p>
+											<?php 
+												$idModal = "modalFin2"; $contenido = "paz-salvo-modal.php";  include("../compartido/contenido-modal.php");
+												}
+											?>
 										</div>
                                 	</div>
 								</div>

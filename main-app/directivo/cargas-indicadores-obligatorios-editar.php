@@ -2,6 +2,7 @@
 <?php $idPaginaInterna = 'DT0037';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -54,12 +55,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 									<header class="panel-heading panel-heading-purple">Editar Indicadores</header>
                                 	<div class="panel-body">
                                     <?php 
-                                    try{
-                                        $consultarCargas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_id='".base64_decode($_GET["id"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                    } catch (Exception $e) {
-                                        include("../compartido/error-catch-to-report.php");
-                                    }
-                                    $rCargas=mysqli_fetch_array($consultarCargas, MYSQLI_BOTH);
+                                    $rCargas = Indicadores::traerIndicadoresDatos(base64_decode($_GET["id"]));
                                     ?>
 
                                    
@@ -81,9 +77,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         </div>	
 
 
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+										
+                                    <?php $botones = new botonesGuardar("cargas-indicadores-obligatorios.php",true); ?>
                                     </form>
                                 </div>
                             </div>

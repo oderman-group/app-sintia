@@ -18,13 +18,13 @@ class Asignaturas {
         string $idMateria
     )
     {
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_materias
-            WHERE mat_id='".$idMateria."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_materias WHERE mat_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idMateria, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -51,14 +51,15 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT SUM(mat_valor) FROM ".BD_ACADEMICA.".academico_materias am
-                    INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_materia=am.mat_id AND car_curso='".$idCurso."' AND car_grupo='".$idGrupo."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-                    WHERE am.mat_area='".$idArea."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $sql = "SELECT SUM(mat_valor) FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_materia=am.mat_id AND car_curso=? AND car_grupo=? AND car.institucion=am.institucion AND car.year=am.year
+        WHERE am.mat_area=? AND am.institucion=? AND am.year=?";
+
+        $parametros = [$idCurso, $idGrupo, $idArea, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -83,18 +84,18 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT ar_id, ar_nombre, count(*) AS numMaterias, car_curso, car_grupo FROM ".BD_ACADEMICA.".academico_materias am
-            INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_cargas car on car_materia = am.mat_id and car_curso = '".$idCurso."' AND car_grupo = '".$idGrupo."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-            WHERE am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-            GROUP by am.mat_area
-            ORDER BY a.ar_posicion");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT ar_id, ar_nombre, count(*) AS numMaterias, car_curso, car_grupo FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion=am.institucion AND a.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_cargas car on car_materia = am.mat_id and car_curso=? AND car_grupo=? AND car.institucion=am.institucion AND car.year=am.year
+        WHERE am.institucion=? AND am.year=?
+        GROUP by am.mat_area
+        ORDER BY a.ar_posicion";
 
-        return $consulta;
+        $parametros = [$idCurso, $idGrupo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -119,13 +120,13 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT car_id FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car WHERE am.mat_area='".$idArea."' AND am.mat_id=car_materia AND car_curso='".$idCurso."' AND car_grupo='".$idGrupo."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year} AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT car_id FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car WHERE am.mat_area=? AND am.mat_id=car_materia AND car_curso=? AND car_grupo=? AND am.institucion=? AND am.year=? AND car.institucion=am.institucion AND car.year=am.institucion";
 
-        return $consulta;
+        $parametros = [$idArea, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -152,13 +153,13 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT car_id, am.mat_nombre, ipc.ipc_intensidad FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car, ".BD_ACADEMICA.".academico_intensidad_curso ipc WHERE am.mat_area='".$idArea."' AND am.mat_id=car_materia AND car_curso='".$idCurso."' AND car_grupo='".$idGrupo."' AND ipc.ipc_curso='".$idCursoEst."' AND ipc.ipc_materia=am.mat_id AND ipc.institucion={$config['conf_id_institucion']} AND ipc.year={$year} AND am.institucion={$config['conf_id_institucion']} AND am.year={$year} AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT car_id, am.mat_nombre, ipc.ipc_intensidad FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car, ".BD_ACADEMICA.".academico_intensidad_curso ipc WHERE am.mat_area=? AND am.mat_id=car_materia AND car_curso=? AND car_grupo=? AND ipc.ipc_curso=? AND ipc.ipc_materia=am.mat_id AND ipc.institucion=am.institucion AND ipc.year=am.year AND am.institucion=? AND am.year=? AND car.institucion=am.institucion AND car.year=am.year";
 
-        return $consulta;
+        $parametros = [$idArea, $idCurso, $idGrupo, $idCursoEst, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -183,12 +184,13 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_grados gra, ".BD_GENERAL.".usuarios uss WHERE am.mat_id='".$idMateria."' AND gra_id='".$idCurso."' AND uss_id='".$idUsuario."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$year} AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$year}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $sql = "SELECT mat_id, mat_nombre, gra_codigo, gra_nombre, uss_id, uss_nombre FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_grados gra, ".BD_GENERAL.".usuarios uss WHERE am.mat_id=? AND gra_id=? AND uss_id=? AND am.institucion=? AND am.year=? AND gra.institucion=am.institucion AND gra.year=am.year AND uss.institucion=am.institucion AND uss.year=am.year";
+
+        $parametros = [$idMateria, $idCurso, $idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -208,14 +210,13 @@ class Asignaturas {
     )
     {
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_materias 
-            WHERE mat_nombre LIKE '%".$buscar."%' OR mat_siglas LIKE '%".$buscar."%' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_materias WHERE mat_nombre LIKE '%".$buscar."%' OR mat_siglas LIKE '%".$buscar."%' AND institucion=? AND year=?";
 
-        return $consulta;
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -237,17 +238,18 @@ class Asignaturas {
     )
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
-        try {
-            $consulta = mysqli_query($conexion, "SELECT mat_nombre, car_docente, car_director_grupo FROM ".BD_ACADEMICA.".academico_materias am
-            INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_cargas car on car_materia = am.mat_id and car_curso = '" . $idCurso . "' AND car_grupo = '" . $idGrupo . "' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-            WHERE am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-            ORDER BY am.mat_id");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
 
-        return $consulta;
+        $sql = "SELECT mat_nombre, car_docente, car_director_grupo FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion=am.institucion AND a.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_cargas car on car_materia = am.mat_id and car_curso=? AND car_grupo=? AND car.institucion=am.institucion AND car.year=am.year
+        WHERE am.institucion=? AND am.year=?
+        ORDER BY am.mat_id";
+
+        $parametros = [$idCurso, $idGrupo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -273,18 +275,19 @@ class Asignaturas {
     )
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
-        try {
-            $consulta = mysqli_query($conexion, "SELECT bol_nota FROM ".BD_ACADEMICA.".academico_materias am
-            INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_cargas car on car_materia = am.mat_id and car_curso = '".$idCurso."' AND car_grupo = '".$idGrupo."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-            LEFT JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo = '".$periodo."' AND bol_estudiante = '".$idEstudiante."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}
-            WHERE am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-            ORDER BY am.mat_id");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
 
-        return $consulta;
+        $sql = "SELECT bol_nota FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion=am.institucion AND a.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_materia = am.mat_id AND car_curso=? AND car_grupo=? AND car.institucion=am.institucion AND car.year=am.year
+        LEFT JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo=? AND bol_estudiante=? AND bol.institucion=am.institucion AND bol.year=am.year
+        WHERE am.institucion=? AND am.year=?
+        ORDER BY am.mat_id";
+
+        $parametros = [$idCurso, $idGrupo, $periodo, $idEstudiante, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -308,26 +311,25 @@ class Asignaturas {
         string    $yearBd    = ''
     )
     {
-        global $conexion, $config;
-        $resultado = [];
+        global $config;
+
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        try {
-            $resultado = mysqli_query($conexion, "SELECT mat_nombre,mat_area,mat_id,ind_nombre,ipc_periodo,
-            ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) as nota, ind_id FROM ".BD_ACADEMICA.".academico_materias am
-            INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id=am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car.car_materia=am.mat_id AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_indicadores_carga aic ON aic.ipc_carga=car.car_id AND aic.institucion={$config['conf_id_institucion']} AND aic.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON aic.ipc_indicador=ai.ind_id AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo=aic.ipc_indicador AND act_id_carga=car_id AND act_estado=1 AND act_registrada=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$year}
-            INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$year}
-            WHERE car_curso='".$grado."'  and car_grupo='".$grupo."' and mat_id='".$materia."'  AND ipc_periodo='".$periodo."' AND cal_id_estudiante='".$estudiante."' and act_periodo='".$periodo."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-            group by act_id_tipo, act_id_carga
-            order by mat_id,ipc_periodo,ind_id");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $sql = "SELECT mat_nombre,mat_area,mat_id,ind_nombre,ipc_periodo,
+        ROUND(SUM(cal_nota*(act_valor/100)) / SUM(act_valor/100),2) as nota, ind_id FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id=am.mat_area AND a.institucion=am.institucion AND a.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car.car_materia=am.mat_id AND car.institucion=am.institucion AND car.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_indicadores_carga aic ON aic.ipc_carga=car.car_id AND aic.institucion=am.institucion AND aic.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON aic.ipc_indicador=ai.ind_id AND ai.institucion=am.institucion AND ai.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo=aic.ipc_indicador AND act_id_carga=car_id AND act_estado=1 AND act_registrada=1 AND aa.institucion=am.institucion AND aa.year=am.year
+        INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad=aa.act_id AND aac.institucion=am.institucion AND aac.year=am.year
+        WHERE car_curso=? and car_grupo=? and mat_id=? AND ipc_periodo=? AND cal_id_estudiante=? and act_periodo=? AND am.institucion=? AND am.year=?
+        GROUP BY act_id_tipo, act_id_carga
+        ORDER BY mat_id, ipc_periodo, ind_id";
+
+        $parametros = [$grado, $grupo, $materia, $periodo, $estudiante, $periodo, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
     }
@@ -346,16 +348,16 @@ class Asignaturas {
         string $filtro = ""
     )
     {
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_materias am
-            INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id=am.mat_area AND ar.institucion={$config['conf_id_institucion']} AND ar.year={$_SESSION["bd"]}
-            WHERE am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]} {$filtro}
-            ORDER BY am.mat_nombre");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_materias am
+        INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id=am.mat_area AND ar.institucion=am.institucion AND ar.year=am.year
+        WHERE am.institucion=? AND am.year=? {$filtro}
+        ORDER BY am.mat_nombre";
 
-        return $consulta;
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
     }
 
     /**
@@ -372,12 +374,13 @@ class Asignaturas {
         string $idArea
     )
     {
-        try {
-            $consulta = mysqli_query($conexion, "SELECT COUNT(mat_id) FROM ".BD_ACADEMICA.".academico_materias WHERE mat_area='".$idArea."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $sql = "SELECT COUNT(mat_id) FROM ".BD_ACADEMICA.".academico_materias WHERE mat_area=? AND institucion=? AND year=?";
+
+        $parametros = [$idArea, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -405,34 +408,11 @@ class Asignaturas {
         $POST["sumarPromedio"] = !empty($POST["sumarPromedio"]) ? $POST["sumarPromedio"] : SI;
         $codigoAsignatura = "ASG".strtotime("now");
 
-        try {
-            mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_materias(
-                mat_id, 
-                mat_codigo, 
-                mat_nombre, 
-                mat_siglas, 
-                mat_area, 
-                mat_oficial, 
-                mat_valor, 
-                mat_sumar_promedio,
-                institucion, 
-                year
-            )
-            VALUES (
-                '".$codigo."', 
-                '".$codigoAsignatura."', 
-                '".$POST["nombreM"]."', 
-                '".strtoupper($POST["siglasM"])."', 
-                '".$POST["areaM"]."', 
-                1, 
-                '".$POST["porcenAsigna"]."', 
-                '".$POST["sumarPromedio"]."', 
-                {$config['conf_id_institucion']}, 
-                {$_SESSION["bd"]}
-            )");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_materias(mat_id, mat_codigo, mat_nombre, mat_siglas, mat_area, mat_oficial, mat_valor, mat_sumar_promedio, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $parametros = [$codigo, $codigoAsignatura, $POST["nombreM"], strtoupper($POST["siglasM"]), $POST["areaM"], 1, $POST["porcenAsigna"], $POST["sumarPromedio"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $codigo;
     }
@@ -452,11 +432,11 @@ class Asignaturas {
         if(empty($POST["porcenAsigna"])) {$POST["porcenAsigna"] = '';}
         $POST["sumarPromedio"] = !empty($POST["sumarPromedio"]) ? $POST["sumarPromedio"] : SI;
 
-        try {
-            mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_materias SET mat_codigo='".$POST["codigoM"]."', mat_nombre='".$POST["nombreM"]."', mat_siglas='".$POST["siglasM"]."', mat_area='".$POST["areaM"]."', mat_oficial=1, mat_valor='".$POST["porcenAsigna"]."', mat_sumar_promedio='".$POST["sumarPromedio"]."' WHERE mat_id='".$POST["idM"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_materias SET mat_codigo=?, mat_nombre=?, mat_siglas=?, mat_area=?, mat_oficial=?, mat_valor=?, mat_sumar_promedio=? WHERE mat_id=? AND institucion=? AND year=?";
+
+        $parametros = [$POST["codigoM"], $POST["nombreM"], $POST["siglasM"], $POST["areaM"], 1, $POST["porcenAsigna"], $POST["sumarPromedio"], $POST["idM"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 
     /**
@@ -471,10 +451,29 @@ class Asignaturas {
         string $idMateria
     )
     {
-        try {
-            mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_materias WHERE mat_id='".$idMateria."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "DELETE FROM ".BD_ACADEMICA.".academico_materias WHERE mat_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idMateria, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina todas las asignaturas de una institucion
+     * @param string $idInstitucion
+     * @param string $yearBd
+    **/
+    public static function eliminarTodasAsignaturas (
+        string  $idInstitucion,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_ACADEMICA.".academico_materias WHERE institucion=? AND year=?";
+
+        $parametros = [$idInstitucion, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 }

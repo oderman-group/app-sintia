@@ -9,6 +9,7 @@ include("../modelo/conexion.php");
 <?php include("verificar-carga.php");?>
 <?php
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 ?>
 <head>
 	<title>Planilla de notas</title>
@@ -39,8 +40,7 @@ $colorNota = "black";
 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	if($calificacion['act_registrada']==1){
 		//Consulta de calificaciones si ya la tienen puestas.
-		$consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_estudiante='".$resultado['mat_id']."' AND cal_id_actividad='".$_GET["idR"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
+		$notas = Calificaciones::traerCalificacionActividadEstudiante($config, $_GET["idR"], $resultado['mat_id']);
 		if($notas['cal_nota']<$config[5] and $notas['cal_nota']!="") $colorNota = $config[6]; elseif($notas['cal_nota']>=$config[5]) $colorNota = $config[7];
 	}	
 ?>    

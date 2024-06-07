@@ -6,6 +6,8 @@ require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $Plataforma = new Plataforma;
 
 $curso='';
@@ -27,8 +29,7 @@ $cursoActual=GradoServicios::consultarCurso($curso);
 $asig =Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"",$cursoActual);
 $num_asg = mysqli_num_rows($asig);
 
-$consultaGrados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gra_id='" . $curso . "' AND gru.gru_id='" . $grupo . "' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}");
-$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
+$grados = Grados::traerGradosGrupos($config, $curso, $grupo);
 ?>
 
 <head>
@@ -50,17 +51,15 @@ $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 			<td align="center" rowspan="2">Estudiante</td>
 			<!--<td align="center">Gru</td>-->
 			<?php
-			$materias1 = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso=" . $curso . "'AND car_grupo='" . $grupo . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+			$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo);
 			while ($mat1 = mysqli_fetch_array($materias1, MYSQLI_BOTH)) {
-				$Mat = Asignaturas::consultarDatosAsignatura($conexion, $config, $mat1['car_materia']);
-
 				$consultaActividades = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $mat1['car_id'], $per);
 				$activivdadesNum = mysqli_num_rows($consultaActividades);
 				if ($activivdadesNum == 0) {
 					$activivdadesNum = 1;
 				}
 			?>
-				<td align="center" colspan="<?= $activivdadesNum; ?>"><?= strtoupper($Mat['mat_siglas']); ?></td>
+				<td align="center" colspan="<?= $activivdadesNum; ?>"><?= strtoupper($mat1['mat_siglas']); ?></td>
 			<?php
 			}
 			?>
@@ -68,7 +67,7 @@ $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 
 		<tr style="font-weight:bold; font-size:12px; height:30px; background:#6017dc; color:white;">
 			<?php
-			$cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='" . $curso . "' AND car_grupo='" . $grupo . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+			$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo);
 			while ($car = mysqli_fetch_array($cargas, MYSQLI_BOTH)) {
 				$activivdades = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $car['car_id'], $per);
 
@@ -100,7 +99,7 @@ $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 										else echo "B"; ?></td> -->
 				<?php
 				$suma = 0;
-				$materias1 = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='" . $curso . "' AND car_grupo='" . $grupo . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+				$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo);
 				while ($mat1 = mysqli_fetch_array($materias1, MYSQLI_BOTH)) {
 
 
@@ -111,7 +110,7 @@ $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 					}
 					while ($act = mysqli_fetch_array($activivdades, MYSQLI_BOTH)) {
 						//Consulta de recuperaciones si ya la tienen puestas.
-						$consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_estudiante=" . $fila['mat_id'] . " AND rind_indicador='" . $act['ipc_indicador'] . "' AND rind_periodo='" . $per . "' AND rind_carga='" . $mat1['car_id'] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+						$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $act['ipc_indicador'], $fila['mat_id'], $mat1['car_id'], $per);
 						$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
 
 						$notaRecuperacion = 0;

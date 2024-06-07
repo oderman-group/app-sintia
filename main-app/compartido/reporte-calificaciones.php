@@ -4,6 +4,7 @@ include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
 $grado="";
 if(!empty($_GET["grado"])){ $grado=base64_decode($_GET["grado"]);}
@@ -37,8 +38,7 @@ if(!empty($_GET["idActividad"])){ $idActividad=base64_decode($_GET["idActividad"
 									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                         $nombre =Estudiantes::NombreCompletoDelEstudiante($resultado);
 										 //LAS CALIFICACIONES A MODIFICAR Y LAS OBSERVACIONES
-										 $notasConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_estudiante='".$resultado['mat_id']."' AND cal_id_actividad='".$idActividad."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-										 $notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
+                                        $notasResultado = Calificaciones::traerCalificacionActividadEstudiante($config, $idActividad, $resultado['mat_id']);
 
                                         $notasResultadoFinal="";
                                         if(!empty($notasResultado['cal_nota'])){

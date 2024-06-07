@@ -45,6 +45,7 @@ define('CHAT_TIPO_AUDIO', 4);
 define('FILE_CURSOS', "cursos/");
 define('FILE_PUBLICACIONES', "publicaciones/");
 define('FILE_TAREAS', "tareas/");
+define('FILE_VIDEO_CLASES', "video-clases/");
 define('FILE_TAREAS_ENTREGADAS', "tareas-entregadas/");
 
 
@@ -183,6 +184,13 @@ define('UNIVERSITY', 'UNIVERSITY');
 define('COMPANY', 'COMPANY');
 define('KINDERGARTEN', 'KINDERGARTEN');
 define('PEOPLE', 'PEOPLE');
+
+/** TIPOS DE PAQUETES **/
+define('PLANES', 'PLANES');
+define('ESPACIO', 'ESPACIO');
+define('USUARIOS', 'USUARIOS');
+define('MODULOS', 'MODULOS');
+define('PAQUETES', 'PAQUETES');
 
 switch($_SERVER['HTTP_HOST']){
 	case 'localhost':

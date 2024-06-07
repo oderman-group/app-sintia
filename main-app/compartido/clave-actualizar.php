@@ -26,11 +26,7 @@ if(!validarClave($_POST["claveNueva"])){
 	exit();
 }
 
-try{
-	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1('" . $_POST["claveNueva"] . "') WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+UsuariosPadre::cambiarClave($config, $_POST["claveNueva"]);
 $_SESSION["datosUsuario"] = UsuariosPadre::sesionUsuario($_SESSION['id']);
 
 include("../compartido/guardar-historial-acciones.php");

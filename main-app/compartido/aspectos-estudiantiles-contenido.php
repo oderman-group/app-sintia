@@ -7,9 +7,7 @@ $datosEditar = Estudiantes::obtenerDatosEstudiantePorIdUsuario($idR);
 
 $usuarioEstudiante = UsuariosPadre::sesionUsuario($idR);
 
-$agnoNacimiento = mysqli_fetch_array(mysqli_query($conexion, "SELECT YEAR(mat_fecha_nacimiento) FROM ".BD_ACADEMICA.".academico_matriculas
-WHERE mat_id_usuario='".$idR."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
-
+$agnoNacimiento = Estudiantes::traerYearNacimiento($config, $idR);
 
 $edad = date("Y") - $agnoNacimiento[0];
 
@@ -384,6 +382,7 @@ $estadoAgno = array("EN CURSO", "SI", "NO");
                         </div>
                         
                     </div>
-					
+                    <?php 
+                            $botones = new botonesGuardar("estudiantes.php", false); ?>
                 </div>
             </div>

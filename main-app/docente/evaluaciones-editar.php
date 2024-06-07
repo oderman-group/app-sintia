@@ -124,12 +124,9 @@ $evaluacion = Evaluaciones::consultaEvaluacion($conexion, $config, $idR);
 											</div>
 
 										
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-
-										<a href="#" name="evaluaciones.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-										</form>
+											<?php 
+                            				$botones = new botonesGuardar("evaluaciones.php",Modulos::validarPermisoEdicion()); ?>
+									</form>
 
 
                                 </div>

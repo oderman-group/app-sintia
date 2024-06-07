@@ -1,5 +1,6 @@
 <?php
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 
@@ -13,7 +14,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
-$codGRADO = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_grados');
 
 	//COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 	if(trim($_POST["nombreC"])==""){
@@ -42,46 +42,20 @@ $codGRADO = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico
 
 
 
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_grados 
-		(gra_id, gra_codigo, gra_nombre, gra_formato_boletin, gra_valor_matricula, gra_valor_pension, gra_estado,gra_grado_siguiente, gra_periodos, gra_tipo, institucion, year,
-		gra_overall_description,
-		gra_course_content,
-		gra_price,
-		gra_minimum_quota,
-		gra_maximum_quota,
-		gra_duration_hours,
-		gra_auto_enrollment,
-		gra_active)
-		VALUES
-		('".$codGRADO."', '".$codigoCurso."', '".$_POST["nombreC"]."', '1', ".$_POST["valorM"].", ".$_POST["valorP"].", 1, '".$_POST["graSiguiente"]."', '".$config['conf_periodos_maximos']."', '".$_POST["tipoG"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]},
-		'".$_POST["descripcion"]."',
-		'".$_POST["contenido"]."',
-		'".$_POST["precio"]."',
-		'".$_POST["minEstudiantes"]."',
-		'".$_POST["maxEstudiantes"]."',
-		'".$_POST["horas"]."',
-		'".$_POST["autoenrollment"]."',
-		'".$_POST["activo"]."')");
+	$codGRADO = Grados::guardarCurso($conexionPDO, "gra_codigo, gra_nombre, gra_formato_boletin, gra_valor_matricula, gra_valor_pension, gra_estado,gra_grado_siguiente, gra_periodos, gra_tipo, institucion, year, gra_overall_description, gra_course_content, gra_price, gra_minimum_quota, gra_maximum_quota, gra_duration_hours, gra_auto_enrollment, gra_active, gra_id", [$codigoCurso, $_POST["nombreC"], '1', $_POST["valorM"], $_POST["valorP"], 1, $_POST["graSiguiente"], $config['conf_periodos_maximos'], $_POST["tipoG"], $config['conf_id_institucion'], $_SESSION["bd"], $_POST["descripcion"], $_POST["contenido"], $_POST["precio"], $_POST["minEstudiantes"], $_POST["maxEstudiantes"], $_POST["horas"], $_POST["autoenrollment"], $_POST["activo"]]);
 
-		if (!empty($_FILES['imagenCurso']['name'])) {
-			$archivoSubido->validarArchivo($_FILES['imagenCurso']['size'], $_FILES['imagenCurso']['name']);
-			$explode=explode(".", $_FILES['imagenCurso']['name']);
-			$extension = end($explode);
-			$archivo = $_SESSION["inst"] . '_' . $_SESSION["id"] . '_curso_'.$_POST["id_curso"]. "." . $extension;
-			$destino = "../files/cursos";
-			$localFilePath = $_FILES['imagenCurso']['tmp_name'];// Ruta del archivo local que deseas subir	
-			$cloudFilePath = FILE_CURSOS.$archivo;// Ruta en el almacenamiento en la nube de Firebase donde deseas almacenar el archivo
-			$storage->getBucket()->upload(fopen($localFilePath, 'r'), ['name' => $cloudFilePath	]);
-			// move_uploaded_file($_FILES['imagenCurso']['tmp_name'], $destino . "/" . $archivo);
-			try{
-				mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_grados SET gra_cover_image = '" . $archivo. "' WHERE gra_id='" . $codigoCurso. "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-			} catch (Exception $e) {
-				include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-			}
-		}
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
+	if (!empty($_FILES['imagenCurso']['name'])) {
+		$archivoSubido->validarArchivo($_FILES['imagenCurso']['size'], $_FILES['imagenCurso']['name']);
+		$explode=explode(".", $_FILES['imagenCurso']['name']);
+		$extension = end($explode);
+		$archivo = $_SESSION["inst"] . '_' . $_SESSION["id"] . '_curso_'.$_POST["id_curso"]. "." . $extension;
+		$destino = "../files/cursos";
+		$localFilePath = $_FILES['imagenCurso']['tmp_name'];// Ruta del archivo local que deseas subir	
+		$cloudFilePath = FILE_CURSOS.$archivo;// Ruta en el almacenamiento en la nube de Firebase donde deseas almacenar el archivo
+		$storage->getBucket()->upload(fopen($localFilePath, 'r'), ['name' => $cloudFilePath	]);
+
+		$update = "gra_cover_image=".$archivo."";
+		Grados::actualizarCursos($config, $codGRADO, $update);
 	}
 
 	include("../compartido/guardar-historial-acciones.php");

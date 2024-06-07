@@ -1,5 +1,6 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -22,11 +23,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <select class="form-control  select2" style="width: 100%;" name="curso">
                         <option value=""></option>
                         <?php
-                        try {
-                            $c = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                        } catch (Exception $e) {
-                            include("../compartido/error-catch-to-report.php");
-                        }
+                        $c = Grados::traerGradosInstitucion($config);
                         while ($r = mysqli_fetch_array($c, MYSQLI_BOTH)) {
                         ?>
                             <option value="<?php echo $r['gra_id']; ?>"><?php echo $r['gra_nombre']; ?></option>
@@ -69,11 +66,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                         <select id="selectEstudiantes" class="form-control  select2" name="estudiante" multiple required>
                             <option value="">Seleccione una opción</option>
                             <?php
-                            try {
-                                $grados = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE gra_estado=1 AND gra_tipo='".GRADO_GRUPAL."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal ");
-                            } catch (Exception $e) {
-                                include("../compartido/error-catch-to-report.php");
-                            }
+                            $grados = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
                             while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
                             ?>
 

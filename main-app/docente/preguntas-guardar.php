@@ -14,66 +14,38 @@ $archivoSubido = new Archivos;
 
 if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 	
-	$codigo = Evaluaciones::guardarPreguntasEvaluacion($conexion, $config, $_POST, $_FILES);
-
-	Evaluaciones::guardarRelacionPreguntaEvaluacion($conexion, $config, $codigo, $_POST);
-
+	
+	$codigo = Evaluaciones::guardarPreguntasEvaluacion($conexion, $config, $_POST, $_FILES,false);	
 	if($_POST["opcionR"]==1){
 		$cont=1;
-		$datosInsert = '';
 		while($cont<=4){
-			$codigoR=Utilidades::generateCode("RES");
 			if(!empty(trim($_POST["r$cont"]))){
 				if(empty($_POST["c$cont"])){$_POST["c$cont"]=0;}
-				$datosInsert .="('".$codigoR."', '".mysqli_real_escape_string($conexion,$_POST["r$cont"])."','".$_POST["c$cont"]."','".$codigo."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
-				$cont++;
+				Evaluaciones::guardarRespuestas($conexionPDO, "resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year, resp_id", [mysqli_real_escape_string($conexion,$_POST["r$cont"]), $_POST["c$cont"], $codigo, $config['conf_id_institucion'], $_SESSION["bd"]]);
 			}
-		}
-
-		if(!empty($datosInsert)){
-			$datosInsert = substr($datosInsert,0,-1);
-			try{
-				mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_actividad_respuestas(resp_id, resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year)VALUES $datosInsert");
-			} catch (Exception $e) {
-				include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-			}
+			$cont++;
 		}
 	}
 
 	if($_POST["opcionR"]==2){
 		$cont=1;
-		$datosInsert = '';
 		while($cont<=2){
-			$codigoR=Utilidades::generateCode("RES");
 			if(!empty(trim($_POST["rv$cont"]))){
 				if(empty($_POST["cv$cont"])){$_POST["cv$cont"]=0;}
-				$datosInsert .="('".$codigoR."', '".mysqli_real_escape_string($conexion,$_POST["rv$cont"])."','".$_POST["cv$cont"]."','".$codigo."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
-				$cont++;
+				Evaluaciones::guardarRespuestas($conexionPDO, "resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year, resp_id", [mysqli_real_escape_string($conexion,$_POST["rv$cont"]), $_POST["cv$cont"], $codigo, $config['conf_id_institucion'], $_SESSION["bd"]]);
 			}
-		}
 
-		if(!empty($datosInsert)){
-			$datosInsert = substr($datosInsert,0,-1);
-			try{
-				mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_actividad_respuestas(resp_id, resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year)VALUES $datosInsert");
-			} catch (Exception $e) {
-				include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-			}
+			$cont++;
 		}
 	}
 
 	if($_POST["opcionR"]==3){
-		$codigoR=Utilidades::generateCode("RES");
-		$datosInsert .="('".$codigoR."', 'Adjuntar un archivo','0','".$codigo."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
 		if(!empty($datosInsert)){
 			$datosInsert = substr($datosInsert,0,-1);
-			try{
-				mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_actividad_respuestas(resp_id, resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year)VALUES $datosInsert");
-			} catch (Exception $e) {
-				include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-			}
+			Evaluaciones::guardarRespuestas($conexionPDO, "resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year, resp_id", ['Adjuntar un archivo', '0', $codigo, $config['conf_id_institucion'], $_SESSION["bd"]]);
 		}
 	}
+	Evaluaciones::guardarRelacionPreguntaEvaluacion($conexion, $conexionPDO, $config, $codigo, $_POST);
 }else{
 	$preguntaBD = Evaluaciones::traerDatosPreguntas($conexion, $config, $_POST["bancoDatos"]);
 
@@ -87,7 +59,7 @@ if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 		
 	}
 
-	Evaluaciones::guardarRelacionPreguntaEvaluacion($conexion, $config, $codigo, $_POST);
+	Evaluaciones::guardarRelacionPreguntaEvaluacion($conexion, $conexionPDO, $config, $codigo, $_POST);
 }
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");

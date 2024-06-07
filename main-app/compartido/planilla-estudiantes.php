@@ -8,6 +8,7 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 ?>
 <head>
 	<title>PLANILLA DE ESTUDIANTES</title>
@@ -20,20 +21,19 @@ require_once("../class/Estudiantes.php");
   if(isset($_REQUEST["agno"])){
     $year=$_REQUEST["agno"];
 	}
-	if((!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])) && (!empty($_REQUEST["grupo"]) && is_numeric($_REQUEST["grupo"]))){
-    $consultaGrados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gra_id='".$_REQUEST["grado"]."' AND gru.gru_id='".$_REQUEST["grupo"]."' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$year} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$year}");
-	}elseif(!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])){
-    $consultaGrados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gra_id='".$_REQUEST["grado"]."' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$year} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$year}");
+	if(!empty($_REQUEST["grado"]) && !empty($_REQUEST["grupo"])){
+    $grados = Grados::traerGradosGrupos($config, $_REQUEST["grado"], $_REQUEST["grupo"], $year);
+	}elseif(!empty($_REQUEST["grado"])){
+    $grados = Grados::traerGradosGrupos($config, $_REQUEST["grado"], "", $year);
 	}else{
-    $consultaGrados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gru.institucion={$config['conf_id_institucion']} AND gru.year={$year} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$year}");
+    $grados = Grados::traerGradosGrupos($config, "", "", $year);
 	}
-  $grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);
 ?>
 <?php
 $subNombre="";
- if((!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])) && (!empty($_REQUEST["grupo"]) && is_numeric($_REQUEST["grupo"]))){
+ if((!empty($_REQUEST["grado"])) && (!empty($_REQUEST["grupo"]))){
 $subNombre=$grados["gra_nombre"]." ".$grados["gru_nombre"]."<br>".$year;
-}elseif(!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])) {
+}elseif(!empty($_REQUEST["grado"])) {
   $subNombre=$grados["gra_nombre"]."<br>".$year;
 }
 $nombreInforme =  "PLANILLA DE ESTUDIANTES ".$subNombre;
@@ -58,10 +58,10 @@ include("../compartido/head-informes.php") ?>
 
   <?php
   $grupo='';
-  if((!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])) && (!empty($_REQUEST["grupo"]) && is_numeric($_REQUEST["grupo"]))){
+  if(!empty($_REQUEST["grado"]) && !empty($_REQUEST["grupo"])){
     $grupo=$_REQUEST["grupo"];
 		$adicional = "AND mat_grado='".$_REQUEST["grado"]."' AND mat_grupo='".$_REQUEST["grupo"]."'";
-  }elseif(!empty($_REQUEST["grado"]) && is_numeric($_REQUEST["grado"])) {
+  }elseif(!empty($_REQUEST["grado"])) {
 		$adicional = "AND mat_grado='".$_REQUEST["grado"]."'";
 	}else{
 		$adicional = "";

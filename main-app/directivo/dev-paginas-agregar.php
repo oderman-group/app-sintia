@@ -221,7 +221,7 @@ include("../compartido/head.php");
 											</div>
 										</div>
 
-										<input type="submit" id="btnGuardar" class="btn btn-primary" value="Guardar cambios">&nbsp;
+										<?php $botones = new botonesGuardar("dev-paginas.php",Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

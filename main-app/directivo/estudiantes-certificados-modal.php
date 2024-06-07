@@ -40,7 +40,40 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     <div class="panel">
         <header class="panel-heading panel-heading-purple">Certificado por áreas</header>
         <div class="panel-body">
-            <form action="../compartido/matricula-certificado-areas<?= $ext; ?>.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
+            <form action="estudiantes-formato-certificado.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
+
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">Estilo de certificado</label>
+                    <div class="col-sm-2">
+                        <select class="form-control  select2" id="tipoCertificado" name="certificado" onchange="cambiarTipoCertificado()" <?=$disabledPermiso;?>>
+                            <option value="1" <?php if($config['conf_certificado']==1){ echo "selected";} ?>>Certificado 1</option>
+                            <option value="2" <?php if($config['conf_certificado']==2){ echo "selected";} ?>>Certificado 2</option>
+                            <option value="3" <?php if($config['conf_certificado']==3){ echo "selected";} ?>>Certificado 3</option>
+                        </select>
+                    </div>
+                    <button type="button" titlee="Ver formato certificado" class="btn btn-sm" data-toggle="popoverCertificado" ><i class="fa fa-eye"></i></button>
+                    <script>
+                            $(document).ready(function(){
+                            $('[data-toggle="popoverCertificado"]').popover({
+                                html: true, // Habilitar contenido HTML
+                                content: function () {
+                                    valor = document.getElementById("tipoCertificado");
+                                return '<div id="myPopover" class="popover-content"><label id="lbl_tipoCert">Estilo Certificado '+valor.value+'</label>'+
+                                '<img id="img-certificado" src="../files/images/certificados/tipo'+valor.value+'.png" class="w-100" />'+                                                       
+                                '</div>';}
+                                });                                                    
+                            });
+                            function cambiarTipoCertificado(){  
+                                var imagen_boletin = document.getElementById('img-certificado'); 
+                                if(imagen_boletin){                                                     
+                                var valor = document.getElementById("tipoCertificado");  
+                                var lbl_tipoCert = document.getElementById('lbl_tipoCert');
+                                imagen_boletin.src ="../files/images/certificados/tipo"+valor.value+".png";
+                                lbl_tipoCert.textContent='Estilo Certificado '+valor.value;
+                                }
+                            }
+                    </script>
+                </div>
 
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Estudiante</label>

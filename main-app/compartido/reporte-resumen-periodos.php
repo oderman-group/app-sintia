@@ -49,10 +49,8 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");?>
 										 $n = 0;
 										 for($i=1; $i<=$config[19]; $i++){
 										 	//LAS CALIFICACIONES
-										 	$notasConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_estudiante='".$_GET["estudiante"]."' AND bol_carga='".$rCargas['car_id']."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-										 	$notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
-											$numN = mysqli_num_rows($notasConsulta);
-											if($numN){
+											$notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $_GET["estudiante"], $rCargas['car_id']);
+											if(!empty($notasResultado)){
 												$n++;
 												$definitiva += $notasResultado['bol_nota'];
 											}

@@ -2,8 +2,10 @@
 require_once("servicios/Servicios.php");
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
-class Inscripciones {
+
+class Inscripciones extends BindSQL{
 
 
         /**
@@ -271,7 +273,7 @@ class Inscripciones {
 
             //Documentos
             $documentosQuery = "INSERT INTO ".BD_ACADEMICA.".academico_matriculas_documentos(matd_id, matd_matricula, institucion, year)VALUES(:codigo, :matricula, :idInstitucion, :year)";
-            $codigo=Utilidades::generateCode("MTD");
+            $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas_documentos');
             $documentos = $conexionPDO->prepare($documentosQuery);
             $documentos->bindParam(':codigo', $codigo, PDO::PARAM_STR);
             $documentos->bindParam(':matricula', $id, PDO::PARAM_STR);
@@ -295,12 +297,12 @@ class Inscripciones {
      * @param array $config
      * @param string $id
     **/
-    public static function eliminarDocumentos( mysqli $conexion, array $config, string $id){
+    public static function eliminarDocumentos(mysqli $conexion, array $config, string $id)
+    {
+        $sql = "UPDATE " . BD_ACADEMICA . ".academico_matriculas_documentos SET matd_fecha_eliminados=now(), matd_usuario_elimados=? WHERE matd_matricula=? AND institucion=? AND year=?";
 
-        try {
-            mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas_documentos SET matd_fecha_eliminados=now(), matd_usuario_elimados='".$_SESSION["id"]."' WHERE matd_matricula='".$id."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $parametros = [$_SESSION["id"], $id, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 }

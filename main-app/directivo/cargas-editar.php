@@ -4,19 +4,16 @@
 <?php include("../compartido/head.php");?>
 <?php
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
-try{
-	$consultaDatos=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car 
-	LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_responsable AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]} WHERE car_id='".base64_decode($_GET["idR"])."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-$datosEditar = mysqli_fetch_array($consultaDatos, MYSQLI_BOTH);
+
+$datosEditar = CargaAcademica::traerCargaMateriaPorID($config, base64_decode($_GET["idR"]));
 
 $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
@@ -113,16 +110,10 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
-												<?php
-												try{
-													$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal");
-												} catch (Exception $e) {
-													include("../compartido/error-catch-to-report.php");
-												}
-												?>
                                                 <select class="form-control  select2" name="curso" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
 													<?php
+                                                	$opcionesConsulta = Grados::traerGradosInstitucion($config);
 													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														$disabled = '';
@@ -336,15 +327,8 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 											</div>
 										</div>
 
-
-										<?php if(Modulos::validarPermisoEdicion()){?>
-											<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-										<?php }?>
-										
-										<a href="javascript:void(0);" name="cargas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                    </form>
+										<?php $botones = new botonesGuardar("cargas.php",Modulos::validarPermisoEdicion()); ?>
+									 </form>
                                 </div>
                             </div>
                         </div>
@@ -356,16 +340,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 									<p>&nbsp;</p>
 									<ul class="list-group list-group-unbordered">
 										<?php
-										$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car 
-										INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_docente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-										INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]}
-										INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=car_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]} {$filtroMT}
-										INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=car_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-										WHERE car.institucion={$config['conf_id_institucion']} 
-										AND car.year={$_SESSION["bd"]} 
-										AND (car_docente='{$datosEditar["car_docente"]}' OR car_curso='{$datosEditar["car_curso"]}')
-										ORDER BY car_docente
-										");
+										$consulta = CargaAcademica::consultaCargasRelacionadas($config, $datosEditar["car_docente"], $datosEditar["car_curso"]);
 										while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 											$resaltaItem = $Plataforma->colorDos;
 											if($resultado['car_id']==base64_decode($_GET["idR"])){$resaltaItem = $Plataforma->colorUno;}

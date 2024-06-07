@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0214';
@@ -10,11 +11,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-try{
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_grupo=1 WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+$update = "mat_grupo=1";
+Estudiantes::actualizarMatriculasInstitucion($config, $update);
 
 include("../compartido/guardar-historial-acciones.php");
 echo '<script type="text/javascript">window.location.href="' . $_SERVER['HTTP_REFERER'] . '";</script>';

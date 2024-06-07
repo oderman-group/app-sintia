@@ -1,5 +1,5 @@
 <?php
-
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -33,16 +33,10 @@ if (!Modulos::validarPermisoEdicion()) {
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Orden o posición en los informes</label>
                 <div class="col-sm-10">
-                    <?php
-                    try {
-                        $c_posicionA = mysqli_query($conexion, "SELECT ar_posicion FROM ".BD_ACADEMICA.".academico_areas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]};");
-                    } catch (Exception $e) {
-                        include("../compartido/error-catch-to-report.php");
-                    }
-                    ?>
                     <select class="form-control  select2" name="posicionA" required <?= $disabledPermiso; ?>>
                         <option value="">Seleccione una opción</option>
                         <?php
+                        $c_posicionA = Areas::traerAreasInstitucion($config);
                         $numDatos = mysqli_num_rows($c_posicionA);
                         $cont = 0;
                         while ($r_pos = mysqli_fetch_array($c_posicionA, MYSQLI_BOTH)) {
@@ -73,11 +67,7 @@ if (!Modulos::validarPermisoEdicion()) {
             </div>
 
 
-            <?php if (Modulos::validarPermisoEdicion()) { ?>
-                <button type="submit" class="btn  btn-info">
-                    <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                </button>
-            <?php } ?>
+            <?php $botones = new botonesGuardar(null,Modulos::validarPermisoEdicion()); ?>
         </form>
     </div>
     </body>

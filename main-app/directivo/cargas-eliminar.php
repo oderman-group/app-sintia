@@ -11,25 +11,19 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 include("../compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
-try{
-	mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_cargas WHERE car_id='" . base64_decode($_GET["id"]) . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+CargaAcademica::eliminarCargaPorID($config, base64_decode($_GET["id"]));
 
-	$contenidoMsg = '
-	<p>Se eliminó una carga académica. A continuación relacionamos la información:</p>
-	<p>
-		<b>ID carga:</b> '.base64_decode($_GET["id"]).'<br>
-		<b>Institucion:</b> '.$config['conf_id_institucion'].'<br>
-		<b>Año:</b> '.$_SESSION["bd"].'<br>
-		<b>Responsable:</b> '.$_SESSION["id"].' - '.UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual).'
-	</p>
-	';
-	
-
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-
+$contenidoMsg = '
+<p>Se eliminó una carga académica. A continuación relacionamos la información:</p>
+<p>
+	<b>ID carga:</b> '.base64_decode($_GET["id"]).'<br>
+	<b>Institucion:</b> '.$config['conf_id_institucion'].'<br>
+	<b>Año:</b> '.$_SESSION["bd"].'<br>
+	<b>Responsable:</b> '.$_SESSION["id"].' - '.UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual).'
+</p>
+';
 
 try {
 	mysqli_query($conexion, "INSERT INTO ".BD_ADMIN.".seguridad_historial_registros_borrados(hrb_id_institucion, hrb_year, hrb_id_registro, hrb_responsable, hrb_referencia)VALUES('".$config['conf_id_institucion']."', '".$_SESSION["bd"]."', '".base64_decode($_GET["id"])."', '".$_SESSION["id"]."', 'CARGA_ACADEMICA')");

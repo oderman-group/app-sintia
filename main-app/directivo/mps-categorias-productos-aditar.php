@@ -69,7 +69,7 @@ $datosCategorias = mysqli_fetch_array($consulta, MYSQLI_BOTH);
                                         </div>
                                     </div>
 
-                                    <input type="submit" id="btnGuardar" class="btn btn-primary" value="Guardar cambios">&nbsp;
+                                    <?php $botones = new botonesGuardar("mps-categorias-productos.php",Modulos::validarPermisoEdicion()); ?>
                                 </form>
                             </div>
                         </div>

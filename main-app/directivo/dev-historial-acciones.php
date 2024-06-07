@@ -113,12 +113,7 @@ $Plataforma = new Plataforma;
 
                                                         $responsable="";
                                                         if($resultado['hil_usuario']!=0){
-
-                                                            try{
-                                                                $consultaResponsable= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$resultado['hil_usuario']."' AND institucion={$resultado["ins_id"]} AND year={$year}");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
+                                                            $consultaResponsable = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['hil_usuario']."'", $resultado['ins_id'], $year);
                                                             $datosResponsable = mysqli_fetch_array($consultaResponsable, MYSQLI_BOTH);
                                                             $responsable=UsuariosPadre::nombreCompletoDelUsuario($datosResponsable);
 
@@ -126,12 +121,7 @@ $Plataforma = new Plataforma;
                                                         
                                                         $ussAutologin="NO";
                                                         if($resultado['hil_usuario_autologin']!=0){
-
-                                                            try{
-                                                                $consultaUssAutologin= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$resultado['hil_usuario_autologin']."' AND institucion={$resultado["ins_id"]} AND year={$year}");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
+                                                            $consultaUssAutologin = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['hil_usuario_autologin']."'", $resultado['ins_id'], $year);
                                                             $datosUssAutologin = mysqli_fetch_array($consultaUssAutologin, MYSQLI_BOTH);
                                                             $ussAutologin=UsuariosPadre::nombreCompletoDelUsuario($datosUssAutologin);
 

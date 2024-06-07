@@ -72,18 +72,11 @@ if($config['conf_activar_encuesta']==1){
                     </div>
                    
 						<?php
-						$cCargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car 
-						INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]}
-						INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=car_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-						INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_docente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-						WHERE car_curso='".$datosEstudianteActual['mat_grado']."' AND car_grupo='".$datosEstudianteActual['mat_grupo']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]}");
-				$nCargas = mysqli_num_rows($cCargas);
-				$mensajeCargas = new Cargas;
-				$mensajeCargas->verificarNumCargas($nCargas, $datosUsuarioActual['uss_idioma']);
-				?>
-
-					
-                   
+							$cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
+							$nCargas = mysqli_num_rows($cCargas);
+							$mensajeCargas = new Cargas;
+							$mensajeCargas->verificarNumCargas($nCargas, $datosUsuarioActual['uss_idioma']);
+						?>
                      <!-- start course list -->
                      <div class="row">
 									<?php

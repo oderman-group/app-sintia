@@ -100,11 +100,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </select>
                                         </div>
                                     </div>
-                                    
-                                    <input type="submit" class="btn btn-primary" value="Generar Contraseña">&nbsp;
-                                    
-                                    <a href="javascript:void(0);" name="usuarios.php?cantidad=50" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                </form>
+                                    <?php $botones = new botonesGuardar("usuarios.php?cantidad=50",Modulos::validarPermisoEdicion(),"Generar Contraseña"); ?>
+                                        
+                                  </form>
                             </div>
                         </div>
 						

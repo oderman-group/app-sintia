@@ -15,12 +15,12 @@ if(empty($_POST["motivo"]))     $_POST["motivo"]    = '';
 
 if ($_POST["estadoMatricula"] == 1){
 
-   Estudiantes::retirarRestaurarEstudiante($_POST["estudiante"], $_POST["motivo"], $config, $conexion);
+   Estudiantes::retirarRestaurarEstudiante($_POST["estudiante"], $_POST["motivo"], $config, $conexion, $conexionPDO);
    Estudiantes::ActualizarEstadoMatricula($_POST["estudiante"], 3);
 
 } else {
    $motivo = 'El estudiante estaba en estado '.$_POST["estadoNombre"].', pero fue restaurado exitosamente!';
-   Estudiantes::retirarRestaurarEstudiante($_POST["estudiante"], $motivo, $config, $conexion);
+   Estudiantes::retirarRestaurarEstudiante($_POST["estudiante"], $motivo, $config, $conexion, $conexionPDO);
    Estudiantes::ActualizarEstadoMatricula($_POST["estudiante"], 1);
 
 }

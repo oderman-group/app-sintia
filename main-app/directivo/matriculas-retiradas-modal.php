@@ -6,6 +6,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     exit();
 }
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 ?>
 
 <!--select2-->
@@ -31,11 +32,7 @@ require_once("../class/Estudiantes.php");
                         <select id="selectEstudiantes3" class="form-control  select2" name="estudiante" multiple required>
                             <option value="">Seleccione una opción</option>
                             <?php
-                            try {
-                                $grados = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE gra_estado=1 AND gra_tipo='".GRADO_GRUPAL."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal ");
-                            } catch (Exception $e) {
-                                include("../compartido/error-catch-to-report.php");
-                            }
+                            $grados = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
                             while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
                             ?>
 

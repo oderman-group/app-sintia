@@ -7,6 +7,7 @@ include("../compartido/head.php");
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 ?>
 </head>
 
@@ -124,10 +125,7 @@ require_once(ROOT_PATH."/main-app/class/Indicadores.php");
                         while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
 
                             //LAS CALIFICACIONES
-                            $consultaSumaNotas=mysqli_query($conexion, "SELECT SUM(cal_nota * (act_valor/100)) FROM ".BD_ACADEMICA.".academico_calificaciones aac
-                            INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id=aac.cal_id_actividad AND aa.act_id_tipo='" . $rA['ipc_indicador'] . "' AND aa.act_periodo='" . $periodoConsultaActual . "' AND aa.act_id_carga='" . $cargaConsultaActual . "' AND aa.act_estado=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}
-                            WHERE aac.cal_id_estudiante='" . $resultado['mat_id']."' AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]}");
-                            $sumaNotas = mysqli_fetch_array($consultaSumaNotas, MYSQLI_BOTH);
+                            $sumaNotas = Calificaciones::consultaSumaNotaIndicadores($config, $rA['ipc_indicador'], $cargaConsultaActual, $resultado['mat_id'], $periodoConsultaActual);
 
                             $notasResultado = round($sumaNotas[0] / ($rA['ipc_valor'] / 100), $config['conf_decimales_notas']);
 

@@ -38,20 +38,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     
                     <div class="row">
                         <div class="col-md-12">
-                            
-									<?php include("../compartido/publicidad-lateral.php");?>
-								
-								  
-                                <?php
-                                try{
-                                    $consultaInd=mysqli_query($conexion, "SELECT sum(ind_valor) FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_obligatorio=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                } catch (Exception $e) {
-                                    include("../compartido/error-catch-to-report.php");
-                                }
-                                $ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);
-                                $consultaIndGenerados = Indicadores::consultarIndicadorGenerados($conexion, $config);
-                                $indGenerados = mysqli_num_rows($consultaIndGenerados);
-                                ?>
+								<?php include("../compartido/publicidad-lateral.php");?>
 								<div class="col-md-12">
                                     <div class="card card-topline-purple">
                                         <div class="card-head">
@@ -89,11 +76,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </thead>
                                                 <tbody>
 													<?php
-                                                    try{
-                                                        $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_obligatorio=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $consulta = Indicadores::consultarIndicadoresObligatorios();
 													$contReg = 1;
                                                     $sumaP = 0;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
@@ -132,7 +115,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													  ?>
                                                 </tbody>
                                             </table>
+                                           
                                             </div>
+                                            <?php $botones = new botonesGuardar("cargas.php",false); ?>
                                         </div>
                                     </div>
                                 </div>

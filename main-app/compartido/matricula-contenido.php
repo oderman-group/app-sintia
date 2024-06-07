@@ -1,5 +1,6 @@
 						
 <?php
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 $acudiente = UsuariosPadre::sesionUsuario($datosEstudianteActual["mat_acudiente"]);
 
 $classDiv="col-sm-12";
@@ -55,8 +56,7 @@ if($config['conf_mostrar_pasos_matricula'] == 1){
 						                        <select class="form-control  select2" name="lNacimiento">
 						                            <option value="">Seleccione una opción</option>
 						                            <?php
-                                                    $opcionesG = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-													");
+													$opcionesG = Grados::traerGradosInstitucion($config);
                                                     while ($opg = mysqli_fetch_array($opcionesG, MYSQLI_BOTH)) {
                                                     ?>
 						                                <option value="<?= $opg['gra_id']; ?>" <?php if ($opg['gra_id'] == $datosEstudianteActual["mat_grado"]) {

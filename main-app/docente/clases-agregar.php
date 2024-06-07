@@ -29,6 +29,26 @@ if( CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodo
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 </head>
+<style>
+	/* Estilos para el contenedor del video */
+	.video-container {
+		max-width: 100%;
+		margin: 0 auto;
+	}
+
+	/* Estilos para la etiqueta video */
+	video {
+		width: 100%;
+		height: auto;
+		display: block;
+		border-radius: 8px;
+		/* Bordes redondeados */
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		/* Sombra */
+		outline: none;
+		/* Eliminar el contorno al hacer clic */
+	}
+</style>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
     <div class="page-wrapper">
@@ -152,42 +172,58 @@ if( CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodo
 												</div>
 											</div>
 
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Video de youtube <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Pegue la URL del video"><i class="fa fa-question"></i></button></label>
-												<div class="col-sm-10">
-													<input type="text" name="video" class="form-control" autocomplete="off">
-												</div>
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Video de youtube <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Pegue la URL del video"><i class="fa fa-question"></i></button></label>
+											<div class="col-sm-10">
+												<input type="text" name="video" class="form-control" autocomplete="off">
 											</div>
+										</div>
+										<div class="form-group row">
 											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Archivo 1</label>
-												<div class="col-sm-5">
-													<input type="file" name="file" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
+											<label class="col-sm-2 control-label">Grabar Video
+												<div class="btn-group" role="group" aria-label="Basic example">
+													<button id="btnIniciar" type="button" onclick="iniciarGrabacion()" class="btn btn-outline-secondary"><i class="fa-solid fa-video"></i></button>
+													<button id="btnGrabando" type="button" class="btn btn-outline-secondary" style="display: none;"><i class="fa-solid  fa-record-vinyl fa-beat-fade"></i></button>
+													<button id="btnDetener" type="button" onclick="detenerGrabacion()" style="display: none;" class="btn btn-outline-secondary"><i class="fa-solid fa-stop"></i></button>
+													<button id="btnEliminar" type="button" onclick="eliminarVideo()" style="display:none" class="btn btn-danger btn-outline-secondary"><i class="fa-solid fa-trash"></i></button>
 												</div>
-												<div class="col-sm-5">
-													<input type="text" name="archivo1" class="form-control" autocomplete="off" placeholder="Nombre del archivo 1">
-												</div>
+											</label>
+											<div class="col-sm-10" id="row-video">
+												<video id="videoGuardar" name="videoGuardar" style="display: none;"></video>
+												<video id="videoElement" style="display: none;" autoplay></video>
+												<input type="file" id="cargarVideo" name="videoClase" style="display: none;" accept="video/*"></input>
 											</div>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Archivo 2</label>
-												<div class="col-sm-5">
-													<input type="file" name="file2" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
-												</div>
-												<div class="col-sm-5">
-													<input type="text" name="archivo2" class="form-control" autocomplete="off" placeholder="Nombre del archivo 2">
-												</div>
+										</div>
+
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Archivo 1</label>
+											<div class="col-sm-5">
+												<input type="file" name="file" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
 											</div>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Archivo 3</label>
-												<div class="col-sm-5">
-													<input type="file" name="file3" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
-												</div>
-												<div class="col-sm-5">
-													<input type="text" name="archivo3" class="form-control" autocomplete="off" placeholder="Nombre del archivo 3">
-												</div>
+											<div class="col-sm-5">
+												<input type="text" name="archivo1" class="form-control" autocomplete="off" placeholder="Nombre del archivo 1">
 											</div>
+										</div>
+
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Archivo 2</label>
+											<div class="col-sm-5">
+												<input type="file" name="file2" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
+											</div>
+											<div class="col-sm-5">
+												<input type="text" name="archivo2" class="form-control" autocomplete="off" placeholder="Nombre del archivo 2">
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Archivo 3</label>
+											<div class="col-sm-5">
+												<input type="file" name="file3" class="form-control" autocomplete="off" onChange="archivoPeso(this)">
+											</div>
+											<div class="col-sm-5">
+												<input type="text" name="archivo3" class="form-control" autocomplete="off" placeholder="Nombre del archivo 3">
+											</div>
+										</div>
 
 											<div class="form-group row">
 												<div class="col-sm-12">
@@ -243,17 +279,118 @@ if( CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodo
                                         </div>
 
 
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-										
-										<a href="#" name="clases.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+										<?php 
+                            				$botones = new botonesGuardar("clases.php",Modulos::validarPermisoEdicion()); 
+											?>
 									</form>
 									
 
-									<script>
-											document.addEventListener("DOMContentLoaded", () =>{
-												let form = document.getElementById("form_subir");
+								<script>
+									var videoElement = document.getElementById('videoElement');
+									var videoGuardar = document.getElementById('videoGuardar');
+									var startButton = document.getElementById('btnIniciar');
+									var stopGrabando = document.getElementById('btnGrabando');
+									var stopButton = document.getElementById('btnDetener');
+									var inputVideo = document.getElementById('cargarVideo');
+									var btnEliminar = document.getElementById('btnEliminar');
+
+
+
+									// Variables para almacenar el objeto de medios y el objeto de grabación
+									var mediaStream;
+									var mediaRecorder;
+
+									function iniciarGrabacion() {
+										// Obtener el flujo de medios de la cámara web
+										videoElement.style.display = "block";
+										videoGuardar.style.display = "none";
+										if (btnEliminar !== null) {
+											btnEliminar.style.display = "none";
+										}
+										navigator.mediaDevices.getUserMedia({
+												video: true,
+												audio: true
+											})
+											.then(function(stream) {
+												// Mostrar el flujo de medios en el elemento de video
+												videoElement.srcObject = stream;
+												mediaStream = stream;
+
+												// Iniciar la grabación del flujo de medios
+												mediaRecorder = new MediaRecorder(stream);
+												var chunks = [];
+
+												mediaRecorder.ondataavailable = function(event) {
+													chunks.push(event.data);
+												}
+
+												mediaRecorder.onstop = function() {
+													// Crear un objeto Blob a partir de los fragmentos de datos recopilados durante la grabación
+													var videoBlob = new Blob(chunks, {
+														mimetype: 'video/webm;codecs=h264'
+													});
+
+													// Crear un objeto URL para el blob
+													var videoURL = URL.createObjectURL(videoBlob);
+
+													var file = new File([videoBlob], 'recorded_video.webm', {
+														type: 'video/webm'
+													});
+													// Crear un objeto DataTransfer y agregar el archivo
+													var dataTransfer = new DataTransfer();
+													dataTransfer.items.add(new File([videoBlob], 'recorded_video.webm', {
+														type: 'video/webm'
+													}));
+													// Asignar el objeto DataTransfer al campo de entrada de tipo file
+													inputVideo.files = dataTransfer.files;
+													// Mostrar el video grabado en un elemento de video
+													videoGuardar.src = videoURL;
+													// inputVideo.src = videoURL;
+													videoGuardar.controls = true;
+													videoGuardar.style.display = "block";
+													videoElement.style.display = "none";
+												}
+
+												mediaRecorder.start();
+												startButton.visible = false;
+												stopGrabando.style.display = "block";
+												startButton.style.display = "none";
+												stopButton.style.display = "block";
+												startTimer();
+											})
+											.catch(function(error) {
+												console.error('Error al acceder a la cámara web:', error);
+											});
+
+									}
+
+
+									function detenerGrabacion() {
+										if (mediaRecorder) {
+											mediaRecorder.stop();
+											mediaStream.getTracks().forEach(track => track.stop());
+											stopGrabando.style.display = "none";
+											startButton.style.display = "block";
+											stopButton.style.display = "none";
+											btnEliminar.style.display = "block";
+										}
+
+									}
+
+									function startTimer() {
+										timer = setTimeout(function() {
+											detenerGrabacion();
+										}, 30000); // 30 segundos
+									}
+
+									function eliminarVideo() {
+										btnEliminar.style.display = "none";
+										videoGuardar.style.display = "none";
+										videoElement.style.display = "none";
+										inputVideo.type = 'text';
+									}
+									document.addEventListener("DOMContentLoaded", () => {
+										let form = document.getElementById("form_subir");
 
 												form.addEventListener("submit", function(event) {
 													event.preventDefault();

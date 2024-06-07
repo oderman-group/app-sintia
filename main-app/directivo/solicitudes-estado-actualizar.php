@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0130';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
@@ -10,12 +11,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 
 if( $_GET["estado"] == 3 ) {
-
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios uss SET uss_bloqueado=0 WHERE uss_id='" . $_GET["idUsuario"] . "' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include("../compartido/error-catch-to-report.php");
-    }
+    $update = "uss_bloqueado=0";
+    UsuariosPadre::actualizarUsuarios($config, $_GET["idUsuario"], $update);
 }
 
 try{

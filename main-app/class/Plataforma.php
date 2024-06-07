@@ -1,4 +1,5 @@
 <?php
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Plataforma {
 
@@ -138,6 +139,102 @@ class Plataforma {
         } catch (Exception $e) {
             return "Hay un inconveniente al guardar el error: ".$e->getMessage();
         }
+    }
+
+    /**
+     * Este metodo sirve para consultar la configuración de la institución
+     * 
+     * @return array
+     */
+    public static function traerDatosPlanes(
+        mysqli  $conexion,
+        int     $idPlan
+    )
+    {
+        $resultado = [];
+
+        try {
+            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ADMIN.".planes_sintia WHERE plns_id='{$idPlan}'");
+            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        } catch (Exception $e) {
+            include(ROOT_PATH."/compartido/error-catch-to-report.php");
+        }
+
+        return $resultado;
+
+    }
+
+    public static function listarPlanesPorTipo(
+        string     $tipoPlan
+    )
+    {
+        $sql = "SELECT * FROM ".BD_ADMIN.".planes_sintia WHERE plns_tipo=?";
+
+        $parametros = [$tipoPlan];
+        
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        return $consulta;
+
+    }
+
+    public static function listarPaquetes(
+        string $filtro
+    )
+    {
+        $sql = "SELECT * FROM ".BD_ADMIN.".planes_sintia WHERE plns_tipo!=? {$filtro}";
+
+        $parametros = [PLANES];
+        
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        return $consulta;
+
+    }
+
+    public static function validarPaquete(
+        string     $idInstitucion,
+        string     $idPaquete,
+        string     $tipoPaquete
+    )
+    {
+        $sql = "SELECT * FROM ".BD_ADMIN.".instituciones_paquetes_extras WHERE paqext_institucion=? AND paqext_id_paquete=? AND paqext_tipo=?";
+
+        $parametros = [$idInstitucion, $idPaquete, $tipoPaquete];
+        
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        $numDatos=mysqli_num_rows($consulta);
+        if ($numDatos > 0) { 
+            return true;
+        }
+        return false;
+
+    }
+
+    public static function contarDatosPaquetes(
+        int     $idInstitucion,
+        string  $tipoPaquete
+    )
+    {
+        $sql = "SELECT 
+        SUM(plns_valor) AS plns_valor, 
+        SUM(plns_espacio_gb) AS plns_espacio_gb, 
+        GROUP_CONCAT(DISTINCT CASE WHEN plns_modulos IS NOT NULL AND plns_modulos != '' THEN plns_modulos END ORDER BY plns_modulos SEPARATOR ',') AS plns_modulos, 
+        SUM(plns_cant_directivos) AS plns_cant_directivos, 
+        SUM(plns_cant_docentes) AS plns_cant_docentes, 
+        SUM(plns_cant_estudiantes) AS plns_cant_estudiantes FROM ".BD_ADMIN.".instituciones_paquetes_extras
+        INNER JOIN ".BD_ADMIN.".planes_sintia ON plns_id=paqext_id_paquete
+        WHERE paqext_institucion=? AND paqext_tipo=?";
+
+        $parametros = [$idInstitucion, $tipoPaquete];
+        
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+        
+        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+
+        return $resultado;
+
     }
 
 }

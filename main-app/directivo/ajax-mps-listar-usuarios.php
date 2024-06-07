@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 $instiConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_id='".$_POST['insti']."'");
 $insti = mysqli_fetch_array($instiConsulta, MYSQLI_BOTH);
 $year= date('Y');
@@ -14,9 +15,7 @@ $year= date('Y');
         <select class="form-control select2" style="width: 100%;"  name="responsable" id="responsable" aucomplete="off">
             <?php
             if(!empty($_POST['responsable'])){
-                $consultaExiste=mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss
-                INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo
-                WHERE uss_id='".$_POST['responsable']."' AND uss.institucion={$insti['ins_id']} AND uss.year={$year}");
+                $consultaExiste = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$_POST['responsable']."'");
                 $existe = mysqli_fetch_array($consultaExiste, MYSQLI_BOTH);
 
                 if(!is_null($existe)){

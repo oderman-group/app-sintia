@@ -4,6 +4,7 @@ require_once("../class/Usuarios.php");
 require_once("../class/Estudiantes.php");
 require '../../librerias/Excel/vendor/autoload.php';
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -95,19 +96,13 @@ if($extension == 'xlsx'){
 						}elseif($_POST["accion"]==2){//Bloquear a los que deben
 							if($tipoMovimiento == 1){
 								$tipo = 3;
-								try{
-									mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado=1 WHERE uss_id='".$idUsuario."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-								} catch (Exception $e) {
-									include("../compartido/error-catch-to-report.php");
-								}
+								$update = "uss_bloqueado=1";
+								UsuariosPadre::actualizarUsuarios($config, $idUsuario, $update);
 								$usuariosBloqueados[] = "FILA ".$f;
 							}else{
 								$tipo = 4;
-								try{
-									mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado='0' WHERE uss_id='".$idUsuario."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-								} catch (Exception $e) {
-									include("../compartido/error-catch-to-report.php");
-								}
+								$update = "uss_bloqueado='0'";
+								UsuariosPadre::actualizarUsuarios($config, $idUsuario, $update);
 							}
 						}
 

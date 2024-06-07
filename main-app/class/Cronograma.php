@@ -1,6 +1,7 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 class Cronograma {
     
     /**
@@ -16,15 +17,14 @@ class Cronograma {
         array $config,
         string $idCronograma
     ){
-        $resultado= [];
+        $sql = "SELECT * FROM " . BD_ACADEMICA . ".academico_cronograma WHERE cro_id=? AND institucion=? AND year=?";
 
-        try{
-            $consulta= mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cronograma WHERE cro_id='".$idCronograma."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $parametros = [$idCronograma, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -44,16 +44,14 @@ class Cronograma {
         string $idCarga,
         int $periodo
     ){
+        $sql = "SELECT * FROM " . BD_ACADEMICA . ".academico_cronograma 
+        WHERE cro_id_carga=? AND cro_periodo=? AND institucion=? AND year=?";
 
-        try{
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cronograma 
-            WHERE cro_id_carga='".$idCarga."' AND cro_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
 
-        return $consulta;
+        return $resultado;
     }
     
     /**
@@ -71,16 +69,14 @@ class Cronograma {
         string $idCarga,
         int $periodo
     ){
+        $sql = "SELECT cro_id, cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color, DAY(cro_fecha) as dia, MONTH(cro_fecha) as mes, YEAR(cro_fecha) as agno FROM " . BD_ACADEMICA . ".academico_cronograma 
+        WHERE cro_id_carga=? AND cro_periodo=? AND institucion=? AND year=?";
 
-        try{
-            $consulta= mysqli_query($conexion, "SELECT cro_id, cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color, DAY(cro_fecha) as dia, MONTH(cro_fecha) as mes, YEAR(cro_fecha) as agno FROM ".BD_ACADEMICA.".academico_cronograma 
-            WHERE cro_id_carga='".$idCarga."' AND cro_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
 
-        return $consulta;
+        return $resultado;
     }
     
     /**
@@ -95,21 +91,21 @@ class Cronograma {
      */
     public static function guardarCronograma(
         mysqli $conexion, 
+        PDO $conexionPDO, 
         array $config,
         array $POST,
         string $idCarga,
         int $periodo
     ){
-
         $date = date('Y-m-d', strtotime(str_replace('-', '/', $POST["fecha"])));
+        $idInsercion = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_cronograma');
+
+        $sql = "INSERT INTO " . BD_ACADEMICA . ".academico_cronograma(cro_id, cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $parametros = [$idInsercion, $POST["contenido"], $date, $idCarga, $POST["recursos"], $periodo, $POST["colorFondo"], $config['conf_id_institucion'], $_SESSION["bd"]];
         
-        $idInsercion=Utilidades::generateCode("CRO");
-        try{
-            mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_cronograma(cro_id, cro_tema, cro_fecha, cro_id_carga, cro_recursos, cro_periodo, cro_color, institucion, year)"." VALUES('" .$idInsercion . "', '".mysqli_real_escape_string($conexion,$POST["contenido"])."', '".$date."', '".$idCarga."', '".$POST["recursos"]."', '".$periodo."', '".$POST["colorFondo"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        
         return $idInsercion;
     }
     
@@ -126,16 +122,13 @@ class Cronograma {
         array $config,
         array $POST
     ){
-
         $date = date('Y-m-d', strtotime(str_replace('-', '/', $POST["fecha"])));
 
-        try{
-            mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_cronograma SET cro_tema='".mysqli_real_escape_string($conexion,$POST["contenido"])."', cro_fecha='".$date."', cro_recursos='".$POST["recursos"]."', cro_color='".$POST["colorFondo"]."' 
-            WHERE cro_id='".$POST["idR"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $sql = "UPDATE " . BD_ACADEMICA . ".academico_cronograma SET cro_tema=?, cro_fecha=?, cro_recursos=?, cro_color=? WHERE cro_id=? AND institucion=? AND year=?";
+
+        $parametros = [$POST["contenido"], $date, $POST["recursos"], $POST["colorFondo"], $POST["idR"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
     
     /**
@@ -151,12 +144,10 @@ class Cronograma {
         array $config,
         string $idCronograma
     ){
+        $sql = "DELETE FROM " . BD_ACADEMICA . ".academico_cronograma WHERE cro_id=? AND institucion=? AND year=?";
 
-        try{
-            mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_cronograma WHERE cro_id='".$idCronograma."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            echo "Excepción catpurada: ".$e->getMessage();
-            exit();
-        }
+        $parametros = [$idCronograma, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 }

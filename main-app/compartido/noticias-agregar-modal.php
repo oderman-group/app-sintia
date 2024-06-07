@@ -5,7 +5,9 @@
 <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
 
 <!-- END HEAD -->
-
+<?php 
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+?>
 <div class="row">
     <div class="col-sm-12">
         <div class="card card-box">
@@ -140,7 +142,7 @@
                         <div class="col-sm-10">
                             <select style="width: 100%" id="multiple" class="form-control select2-multiple" multiple name="cursos[]">
                                 <?php
-                                $infoConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+                                $infoConsulta = Grados::traerGradosInstitucion($config);
                                 while ($infoDatos = mysqli_fetch_array($infoConsulta, MYSQLI_BOTH)) {
                                 ?>
                                     <option value="<?= $infoDatos['gra_id']; ?>"><?= strtoupper($infoDatos['gra_nombre']); ?></option>

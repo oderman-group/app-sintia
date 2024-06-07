@@ -2,21 +2,21 @@
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Clases.php");
+require_once(ROOT_PATH."/main-app/class/Ausencias.php");
 
-$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_ausencias WHERE aus_id_clase='".$_POST["codNota"]."' AND aus_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$rC = Ausencias::traerAusenciasClaseEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
+if(empty($rC)){
+	if(!empty($rC['aus_id'])){
+		Ausencias::eliminarAusenciasID($config, $rC['aus_id']);
+	}
 
-$num = mysqli_num_rows($consulta);
-$rC = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-if($num==0){
-	$codigo=Utilidades::generateCode("AUS");
-	mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_ausencias WHERE aus_id_clase='".$_POST["codNota"]."' AND aus_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	
-	mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_ausencias(aus_id, aus_id_estudiante, aus_ausencias, aus_id_clase, institucion, year)VALUES('".$codigo."', '".$_POST["codEst"]."','".$_POST["nota"]."','".$_POST["codNota"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+	Ausencias::guardarAusencia($conexionPDO, "aus_id_estudiante, aus_ausencias, aus_id_clase, institucion, year, aus_id", [$_POST["codEst"],$_POST["nota"],$_POST["codNota"], $config['conf_id_institucion'], $_SESSION["bd"]]);
 	
 	Clases::registrarAusenciaClase($conexion, $config, $_POST);
 	
 }else{
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_ausencias SET aus_ausencias='".$_POST["nota"]."' WHERE aus_id='".$rC['aus_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	$update = "aus_ausencias=".$_POST["nota"]."";
+	Ausencias::actualizarAusencia($config, $rC['aus_id'], $update);
 	
 	Clases::registrarAusenciaClase($conexion, $config, $_POST);
 	

@@ -1,16 +1,20 @@
 <?php
+
+use PhpOffice\PhpSpreadsheet\Calculation\LookupRef\Indirect;
+
 include("session.php");
 $idPaginaInterna = 'DC0046';
 include("../compartido/historial-acciones-guardar.php");
 include("verificar-carga.php");
 include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 
 $disabled = '';
 if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual) ) { 
     $disabled = 'disabled';
 }
 
-$consultaTematica=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_carga='".$cargaConsultaActual."' AND ind_periodo='".$periodoConsultaActual."' AND ind_tematica=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$consultaTematica = Indicadores::consultaTematica($cargaConsultaActual, $periodoConsultaActual);
 $tematica = mysqli_fetch_array($consultaTematica, MYSQLI_BOTH);
 ?>
 </head>

@@ -1,4 +1,7 @@
 <?php
+require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class UsuariosPadre {
 
@@ -36,19 +39,17 @@ class UsuariosPadre {
      */
     public static function listarUsuariosAnio($usuario)
     {
-        global $conexion;
         global $yearStart;
         global $yearEnd;
-        global $baseDatosServicios;
-        global $filtro;
         $index = 0;
-        $tableName = BDT_GeneralPerfiles::getTableName();
         $arraysDatos = [];
 
         while ($yearStart <= $yearEnd) {
-            $consultaUsuarioAuto = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios uss 
-            INNER JOIN " . $baseDatosServicios . ".{$tableName} ON pes_id=uss_tipo
-            WHERE uss_usuario LIKE '" . $usuario . "%' AND uss.institucion={$_SESSION["idInstitucion"]} AND uss.year={$yearStart}");
+            $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios uss 
+            INNER JOIN " . BD_ADMIN . ".general_perfiles ON pes_id=uss_tipo
+            WHERE uss_usuario LIKE '" . $usuario . "%' AND uss.institucion=? AND uss.year=?";
+            $parametros = [$_SESSION["idInstitucion"], $yearStart];
+            $consultaUsuarioAuto = BindSQL::prepararSQL($sql, $parametros);
 
             if ($consultaUsuarioAuto->num_rows > 0) {
                 while ($fila = $consultaUsuarioAuto->fetch_assoc()) {
@@ -73,19 +74,25 @@ class UsuariosPadre {
      *
      * @return array - Un array que contiene los datos del usuario si se encuentra en la base de datos, o un array vacío si no se encuentra.
      */
-    public static function sesionUsuario($idUsuario, $filtroAdicional='')
-    {
-        global $conexion;
+    public static function sesionUsuario(
+        string $idUsuario, 
+        string $filtroAdicional =   '', 
+        int    $instiBd         =   NULL, 
+        string $yearBd          =   ''
+    ){
+        $year       = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $idInsti    = !empty($instiBd) ? $instiBd : $_SESSION["idInstitucion"];
 
-        try{
-            $consultaUsuarioAuto = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$idUsuario."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]} {$filtroAdicional}");
-            $datosUsuarioAuto = mysqli_fetch_array($consultaUsuarioAuto, MYSQLI_BOTH);
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-            return [];
-        }
-    
-        return $datosUsuarioAuto;
+        $sql = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id=? AND institucion=? AND year=? {$filtroAdicional}";
+
+        $parametros = [$idUsuario, $idInsti, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
     }
 
     /**
@@ -98,8 +105,10 @@ class UsuariosPadre {
      */
     public static function sesionUsuarioAnio($usuario,$year)
     {
-        global $conexion;
-        $consultaUsuarioAuto = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_usuario='".$usuario."' AND institucion={$_SESSION["idInstitucion"]} AND year={$year} limit 1");
+        $sql = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_usuario=? AND institucion=? AND year=? limit 1";
+        $parametros = [$usuario, $_SESSION['idInstitucion'], $year];
+        $consultaUsuarioAuto = BindSQL::prepararSQL($sql, $parametros);
+
         $datosUsuarioAuto = mysqli_fetch_array($consultaUsuarioAuto, MYSQLI_BOTH);
         return $datosUsuarioAuto;
     }
@@ -143,30 +152,36 @@ class UsuariosPadre {
                 while($yearStart <= $yearEnd){	
                     if ($_SESSION["bd"] == $yearStart) {			
                         if($get == 5) {
-                            mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
-                            uss_tema_header='" . $_GET["temaHeader"] . "', 
-                            uss_tema_sidebar='" . $_GET["temaSidebar"] . "', 
-                            uss_tema_logo='" . $_GET["temaLogo"] . "' 
-                            WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$_SESSION["idInstitucion"]} AND year={$yearStart}");
+                            $sql = "UPDATE ".BD_GENERAL.".usuarios SET 
+                            uss_tema_header=?, 
+                            uss_tema_sidebar=?, 
+                            uss_tema_logo=? 
+                            WHERE uss_id=? AND institucion=? AND year=?";
+                            $parametros = [$_GET["temaHeader"], $_GET["temaSidebar"], $_GET["temaLogo"], $_SESSION["id"], $_SESSION["idInstitucion"], $yearStart];
+                            $resultado = BindSQL::prepararSQL($sql, $parametros);
                         }
                         else {
-                            mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET $campoTabla='" . $_GET[$campoGet] . "' 
-                            WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$_SESSION["idInstitucion"]} AND year={$yearStart}");
+                            $sql = "UPDATE ".BD_GENERAL.".usuarios SET $campoTabla=? WHERE uss_id=? AND institucion=? AND year=?";
+                            $parametros = [$_GET[$campoGet], $_SESSION["id"], $_SESSION["idInstitucion"], $yearStart];
+                            $resultado = BindSQL::prepararSQL($sql, $parametros);
                         }
                     } else {
                         $usuarioSession = $_SESSION["datosUsuario"];
                         $usauriosOtrosAnios = UsuariosPadre::sesionUsuarioAnio($usuarioSession['uss_usuario'], $yearStart);
                         if($usauriosOtrosAnios) {
                             if($get == 5) {
-                                mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
-                                uss_tema_header='" . $_GET["temaHeader"] . "', 
-                                uss_tema_sidebar='" . $_GET["temaSidebar"] . "', 
-                                uss_tema_logo='" . $_GET["temaLogo"] . "' 
-                                WHERE uss_id='" .$usauriosOtrosAnios["uss_id"]."' AND institucion={$_SESSION["idInstitucion"]} AND year={$yearStart}");
+                                $sql = "UPDATE ".BD_GENERAL.".usuarios SET 
+                                uss_tema_header=?, 
+                                uss_tema_sidebar=?, 
+                                uss_tema_logo=? 
+                                WHERE uss_id=? AND institucion=? AND year=?";
+                                $parametros = [$_GET["temaHeader"], $_GET["temaSidebar"], $_GET["temaLogo"], $usauriosOtrosAnios["uss_id"], $_SESSION["idInstitucion"], $yearStart];
+                                $resultado = BindSQL::prepararSQL($sql, $parametros);
                             }
                             else {
-                                mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET $campoTabla='" . $_GET[$campoGet] . "' 
-                                WHERE uss_id='" .$usauriosOtrosAnios["uss_id"]. "' AND institucion={$_SESSION["idInstitucion"]} AND year={$yearStart}"); 
+                                $sql = "UPDATE ".BD_GENERAL.".usuarios SET $campoTabla=? WHERE uss_id=? AND institucion=? AND year=?";
+                                $parametros = [$_GET[$campoGet], $usauriosOtrosAnios["uss_id"], $_SESSION["idInstitucion"], $yearStart];
+                                $resultado = BindSQL::prepararSQL($sql, $parametros); 
                             }
                         }
                         
@@ -192,12 +207,15 @@ class UsuariosPadre {
         string $yearBd    = ''
     )
     {
-        global $conexion,$baseDatosServicios, $config;
+        global $config;
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $consulta= mysqli_query($conexion, "SELECT uss_id,uss_apellido1,uss_apellido2,uss_nombre,uss_nombre2,pes_nombre FROM ".BD_GENERAL.".usuarios uss 
-        INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo
-        WHERE CONCAT(uss_apellido1,' ',uss_apellido2,' ',uss_nombre,' ',uss_nombre2) LIKE '%".$nombre."%' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$year} ORDER BY uss_apellido1, uss_apellido2, uss_nombre LIMIT 10");
+        $sql = "SELECT uss_id, uss_apellido1, uss_apellido2, uss_nombre, uss_nombre2, pes_nombre FROM ".BD_GENERAL.".usuarios uss 
+        INNER JOIN ".BD_ADMIN.".general_perfiles ON pes_id=uss_tipo
+        WHERE CONCAT(uss_apellido1,' ',uss_apellido2,' ',uss_nombre,' ',uss_nombre2) LIKE '%".$nombre."%' AND uss.institucion=? AND uss.year=? 
+        ORDER BY uss_apellido1, uss_apellido2, uss_nombre LIMIT 10";
+        $parametros = [$config['conf_id_institucion'], $year];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
 
         return $consulta;         
     }
@@ -212,19 +230,22 @@ class UsuariosPadre {
      *
      * @return mixed - Un objeto de resultado de la consulta si tiene éxito, o 0 si ocurre un error.
      */
-    public static function obtenerTodosLosDatosDeUsuarios($filtroBusqueda='')
-    {
-        global $conexion, $baseDatosServicios;
+    public static function obtenerTodosLosDatosDeUsuarios(
+        string  $filtroBusqueda     =   '',
+        int     $instiBd            =   NULL,
+        string  $yearBd             =   ''
+    ){
+        global $conexion;
+        $year       = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $idInsti    = !empty($instiBd) ? $instiBd : $_SESSION["idInstitucion"];
 
-        try{
-            $consultaUsuario = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss 
-            INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo 
-            WHERE uss.institucion={$_SESSION["idInstitucion"]} AND uss.year={$_SESSION["bd"]} {$filtroBusqueda}");
-            return $consultaUsuario;
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-            return 0;
-        }
+        $sql = "SELECT * FROM ".BD_GENERAL.".usuarios uss 
+        INNER JOIN ".BD_ADMIN.".general_perfiles ON pes_id=uss_tipo 
+        WHERE uss.institucion=? AND uss.year=? {$filtroBusqueda}";
+        $parametros = [$idInsti, $year];
+        $consultaUsuario = BindSQL::prepararSQL($sql, $parametros);
+
+        return $consultaUsuario;
 
     }
 
@@ -260,16 +281,36 @@ class UsuariosPadre {
             $filtro = "AND id_nuevo != '".$idUsuario."'";
         }
         $num = 0;
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE uss_usuario='" . $usuario . "' {$filtro}");
-            $num = mysqli_num_rows($consulta);
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE uss_usuario=? {$filtro}";
+        $parametros = [$usuario];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
 
+        $num = mysqli_num_rows($consulta);
         return $num;
     }
 
+    /**
+     * Valida la existencia de un usuario en toda la tabla.
+     *
+     * @param mysqli $conexion
+     * @param string $tipoUsuario
+     *
+     * @return int Número de filas que coinciden con la consulta.
+     */
+    public static function contarUsuariosPorTipo(
+        mysqli $conexion,
+        string $tipoUsuario,
+    ){
+        $num = 0;
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE institucion=? AND year=? AND uss_tipo IN (".$tipoUsuario.")";
+        $parametros = [$_SESSION["idInstitucion"], $_SESSION["bd"]];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        $num = mysqli_num_rows($consulta);
+        return $num;
+    }
+    
     /**
      * Valida la existencia de un usuario por su documento en toda la tabla.
      *
@@ -294,14 +335,383 @@ class UsuariosPadre {
         $doctSinPuntos = strpos($documento, '.') == true ? str_replace('.', '', $documento) : $documento;
         $doctConPuntos = strpos($documento, '.') !== true && is_numeric($documento) ? str_replace('.', '', $documento) : $documento;
         $num = 0;
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE (uss_documento='" . $doctSinPuntos . "' OR uss_documento='" . $doctConPuntos . "') {$filtro} AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-            $num = mysqli_num_rows($consulta);
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE (uss_documento=? OR uss_documento=?) {$filtro} AND institucion=? AND year=?";
+        $parametros = [$doctSinPuntos, $doctConPuntos, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
 
+        $num = mysqli_num_rows($consulta);
         return $num;
     }
 
+    /**
+     * Este metodo me elimina todos los usuarios de una institucion
+    **/
+    public static function eliminarTodosUsuarios (
+        string  $idInstitucion,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_GENERAL.".usuarios WHERE institucion=? AND year=?";
+
+        $parametros = [$idInstitucion, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me cambia el tipo de menu para el usuario actual
+    **/
+    public static function cambiarTipoMenu (
+        array   $config,
+        string  $tipoMenu,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_tipo_menu=? WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$tipoMenu, $_SESSION["id"], $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me cambia la contraseña del usuario actual
+    **/
+    public static function cambiarClave (
+        array   $config,
+        string  $clave,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1(?) WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$clave, $_SESSION["id"], $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me trae los datos de los cumplimentados
+    **/
+    public static function consultarCumplimentados ()
+    {
+        $sql = "SELECT uss_nombre, YEAR(uss_fecha_nacimiento) AS agno, uss_foto, uss_id, uss_mostrar_edad FROM ".BD_GENERAL.".usuarios 
+        WHERE MONTH(uss_fecha_nacimiento)='".date("m")."' AND DAY(uss_fecha_nacimiento)='".date("d")."' AND institucion=? AND year=?";
+
+        $parametros = [$_SESSION["idInstitucion"], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae los usuarios duplicados
+    **/
+    public static function consultarUsuarioDuplicados (
+        array $config,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT GROUP_CONCAT( uss_id SEPARATOR ', ') as uss_id, uss_usuario, pes_nombre, uss_apellido1, uss_apellido2, uss_nombre2, uss_nombre, COUNT(*) as duplicados FROM ".BD_GENERAL.".usuarios uss 
+        INNER JOIN ".BD_ADMIN.".general_perfiles ON pes_id=uss_tipo
+        WHERE uss.institucion=? AND uss.year=?
+        GROUP BY uss_usuario
+        HAVING COUNT(*) > 1 
+        ORDER BY uss_id ASC";
+
+        $parametros = [$config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae la entrada de un usuario
+    **/
+    public static function consultarEntrada (
+        array   $config,
+        string  $idUsuario,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT (DATEDIFF(uss_ultimo_ingreso, now())*-1) FROM ".BD_GENERAL.".usuarios WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae la salida de un usuario
+    **/
+    public static function consultarSalida (
+        array   $config,
+        string  $idUsuario,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT (DATEDIFF(uss_ultima_salida, now())*-1) FROM ".BD_GENERAL.".usuarios WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        // Obtener la fila de resultados como un array asociativo
+        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me actualiza la informacion de un usuario
+    **/
+    public static function guardarUsuario (
+        PDO     $conexionPDO,
+        string  $insert,
+        array   $parametros
+    )
+    {
+        $campos = explode(',', $insert);
+        $numCampos = count($campos);
+        $signosPreguntas = str_repeat('?,', $numCampos);
+        $signosPreguntas = rtrim($signosPreguntas, ',');
+
+        $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_GENERAL, 'usuarios');
+        $parametros[] = $codigo;
+
+        $sql = "INSERT INTO ".BD_GENERAL.".usuarios({$insert}) VALUES ({$signosPreguntas})";
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $codigo;
+    }
+
+    /**
+     * Este metodo me actualiza la informacion de un usuario
+    **/
+    public static function actualizarUsuarios (
+        array   $config,
+        string  $idUsuario,
+        string  $update,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        [$updateSql, $updateValues] = BindSQL::prepararUpdate($update);
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET {$updateSql}, uss_ultima_actualizacion=now() WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = array_merge($updateValues, [$idUsuario, $config['conf_id_institucion'], $year]);
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me actualiza el usuario de los estudiantes por su documento
+    **/
+    public static function actualizarUsuariosEstudiantesDocumento (
+        array   $config,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_usuario=(SELECT mat_documento FROM ".BD_ACADEMICA.".academico_matriculas WHERE mat_id_usuario=uss_id AND mat_documento!='' AND institucion=? AND year=?) WHERE uss_tipo=4 AND institucion=? AND year=?";
+
+        $parametros = [$config['conf_id_institucion'], $year, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me actualiza la clave a un tipo de usuarios por su usuario
+    **/
+    public static function actualizarUsuariosClavePorTipoUsuario (
+        array   $config,
+        string  $tipoUsuario,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1(uss_usuario) WHERE uss_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$tipoUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me actualiza la clave a un tipo de usuarios por una clave ingresada por el directivo
+    **/
+    public static function actualizarUsuariosClaveManualPorTipoUsuario (
+        array   $config,
+        string  $clave,
+        string  $tipoUsuario,
+        string  $yearBd = ""
+    )
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_clave=SHA1(?) WHERE uss_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$clave, $tipoUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae los 10 ultimos usuarios que estan en linea
+    **/
+    public static function consultaUsuariosOnline(
+        array   $config,
+        string  $idUsuario,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 10";
+
+        $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me trae los 5 ultimos usuarios que estan fuera de linea
+    **/
+    public static function consultaUsuariosOffline(
+        array   $config,
+        string  $idUsuario,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 5";
+
+        $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me consulta los usuarios por tipo
+    **/
+    public static function consultaUsuariosPorTipo(
+        string  $tipoUsuario,
+        int     $instiBd = NULL,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $idInsti    = !empty($instiBd) ? $instiBd : $_SESSION["idInstitucion"];
+
+        $sql = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$tipoUsuario, $idInsti, $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return $resultado;
+    }
+
+    /**
+     * Este metodo me bloquea un usuario
+    **/
+    public static function bloquearUsuario(
+        array   $config,
+        string  $idUsuario,
+        int     $bloquearDesbloquear,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado=? WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$bloquearDesbloquear, $idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina un usuario por su ID
+    **/
+    public static function eliminarUsuarioPorID(
+        array   $config,
+        string  $idUsuario,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_GENERAL.".usuarios WHERE uss_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina un usuario por su Usuario
+    **/
+    public static function eliminarUsuarioPorUsuario(
+        array   $config,
+        string  $usuario,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_GENERAL.".usuarios WHERE uss_usuario=? AND institucion=? AND year=?";
+
+        $parametros = [$usuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Este metodo me elimina todos los usuario de cierto tipo
+    **/
+    public static function eliminarUsuarioPorTipoUsuario(
+        array   $config,
+        string  $tipoUsuario,
+        string  $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "DELETE FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=? AND institucion=? AND year=?";
+
+        $parametros = [$tipoUsuario, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
 }   

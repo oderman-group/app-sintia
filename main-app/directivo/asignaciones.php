@@ -5,6 +5,7 @@ include("../compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Asignaciones.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -95,16 +96,13 @@ if (!empty($_GET['idE'])) {
 														while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 															switch ($resultado['gal_tipo']) {
 																case CURSO:
-																	$consultaEvaluado = mysqli_query($conexion, "SELECT gra_nombre FROM ".BD_ACADEMICA.".academico_grados
-																	WHERE gra_id='".$resultado['gal_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-																	$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+																	require_once(ROOT_PATH."/main-app/class/Grados.php");
+																	$datosEvaluado = Grados::obtenerGrado($resultado['epag_id_evaluado']);
 																	$nombreEvaluado = $datosEvaluado['gra_nombre'];
 																break;
 
 																case AREA:
-																	$consultaEvaluado = mysqli_query($conexion, "SELECT ar_nombre FROM ".BD_ACADEMICA.".academico_areas
-																	WHERE ar_id='".$resultado['gal_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-																	$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+																	$datosEvaluado = Areas::traerDatosArea($config, $resultado['gal_id_evaluado']);
 																	$nombreEvaluado = $datosEvaluado['ar_nombre'];
 																break;
 
@@ -115,9 +113,7 @@ if (!empty($_GET['idE'])) {
 
 																default:
 																	if($resultado['gal_tipo'] == DIRECTIVO || $resultado['gal_tipo'] == DOCENTE) {
-																		$consultaEvaluado = mysqli_query($conexion, "SELECT uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 FROM ".BD_GENERAL.".usuarios
-																		WHERE uss_id='".$resultado['gal_id_evaluado']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-																		$datosEvaluado = mysqli_fetch_array($consultaEvaluado, MYSQLI_BOTH);
+																		$datosEvaluado = UsuariosPadre::sesionUsuario($resultado['gal_id_evaluado']);
 																		$nombreEvaluado = UsuariosPadre::nombreCompletoDelUsuario($datosEvaluado);
 																	}
 																break;

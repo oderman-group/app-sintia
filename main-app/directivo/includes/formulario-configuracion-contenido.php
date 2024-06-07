@@ -1,4 +1,6 @@
 <?php
+require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
+
 $year = $_SESSION["bd"];
 if (!empty($_GET['year'])) {
     $year = base64_decode($_GET['year']);
@@ -141,12 +143,8 @@ if($idPaginaInterna == 'DV0032'){ $configDEV =1; $institucion = "de <b>".$datosC
                         <div class="col-sm-4">
                             <select class="form-control  select2" name="estiloNotas" required <?=$disabledPermiso;?>>
                                 <option value="">Seleccione una opción</option>
-                                <?php 
-                                    try{
-                                        $opcionesGeneralesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_categorias_notas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                    } catch (Exception $e) {
-                                        include("../compartido/error-catch-to-report.php");
-                                    }
+                                <?php
+                                    $opcionesGeneralesConsulta = categoriasNota::traerCategoriasNotasInstitucion($config);
                                     while($opcionesGeneralesDatos = mysqli_fetch_array($opcionesGeneralesConsulta, MYSQLI_BOTH)){
                                         if($datosConfiguracion['conf_notas_categoria']==$opcionesGeneralesDatos['catn_id'])
                                             echo '<option value="'.$opcionesGeneralesDatos['catn_id'].'" selected>'.$opcionesGeneralesDatos['catn_nombre'].'</option>';
@@ -544,11 +542,7 @@ if($idPaginaInterna == 'DV0032'){ $configDEV =1; $institucion = "de <b>".$datosC
                         </div>
                     </div>
 
-                    <?php if(Modulos::validarPermisoEdicion() || $datosUsuarioActual['uss_tipo'] == TIPO_DEV){?>
-                        <button type="submit" class="btn  btn-info">
-                            <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                        </button>
-                    <?php }?>
+                    <?php $botones = new botonesGuardar("dev-instituciones.php",Modulos::validarPermisoEdicion() || $datosUsuarioActual['uss_tipo'] == TIPO_DEV); ?>
                 </form>
             </div>
         </div>

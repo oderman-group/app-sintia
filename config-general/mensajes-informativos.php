@@ -48,6 +48,11 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 ';
             break;
 
+            case 9:
+                $tipo = 'danger';
+                $mensaje = 'Su institución se encuentra desactivada. Por favor comúniquese con la administración de plataforma SINTIA.';
+            break;
+
             case 'ER_DT_1':
                 $tipo = 'danger';
                 $mensaje = 'Este usuario(<b>' . $_GET["usuario"] . '</b>) ya existe para otra persona. Cambie el nombre de usuario por favor.';

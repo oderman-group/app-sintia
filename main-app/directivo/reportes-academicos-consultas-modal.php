@@ -1,5 +1,6 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -22,11 +23,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                         <select class="form-control  select2" style="width: 100%;" name="cursosR">
                             <option value=""></option>
                             <?php
-                            try {
-                                $c_cursos = mysqli_query($conexion, "SELECT gra_id, gra_codigo, gra_nombre, gra_formato_boletin, gra_valor_matricula, gra_valor_pension, gra_estado FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_codigo;");
-                            } catch (Exception $e) {
-                                include("../compartido/error-catch-to-report.php");
-                            }
+                            $c_cursos = Grados::traerGradosInstitucion($config);
                             while ($r_cursos = mysqli_fetch_array($c_cursos, MYSQLI_BOTH)) {
                                 echo '<option value="' . $r_cursos["gra_id"] . '">' . $r_cursos["gra_nombre"] . '</option>';
                             }

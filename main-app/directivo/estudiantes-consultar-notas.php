@@ -27,6 +27,7 @@ include("session.php");
 $idPaginaInterna = 'DT0079';
 include("../compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 include("../compartido/head.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
@@ -124,17 +125,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Carga Acad&eacute;mica</label> 
-                                          	<?php 
-                                            try{
-                                                $consulta_cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car, ".BD_ACADEMICA.".academico_materias am WHERE car_curso='".$e['car_curso']."' AND car_grupo='".$e['car_grupo']."' AND am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]} AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]}");
-                                            } catch (Exception $e) {
-                                                include("../compartido/error-catch-to-report.php");
-                                            }
-											?>
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="carga" required>
                                                 <option value="0"></option>
                                                 <?php 
+													$consulta_cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $e['car_curso'], $e['car_grupo']);
                                                     while($c = mysqli_fetch_array($consulta_cargas, MYSQLI_BOTH)){
                                                         echo '<option value="'.$c['car_id'].'">COD. '.$c['car_id'].' - '.$c["mat_nombre"].'</option>';	
                                                     }

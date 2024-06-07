@@ -22,7 +22,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $cargaHconsulta = CargaAcademica::accesoCargasEstudiante($conexion, $config, $cargaConsultaActual, $datosEstudianteActual['mat_id']);
 $cargaHnum = mysqli_num_rows($cargaHconsulta);
 if($cargaHnum==0){
-	CargaAcademica::guardarAccesoCargasEstudiante($conexion, $config, $cargaConsultaActual, $datosEstudianteActual['mat_id']);
+	CargaAcademica::guardarAccesoCargasEstudiante($conexion, $conexionPDO, $config, $cargaConsultaActual, $datosEstudianteActual['mat_id']);
 }else{
 	CargaAcademica::actualizarAccesoCargasEstudiante($conexion, $config, $cargaConsultaActual, $datosEstudianteActual['mat_id']);
 }

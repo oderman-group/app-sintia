@@ -72,9 +72,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         </div>	
 
 
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+										
+                                    <?php $botones = new botonesGuardar("cargas-indicadores-obligatorios.php",true); ?>
                                     </form>
                                 </div>
                             </div>

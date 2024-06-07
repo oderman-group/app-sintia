@@ -1,5 +1,6 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -19,16 +20,10 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Curso</label>
                 <div class="col-sm-8">
-                    <?php
-                    try {
-                        $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal");
-                    } catch (Exception $e) {
-                        include("../compartido/error-catch-to-report.php");
-                    }
-                    ?>
                     <select class="form-control  select2" style="width: 100%;" name="curso" required>
                         <option value="">Seleccione una opción</option>
                         <?php
+                        $opcionesConsulta = Grados::traerGradosInstitucion($config);
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
                             $disabled = '';
                             if ($opcionesDatos['gra_estado'] == '0') $disabled = 'disabled';
@@ -88,11 +83,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <select id="selectEstudiantes" class="form-control  select2" name="id" multiple required>
                         <option value="">Seleccione una opción</option>
                         <?php
-                        try {
-                            $grados = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE gra_estado=1 AND gra_tipo='".GRADO_GRUPAL."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal ");
-                        } catch (Exception $e) {
-                            include("../compartido/error-catch-to-report.php");
-                        }
+                        $grados = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
                         while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
                         ?>
 

@@ -228,6 +228,9 @@ $institucionNombre = $institucion['ins_siglas'];
                                 <?php if(Modulos::validarSubRol(["DT0202"])){?>
                                     <li><a href="../directivo/solicitud-cancelacion.php"><i class="fa fa-cut"></i><?=$frases[367][$datosUsuarioActual['uss_idioma']];?></a></li>
                                 <?php }?>
+                                <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DEV || ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && Modulos::validarSubRol(["DT0332"]))){?>
+                                    <li><a href="consumo-plan.php"><i class="fa-solid fa-chart-pie"></i>Consumo Del Plan</a></li>
+                                <?php }?>
                                 <li><a href="../compartido/sintia-refresh.php" onClick="localStorage.clear();"><i class="fa fa-refresh"></i>Refrescar SINTIA</a></li>
                                 <li><a href="../controlador/salir.php" onClick="localStorage.clear();"><i class="icon-logout"></i><?=$frases[15][$datosUsuarioActual['uss_idioma']];?></a></li>
                             </ul>

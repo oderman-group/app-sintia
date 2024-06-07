@@ -1,6 +1,7 @@
 <?php
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Inscripciones.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0163';
@@ -29,11 +30,7 @@ if(file_exists($ruta."/".$documentos['matd_certificados'])){	unlink($ruta."/".$d
 
 Inscripciones::eliminarDocumentos($conexion, $config, $matricula);
 
-try{
-    mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_matriculas WHERE mat_id='".$matricula."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+Estudiantes::eliminarMatricula($config, $matricula);
 
 include("../compartido/guardar-historial-acciones.php");
 

@@ -108,13 +108,12 @@ require_once(ROOT_PATH."/main-app/class/Grados.php"); ?>
                                                 $porcentajeGrado=$periodosCursos['gvp_valor'];
                                             }
 
-											$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM ".BD_ACADEMICA.".academico_boletin 
-												WHERE bol_estudiante='" . $datosEstudianteActual['mat_id'] . "' AND bol_periodo='" . $i . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
+                                            $notapp = Boletin::traerNotaBoletinPeriodo($config, $i, $datosEstudianteActual['mat_id']);
                                             $porcentaje=0;
-                                            if(!empty($notapp[0])){
-                                                $porcentaje = ($notapp[0]/$config['conf_nota_hasta'])*100;
+                                            if(!empty($notapp['bol_nota'])){
+                                                $porcentaje = ($notapp['bol_nota']/$config['conf_nota_hasta'])*100;
                                             }
-											if (!empty($notapp[0]) && $notapp[0] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger';
+											if (!empty($notapp['bol_nota']) && $notapp['bol_nota'] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger';
 											else $colorGrafico = 'info';
 											if ($i == $periodo) $estiloResaltadoP = 'style="color: orange;"';
 											else $estiloResaltadoP = '';
@@ -123,11 +122,11 @@ require_once(ROOT_PATH."/main-app/class/Grados.php"); ?>
 												<a href="<?= $_SERVER['PHP_SELF']; ?>?usrEstud=<?= base64_encode($usrEstud); ?>&periodo=<?= base64_encode($i); ?>" <?= $estiloResaltadoP; ?>><?= strtoupper($frases[27][$datosUsuarioActual['uss_idioma']]); ?> <?= $i; ?> (<?= $porcentajeGrado; ?>%)</a>
 
                                                 <?php
-                                                    if(!empty($notapp[0]) and $config['conf_sin_nota_numerica']!=1){
+                                                    if(!empty($notapp['bol_nota']) and $config['conf_sin_nota_numerica']!=1){
 
-                                                    $notaPorPeriodo=$notapp[0];
+                                                    $notaPorPeriodo=$notapp['bol_nota'];
                                                     if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                                        $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp[0]);
+                                                        $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp['bol_nota']);
                                                         $notaPorPeriodo= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
                                                     }
                                                 ?>

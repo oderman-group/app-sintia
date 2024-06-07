@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -89,12 +90,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													$consulta = Asignaturas::consultarTodasAsignaturas($conexion, $config);
 													 $contReg = 1;
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														try{
-															$consultaNumeros=mysqli_query($conexion, "SELECT COUNT(car_id) FROM ".BD_ACADEMICA.".academico_cargas WHERE car_materia='".$resultado['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-														} catch (Exception $e) {
-															include("../compartido/error-catch-to-report.php");
-														}
-														 $numeros = mysqli_fetch_array($consultaNumeros, MYSQLI_BOTH);
+														$numeros = CargaAcademica::contarCargasMaterias($config, $resultado['mat_id']);
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>

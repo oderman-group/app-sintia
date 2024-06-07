@@ -8,14 +8,9 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
-$consulta = mysqli_query($conexion, "SELECT GROUP_CONCAT( uss_id SEPARATOR ', ') as uss_id, uss_usuario, pes_nombre, uss_apellido1, uss_apellido2, uss_nombre2, uss_nombre, COUNT(*) as duplicados FROM ".BD_GENERAL.".usuarios uss 
-INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo
-WHERE uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-GROUP BY uss_usuario
-HAVING COUNT(*) > 1 
-ORDER BY uss_id ASC");
-
+$consulta = UsuariosPadre::consultarUsuarioDuplicados($config);
 ?>
 <!doctype html>
 <html>

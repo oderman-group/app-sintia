@@ -5,6 +5,7 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 	include("historial-acciones-guardar.php");
 	require_once("../class/UsuariosPadre.php");
 	require_once("../class/Estudiantes.php");
+	require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 	$config = Plataforma::sesionConfiguracion();
 	$_SESSION["configuracion"] = $config;
@@ -26,11 +27,7 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 												$profesNombre = array();
 												while($docProgreso = mysqli_fetch_array($docentesProgreso, MYSQLI_BOTH)){
 													$nombreDocente= UsuariosPadre::nombreCompletoDelUsuario($docProgreso);
-													$consultaDatosProgreso=mysqli_query($conexion, "SELECT
-													(SELECT count(car_id) FROM ".BD_ACADEMICA.".academico_cargas WHERE car_docente='".$docProgreso['uss_id']."' AND car_periodo='".$config['conf_periodo']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-													(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=aa.act_id_carga AND car_periodo='".$config['conf_periodo']."' AND car_docente='".$docProgreso['uss_id']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]} WHERE aa.act_estado=1 AND aa.act_periodo='".$config['conf_periodo']."' AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}),
-													(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=aa.act_id_carga AND car_periodo='".$config['conf_periodo']."' AND car_docente='".$docProgreso['uss_id']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]} WHERE aa.act_estado=1 AND aa.act_periodo='".$config['conf_periodo']."' AND aa.act_registrada=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]})");
-													$datosProgreso = mysqli_fetch_array($consultaDatosProgreso, MYSQLI_BOTH);
+													$datosProgreso = CargaAcademica::consultaProgresoDocentes($config, $docProgreso['uss_id']);
 													$sumasProgreso = ($datosProgreso[1] + $datosProgreso[2])/2;
 													if($datosProgreso[0]>0){
 														$sumasProgreso = round($sumasProgreso / $datosProgreso[0],2);

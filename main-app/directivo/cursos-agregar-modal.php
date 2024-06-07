@@ -10,31 +10,10 @@ if (!Modulos::validarPermisoEdicion()) {
 
 <!-- Theme Styles -->
 <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
-
+<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 
 
 <style>
-    .gif-carga {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.7);
-        /* Fondo semitransparente */
-        z-index: 9999;
-        /* Asegura que esté por encima de otros elementos */
-        display: none;
-        /* Por defecto oculto */
-    }
-
-    .gif-carga img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
     div:where(.swal2-container).swal2-top-end,
     div:where(.swal2-container).swal2-center-end,
     div:where(.swal2-container).swal2-bottom-end {
@@ -128,7 +107,7 @@ if (!Modulos::validarPermisoEdicion()) {
 
                                 <div class="col-sm-8">
                                     <div id="gifCarga" class="gif-carga">
-                                        <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                        <img alt="Cargando...">
                                     </div>
                                     <img id="imagenSelect" class="cursor-mano" src="../files/cursos/curso.png" alt="avatar" style="height: 400px;width: 100%;border:3px dashed;padding:10px;border-radius:40px / 30px">
                                 </div>
@@ -150,7 +129,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                 <div class="col-sm-10">
                                     <textarea cols="80" id="editor1" name="descripcion" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?= $disabledPermiso; ?>></textarea>
                                     <div id="gifCarga2" class="gif-carga">
-                                        <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                        <img alt="Cargando...">
                                     </div>
                                 </div>
                             </div>
@@ -161,7 +140,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                 <div class="col-sm-10">
                                     <textarea cols="80" id="editor2" name="contenido" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?= $disabledPermiso; ?>></textarea>
                                     <div id="gifCarga3" class="gif-carga">
-                                        <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                        <img alt="Cargando...">
                                     </div>
                                 </div>
                             </div>
@@ -245,12 +224,8 @@ if (!Modulos::validarPermisoEdicion()) {
                     </div>
                 </div>
             <?php } ?>
-            <?php if (Modulos::validarPermisoEdicion()) { ?>
-                <button type="submit" class="btn  btn-info">
-                    <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios
-                </button>
-            <?php } ?>
-
+            <?php  
+              $botones = new botonesGuardar(null,Modulos::validarPermisoEdicion()); ?>
         </div>
     </form>
 </div>

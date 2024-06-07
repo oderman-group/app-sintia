@@ -1,10 +1,8 @@
 <?php
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 //CALCULO DEFINITIVA
-
-$consultaD = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$carga."' AND act_registrada=1 AND act_estado=1 AND act_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-
-
+$consultaD = Actividades::consultaActividadesCarga($config, $carga, $periodo);
 
 $numConsultaD = mysqli_num_rows($consultaD);
 
@@ -21,7 +19,7 @@ $numConsultaD = mysqli_num_rows($consultaD);
 
 	while($resultadoD = mysqli_fetch_array($consultaD, MYSQLI_BOTH)){
 
-		$nota = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_actividad='".$resultadoD['act_id']."' AND cal_id_estudiante='".$estudiante."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
+		$nota = Calificaciones::traerCalificacionActividadEstudiante($config, $resultadoD['act_id'], $estudiante);
 
 		
 

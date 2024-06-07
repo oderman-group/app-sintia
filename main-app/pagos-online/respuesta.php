@@ -60,17 +60,108 @@ include("../../conexion.php");
       }
 
       if (!empty($jsonObject['data']['x_extra16'])) {
-        mysqli_query($conexion, "INSERT INTO " . BD_ADMIN . ".instituciones_modulos(ipmod_institucion, ipmod_modulo) VALUES ('" . $jsonObject['data']['x_extra6'] . "', '" . $jsonObject['data']['x_extra16'] . "')");
+        require_once(ROOT_PATH."/main-app/class/Modulos.php");
+
+        mysqli_query($conexion, "INSERT INTO " . BD_ADMIN . ".instituciones_paquetes_extras(paqext_institucion, paqext_id_paquete, paqext_fecha, paqext_tipo) VALUES ('" . $jsonObject['data']['x_extra6'] . "', '" . $jsonObject['data']['x_extra16'] . "', now(), '".MODULOS."')");
+
+        if($jsonObject['data']['x_extra16'] == MODULO_ADMISIONES) {
+          require_once(ROOT_PATH."/main-app/class/Plataforma.php");
+          
+          $Plataforma = new Plataforma;
     
-        $arregloModulos = array();
-        $modulosSintia = mysqli_query($conexion, "SELECT mod_id, mod_nombre FROM ".BD_ADMIN.".modulos
-        INNER JOIN ".BD_ADMIN.".instituciones_modulos ON ipmod_institucion='".$jsonObject['data']['x_extra6']."' AND ipmod_modulo=mod_id
-        WHERE mod_estado=1");
-        while($modI = mysqli_fetch_array($modulosSintia, MYSQLI_BOTH)){
-            $arregloModulos [$modI['mod_id']] = $modI['mod_nombre'];
+          try{
+            $colorBG = $Plataforma->colorUno;
+            $yearInscription = date('Y')+1;
+    
+            $sql = "INSERT INTO " . BD_ADMISIONES . ".config_instituciones(cfgi_id_institucion,
+            cfgi_year,
+            cfgi_color_barra_superior,
+            cfgi_inscripciones_activas,
+            cfgi_politicas_texto,
+            cfgi_color_texto,
+            cfgi_mostrar_banner,
+            cfgi_year_inscripcion) VALUES (?, ?, ?, '0', 'Loremp ipsum...', 'white', '0', ?) 
+            ON DUPLICATE KEY UPDATE cfgi_year_inscripcion = VALUES(cfgi_year_inscripcion)";
+    
+            $stmt = mysqli_prepare($conexion, $sql);
+    
+            if (!$stmt) {
+              die("Error al preparar la consulta.");
+            }
+    
+            // Vincular los parámetros
+            mysqli_stmt_bind_param($stmt, "iisi", $jsonObject['data']['x_extra6'], date('Y'), $colorBG, $yearInscription);
+    
+            // Ejecutar la consulta
+            $resultado = mysqli_stmt_execute($stmt);
+    
+            if (!$resultado) {
+              die("Error al ejecutar la consulta.");
+            }
+    
+            } catch (Exception $e) {
+              include("../compartido/error-catch-to-report.php");
+            }
+          
         }
-        
+    
+        $arregloModulos = Modulos::consultarModulosIntitucion($conexion, $jsonObject['data']['x_extra6']);
         $_SESSION["modulos"] = $arregloModulos;
+      }
+
+      if (!empty($jsonObject['data']['x_extra17']) && !empty($jsonObject['data']['x_extra18'])) {
+          
+        mysqli_query($conexion, "INSERT INTO " . BD_ADMIN . ".instituciones_paquetes_extras(paqext_institucion, paqext_id_paquete, paqext_fecha, paqext_tipo) VALUES ('" . $jsonObject['data']['x_extra6'] . "', '" . $jsonObject['data']['x_extra17'] . "', now(), '".PAQUETES."')");
+
+        if ($jsonObject['data']['x_extra18'] == MODULOS) {
+            require_once(ROOT_PATH."/main-app/class/Plataforma.php");
+            require_once(ROOT_PATH."/main-app/class/Modulos.php");
+            $datosPaquetes = Plataforma::contarDatosPaquetes($jsonObject['data']['x_extra6'], PAQUETES);
+
+            $arrayModulos = explode(",", $datosPaquetes['plns_modulos']);
+            if(in_array(MODULO_ADMISIONES, $arrayModulos)) {
+              
+              $Plataforma = new Plataforma;
+        
+              try{
+                $colorBG = $Plataforma->colorUno;
+                $yearInscription = date('Y')+1;
+        
+                $sql = "INSERT INTO " . BD_ADMISIONES . ".config_instituciones(cfgi_id_institucion,
+                cfgi_year,
+                cfgi_color_barra_superior,
+                cfgi_inscripciones_activas,
+                cfgi_politicas_texto,
+                cfgi_color_texto,
+                cfgi_mostrar_banner,
+                cfgi_year_inscripcion) VALUES (?, ?, ?, '0', 'Loremp ipsum...', 'white', '0', ?) 
+                ON DUPLICATE KEY UPDATE cfgi_year_inscripcion = VALUES(cfgi_year_inscripcion)";
+        
+                $stmt = mysqli_prepare($conexion, $sql);
+        
+                if (!$stmt) {
+                  die("Error al preparar la consulta.");
+                }
+        
+                // Vincular los parámetros
+                mysqli_stmt_bind_param($stmt, "iisi", $jsonObject['data']['x_extra6'], date('Y'), $colorBG, $yearInscription);
+        
+                // Ejecutar la consulta
+                $resultado = mysqli_stmt_execute($stmt);
+        
+                if (!$resultado) {
+                  die("Error al ejecutar la consulta.");
+                }
+        
+                } catch (Exception $e) {
+                  include("../compartido/error-catch-to-report.php");
+                }
+              
+            }
+    
+            $arregloModulos = Modulos::consultarModulosIntitucion($conexion, $jsonObject['data']['x_extra6']);
+            $_SESSION["modulos"] = $arregloModulos;
+        }
       }
     }
   }

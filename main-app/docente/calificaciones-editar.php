@@ -6,20 +6,15 @@ include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
 $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
 
-$consultaCalificacion=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id='".$idR."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-$calificacion = mysqli_fetch_array($consultaCalificacion, MYSQLI_BOTH);
+$calificacion = Actividades::consultarDatosActividades($config, $idR);
 
-$consultaValor=mysqli_query($conexion, "SELECT
-(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-(SELECT count(*) FROM ".BD_ACADEMICA.".academico_actividades 
-WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})
-");
-$valores = mysqli_fetch_array($consultaValor, MYSQLI_BOTH);
+$valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
 ?>
 
@@ -71,9 +66,7 @@ $porcentajeRestante = 100 - $valores[0];
 								<header class="panel-heading panel-heading-purple"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?> </header>
 								<div class="panel-body">
 										<?php
-										$enComun = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades
-										WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id!='".$idR."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-										");
+										$enComun = Actividades::consultaActividadesDiferentesCarga($config, $idR, $cargaConsultaActual, $periodoConsultaActual);
 										while($regComun = mysqli_fetch_array($enComun, MYSQLI_BOTH)){
 										?>
 										<p><a href="calificaciones-editar.php?idR=<?=base64_encode($regComun['act_id']);?>"><?=$regComun['act_descripcion'];?></a></p>
@@ -133,13 +126,10 @@ $porcentajeRestante = 100 - $valores[0];
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Evidencia</label>
                                             <div class="col-sm-10">
-												<?php
-												$evidenciasConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_evidencias WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-												");
-												?>
                                                 <select class="form-control  select2" name="evidencia" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
+													$evidenciasConsulta = Calificaciones::traerEvidenciasInstitucion($config);
 													while($evidenciasDatos = mysqli_fetch_array($evidenciasConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($evidenciasDatos['evid_id']==$calificacion['act_id_evidencia']) $select = 'selected';
@@ -174,12 +164,9 @@ $porcentajeRestante = 100 - $valores[0];
 
 
 
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-										
-										<a href="#" name="calificaciones.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                    </form>
+											<?php 
+                            				$botones = new botonesGuardar("calificaciones.php",Modulos::validarPermisoEdicion()); ?>
+										</form>
                                 </div>
                             </div>
                         </div>

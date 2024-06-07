@@ -191,7 +191,7 @@ if (!empty($infoDatos['emp_logo']) && file_exists('../files/marketplace/logos/'.
                                         }
                                     </script>
 
-                                    <input type="submit" id="btnGuardar" class="btn btn-primary" value="Guardar cambios">&nbsp;
+                                    <?php $botones = new botonesGuardar("mps-empresas.php",Modulos::validarPermisoEdicion()); ?>
                                 </form>
                             </div>
                         </div>

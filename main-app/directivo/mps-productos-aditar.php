@@ -188,7 +188,7 @@ if (!empty($infoDatos['prod_foto']) && file_exists('../files/marketplace/product
                                         </div>
                                     </div>
 
-                                    <input type="submit" id="btnGuardar" class="btn btn-primary" value="Guardar cambios">&nbsp;
+                                    <?php $botones = new botonesGuardar("mps-productos.php",Modulos::validarPermisoEdicion()); ?>
                                 </form>
                             </div>
                         </div>

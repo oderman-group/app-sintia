@@ -7,6 +7,7 @@ include("verificar-periodos-diferentes.php");
 include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Clases.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 ?>
 
 <!--bootstrap -->
@@ -85,12 +86,7 @@ require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 												echo "<span'>".$contIndicadores.") ".$indImpDatos['ind_nombre']." (".$indImpDatos['ipc_valor']."%)</span><br>";
 
 												//Consultamos las calificaciones del indicador a Importar
-												try{
-													$calImpConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades
-													WHERE act_id_carga='".$_POST["cargaImportar"]."' AND act_periodo='".$_POST["periodoImportar"]."' AND act_id_tipo='".$indImpDatos['ind_id']."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-												} catch (Exception $e) {
-													include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-												}
+												$calImpConsulta = Actividades::traerActividadesCargaIndicador($config, $indImpDatos['ind_id'], $_POST["cargaImportar"], $_POST["periodoImportar"]);
 												$numCalificaciones = mysqli_num_rows($calImpConsulta);
 												if ($numCalificaciones > 0) {
 													echo "<b style='margin-left: 40px;'>Calificaciones a importar de este indicador:</b><br>";

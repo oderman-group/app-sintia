@@ -86,11 +86,8 @@ $datosUnidad = Unidades::consultarUnidadesPorID($conexion, $idR);
 											<textarea id="editor1" name="contenido" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"><?=$datosUnidad['uni_descripcion'];?></textarea>
 										</div>
 									</div>
-									<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-
-									<a href="#" name="clases.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+									<?php 
+                            				$botones = new botonesGuardar("clases.php",Modulos::validarPermisoEdicion()); ?>
 								</form>
 							</div>
 						</div>

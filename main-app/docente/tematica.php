@@ -5,7 +5,7 @@
 <?php //include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
 <?php
-$consultaTematica=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_carga='".$cargaConsultaActual."' AND ind_periodo='".$periodoConsultaActual."' AND ind_tematica=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$consultaTematica = Indicadores::consultaTematica($cargaConsultaActual, $periodoConsultaActual);
 $tematica = mysqli_fetch_array($consultaTematica, MYSQLI_BOTH);
 ?>
 

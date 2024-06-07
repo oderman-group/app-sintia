@@ -114,14 +114,7 @@ if(!Modulos::validarPermisoEdicion()){
 										<input type="hidden" name="saberes" class="form-control" value="<?=$indicador['ipc_evaluacion'];?>">
 										<?php }?>
 
-
-                                        <?php if(Modulos::validarPermisoEdicion()){?>
-										    <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-                                        <?php }?>
-										
-										<a href="javascript:void(0);" name="cargas-indicadores.php?carga=<?=$_GET["carga"];?>&docente=<?=$_GET["docente"];?>" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+                                        <?php $botones = new botonesGuardar("cargas-indicadores.php?carga=".$_GET["carga"]."&docente=".$_GET["docente"],Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

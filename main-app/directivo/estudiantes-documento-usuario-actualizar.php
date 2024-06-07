@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0175';
@@ -10,11 +11,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-try{
-	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_usuario=(SELECT mat_documento FROM ".BD_ACADEMICA.".academico_matriculas WHERE mat_id_usuario=uss_id AND mat_documento!='' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}) WHERE uss_tipo=4 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+UsuariosPadre::actualizarUsuariosEstudiantesDocumento($config);
+
 	include("../compartido/guardar-historial-acciones.php");
 
 	echo '<script type="text/javascript">window.location.href="' . $_SERVER['HTTP_REFERER'] . '";</script>';

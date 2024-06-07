@@ -1,12 +1,9 @@
 <?php
 	include("session.php");
-	include("../modelo/conexion.php");
+	require_once(ROOT_PATH."/main-app/class/Grados.php");
 	
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_grados SET gra_formato_boletin=1 WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$update = "gra_formato_boletin=1";
+	Grados::actualizarTodosCursos($config, $update);
 	
 	echo '<script type="text/javascript">window.location.href="'.$_SERVER['HTTP_REFERER'].'";</script>';
 	exit();

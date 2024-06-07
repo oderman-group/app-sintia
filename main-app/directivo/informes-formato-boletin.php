@@ -8,6 +8,7 @@
     }
     include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
     require_once("../class/Estudiantes.php");
+    require_once(ROOT_PATH."/main-app/class/Grados.php");
     
     $year=$_SESSION["bd"];
     if(isset($_POST["year"])){
@@ -23,25 +24,29 @@
     $id="";
     if(isset($_POST["estudiante"])){$id=base64_encode($_POST["estudiante"]);}
 
-    $consulta="";
-    if(isset($_POST["curso"]) AND $_POST["curso"]!=""){
-        try{
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE gra_id='".$_POST["curso"]."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
+    $formatoB = "";
+    if (empty($_POST["formatoB"])) {
+        $consulta="";
+        if(isset($_POST["curso"]) AND $_POST["curso"]!=""){
+            $consulta = Grados::obtenerDatosGrados($_POST["curso"], $year);
         }
-    }
 
-    if(isset($_POST["estudiante"]) AND $_POST["estudiante"]!=""){
-    $consulta =Estudiantes::obtenerDatosEstudiantesParaBoletin($_POST["estudiante"],$year);
-    }
+        if(isset($_POST["estudiante"]) AND $_POST["estudiante"]!=""){
+        $consulta =Estudiantes::obtenerDatosEstudiantesParaBoletin($_POST["estudiante"],$year);
+        }
 
-    $boletin = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-    $numDatos=mysqli_num_rows($consulta);
+        $boletin = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        $numDatos=mysqli_num_rows($consulta);
+        if($numDatos>0){
+            $formatoB = $boletin['gra_formato_boletin'];
+        }
+    } else {
+        $formatoB = $_POST["formatoB"];
+    }
 
     $ruta="informes-todos.php?error=ER_DT_9";
-    if($numDatos>0){
-        $ruta="../compartido/matricula-boletin-curso-".$boletin['gra_formato_boletin'].".php?id=".$id."&periodo=".$periodo."&curso=".$curso."&grupo=".$grupo."&year=".base64_encode($year);
+    if(!empty($formatoB)){
+        $ruta="../compartido/matricula-boletin-curso-".$formatoB.".php?id=".$id."&periodo=".$periodo."&curso=".$curso."&grupo=".$grupo."&year=".base64_encode($year);
     }
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="'.$ruta.'";</script>';

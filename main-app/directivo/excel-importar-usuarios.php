@@ -3,6 +3,7 @@ include("session.php");
 require_once("../class/Usuarios.php");
 require '../../librerias/Excel/vendor/autoload.php';
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -127,12 +128,8 @@ if($extension == 'xlsx'){
 							}
 
 							//Actualizamos el acudiente y los datos del formulario
-							try{
-								mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_tipo=uss_tipo $camposActualizar
-								WHERE uss_id='".$datosUsuariosExistente['uss_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-							} catch (Exception $e) {
-								include("../compartido/error-catch-to-report.php");
-							}
+							$update = "uss_tipo=uss_tipo {$camposActualizar}";
+							UsuariosPadre::actualizarUsuarios($config, $datosUsuariosExistente['uss_id'], $update);
 
 							$usuariosActualizados["FILA_".$f] = $datosUsuariosExistente['uss_documento'];
 

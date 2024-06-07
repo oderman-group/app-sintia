@@ -4,6 +4,7 @@ include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");
 require_once("../class/Estudiantes.php");
 require_once("../class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 ?>
 <head>
 	<title>Estudiantes</title>
@@ -37,8 +38,8 @@ require_once("../class/UsuariosPadre.php");
   $consulta = Estudiantes::listarEstudiantes(0, $adicional, '');
   while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	$acudiente = UsuariosPadre::sesionUsuario($resultado['mat_acudiente']);
-  $consultaGrado=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gra_id='".$resultado['mat_grado']."' AND gru.gru_id='".$resultado['mat_grupo']."' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}");
-	$grados = mysqli_fetch_array($consultaGrado, MYSQLI_BOTH);	
+  
+  $grados = Grados::traerGradosGrupos($config, $resultado['mat_grado'], $resultado['mat_grupo']);
   ?>
   <tr style="font-size:13px;">
       <td><?=$resultado['mat_id'];?></td>

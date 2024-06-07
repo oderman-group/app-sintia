@@ -7,12 +7,13 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 	exit();
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-    require_once("../class/Estudiantes.php");
-    require_once("../class/Boletin.php");
-    require_once("../class/Usuarios.php");
-    require_once("../class/UsuariosPadre.php");
+    require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+    require_once(ROOT_PATH."/main-app/class/Boletin.php");
+    require_once(ROOT_PATH."/main-app/class/Usuarios.php");
+    require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
     require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
     require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+    require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
     $Plataforma = new Plataforma;
 
     $year=$_SESSION["bd"];
@@ -204,16 +205,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                     $sumaPromedioGeneralPeriodo3=0;
                     while($datosAreas = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)){
 
-                        $consultaMaterias= mysqli_query($conexion,"SELECT car_id, car_ih, car_materia, car_docente, car_director_grupo,
-                        mat_nombre, mat_area, mat_valor,
-                        ar_nombre, ar_posicion
-                        bol_estudiante, bol_periodo, bol_nota,
-                        bol_nota * (mat_valor/100) AS notaArea
-                        FROM ".BD_ACADEMICA.".academico_cargas car
-                        INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-                        INNER JOIN ".BD_ACADEMICA.".academico_areas a ON a.ar_id = am.mat_area AND a.institucion={$config['conf_id_institucion']} AND a.year={$year}
-                        LEFT JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo ='".$periodoActual."' AND bol_estudiante = '".$matriculadosDatos['mat_id']."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}
-                        WHERE car_curso = '".$datosAreas['car_curso']."' AND car_grupo = '".$datosAreas['car_grupo']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year} AND am.mat_area = '".$datosAreas['ar_id']."'");
+                        $consultaMaterias = CargaAcademica::consultaMaterias($config, $periodoActual, $matriculadosDatos['mat_id'], $datosAreas['car_curso'], $datosAreas['car_grupo'], $datosAreas['ar_id'], $year);
                         $notaArea=0;
                         $notaAreasPeriodos=0;
                         while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
@@ -254,8 +246,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                         $ultimoPeriodo = $config["conf_periodos_maximos"];
                                         for($i=1;$i<=$periodoActual;$i++){
                                             if($i!=$periodoActual){
-                                                $consultaPeriodos=mysqli_query($conexion,"SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$datosMaterias['car_id']."' AND bol_periodo='".$i."' AND bol_estudiante = '".$matriculadosDatos['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-                                                $datosPeriodos=mysqli_fetch_array($consultaPeriodos, MYSQLI_BOTH);
+                                                $datosPeriodos = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $matriculadosDatos['mat_id'], $datosMaterias['car_id'], $year);
                                                 $notaMateriasPeriodos=$datosPeriodos['bol_nota'];
                                                 $notaMateriasPeriodos=round($notaMateriasPeriodos, 1);
                                                 $notaMateriasPeriodosTotal+=$notaMateriasPeriodos;
@@ -332,14 +323,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                 $ultimoPeriodoAreas = $config["conf_periodos_maximos"];
                                 for($i=1;$i<=$periodoActual;$i++){
                                     if($i!=$periodoActual){
-                                        $consultaAreasPeriodos=mysqli_query($conexion,"SELECT mat_valor,
-                                        bol_estudiante, bol_periodo, bol_nota,
-                                        SUM(bol_nota * (mat_valor/100)) AS notaArea
-                                        FROM ".BD_ACADEMICA.".academico_cargas car
-                                        INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car_materia AND mat_sumar_promedio='SI' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-                                        INNER JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_carga=car_id AND bol_periodo='".$i."' AND bol_estudiante = '".$matriculadosDatos['mat_id']."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}
-                                        WHERE am.mat_area = '".$datosAreas['ar_id']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-                                        GROUP BY am.mat_area");
+                                        $consultaAreasPeriodos = CargaAcademica::consultaAreasPeriodos($config, $i, $matriculadosDatos['mat_id'], $datosAreas['ar_id'], $year);
                                         $datosAreasPeriodos=mysqli_fetch_array($consultaAreasPeriodos, MYSQLI_BOTH);
                                         $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? round($datosAreasPeriodos['notaArea'], 1) : 0;
                                         $notaAreasPeriodosTotal+=$notaAreasPeriodos;
@@ -581,10 +565,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
             </thead>
 
             <?php
-            $conCargasDos = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car
-	        INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
-	        INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_docente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$year}
-	        WHERE car_curso='" . $gradoActual . "' AND car_grupo='" . $grupoActual . "' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}");
+            $conCargasDos = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $year);
             while ($datosCargasDos = mysqli_fetch_array($conCargasDos, MYSQLI_BOTH)) {
 
                 

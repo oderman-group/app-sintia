@@ -99,8 +99,8 @@ $Plataforma = new Plataforma;
                                                         while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                             $responsable='';
                                                             if(!empty($resultado['emp_usuario'])){
-                                                                $year=date('Y');
-                                                                $consultaResponsable = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='" . $resultado['emp_usuario'] . "' AND institucion={$resultado['ins_id']} AND year={$year}"));
+                                                                $consultaR = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['emp_usuario']."'");
+                                                                $consultaResponsable = mysqli_fetch_array($consultaR, MYSQLI_BOTH);
                                                                 $responsable=UsuariosPadre::nombreCompletoDelUsuario($consultaResponsable);
                                                             }
                                                             $estado='Activo';

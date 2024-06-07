@@ -118,13 +118,8 @@ if (!Modulos::validarPermisoEdicion()) {
                                             </textarea>
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <a href="javascript:void(0);" name="evaluaciones.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i><?= $frases[184][$datosUsuarioActual['uss_idioma']]; ?></a>
-                                        <?php if (Modulos::validarPermisoEdicion()) { ?>
-                                            <button type="submit" class="btn  btn-info">
-                                                <i class="fa fa-save" aria-hidden="true"></i> <?= $frases[419][$datosUsuarioActual['uss_idioma']]; ?>
-                                            </button>
-                                        <?php } ?>
+                                    <div class="text-left">
+                                        <?php $botones = new botonesGuardar("evaluaciones.php",Modulos::validarPermisoEdicion()); ?>
                                     </div>
                                 </form>
                             </div>

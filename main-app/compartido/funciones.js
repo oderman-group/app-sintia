@@ -684,6 +684,84 @@ function mostrarImagen(idFile, idImg) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+/**
+ * me crea un metodo fetch y creaun metodo de respuesta
+ * @param {string} url url la cual se va a ejecutar
+ * @param {array} data datos que se enviuaran
+ * @param {string} tipo tipo de envio si es un Json o un html
+ * @param {boolean} isGet  valida si la peticion es GET
+ * @param {string} metodoresponse  meodo que se ecutaran con la respuesta del fetch
+ */
+function metodoFetch(url, data, tipo, isGet, metodoresponse) {
+    var parametros;
+    if (tipo == 'json') {
+        parametros = {
+            method: isGet ? "GET" : "POST", // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+    } else {
+        parametros = {
+            method: isGet ? "GET" : "POST", // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                "Content-Type": "text/html"
+            }
+
+        }
+    }
+
+    fetch(url, parametros)
+        .then((res) => tipo == 'json' ? res.json() : res.text())
+        .catch((error) => console.error("Error:", error))
+        .then(
+            function (res) {
+                window[metodoresponse](res, data);
+            });
+
+}
+/**
+ * me crea un metodo fetch de manera Asyncrona
+ * @param {string} url url la cual se va a ejecutar
+ * @param {array} data datos que se enviuaran
+ * @param {string} tipo tipo de envio si es un Json o un html
+ * @param {boolean} get  valida si la peticion es GET
+ */
+async function metodoFetchAsync(url, data, tipo, get) {
+    if (tipo == 'json') {
+        var parametros = {
+            method: get ? "GET" : "POST", // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+    } else {
+        var parametros = {
+            method: get ? "GET" : "POST", // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                "Content-Type": "text/html"
+            }
+        }
+    }
+
+    var response = await fetch(url, parametros)
+        .then((res) => tipo == 'json' ? res.json() : res.text())
+        .catch((error) => console.error("Error:", error))
+        .then(
+            function (res) {
+                var result = {
+                    parametros: data,
+                    data: res
+                }
+                return result;
+            });
+    return response;
+
+}
 
 /**
  * muestra modal para comprar modulos
@@ -714,6 +792,36 @@ function mostrarModalCompraModulos(idModulo, year) {
         });
 
         $("#modalComprarModulo").modal("show");
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+/**
+ * muestra modal para comprar paquete
+ * @param {int} idPaquete
+ */
+function mostrarModalCompraPaquete(idPaquete) {
+
+    fetch('../compartido/ajax-consultar-paquete.php?idPaquete='+(idPaquete), {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('tituloPaquete').innerHTML = "PAQUETE "+data.nombrePaquete;
+        document.getElementById('imgPaquete').src = data.imgPaquete;
+        if (data.descripcionPaquete !== "") {
+            document.getElementById('tituloDescripcionPaquete').innerHTML = "DESCRIPCIÓN DEL PAQUETE";
+            document.getElementById('descripcionPaquete').innerHTML = data.descripcionPaquete;
+        }
+        document.getElementById('enlaceWhatsappPaquete').href = "https://api.whatsapp.com/send?phone=573006075800&text="+data.mensaje;
+        document.getElementById('montoPaquete').value = data.montoPaquete;
+        document.getElementById('nombrePaquete').value = "PAQUETE "+data.nombrePaquete;
+        document.getElementById('idPaquete').value = idPaquete;
+        document.getElementById('tipoPaquete').value = data.tipoPaquete;
+
+        $("#modalComprarPaquete").modal("show");
     })
     .catch(error => {
         console.error('Error:', error);

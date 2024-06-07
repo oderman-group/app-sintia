@@ -36,7 +36,7 @@ require_once("../class/UsuariosPadre.php");
                   $cont=0;
 									while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                     $u = UsuariosPadre::sesionUsuario($resultado['fcu_usuario']);
-                    $cerrado = UsuariosPadre::sesionUsuario($resultado['fcu_cerrado_usuario']);
+                    $cerrado = !empty($resultado['fcu_cerrado_usuario']) ? UsuariosPadre::sesionUsuario($resultado['fcu_cerrado_usuario']) : array();
                     $nombreCompleto = UsuariosPadre::nombreCompletoDelUsuario($u);
 									?>
   <tr style="font-size:13px;">

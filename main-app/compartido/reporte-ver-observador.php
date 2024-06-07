@@ -60,11 +60,7 @@ if(!empty($_GET["busqueda"])){
       if (!empty($_GET["orden"])) {
         $ordenado = $_GET["orden"] . " DESC";
       }
-      $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
-      INNER JOIN ".BD_DISCIPLINA.".disiplina_nota dn ON dn_cod_estudiante=mat_id AND dn.institucion={$config['conf_id_institucion']} AND dn.year={$_SESSION["bd"]}
-      LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-      WHERE  mat_eliminado=0  AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]} $filtro
-      ORDER BY $ordenado");
+      $consulta = Estudiantes::listarMatriculasObservador($config, $filtro, $ordenado);
       while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
         $colorProceso = 'tomato';
         if (!empty($resultado["dn_aprobado"]) && $resultado["dn_aprobado"] == 1) {

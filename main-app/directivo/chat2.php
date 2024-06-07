@@ -209,10 +209,7 @@
                                         <ul class="list-unstyled chat-list mt-2 mb-0" id="listaUsuario">
 
                                             <?php
-                                            $consultaUsuariosOnline = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios 
-                                                WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!='" . $_SESSION['id'] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} 
-                                                ORDER BY uss_ultimo_ingreso DESC
-                                                LIMIT 10");
+                                            $consultaUsuariosOnline = UsuariosPadre::consultaUsuariosOnline($config, $_SESSION['id']);
                                             if (mysqli_num_rows($consultaUsuariosOnline) > 0) {
                                                 while ($datosUsuriosOnline = mysqli_fetch_array($consultaUsuariosOnline, MYSQLI_BOTH)) {
                                                     $fotoPerfilUsrOnline = $usuariosClase->verificarFoto($datosUsuriosOnline['uss_foto']);
@@ -228,10 +225,7 @@
                                                 <?php
                                                 }
                                             }
-                                            $consultaUsuariosOffline = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios 
-                                                WHERE uss_estado=0 AND uss_bloqueado=0  AND uss_id!='" . $_SESSION['id'] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-                                                ORDER BY uss_ultima_salida DESC
-                                                LIMIT 5");
+                                            $consultaUsuariosOffline = UsuariosPadre::consultaUsuariosOffline($config, $_SESSION['id']);
                                             if (mysqli_num_rows($consultaUsuariosOffline) > 0) {
                                                 while ($datosUsuriosOffline = mysqli_fetch_array($consultaUsuariosOffline, MYSQLI_BOTH)) {
                                                     $fotoPerfilUsrOffline = $usuariosClase->verificarFoto($datosUsuriosOffline['uss_foto']);

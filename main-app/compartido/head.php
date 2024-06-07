@@ -35,6 +35,7 @@ require_once(ROOT_PATH."/main-app/class/Plataforma.php");
 require_once(ROOT_PATH."/main-app/class/TipoUsuario.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/componentes/botones-guardar.php");
 
 $tituloDePagina = $frases[102][$datosUsuarioActual['uss_idioma']];
 if (!empty($datosPaginaActual)) {

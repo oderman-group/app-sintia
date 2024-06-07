@@ -7,7 +7,10 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 	exit();
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 $carga='';
 $grado='';
 $grupo='';
@@ -52,12 +55,11 @@ include("../compartido/head-informes.php") ?>
   $consultaNumEstudiantes =Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"",$cursoActual,$grupo);
 	$numEstudiantes = mysqli_num_rows($consultaNumEstudiantes);
   $cont=1;
-  $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$carga."' AND act_estado=1 AND act_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+  $consulta = Actividades::consultaActividadesCarga($config, $carga, $periodo);
   while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-  $consultaInd=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores WHERE ind_id='".$resultado['act_id_tipo']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	$ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);
+  $ind = Indicadores::traerIndicadoresDatos($resultado['act_id_tipo']);
 	if($resultado['act_registrada']==1) $estado = "REGISTRADA"; else $estado = "PENDIENTE";
-  $consultaNumCalificados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_actividad='".$resultado['act_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+  $consultaNumCalificados = Calificaciones::traerCalificacionActividad($config, $resultado['act_id']);
 	$numCalificados = mysqli_num_rows($consultaNumCalificados);
 	if($numEstudiantes!=$numCalificados) $bg = '#FCC'; else $bg = '#FFF';
   ?>

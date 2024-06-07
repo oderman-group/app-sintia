@@ -4,13 +4,13 @@ $idPaginaInterna = 'CM0009';
 include("../compartido/historial-acciones-guardar.php");
 require_once("../class/UsuariosPadre.php");
 require_once("../class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 $config = Plataforma::sesionConfiguracion();
 $_SESSION["configuracion"] = $config;
 
-$docentesProgreso = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas 
-WHERE car_docente='{$_GET["docente"]}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-ORDER BY car_periodo");
+$docentesProgreso = CargaAcademica::traerCargasDocentes($config, $_GET["docente"]);
 $numCargas = mysqli_num_rows($docentesProgreso);
 ?>
 
@@ -35,10 +35,7 @@ $numCargas = mysqli_num_rows($docentesProgreso);
         while($docProgreso = mysqli_fetch_array($docentesProgreso, MYSQLI_BOTH)){
             $datosCarga = CargaAcademica::datosRelacionadosCarga($docProgreso['car_id']);
 
-            $consultaDatosProgreso=mysqli_query($conexion, "SELECT
-            (SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades WHERE act_estado=1 AND act_periodo='".$docProgreso['car_periodo']."' AND act_registrada=1 AND act_id_carga='{$docProgreso['car_id']}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})");
-
-            $datosProgreso = mysqli_fetch_array($consultaDatosProgreso, MYSQLI_BOTH);
+            $datosProgreso = Actividades::consultarPorcentajeActividadesRegistradas($config, $docProgreso['car_id'], $docProgreso['car_periodo']);
             $sumasProgreso = round($datosProgreso[0],2);           
             
             if($sumasProgreso <= 50) $colorGrafico = 'danger';

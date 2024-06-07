@@ -1,7 +1,8 @@
 <?php include("session.php");?>
 <?php $idPaginaInterna = 'DC0068';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
-<?php include("../compartido/head.php");?>
+<?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");?>
 </head>
 <!-- END HEAD -->
 
@@ -72,13 +73,7 @@
                                                 <tbody>
 													<?php
 													$contReg = 1; 
-													$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas car 
-													INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]}
-													INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=car_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-													INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=car_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-													WHERE car_docente='".$_SESSION["id"]."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]}
-													ORDER BY car_posicion_docente, car_curso, car_grupo, mat_nombre
-													");
+													$consulta = CargaAcademica::traerCargasDocentes($config, $_SESSION["id"]);
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$consultaNumerosCargas=mysqli_query($conexion, "SELECT
 														(SELECT COUNT(ipc_id) FROM ".BD_ACADEMICA.".academico_indicadores_carga WHERE ipc_carga='".$resultado['car_id']."' AND ipc_periodo='".$resultado['car_periodo']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),

@@ -4,6 +4,7 @@ require_once("../class/Estudiantes.php");
 require_once "../class/Modulos.php";
 require_once("../class/servicios/MediaTecnicaServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0192';
@@ -89,116 +90,10 @@ if ($acudienteNum > 0) {
 	if(empty($_POST["tipoSangre"]))     $_POST["tipoSangre"]    = '';
 	if(empty($_POST["eps"]))       		$_POST["eps"]       	= 126;
 	
-	$idAcudiente=Utilidades::generateCode("USS");
-	//CREAMOS AL ACUDIENTE
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, 
-			uss_usuario, 
-			uss_clave, 
-			uss_tipo, 
-			uss_nombre, 
-			uss_estado, 
-			uss_ocupacion, 
-			uss_email, 
-			uss_fecha_nacimiento, 
-			uss_permiso1, 
-			uss_genero, 
-			uss_celular, 
-			uss_foto,
-			uss_idioma,
-			uss_tipo_documento, 
-			uss_lugar_expedicion, 
-			uss_direccion, 
-			uss_apellido1, 
-			uss_apellido2, 
-			uss_nombre2,
-			uss_documento, 
-			uss_tema_sidebar,
-			uss_tema_header,
-			uss_tema_logo, institucion, year
-			)VALUES('".$idAcudiente."', 
-			'".$_POST["documentoA"]."',
-			'".$clavePorDefectoUsuarios."',
-			3,
-			'".mysqli_real_escape_string($conexion,$_POST["nombresA"])."',
-			0,
-			'".$_POST["ocupacionA"]."',
-			'".$_POST["email"]."',
-			'".$_POST["fechaNA"]."',
-			0,
-			'".$_POST["generoA"]."',
-			'".$_POST["celular"]."', 
-			'default.png',
-			1,
-			'".$_POST["tipoDAcudiente"]."',
-			'".$_POST["lugarDa"]."', 
-			'".$_POST["direccion"]."', 
-			'".mysqli_real_escape_string($conexion,$_POST["apellido1A"])."', 
-			'".mysqli_real_escape_string($conexion,$_POST["apellido2A"])."', 
-			'".mysqli_real_escape_string($conexion,$_POST["nombre2A"])."',
-			'".	$_POST["documentoA"]."',
-			'cyan-sidebar-color',
-			'header-indigo',
-			'logo-indigo', {$config['conf_id_institucion']}, {$_SESSION["bd"]}
-			)");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto,uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
 }
 
-$idEstudianteU=Utilidades::generateCode("USS");
-//INSERTAMOS EL USUARIO ESTUDIANTE
-try{
-	mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, 
-		uss_usuario, 
-		uss_clave, 
-		uss_tipo, 
-		uss_nombre, 
-		uss_estado, 
-		uss_email, 
-		uss_fecha_nacimiento, 
-		uss_permiso1, 
-		uss_genero, 
-		uss_celular, 
-		uss_foto, 
-		uss_idioma, 
-		uss_tipo_documento, 
-		uss_lugar_expedicion, 
-		uss_direccion, 
-		uss_apellido1, 
-		uss_apellido2, 
-		uss_nombre2,
-		uss_documento, 
-		uss_tema_sidebar,
-		uss_tema_header,
-		uss_tema_logo, institucion, year
-		)VALUES('".$idEstudianteU."', 
-		'".	$_POST["nDoc"]."',
-		'".$clavePorDefectoUsuarios."',
-		4,
-		'".mysqli_real_escape_string($conexion,$_POST["nombres"])."',
-		0,
-		'".strtolower($_POST["email"])."',
-		'".$_POST["fNac"]."',
-		0,
-		'".$_POST["genero"]."',
-		'".$_POST["celular"]."', 
-		'default.png', 
-		1, 
-		'".$_POST["tipoD"]."',
-		'".$_POST["lugarD"]."', 
-		'".$_POST["direccion"]."', 
-		'".mysqli_real_escape_string($conexion,$_POST["apellido1"])."', 
-		'".mysqli_real_escape_string($conexion,$_POST["apellido2"])."', 
-		'".mysqli_real_escape_string($conexion,$_POST["nombre2"])."',
-		'".	$_POST["nDoc"]."',
-		'cyan-sidebar-color',
-		'header-indigo',
-		'logo-indigo', {$config['conf_id_institucion']}, {$_SESSION["bd"]}
-		)");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+$idEstudianteU = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar,uss_tema_header,uss_tema_logo, institucion, year, uss_id", [$_POST["nDoc"], $clavePorDefectoUsuarios, 4, mysqli_real_escape_string($conexion,$_POST["nombres"]), 0, strtolower($_POST["email"]), $_POST["fNac"], 0, $_POST["genero"], $_POST["celular"], 'default.png', 1, $_POST["tipoD"], $_POST["lugarD"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1"]), mysqli_real_escape_string($conexion,$_POST["apellido2"]), mysqli_real_escape_string($conexion,$_POST["nombre2"]), $_POST["nDoc"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 //Insertamos la matrícula
 $idEstudiante = Estudiantes::insertarEstudiantes($conexionPDO, $_POST, $idEstudianteU, $result_numMat, $procedencia, $idAcudiente);

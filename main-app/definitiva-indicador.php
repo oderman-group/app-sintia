@@ -1,6 +1,7 @@
 <?php
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 //CALCULO DEFINITIVA
-$consultaD = mysqli_query($conexion,"SELECT * FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$carga."' AND act_registrada=1 AND act_estado=1 AND act_periodo='".$periodo."' AND act_id_tipo='".$indicador."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$consultaD = Actividades::consultaActividadesCargaIndicador($config, $indicador, $carga, $periodo);
 $acumulaValor = "";
 $sumaNota = "";
 $definitiva = "";

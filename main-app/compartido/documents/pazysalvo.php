@@ -5,7 +5,7 @@ require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 $id="";
-if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
+if(!empty($_REQUEST["id"])){ $id=base64_decode($_REQUEST["id"]);}
 ?>
 <head>
 	<title>SINTIA | Saldos</title>
@@ -38,6 +38,7 @@ if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
 <?php
 $usuario = Estudiantes::obtenerDatosEstudiantePorIdUsuario($id);
 $nombre = Estudiantes::NombreCompletoDelEstudiante($usuario);
+$documento = strpos($usuario["mat_documento"], '.') !== true && is_numeric($usuario["mat_documento"]) ? number_format($usuario["mat_documento"],0,",",".") : $usuario["mat_documento"];
     switch($usuario['mat_tipo_documento']){
         case 105:
             $tipoD='CC.';
@@ -63,23 +64,32 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($usuario);
     }
 ?>
     <div align="justify" style="margin-top: 20px;">
-    <p>El <?=$informacion_inst["info_nombre"]?> hace constar que el estudiante <b><?=$nombre?></b> identificado con <?=$tipoD." ".$usuario['mat_documento']?> se encuentra a PAZ y SALVO por todo concepto.</p>
+    <p>El <?=$informacion_inst["info_nombre"]?> hace constar que el estudiante <b><?=$nombre?></b> identificado con <?=$tipoD." ".$documento?> se encuentra a PAZ y SALVO por todo concepto.</p>
+    <p>Esta constancia certifica que ha cumplido satisfactoriamente con todos los compromisos y obligaciones financieras con nuestra institución.</p>
     <p>Se expide esta constancia a los <?=date("d");?> días del mes de <?=$mesesAgno[date("m")];?> del año <?=date("Y");?>.</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>Agradecemos tu colaboración y compromiso con nuestra institución.</p>
     </div>
     
-    <?php
-        $tesorero = UsuariosPadre::sesionUsuario($informacion_inst["info_tesorero"]);
-    ?>
     <div class="pieP">
     	<div>
-            <?=strtoupper($tesorero['uss_apellido1']." ".$tesorero['uss_apellido2']." ".$tesorero['uss_nombre']." ".$tesorero['uss_nombre2']);?><br>
+            <p>Atentamente,</p>
+            <?php
+                $tesorero = UsuariosPadre::sesionUsuario($informacion_inst["info_tesorero"]);
+                if(!empty($tesorero["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/'.$tesorero["uss_firma"])){
+                    echo '<img src="'.REDIRECT_ROUTE.'/files/fotos/'.$tesorero["uss_firma"].'" width="100"><br>';
+                }else{
+                    echo '<p>&nbsp;</p>
+                        <p>&nbsp;</p>';
+                }
+            ?>
+            <p style="height:0px;"></p>_________________________________<br>
+            <p>&nbsp;</p>
+            <?=UsuariosPadre::nombreCompletoDelUsuario($tesorero);?><br>
             Contador(a)
         </div>
     </div>
-	<div align="center" style="font-size:10px; margin-top:20px;">
-      <img src="../../sintia-logo-2023.png" height="50" width="100"><br>
-      SINTIA -  SISTEMA INTEGRAL DE GESTI&Oacute;N INSTITUCIONAL - <?=date("l, d-M-Y");?>
-     </div>
      <script type="text/javascript">print();</script>
 </body>
 </html>

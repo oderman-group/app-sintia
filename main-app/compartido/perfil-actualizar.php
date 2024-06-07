@@ -5,6 +5,7 @@ $idPaginaInterna = 'CM0048';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 $usuariosClase = new Usuarios;
 $archivoSubido = new Archivos;
 
@@ -51,8 +52,7 @@ if (empty($_POST["tipoNegocio"])) $_POST["tipoNegocio"] = '0';
 
 //Si es estudiante
 if ($_POST["tipoUsuario"] == 4) {
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
+    $update = "
         uss_nombre='" . strtoupper($_POST["nombre"]) . "', 
         uss_nombre2='" . strtoupper($_POST["nombre2"]) . "', 
         uss_apellido1='" . strtoupper($_POST["apellido1"]) . "', 
@@ -62,23 +62,15 @@ if ($_POST["tipoUsuario"] == 4) {
         uss_lugar_nacimiento='" . $_POST["lNacimiento"] . "', 
         uss_telefono='" . $_POST["telefono"] . "', 
         uss_notificacion='" . $notificaciones . "', 
-        uss_mostrar_edad='" . $mostrarEdad . "',
-        uss_ultima_actualizacion=now()
-
-        WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-    }
+        uss_mostrar_edad='" . $mostrarEdad . "'
+    ";
+    UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 
     //Actualizar matricula a los estudiantes
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_genero='" . $_POST["genero"] . "', mat_fecha_nacimiento='" . $_POST["fechaN"] . "', mat_celular='" . $_POST["celular"] . "', mat_lugar_nacimiento='" . $_POST["lNacimiento"] . "', mat_telefono='" . $_POST["telefono"] . "' WHERE mat_id_usuario='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-    }
+    $update = "mat_genero=" . $_POST["genero"] . ", mat_fecha_nacimiento=" . $_POST["fechaN"] . ", mat_celular=" . $_POST["celular"] . ", mat_lugar_nacimiento=" . $_POST["lNacimiento"] . ", mat_telefono=" . $_POST["telefono"] . "";
+    Estudiantes::actualizarMatriculasPorIdUsuario($config, $_SESSION["id"], $update);
 } else {
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
+    $update = "
         uss_nombre='" . strtoupper($_POST["nombre"]) . "', 
         uss_nombre2='" . strtoupper($_POST["nombre2"]) . "', 
         uss_apellido1='" . strtoupper($_POST["apellido1"]) . "', 
@@ -102,13 +94,9 @@ if ($_POST["tipoUsuario"] == 4) {
         uss_tipo_vivienda='" . $_POST["tipoVivienda"] . "',
         uss_medio_transporte='" . $_POST["medioTransporte"] . "',
         uss_tipo_negocio='" . $_POST["tipoNegocio"] . "',
-        uss_sitio_web_negocio='" . mysqli_real_escape_string($conexion,$_POST["web"]) . "',
-        uss_ultima_actualizacion=now()
-
-        WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-    }
+        uss_sitio_web_negocio='" . mysqli_real_escape_string($conexion,$_POST["web"]) . "'
+    ";
+    UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 }
 
 if (!empty($_FILES['firmaDigital']['name'])) {
@@ -118,11 +106,9 @@ if (!empty($_FILES['firmaDigital']['name'])) {
     $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_firma_') . "." . $extension;
     $destino = "../files/fotos";
     move_uploaded_file($_FILES['firmaDigital']['tmp_name'], $destino . "/" . $archivo);
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_firma='" . $archivo . "' WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-    }
+
+    $update = "uss_firma='" . $archivo . "'";
+    UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 }
 
 if (!empty($_FILES['fotoPerfil']['name'])) {
@@ -132,11 +118,9 @@ if (!empty($_FILES['fotoPerfil']['name'])) {
     $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_img_') . "." . $extension;
     $destino = "../files/fotos";
     move_uploaded_file($_FILES['fotoPerfil']['tmp_name'], $destino . "/" . $archivo);
-    try{
-        mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_foto='" . $archivo . "' WHERE uss_id='" . $_SESSION["id"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-    } catch (Exception $e) {
-        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-    }
+
+    $update = "uss_foto='" . $archivo . "'";
+    UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 
     $file = $destino . "/" . $archivo;  // Dirección de la imagen
     $imagen = getimagesize($file);    //Sacamos la información

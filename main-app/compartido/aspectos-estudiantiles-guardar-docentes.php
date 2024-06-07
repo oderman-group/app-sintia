@@ -5,15 +5,11 @@ $idPaginaInterna = 'CM0017';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $usuariosClase = new Usuarios;
 
 //CONSUTLAR CARGA PARA DIRECTOR DE GRUPO
-try{
-    $carga = mysqli_fetch_array( mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas
-    WHERE car_curso='".$_POST["curso"]."' AND car_director_grupo=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
-} catch (Exception $e) {
-    include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
+$carga = CargaAcademica::traerCargaDirectorGrupo($config, $_POST["curso"]);
 
 //PARA NOTAS DE COMPORTAMIENTO
 try{

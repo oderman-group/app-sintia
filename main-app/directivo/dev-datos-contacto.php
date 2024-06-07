@@ -150,9 +150,7 @@ $datosContacto = mysqli_fetch_array($consultaDatosContacto, MYSQLI_BOTH);
                                         </div>
                                     </div>
 
-                                    <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+                                    <?php $botones = new botonesGuardar("",Modulos::validarPermisoEdicion()); ?>
                                 </form>
                             </div>
                         </div>

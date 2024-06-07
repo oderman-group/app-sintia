@@ -85,8 +85,8 @@ require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
                         </select>
                     </div>
                 </div>
-
-                <input type="submit" class="btn btn-success" value="Hacer cambio" name="consultas">
+                <?php  
+                $botones = new botonesGuardar(null,Modulos::validarPermisoEdicion()); ?>
             </form>
         </div>
     </div>

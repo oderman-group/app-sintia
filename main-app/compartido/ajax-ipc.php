@@ -7,12 +7,14 @@ if(trim($_POST["ih"])==""){
 }
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 Grados::eliminarIntensidadMateriaCurso($conexion, $config, $_POST["curso"], $_POST["materia"]);
 
 Grados::guardarIntensidadMateriaCurso($conexion, $conexionPDO, $config, $_POST["curso"], $_POST["materia"], $_POST["ih"]);
 
-mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_cargas SET car_ih='".$_POST["ih"]."' WHERE car_curso='".$_POST["curso"]."' AND car_materia='".$_POST["materia"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+$update = "car_ih=".$_POST["ih"]."";
+CargaAcademica::actualizarCargaPorCursoMateria($config, $_POST["curso"], $_POST["materia"], $update);
 
 ?>
 	<script type="text/javascript">

@@ -40,28 +40,7 @@ if (!Modulos::validarPermisoEdicion()) {
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
-<style>
-    .gif-carga {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.7);
-        /* Fondo semitransparente */
-        z-index: 9999;
-        /* Asegura que esté por encima de otros elementos */
-        display: none;
-        /* Por defecto oculto */
-    }
-
-    .gif-carga img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-</style>
+<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php"); ?>
@@ -366,7 +345,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                             }
                                                             ?>
                                                             <div id="gifCarga" class="gif-carga">
-                                                                <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                                                <img alt="Cargando...">
                                                             </div>
                                                             <img id="imagenSelect" class="cursor-mano" src="<?= $urlImagen ?>" alt="avatar" style="height: 400px;width: 100%;border:3px dashed;padding:10px;border-radius:40px / 30px">
                                                         </div>
@@ -377,7 +356,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                         <label class="col-sm-2 control-label">
                                                             Imagen
                                                             <button type="button" data-toggle="tooltip" data-placement="left" title="Genera una imagen con inteligencia artificial teniendo en cuenta el nombre del curso" onclick="generar('imagen')" class="btn btn-sm btn-info"><i class="fa-regular fa-image"></i></button>
-                                                            
+
                                                         </label>
                                                         <div class="col-sm-5">
                                                             <input hidden id="imagenCursoAi" name="imagenCursoAi" value="">
@@ -396,7 +375,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                             <?= $resultadoCurso["gra_overall_description"]; ?>
                                                         </textarea>
                                                             <div id="gifCarga2" class="gif-carga">
-                                                                <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                                                <img alt="Cargando...">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -409,7 +388,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                         <?= $resultadoCurso["gra_course_content"]; ?>
                                                         </textarea>
                                                             <div id="gifCarga3" class="gif-carga">
-                                                                <img height="100px" width="100px" src="https://i.gifer.com/Vp3R.gif" alt="Cargando...">
+                                                                <img alt="Cargando...">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -518,7 +497,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                             $selectEctudiante2->generarComponente();
                                                             ?>
                                                         </div>
-                                                        <?php                                                        
+                                                        <?php
                                                         $cv = Grupos::traerGrupos($conexion, $config);
                                                         ?>
                                                         <div style="display: none;">
@@ -526,7 +505,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                                 <?php while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
                                                                     echo '<option value="' . $rv['gru_id'] . '" selected >' . $rv['gru_nombre'] . '</option>';
                                                                 } ?>
-                                                                
+
                                                             </select>
                                                             <select id="estadoBase" multiple class="form-control select2-multiple">
                                                                 <option value="<?= ESTADO_CURSO_ACTIVO ?>" selected><?= ESTADO_CURSO_ACTIVO ?></option>
@@ -572,11 +551,13 @@ if (!Modulos::validarPermisoEdicion()) {
                                                                         <td><?= $nombre; ?></td>
                                                                         <td>
                                                                             <select id="grupo-<?= $idEstudiante["matcur_id_matricula"]; ?>" class="form-control" onchange="editarEstudainte('<?= $idEstudiante['matcur_id_matricula']; ?>')" <?= $disabledPermiso; ?>>
-                                                                                <?php while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
+                                                                                <?php
+                                                                                $cv = Grupos::traerGrupos($conexion, $config);
+                                                                                while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
                                                                                     if ($rv[0] == $idEstudiante['matcur_id_grupo'])
-                                                                                        echo '<option value="' . $rv[0] . '" selected>' . $rv[1] . '</option>';
+                                                                                        echo '<option value="' . $rv['gru_id'] . '" selected>' . $rv['gru_nombre'] . '</option>';
                                                                                     else
-                                                                                        echo '<option value="' . $rv[0] . '">' . $rv[1] . '</option>';
+                                                                                        echo '<option value="' . $rv['gru_id'] . '">' . $rv['gru_nombre'] . '</option>';
                                                                                 } ?>
                                                                             </select>
                                                                         </td>
@@ -600,7 +581,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                         </tbody>
                                                     </table>
 
-                                                    <div id="escogerEstudiantes">                                                        
+                                                    <div id="escogerEstudiantes">
                                                     </div>
 
 
@@ -609,19 +590,16 @@ if (!Modulos::validarPermisoEdicion()) {
 
                                         </div>
                                     <?php } ?>
-                                    <a href="javascript:void(0);" name="cursos.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                                    <?php if (Modulos::validarPermisoEdicion()) { ?>
-                                        <button type="submit" class="btn  btn-info">
-                                            <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios
-                                        </button>
-                                    <?php } ?>
+                                    <?php  
+                                        $botones = new botonesGuardar("estudiantes.php",Modulos::validarPermisoEdicion()); ?>
                                 </div>
                                 <!-- end js include path -->
                                 <script src="../ckeditor/ckeditor.js"></script>
                                 <script type="text/javascript">
-                                    function limpiarImagenOpenAi(){
+                                    function limpiarImagenOpenAi() {
                                         document.getElementById("imagenCursoAi").value = '';
                                     }
+
                                     function generar(tipo) {
                                         var valor = document.getElementById('nombreC').value;
                                         if (valor) {

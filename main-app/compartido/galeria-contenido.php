@@ -3,12 +3,8 @@
 									
                        		<div class="row">
 											<?php
-											$datosConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss
-											INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo
-											WHERE uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-											ORDER BY uss_nombre
-											LIMIT 0,100
-											");
+											require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+											$datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios();
 											while($datos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
 												$fileFoto = "../files/fotos/".$datos['uss_foto'];
 												if(empty($datos['uss_foto']) or !file_exists($fileFoto) or empty($datos['uss_nombre'])) continue;

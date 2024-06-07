@@ -2,6 +2,9 @@
 	require_once(ROOT_PATH."/main-app/class/Boletin.php");
 	require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 	require_once(ROOT_PATH."/main-app/class/Grados.php");
+	require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+	require_once(ROOT_PATH."/main-app/class/Actividades.php");
+	require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 	$usrEstud="";
 	if(!empty($_GET["usrEstud"])){ $usrEstud=base64_decode($_GET["usrEstud"]);}
 ?>
@@ -152,15 +155,13 @@
 													$porcentajeGrado=$periodosCursos['gvp_valor'];
 												}
 												
-												$notapp = mysqli_fetch_array(mysqli_query($conexion, "SELECT bol_nota FROM ".BD_ACADEMICA.".academico_boletin 
+												$notapp = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $datosEstudianteActual['mat_id'], $cargaConsultaActual);
 
-												WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$cargaConsultaActual."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
-
-												if(!empty($notapp[0])){
-													$porcentaje = ($notapp[0]/$config['conf_nota_hasta'])*100;
+												if(!empty($notapp['bol_nota'])){
+													$porcentaje = ($notapp['bol_nota']/$config['conf_nota_hasta'])*100;
 												}
 
-												if(!empty($notapp[0]) and $notapp[0] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger'; else $colorGrafico = 'info';
+												if(!empty($notapp['bol_nota']) and $notapp['bol_nota'] < $config['conf_nota_minima_aprobar']) $colorGrafico = 'danger'; else $colorGrafico = 'info';
 
 												if($i==$periodoConsultaActual) $estiloResaltadoP = 'style="color: orange;"'; else $estiloResaltadoP = '';
 
@@ -173,11 +174,11 @@
 													
 
 													<?php
-														if(!empty($notapp[0]) and $config['conf_sin_nota_numerica']!=1){
+														if(!empty($notapp['bol_nota']) and $config['conf_sin_nota_numerica']!=1){
 
-														$notaPorPeriodo=$notapp[0];
+														$notaPorPeriodo=$notapp['bol_nota'];
 														if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp[0]);
+															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notapp['bol_nota']);
 															$notaPorPeriodo= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 														}
 													?>
@@ -301,18 +302,10 @@
                                                 <tbody>
 
 													<?php
-
-													 $filtro = '';
-
-													 if(!empty($_GET["indicador"])){$filtro .= " AND act_id_tipo='".base64_decode($_GET["indicador"])."'";}
-
-													 $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_actividades 
-
-													 WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."'
-
-													 AND act_registrada=1 AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} $filtro
-
-													 ");
+													$consulta = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+													if(!empty($_GET["indicador"])){
+														$consulta = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+													}
 
 													 $contReg = 1;
 
@@ -323,8 +316,7 @@
 													 $porcentajeActualActividad = 0;
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
-														$nota = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones
-														WHERE cal_id_actividad='".$resultado['act_id']."' AND cal_id_estudiante='".$datosEstudianteActual['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
+														$nota = Calificaciones::traerCalificacionActividadEstudiante($config, $resultado['act_id'], $datosEstudianteActual['mat_id']);
 
 														$porNuevo = ($resultado['act_valor'] / 100);
 
@@ -348,10 +340,7 @@
 
 														else $colorNota = $config[7];
 
-														$indicadorName = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores ai 
-															INNER JOIN ".BD_ACADEMICA.".academico_indicadores_carga ipc ON ipc.ipc_indicador=ai.ind_id AND ipc.institucion={$config['conf_id_institucion']} AND ipc.year={$_SESSION["bd"]}
-															WHERE ai.ind_id='".$resultado['act_id_tipo']."' AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$_SESSION["bd"]}
-															"), MYSQLI_BOTH); 
+														$indicadorName = Indicadores::traerIndicadoresDatosRelacion($resultado['act_id_tipo']); 
 
 															$notaFinal=$nota3;
 															if($config['conf_forma_mostrar_notas'] == CUALITATIVA){

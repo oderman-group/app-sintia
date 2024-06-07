@@ -1,7 +1,7 @@
 <?php
 include("session.php");
-require_once("../class/Sysjobs.php");
-require_once("../class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/Sysjobs.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 
@@ -20,28 +20,25 @@ include("../compartido/historial-acciones-guardar.php");
 	}
 
 	if(!$existeCarga){
-		try{
-			mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_cargas SET 
-			car_docente='" . $_POST["docente"] . "', 
-			car_curso='" . $_POST["curso"] . "', 
-			car_grupo='" . $_POST["grupo"] . "', 
-			car_materia='" . $_POST["asignatura"] . "', 
-			car_periodo='" . $_POST["periodo"] . "', 
-			car_director_grupo='" . $_POST["dg"] . "', 
+		$update = "
+			car_docente=" . $_POST["docente"] . ", 
+			car_curso=" . $_POST["curso"] . ", 
+			car_grupo=" . $_POST["grupo"] . ", 
+			car_materia=" . $_POST["asignatura"] . ", 
+			car_periodo=" . $_POST["periodo"] . ", 
+			car_director_grupo=" . $_POST["dg"] . ", 
 			car_ih=" . $_POST["ih"] . ", 
-			car_activa='" . $_POST["estado"] . "', 
-			car_maximos_indicadores='" . $_POST["maxIndicadores"] . "', 
-			car_maximas_calificaciones='" . $_POST["maxActividades"] . "', 
-			car_configuracion='" . $_POST["valorActividades"] . "', 
-			car_valor_indicador='" . $_POST["valorIndicadores"] . "', 
-			car_permiso1='" . $_POST["permiso1"] . "', 
-			car_permiso2='" . $_POST["permiso2"] . "', 
-			car_indicador_automatico='" . $_POST["indicadorAutomatico"] . "',
-			car_observaciones_boletin='" . $_POST["observacionesBoletin"] . "' 
-			WHERE car_id='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
+			car_activa=" . $_POST["estado"] . ", 
+			car_maximos_indicadores=" . $_POST["maxIndicadores"] . ", 
+			car_maximas_calificaciones=" . $_POST["maxActividades"] . ", 
+			car_configuracion=" . $_POST["valorActividades"] . ", 
+			car_valor_indicador=" . $_POST["valorIndicadores"] . ", 
+			car_permiso1=" . $_POST["permiso1"] . ", 
+			car_permiso2=" . $_POST["permiso2"] . ", 
+			car_indicador_automatico=" . $_POST["indicadorAutomatico"] . ",
+			car_observaciones_boletin=" . $_POST["observacionesBoletin"] . " 
+		";
+		CargaAcademica::actualizarCargaPorID($config, $_POST["idR"], $update);
 
 		Grados::eliminarIntensidadMateriaCurso($conexion, $config, $_POST["curso"], $_POST["asignatura"]);
 		

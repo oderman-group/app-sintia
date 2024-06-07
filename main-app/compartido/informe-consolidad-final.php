@@ -7,11 +7,12 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 	exit();
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
-require_once("../class/Estudiantes.php");
-require_once("../class/Grados.php");
-require_once("../class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $year = $_SESSION["bd"];
 if(!empty($_REQUEST["agno"])){
 	$year = $_REQUEST["agno"];
@@ -56,13 +57,12 @@ include("../compartido/head-informes.php") ?>
                                         <th rowspan="2" style="font-size:9px;">Mat</th>
                                         <th rowspan="2" style="font-size:9px;">Estudiante</th>
                                         <?php
-										$cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$cursoV."' AND car_grupo='".$grupoV."' AND car_activa=1 AND institucion={$config['conf_id_institucion']} AND year={$year}");
+										$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
 										//SACAMOS EL NUMERO DE CARGAS O MATERIAS QUE TIENE UN CURSO PARA QUE SIRVA DE DIVISOR EN LA DEFINITIVA POR ESTUDIANTE
 										$numCargasPorCurso = mysqli_num_rows($cargas); 
 										while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
-											$materia = Asignaturas::consultarDatosAsignatura($conexion, $config, $carga['car_materia']);
 										?>
-                                        	<th style="font-size:9px; text-align:center; border:groove;" colspan="<?=$config[19]+1;?>" width="5%"><?php if(!empty($materia['mat_nombre'])){echo $materia['mat_nombre'];}?></th>
+                                        	<th style="font-size:9px; text-align:center; border:groove;" colspan="<?=$config[19]+1;?>" width="5%"><?php if(!empty($carga['mat_nombre'])){echo $carga['mat_nombre'];}?></th>
                                         <?php
 										}
 										?>
@@ -71,7 +71,7 @@ include("../compartido/head-informes.php") ?>
                                         
                                         <tr>
                                             <?php
-                                            $cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$cursoV."' AND car_grupo='".$grupoV."' AND car_activa=1 AND institucion={$config['conf_id_institucion']} AND year={$year}"); 
+											$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
                                             while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
                                                 $p = 1;
                                                 //PERIODOS DE CADA MATERIA
@@ -98,16 +98,14 @@ include("../compartido/head-informes.php") ?>
 										<td style="font-size:9px;"><?=$resultado['mat_matricula'];?></td>
                                         <td style="font-size:9px;"><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
                                         <?php
-										$cargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$cursoV."' AND car_grupo='".$grupoV."' AND car_activa=1 AND institucion={$config['conf_id_institucion']} AND year={$year}"); 
+										$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
 										while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
-											$materia = Asignaturas::consultarDatosAsignatura($conexion, $config, $carga['car_materia']);
 											$p = 1;
                                             $porcPeriodo = array("",0.25,0.15,0.35,0.25);
 											$defPorMateria = 0;
 											//PERIODOS DE CADA MATERIA
 											while($p<=$config[19]){
-												$consultaBoletin=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$carga['car_id']."' AND bol_estudiante='".$resultado['mat_id']."' AND bol_periodo='".$p."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-												$boletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH);
+												$boletin = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $resultado['mat_id'], $carga['car_id'], $year);
 												if(!empty($boletin['bol_nota']) and $boletin['bol_nota']<$config[5] and $boletin['bol_nota']!="")$color = $config[6]; elseif(!empty($boletin['bol_nota']) and $boletin['bol_nota']>=$config[5]) $color = $config[7];
 												
 												$notaBoletinFinal="";

@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -81,15 +82,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 </thead>
                                                 <tbody>
 													<?php
-                                                    try{											
-													    $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_areas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY ar_posicion");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
-													 $contReg = 1;
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                                                        $numMaterias = Asignaturas::contarAsignaturasArea($conexion, $config, $resultado['ar_id']);
-													 ?>
+                                                    $consulta = Areas::traerAreasInstitucion($config);
+                                                    $contReg = 1;
+                                                    while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                                                    $numMaterias = Asignaturas::contarAsignaturasArea($conexion, $config, $resultado['ar_id']);
+                                                    ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
 														<td><?=$resultado['ar_id'];?></td>

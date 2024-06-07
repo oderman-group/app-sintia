@@ -9,14 +9,6 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
 require_once("../class/Usuarios.php");
-
-$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat 
-LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat.mat_id_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]} 
-INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=mat.mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]} 
-INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=mat.mat_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-WHERE mat.mat_eliminado=0 AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-ORDER BY mat.mat_primer_apellido, mat.mat_segundo_apellido, mat.mat_nombres");
-
 ?>
 <!doctype html>
 <html>
@@ -49,6 +41,7 @@ ORDER BY mat.mat_primer_apellido, mat.mat_segundo_apellido, mat.mat_nombres");
       </tr>
       <?php
         $i = 1;
+        $consulta = Estudiantes::listarMatriculaSinUsuario($config);
         while ($datos = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 
           if($datos['uss_id']==NULL || $datos['uss_id']==""){

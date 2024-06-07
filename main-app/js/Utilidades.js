@@ -56,7 +56,7 @@ function fetchGeneral(url, title, method='POST', paramsJSON=null) {
  * @param {string} method - El método de solicitud HTTP (por defecto, 'POST').
  * @param {Object} paramsJSON - Un objeto con los datos que se enviarán en la solicitud (opcional).
  */
-function listarInformacion(url, idResponseTag, method='POST', paramsJSON=null) {
+function listarInformacion(url, idResponseTag, method='POST', paramsJSON=null, idRol=null) {
 
     const skeletonContent = `
         <div id="skeleton" class="skeleton">
@@ -88,6 +88,18 @@ function listarInformacion(url, idResponseTag, method='POST', paramsJSON=null) {
     .then(data => {
         document.getElementById(idResponseTag).innerHTML = data;
 
+        if (idRol && $('#'+idResponseTag+' #panel-body').length) {  
+            $('#'+idResponseTag+' #panel-body .select2').select2();
+
+            contarPaginasSeleccionadas(idRol);
+            primeraCarga(idRol);
+        }
+
+        if (idRol && $('#'+idResponseTag+' #example3').length) {
+            $('#'+idResponseTag+' #example3').DataTable();
+            
+            inicializarCheckAll(idRol);
+        }
     })
     .catch(error => {
         // Manejar errores

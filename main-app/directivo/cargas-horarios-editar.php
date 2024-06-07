@@ -51,7 +51,7 @@ if(!Modulos::validarPermisoEdicion()){
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="javascript:void(0);" name="cargas-horarios.php?id=<?=$_GET["id"];?>" onClick="deseaRegresar(this)">Horarios</a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li><a class="parent-item" href="javascript:void(0);" name="cargas-horarios.php?id=<?=$_GET["idGH"];?>" onClick="deseaRegresar(this)">Horarios</a>&nbsp;<i class="fa fa-angle-right"></i></li>
                                 <li class="active">Editar Horarios</li>
                             </ol>
                         </div>
@@ -101,13 +101,7 @@ if(!Modulos::validarPermisoEdicion()){
 										</div>
 
 
-                                        <?php if(Modulos::validarPermisoEdicion()){?>
-										    <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-                                        <?php }?>
-										
-										<a href="javascript:void(0);" name="cargas-horarios.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+                                        <?php $botones = new botonesGuardar("cargas-horarios.php?id=".$_GET["idGH"],Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

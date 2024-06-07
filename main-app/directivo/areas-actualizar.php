@@ -1,5 +1,6 @@
 <?php
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0165';
@@ -16,12 +17,10 @@ if(trim($_POST["nombreA"])=="" or trim($_POST["posicionA"])==""){
 	exit();
 }
 
-try{
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_areas SET ar_nombre='".$_POST["nombreA"]."', ar_posicion='".$_POST["posicionA"]."' WHERE ar_id='".$_POST["idA"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-	include("../compartido/guardar-historial-acciones.php");
+$update = "ar_nombre=".$_POST["nombreA"].", ar_posicion=".$_POST["posicionA"]."";
+Areas::actualizarAreas($config, $_POST["idA"], $update);
 
-	echo '<script type="text/javascript">window.location.href="areas.php?success=SC_DT_2&id='.base64_encode($_POST["idA"]).'";</script>';
-	exit();
+include("../compartido/guardar-historial-acciones.php");
+
+echo '<script type="text/javascript">window.location.href="areas.php?success=SC_DT_2&id='.base64_encode($_POST["idA"]).'";</script>';
+exit();

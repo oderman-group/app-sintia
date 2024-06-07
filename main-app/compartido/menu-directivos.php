@@ -284,6 +284,16 @@
 	                            </a>
 	                        </li>
 							<?php }?>
+							
+							<li <?php agregarClass(MENU_PADRE,["DT0335","DT0336"]) ?> class="nav-item bg-warning">
+								<a href="#" class="nav-link nav-toggle bg-warning text-dark"><i class="fa-solid fa-cart-plus text-dark"></i>
+									<span class="title">Servicios SINTIA</span> <span class="arrow"></span>
+								</a>
+								<ul class="sub-menu bg-warning text-dark" <?php agregarClass(SUB_MENU,["DT0335","DT0336"])?>>
+									<li <?php agregarClass(MENU,["DT0335"]) ?>><a href="servicios-modulos.php" class="nav-link text-dark"> <span class="title">Modulos</span></a></li>
+									<li <?php agregarClass(MENU,["DT0336"]) ?>><a href="servicios-paquetes.php" class="nav-link text-dark"> <span class="title">Paquetes</span></a></li>
+								</ul>
+							</li>
 
 							<?php
 								if($datosUsuarioActual['uss_permiso1'] == CODE_DEV_MODULE_PERMISSION && $datosUsuarioActual['uss_tipo'] == TIPO_DEV && ($_SESSION["idInstitucion"] == DEVELOPER_PROD || $_SESSION["idInstitucion"] == DEVELOPER) ){

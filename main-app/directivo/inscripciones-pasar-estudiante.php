@@ -33,19 +33,11 @@ if ($existe>0) {
 	}
 	$idNuevo = mysqli_insert_id($conexion);
 
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_estado_matricula=4, mat_grupo=1 WHERE mat_id='".$matricula."' AND institucion={$config['conf_id_institucion']} AND year={$yearPasar}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$update = "mat_estado_matricula=4, mat_grupo=1";
+	Estudiantes::actualizarMatriculasPorId($config, $matricula, $update, $yearPasar);
 
 	//CONSULTAMOS DATOS DEL ESTUDIANTE
-	try{
-		$consultaMatricula=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas WHERE mat_id='".$matricula."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
-	$datosMatricula = mysqli_fetch_array($consultaMatricula, MYSQLI_BOTH);
+	$datosMatricula = Estudiantes::obtenerDatosEstudiante($matricula, $year);
 
 	//SE CREA EL USUARIO DEL ESTUDIANTE
 	try{

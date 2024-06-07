@@ -296,16 +296,23 @@ class SubRoles {
      * @param String $tipoUsuario
      * @param String $subRol
      * */
-    public static function listarPaginas($subRol='-1', $tipoUsuario = '5', $soloActivas='0'){
+    public static function listarPaginas($subRol='-1', $tipoUsuario = '5', $soloActivas='0', $idModulo=''){
         global $conexion, $baseDatosServicios, $config;
         $resultado = [];
         $sqlJoin   = $soloActivas == '1' ? "INNER" : "LEFT";
+        $filtroMod   = !empty($idModulo) ? "AND pagp_modulo = '{$idModulo}'" : "";
        
-        $sqlExecute="SELECT * FROM ".$baseDatosServicios.".paginas_publicidad
-        INNER JOIN ".$baseDatosServicios .".modulos ON mod_id=pagp_modulo
-        INNER JOIN ".$baseDatosServicios .".instituciones_modulos ON ipmod_modulo=mod_id AND ipmod_institucion={$config['conf_id_institucion']} 
-        ".$sqlJoin." JOIN ".$baseDatosServicios .".sub_roles_paginas ON spp_id_pagina=pagp_id AND spp_id_rol='".$subRol."'
-        WHERE pagp_tipo_usuario = '".$tipoUsuario."' AND pagp_asignable_subroles = '".SI."' AND (pagp_pagina_padre='' OR pagp_pagina_padre IS NULL) 
+        $sqlExecute="SELECT pp.*, m.*, srp.* FROM ".BD_ADMIN.".paginas_publicidad pp
+        INNER JOIN ".BD_ADMIN .".modulos m ON mod_id=pagp_modulo
+        INNER JOIN ".BD_ADMIN .".instituciones_modulos ON ipmod_modulo=mod_id AND ipmod_institucion={$config['conf_id_institucion']} 
+        ".$sqlJoin." JOIN ".BD_ADMIN .".sub_roles_paginas srp ON spp_id_pagina=pagp_id AND spp_id_rol='".$subRol."'
+        WHERE pagp_tipo_usuario = '".$tipoUsuario."' {$filtroMod} AND pagp_asignable_subroles = '".SI."' AND (pagp_pagina_padre='' OR pagp_pagina_padre IS NULL) 
+        UNION
+        SELECT pp.*, m.*, srp.* FROM ".BD_ADMIN.".paginas_publicidad pp
+        INNER JOIN ".BD_ADMIN .".modulos m ON mod_id=pagp_modulo
+        INNER JOIN ".BD_ADMIN .".instituciones_paquetes_extras ON paqext_id_paquete=mod_id AND paqext_institucion={$config['conf_id_institucion']} AND paqext_tipo='".MODULOS."' 
+        ".$sqlJoin." JOIN ".BD_ADMIN .".sub_roles_paginas srp ON spp_id_pagina=pagp_id AND spp_id_rol='".$subRol."'
+        WHERE pagp_tipo_usuario = '".$tipoUsuario."' {$filtroMod} AND pagp_asignable_subroles = '".SI."' AND (pagp_pagina_padre='' OR pagp_pagina_padre IS NULL) 
         ORDER BY spp_id_pagina DESC";
         try {
             $resultado = mysqli_query($conexion,$sqlExecute);

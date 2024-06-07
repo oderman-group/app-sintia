@@ -120,11 +120,9 @@ if(
 										<div id="infoCeroDos"></div>
 
 
-										<a href="#" name="indicadores.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-										<button type="submit" class="btn  btn-info">
-											<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-										</button>
 										
+										<?php 
+                            				$botones = new botonesGuardar("indicadores.php",Modulos::validarPermisoEdicion()); ?>
 										
                                     </form>
                                 </div>

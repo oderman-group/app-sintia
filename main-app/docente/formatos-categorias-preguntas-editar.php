@@ -87,12 +87,9 @@ $datosConsultaBD = mysqli_fetch_array($consultaDatosBD, MYSQLI_BOTH);
 												</div>
 											 </div>	
 										
+                                             <?php 
+                            				$botones = new botonesGuardar("formatos-categorias-preguntas.php?idF=".$_GET["idF"]."&idE=".$_GET["idE"],Modulos::validarPermisoEdicion()); ?>
 
-								<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-
-												<a href="#" name="formatos-categorias-preguntas.php?idF=<?=$_GET["idF"];?>&idE=<?=$_GET["idE"];?>" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 										</form>
 
                                 </div>

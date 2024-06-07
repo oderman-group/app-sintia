@@ -10,7 +10,6 @@ include("verificar-periodos-diferentes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
-$idRegistro      = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_indicadores');
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
@@ -24,11 +23,7 @@ if($sumaIndicadores[2]>=$datosCargaActual['car_maximos_indicadores']){
 $infoCompartir=0;
 if(!empty($_POST["compartir"]) && $_POST["compartir"]==1) $infoCompartir=1;
 if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_indicadores(ind_id, ind_nombre, ind_obligatorio, ind_publico, institucion, year) VALUES('".$idRegistro."', '".mysqli_real_escape_string($conexion,$_POST["contenido"])."', 0, '".$infoCompartir."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-	} catch (Exception $e) {
-		include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-	}
+	$idRegistro = Indicadores::guardarIndicador($conexionPDO, "ind_nombre, ind_obligatorio, ind_publico, institucion, year, ind_id", [mysqli_real_escape_string($conexion,$_POST["contenido"]), 0, $infoCompartir, $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 	//Si decide poner los valores porcentuales de los indicadores de forma manual
 	if($datosCargaActual['car_valor_indicador']==1){
@@ -54,20 +49,9 @@ if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 	}
 }else{
 //Si escoge del banco de datos
-	try{
-		$consultaIndicadorBD=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores ai
-		INNER JOIN ".BD_ACADEMICA.".academico_indicadores_carga ipc ON ipc.ipc_indicador=ai.ind_id AND ipc.institucion={$config['conf_id_institucion']} AND ipc.year={$_SESSION["bd"]}
-		WHERE ai.ind_id='".$_POST["bancoDatos"]."' AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-	}
-	$indicadorBD = mysqli_fetch_array($consultaIndicadorBD, MYSQLI_BOTH);
+	$indicadorBD = Indicadores::traerDatosIndicadorRelacion($_POST["bancoDatos"]);
 
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_indicadores(ind_id, ind_nombre, ind_obligatorio, ind_publico, institucion, year) VALUES('".$idRegistro."', '".mysqli_real_escape_string($conexion,$indicadorBD['ind_nombre'])."', 0, 1, {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-	} catch (Exception $e) {
-		include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-	}
+	$idRegistro = Indicadores::guardarIndicador($conexionPDO, "ind_nombre, ind_obligatorio, ind_publico, institucion, year, ind_id", [mysqli_real_escape_string($conexion,$indicadorBD['ind_nombre']), 0, 1, $config['conf_id_institucion'], $_SESSION["bd"]]);
 	//Si decide poner los valores porcentuales de los indicadores de forma manual
 	if($datosCargaActual['car_valor_indicador']==1){
 		if($porcentajeRestante<=0){

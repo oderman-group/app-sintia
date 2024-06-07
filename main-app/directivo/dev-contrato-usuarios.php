@@ -110,12 +110,7 @@ $datosContrato = mysqli_fetch_array($contrato, MYSQLI_BOTH);
 
                                                         $responsable="";
                                                         if($resultado['cxu_id_usuario']!=0){
-
-                                                            try{
-                                                                $consultaResponsable= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$resultado['cxu_id_usuario']."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
+                                                            $consultaResponsable = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['cxu_id_usuario']."'", $config['conf_id_institucion'], $year);
                                                             $datosResponsable = mysqli_fetch_array($consultaResponsable, MYSQLI_BOTH);
                                                             $responsable=UsuariosPadre::nombreCompletoDelUsuario($datosResponsable);
 

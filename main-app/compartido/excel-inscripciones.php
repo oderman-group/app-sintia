@@ -1,5 +1,6 @@
 <?php
 include("session-compartida.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 $idPaginaInterna = 'DT0243';
 
 if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol([$idPaginaInterna])){
@@ -23,9 +24,7 @@ header("content-disposition: attachment;filename=Inscripciones_" . date("d/m/Y")
 <?php
 include(ROOT_PATH."/config-general/config-admisiones.php");
 
-$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
-INNER JOIN ".$baseDatosAdmisiones.".aspirantes ON asp_id=mat.mat_solicitud_inscripcion
-WHERE mat.mat_estado_matricula=5 AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]} ORDER BY mat.mat_primer_apellido");
+$consulta = Estudiantes::listarMatriculasAspirantes($config);
 ?>
 <div align="center">
     <table width="100%" border="1" rules="all">

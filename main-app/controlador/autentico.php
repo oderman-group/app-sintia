@@ -23,7 +23,13 @@ $usrE = mysqli_fetch_array($rst_usrE, MYSQLI_BOTH);
 
 $_POST["bd"]=$usrE["institucion"];
 $institucionConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones 
-WHERE ins_id='".$_POST["bd"]."' AND ins_enviroment='".ENVIROMENT."'");
+WHERE ins_estado = 1 AND ins_id='".$_POST["bd"]."' AND ins_enviroment='".ENVIROMENT."'");
+
+$numInsti = mysqli_num_rows($institucionConsulta);
+if($numInsti==0){
+	header("Location:".REDIRECT_ROUTE."/index.php?error=9&inst=".base64_encode($_POST["bd"]));
+	exit();
+}
 
 $institucion = mysqli_fetch_array($institucionConsulta, MYSQLI_BOTH);
 $yearArray = explode(",", $institucion['ins_years']);
@@ -44,10 +50,10 @@ if( !empty($institucion['ins_year_default']) && is_numeric($institucion['ins_yea
 include("../modelo/conexion.php");
 require_once("../class/Plataforma.php");
 require_once("../class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 
-$rst_usrE = mysqli_query($conexion, "SELECT uss_usuario, uss_id, uss_intentos_fallidos FROM ".BD_GENERAL.".usuarios 
-WHERE uss_usuario='".trim($_POST["Usuario"])."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL AND institucion={$institucion['ins_id']} AND year={$_SESSION["bd"]}");
+$rst_usrE = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_usuario='".trim($_POST["Usuario"])."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL");
 
 $numE = mysqli_num_rows($rst_usrE);
 if($numE==0){
@@ -137,14 +143,8 @@ if($num>0)
 	$datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
 	$_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
 
-	$arregloModulos = array();
-	$modulosSintia = mysqli_query($conexion, "SELECT mod_id, mod_nombre FROM ".$baseDatosServicios.".modulos
-	INNER JOIN ".$baseDatosServicios.".instituciones_modulos ON ipmod_institucion='".$config['conf_id_institucion']."' AND ipmod_modulo=mod_id
-	WHERE mod_estado=1");
-	while($modI = mysqli_fetch_array($modulosSintia, MYSQLI_BOTH)){
-		$arregloModulos [$modI['mod_id']] = $modI['mod_nombre'];
-	}
-
+    
+	$arregloModulos = Modulos::consultarModulosIntitucion($conexion, $config['conf_id_institucion']);
 	$_SESSION["modulos"] = $arregloModulos;
 
 	//INICIO SESION

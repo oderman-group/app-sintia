@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -62,12 +63,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <div class="col-sm-10">
                                                 <select class="form-control  select2" name="curso" required>
                                                 <option value=""></option>
-                                                <?php 
-                                                try{
-                                                    $c=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-                                                } catch (Exception $e) {
-                                                    include("../compartido/error-catch-to-report.php");
-                                                }
+                                                <?php
+                                                $c = Grados::traerGradosInstitucion($config);
                                                 while($r=mysqli_fetch_array($c, MYSQLI_BOTH)){
                                                 ?>
                                                     <option value="<?php echo $r['gra_id']; ?>"><?php echo $r['gra_nombre'];?></option>
@@ -95,9 +92,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </div>
                                         </div>
 
-                                        <?php if(Modulos::validarSubRol(['DT0076'])){?>
-                                        <input type="submit" class="btn btn-primary" value="Generar Planilla">&nbsp;
-                                        <?php }?>
+                                        <?php   $botones = new botonesGuardar("estudiantes.php",  Modulos::validarSubRol(['DT0081']),"Generar planilla"); ?>
                                     </form>
                                 </div>
                             </div>

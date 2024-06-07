@@ -10,6 +10,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 
 	//COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 	if (trim($_POST["nombre"]) == "" or trim($_POST["valor"]) == "") {
@@ -18,25 +19,15 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 		exit();
 	}
 	
-	try{
-		$consultaInd=mysqli_query($conexion, "SELECT sum(ind_valor)+" . $_POST["valor"] . " FROM ".BD_ACADEMICA.".academico_indicadores where ind_obligatorio=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
-	$ind = mysqli_fetch_array($consultaInd, MYSQLI_BOTH);
+	$ind = Indicadores::consultarValorIndicadoresObligatorios();
 
-	if ($ind[0] > 100) {
-		include("../compartido/guardar-historial-acciones.php");
+	if (($ind[0] + $_POST["valor"]) > 100) {
 		echo "<span style='font-family:Arial; color:red;'>Los valores de los indicadores no deben superar el 100%.</samp>";
 		exit();
 	}
-	$codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_indicadores');
-
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_indicadores(ind_id, ind_nombre, ind_valor, ind_obligatorio, institucion, year)VALUES('".$codigo."', '" . mysqli_real_escape_string($conexion,$_POST["nombre"]) . "','" . $_POST["valor"] . "',1, {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	
+	$codigo = Indicadores::guardarIndicador($conexionPDO, "ind_nombre, ind_valor, ind_obligatorio, institucion, year, ind_id", [mysqli_real_escape_string($conexion,$_POST["nombre"]),$_POST["valor"],1, $config['conf_id_institucion'], $_SESSION["bd"]]);
+	
 
 	include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="cargas-indicadores-obligatorios.php";</script>';

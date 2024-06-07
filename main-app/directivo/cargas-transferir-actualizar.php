@@ -1,5 +1,6 @@
 <?php
 	include("session.php");
+	require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
 	Modulos::validarAccesoDirectoPaginas();
 	$idPaginaInterna = 'DT0171';
@@ -11,11 +12,8 @@
 	include("../compartido/historial-acciones-guardar.php");
 
 	foreach ($_POST["cargas"] as $idCarga) {
-		try{
-			mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_cargas SET car_docente='" . $_POST["para"] . "' WHERE car_id='" . $idCarga . "' AND car_docente='" . $_POST["de"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
+		$update = "car_docente=" . $_POST["para"] . "";
+		CargaAcademica::actualizarCargaPorID($config, $idCarga, $update);
 	}
 
 	include("../compartido/guardar-historial-acciones.php");

@@ -7,6 +7,7 @@ require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 ?>
 <?php require_once("../class/servicios/MediaTecnicaServicios.php"); ?>
 <div class="page-content">
@@ -114,7 +115,7 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 															$filtroOr.=" OR (car_curso='".$dato["matcur_id_curso"]."' AND car_grupo='".$dato["matcur_id_grupo"]."')";
 														}
 													}
-													$cCargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND ((car_curso='".$datosEstudianteActual['mat_grado']."' AND car_grupo='".$datosEstudianteActual['mat_grupo']."') {$filtroOr})");
+													$cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo'], "", $filtroOr);
 													while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
 														$rDatos = Asignaturas::consultarAsignaturaCursoUsuario($conexion, $config, $rCargas['car_curso'], $rCargas['car_materia'], $rCargas['car_docente']);
 													?>
@@ -140,8 +141,7 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 															$decimal = $porcentajeGrado/100;
 															
 															//LAS CALIFICACIONES
-															$notasConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_estudiante='".$datosEstudianteActual['mat_id']."' AND bol_carga='".$rCargas['car_id']."' AND bol_periodo='".$i."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-															$notasResultado = mysqli_fetch_array($notasConsulta, MYSQLI_BOTH);
+															$notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $datosEstudianteActual['mat_id'], $rCargas["car_id"]);
 															$numN = mysqli_num_rows($notasConsulta);
 															if($numN){
 																$n++;

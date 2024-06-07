@@ -107,9 +107,9 @@
 	                        </li>
 							<?php }?>
 							
-							<?php if(Modulos::validarModulosActivos($conexion, 6)){ ?>
+							<?php if(Modulos::validarModulosActivos($conexion, 20)){ ?>
 							<li class="nav-item active" data-step="11" data-intro="<b><?=$frases[175][$datosUsuarioActual['uss_idioma']];?>:</b> Encuentra los mejores productos y servicios complementarios." data-position='left'>
-	                            <a <?php validarModuloMenu(6, "marketplace.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>
+	                            <a <?php validarModuloMenu(20, "marketplace.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>
 	                                <span class="title">Marketplace</span> 
 	                            </a>
 	                        </li>

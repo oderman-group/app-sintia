@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -85,16 +86,10 @@ if(!Modulos::validarPermisoEdicion()){
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
-												<?php
-                                                try{
-                                                    $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY gra_vocal");
-                                                } catch (Exception $e) {
-                                                    include("../compartido/error-catch-to-report.php");
-                                                }
-												?>
                                                 <select id="multiple" class="form-control  select2-multiple" name="curso[]" required multiple <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
 													<?php
+                                                    $opcionesConsulta = Grados::traerGradosInstitucion($config);
 													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$disabled = '';
 														if($opcionesDatos['gra_estado']=='0') $disabled = 'disabled';
@@ -265,13 +260,7 @@ if(!Modulos::validarPermisoEdicion()){
                                         </div>
 
 
-                                        <?php if(Modulos::validarPermisoEdicion()){?>
-                                            <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-                                        <?php }?>
-										
-										<a href="javascript:void(0);" name="cargas.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
+                                        <?php $botones = new botonesGuardar("cargas.php",Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>

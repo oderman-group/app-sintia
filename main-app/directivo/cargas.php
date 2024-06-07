@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $Plataforma = new Plataforma;
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -109,19 +110,8 @@ if($config['conf_doble_buscador'] == 1) {
 													</thead>
 													<tbody id="cargas_result">
 													<?php
-													include("includes/consulta-paginacion-cargas.php");	
-													try{										       
-														$busqueda=mysqli_query($conexion,"SELECT car.*, am.*, gra.*, gru.*, uss.*, car.id_nuevo AS id_nuevo_carga FROM ".BD_ACADEMICA.".academico_cargas car
-														INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=car_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]} {$filtroMT}
-														LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=car_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-														LEFT JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]}
-														LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=car_docente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-														WHERE car_id=car_id AND car.institucion={$config['conf_id_institucion']} AND car.year={$_SESSION["bd"]} $filtro
-														ORDER BY car_id
-														LIMIT $inicio,$registros;");
-													} catch (Exception $e) {
-														include("../compartido/error-catch-to-report.php");
-													}
+													include("includes/consulta-paginacion-cargas.php");
+													$busqueda = CargaAcademica::listarCargas($conexion, $config, "", $filtro, "car_id", "LIMIT $inicio,$registros");
     												$contReg = 1;
 													$index = 0;
 													$arraysDatos = array();																									

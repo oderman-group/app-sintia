@@ -3,12 +3,12 @@ session_start();
 include("../../config-general/config.php");
 include("../../config-general/consulta-usuario-actual.php");
 include("../compartido/sintia-funciones.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 //Instancia de Clases generales
 $usuariosClase = new Usuarios();
 
-
-$consultaUsuariosOnline = mysqli_query($conexion,"SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!='".$_SESSION['id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} LIMIT 10");
-$consultaUsuariosOfline = mysqli_query($conexion,"SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND uss_id!='".$_SESSION['id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} LIMIT 5");
+$consultaUsuariosOnline = UsuariosPadre::consultaUsuariosOnline($config, $_SESSION['id']);
+$consultaUsuariosOffline = UsuariosPadre::consultaUsuariosOffline($config, $_SESSION['id']);
 
 $resultadosOnline = array();
 $resultadosOfline = array();
@@ -27,7 +27,7 @@ while ($datosUsuarios = mysqli_fetch_array($consultaUsuariosOnline, MYSQLI_BOTH)
         'fotoPerfil'    => $fotoPerfil
     );
 }
-while ($datosUsuarios = mysqli_fetch_array($consultaUsuariosOfline, MYSQLI_BOTH)) {
+while ($datosUsuarios = mysqli_fetch_array($consultaUsuariosOffline, MYSQLI_BOTH)) {
     $fotoPerfil = $usuariosClase->verificarFoto($datosUsuarios['uss_foto']);
 
     $nombre = $datosUsuarios['uss_nombre'];

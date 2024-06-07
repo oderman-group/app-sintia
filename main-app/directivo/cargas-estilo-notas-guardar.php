@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0182';
@@ -9,9 +10,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 include("../compartido/historial-acciones-guardar.php");
-require_once(ROOT_PATH."/main-app/class/Utilidades.php");
-
-$codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_categorias_notas');
 
 if (trim($_POST["nombre"]) == "") {
 	include("../compartido/guardar-historial-acciones.php");
@@ -20,11 +18,7 @@ if (trim($_POST["nombre"]) == "") {
 	exit();
 }
 
-try {
-	mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_categorias_notas (catn_id, catn_nombre, institucion, year)VALUES('".$codigo."', '" . $_POST["nombre"] . "', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+$codigo = categoriasNota::guardarCategoriaNota($conexionPDO, "catn_nombre, institucion, year, catn_id", [$_POST["nombre"], $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 include("../compartido/guardar-historial-acciones.php");
 

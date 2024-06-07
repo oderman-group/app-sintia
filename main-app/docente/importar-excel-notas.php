@@ -2,6 +2,7 @@
 <?php include("verificar-carga.php");?>
 <?php
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 if($_FILES['planilla']['name']!=""){
 	$archivo = $_FILES['planilla']['name']; $destino = "../files/excel";
 	move_uploaded_file($_FILES['planilla']['tmp_name'], $destino ."/".$archivo);
@@ -69,9 +70,7 @@ if($accionBD==1){
 	include("../compartido/reporte-errores.php");	
 }
 
-mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1 WHERE act_id='".$_POST["idR"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-$lineaError = __LINE__;
-include("../compartido/reporte-errores.php");
+Actividades::marcarActividadRegistrada($config, $_POST["idR"]);
 
 echo '<script type="text/javascript">window.location.href="calificaciones.php";</script>';
 exit();

@@ -9,22 +9,14 @@ class Usuarios {
      */
     public static function obtenerDatosUsuario($usuario = 0)
     {
-        global $conexion, $config;
+        global $config;
         $resultado = [];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios
-            WHERE (uss_id='" . $usuario . "' || uss_usuario='" . $usuario . "') AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-            ");
-            $num = mysqli_num_rows($consulta);
-            if ($num == 0) {
-                $resultado = "";
-            }
-            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-        } catch (Exception $e) {
-            echo "Excepción capturada: " . $e->getMessage();
-            exit();
-        }
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE (uss_id=? || uss_usuario=?) AND institucion=? AND year=?";
+        $parametros = [$usuario, $usuario, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -38,18 +30,14 @@ class Usuarios {
      */
     public static function validarExistenciaUsuario($usuario = 0)
     {
-        global $conexion, $config;
+        global $config;
         $num = 0;
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios
-            WHERE (uss_id='" . $usuario . "' || uss_usuario='" . $usuario . "' || uss_email='" . $usuario . "') AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-            ");
-            $num = mysqli_num_rows($consulta);
-        } catch (Exception $e) {
-            echo "Excepción capturada: " . $e->getMessage();
-            exit();
-        }
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE (uss_id=? || uss_usuario=? || uss_email=?) AND institucion=? AND year=?";
+        $parametros = [$usuario, $usuario, $usuario, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        $num = mysqli_num_rows($consulta);
 
         return $num;
     }
@@ -67,19 +55,11 @@ class Usuarios {
         global $conexion;
         $resultado = [];
 
-        try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios
-            WHERE (uss_email='" . $usuario . "' || uss_usuario='" . $usuario . "') AND institucion={$idInstitucion} AND year={$_SESSION["bd"]}
-            ");
-            $num = mysqli_num_rows($consulta);
-            if ($num == 0) {
-                return $resultado;
-            }
-            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-        } catch (Exception $e) {
-            echo "Excepción capturada: " . $e->getMessage();
-            exit();
-        }
+        $sql = "SELECT * FROM " . BD_GENERAL . ".usuarios WHERE (uss_email=? || uss_usuario=?) AND institucion=? AND year=?";
+        $parametros = [$usuario, $usuario, $idInstitucion, $_SESSION["bd"]];
+        $consulta = BindSQL::prepararSQL($sql, $parametros);
+
+        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
         return $resultado;
     }
@@ -102,12 +82,9 @@ class Usuarios {
             include("../compartido/error-catch-to-report.php");
         }
 
-        try {
-            mysqli_query($conexion, "UPDATE " . BD_GENERAL . ".usuarios SET uss_clave=SHA1('" . $data['nueva_clave'] . "'), uss_intentos_fallidos=0 
-            WHERE uss_id='" . $data['usuario_id'] . "' AND institucion={$data['institucion_id']} AND year={$data['institucion_agno']}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
+        $sql = "UPDATE " . BD_GENERAL . ".usuarios SET uss_clave=?, uss_intentos_fallidos=0 WHERE uss_id=? AND institucion=? AND year=?";
+        $parametros = [SHA1($data['nueva_clave']), $data['usuario_id'], $data['institucion_id'], $data['institucion_agno']];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $idatosUsuarioltimoRegistro;
     }
@@ -158,11 +135,10 @@ class Usuarios {
     public static function bloquearDesbloquearUsuarios($conexion,$tipoUsuarios,$bloquearDesbloquear)
     {
         global $config;
-        try{
-            mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado={$bloquearDesbloquear} WHERE uss_tipo={$tipoUsuarios} AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-        }
+
+        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado=? WHERE uss_tipo=? AND institucion=? AND year=?";
+        $parametros = [$bloquearDesbloquear, $tipoUsuarios, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
 
 }

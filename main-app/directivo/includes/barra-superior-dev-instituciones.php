@@ -29,7 +29,7 @@ if (isset($_GET['busqueda'])) {
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
                     try{
-                        $instituciones = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".planes_sintia");
+                        $instituciones = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".planes_sintia WHERE plns_tipo='".PLANES."'");
                     } catch (Exception $e) {
                         include("../compartido/error-catch-to-report.php");
                     }

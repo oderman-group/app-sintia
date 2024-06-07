@@ -9,19 +9,6 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/compartido/head.php");
-
-$consulta = mysqli_query($conexion, "SELECT 
-GROUP_CONCAT( mat_id SEPARATOR ', ') as mat_id, 
-GROUP_CONCAT( mat_matricula SEPARATOR ', ') as mat_matricula, 
-GROUP_CONCAT( gra_nombre SEPARATOR ', ') as gra_nombre, 
-mat_documento, mat_estado_matricula, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_nombre2, COUNT(*) as duplicados 
-FROM ".BD_ACADEMICA.".academico_matriculas mat 
-INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-WHERE mat_eliminado=0 AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-GROUP BY mat_documento
-HAVING COUNT(*) > 1 
-ORDER BY mat_id ASC");
-
 ?>
 <!doctype html>
 <html>
@@ -53,6 +40,7 @@ ORDER BY mat_id ASC");
       </tr>
       <?php
         $i = 1;
+        $consulta = Estudiantes::listarMatriculasRepetidas($config);
         while ($datos = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
           $nombreCompleto=Estudiantes::NombreCompletoDelEstudiante($datos);
       ?>

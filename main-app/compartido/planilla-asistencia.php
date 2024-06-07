@@ -8,6 +8,7 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 }
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 ?>
 <head>
 	<title>PLANILLA DE ESTUDIANTES</title>
@@ -21,8 +22,7 @@ require_once("../class/Estudiantes.php");
     $year=$_POST["agno"];
   }
 
-$consultaGrados=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados gra, ".BD_ACADEMICA.".academico_grupos gru WHERE gra_id='".$_REQUEST["grado"]."' AND gru.gru_id='".$_REQUEST["grupo"]."' AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$year} AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$year}");
-$grados = mysqli_fetch_array($consultaGrados, MYSQLI_BOTH);	
+$grados = Grados::traerGradosGrupos($config, $_REQUEST["grado"], $_REQUEST["grupo"], $year);
 ?>
 <?php
 $nombreInforme = "PLANILLA DE ESTUDIANTES"."<br>".$grados["gra_nombre"]." ".$grados["gru_nombre"]."<br>".$year;

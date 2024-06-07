@@ -123,7 +123,7 @@
 	                        </li>
 							<?php } ?>
 
-							<?php if (array_key_exists(6, $arregloModulos) && Modulos::validarModulosActivos($conexion, 6)) { ?>
+							<?php if (array_key_exists(20, $arregloModulos) && Modulos::validarModulosActivos($conexion, 20)) { ?>
 							<li class="nav-item active" data-step="11" data-intro="<b><?=$frases[175][$datosUsuarioActual['uss_idioma']];?>:</b> Encuentra los mejores productos y servicios complementarios." data-position='left'>
 	                            <a href="marketplace.php" class="nav-link nav-toggle bg-warning text-dark"> <i class="fa fa-shopping-cart text-dark"></i>
 	                                <span class="title">Marketplace</span> 

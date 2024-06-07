@@ -2,6 +2,7 @@
 include("../directivo/session.php");
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 ?>
 <head>
 	<title>TODAS LAS CALIFICACIONES</title>
@@ -35,7 +36,7 @@ require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
                                     <!-- BEGIN -->
                                     <tbody>
                                     <?php
-									$cCargas = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso='".$datosEstudianteActual['mat_grado']."' AND car_grupo='".$datosEstudianteActual['mat_grupo']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+                  $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
 									$nCargas = mysqli_num_rows($cCargas);
 									while($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
                     $rDatos = Asignaturas::consultarAsignaturaCursoUsuario($conexion, $config, $rCargas['car_curso'], $rCargas['car_materia'], $rCargas['car_docente']);

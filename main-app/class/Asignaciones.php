@@ -1,6 +1,7 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Asignaciones {
 
@@ -128,10 +129,12 @@ class Asignaciones {
                     break;
                 }
 
-                $consulta = mysqli_query($conexion, "SELECT uss_id FROM ".BD_GENERAL.".usuarios 
-                WHERE uss_tipo='".$tipoUsuario."' AND (uss_usuario!='' OR uss_usuario IS NOT NULL) AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
+                $sql = "SELECT uss_id FROM ".BD_GENERAL.".usuarios 
+                WHERE uss_tipo=? AND (uss_usuario!='' OR uss_usuario IS NOT NULL) AND institucion=? AND year=?
                 ORDER BY RAND() 
-                LIMIT {$POST["limiteEvaluadores"]}");
+                LIMIT {$POST["limiteEvaluadores"]}";
+                $parametros = [$tipoUsuario, $config['conf_id_institucion'], $_SESSION["bd"]];
+                $consulta = BindSQL::prepararSQL($sql, $parametros);
                 while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                     try {
                         mysqli_query($conexion, "INSERT INTO ".BD_ADMIN.".general_evaluacion_asignar (epag_id_evaluacion, epag_id_evaluado, epag_id_evaluador, epag_tipo, epag_id_limite, epag_institucion, epag_year)VALUES('".$POST["idE"]."', '".$idEvaluado."', '".$resultado["uss_id"]."', '".$POST["tipoEncuesta"]."', '".$idLimite."', {$config['conf_id_institucion']}, {$_SESSION["bd"]});");

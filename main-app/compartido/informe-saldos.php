@@ -15,9 +15,9 @@ include("../../config-general/consulta-usuario-actual.php");?>
 </div>   
 <?php
 									if(isset($_GET["tipo"]) and $_GET["tipo"]!="" and is_numeric($_GET["tipo"])){
-										$SQL = "SELECT * FROM ".BD_GENERAL.".usuarios uss INNER JOIN ".$baseDatosServicios.".general_perfiles ON uss_tipo=pes_id WHERE uss_id!='".$_SESSION["id"]."' AND uss_tipo='".$_GET["tipo"]."' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}";
+                    $filtro = "AND uss_id!='".$_SESSION["id"]."' AND uss_tipo='".$_GET["tipo"]."'";
 									}else{
-										$SQL = "SELECT * FROM ".BD_GENERAL.".usuarios uss INNER JOIN ".$baseDatosServicios.".general_perfiles ON uss_tipo=pes_id WHERE uss_id!='".$_SESSION["id"]."' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}";
+                    $filtro = "AND uss_id!='".$_SESSION["id"]."'";
 									}
 									//include("paginacion.php");
 									?>
@@ -31,7 +31,7 @@ include("../../config-general/consulta-usuario-actual.php");?>
                                         <th>Saldo</th>
   </tr>
   <?php
-									 $consulta = mysqli_query($conexion, $SQL);
+                   $consulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios($filtro);
 									 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 										 if($resultado['uss_estado']==1) $s='<img src="../files/iconos/on.png">'; elseif($resultado['uss_estado']==0) $s='<img src="../files/iconos/off.png">'; else $s="-";
 										 if($resultado['uss_tipo']==5) $b = "bold"; else $b="";

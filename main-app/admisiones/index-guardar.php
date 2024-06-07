@@ -7,7 +7,7 @@ require_once(ROOT_PATH."/main-app/class/Inscripciones.php");
 
 $idInst="";
 if(!empty($_REQUEST["idInst"])){ $idInst=base64_decode($_REQUEST["idInst"]);}
-
+Inscripciones::iniciarTransacion();
 
 $year=$config["cfgi_year_inscripcion"];
 
@@ -127,7 +127,7 @@ if ($newId > 0) {
 
     //Documentos
     Inscripciones::guardarDocumentos($pdoI, $config, $codigoMAT);
-
+    Inscripciones::finalizarTransacion();
 
     //Mensaje para correo
 

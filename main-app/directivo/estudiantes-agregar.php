@@ -4,6 +4,7 @@
 <?php include("../compartido/head.php");?>
 <?php include("includes/variables-estudiantes-agregar.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -418,13 +419,10 @@ if(!Modulos::validarPermisoEdicion()){
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
 												<div class="col-sm-4">
-													<?php
-													$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_grados
-													WHERE gra_estado=1 AND gra_tipo='".GRADO_GRUPAL."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-													?>
 													<select class="form-control" name="grado" required <?=$disabledPermiso;?>>
 														<option value="">Seleccione una opción</option>
 														<?php
+                                                		$opcionesConsulta = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
 														while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 															if($opcionesDatos['gra_id']==$datosMatricula['grado'])
 																echo '<option value="'.$opcionesDatos['gra_id'].'" selected>'.$opcionesDatos['gra_nombre'].'</option>';

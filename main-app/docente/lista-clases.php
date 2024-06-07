@@ -5,6 +5,7 @@ include("../compartido/historial-acciones-guardar.php");
 include("verificar-carga.php");
 include("../compartido/head.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Ausencias.php");
 ?>
 </head>
 
@@ -77,17 +78,7 @@ require_once("../class/Estudiantes.php");
                 <?php
                         }
                         $bg = '';
-                        if($datosCargaActual['gra_tipo'] == GRADO_INDIVIDUAL) {
-                            $consultaNumerosEstudiantes=mysqli_query($conexion, "SELECT count(*) FROM ".BD_ACADEMICA.".academico_ausencias aus
-                            INNER JOIN ".$baseDatosServicios.".mediatecnica_matriculas_cursos ON matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."' AND matcur_id_matricula=aus.aus_id_estudiante
-                            INNER JOIN ".BD_ACADEMICA.".academico_matriculas mat ON (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 AND mat_id=matcur_id_matricula AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-                            WHERE aus.aus_id_clase='".$resultado['cls_id']."' AND aus.institucion={$config['conf_id_institucion']} AND aus.year={$_SESSION["bd"]}");
-                        }else{
-                            $consultaNumerosEstudiantes=mysqli_query($conexion, "SELECT count(*) FROM ".BD_ACADEMICA.".academico_ausencias aus
-                            INNER JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2) AND mat_eliminado=0 AND mat_id=aus.aus_id_estudiante AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-                            WHERE aus.aus_id_clase='".$resultado['cls_id']."' AND aus.institucion={$config['conf_id_institucion']} AND aus.year={$_SESSION["bd"]}");
-                        }
-                        $numerosEstudiantes = mysqli_fetch_array($consultaNumerosEstudiantes, MYSQLI_BOTH);
+                        $numerosEstudiantes = Ausencias::consultaNumEstudiantesAusencias($config, $datosCargaActual, $resultado['cls_id']);
                         if($numerosEstudiantes[0]<$cantidadEstudiantesParaDocentes) $bg = '#FCC';
                         
                         $cheked = '';

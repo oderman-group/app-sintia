@@ -288,11 +288,9 @@ $cantPreguntas = Evaluaciones::numeroPreguntasEvaluacion($conexion, $config, $id
 							</div>
 									
 										
-									<a href="#" name="evaluaciones-preguntas.php?idE=<?=$_GET["idE"];?>" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 
-									<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+									<?php 
+                            				$botones = new botonesGuardar("evaluaciones-preguntas.php?idE=".$_GET["idE"],Modulos::validarPermisoEdicion()); ?>
 
 												
 										</form>

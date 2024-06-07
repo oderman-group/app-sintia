@@ -1,6 +1,6 @@
 <?php
 include("session.php");
-require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0179';
@@ -19,12 +19,7 @@ if (trim($_POST["nombreA"]) == "" || trim($_POST["posicionA"]) == "" ) {
 	exit();
 }
 
-$codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_areas');
-try{
-	mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_areas (ar_id, ar_nombre,ar_posicion, institucion, year)VALUES('".$codigo."', '".$_POST["nombreA"]."',".$_POST["posicionA"].", {$config['conf_id_institucion']}, {$_SESSION["bd"]});");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+$codigo = Areas::guardarArea($conexionPDO, "ar_nombre, ar_posicion, institucion, year, ar_id", [$_POST["nombreA"], $_POST["posicionA"], $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 include("../compartido/guardar-historial-acciones.php");
 

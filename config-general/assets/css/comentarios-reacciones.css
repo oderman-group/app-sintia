@@ -1,0 +1,209 @@
+
+.li-seleccion {
+    color: white !important;
+    background: #6d84b4;
+}
+
+
+/* Estilos para el contenedor del menú desplegable */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Estilos para el contenido del menú desplegable */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+/* Mostrar el contenido del menú desplegable al pasar el ratón sobre el botón */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown.open .dropdown-content {
+    display: block;
+
+}
+
+/* Mostrar el contenido del menú desplegable cuando el div tenga la clase 'open' */
+.tabbable-panel {
+    border: 1px solid #eee;
+    padding: 10px;
+}
+
+/* Default mode */
+.tabbable-line>.nav-tabs {
+    border: none;
+    margin: 0px;
+}
+
+.tabbable-line>.nav-tabs>li {
+    margin-right: 2px;
+}
+
+.tabbable-line>.nav-tabs>li>a {
+    border: 0;
+    margin-right: 0;
+    color: #737373;
+}
+
+.tabbable-line>.nav-tabs>li>a>i {
+    color: #a6a6a6;
+}
+
+.tabbable-line>.nav-tabs>li.open,
+.tabbable-line>.nav-tabs>li:hover {
+    border-bottom: 4px solid #fbcdcf;
+}
+
+.tabbable-line>.nav-tabs>li.open>a,
+.tabbable-line>.nav-tabs>li:hover>a {
+    border: 0;
+    background: none !important;
+    color: #333333;
+}
+
+.tabbable-line>.nav-tabs>li.open>a>i,
+.tabbable-line>.nav-tabs>li:hover>a>i {
+    color: #a6a6a6;
+}
+
+.tabbable-line>.nav-tabs>li.open .dropdown-menu,
+.tabbable-line>.nav-tabs>li:hover .dropdown-menu {
+    margin-top: 0px;
+}
+
+.tabbable-line>.nav-tabs>li.active {
+    border-bottom: 4px solid #f3565d;
+    position: relative;
+}
+
+.tabbable-line>.nav-tabs>li.active>a {
+    border: 0;
+    color: #333333;
+}
+
+.tabbable-line>.nav-tabs>li.active>a>i {
+    color: #404040;
+}
+
+.tabbable-line>.tab-content {
+    margin-top: -3px;
+    background-color: #fff;
+    border: 0;
+    border-top: 1px solid #eee;
+    padding: 15px 0;
+}
+
+.portlet .tabbable-line>.tab-content {
+    padding-bottom: 0;
+}
+
+/* Below tabs mode */
+
+.tabbable-line.tabs-below>.nav-tabs>li {
+    border-top: 4px solid transparent;
+}
+
+.tabbable-line.tabs-below>.nav-tabs>li>a {
+    margin-top: 0;
+}
+
+.tabbable-line.tabs-below>.nav-tabs>li:hover {
+    border-bottom: 0;
+    border-top: 4px solid #fbcdcf;
+}
+
+.tabbable-line.tabs-below>.nav-tabs>li.active {
+    margin-bottom: -2px;
+    border-bottom: 0;
+    border-top: 4px solid #f3565d;
+}
+
+.tabbable-line.tabs-below>.tab-content {
+    margin-top: -10px;
+    border-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.me_gusta {
+    color: rgb(5, 28, 125, 1) !important;
+}
+
+.nav-pills .me_gusta.nav-link.active {
+    border-bottom: 4px solid rgb(5, 28, 125, 1);
+    position: relative;
+    background-color: #ff000000;
+}
+
+.nav-pills .me_gusta.nav-link.active::after {
+    content: "Me Gusta";
+}
+
+.me_encanta {
+    color: rgb(193, 31, 33) !important;
+}
+
+.nav-pills .me_encanta.nav-link.active {
+    border-bottom: 4px solid rgb(193, 31, 33);
+    position: relative;
+    background-color: #ff000000;
+}
+
+.nav-pills .me_encanta.nav-link.active::after {
+    content: "Me Encanta";
+}
+
+.me_divierte {
+    color: rgb(247, 177, 37) !important;
+}
+
+.nav-pills .me_divierte.nav-link.active {
+    border-bottom: 4px solid rgb(247, 177, 37);
+    position: relative;
+    background-color: #ff000000;
+}
+
+.nav-pills .me_divierte.nav-link.active::after {
+    content: "Me Divierte";
+}
+
+.me_entristece {
+    color: rgb(125, 89, 5, 1) !important;
+}
+
+.nav-pills .me_entristece.nav-link.active {
+    border-bottom: 4px solid rgb(125, 89, 5, 1);
+    position: relative;
+    color: rgb(125, 89, 5, 1);
+
+    background-color: #ff000000;
+}
+
+.nav-pills .me_entristece.nav-link.active::after {
+    content: "Me Entristece";
+}
+
+.list-group .list-group-item {
+    display: block;
+    font-size: 10px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.list-group-item {
+    /* position: relative; */
+    /* display: block; */
+    padding: 0px;
+    padding-top: 10px;
+    margin-bottom: -1px;
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, .0);
+}

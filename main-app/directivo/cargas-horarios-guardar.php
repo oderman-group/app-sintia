@@ -21,7 +21,7 @@ if (trim($_POST["idH"]) == "" or trim($_POST["inicioH"]) == "" or trim($_POST["f
 $numero = (count($_POST["diaH"]));
 $contador = 0;
 while ($contador < $numero) {
-	CargaAcademica::guardarHorariosCargas($conexion, $config, $_POST["diaH"][$contador], $_POST);
+	CargaAcademica::guardarHorariosCargas($conexion, $conexionPDO, $config, $_POST["diaH"][$contador], $_POST);
 	$contador++;
 }
 

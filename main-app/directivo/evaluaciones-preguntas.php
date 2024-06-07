@@ -183,8 +183,7 @@ $consultaPreguntas = PreguntaGeneral::listar($parametros);
                     </div>
                     <div class="form-group">
                         <div class="col-md-9">
-                            <a href="javascript:void(0);" name="evaluaciones.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-                            <button type="submit" class="btn btn-info"><?= $frases[419][$datosUsuarioActual['uss_idioma']]; ?></button>
+                            <?php $botones = new botonesGuardar("evaluaciones.php",Modulos::validarPermisoEdicion()); ?>
                         </div>
                     </div>
                 </div>

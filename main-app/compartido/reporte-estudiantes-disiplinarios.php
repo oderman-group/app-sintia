@@ -1,7 +1,8 @@
 <?php
 session_start();
 include("../../config-general/config.php");
-include("../../config-general/consulta-usuario-actual.php");?>
+include("../../config-general/consulta-usuario-actual.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");?>
 <?php
 
 ?>
@@ -56,15 +57,7 @@ include("../../config-general/consulta-usuario-actual.php");?>
 	  $condicion=$condicion." dr_tipo=".$_POST["faltaR"];  
 		  }
 	  }
-		$c_matricEst=mysqli_query($conexion, "SELECT mat_matricula,mat_primer_apellido,mat_segundo_apellido,mat_nombres,gru_nombre,gra_nombre,ogen_nombre,dr_fecha, dr_estudiante, dr_falta,
-CASE dr_tipo WHEN 1 THEN 'Leve' WHEN 2 THEN 'Grave' WHEN 3 THEN 'Gravísima' END as tipo_falta
-FROM ".BD_ACADEMICA.".academico_matriculas am 
-INNER JOIN ".BD_ACADEMICA.".academico_grupos ag ON am.mat_grupo=ag.gru_id AND ag.institucion={$config['conf_id_institucion']} AND ag.year={$_SESSION["bd"]}
-INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra.gra_id=am.mat_grado AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-INNER JOIN ".$baseDatosServicios.".opciones_generales og ON og.ogen_id=am.mat_tipo
-INNER JOIN ".BD_DISCIPLINA.".disciplina_reportes dr ON dr.dr_estudiante=am.mat_id AND dr.institucion={$config['conf_id_institucion']} AND dr.year={$_SESSION["bd"]} 
-WHERE am.institucion={$config['conf_id_institucion']} AND am.year={$_SESSION["bd"]} ".$condicion."
-ORDER BY mat_primer_apellido;");
+$c_matricEst = Estudiantes::listarMatriculasReportes($config, $condicion);
  while($resultado=mysqli_fetch_array($c_matricEst)){
   ?>
   <tr style="font-size:13px;">

@@ -12,6 +12,7 @@ header("Expires: 0");
 header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 header("content-disposition: attachment;filename=Estudiantes_".date("d/m/Y")."-SINTIA.xls");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 $consulta = Estudiantes::listarEstudiantes(0, '', '');
 ?>
@@ -63,10 +64,7 @@ $consulta = Estudiantes::listarEstudiantes(0, '', '');
 $conta=1;
 while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
 {
-    $consultaDatosA=mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss 
-    LEFT JOIN ".$baseDatosServicios.".opciones_generales ON ogen_id=uss_tipo_documento
-    WHERE uss_id='".$resultado['mat_acudiente']."' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}");
-
+    $consultaDatosA = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['mat_acudiente']."'");
 	$datosA = mysqli_fetch_array($consultaDatosA, MYSQLI_BOTH);
 
         $estadoM = $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']];

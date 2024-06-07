@@ -73,13 +73,8 @@ if(!Modulos::validarPermisoEdicion()){
 										
 										
 
-                                        <a href="javascript:void(0);" name="disciplina-categorias.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-
-                                        <?php if(Modulos::validarPermisoEdicion()){?>
-										    <button type="submit" class="btn  btn-info">
-                                                <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                                            </button>
-                                        <?php }?>
+                                      
+                                        <?php $botones = new botonesGuardar("disciplina-categorias.php",Modulos::validarPermisoEdicion()); ?>
 
                                     </form>
                                 </div>

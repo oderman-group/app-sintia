@@ -20,13 +20,7 @@ $datosReportes = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
 $responsable="";
 if(!empty($datosReportes['rperr_usuario'])){
-    try{
-        $consultaResponsable= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios 
-        INNER JOIN ".$baseDatosServicios.".general_perfiles ON pes_id=uss_tipo 
-        WHERE uss_id='".$datosReportes['rperr_usuario']."' AND institucion={$datosReportes['ins_id']} AND year={$agnoBD}");
-    } catch (Exception $e) {
-        include("../compartido/error-catch-to-report.php");
-    }
+    $consultaResponsable = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$datosReportes['rperr_usuario']."'", $datosReportes['ins_id'], $agnoBD);
     $numDatosResponsable=mysqli_num_rows($consultaResponsable);
     if($numDatosResponsable>0){
         $datosResponsable = mysqli_fetch_array($consultaResponsable, MYSQLI_BOTH);

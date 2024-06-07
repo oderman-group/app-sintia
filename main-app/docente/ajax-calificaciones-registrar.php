@@ -1,11 +1,15 @@
 <?php 
 include("session.php");
-require_once("../class/Estudiantes.php");
 include("verificar-carga.php");
-require_once("../class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 require_once(ROOT_PATH."/main-app/class/AjaxCalificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 $operacionesPermitidas = [9, 10];
 
@@ -21,9 +25,7 @@ if(!in_array($_POST["operacion"], $operacionesPermitidas)) {
 }
 
 if(!empty($_POST["codNota"]) && !empty($_POST["codEst"])) {
-	$consultaNum = mysqli_query($conexion, "SELECT cal_id_actividad, cal_id_estudiante FROM ".BD_ACADEMICA.".academico_calificaciones 
-	WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	$num = mysqli_num_rows($consultaNum);
+	$existeNota = Calificaciones::traerCalificacionActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
 }
 
 $mensajeNot = 'Hubo un error al guardar las cambios';
@@ -34,24 +36,22 @@ if($_POST["operacion"]==1){
 	if(trim($_POST["nota"])==""){echo "<span style='color:red; font-size:16px;'>Digite una nota correcta</span>";exit();}
 	if($_POST["nota"]>$config[4]) $_POST["nota"] = $config[4]; if($_POST["nota"]<$config[3]) $_POST["nota"] = $config[3];
 
-	if($num==0){
-		$codigoCAL=Utilidades::generateCode("CAL");
-		mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	if(empty($existeNota['cal_id'])){
+		Calificaciones::eliminarCalificacionActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
 		
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_calificaciones(cal_id, cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year)VALUES('".$codigoCAL."', '".$_POST["codEst"]."','".$_POST["nota"]."','".$_POST["codNota"]."', now(), 0, {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-		
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() WHERE act_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		Calificaciones::guardarNotaActividadEstudiante($conexionPDO, "cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year, cal_id", [$_POST["codEst"],$_POST["nota"],$_POST["codNota"], date("Y-m-d H:i:s"), 0, $config['conf_id_institucion'], $_SESSION["bd"]]);
+
+		Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 
 		//Si la institución autoriza el envío de mensajes - Requiere datos relacionados de unas consultas que fueron eliminadas
 		//include("calificaciones-enviar-email.php");
 
 	}else{
 		if($_POST["notaAnterior"]==""){$_POST["notaAnterior"] = "0.0";}
-		
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_calificaciones SET cal_nota='".$_POST["nota"]."', cal_fecha_modificada=now(), cal_cantidad_modificaciones=cal_cantidad_modificaciones+1, cal_nota_anterior='".$_POST["notaAnterior"]."', cal_tipo=1 
-		WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1 WHERE act_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		$update = "cal_nota=".$_POST["nota"].", cal_nota_anterior=".$_POST["notaAnterior"]."";
+		Calificaciones::actualizarNotaActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"], $update);
+
+		Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 
 	}
 	$mensajeNot = 'La nota se ha guardado correctamente para el estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b>';
@@ -59,18 +59,18 @@ if($_POST["operacion"]==1){
 
 //Para guardar observaciones
 if($_POST["operacion"]==2){
-	if($num==0){
-		$codigoCAL=Utilidades::generateCode("CAL");
-		mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	if(empty($existeNota['cal_id'])){
+		Calificaciones::eliminarCalificacionActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
 		
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_calificaciones(cal_id, cal_id_estudiante, cal_observaciones, cal_id_actividad, institucion, year)VALUES('".$codigoCAL."', '".$_POST["codEst"]."','".mysqli_real_escape_string($conexion,$_POST["nota"])."','".$_POST["codNota"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-		
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() WHERE act_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		Calificaciones::guardarNotaActividadEstudiante($conexionPDO, "cal_id_estudiante, cal_observaciones, cal_id_actividad, institucion, year, cal_id", [$_POST["codEst"],$_POST["nota"],$_POST["codNota"], $config['conf_id_institucion'], $_SESSION["bd"]]);
+
+		Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 		
 	}else{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_calificaciones SET cal_observaciones='".mysqli_real_escape_string($conexion,$_POST["nota"])."' WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1 WHERE act_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		$update = "cal_observaciones=".mysqli_real_escape_string($conexion,$_POST["nota"])."";
+		Calificaciones::actualizarNotaActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"], $update);
+
+		Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 		
 	}
 	$mensajeNot = 'La observación se ha guardado correctamente para el estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b>';
@@ -89,55 +89,29 @@ if($_POST["operacion"]==3){
 	$datosDelete = '';
 	
 	while($estudiantes = mysqli_fetch_array($consultaE, MYSQLI_BOTH)){
+
+		$existeNota = Calificaciones::traerCalificacionActividadEstudiante($config, $_POST["codNota"], $estudiantes['mat_id']);
 		
-		$consultaNumE=mysqli_query($conexion, "SELECT cal_id_actividad, cal_id_estudiante FROM ".BD_ACADEMICA.".academico_calificaciones 
-		WHERE cal_id_actividad='".$_POST["codNota"]."' AND cal_id_estudiante='".$estudiantes['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		$numE = mysqli_num_rows($consultaNumE);
-		
-		if($numE==0){
-			$accionBD = 1;
-			$insertBD = 1;
-			$codigoCAL=Utilidades::generateCode("CAL");
-			$datosDelete .="cal_id_estudiante='".$estudiantes['mat_id']."' OR ";
-			$datosInsert .="('".$codigoCAL."', '".$estudiantes['mat_id']."','".$_POST["nota"]."','".$_POST["codNota"]."', now(), 0, {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
+		if(empty($existeNota['cal_id'])){
+			Calificaciones::eliminarCalificacionActividadEstudiante($config, $_POST["codNota"], $estudiantes['mat_id']);
+			
+			Calificaciones::guardarNotaActividadEstudiante($conexionPDO, "cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year, cal_id", [$estudiantes['mat_id'],$_POST["nota"],$_POST["codNota"], date("Y-m-d H:i:s"), 0, $config['conf_id_institucion'], $_SESSION["bd"]]);
+
+			Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 		}else{
-			$accionBD = 2;
-			$updateBD = 1;
-			$datosUpdate .="cal_id_estudiante='".$estudiantes['mat_id']."' OR ";
+			$update = "cal_nota=".$_POST["nota"]."";
+			Calificaciones::actualizarNotaActividadEstudiante($config, $_POST["codNota"], $estudiantes['mat_id'], $update);
+
+			Actividades::marcarActividadRegistrada($config, $_POST["codNota"]);
 		}
 	}
-	//exit();
-	
-	if($insertBD==1){
-		$datosInsert = substr($datosInsert,0,-1);
-		$datosDelete = substr($datosDelete,0,-4);
-		
-		mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_actividad='".$_POST["codNota"]."' AND (".$datosDelete.") AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		
-		
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_calificaciones(cal_id, cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year)VALUES
-		".$datosInsert."
-		");
-		
-		//echo "Este es:". $idNotify = mysqli_insert_id($conexion); exit();
-	}
-	
-	if($updateBD==1){
-		$datosUpdate = substr($datosUpdate,0,-4);
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_calificaciones SET cal_nota='".$_POST["nota"]."', cal_fecha_modificada=now(), cal_cantidad_modificaciones=cal_cantidad_modificaciones+1 
-		WHERE cal_id_actividad='".$_POST["codNota"]."' AND (".$datosUpdate.") AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-			
-	}
-	
-	mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() WHERE act_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
 
 	$mensajeNot = 'Se ha guardado la misma nota para todos los estudiantes en esta actividad. La página se actualizará en unos segundos para que vea los cambios...';
 }
 
 //Para guardar recuperaciones
 if($_POST["operacion"]==4){
-	$consultaNotaA=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones WHERE cal_id_estudiante=".$_POST["codEst"]." AND cal_id_actividad='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	$notaA = mysqli_fetch_array($consultaNotaA, MYSQLI_BOTH);
+	$notaA = Calificaciones::traerCalificacionActividadEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
 	
 	AjaxCalificaciones::ajaxGuardarNotaRecuperacion($conexion, $config, $_POST["codEst"], $_POST["nombreEst"], $_POST["codNota"], $_POST["nota"], $notaA['cal_nota']);
 
@@ -238,20 +212,17 @@ if($_POST["operacion"]==7){
 }
 //Para guardar observaciones en el boletín de preescolar, Y TAMBIÉN EN EL DE LOS DEMÁS
 if($_POST["operacion"]==8){
-	$consultaNum=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin 
-	WHERE bol_carga='".$_POST["carga"]."' AND bol_estudiante='".$_POST["codEst"]."' AND bol_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	$num = mysqli_num_rows($consultaNum);
+	$boletin = Boletin::traerNotaBoletinCargaPeriodo($config, $_POST["periodo"], $_POST["codEst"], $_POST["carga"]);
 	
-	
-	if($num==0){
-		mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$_POST["carga"]."' AND bol_estudiante='".$_POST["codEst"]."' AND bol_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	if(empty($boletin)){
+		if(!empty($boletin)){
+			Boletin::eliminarNotaBoletinID($config, $boletin['bol_id']);
+		}
 		
-		$codigoBOL=Utilidades::generateCode("BOL");
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_boletin(bol_id, bol_carga, bol_estudiante, bol_periodo, bol_tipo, bol_observaciones_boletin, bol_fecha_registro, bol_actualizaciones, institucion, year)VALUES('".$codigoBOL."', '".$_POST["carga"]."', '".$_POST["codEst"]."', '".$_POST["periodo"]."', 1, '".mysqli_real_escape_string($conexion,$_POST["nota"])."', now(), 0, {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-		
+		Boletin::guardarNotaBoletin($conexionPDO, "bol_carga, bol_estudiante, bol_periodo, bol_tipo, bol_observaciones_boletin, bol_fecha_registro, bol_actualizaciones, institucion, year, bol_id", [$_POST["carga"], $_POST["codEst"], $_POST["periodo"], 1, mysqli_real_escape_string($conexion,$_POST["nota"]), date("Y-m-d H:i:s"), 0, $config['conf_id_institucion'], $_SESSION["bd"]]);
 	}else{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_boletin SET bol_observaciones_boletin='".mysqli_real_escape_string($conexion,$_POST["nota"])."', bol_actualizaciones=bol_actualizaciones+1, bol_ultima_actualizacion=now() WHERE bol_carga='".$_POST["carga"]."' AND bol_estudiante='".$_POST["codEst"]."' AND bol_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		
+		$update = "bol_observaciones_boletin=".mysqli_real_escape_string($conexion,$_POST["nota"])."";
+		Boletin::actualizarNotaBoletin($config, $boletin['bol_id'], $update);
 	}
 	$mensajeNot = 'La observación para el boletín de este periodo se ha guardado correctamente para el estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b>';
 }
@@ -260,12 +231,10 @@ if($_POST["operacion"]==8){
 if($_POST["operacion"]==9){
 	
 	//Consultamos si tiene registros en el boletín
-	$consultaBoletinDatos=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin 
-	WHERE bol_carga='".$_POST["carga"]."' AND bol_periodo='".$_POST["periodo"]."' AND bol_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	$boletinDatos = mysqli_fetch_array($consultaBoletinDatos, MYSQLI_BOTH);
+	$boletinDatos = Boletin::traerNotaBoletinCargaPeriodo($config, $_POST["periodo"], $_POST["codEst"], $_POST["carga"]);
 	
 	$caso = 1; //Inserta la nueva definitiva del indicador normal
-	if($boletinDatos['bol_id']==""){
+	if(empty($boletinDatos['bol_id'])){
  		$caso = 2;
 		$mensajeNot = 'El estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b> no presenta registros en el boletín actualmente para este periodo, en esta asignatura.';
 		$heading = 'No se generó ningún cambio';
@@ -278,57 +247,41 @@ if($_POST["operacion"]==9){
 		$indicador = Indicadores::consultaIndicadorPeriodo($conexion, $config, $_POST['codNota'], $_POST["carga"], $_POST["periodo"]);
 		$valorIndicador = ($indicador['ipc_valor']/100);
 		$rindNotaActual = ($_POST["nota"] * $valorIndicador);
-		$consultaNum=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
-		WHERE rind_carga='".$_POST["carga"]."' AND rind_estudiante='".$_POST["codEst"]."' AND rind_periodo='".$_POST["periodo"]."' AND rind_indicador='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $_POST["codNota"], $_POST["codEst"], $_POST["carga"], $_POST["periodo"]);
 		$num = mysqli_num_rows($consultaNum);
 		
 
-		if($num==0){
-			$codigo=Utilidades::generateCode("RIN");
-			mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_carga='".$_POST["carga"]."' AND rind_estudiante='".$_POST["codEst"]."' AND rind_periodo='".$_POST["periodo"]."' AND rind_indicador='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		if($num == 0){
+			Indicadores::eliminarRecuperacionIndicadorPeriodo($config, $_POST["codNota"], $_POST["codEst"], $_POST["carga"], $_POST["periodo"]);				
 			
-
-			mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_indicadores_recuperacion(rind_id, rind_fecha_registro, rind_estudiante, rind_carga, rind_nota, rind_indicador, rind_periodo, rind_actualizaciones, rind_nota_actual, rind_valor_indicador_registro, institucion, year)VALUES('".$codigo."', now(), '".$_POST["codEst"]."', '".$_POST["carga"]."', '".$_POST["nota"]."', '".$_POST["codNota"]."', '".$_POST["periodo"]."', 1, '".$rindNotaActual."', '".$indicador['ipc_valor']."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-			
+			Indicadores::guardarRecuperacionIndicador($conexionPDO, $config, $_POST["codEst"], $_POST["carga"], $_POST["nota"], $_POST["codNota"], $_POST["periodo"], $indicador['ipc_valor']);
 		}else{
 			if($_POST["notaAnterior"]==""){$_POST["notaAnterior"] = "0.0";}
-			
-			mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota='".$_POST["nota"]."', rind_nota_anterior='".$_POST["notaAnterior"]."', rind_actualizaciones=rind_actualizaciones+1, rind_ultima_actualizacion=now(), rind_nota_actual='".$rindNotaActual."', rind_tipo_ultima_actualizacion=2, rind_valor_indicador_actualizacion='".$indicador['ipc_valor']."' WHERE rind_carga='".$_POST["carga"]."' AND rind_estudiante='".$_POST["codEst"]."' AND rind_periodo='".$_POST["periodo"]."' AND rind_indicador='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-			
+			Indicadores::actualizarRecuperacionIndicador($config, $_POST["codEst"], $_POST["carga"], $_POST["nota"], $_POST["codNota"], $_POST["periodo"], $indicador['ipc_valor']);
 		}
 		
 		//Actualizamos la nota actual a los que la tengan nula.
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota_actual=rind_nota_original
-		WHERE rind_carga='".$_POST["carga"]."' AND rind_estudiante='".$_POST["codEst"]."' AND rind_periodo='".$_POST["periodo"]."' AND rind_nota_actual IS NULL AND rind_nota_original=rind_nota AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-		");
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota_actual=rind_nota_original WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_nota_actual IS NULL AND rind_nota_original=rind_nota AND institucion=? AND year=?";
+		$parametros = [$_POST["carga"], $_POST["codEst"], $_POST["periodo"], $config['conf_id_institucion'], $_SESSION["bd"]];
+		$consultaUpdate = BindSQL::prepararSQL($sql, $parametros);
 		
 		
 		//Se suman los decimales de todos los indicadores para obtener la definitiva de la asignatura
-		$consultaRecuperacionIndicador=mysqli_query($conexion, "SELECT SUM(rind_nota_actual) FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
-		WHERE rind_carga='".$_POST["carga"]."' AND rind_estudiante='".$_POST["codEst"]."' AND rind_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+        $sql = "SELECT SUM(rind_nota_actual) FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND institucion=? AND year=?";
+		$parametros = [$_POST["carga"], $_POST["codEst"], $_POST["periodo"], $config['conf_id_institucion'], $_SESSION["bd"]];
+		$consultaRecuperacionIndicador = BindSQL::prepararSQL($sql, $parametros);
 		$recuperacionIndicador = mysqli_fetch_array($consultaRecuperacionIndicador, MYSQLI_BOTH);
 		
 		
 		$notaDefIndicador = round($recuperacionIndicador[0],1);
 
-
-
-		//if($notaDefIndicador == $boletinDatos['bol_nota']){
-			mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_boletin SET bol_nota_anterior=bol_nota, bol_nota='".$notaDefIndicador."', bol_actualizaciones=bol_actualizaciones+1, bol_ultima_actualizacion=now(), bol_nota_indicadores='".$notaDefIndicador."', bol_tipo=3, bol_observaciones='Actualizada desde el indicador.' 
-			WHERE bol_carga='".$_POST["carga"]."' AND bol_periodo='".$_POST["periodo"]."' AND bol_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-			$lineaError = __LINE__;
-			include("../compartido/reporte-errores.php");
-			
-			$mensajeNot = 'La recuperación del indicador de este periodo se ha guardado correctamente para el estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b>. La nota definitiva de la asignatura ahora es <b>'.round($recuperacionIndicador[0],1)."</b>.";
-			$heading = 'Cambios guardados';
-			$tipo = 'success';
-			$icon = 'success';
-		//}else{
-			//$mensajeNot = 'No es posible registrar una definitiva de la asignatura igual a la que ya existe. Solo se guardó la recuperación del inidicador.';
-			//$heading = 'Este cambio no afectó en la definitiva';
-			//$tipo = 'danger';
-			//$icon = 'error';
-		//}
+		$update = "bol_nota_anterior=bol_nota, bol_nota=".$notaDefIndicador.", bol_nota_indicadores=".$notaDefIndicador.", bol_tipo=3, bol_observaciones='Actualizada desde el indicador.'";
+		Boletin::actualizarNotaBoletin($config, $boletinDatos['bol_id'], $update);
+		
+		$mensajeNot = 'La recuperación del indicador de este periodo se ha guardado correctamente para el estudiante <b>'.strtoupper($_POST["nombreEst"]).'</b>. La nota definitiva de la asignatura ahora es <b>'.round($recuperacionIndicador[0],1)."</b>.";
+		$heading = 'Cambios guardados';
+		$tipo = 'success';
+		$icon = 'success';
 		
 	}
 }

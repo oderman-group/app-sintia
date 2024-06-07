@@ -1,5 +1,6 @@
 <?php
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/Areas.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0150';
@@ -10,12 +11,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-try{
-	mysqli_query($conexion, "DELETE FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id='".base64_decode($_GET["id"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]};");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
-	include("../compartido/guardar-historial-acciones.php");
-	
-	echo '<script type="text/javascript">window.location.href="areas.php?error=ER_DT_3";</script>';
-	exit();
+Areas::eliminarAreasID($config, base64_decode($_GET["id"]));
+
+include("../compartido/guardar-historial-acciones.php");
+
+echo '<script type="text/javascript">window.location.href="areas.php?error=ER_DT_3";</script>';
+exit();

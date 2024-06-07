@@ -55,7 +55,7 @@
                         include("../compartido/error-catch-to-report.php");
                     }
                     ?>
-                    <select id="tipoUsuario" class="form-control  select2" name="tipoUsuario"  onchange="mostrarSubroles(this)" required <?=$disabledPermiso;?>>
+                    <select id="tipoUsuario" class="form-control  select2" name="tipoUsuario" onchange="validarCantidadUsuarios(this)" required <?=$disabledPermiso;?>>
                         <option value="">Seleccione una opción</option>
                         <?php
                         while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
@@ -304,13 +304,7 @@
                 </div>
             </div>
 
-            <a href="javascript:void(0);" name="usuarios.php?cantidad=10" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
-            <?php if(Modulos::validarPermisoEdicion()){?>
-                <button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
-            <?php }?>
-            
+            <?php $botones = new botonesGuardar("usuarios.php?cantidad=10",Modulos::validarPermisoEdicion()); ?>
         </form>
     </div>
 </div>

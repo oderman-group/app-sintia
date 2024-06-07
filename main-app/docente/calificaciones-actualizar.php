@@ -7,19 +7,13 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
 include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 
 $indicadoresDatosC = Indicadores::consultaIndicadorPeriodo($conexion, $config, $_POST['indicador'], $cargaConsultaActual, $periodoConsultaActual);
 
-try{
-	$consultaValores=mysqli_query($conexion, "SELECT
-	(SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades 
-	WHERE act_id_carga='".$cargaConsultaActual."' AND act_periodo='".$periodoConsultaActual."' AND act_id_tipo='".$_POST["indicador"]."' AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]})");
-} catch (Exception $e) {
-	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
-$valores = mysqli_fetch_array($consultaValores, MYSQLI_BOTH);
+$valores = Actividades::consultarPorcentajeActividadesIndicador($config, $cargaConsultaActual, $_POST["indicador"], $periodoConsultaActual);
 
 $porcentajeRestante = $indicadoresDatosC['ipc_valor'] - $valores[0];
 $porcentajeRestante = ($porcentajeRestante + $_POST["valorCalificacion"]);
@@ -28,12 +22,7 @@ $fecha = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
 
 //Si las calificaciones son de forma automática.
 if($datosCargaActual['car_configuracion']==0){
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_fecha_modificacion=now(), act_id_evidencia='".$_POST["evidencia"]."' 
-		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-	}
+	Actividades::actualizarActividadesCalificacionAutomatica($config, mysqli_real_escape_string($conexion,$_POST["contenido"]), $fecha, $_POST["evidencia"], $_POST["indicador"], $_POST["idR"]);
 
 	//Actualizamos los valores de todas las actividades de la carga
 	Calificaciones::actualizarValorCalificacionesDeUnaCarga($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
@@ -50,12 +39,7 @@ if($datosCargaActual['car_configuracion']==0){
 	//Si el valor es mayor al adecuado lo ajustamos al porcentaje restante; Siempre que este último sea mayor a 0.
 	if($_POST["valor"]>$porcentajeRestante and $porcentajeRestante>0){$_POST["valor"] = $porcentajeRestante;}
 
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_descripcion='".mysqli_real_escape_string($conexion,$_POST["contenido"])."', act_fecha='".$fecha."', act_id_tipo='".$_POST["indicador"]."', act_valor='".$_POST["valor"]."', act_fecha_modificacion=now() 
-		WHERE act_id='".$_POST["idR"]."'  AND act_estado=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-	}
+	Actividades::actualizarActividadesCalificacionManual($config, mysqli_real_escape_string($conexion,$_POST["contenido"]), $fecha, $_POST["valor"], $_POST["indicador"], $_POST["idR"]);
 }
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");

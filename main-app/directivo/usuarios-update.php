@@ -4,6 +4,8 @@ $idPaginaInterna = 'DT0131';
 include("../compartido/sintia-funciones.php");
 include("../compartido/guardar-historial-acciones.php");
 require_once("../class/SubRoles.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 
 $archivoSubido = new Archivos;
 
@@ -25,21 +27,17 @@ if (!empty($_FILES['fotoUss']['name'])) {
 	$archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_img_') . "." . $extension;
 	$destino = "../files/fotos";
 	move_uploaded_file($_FILES['fotoUss']['tmp_name'], $destino . "/" . $archivo);
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_foto='" . $archivo . "' WHERE uss_id='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+
+	$update = "uss_foto='" . $archivo . "'";
+	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
+	
 	if($_POST["tipoUsuario"]==4){
-		try{
-			mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_foto='" . $archivo . "' WHERE mat_id_usuario='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
+		$update = "mat_foto=" . $archivo . "";
+		Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
 	}
 }
-try{
-	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET 
+
+$update = "
 	uss_usuario=           '" . $_POST["usuario"] . "', 
 	uss_tipo=              " . $_POST["tipoUsuario"] . ", 
 	uss_nombre=            '" . mysqli_real_escape_string($conexion,$_POST["nombre"]) . "',
@@ -55,13 +53,9 @@ try{
 	uss_apellido1=         '" . mysqli_real_escape_string($conexion,$_POST["apellido1"]) . "', 
 	uss_apellido2=         '" . mysqli_real_escape_string($conexion,$_POST["apellido2"]) . "', 
 	uss_nombre2=           '" . mysqli_real_escape_string($conexion,$_POST["nombre2"]) . "', 
-	uss_documento=         '" . $_POST["documento"] . "',
-
-	uss_ultima_actualizacion=now()
-	WHERE uss_id='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-} catch (Exception $e) {
-	include("../compartido/error-catch-to-report.php");
-}
+	uss_documento=         '" . $_POST["documento"] . "'
+";
+UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
 if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 
@@ -71,23 +65,15 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 		exit();
 	}
 
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_clave= SHA1('" . $_POST["clave"] . "')
-		WHERE uss_id='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$update = "uss_clave= SHA1('" . $_POST["clave"] . "')";
+	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
 }
 
 
 if ($_POST["tipoUsuario"] == 4) {
-	try{
-		mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_email='" . strtolower($_POST["email"]) . "'
-		WHERE mat_id_usuario='" . $_POST["idR"] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
+	$update = "mat_email=" . strtolower($_POST["email"]) . "";
+	Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
 }
 try{
 if(!empty($_POST["subroles"])){	

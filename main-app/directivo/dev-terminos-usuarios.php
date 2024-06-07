@@ -110,12 +110,7 @@ $resultadoTerminos = mysqli_fetch_array($consultaTerminos, MYSQLI_BOTH);
 
                                                         $responsable="";
                                                         if($resultado['ttpxu_id_usuario']!=0){
-
-                                                            try{
-                                                                $consultaResponsable= mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id='".$resultado['ttpxu_id_usuario']."' AND institucion={$resultado["ins_id"]} AND year={$year}");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
+                                                            $consultaResponsable = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['ttpxu_id_usuario']."'", $resultado["ins_id"], $year);
                                                             $datosResponsable = mysqli_fetch_array($consultaResponsable, MYSQLI_BOTH);
                                                             $responsable=UsuariosPadre::nombreCompletoDelUsuario($datosResponsable);
 

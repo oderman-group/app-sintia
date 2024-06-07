@@ -197,11 +197,7 @@ $datosInstitucion = mysqli_fetch_array($consultaInformacion, MYSQLI_BOTH);
                                             <label class="col-sm-2 control-label">Rector(a)</label>
                                             <div class="col-sm-4">
                                                 <?php
-                                                try{
-                                                    $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=5 and uss_bloqueado=0 AND institucion={$datosInstitucion["ins_id"]} AND year={$year}");
-                                                } catch (Exception $e) {
-                                                    include("../compartido/error-catch-to-report.php");
-                                                }
+                                                $consulta = UsuariosPadre::consultaUsuariosPorTipo(TIPO_DIRECTIVO, $datosInstitucion["ins_id"], $year);
                                                 ?>
                                                 <select class="form-control" name="rectorI">
                                                     <option value="">Seleccione una opción</option>
@@ -209,11 +205,11 @@ $datosInstitucion = mysqli_fetch_array($consultaInformacion, MYSQLI_BOTH);
                                                     while ($r = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                         if ($datosInstitucion["info_rector"] == $r["uss_id"]) {
                                                     ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>" selected><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                         <?php } else {
 
                                                         ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>"><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>"><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                     <?php
                                                         }
                                                     }
@@ -228,19 +224,15 @@ $datosInstitucion = mysqli_fetch_array($consultaInformacion, MYSQLI_BOTH);
                                                 <select class="form-control" name="secretarioI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
-                                                    try{
-                                                        $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=5 and uss_bloqueado=0 AND institucion={$datosInstitucion["ins_id"]} AND year={$year}");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $consulta = UsuariosPadre::consultaUsuariosPorTipo(TIPO_DIRECTIVO, $datosInstitucion["ins_id"], $year);
                                                     while ($r = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                         if ($datosInstitucion["info_secretaria_academica"] == $r["uss_id"]) {
                                                     ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>" selected><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                         <?php } else {
 
                                                         ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>"><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>"><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                     <?php
                                                         }
                                                     }
@@ -255,19 +247,15 @@ $datosInstitucion = mysqli_fetch_array($consultaInformacion, MYSQLI_BOTH);
                                                 <select class="form-control" name="coordinadorI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
-                                                    try{
-                                                        $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=5 and uss_bloqueado=0 AND institucion={$datosInstitucion["ins_id"]} AND year={$year}");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $consulta = UsuariosPadre::consultaUsuariosPorTipo(TIPO_DIRECTIVO, $datosInstitucion["ins_id"], $year);
                                                     while ($r = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                         if ($datosInstitucion["info_coordinador_academico"] == $r["uss_id"]) {
                                                     ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>" selected><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                         <?php } else {
 
                                                         ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>"><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>"><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                     <?php
                                                         }
                                                     }
@@ -282,19 +270,15 @@ $datosInstitucion = mysqli_fetch_array($consultaInformacion, MYSQLI_BOTH);
                                                 <select class="form-control" name="tesoreroI">
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
-                                                    try{
-                                                        $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_tipo=5 and uss_bloqueado=0 AND institucion={$datosInstitucion["ins_id"]} AND year={$year}");
-                                                    } catch (Exception $e) {
-                                                        include("../compartido/error-catch-to-report.php");
-                                                    }
+                                                    $consulta = UsuariosPadre::consultaUsuariosPorTipo(TIPO_DIRECTIVO, $datosInstitucion["ins_id"], $year);
                                                     while ($r = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                                                         if ($datosInstitucion["info_tesorero"] == $r["uss_id"]) {
                                                     ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>" selected><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>" selected><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                         <?php } else {
 
                                                         ?>
-                                                            <option value="<?php echo $r["uss_id"]; ?>"><?php echo UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
+                                                            <option value="<?=$r["uss_id"]; ?>"><?=UsuariosPadre::nombreCompletoDelUsuario($r); ?></option>
                                                     <?php
                                                         }
                                                     }

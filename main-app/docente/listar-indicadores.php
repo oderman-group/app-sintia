@@ -4,17 +4,20 @@ $idPaginaInterna = 'DC0034';
 include("../compartido/historial-acciones-guardar.php");
 include("verificar-carga.php");
 include("../compartido/head.php");
-require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH . "/main-app/class/Indicadores.php");
 
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 ?>
 </head>
-
+<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
+<div id="gifCarga" class="gif-carga">
+    <img alt="Cargando...">
+</div>
 <div class="card card-topline-purple" id="idElemento">
     <div class="card-head">
-        <header><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></header>
+        <header><?= $frases[63][$datosUsuarioActual['uss_idioma']]; ?></header>
         <div class="tools">
             <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
             <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
@@ -22,125 +25,107 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
         </div>
     </div>
     <div class="card-body">
-            <div class="row">
-                        <div class="col-md-6 col-sm-6 col-6">
-                            <?php 
-                            if(
-                                (
-                                    ( $datosCargaActual['car_valor_indicador'] == CONFIG_AUTOMATICO_INDICADOR 
-                                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores'] 
-                                    ) 
-                                    ||
-                                    ( $datosCargaActual['car_valor_indicador'] == CONFIG_MANUAL_INDICADOR 
-                                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores'] 
-                                    && $porcentajeRestante > 0 )
-                                ) 
-                                && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
-                            )
-                            {
-                            ?>
-                            <div class="btn-group" id="agregarNuevo">
-                                <a href="indicadores-agregar.php?carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" id="addRow" class="btn deepPink-bgcolor">
-                                    Agregar nuevo<i class="fa fa-plus"></i>
-                                </a>
-                            </div>
-                            <?php }?>
-                            
-                            <?php if($datosCargaActual['car_valor_indicador']==1 and $porcentajeRestante<=0){?>
-                                <p style="color: tomato;"> Has alcanzado el 100% de valor para los indicadores. </p>
-                            <?php }?>
-                            
-                            <?php if($datosCargaActual['car_maximos_indicadores']<=$sumaIndicadores[2]){?>
-                                <p style="color: tomato;"> Has alcanzado el número máximo de indicadores permitidos. </p>
-                            <?php }?>
+        <div class="row">
+            <div class="col-md-6 col-sm-6 col-6">
+                <?php
+                if (
+                    (
+                        ($datosCargaActual['car_valor_indicador'] == CONFIG_AUTOMATICO_INDICADOR
+                            && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                        )
+                        ||
+                        ($datosCargaActual['car_valor_indicador'] == CONFIG_MANUAL_INDICADOR
+                            && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                            && $porcentajeRestante > 0)
+                    )
+                    && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
+                ) {
+                ?>
+                    <div class="btn-group" id="agregarNuevo">
+                        <a href="indicadores-agregar.php?carga=<?= base64_encode($cargaConsultaActual); ?>&periodo=<?= base64_encode($periodoConsultaActual); ?>" id="addRow" class="btn deepPink-bgcolor">
+                            Agregar nuevo<i class="fa fa-plus"></i>
+                        </a>
+                        <a class="dropdown-toggle btn deepPink-bgcolor" title="Genera n indicadores con inteligencia artificial teniendo en cuenta la asginadtura y el nombre del curso " id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            IA <i class="fa-solid fa-list"></i>
+                        </a>
 
-                            <div class="btn-group" id="agregarNuevo">
-                                <a href="../compartido/indicadores-perdidos-curso.php?curso=<?=base64_encode($datosCargaActual['car_curso']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" class="btn btn-secondary" target="_blank">
-                                    Ver indicadores perdidos<i class="fa fa-file-text-o"></i>
-                                </a>
+                        <div class="dropdown-menu panel" aria-labelledby="navbarDropdown">
+                            <header class="panel-heading panel-heading-yellow">Crear indicadores para:</header>
+
+                            <div class="panel-body">
+                                <ul class="list-group list-group-unbordered">
+                                    <li class="list-group-item">
+                                        <b><?= strtoupper($frases[116][$datosUsuarioActual['uss_idioma']]); ?></b>
+                                        <div class="profile-desc-item pull-right"><?= strtoupper($datosCargaActual['mat_nombre']); ?></div>
+                                        <input type="text" id="asignatura" hidden name="asignatura" class="form-control text-center" value="<?= $datosCargaActual['mat_nombre'] ?>">
+                                    </li>
+                                    <li class="list-group-item">
+                                        <b><?= strtoupper($frases[26][$datosUsuarioActual['uss_idioma']]); ?></b>
+                                        <div class="profile-desc-item pull-right"><?= strtoupper($datosCargaActual['gra_nombre'] . " " . $datosCargaActual['gru_nombre']); ?></div>
+                                        <input type="text" id="curso" hidden name="curso" class="form-control text-center" value="<?= $datosCargaActual['gra_nombre'] ?>">
+                                    </li>
+                                    <li class="list-group-item">
+                                        <b>CANTIDAD:</b>
+                                        <div class="profile-desc-item pull-right">
+                                            <input type="number" id="maxidicadores" name="maxidicadores" class="form-control text-center" value="1" min="1">
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
+                            <p align="center"><a href="javascript:;" onclick="generarIndicadores()" class="btn yellow">Generar indicadores</a></p>
 
                         </div>
-                        
-                    </div>	
+                    </div>
+                <?php } ?>
+
+                <?php if ($datosCargaActual['car_valor_indicador'] == 1 and $porcentajeRestante <= 0) { ?>
+                    <p style="color: tomato;"> Has alcanzado el 100% de valor para los indicadores. </p>
+                <?php } ?>
+
+                <?php if ($datosCargaActual['car_maximos_indicadores'] <= $sumaIndicadores[2]) { ?>
+                    <p style="color: tomato;"> Has alcanzado el número máximo de indicadores permitidos. </p>
+                <?php } ?>
+
+                <div class="btn-group">
+                    <a href="../compartido/indicadores-perdidos-curso.php?curso=<?= base64_encode($datosCargaActual['car_curso']); ?>&periodo=<?= base64_encode($periodoConsultaActual); ?>" class="btn btn-secondary" target="_blank">
+                        Ver indicadores perdidos<i class="fa fa-file-text-o"></i>
+                    </a>
+                </div>
+                <div class="btn-group" style="width: 300px;" id="AgregarIndicadores">
+
+                </div>
+            </div>
+
+
+        </div>
         <div class="table-scrollable">
             <table class="table table-striped table-bordered table-hover table-checkable order-column valign-middle" id="example4">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
-                    <th><?=$frases[50][$datosUsuarioActual['uss_idioma']];?></th>
-                    <th><?=$frases[52][$datosUsuarioActual['uss_idioma']];?></th>
-                    
-                    <?php if($datosCargaActual['car_saberes_indicador']==1){?>
-                        <th>Tipo evaluación</th>
-                    <?php }?>
-                    
-                    <th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                    $saberes = array("","Saber saber (55%)","Saber hacer (35%)","Saber ser (10%)");
-					$consulta = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
-                    $contReg = 1; 
-                    $porcentajeActual = 0;
-                    while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                        $porcentajeActual +=$resultado['ipc_valor'];
-                    ?>
-                <tr id="reg<?=$resultado['ipc_id'];?>">
-                    <td><?=$contReg;?></td>
-                    <td><?=$resultado['ipc_id'];?></td>
-                    <td><?=$resultado['ind_nombre'];?></td>
-                    <td><?=$resultado['ipc_valor'];?>%</td>
-                    
-                    <?php if($datosCargaActual['car_saberes_indicador']==1){?>
-                        <th><?=$saberes[$resultado['ipc_evaluacion']];?></th>
-                    <?php }?>
-                    
-                    <td>
-                        
-                            <?php
-                            $arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
-                            $arrayDatos = json_encode($arrayEnviar);
-                            $objetoEnviar = htmlentities($arrayDatos);
-                            ?>
-                        <div class="btn-group">
-                            <button class="btn btn-xs btn-info dropdown-toggle center no-margin" type="button" data-toggle="dropdown" aria-expanded="false"> Acciones
-                                <i class="fa fa-angle-down"></i>
-                            </button>
-                            <ul class="dropdown-menu pull-left" role="menu" x-placement="bottom-start" style="position: absolute; transform: translate3d(0px, 23px, 0px); top: 0px; left: 0px; will-change: transform;">
-                                
-                                    <?php if($resultado['ipc_creado']==1 and ($periodoConsultaActual==$datosCargaActual['car_periodo'] or $datosCargaActual['car_permiso2']==1)){?>
-                                        <li><a href="indicadores-editar.php?idR=<?=base64_encode($resultado['ipc_id']);?>">Editar</a></li>
-                                
-                                <li><a href="#" title="<?=$objetoEnviar;?>" id="<?=$resultado['ipc_id'];?>" name="indicadores-eliminar.php?idR=<?=base64_encode($resultado['ipc_id']);?>&idIndicador=<?=base64_encode($resultado['ipc_indicador']);?>&carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" onClick="deseaEliminar(this)">Eliminar</a></li>
-                                    <?php } ?>
-                                    
-                                    <?php if($periodoConsultaActual<$datosCargaActual['car_periodo']){?>
-                                    <li><a href="indicadores-recuperar.php?idR=<?=base64_encode($resultado['ipc_indicador']);?>">Recuperar</a></li>
-                                    <?php } ?>
-                            </ul>
-                        </div>
-                        
-                    </td>
-                </tr>
-                
-                <?php 
-                        $contReg++;
-                    }
-                    ?>
-            </tbody>
-            <tfoot>
-                <tr style="font-weight:bold;">
-                    <td colspan="3"><?=strtoupper($frases[107][$datosUsuarioActual['uss_idioma']]);?></td>
-                    <td><?=$porcentajeActual;?>%</td>
-                    <td></td>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th><?= $frases[49][$datosUsuarioActual['uss_idioma']]; ?></th>
+                        <th><?= $frases[50][$datosUsuarioActual['uss_idioma']]; ?></th>
+                        <th><?= $frases[52][$datosUsuarioActual['uss_idioma']]; ?></th>
+
+                        <?php if ($datosCargaActual['car_saberes_indicador'] == 1) { ?>
+                            <th>Tipo evaluación</th>
+                        <?php } ?>
+
+                        <th><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
                     </tr>
-            </tfoot>   
-        </table>
+                </thead>
+                <tbody id="contenido-dinamico">
+                    <?php include 'listar-indicadores-tbody.php' ?>                   
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:bold;">
+                        <td colspan="3"><?= strtoupper($frases[107][$datosUsuarioActual['uss_idioma']]); ?></td>
+                        <td id="porcentajeActual"><?= $porcentajeActual; ?>%</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </div>
-
-<?php include("../compartido/guardar-historial-acciones.php");?>
+<?php include("../compartido/guardar-historial-acciones.php"); ?>
