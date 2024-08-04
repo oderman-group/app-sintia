@@ -3,9 +3,10 @@ include("session-compartida.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'CM0063';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
+$config = RedisInstance::getSystemConfiguration(true);
 
 $informacionInstConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion
 LEFT JOIN ".$baseDatosServicios.".localidad_ciudades ON ciu_id=info_ciudad
@@ -19,9 +20,7 @@ WHERE ins_id='".$config['conf_id_institucion']."' AND ins_enviroment='".ENVIROME
 $datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
 $_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
 
-    
-$arregloModulos = Modulos::consultarModulosIntitucion($conexion, $config['conf_id_institucion']);
-$_SESSION["modulos"] = $arregloModulos;
+$_SESSION["modulos"] = RedisInstance::getModulesInstitution(true);
 
 $rst_usr = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_id='".$_SESSION["id"]."'");
 $fila = mysqli_fetch_array($rst_usr, MYSQLI_BOTH);

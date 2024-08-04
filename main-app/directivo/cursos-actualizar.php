@@ -24,7 +24,7 @@ if (trim($_POST["nombreC"]) == "" or trim($_POST["formatoB"]) == "" or trim($_PO
 if (empty($_POST["estado"])) {
 	$_POST["estado"] = 1;
 }
-$esMediaTecnica = !is_null($_POST["tipoG"]);
+$esMediaTecnica = !empty($_POST["tipoG"]) ? !is_null($_POST["tipoG"]) : 0;
 if (!$esMediaTecnica) {
 	$resultadoCurso = GradoServicios::consultarCurso($_POST["id_curso"]);
 	$_POST["tipoG"] = $resultadoCurso['gra_tipo'];

@@ -78,40 +78,102 @@ function niv(enviada){
  * Esta función sirve para registrar la notas de un estudiante
  * @param enviada //Datos enviados por imput
  */
-function notasGuardar(enviada){
-    var carga = enviada.step;
+function notasGuardar(enviada, fila = null, tabla_notas = null){
+    var nota = enviada.value;
 
-	var nota = enviada.value;
-	var notaAnterior = enviada.name;	
-    var input = enviada.id;
-	var codEst = enviada.getAttribute("data-cod-estudiante");
-	var codNota = enviada.title;	 
-	var nombreEst = enviada.alt;
-
-	
-	if (alertValidarNota(nota)) {		
+    if (alertValidarNota(nota)) {		
 		return false;
 	}
 
-	aplicarColorNota(nota, input);
+    // Puede ser null si es una actividad individual. En este caso se usa el id de la carga académica.
+    var carga             = enviada.getAttribute("data-carga-actividad") ?? null;
 
-    notaCualitativa(nota,codEst,carga);
+	var codEst            = enviada.getAttribute("data-cod-estudiante");
+	var notaAnterior      = enviada.getAttribute("data-nota-anterior") ?? 0;
+    var colorNotaAnterior = enviada.getAttribute("data-color-nota-anterior") ?? '#000000';
+	var codNota           = enviada.getAttribute("data-cod-nota");	 
+	var nombreEst         = enviada.getAttribute("data-nombre-estudiante");
+    var input             = enviada.id;
 
-	$('#respRCT').empty().hide().html("Guardando la nota, espere por favor...").show(1);
+    var tabla_notas       = document.getElementById(tabla_notas);
+    var tbody             = tabla_notas.querySelector("tbody");
+    var filaCompleta      = document.getElementById(fila);
+    var idColumna         = 'columna_'+input;
+    var colunaNota        = filaCompleta.querySelector("td[id='"+idColumna+"']");
+    var spinner           = document.createElement('span');
 
-	datos = "nota="+(nota)+
+    tabla_notas.querySelectorAll("input").forEach(input => input.disabled = true);
+
+    tbody.querySelectorAll('a').forEach(a => {
+        a.style.visibility = 'hidden';
+    });
+
+    enviada.disabled = true;
+
+    spinner.className = 'spinner-border spinner-border-sm';
+    spinner.setAttribute('role', 'status');
+    spinner.setAttribute('aria-hidden', 'true');
+    spinner.style.display = 'block';
+    spinner.style.margin = '0 auto';
+    spinner.style.marginBottom = '5px';
+
+    colunaNota.insertBefore(spinner, colunaNota.firstChild);
+
+	var colorAplicado = aplicarColorNota(nota, input);
+    
+    notaCualitativa(nota, codEst, carga, colorAplicado)
+    .then(function(res) {
+
+        let idHref = 'CU'+codEst+carga;
+        let href   = document.getElementById(idHref);
+
+        if(!res.success) {
+            console.error("Error al obtener la calificación cualitativa.");
+            href.innerHTML    = '<span style="color:red;">Error al guardar la nota</span>';
+            enviada.disabled  = false;
+            enviada.value     = notaAnterior;
+            document.getElementById(input).style.color = colorNotaAnterior;
+            spinner.remove();
+            tabla_notas.querySelectorAll("input").forEach(input => input.disabled = false);
+            tbody.querySelectorAll('a').forEach(a => {
+                a.style.visibility = 'visible';
+            });
+
+            return;
+        }
+
+        $('#respRCT').empty().hide().html("Guardando la nota, espere por favor...").show(1);
+
+        datos = "nota="+(nota)+
 			"&codNota="+(codNota)+
 			"&notaAnterior="+(notaAnterior)+
 			"&nombreEst="+(nombreEst)+
 			"&codEst="+(codEst);
-			$.ajax({
-				type: "POST",
-				url: "ajax-notas-guardar.php",
-				data: datos,
-				success: function(data){
-					$('#respRCT').empty().hide().html(data).show(1);
-				}
-			});
+
+        return $.ajax({
+            type: "POST",
+            url: "ajax-notas-guardar.php",
+            data: datos,
+            success: function(data) {
+                $('#respRCT').empty().hide().html(data).show(1);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error en la petición AJAX:", error);
+            },
+            complete: function() {
+                enviada.disabled = false;
+                spinner.remove();
+                tabla_notas.querySelectorAll("input").forEach(input => input.disabled = false);
+                tbody.querySelectorAll('a').forEach(a => {
+                    a.style.visibility = 'visible';
+                });
+            }
+        });
+
+    }).catch(function(error) {
+        console.error("ERROR: ", error);
+    });
+
 }
 
 /**
@@ -439,16 +501,34 @@ function recuperarIndicador(enviada){
  * @param {string} idEstudiante 
  * @param {string} idCarga 
  */
-function notaCualitativa(nota,idEstudiante,idCarga){
-    let idHref = 'CU'+idEstudiante+idCarga;
-    let href   = document.getElementById(idHref);
-    fetch('../compartido/ajax-estilo-notas.php?nota='+nota, {method: 'GET'})
-	.then(response => response.text()) // Convertir la respuesta a texto
-	.then(data => {
-        href.innerHTML = '<span>'+data+'</span>';
-	})
-	.catch(error => {
-		// Manejar errores
-		console.error('Error:', error);
-	});
+function notaCualitativa(nota, idEstudiante, idCarga, color='black') {
+    return new Promise((resolve, reject) => {
+        let idHref = 'CU'+idEstudiante+idCarga;
+        let href   = document.getElementById(idHref);
+        let response;
+
+        if (href === null) {
+            console.error('Elemento no encontrado: ', idHref, idEstudiante, idCarga);
+            reject('Elemento no encontrado: ', idHref);
+        }
+
+        href.innerHTML = '<span style="color:gray;">Calculando...</span>';
+
+        fetch('../compartido/ajax-estilo-notas.php?nota='+nota, {method: 'GET'})
+        .then(response => response.text()) // Convertir la respuesta a texto
+        .then(data => {
+            href.innerHTML = '<span style="color:'+color+';">'+data+'</span>';
+            response = {
+                success: true, 
+                data: data  
+            };
+
+            resolve(response);
+        })
+        .catch(error => {
+            // Manejar errores
+            console.error('Error:', error);
+            reject('Error al obtener la notaCualitativa' + error);
+        });
+    });
 }

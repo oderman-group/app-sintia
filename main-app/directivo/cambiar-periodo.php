@@ -18,9 +18,6 @@ try {
 	include("../compartido/error-catch-to-report.php");
 }
 
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
-
 include("../compartido/guardar-historial-acciones.php");
 
 header("Location:".$_SERVER["HTTP_REFERER"]);

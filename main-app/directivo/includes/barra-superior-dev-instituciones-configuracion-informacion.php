@@ -19,7 +19,7 @@
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
-                        $years = explode(",", $datosInstitucion['ins_years']);
+                        $years = explode(",", $_SESSION["datosUnicosInstitucion"]['ins_years']);
                         $start = $years[0];
                         $end = $years[1];
                         while($start <= $end){

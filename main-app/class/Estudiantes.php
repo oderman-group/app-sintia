@@ -722,7 +722,7 @@ class Estudiantes {
     {
         $filtroDocentesParaListarEstudiantes = " AND mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."'";
 
-        if($datosCargaActual['gra_tipo'] == GRADO_INDIVIDUAL) {
+        if (!empty($datosCargaActual['gra_tipo']) && $datosCargaActual['gra_tipo'] == GRADO_INDIVIDUAL) {
             $consulta = Estudiantes::listarEstudiantesParaDocentesMT($datosCargaActual);
         } else {
             $consulta = Estudiantes::listarEstudiantesParaDocentes($filtroDocentesParaListarEstudiantes);
@@ -1588,6 +1588,47 @@ class Estudiantes {
         $parametros = [$idAcudiente, $config['conf_id_institucion'], $year];
         
         $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    public static function listarEstudiantesConInfoBasica(
+        array $datosCargaActual = []
+    )
+    {
+        global $config;
+        $resultado = [];
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        if (!empty($datosCargaActual['gra_tipo']) && $datosCargaActual['gra_tipo'] == GRADO_INDIVIDUAL) {
+            return self::listarEstudiantesParaDocentesMT($datosCargaActual);
+        }
+
+        try {
+            $sql = "
+            SELECT 
+                mat.mat_id
+            FROM ".BD_ACADEMICA.".academico_matriculas mat
+            WHERE
+                mat_grado='".$datosCargaActual['car_curso']."'
+            AND mat_grupo='".$datosCargaActual['car_grupo']."'
+            AND mat.mat_eliminado = 0
+            AND (mat.mat_estado_matricula=".MATRICULADO." OR mat.mat_estado_matricula=".ASISTENTE.") 
+            AND mat.institucion=? 
+            AND mat.year=?
+            ORDER BY 
+                mat.mat_primer_apellido, 
+                mat.mat_segundo_apellido, 
+                mat.mat_nombres
+            ";
+
+            $parametros = [$config['conf_id_institucion'], $year];
+            
+            $resultado = BindSQL::prepararSQL($sql, $parametros);
+        } catch (Exception $e) {
+            echo "Excepción catpurada: ".$e->getMessage();
+            exit();
+        }
+
+        return $resultado;
     }
 
 }

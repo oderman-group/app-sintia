@@ -4,9 +4,20 @@ $idPaginaInterna = 'DC0099';
 include("../compartido/historial-acciones-guardar.php");
 include("verificar-carga.php");
 include("../compartido/head.php");
-require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Actividades.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+
+$consulta = Estudiantes::listarEstudiantesNotasFaltantes($cargaConsultaActual,$periodoConsultaActual,$datosCargaActual["gra_tipo"]);
+if (mysqli_num_rows($consulta) == 0) {
+?>
+	<script language="javascript">
+		window.location.href="./cargas.php?error=11";
+	</script>
+<?php
+	Conexion::getConexion()->closeConnection();
+    exit;
+}
 
 $valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
@@ -65,7 +76,7 @@ include("../compartido/sintia-funciones-js.php");
 	}
 	?>
 
-	<table width="100%" border="1" rules="rows">
+	<table width="100%" border="1" rules="rows" id="tabla_notas">
 		<thead>
 			<tr>
 				<th style="width: 50px;">#</th>
@@ -77,7 +88,15 @@ include("../compartido/sintia-funciones-js.php");
 														' . $rA['act_descripcion'] . '<br>
 														(' . $rA['act_valor'] . '%)</a><br>
 														<a href="#" name="calificaciones-eliminar.php?idR=' . base64_encode($rA['act_id']) . '&idIndicador=' . base64_encode($rA['act_id_tipo']) . '&carga=' . base64_encode($cargaConsultaActual) . '&periodo=' . base64_encode($periodoConsultaActual) . '" onClick="deseaEliminar(this)" ' . $deleteOculto . '><i class="fa fa-times"></i></a><br>
-														<input type="text" style="text-align: center; font-weight: bold;" maxlength="3" size="10" title="0" name="'.$rA['act_id'].'" onChange="notasMasiva(this)" ' . $habilitado . '>
+														<input 
+															type="text" 
+															style="text-align: center; font-weight: bold;"
+															size="10" 
+															title="0" 
+															name="'.$rA['act_id'].'" 
+															onChange="notasMasiva(this)" 
+														' . $habilitado . '
+														>
 														</th>';
 				}
 				?>
@@ -88,7 +107,6 @@ include("../compartido/sintia-funciones-js.php");
 		<tbody>
 			<?php
 			$contReg = 1;
-			$consulta = Estudiantes::listarEstudiantesNotasFaltantes($cargaConsultaActual,$periodoConsultaActual,$datosCargaActual["gra_tipo"]);
 			while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 				$nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($resultado);
 				//DEFINITIVAS
@@ -108,7 +126,7 @@ include("../compartido/sintia-funciones-js.php");
 				}
 			?>
 
-				<tr style="background-color: <?= $colorFondo; ?>">
+				<tr style="background-color: <?= $colorFondo; ?>" id="fila_<?=$resultado['mat_id'];?>">
 					<td style="text-align:center;" style="width: 100px;"><?= $contReg; ?></td>
 					<td style="color: <?= $colorEstudiante; ?>">
 						<?= $nombreCompleto ?>
@@ -128,12 +146,56 @@ include("../compartido/sintia-funciones-js.php");
 						$arrayDatos = json_encode($arrayEnviar);
 						$objetoEnviar = htmlentities($arrayDatos);
 					?>
-						<td style="text-align:center;">
-							<input size="5" maxlength="3" name="<?= $notasResultado['cal_nota'] ?>" id="<?= $resultado['mat_id']; ?>" data-cod-estudiante="<?=$resultado['mat_id'];?>" title="<?=$rA['act_id'];?>" value="<?php if (!empty($notasResultado['cal_nota'])) { echo $notasResultado['cal_nota']; } ?>" alt="<?= $resultado['mat_nombres']; ?>" onChange="notasGuardar(this)" tabindex="2" style="font-size: 13px; text-align: center; color:<?php if ($notasResultado['cal_nota'] < $config[5] and $notasResultado['cal_nota'] != "") echo $config[6]; elseif ($notasResultado['cal_nota'] >= $config[5]) echo $config[7]; else echo "black"; ?>;" <?= $habilitado; ?>>
+						<td style="text-align:center;" id="columna_<?=$resultado['mat_id']."-".$rA['act_id'];?>">
+							<input 
+								size="5"
+								id="<?=$resultado['mat_id']."-".$rA['act_id'];?>" 
+								data-cod-estudiante="<?=$resultado['mat_id'];?>"
+								data-carga-actividad="<?=$rA['act_id'];?>"
+								data-nota-anterior="<?php if(!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>"
+								data-cod-nota="<?=$rA['act_id']?>"
+								data-nombre-estudiante="<?=$resultado['mat_nombres']." ".$resultado['mat_primer_apellido'];?>" 
+								value="<?php if (!empty($notasResultado['cal_nota'])) { echo $notasResultado['cal_nota']; } ?>"
+								onChange="notasGuardar(this, 'fila_<?=$resultado['mat_id'];?>', 'tabla_notas')" 
+								tabindex="2" 
+								style="
+									font-size: 13px; 
+									text-align: center; 
+									color:<?php 
+										if (!empty($notasResultado['cal_nota']) && $notasResultado['cal_nota'] < $config[5] && $notasResultado['cal_nota'] != "") echo $config[6]; 
+										elseif (!empty($notasResultado['cal_nota']) && $notasResultado['cal_nota'] >= $config[5]) echo $config[7]; 
+										else echo "black";
+									?>;
+								" 
+								<?= $habilitado; ?>
+							>
+							<br><span id="CU<?=$resultado['mat_id'].$rA['act_id'];?>" style="font-size: 12px;"></span>
+
 							<?php if (!empty($notasResultado['cal_nota'])) { ?>
-								<a href="#" title="<?= $objetoEnviar; ?>" id="<?= $notasResultado['cal_id']; ?>" name="calificaciones-nota-eliminar.php?id=<?= base64_encode($notasResultado['cal_id']); ?>" onClick="deseaEliminar(this)" <?= $deleteOculto; ?>><i class="fa fa-times"></i></a>
+								<a 
+									href="#" 
+									title="<?= $objetoEnviar; ?>" 
+									id="<?= $notasResultado['cal_id']; ?>" 
+									name="calificaciones-nota-eliminar.php?id=<?= base64_encode($notasResultado['cal_id']); ?>" 
+									onClick="deseaEliminar(this)" 
+									<?= $deleteOculto; ?>
+								>
+									<i class="fa fa-times"></i>
+								</a>
 								<?php if ($notasResultado['cal_nota'] < $config[5]) { ?>
-									<br><br><input size="5" maxlength="3" id="<?= $resultado['mat_id']; ?>" title="<?=$rA['act_id'];?>" alt="<?= $resultado['mat_nombres']; ?>" name="<?= $notasResultado['cal_nota']; ?>" onChange="notaRecuperacion(this)" tabindex="2" style="font-size: 13px; text-align: center; border-color:tomato;" placeholder="Recup" <?= $habilitado; ?>>
+									<br><br>
+									<input 
+										size="5" 
+										id="<?= $resultado['mat_id']; ?>" 
+										title="<?=$rA['act_id'];?>" 
+										alt="<?= $resultado['mat_nombres']; ?>" 
+										name="<?= $notasResultado['cal_nota']; ?>" 
+										onChange="notaRecuperacion(this)" 
+										tabindex="2" 
+										style="font-size: 13px; text-align: center; border-color:tomato;" 
+										placeholder="Recup" 
+										<?= $habilitado; ?>
+									>
 								<?php } ?>
 							<?php } ?>
 

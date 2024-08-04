@@ -7,13 +7,12 @@ require_once("../class/UsuariosPadre.php");
 require_once("../class/Estudiantes.php");
 require_once("../class/Sysjobs.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+
 $datosCargaActual = null;
+
 if( !empty($_SESSION["infoCargaActual"]) ) {
 	$datosCargaActual = $_SESSION["infoCargaActual"]['datosCargaActual'];
 }
-
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
 ?>
 </head>
 <style>
@@ -137,7 +136,25 @@ $_SESSION["configuracion"] = $config;
                                                                         <i class="fa fa-angle-down"></i>
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
-                                                                        <li><a rel="'.$configGenerarJobs.'-'.$numSinNotas.'-1" data-toggle="tooltip" data-placement="right" title="Lo hará usted manualmente como siempre." href="javascript:void(0);" name="../compartido/generar-informe.php?carga='.base64_encode($rCargas["car_id"]).'&periodo='.base64_encode($rCargas["car_periodo"]).'&grado='.base64_encode($rCargas["car_curso"]).'&grupo='.base64_encode($rCargas["car_grupo"]).'" onclick="mensajeGenerarInforme(this)">Forma tradicional</a></li>
+                                                                        <li>
+																			<a 
+																				rel="'.$configGenerarJobs.'-'.$numSinNotas.'-1" 
+																				data-toggle="tooltip" 
+																				data-placement="right" 
+																				title="Lo hará usted manualmente como siempre." 
+																				href="javascript:void(0);" 
+																				name="../compartido/generar-informe.php?
+																					carga='.base64_encode($rCargas["car_id"]).'
+																					&periodo='.base64_encode($rCargas["car_periodo"]).'
+																					&grado='.base64_encode($rCargas["car_curso"]).'
+																					&grupo='.base64_encode($rCargas["car_grupo"]).'
+																					&tipoGrado='.base64_encode($rCargas["gra_tipo"]).'
+																				" 
+																				onclick="mensajeGenerarInforme(this)"
+																			>
+																				Forma tradicional
+																			</a>
+																		</li>
                                                                     </ul>
                                                                 </div>
 															';

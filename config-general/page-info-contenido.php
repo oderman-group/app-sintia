@@ -103,6 +103,14 @@ switch($_GET["idmsg"]){
 		$url1 = 'estudiantes.php';
 		$boton1 = 'IR A ACUDIDOS';
 	break;
+
+	case 112:
+		$color = 'yellow';
+		$titulo = 'NO SE PUDO GENERAR';
+		$texto = 'No se pudo generar el informe porque faltan parametros necesarios para generar el informe.';
+		$url1 = 'cargas.php';
+		$boton1 = 'IR A CARGAS';
+	break;
 			
 		
 									

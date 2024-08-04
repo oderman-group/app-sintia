@@ -6,9 +6,6 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 	require_once("../class/UsuariosPadre.php");
 	require_once("../class/Estudiantes.php");
 	require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
-
-	$config = Plataforma::sesionConfiguracion();
-	$_SESSION["configuracion"] = $config;
 }
 ?>
 <div class="panel">

@@ -2,6 +2,7 @@
 include("session.php");
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once("../class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 Modulos::validarAccesoDirectoPaginas();
 
 $idPaginaInterna = 'DV0073';
@@ -18,18 +19,13 @@ WHERE ins_id='".$_SESSION["idInstitucion"]."' AND ins_enviroment='".ENVIROMENT."
 $datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
 $_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
 
-    
-$arregloModulos = Modulos::consultarModulosIntitucion($conexion, $_SESSION["idInstitucion"]);
-$_SESSION["modulos"] = $arregloModulos;
+$_SESSION["modulos"] = RedisInstance::getModulesInstitution();
 
 $informacionInstConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion='" . $_SESSION["idInstitucion"] . "' AND info_year='" . $_SESSION["bd"] . "'");
 $informacion_inst = mysqli_fetch_array($informacionInstConsulta, MYSQLI_BOTH);
 $_SESSION["informacionInstConsulta"] = $informacion_inst;
 
 $_SESSION["datosUsuario"] = UsuariosPadre::sesionUsuario($_SESSION['id']);
-
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
 
 include("../compartido/guardar-historial-acciones.php");
 

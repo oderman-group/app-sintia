@@ -12,3 +12,6 @@ sensitive.php
 /composer.json
 /composer.lock
 librerias/Firebase/key
+mycoverage
+.phpunit.cache
+.phpunit.result.cache

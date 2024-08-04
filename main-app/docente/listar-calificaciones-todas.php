@@ -83,7 +83,7 @@ $porcentajeRestante = 100 - $valores[0];
         $objetoEnviar = htmlentities($arrayDatos);
         ?>
         
-        <table class="table table-striped custom-table table-hover">
+        <table class="table table-striped custom-table table-hover" id="tabla_notas">
             <thead>
                 <tr>
                 <th style="width: 50px;">#</th>
@@ -94,8 +94,18 @@ $porcentajeRestante = 100 - $valores[0];
                     echo '<th style="text-align:center; font-size:11px; width:100px;"><a href="calificaciones-editar.php?idR='.base64_encode($rA['act_id']).'" title="'.$rA['act_descripcion'].'">'.$rA['act_id'].'<br>
                     '.$rA['act_descripcion'].'<br>
                     ('.$rA['act_valor'].'%)</a><br>
-                    <a href="#" name="calificaciones-eliminar.php?idR='.base64_encode($rA['act_id']).'&idIndicador='.base64_encode($rA['act_id_tipo']).'&carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'" onClick="deseaEliminar(this)" '.$deleteOculto.'><i class="fa fa-times"></i></a><br>
-                    <input type="text" style="text-align: center; font-weight: bold;" maxlength="3" size="10" title="1" name="'.$rA['act_id'].'" onChange="notasMasiva(this)" '.$disabledNotas.'>
+                    <a href="#" 
+                    name="calificaciones-eliminar.php?idR='.base64_encode($rA['act_id']).'&idIndicador='.base64_encode($rA['act_id_tipo']).'&carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'" 
+                    onClick="deseaEliminar(this)" '.$deleteOculto.'><i class="fa fa-times"></i></a><br>
+                    <input 
+                        type="text" 
+                        style="text-align: center; font-weight: bold;"
+                        size="10" 
+                        title="1" 
+                        name="'.$rA['act_id'].'" 
+                        onChange="notasMasiva(this)" 
+                        '.$disabledNotas.'
+                    >
                     </th>';
                     }
                 ?>
@@ -118,7 +128,7 @@ $porcentajeRestante = 100 - $valores[0];
                     if($resultado['mat_inclusion']==1){$colorEstudiante = 'blue;';}
                 ?>
                 
-                <tr>
+                <tr id="fila_<?=$resultado['mat_id'];?>">
                     <td style="text-align:center;" style="width: 100px;"><?=$contReg;?></td>
                     <td style="color: <?=$colorEstudiante;?>">
                         <img src="../files/fotos/<?=$resultado['uss_foto'];?>" width="50">
@@ -131,7 +141,7 @@ $porcentajeRestante = 100 - $valores[0];
                         //LAS CALIFICACIONES
                         $notasResultado = Calificaciones::traerCalificacionActividadEstudiante($config, $rA['act_id'], $resultado['mat_id']);
                     ?>
-                        <td style="text-align:center;">
+                        <td style="text-align:center;" id="columna_<?=$resultado['mat_id']."-".$rA['act_id'];?>">
                             
                         <?php
                         $arrayEnviar = [
@@ -150,15 +160,49 @@ $porcentajeRestante = 100 - $valores[0];
                             $estiloNotaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
                         }	
                         ?>
-                        <input size="5" maxlength="3" step="<?=$rA['act_id'];?>" title="<?=$rA['act_id']?>" id="<?=$resultado['mat_id']."-".$rA['act_id'];?>" data-cod-estudiante="<?=$resultado['mat_id'];?>" value="<?php if(isset($notasResultado)) echo $notasResultado['cal_nota'];?>" alt="<?=$resultado['mat_nombres'];?>" name="<?=$notasResultado['cal_nota'];?>" onChange="notasGuardar(this)" tabindex="2" style="font-size: 13px; text-align: center; color:<?=$colorNota;?>;" <?=$disabledNotas;?>>
+                        <input 
+                            size="5"
+                            id="<?=$resultado['mat_id']."-".$rA['act_id'];?>" 
+                            data-cod-estudiante="<?=$resultado['mat_id'];?>" 
+                            data-carga-actividad="<?=$rA['act_id'];?>" 
+                            data-nota-anterior="<?php if(!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>"
+                            data-color-nota-anterior="<?=$colorNota;?>"
+                            data-cod-nota="<?=$rA['act_id']?>"
+                            data-nombre-estudiante="<?=$resultado['mat_nombres']." ".$resultado['mat_primer_apellido'];?>" 
+                            value="<?php if(!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>"
+                            onChange="notasGuardar(this, 'fila_<?=$resultado['mat_id'];?>', 'tabla_notas')" 
+                            tabindex="2" 
+                            style="font-size: 13px; text-align: center; color:<?=$colorNota;?>;" <?=$disabledNotas;?>
+                        >
                         <br><span id="CU<?=$resultado['mat_id'].$rA['act_id'];?>" style="font-size: 12px; color:<?=$colorNota;?>;"><?=$estiloNotaFinal?></span>
                             
                         <?php
-                            if(isset($notasResultado) && $notasResultado['cal_nota']!=""){
+                            if (isset($notasResultado) && $notasResultado['cal_nota']!="") {
                         ?>
-                            <a href="#" title="<?=$objetoEnviar;?>" id="<?=$notasResultado['cal_id'];?>" name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notasResultado['cal_id']);?>" onClick="deseaEliminar(this)" <?=$deleteOculto;?>><i class="fa fa-times"></i></a>
-                            <?php if($notasResultado['cal_nota']<$config[5]){?>
-                                <br><br><input size="5" maxlength="3" title="<?=$rA['act_id']?>" id="<?=$resultado['mat_id'];?>" alt="<?=$resultado['mat_nombres'];?>" name="<?=$notasResultado['cal_nota'];?>" onChange="notaRecuperacion(this)" tabindex="2" style="font-size: 13px; text-align: center; border-color:tomato;" placeholder="Recup" <?=$disabledNotas;?>>
+                            <a 
+                                href="#" 
+                                title="<?=$objetoEnviar;?>" 
+                                id="<?=$notasResultado['cal_id'];?>" 
+                                name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notasResultado['cal_id']);?>" 
+                                onClick="deseaEliminar(this)" 
+                                <?=$deleteOculto;?>
+                            >
+                                <i class="fa fa-times"></i>
+                            </a>
+                            <?php if ($notasResultado['cal_nota'] < $config[5]) {?>
+                                <br><br>
+                                <input 
+                                    size="5"
+                                    title="<?=$rA['act_id']?>" 
+                                    id="<?=$resultado['mat_id'];?>" 
+                                    alt="<?=$resultado['mat_nombres'];?>" 
+                                    name="<?=$notasResultado['cal_nota'];?>" 
+                                    onChange="notaRecuperacion(this)" 
+                                    tabindex="2" 
+                                    style="font-size: 13px; text-align: center; border-color:tomato;" 
+                                    placeholder="Recup" 
+                                    <?=$disabledNotas;?>
+                                >
                             <?php }?>
                             
                         <?php }?>

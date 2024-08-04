@@ -58,6 +58,12 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 $mensaje = 'Error genérico: '.$_GET['genericError'];
             break;
 
+            case 11:
+                $tipo = 'info';
+                $mensaje = 'No se encontraron registros para mostrar en la pagina donde intentaste acceder.';
+            break;
+
+
             case 'ER_DT_1':
                 $tipo = 'danger';
                 $mensaje = 'Este usuario(<b>' . $_GET["usuario"] . '</b>) ya existe para otra persona. Cambie el nombre de usuario por favor.';

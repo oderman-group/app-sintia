@@ -12,7 +12,7 @@ $arregloModulos = $_SESSION["modulos"];
 $Utilidades = new Utilidades; 
 $Plataforma = new Plataforma;
 
-$config = $_SESSION["configuracion"];
+$config = RedisInstance::getSystemConfiguration();
 
 $informacion_inst = $_SESSION["informacionInstConsulta"];
 

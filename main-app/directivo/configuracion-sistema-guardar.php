@@ -1,5 +1,6 @@
 <?php 
 include("session.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0187';
@@ -73,8 +74,7 @@ try {
 }
 
 if($_POST["configDEV"]==0){
-	$config = Plataforma::sesionConfiguracion();
-	$_SESSION["configuracion"] = $config;
+	RedisInstance::getSystemConfiguration(true);
 }
 
 include("../compartido/guardar-historial-acciones.php");

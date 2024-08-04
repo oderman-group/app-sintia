@@ -128,6 +128,34 @@ LIMIT ".$empezar.",1
 <?php 	
 	} ?>
 
+<script>
+const forms = document.querySelectorAll('form[name="formularioGuardar"]');
+
+let form = forms[forms.length - 1]; // Obtener el último formulario del documento en caso de encontrar varias coincidencias.
+
+if(typeof form !== 'undefined' && form !== null) {
+
+	const btnSubmit = form.querySelector('button[type=submit]');
+
+	btnSubmit.addEventListener("click", function() {
+		// Validar el formulario al enviarlo.
+		if (!form.checkValidity()) {
+			form.reportValidity();
+			return false; // Si el formulario no es válido, detener el envío.
+		}
+
+		btnSubmit.setAttribute("disabled", true);
+		btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> GUARDANDO CAMBIOS';
+
+		setTimeout(() => {
+			form.submit();
+		}, 1000);
+
+		return false;
+	});
+}
+</script>
+
 
 <!-- start footer -->
 <div class="page-footer">

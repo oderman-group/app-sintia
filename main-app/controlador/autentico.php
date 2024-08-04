@@ -4,6 +4,7 @@ $idPaginaInterna = 'GN0001';
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
 $auth = Autenticate::getInstance();
 
@@ -132,9 +133,8 @@ if ($num>0)
 			break;
 		}
 	}
-	
-	$config = Plataforma::sesionConfiguracion();
-	$_SESSION["configuracion"] = $config;
+
+	$config = RedisInstance::getSystemConfiguration(true);
 
 	$informacionInstConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion
 	LEFT JOIN ".$baseDatosServicios.".localidad_ciudades ON ciu_id=info_ciudad
@@ -148,9 +148,10 @@ if ($num>0)
 	$datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
 	$_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
 
-    
-	$arregloModulos = Modulos::consultarModulosIntitucion($conexion, $config['conf_id_institucion']);
+	$arregloModulos = RedisInstance::getModulesInstitution(true);
 	$_SESSION["modulos"] = $arregloModulos;
+
+	//RedisInstance::getMatriculas(true);
 
 	//INICIO SESION
 	$_SESSION["id"] = $fila['uss_id'];

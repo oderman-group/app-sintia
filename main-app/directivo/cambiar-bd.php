@@ -13,9 +13,6 @@ include("../compartido/historial-acciones-guardar.php");
 $_SESSION["yearAnterior"]=$_SESSION["bd"];
 $_SESSION["bd"] = base64_decode($_GET["agno"]);
 
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
-
 include("../compartido/guardar-historial-acciones.php");
 
 header("Location:".$_SERVER["HTTP_REFERER"]);

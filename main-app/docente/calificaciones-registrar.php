@@ -225,7 +225,14 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 													<p style="color: darkblue;">Utilice esta casilla para colocar la misma nota a todos los estudiantes. Esta opción <mark>reemplazará las notas existentes</mark> en esta actividad.</p>
 
-													<input type="text" style="text-align: center; font-weight: bold;" maxlength="3" size="10" title="0" onChange="notasMasiva(this)" name="<?=$idR;?>">
+													<input 
+														type="text" 
+														style="text-align: center; font-weight: bold;" 
+														size="10" 
+														title="0" 
+														onChange="notasMasiva(this)" 
+														name="<?=$idR;?>"
+													>
 
 												</div>
 
@@ -243,7 +250,7 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
                                         <div class="table-responsive">
 
-                                            <table class="table table-striped custom-table table-hover">
+                                            <table class="table table-striped custom-table table-hover" id="tabla_notas">
 
                                                 <thead>
 
@@ -315,11 +322,13 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 														$estiloNotaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 													}
 
+													$notaActual = !empty($notas['cal_nota']) ? $notas['cal_nota'] : '';
+
 													?>
 
                                                     
 
-													<tr>
+													<tr id="fila_<?=$resultado['mat_id'];?>">
 
                                                         <td><?=$contReg;?></td>
 
@@ -331,16 +340,38 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 														</td>
 
-														<td>
+														<td id="columna_<?=$resultado['mat_id'];?>">
 
-															<input type="text" style="text-align: center; color:<?=$colorNota;?>" step="<?=$cargaConsultaActual;?>" size="5" maxlength="3" value="<?php if(!empty($notas['cal_nota'])){ echo $notas['cal_nota'];}?>" name="<?=$notas['cal_nota'];?>" id="<?=$resultado['mat_id'];?>" data-cod-estudiante="<?=$resultado['mat_id'];?>" title="<?=$idR;?>" alt="<?=$resultado['mat_nombres'];?>" onChange="notasGuardar(this)" tabindex="<?=$contReg;?>">
+															<input 
+																type="text" 
+																style="text-align: center; color:<?=$colorNota;?>" 
+																size="5"
+																value="<?php echo $notaActual;?>" 
+																id="<?=$resultado['mat_id'];?>" 
+																data-cod-estudiante="<?=$resultado['mat_id'];?>" 
+																data-carga-actividad="<?=$cargaConsultaActual;?>"
+																data-nota-anterior="<?php echo $notaActual;?>"
+																data-color-nota-anterior="<?=$colorNota;?>"
+																data-cod-nota="<?=$idR;?>"
+																data-nombre-estudiante="<?=$resultado['mat_nombres']." ".$resultado['mat_primer_apellido'];?>"
+																onChange="notasGuardar(this, 'fila_<?=$resultado['mat_id'];?>', 'tabla_notas')" 
+																tabindex="<?=$contReg;?>"
+															>
 
-															<?php if(!empty($notas['cal_nota'])){?>
+															<p id="CU<?=$resultado['mat_id'].$cargaConsultaActual;?>" style="font-size: 12px; color:<?=$colorNota;?>;"><?=$estiloNotaFinal?></p>
 
-															<a href="#" title="<?=$objetoEnviar;?>" id="<?=$notas['cal_id'];?>" name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notas['cal_id']);?>" onClick="deseaEliminar(this)">X</a>
-
-															<?php }?>
-
+															<?php if (!empty($notas['cal_nota'])) {?>
+															<a 
+																href="#"
+																title="<?=$objetoEnviar;?>" 
+																id="<?=$notas['cal_id'];?>" 
+																name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notas['cal_id']);?>" onClick="deseaEliminar(this)"
+																s
+															>
+																<i class="fa fa-trash"></i>
+															</a>
+														<?php }?>
+														
 														</td>
 
 														<?php if($config['conf_forma_mostrar_notas'] == CUALITATIVA){	?>
@@ -351,13 +382,34 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 															<?php if(!empty($notas['cal_nota'])){?>
 
-															<input type="text" style="text-align: center;" size="5" step="<?=$cargaConsultaActual;?>" maxlength="3" name="<?=$notas['cal_nota'];?>" id="<?=$resultado['mat_id'];?>" alt="<?=$resultado['mat_nombres'];?>" title="<?=$idR;?>" onChange="notaRecuperacion(this)">
+															<input 
+																type="text" 
+																style="text-align: center;" 
+																size="5" 
+																step="<?=$cargaConsultaActual;?>"
+																name="<?=$notas['cal_nota'];?>" 
+																id="<?=$resultado['mat_id'];?>" 
+																alt="<?=$resultado['mat_nombres'];?>" 
+																title="<?=$idR;?>" 
+																onChange="notaRecuperacion(this)"
+															>
 
 															<?php }?>
 
 														</td>
 
-														<td><input type="text" value="<?php if(!empty($notas['cal_observaciones'])){ echo $notas['cal_observaciones'];}?>" name="O<?=$contReg;?>" id="<?=$resultado['mat_id'];?>" alt="<?=$resultado['mat_nombres'];?>" title="<?=$idR;?>" onChange="guardarObservacion(this)" tabindex="10<?=$contReg;?>"></td>
+														<td>
+															<input 
+																type="text" 
+																value="<?php if(!empty($notas['cal_observaciones'])){ echo $notas['cal_observaciones'];}?>" 
+																name="O<?=$contReg;?>" 
+																id="<?=$resultado['mat_id'];?>" 
+																alt="<?=$resultado['mat_nombres'];?>" 
+																title="<?=$idR;?>" 
+																onChange="guardarObservacion(this)" 
+																tabindex="10<?=$contReg;?>"
+															>
+														</td>
 
                                                     </tr>
 

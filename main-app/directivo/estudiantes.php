@@ -6,6 +6,7 @@
 require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php"); 
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
 if (isset($_GET['mode']) && $_GET['mode'] === 'DEV') {
 	$redis = RedisInstance::getRedisInstance();
@@ -178,7 +179,8 @@ if($config['conf_doble_buscador'] == 1) {
 													
 													include("includes/consulta-paginacion-estudiantes.php");
 													$filtroLimite = 'LIMIT '.$inicio.','.$registros;													
-													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite,$cursoActual);
+													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual);
+													
 													$contReg = 1;
 
 													$index = 0;

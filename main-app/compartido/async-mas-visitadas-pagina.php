@@ -3,9 +3,6 @@ include("session-compartida.php");
 $idPaginaInterna = 'CM0011';
 include("historial-acciones-guardar.php");
 require_once("../class/UsuariosPadre.php");
-
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
 ?>
 
 <div class="panel">

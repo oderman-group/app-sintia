@@ -12,9 +12,6 @@ $_SESSION['id'] = base64_decode($_GET['user']);
 
 $_SESSION["datosUsuario"] = UsuariosPadre::sesionUsuario($_SESSION['id']);
 
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
-
 include("../compartido/guardar-historial-acciones.php");
 
 switch (base64_decode($_GET['tipe'])) {

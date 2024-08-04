@@ -267,7 +267,7 @@ class Boletin {
      */
     public static function obtenerPromedioPorTodasLasCargas(
         string $estudiante = '',
-        string $carga,
+        string $carga = '',
         string $yearBd     = ''
     )
     {

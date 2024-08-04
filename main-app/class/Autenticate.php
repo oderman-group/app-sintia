@@ -1,5 +1,6 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Conexion.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
 class Autenticate {
 
@@ -79,6 +80,10 @@ class Autenticate {
         session_destroy();
 
         Conexion::getConexion()->closeConnection();
+
+        $redis = RedisInstance::getRedisInstance();
+        $keysToDelete = [RedisInstance::KEY_SYSTEM_CONFIGURATION, RedisInstance::KEY_MODULES_INSTITUTION];
+        $redis->del($keysToDelete);
 
         header("Location:".$urlRedirect);
     }

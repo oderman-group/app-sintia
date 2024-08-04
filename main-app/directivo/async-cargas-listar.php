@@ -7,9 +7,6 @@ require_once("../class/CargaAcademica.php");
 require_once(ROOT_PATH."/main-app/class/Actividades.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
-$config = Plataforma::sesionConfiguracion();
-$_SESSION["configuracion"] = $config;
-
 $docentesProgreso = CargaAcademica::traerCargasDocentes($config, $_GET["docente"]);
 $numCargas = mysqli_num_rows($docentesProgreso);
 ?>
