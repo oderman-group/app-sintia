@@ -1,11 +1,12 @@
 <?php
-if  (!empty($data["dataTotal"]))  {
+if (!empty($data["dataTotal"])) {
 	require_once("../Estudiantes.php");
 	require_once("../Modulos.php");
+	require_once("../Sysjobs.php");
 }
 
 $permisoReportesNotas = Modulos::validarSubRol(['DT0238']);
-$permisoedicion       = Modulos::validarSubRol(['DT0049','DT0148','DT0129']);
+$permisoedicion       = Modulos::validarSubRol(['DT0049', 'DT0148', 'DT0129']);
 $permisoEditar        = Modulos::validarSubRol(['DT0049']);
 $permisoEliminar      = Modulos::validarSubRol(['DT0148']);
 $permisoAutologin     = Modulos::validarSubRol(['DT0129']);
@@ -14,55 +15,44 @@ $permisoResumen       = Modulos::validarSubRol(['DT0111']);
 $permisoIndicadores   = Modulos::validarSubRol(['DT0034']);
 $permisoPlanilla      = Modulos::validarSubRol(['DT0239']);
 $permisoPlanillaNotas = Modulos::validarSubRol(['DT0237']);
+$permisoGenerarInforme = Modulos::validarSubRol(['DT0237']);
 
 $contReg = 1;
 
 foreach ($data["data"] as $resultado) {
-	//Para calcular el porcentaje de actividades en las cargas
 	$cargaSP = $resultado['car_id'];
 	$periodoSP = $resultado['car_periodo'];
-	if(!empty($data["dataTotal"])){
-		include("../../suma-porcentajes.php");
-	}else{
-		include("../suma-porcentajes.php");
-	}
-
 	$marcaMediaTecnica = '';
-	$filtroDocentesParaListarEstudiantes = " AND mat_grado='" . $resultado['car_curso'] . "' AND mat_grupo='" . $resultado['car_grupo'] . "'";
 	if ($resultado['gra_tipo'] == GRADO_INDIVIDUAL) {
 		$cantidadEstudiantes = $resultado['cantidad_estudaintes_mt'];
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	} else {
 		$cantidadEstudiantes = $resultado['cantidad_estudaintes'];
 	}
-
 	$infoTooltipCargas = "<b>COD:</b> 
-						  {$resultado['car_id']}<br>
-						  <b>Director de grupo:</b> 
-						  {$opcionSINO[$resultado['car_director_grupo']]}<br>
-						  <b>I.H:</b> 
-						  {$resultado['car_ih']}<br>
-						  <b>Puede editar en otros periodos?:</b> 
-						  {$opcionSINO[$resultado['car_permiso2']]}<br>
-						  <b>Indicadores automáticos?:</b> 
-						  {$opcionSINO[$resultado['car_indicador_automatico']]}<br>
-						  <b>Max. Indicadores:</b> 
-						  {$resultado['car_maximos_indicadores']}<br>
-						  <b>Max. Calificaciones:</b> 
-						  {$resultado['car_maximas_calificaciones']}<br>
-						  <b>Nro. Estudiantes:</b> 
-						  {$cantidadEstudiantes}";
+	{$resultado['car_id']}<br>
+	<b>Director de grupo:</b> 
+	{$opcionSINO[$resultado['car_director_grupo']]}<br>
+	<b>I.H:</b> 
+	{$resultado['car_ih']}<br>
+	<b>Puede editar en otros periodos?:</b> 
+	{$opcionSINO[$resultado['car_permiso2']]}<br>
+	<b>Indicadores automáticos?:</b> 
+	{$opcionSINO[$resultado['car_indicador_automatico']]}<br>
+	<b>Max. Indicadores:</b> 
+	{$resultado['car_maximos_indicadores']}<br>
+	<b>Max. Calificaciones:</b> 
+	{$resultado['car_maximas_calificaciones']}<br>
+	<b>Nro. Estudiantes:</b> 
+	{$cantidadEstudiantes}";
 
 	$marcaDG = '';
 	if ($resultado['car_director_grupo'] == 1) {
 		$marcaDG = '<i class="fa fa-star text-info" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Director de grupo"></i> ';
 	}
-
-
 ?>
-
-	<trt>
-		<td><?= $contReg; ?></td>
+	<tr>
+	   <td><?= $contReg; ?></td>
 		<td><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="Información adicional" data-content="<?= $infoTooltipCargas; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= $resultado['id_nuevo_carga']; ?></a></td>
 		<td><?= $marcaDG . "" . strtoupper($resultado['uss_nombre'] . " " . $resultado['uss_nombre2'] . " " . $resultado['uss_apellido1'] . " " . $resultado['uss_apellido2']); ?></td>
 		<td><?= $marcaMediaTecnica . "[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
@@ -111,40 +101,40 @@ foreach ($data["data"] as $resultado) {
 						<?php }
 						if ($permisoPlanillaNotas) { ?>
 							<li><a href="../compartido/planilla-docentes-notas.php?carga=<?= base64_encode($resultado['car_id']); ?>" target="_blank">Ver Planilla con notas</a></li>
-						<?php }
-						if (Modulos::validarSubRol(['DT0237'])) {
-							$permisoGenerarInforme = false;
+						<?php } ?>
+						<?php 	if ($permisoGenerarInforme) {
+							$generarInforme = false;
 							$msnajetooltip = "";
-							$actividadesAsignadas = $spcd[0];
-							$actividadesRegistradas = $spcr[0];
+							$actividadesDeclaradas = $resultado['actividades'];
+							$actividadesRegistradas = $resultado['actividades_registradas'];
 							$configGenerarJobs = $config['conf_porcentaje_completo_generar_informe'];
 							$numSinNotas=0;
-							if ($actividadesAsignadas < PORCENTAJE_MINIMO_GENERAR_INFORME) {
-								$permisoGenerarInforme = false;
-								$msnajetooltip = "Las calidifaciones asignadas no completan el 100% ";
+							if ($actividadesDeclaradas < PORCENTAJE_MINIMO_GENERAR_INFORME) {
+								$generarInforme = false;
+								$msnajetooltip = "Las calidifaciones declaradas no completan el 100% ";
 							} else if ($actividadesRegistradas < PORCENTAJE_MINIMO_GENERAR_INFORME) { 
-								$permisoGenerarInforme = false;
+								$generarInforme = false;
 								$msnajetooltip = "Las calidifaciones regsitradas no completan el 100% ";
 							} else {
-								$permisoGenerarInforme = true;
+								$generarInforme = true;
 							}
-							if ($permisoGenerarInforme) {
+							if ($generarInforme) {
 								switch (intval($configGenerarJobs)) {
 									case 1:
 										$consultaListaEstudantesSinNotas = Estudiantes::listarEstudiantesNotasFaltantes($resultado["car_id"],$resultado["car_periodo"],$resultado["gra_tipo"]);
                                         $numSinNotas = mysqli_num_rows($consultaListaEstudantesSinNotas);
 										if ($numSinNotas < PORCENTAJE_MINIMO_GENERAR_INFORME) {
-											$permisoGenerarInforme = false;
+											$generarInforme = false;
 											$msnajetooltip = "La institución no permite generar informe hasta que todos los estudiantes estén calificados un 100%";
 											break;
 										}
 										break;
 									case 2:
-										$permisoGenerarInforme = true;
+										$generarInforme = true;
 										$msnajetooltip = "La institución omitirá los estudiantes que no tengan las calificaciones en un 100%";
 										break;
 									case 3:
-										$permisoGenerarInforme = true;
+										$generarInforme = true;
 										$msnajetooltip = "La institución generará el informe con el porcentaje actual de cada estudiante";
 										break;
 								}
@@ -167,11 +157,11 @@ foreach ($data["data"] as $resultado) {
 							$jobsEncontrado = mysqli_fetch_array($buscarJobs, MYSQLI_BOTH);
 
 							if (!empty($jobsEncontrado)) {
-								$permisoGenerarInforme=false;
+								$generarInforme=false;
 								switch ($jobsEncontrado["job_estado"]) {
 									case JOBS_ESTADO_ERROR:
 										$msnajetooltip =$jobsEncontrado["job_mensaje"];
-										$permisoGenerarInforme=true;
+										$generarInforme=true;
 										break;
 
 									case JOBS_ESTADO_PENDIENTE:
@@ -195,10 +185,11 @@ foreach ($data["data"] as $resultado) {
 							if (!empty($msnajetooltip)) {
 								$tooltip = ' title="' . $msnajetooltip . '"';
 							}
-						?>
-							<li class="dropdown-submenu-generar-informe" data-toggle="tooltip" <?= $tooltip ?>>
-								<a style="color:<?= !$permisoGenerarInforme ? '#bcc6d0' : '#6f6f6f' ?>;" class="dropdown-item dropdown-toggle" href="javascript:void(0);" onclick="mostrarGenerarInforme(<?=$resultado["car_id"]?>)" >Generar Informe</a>
-								<?php if ($permisoGenerarInforme) {
+							$onClick='onclick=mostrarGenerarInforme("'.$resultado['car_id'].'")';
+							?>
+								<li id="informe-<?php $resultado['car_id']?>" class="dropdown-submenu-generar-informe" <?= !$generarInforme ? '' : 'onmouseover="noCerrarToggle(this)"' ?>  data-toggle="tooltip" <?= $tooltip ?>>
+								<a style="color:<?= !$generarInforme ? '#bcc6d0' : '#6f6f6f' ?>;" class="dropdown-item dropdown-toggle" href="javascript:void(0);" <?= !$generarInforme ? '' : $onClick ?>  >Generar Informe</a>
+								<?php if ($generarInforme) {
 									 $parametros='?carga='.base64_encode($resultado["car_id"]).
 									              '&periodo='.base64_encode($resultado["car_periodo"]).
 												  '&grado='.base64_encode($resultado["car_curso"]).
@@ -215,29 +206,29 @@ foreach ($data["data"] as $resultado) {
 				</ul>
 			</div>
 		</td>
-		</tr>
-	<?php $contReg++;
+	</tr>
+<?php
+	$contReg++;
 } ?>
 <script>
-	// Habilita los submenús al hacer clic
-	document.querySelectorAll('.dropdown-submenu-generar-informe a.dropdown-toggle').forEach(function(element) {
-		element.addEventListener('click', function(e) {
+
+	function noCerrarToggle(element){
+		 element.addEventListener('click', function(e) {
 			e.stopPropagation(); // Evita el cierre al hacer clic dentro del submenú
-		});
-	});
-	$(document).ready(function() {
-		$('[data-toggle="tooltip"]').tooltip();
-	});
+		 });
+
+	}
 	
+
 	function mostrarGenerarInforme(valor) {
-			submenu = document.getElementById('generarInforme-' + valor);
-			if (submenu.classList.contains('show')) {
-				submenu.classList.remove('show');					
-			}else{
-				submenu.classList.add('show');
-			};
-			
-		}
+		submenu = document.getElementById('generarInforme-' + valor);
+		if (submenu.classList.contains('show')) {
+			submenu.classList.remove('show');
+		} else {
+			submenu.classList.add('show');
+		};
+
+	}
 </script>
 <style>
 	.dropdown-submenu-generar-informe .dropdown-menu {
