@@ -5,6 +5,7 @@ $idPaginaInterna = 'CM0044';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/compartido/socket.php");
 $usuariosClase = new UsuariosFunciones;
 $archivoSubido = new Archivos;
 
@@ -49,9 +50,9 @@ if (!empty($_FILES['archivo']['name'])) {
 $findme   = '?v=';
 $pos = strpos($_POST["video"], $findme) + 3;
 $video = substr($_POST["video"], $pos, 11);
-
+$notificar=!empty($_POST["notificar"]) ? 1 : 0;
 try{
-    mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_titulo='" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', not_descripcion='" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "',  not_keywords='" . mysqli_real_escape_string($conexion,$_POST["keyw"]) . "', not_url_imagen='" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', not_video='" . $video . "', not_id_categoria_general='" . $_POST["categoriaGeneral"] . "', not_video_url='" . $_POST["video"] . "', not_para='" . $destinatarios . "', not_global='" . $global . "', not_enlace_video2='" . $video2 . "', not_descripcion_pie='" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "' WHERE not_id='" . $_POST["idR"] . "'");
+    mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_titulo='" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', not_descripcion='" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "',  not_keywords='" . mysqli_real_escape_string($conexion,$_POST["keyw"]) . "', not_url_imagen='" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', not_video='" . $video . "', not_id_categoria_general='" . $_POST["categoriaGeneral"] . "', not_video_url='" . $_POST["video"] . "', not_para='" . $destinatarios . "', not_global='" . $global . "', not_enlace_video2='" . $video2 . "', not_descripcion_pie='" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "',not_notificar='".$notificar."' WHERE not_id='" . $_POST["idR"] . "'");
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
@@ -77,5 +78,18 @@ if(!empty($_POST["cursos"])){
 $url= $usuariosClase->verificarTipoUsuario($datosUsuarioActual['uss_tipo'],'noticias.php');
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
-echo '<script type="text/javascript">window.location.href="' . $url . '";</script>';
-exit();
+if ($notificar == 1) {
+    echo '<script type="text/javascript">
+    socket.emit("notificar_noticia", {
+                    global      : "' . $global . '",
+                    id_noticia  : "' . $_POST["idR"] . '",
+                    institucion : "' . $config['conf_id_institucion'] . '",
+                    year        : "' . $_SESSION["bd"] . '"
+    });
+    setTimeout(function() {
+        window.location.href = "' . $url . '";
+    }, 500);
+    </script>';
+}else{
+    echo '<script type="text/javascript">window.location.href="' . $url . '";</script>'; 
+}

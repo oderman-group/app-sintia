@@ -312,9 +312,10 @@ class ComponenteFiltro
         $html .= "    
         </nav>
         <script type='text/javascript'>
-        function cargarPopover() {
+        function cargarJquery() {
           $(document).ready(function() {			
               $('[data-toggle=".'popover'."]').popover();
+              $('[data-toggle=".'tooltip'."]').tooltip();
            
           });
         };
@@ -402,7 +403,7 @@ class ComponenteFiltro
                             $('#example1').DataTable().clear().destroy(); // Destruir y limpiar
                         }                     
                        tbody.innerHTML = response;
-                       cargarPopover();
+                       cargarJquery();
                         $('#example1').DataTable();
                        document.getElementById('gifCarga').style.display = 'none';";
 

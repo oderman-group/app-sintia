@@ -2,6 +2,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/css/comentarios-reacciones.css" rel="stylesheet" type="text/css" />
+<script src="../ckeditor/ckeditor.js"></script>
 <div class="row">
 
     <div class="col-md-12">

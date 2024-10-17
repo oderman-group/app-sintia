@@ -1,22 +1,28 @@
-<!--select2-->
-<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
-<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
-<!--tagsinput-->
-<link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
+    <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
+	<!-- dropzone -->
+    <link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
+    <!--tagsinput-->
+    <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
+    <!--select2-->
+    <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+    <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 
 <!-- END HEAD -->
 <?php 
+if (empty($_SESSION["id"])) {
+    include_once("session-compartida.php");
+    $input = json_decode(file_get_contents("php://input"), true);
+    if (!empty($input)) {
+        $_GET = $input;
+    }
+}
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 ?>
-<div class="row">
-    <div class="col-sm-12">
-        <div class="card card-box">
-            <div class="card-head">
-                <header><?= $frases[212][$datosUsuarioActual['uss_idioma']]; ?></header>
-            </div>
+
+            
             <div class="card-body " id="bar-parent6">
                 <form class="form-horizontal" action="../compartido/noticias-guardar.php" method="post" enctype="multipart/form-data">
-
+               
                     <div class="form-group row">
                         <label class="col-sm-2 control-label"><?= $frases[127][$datosUsuarioActual['uss_idioma']]; ?></label>
                         <div class="col-sm-10">
@@ -113,6 +119,19 @@ require_once(ROOT_PATH."/main-app/class/Grados.php");
                                 </select>
                             </div>
                         </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label" >Notificar en tiempo real?</label>
+                            <div class="col-sm-10">
+                                <div class="col-sm-2 card-head" data-toggle="tooltip" title="Notificará la noticia en tiempo real a todos los usuarios conectados " style=" border-bottom: 0px rgba(0, 0, 0, 0.2);">
+                                    <header>
+                                        <label class="switchToggle">
+                                            <input name="notificar" type="checkbox" >
+                                            <span class="slider green round"></span>
+                                        </label>
+                                    </header>
+                                </div>
+                            </div>
+                         </div>
                     <?php } ?>
 
                     <h4 align="center" style="font-weight: bold;"><?= $frases[205][$datosUsuarioActual['uss_idioma']]; ?></h4>
@@ -157,26 +176,19 @@ require_once(ROOT_PATH."/main-app/class/Grados.php");
 
                 </form>
             </div>
-        </div>
-    </div>
+     
+  
+   <!-- start js include path -->
 
-    <div class="col-sm-3">
-        <?php include("../compartido/publicidad-lateral.php"); ?>
-    </div>
-
-</div>
-<script src="../ckeditor/ckeditor.js"></script>
-
+    <!--tags input-->
+    <script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.js" ></script>
+    <script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input-init.js" ></script>
+    <!--select2-->
+    <script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
+    <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
+    
 <script>
-    // Replace the <textarea id="editor1"> with a CKEditor 4
-    // instance, using default configuration.
+   
     CKEDITOR.replace('editor1');
     CKEDITOR.replace('editor2');
 </script>
-<script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.js"></script>
-<script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input-init.js"></script>
-<!--select2-->
-<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
-<script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
-<!-- end js include path -->
-</body>

@@ -1,6 +1,12 @@
 <?php
 session_start();
 
+$acceso = explode("/", $_SERVER['HTTP_REFERER']);
+
+if (count($acceso) > 5) {
+    $carpeta_actual = $acceso[5] ;
+}
+
 if (empty($_GET["grado"]) || empty($_GET["grupo"]) || empty($_GET["carga"]) || empty($_GET["periodo"]) || empty($_GET["tipoGrado"])) {
 ?>
 	<script language="javascript">
@@ -262,7 +268,7 @@ CargaAcademica::actualizarCargaPorID($config, $carga, $update);
 include("../compartido/guardar-historial-acciones.php");
 ?>
 <script language="javascript">
-	window.location.href="../docente/page-info.php?idmsg=109&curso=<?=$_GET["grado"];?>&grupo=<?=$_GET["grupo"];?>&periodo=<?=$_GET["periodo"];?>";
+	window.location.href="../<?=$carpeta_actual?>/page-info.php?idmsg=109&curso=<?=$_GET["grado"];?>&grupo=<?=$_GET["grupo"];?>&periodo=<?=$_GET["periodo"];?>";
 </script>
 <?php
 exit();

@@ -19,7 +19,7 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
                                     <header><?=$frases[217][$datosUsuarioActual['uss_idioma']];?></header>
                                 </div>
                                 <div class="card-body " id="bar-parent6">
-                                    <form class="form-horizontal" action="../compartido/noticias-actualizar.php" method="post" enctype="multipart/form-data">
+                                    <form class="form-horizontal" action="../compartido/noticias-actualizar.php" method="post" enctype="multipart/form-data" >
 										<input type="hidden" name="idR" value="<?=$idR;?>">
                                         
 										<div class="form-group row">
@@ -93,7 +93,7 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
 												WHERE gcat_activa=1
 												");
 												?>
-                                                <select class="form-control  select2" name="categoriaGeneral" required>
+                                                <select class="form-control  select2" style="width: 100%" name="categoriaGeneral" required>
                                                     <option value="">Seleccione una opción</option>
 													<?php
 													while($datosBD = mysqli_fetch_array($datosConsultaBD, MYSQLI_BOTH)){
@@ -146,6 +146,19 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
                                                     </select>
                                                 </div>
                                             </div>
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label" >Notificar en tiempo real?</label>
+                                                <div class="col-sm-10">
+                                                    <div class="col-sm-2 card-head" data-toggle="tooltip" title="Notificará la noticia en tiempo real a todos los usuarios conectados " style=" border-bottom: 0px rgba(0, 0, 0, 0.2);">
+                                                    <label class="switchToggle">
+                                                                <input name="notificar" type="checkbox" <?php if ($datosConsulta['not_notificar'] == 1) {
+                                                                                                            echo "checked";
+                                                                                                        } ?>>
+                                                                <span class="slider green round"></span>
+                                                            </label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         <?php } ?>
 
 										<h4 align="center" style="font-weight: bold;">FILTROS</h4>
@@ -153,7 +166,7 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[75][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-10">
-                                                <select id="multiple" class="form-control select2-multiple" multiple name="destinatarios[]">
+                                                <select  class="form-control select2-multiple" style="width: 100%" multiple name="destinatarios[]">
                                                     <?php
                                                         $destinatarios=(!empty($datosConsulta['not_para']) && $datosConsulta['not_para']!="1,2,3,4,5") ? explode(',',$datosConsulta['not_para']) : "";
                                                         try{
@@ -174,7 +187,7 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
 										<div class="form-group row">
 												<label class="col-sm-2 control-label"><?=$frases[5][$datosUsuarioActual['uss_idioma']];?></label>
 												<div class="col-sm-10">
-													<select id="multiple" class="form-control select2-multiple" multiple name="cursos[]">
+													<select  class="form-control select2-multiple" style="width: 100%" multiple name="cursos[]">
 													<?php
                                                     $infoConsulta = Grados::traerGradosInstitucion($config);
 													while($infoDatos = mysqli_fetch_array($infoConsulta, MYSQLI_BOTH)){
@@ -186,10 +199,9 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
 													</select>
 												</div>
 											</div>
-										
-										<button type="submit" class="btn  btn-info">
-										<i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-									</button>
+                                        <button type="submit" class="btn  btn-info">
+                                           <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
+									    </button>
 										
 										<a href="#" name="noticias.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 

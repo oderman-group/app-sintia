@@ -34,7 +34,11 @@
 										<header class="panel-heading panel-heading-<?=$color;?>"><?=$titulo;?></header>
 										<div class="panel-body">
 											<p><?=$texto;?></p>
-											<p><a href="<?=$url1;?>" class="btn btn-round btn-primary"><?=$boton1;?></a></p>
+											<p><a href="<?=$url1;?>" class="btn btn-round btn-primary"><?=$boton1;?></a>
+                                            <?php if(!empty($url2)) {?>
+											<a href="<?=$url2;?>" class="btn btn-round btn-success" target="_blank"><?=$boton2;?></a>
+                                            <?php }?>
+                                            </p>
                                             <?php if(!empty($lottie)) {?>
                                             <p>
                                                 <lottie-player src="<?=$lottie;?>" background="transparent"

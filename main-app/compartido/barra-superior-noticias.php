@@ -3,8 +3,8 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="navbar-collapse" id="navbarSupportedContent">
-  <a data-hint="Agrega una nueva publicación que tenga más contenido (Imagen, video, etc.)." data-toggle="modal" data-target="#ModalSintia" class="btn deepPink-bgcolor"><?=$frases[263][$datosUsuarioActual['uss_idioma']];?>  <i class="fa fa-plus"></i></a>
-  <?php $idModal="ModalSintia"; $contenido="../compartido/noticias-agregar-modal.php"; include("../compartido/contenido-modal.php");?>
+  <a data-hint="Agrega una nueva publicación que tenga más contenido (Imagen, video, etc.)."   onclick="abrirModal('<?= $frases[212][$datosUsuarioActual['uss_idioma']]; ?>','../compartido/noticias-agregar-modal.php')" class="btn deepPink-bgcolor"><?=$frases[263][$datosUsuarioActual['uss_idioma']];?>  <i class="fa fa-plus"></i></a>
+
   <ul class="navbar-nav mr-auto">
     
     

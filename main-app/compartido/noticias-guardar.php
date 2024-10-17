@@ -5,6 +5,7 @@ $idPaginaInterna = 'CM0043';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/compartido/socket.php");
 $usuariosClase = new UsuariosFunciones;
 $archivoSubido = new Archivos;
 
@@ -46,9 +47,10 @@ if (!empty($_FILES['archivo']['name'])) {
 $findme   = '?v=';
 $pos = strpos($_POST["video"], $findme) + 3;
 $video = substr($_POST["video"], $pos, 11);
+$notificar=!empty($_POST["notificar"]) ? 1 : 0;
 try{
-    mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie)
-    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . $_POST["keyw"] . "', '" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$_POST["video"]) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "')");
+    mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie,not_notificar)
+    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . $_POST["keyw"] . "', '" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$_POST["video"]) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "','".$notificar."')");
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
@@ -76,5 +78,18 @@ if(!empty($_POST["cursos"])){
 $url= $usuariosClase->verificarTipoUsuario($datosUsuarioActual['uss_tipo'],'noticias.php');
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
-echo '<script type="text/javascript">window.location.href="' . $url . '";</script>';
-exit();
+if ($notificar == 1) {
+    echo '<script type="text/javascript">
+    socket.emit("notificar_noticia", {
+                    global      : "' . $global . '",
+                    id_noticia  : "' . $idRegistro . '",
+                    institucion : "' . $config['conf_id_institucion'] . '",
+                    year        : "' . $_SESSION["bd"] . '"
+    });
+    setTimeout(function() {
+        window.location.href = "' . $url . '";
+    }, 500);
+    </script>';
+}else{
+    echo '<script type="text/javascript">window.location.href="' . $url . '";</script>'; 
+}
