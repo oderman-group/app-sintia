@@ -15,6 +15,11 @@ require_once("../class/Estudiantes.php");
     .select2 {
         width: 100% !important;
     }
+    .modal {
+    z-index: 1050 !important;
+    outline: 0;
+    overflow-y: auto!important
+}
 </style>
 
 <!-- END HEAD -->
@@ -112,7 +117,7 @@ require_once("../class/Estudiantes.php");
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Periodo</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" id="periodo" name="periodo" required>
+                        <select class="form-control  select2" style="z-index:10051 !important" id="periodo" name="periodo" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $p = 1;
@@ -130,9 +135,9 @@ require_once("../class/Estudiantes.php");
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Año</label>
+                    <label class="col-sm-2 control-label" >Año</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="year" id="year" required>
+                        <select class="form-control  select2"  style="z-index:10051 !important" name="year" id="year" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $yearStartC = $yearStart;
@@ -268,7 +273,7 @@ require_once("../class/Estudiantes.php");
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Año</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="year" id="year2" required>
+                        <select class="form-control  select2" name="year" style="z-index:1051" id="year2" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $yearStartE = $yearStart;
@@ -293,6 +298,9 @@ require_once("../class/Estudiantes.php");
 <!-- notifications -->
 <script src="../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.js"></script>
 <script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
+   <!--select2-->
+<script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
+<script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
 <script>
     // Agregar el evento onchange al select
     var miSelect = document.getElementById('selectEstudiantes');
