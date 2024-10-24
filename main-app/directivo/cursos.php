@@ -137,6 +137,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 																	<?php if(Modulos::validarSubRol(['DT0251'])){?>
 																	<li><a href="../compartido/matriculas-formato3-curso.php?curso=<?=base64_encode($resultado['gra_id']);?>" title="Hoja de matrícula por curso" target="_blank">Hojas de matrícula</a></li>
                                                         			<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0343'])){?>
+																	<li><a href="comportamiento.php?curso=<?=base64_encode($resultado['gra_id']);?>" title="Observaciones de comportamiento registradas">Comportamiento</a></li>
+                                                        			<?php }?>
 																  </ul>
 															  </div>
 														</td>

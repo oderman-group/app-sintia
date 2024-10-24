@@ -279,7 +279,7 @@ class ComponenteFiltro
                 $html .= "</li>";
             }
         }
-        if (!empty($_GET)) {
+        if (!empty($this->filtros) &&  !empty($this->opciones)) {
             $html .= "<li class='nav-item'> <a class='nav-link' href='javascript:void(0);' style='color:{$Plataforma->colorUno}'>|</a></li>
   
             <li class='nav-item'> <a class='nav-link' href='{$_SERVER['PHP_SELF']}' style='color:{$Plataforma->colorUno}'>Quitar filtros</a></li>";

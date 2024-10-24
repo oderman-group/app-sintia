@@ -17,6 +17,7 @@ $permisoIndicadores   = Modulos::validarSubRol(['DT0034']);
 $permisoPlanilla      = Modulos::validarSubRol(['DT0239']);
 $permisoPlanillaNotas = Modulos::validarSubRol(['DT0237']);
 $permisoGenerarInforme = Modulos::validarSubRol(['DT0237']);
+$permisoComportamiento = Modulos::validarSubRol(['DT0343']);
 
 $contReg = 1;
 foreach ($data["data"] as $resultado) {
@@ -203,6 +204,9 @@ foreach ($data["data"] as $resultado) {
 								<?php } ?>
 							</li>
 						<?php } ?>
+						<?php if($permisoComportamiento){?>
+						<li><a href="comportamiento.php?carga=<?=base64_encode($resultado['car_id']);?>" title="Observaciones de comportamiento registradas">Comportamiento</a></li>
+						<?php }?>
 				</ul>
 			</div>
 		</td>
