@@ -622,13 +622,13 @@ var App = function() {
             }, 2000);
         };*/
 
-        wrapperChat.find('.chat-sidebar-chat-user-form .btn').on('click', handleChatMessagePost);
-        wrapperChat.find('.chat-sidebar-chat-user-form .form-control').on('keypress', function(e) {
-            if (e.which == 13) {
-                handleChatMessagePost(e);
-                return false;
-            }
-        });
+        // wrapperChat.find('.chat-sidebar-chat-user-form .btn').on('click', handleChatMessagePost);
+        // wrapperChat.find('.chat-sidebar-chat-user-form .form-control').on('keypress', function(e) {
+        //     if (e.which == 13) {
+        //         handleChatMessagePost(e);
+        //         return false;
+        //     }
+        // });
     };
 
     /********Sidebar slim-menu*********/

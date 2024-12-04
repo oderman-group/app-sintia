@@ -11,6 +11,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
 require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_configuracion.php");
+require_once ROOT_PATH.'/main-app/class/App/Academico/Calificacion.php';
 
 $year = $_SESSION["bd"];
 if (!empty($_GET['year'])) {
@@ -45,6 +46,9 @@ if ($idPaginaInterna == 'DV0032')
 { 
     $configDEV =1; $institucion = "de <b>".$datosConfiguracion['ins_siglas']."</b> (". $year .")"; 
 }
+
+$hayRegistroEnCalificaciones = Academico_Calificacion::contarRegistrosEnCalificaciones() > 0 ? true : false;
+$disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'disabled' : '';
 ?>
 
 	<!--bootstrap -->

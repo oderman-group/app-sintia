@@ -45,18 +45,20 @@ function validarModuloMenu (
 	int $idModulo,
 	string $enlace,
 	string $tipoMenu
-){
-	$opacity = "";
-	$href = $enlace;
-	$modal = "";
-	if(!empty($_SESSION["modulos"]) && !array_key_exists($idModulo, $_SESSION["modulos"])){
+) {
+	$opacity        = "";
+	$href           = $enlace;
+	$modalOnClick   = "";
+
+	if (!empty($_SESSION["modulos"]) && !array_key_exists($idModulo, $_SESSION["modulos"])) {
 		$opacity = 'style="opacity: 0.6;" ';
-		$href = "javascript:void(0);";
+		$href    = "javascript:void(0);";
+
+		// Preguntamos si es subitem de un menú padre.
 		if ($tipoMenu == MENU) {
-			$modal = ' onclick="mostrarModalCompraModulos('.$idModulo.', '.$_SESSION["bd"].')"';
+			$modalOnClick = ' onclick="mostrarModalCompraModulos('.$idModulo.', '.$_SESSION["bd"].')"';
 		}
 	}
 	
-	echo $opacity.'href="'.$href.'"'.$modal;
-};
-?>
+	echo $opacity.'href="'.$href.'"'.$modalOnClick;
+}

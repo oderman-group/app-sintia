@@ -4,6 +4,7 @@ require_once(ROOT_PATH."/main-app/class/Tables/BDT_interface.php");
 
 abstract class BDT_Tablas implements BDT_Interface{
 
+    public static $schema;
     public static $tableName;
 
     /**
@@ -214,7 +215,13 @@ abstract class BDT_Tablas implements BDT_Interface{
      * @return int El número de filas resultantes de la consulta.
      */
     public static function numRows(array $predicado = []) {
-        $consulta   = self::Select($predicado);
+        $schema = BD_ACADEMICA;
+
+        if(property_exists(self::class, 'schema') && !empty(static::$schema)) {
+            $schema = static::$schema;
+        }
+
+        $consulta   = self::Select($predicado, '*', $schema);
         $numRecords = $consulta->rowCount();
 
         return $numRecords;

@@ -1,4 +1,6 @@
 <?php
+include("session.php");
+$idPaginaInterna = 'DT0143';
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
@@ -13,7 +15,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 <div class="panel">
     <header class="panel-heading panel-heading-purple">POR CURSO </header>
     <div class="panel-body">
-        <form name="formularioGuardar" action="../compartido/informe-consolidad-final.php" method="post" target="_blank">
+        <form name="formularioGuardar" action="../compartido/informe-consolidad-final-fast.php" method="post" target="_blank">
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Curso</label>
@@ -38,7 +40,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <select class="form-control  select2" style="width: 100%;" name="grupo">
                         <option value="">Seleccione una opción</option>
                         <?php
-                        $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                        $opcionesConsulta = Grupos::listarGrupos();
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
                         ?>
                             <option value="<?= $opcionesDatos['gru_id']; ?>"><?= $opcionesDatos['gru_id'] . ". " . strtoupper($opcionesDatos['gru_nombre']); ?></option>

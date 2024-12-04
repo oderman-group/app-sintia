@@ -3,6 +3,17 @@ require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Plataforma {
 
+    /**
+     * Colores principales de la plataforma: Encabezado, logo y menú principal.
+     * 
+     * Actualizado: 28 de Noviembre de 2024
+     * 
+     * Principal: #283655
+     * Secundario: #4D648D
+     * 
+     * Archivo: config-general\assets\css\theme\light\theme_style.css
+     */
+
     public $colorUno   = '#6017dc';
     public $colorDos   = '#41c4c4';
     public $colorTres  = '#56ffe4';

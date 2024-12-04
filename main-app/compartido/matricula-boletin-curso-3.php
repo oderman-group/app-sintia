@@ -45,6 +45,7 @@ $estudiantesCache = 'estudiantes_' . base64_decode($_REQUEST["curso"]) . '_' .ba
 if (!empty($_GET["id"])) {
 
     $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro, $year);
+   
     $rows = [];
 
     while ($resultado = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_ASSOC)) {
@@ -69,7 +70,7 @@ if (!empty($_GET["id"])) {
 } else {
     $rows = Estudiantes::estudiantesMatriculadosCache($estudiantesCache);
 }
-
+Utilidades::validarInfoBoletin($rows);
 $tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50;
 
 $modulo = 1;

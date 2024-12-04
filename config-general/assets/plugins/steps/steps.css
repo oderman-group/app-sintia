@@ -303,3 +303,15 @@
 .wizard .steps .current a:active, .wizard .steps .current a:focus, .wizard .steps .current a:hover {
 	background-color: #009688;
 }
+
+.wizard .steps ul li {
+	width: 33.33% !important; /* Ajusta este valor dependiendo de la cantidad de tabs */
+	text-align: center;
+}
+
+/* Asegura que el botón extra mantenga el estilo de Bootstrap */
+.btn-extraButton {
+	color: #fff !important;
+	background-color: #4553E6 !important;
+	border-color: #4553E6 !important;
+}

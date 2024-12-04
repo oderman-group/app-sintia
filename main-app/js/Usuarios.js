@@ -133,3 +133,62 @@ function validarDocumento(datos) {
         $("#btnEnviar").attr('disabled', false); 
     }
 }
+
+function ajaxBloqueoDesbloqueo(datos) {
+    var idR = datos.id;
+    var operacion = 1;
+
+    $('#respuestaGuardar').empty().hide().html("").show(1);
+
+    // Determinar el nuevo estado del checkbox
+    if (document.getElementById(idR).checked) {
+        // Mostrar el modal
+        $('#motivoModal').modal('show');
+
+        // Al confirmar el motivo
+        $('#confirmarMotivo').off('click').on('click', function () {
+            valor = 1;
+            document.getElementById("reg" + idR).style.backgroundColor = "#ff572238";
+            var motivo = document.getElementById("motivo").value.trim();
+
+            if (motivo === "") {
+                alert("Debe ingresar un motivo.");
+                return;
+            }
+
+            // Ocultar el modal
+            $('#motivoModal').modal('hide');
+
+            // Limpiar el contenido del textarea para futuros usos
+            document.getElementById("motivo").value = "";
+
+            datos = "idR=" + (idR) +
+                "&valor=" + (valor) +
+                "&operacion=" + (operacion) +
+                "&motivo=" + encodeURIComponent(motivo);
+
+            enviarAjaxBloqueoDesbloqueo(datos);
+        });
+    } else {
+        valor = 0;
+        document.getElementById("reg" + idR).style.backgroundColor = "white";
+
+        datos = "idR=" + (idR) +
+            "&valor=" + (valor) +
+            "&operacion=" + (operacion)
+
+        enviarAjaxBloqueoDesbloqueo(datos);
+    }
+}
+
+function enviarAjaxBloqueoDesbloqueo(datos) {
+
+    $.ajax({
+        type: "POST",
+        url: "ajax-guardar.php",
+        data: datos,
+        success: function (data) {
+            $('#respuestaGuardar').empty().hide().html(data).show(1);
+        }
+    });
+}

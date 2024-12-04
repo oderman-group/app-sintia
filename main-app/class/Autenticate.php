@@ -8,6 +8,7 @@ require_once(ROOT_PATH."/main-app/class/Usuarios.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios/Directivo.php");
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
 
 class Autenticate {
 
@@ -86,10 +87,9 @@ class Autenticate {
             $urlRedirect = REDIRECT_ROUTE."?inst=".base64_encode($_SESSION["idInstitucion"])."&year=".base64_encode($_SESSION["bd"]);
         }
 
-        setcookie("carga","",time()-3600);
-        setcookie("periodo","",time()-3600);
-        setcookie("cargaE","",time()-3600);
-        setcookie("periodoE","",time()-3600);
+        $this->limpiarCookiesDocentes();
+        $this->limpiarCookiesEstudiantes();
+
         session_destroy();
 
         Conexion::getConexion()->closeConnection();
@@ -100,6 +100,34 @@ class Autenticate {
 
         header("Location:".$urlRedirect);
     }
+
+    /**
+     * Clears the cookies related to teacher sessions.
+     *
+     * This function sets the expiration time of the "carga" and "periodo" cookies to a time in the past, effectively
+     * clearing them from the user's browser. This is typically done when a teacher logs out or when switching institutions.
+     *
+     * @return void
+     */
+    public function limpiarCookiesDocentes() {
+        setcookie("carga", "", time()-3600, "/");
+        setcookie("periodo", "", time()-3600, "/");
+    }
+
+
+    /**
+     * Clears the cookies related to student sessions.
+     *
+     * This function sets the expiration time of the "cargaE" and "periodoE" cookies to a time in the past, effectively
+     * clearing them from the user's browser. This is typically done when a student logs out or when switching institutions.
+     *
+     * @return void
+     */
+    public function limpiarCookiesEstudiantes() {
+        setcookie("cargaE","",time()-3600);
+        setcookie("periodoE","",time()-3600);
+    }
+
 
     /**
      * Switches the current institution for the user session.
@@ -116,6 +144,7 @@ class Autenticate {
      */
     public function switchInstitution(int $idInstitucion, array $datosUsuarioActual): void
     {
+        // Si es la misma Institucion
         if ($_SESSION["idInstitucion"] == $idInstitucion) {
             return;
         }
@@ -137,14 +166,19 @@ class Autenticate {
         $objetInstitution = Instituciones::getDataInstitution($idInstitucion);
         $dataInstitution  = mysqli_fetch_array($objetInstitution, MYSQLI_ASSOC);
         $mySelf           = Directivo::getMyselfByDocument($datosUsuarioActual["uss_documento"], $datosUsuarioActual["uss_tipo"], $idInstitucion);
+        $config           = RedisInstance::getSystemConfiguration(true);
+        $infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($mySelf["uss_id"], $idInstitucion);
 
-        $_SESSION["idInstitucion"]           = $idInstitucion;
-        $_SESSION['id']                      = $mySelf["uss_id"];
-        $_SESSION["inst"]                    = $dataInstitution['ins_bd'];
-        $_SESSION["bd"]                      = $dataInstitution['ins_year_default'];
-        $_SESSION["datosUnicosInstitucion"]  = $dataInstitution;
-        $_SESSION["modulos"]                 = RedisInstance::getModulesInstitution(true);
-        $_SESSION["informacionInstConsulta"] = Instituciones::getGeneralInformationFromInstitution($_SESSION["idInstitucion"], $_SESSION["bd"]);;
-        $_SESSION["datosUsuario"]            = UsuariosPadre::sesionUsuario($_SESSION['id']);
+        $_SESSION["idInstitucion"]                     = $idInstitucion;
+        $_SESSION['id']                                = $mySelf["uss_id"];
+        $_SESSION["inst"]                              = $dataInstitution['ins_bd'];
+        $_SESSION["bd"]                                = $dataInstitution['ins_year_default'];
+        $_SESSION["datosUnicosInstitucion"]            = $dataInstitution;
+        $_SESSION["datosUnicosInstitucion"]["config"]  = $config;
+        $_SESSION["modulos"]                           = RedisInstance::getModulesInstitution(true);
+        $_SESSION["informacionInstConsulta"]           = Instituciones::getGeneralInformationFromInstitution($_SESSION["idInstitucion"], $_SESSION["bd"]);
+        $_SESSION["datosUsuario"]                      = UsuariosPadre::sesionUsuario($_SESSION['id']);
+        $_SESSION["datosUsuario"]["sub_roles"]         = $infoRolesUsuario['datos_sub_roles_usuario'];
+        $_SESSION["datosUsuario"]["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'];
     }
 }

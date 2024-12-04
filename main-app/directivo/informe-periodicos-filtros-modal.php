@@ -1,3 +1,4 @@
+<?php include("session.php");?>
 <?php
 require_once(ROOT_PATH . "/main-app/class/Grupos.php");
 require_once(ROOT_PATH . "/main-app/class/Grados.php");

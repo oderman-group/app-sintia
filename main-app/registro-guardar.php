@@ -2,13 +2,10 @@
 session_start();
 require_once("../conexion.php");
 require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
+require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
 
-if(empty($_POST["suma"]) || (!empty($_POST["suma"]) && md5($_POST["suma"])!=$_POST["sumaReal"])){
-	header("Location:".REDIRECT_ROUTE."/registro.php?error=1&institucion=".base64_encode($_POST["institucion"])."&nombreIns=".base64_encode($_POST["nombreIns"])."&plan=".base64_encode($_POST["plan"])."&nombre=".base64_encode($_POST["nombre"])."&apellidos=".base64_encode($_POST["apellidos"])."&email=".base64_encode($_POST["email"])."&celular=".base64_encode($_POST["celular"])."&usuario=".base64_encode($_POST["usuario"])."&clave=".base64_encode($_POST["clave"]));
-	exit();
-}
+$notificacion = new Notificacion();
 
-$clave = $_POST['clave'];
 $fecha=date("Y-m-d");
 $fechaCompleta = date("Y-m-d H:i:s");
 $nombreInsti = $_POST['nombreIns'];
@@ -32,7 +29,7 @@ try {
 			'ins_email_contacto' => $_POST['email'],
 			'ins_email_institucion' => NULL,
 			'ins_ciudad' => NULL,
-			'ins_enviroment' => 'TEST',
+			'ins_enviroment' => ENVIROMENT,
 			'ins_nit' => NULL,
 			'ins_medio_info' => NULL,
 			'ins_estado' => 1,
@@ -48,7 +45,7 @@ try {
 			'ins_fecha_renovacion' => NULL,
 			'ins_id_plan' => $_POST['plan'],
 			'ins_year_default' => $year,
-			'ins_tipo' => $_POST['institucion']
+			'ins_tipo' => SCHOOL
 		);
 
 		// Crear la consulta SQL
@@ -82,13 +79,6 @@ try {
 	$modulosInsertar = "";
 	foreach ($arrayModulos as $idModulo) {
 		$modulosInsertar .= '('.$idInsti.','.$idModulo.'),';
-	}
-
-	//AÑADIMOS MODULOS ADICIONALES
-	if (!empty($_POST['modAdicional'])){
-		foreach ($_POST['modAdicional'] as $idModuloAdicional) {
-			$modulosInsertar .= '('.$idInsti.','.$idModuloAdicional.'),';
-		}
 	}
 	$modulosInsertar = substr($modulosInsertar,0,-1);
 
@@ -193,7 +183,7 @@ try {
 	try{
 		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2, uss_estado, uss_foto, uss_portada, uss_idioma, uss_tema, uss_perfil, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_celular, uss_genero, uss_ultimo_ingreso, uss_ultima_salida, uss_telefono, uss_bloqueado, uss_tipo_documento, uss_documento, institucion, year) VALUES 
 		('1','sintia-".$idInsti."',SHA1('sintia2014$'),1,'ADMINISTRACIÓN', NULL, 'SINTIA', NULL,0,'default.png','default.png',1,'orange','','Administrador','soporte@plataformasintia.com','2022-12-06',1298,'(313) 591-2073',126,'2023-01-26 05:56:36','2023-01-26 05:55:46','853755',0, NULL, NULL,'".$idInsti."','".$year."'),
-		('2','".$_POST['usuario']."',SHA1('" . $clave . "'),5,'".$_POST['nombre']."',NULL,'".$_POST['apellidos']."',NULL,0,'default.png','default.png',1,'orange','','DIRECTIVO', '".$_POST['email']."',NULL, 1298, '".$_POST['celular']."',126,NULL,NULL,NULL,0, NULL, '".$_POST['usuario']."','".$idInsti."','".$year."'),
+		('2','directivo-".$idInsti."',SHA1('12345678'),5,'".$_POST['nombre']."',NULL,'".$_POST['apellidos']."',NULL,0,'default.png','default.png',1,'orange','','DIRECTIVO', '".$_POST['email']."',NULL, 1298, '".$_POST['celular']."',126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
 		('3','pruebaDC-".$idInsti."',SHA1('12345678'),2,'USUARIO', NULL,'DOCENTE', NULL,0,'default.png','default.png',1,'orange','','DOCENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
 		('4','pruebaAC-".$idInsti."',SHA1('12345678'),3,'USUARIO', NULL,'ACUDIENTE', NULL,0,'default.png','default.png',1,'orange','','ACUDIENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
 		('5','pruebaES-".$idInsti."',SHA1('12345678'),4,'USUARIO', NULL,'ESTUDIANTE', NULL,0,'default.png','default.png',1,'orange','','ESTUDIANTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."');");
@@ -249,14 +239,26 @@ $data = [
 	'usuario_id'       => '2',
 	'usuario_email'    => $_POST['email'],
 	'usuario_nombre'   => $_POST["nombre"]." ".$_POST["apellidos"],
-	'usuario_usuario'  => $_POST["usuario"],
-	'usuario_clave'    => $clave
+	'usuario_usuario'  => "directivo-".$idInsti,
+	'usuario_clave'    => '12345678'
 ];
 $asunto = $_POST["nombre"] . ', Bienvenido a la Plataforma SINTIA';
-$bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-prueba.php';
+$bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-bienvenida.php';
 
 EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute,null,null);
 
+$datos = [
+	'codv_usuario_asociado'    	=> '2',
+	'institucion'       		=> $idInsti,
+	'year'       				=> $year
+];
+
+$predicado = [
+	'codv_id' => $_REQUEST["idRegistro"]
+];
+
+$notificacion->actualizarCodigo($datos, $predicado);
+
 //FIN ENVÍO DE MENSAJE
-echo '<script type="text/javascript">window.location.href="https://plataformasintia.com/es/gracias.php";</script>';
+echo '<script type="text/javascript">window.location.href="bienvenida.php?inf=' . base64_encode(serialize($data)) . '";</script>';
 exit();

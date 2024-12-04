@@ -120,7 +120,20 @@ class Asignaturas {
     {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT car_id FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car WHERE am.mat_area=? AND am.mat_id=car_materia AND car_curso=? AND car_grupo=? AND am.institucion=? AND am.year=? AND car.institucion=am.institucion AND car.year=am.institucion";
+        $sql = "SELECT car_id 
+        FROM 
+            ".BD_ACADEMICA.".academico_materias am, 
+            ".BD_ACADEMICA.".academico_cargas car 
+        WHERE 
+            am.mat_area=? 
+        AND am.mat_id=car_materia 
+        AND car_curso=? 
+        AND car_grupo=? 
+        AND am.institucion=? 
+        AND am.year=? 
+        AND car.institucion=am.institucion 
+        AND car.year=am.institucion
+        ";
 
         $parametros = [$idArea, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
         

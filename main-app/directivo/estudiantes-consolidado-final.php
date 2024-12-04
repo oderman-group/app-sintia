@@ -83,7 +83,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                                     <select class="form-control  select2" name="grupo" required>
                                         <option value="">Seleccione una opción</option>
                                         <?php
-                                        $c = Grupos::traerGrupos($conexion, $config);
+                                        $c = Grupos::listarGrupos();
                                         while ($r = mysqli_fetch_array($c, MYSQLI_BOTH)) {
                                         ?>
                                             <option value="<?php echo $r['gru_id']; ?>"><?php echo $r['gru_nombre']; ?></option>

@@ -16,3 +16,8 @@ librerias/Firebase/key
 mycoverage
 .phpunit.cache
 .phpunit.result.cache
+config-general/errores_local.log
+config-general/errores_dev.log
+config-general/errores_prod.log
+config-general/errores_copy_prod.log
+config-general/errores_default_env.log

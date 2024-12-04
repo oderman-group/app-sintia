@@ -2,6 +2,8 @@
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario_Bloqueado.php");
 
 class UsuariosPadre {
 
@@ -662,21 +664,45 @@ class UsuariosPadre {
     }
 
     /**
-     * Este metodo me bloquea un usuario
-    **/
+     * Bloquea o desbloquea a un usuario en el sistema.
+     *
+     * @param array  $config                Configuración general, incluyendo información de la institución.
+     * @param string $idUsuario             ID del usuario que será bloqueado o desbloqueado.
+     * @param int    $bloquearDesbloquear   Indica si se bloquea (1) o desbloquea (0) al usuario.
+     * @param string $motivo                (Opcional) Motivo por el cual se bloquea al usuario.
+     * @param string $formaBloqueo          (Opcional) Forma de creación del bloqueo. Por defecto: USUARIO_INDIVIDUAL.
+     *
+     * @return void
+     */
     public static function bloquearUsuario(
         array   $config,
         string  $idUsuario,
         int     $bloquearDesbloquear,
-        string  $yearBd = ""
+        string  $motivo = "",
+        string  $formaBloqueo = Administrativo_Usuario_Usuario_Bloqueado::USUARIO_INDIVIDUAL
     ){
-        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $datos = [
+            'uss_bloqueado'    => $bloquearDesbloquear
+        ];
 
-        $sql = "UPDATE ".BD_GENERAL.".usuarios SET uss_bloqueado=? WHERE uss_id=? AND institucion=? AND year=?";
+        $predicado = [
+            'uss_id'        => $idUsuario,
+            'institucion'   => $config['conf_id_institucion'],
+            'year'          => $_SESSION["bd"]
+        ];
+        Administrativo_Usuario_Usuario::Update($datos, $predicado, BD_GENERAL);
 
-        $parametros = [$bloquearDesbloquear, $idUsuario, $config['conf_id_institucion'], $year];
-        
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        if ($bloquearDesbloquear == 1) {
+            $datosMotivo = [
+                'usblo_id_usuario'    => $idUsuario,
+                'usblo_motivo'        => $motivo,
+                'usblo_responsable'   => $_SESSION["id"],
+                'usblo_institucion'   => $config['conf_id_institucion'],
+                'usblo_year'          => $_SESSION["bd"],
+                'usblo_forma_creacion'=> $formaBloqueo
+            ];
+            Administrativo_Usuario_Usuario_Bloqueado::Insert($datosMotivo, BD_ADMIN);
+        }
     }
 
     /**

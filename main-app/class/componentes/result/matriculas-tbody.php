@@ -20,10 +20,10 @@ if (!empty($data["dataTotal"])) {
 }
 
 $contReg               = 1;
-$moduloMediaTecnica    = Modulos::validarModulosActivos($conexion, 10);
-$moduloAdministrativo  = Modulos::validarModulosActivos($conexion, modulo: 4);
-$moduloFinanciero      = Modulos::validarModulosActivos($conexion, modulo: 2);
-$moduloConvivencia     = Modulos::validarModulosActivos($conexion, modulo: 3);
+$moduloMediaTecnica    = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MEDIA_TECNICA);
+$moduloAdministrativo  = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ADMINISTRATIVO);
+$moduloFinanciero      = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_FINANCIERO);
+$moduloConvivencia     = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_DISCIPLINARIO);
 
 $permisoBloquearUsuario   = Modulos::validarSubRol(['DT0087']);
 $permisoCambiarEstado     = Modulos::validarSubRol(['DT0217']);
@@ -103,7 +103,7 @@ foreach ($data["data"] as $resultado) {
 			<?php } elseif (!empty($resultado["mat_compromiso"])) { ?>
 				<a href="javascript:void(0);" title="Bloquear para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-bloquear.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/msn_blocked.png" height="20" width="20"></a>
 			<?php } ?>
-			<?= $resultado["mat_id"]; ?>
+			<?= $resultado["mat_id_nuevo"]; ?>
 		</td>
 		<td>
 			<?php if (!empty($resultado['uss_usuario']) && $permisoBloquearUsuario) { ?>
@@ -121,12 +121,14 @@ foreach ($data["data"] as $resultado) {
 			if ($permisoCambiarEstado) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
 			}
+			if(!empty($resultado['mat_estado_matricula'])){
 			?>
 			<a style="cursor: pointer;" id="estadoMatricula<?= $resultado['mat_id']; ?>" <?= $cambiarEstado; ?>>
 				<span class="<?= $estadosEtiquetasMatriculas[$resultado['mat_estado_matricula']]; ?>">
 					<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
 				</span>
 			</a>
+			<?php } ?>
 		</td>
 		<td><?= $resultado['mat_documento']; ?></td>
 		<?php $nombre = Estudiantes::NombreCompletoDelEstudiante($resultado); ?>
@@ -220,10 +222,10 @@ foreach ($data["data"] as $resultado) {
 							<li><a href="aspectos-estudiantiles.php?idR=<?= base64_encode($resultado['mat_id_usuario']); ?>">Ficha estudiantil</a></li>
 						<?php }
 						if (array_key_exists(2, $arregloModulos) && $moduloFinanciero && $permisoFinanzas) { ?>
-							<li><a href="finanzas-cuentas.php?id=<?= base64_encode($resultado["mat_id_usuario"]); ?>" target="_blank">Estado de cuenta</a></li>
+							<!-- <li><a href="finanzas-cuentas.php?id=<?= base64_encode($resultado["mat_id_usuario"]); ?>" target="_blank">Estado de cuenta</a></li> -->
 						<?php }
 						if (array_key_exists(3, $arregloModulos) && $moduloConvivencia && $permisoReportes) { ?>
-							<li><a href="reportes-lista.php?est=<?= base64_encode($resultado["mat_id_usuario"]); ?>&filtros=<?= base64_encode(1); ?>" target="_blank">Disciplina</a></li>
+							<!-- <li><a href="reportes-lista.php?est=<?= base64_encode($resultado["mat_id_usuario"]); ?>&filtros=<?= base64_encode(1); ?>" target="_blank">Disciplina</a></li> -->
 					<?php }
 					} ?>
 				</ul>

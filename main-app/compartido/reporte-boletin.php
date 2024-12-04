@@ -200,7 +200,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 <?php 
 		$ind ++;
 		$a = $_GET['id'];
-		$reg = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones aac, ".BD_ACADEMICA.".academico_actividades aa WHERE aac.cal_id_actividad in(SELECT act_id FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$fila[3]."' and act_id_tipo='".$indicador['ind_id']."' and act_periodo=".$periodoActual." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}) and aac.cal_id_estudiante=".$_GET['id']." and aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]} AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}");
+		$reg = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_calificaciones aac, ".BD_ACADEMICA.".academico_actividades aa WHERE aac.cal_id_actividad in(SELECT act_id FROM ".BD_ACADEMICA.".academico_actividades WHERE act_id_carga='".$fila[3]."' and act_id_tipo='".$indicador['ind_id']."' and act_periodo=".$periodoActual." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}) and aac.cal_id_estudiante='".$_GET['id']."' and aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$_SESSION["bd"]} AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$_SESSION["bd"]}");
 		$num = mysqli_num_rows($reg);
     	$contador = 0;
 		while ($nota = mysqli_fetch_array($reg, MYSQLI_BOTH)){ //While de notas

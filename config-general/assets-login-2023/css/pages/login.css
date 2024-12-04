@@ -6,6 +6,10 @@
     width: 100vw;
 }
 
+.register-container {
+    grid-template-columns: 60% 40%;
+}
+
 .vertical-center {
     display: flex;
     justify-content: center;
@@ -27,6 +31,31 @@
 .btn-primary {
     background-color: #4553E6;
     border: #4553E6;
+}
+
+.deepPink-bgcolor,
+.label.deepPink-bgcolor {
+    background-color: #6017dc !important;
+    color: #fff !important;
+}
+
+.float{
+	position:fixed;
+	width:60px;
+	height:60px;
+	bottom:40px;
+	right:40px;
+	background-color:#25d366;
+	color:#FFF;
+	border-radius:50px;
+	text-align:center;
+    font-size:30px;
+	box-shadow: 2px 2px 3px #999;
+    z-index:100;
+}
+
+.my-float{
+	margin-top:16px;
 }
 
 .forgot-password,

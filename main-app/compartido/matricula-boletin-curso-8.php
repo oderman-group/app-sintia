@@ -42,6 +42,7 @@ if (!empty($_REQUEST["curso"])) {
 if(!empty($_REQUEST["grupo"])){$filtro .= " AND mat_grupo='".base64_decode($_REQUEST["grupo"])."'";}
 
 $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro,$year);
+Utilidades::validarInfoBoletin($matriculadosPorCurso);
 $numMatriculados = mysqli_num_rows($matriculadosPorCurso);
 $idDirector="";
 while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
