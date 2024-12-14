@@ -93,6 +93,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     $nombreRemitente    = UsuariosPadre::nombreCompletoDelUsuario($resultadoRemitente);
 
                                                     $nombreRecurso = $nombreRemitente;
+                                                    $IDUsuario = $resultado['soli_id_recurso'];
                                                     if ($resultado['soli_id_recurso'] != $resultado['soli_remitente']) {
 
                                                         $predicadoEstudiante = [
@@ -101,10 +102,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             'year'        => $_SESSION['bd']
                                                         ];
                                                     
-                                                        $camposEstudiante    = "mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido";
+                                                        $camposEstudiante    = "mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido, mat_id_usuario";
                                                         $consultaEstudiante  = Administrativo_Usuario_Estudiante::Select($predicadoEstudiante, $camposEstudiante, BD_ACADEMICA);
                                                         $resultadoEstudiante = $consultaEstudiante->fetch(PDO::FETCH_ASSOC);
                                                         $nombreRecurso       = Estudiantes::NombreCompletoDelEstudiante($resultadoEstudiante);
+                                                        $IDUsuario = $resultadoEstudiante['mat_id_usuario'];
                                                     }
 												?>
 												<tr>
@@ -120,9 +122,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 <i class="fa fa-angle-down"></i>
                                                             </button>
                                                             <ul class="dropdown-menu pull-left" role="menu" x-placement="bottom-start">
-                                                                <li data-id-estado="2" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">En proceso</a></li>
-                                                                <li data-id-estado="3" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">Aceptar</a></li>
-                                                                <li data-id-estado="4" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">Rechazar</a></li>
+                                                                <li data-id-estado="2" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">En proceso</a></li>
+                                                                <li data-id-estado="3" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">Aceptar</a></li>
+                                                                <li data-id-estado="4" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">Rechazar</a></li>
                                                             </ul>
                                                         </div>
                                                     </td>
@@ -140,11 +142,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     </div>
                 </div>
             </div>
-            <!-- end page content -->
-             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
-        <?php include("../compartido/footer.php");?>
+        <?php include(ROOT_PATH."/main-app/compartido/footer.php");?>
     </div>
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
