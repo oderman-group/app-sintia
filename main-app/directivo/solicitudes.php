@@ -16,7 +16,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 </head>
 <!-- END HEAD -->
-<?php include("../compartido/body.php");?>
+<?php
+	include(ROOT_PATH."/main-app/compartido/body.php");
+	include("usuarios-bloquear-modal.php");
+?>
     <div class="page-wrapper">
         <?php include(ROOT_PATH."/main-app/compartido/encabezado.php");?>
 		
