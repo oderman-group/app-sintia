@@ -74,6 +74,7 @@ if(!isset($_GET['nodb'])) {
                             <?php include("../config-general/mensajes-informativos.php"); ?>
 		                        <input type="hidden" name="urlDefault" value="<?php if(isset($_GET["urlDefault"])) echo $_GET["urlDefault"];?>" />
                                 <input type="hidden" name="directory"  value="<?php if(isset($_GET["directory"]))  echo $_GET["directory"]; ?>" />
+                                <input type="hidden" id="intentosFallidos" name="intentosFallidos"  value="0" />
                                 <img class="mb-4" src="<?=$logoIndex;?>" width="<?=$logoWidth;?>">
                             
                             <div class=" form-floating mt-3">
@@ -171,6 +172,28 @@ if(!isset($_GET['nodb'])) {
                 }
                 
             });
+
+            // Obtener los parámetros de la URL
+            const params = new URLSearchParams(window.location.search);
+            const error = params.get('error');
+
+            // Verificar si el parámetro "error" tiene el valor "10" o "3"
+            if (error === '10' || error === '2') {
+                // Recuperar el valor de "intentos_fallidos" de localStorage
+                let intentosFallidos = localStorage.getItem('intentos_fallidos');
+
+                // Si ya existe en localStorage, incrementar su valor
+                if (intentosFallidos !== null) {
+                    intentosFallidos = parseInt(intentosFallidos, 10) + 1;
+                } else {
+                    // Si no existe, inicializar con 0
+                    intentosFallidos = 1;
+                }
+
+                // Guardar el nuevo valor en localStorage
+                localStorage.setItem('intentos_fallidos', intentosFallidos);
+                document.getElementById('intentosFallidos').value = intentosFallidos;
+            }
         });
     </script>
     <!-- Core theme JS-->
