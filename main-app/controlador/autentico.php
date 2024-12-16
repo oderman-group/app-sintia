@@ -25,6 +25,8 @@ if(!empty($_GET)) {
 try {
 	$usrE = $auth->getUserData($_POST["Usuario"], $_POST["Clave"]);
 } catch (Exception $e) {
+	mysqli_query($conexionBaseDatosServicios, "UPDATE " . BD_GENERAL . ".usuarios SET uss_intentos_fallidos='" . ($_POST["intentosFallidos"] + 1) . "' WHERE uss_usuario='" . trim($_POST["Usuario"]) . "' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL");
+
 	header("Location:".REDIRECT_ROUTE."/index.php?error=10&genericError=".$e->getMessage());
 	exit();
 }
