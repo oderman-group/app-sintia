@@ -22,6 +22,11 @@ if(!empty($_GET)) {
 	$_POST["directory"] 	= 	base64_decode($_GET["directory"]);
 }
 
+if($_POST['intentosFallidos']>=3 && md5($_POST["suma"]) != $_POST["sumaReal"]){
+	header("Location:".REDIRECT_ROUTE."/index.php?error=3&inst=".base64_encode($_POST["bd"]));
+	exit();
+}
+
 try {
 	$usrE = $auth->getUserData($_POST["Usuario"], $_POST["Clave"]);
 } catch (Exception $e) {
@@ -70,11 +75,6 @@ if($numE==0){
 	exit();
 }
 $usrE = mysqli_fetch_array($rst_usrE, MYSQLI_BOTH);
-
-if($usrE['uss_intentos_fallidos']>=3 && md5($_POST["suma"]) != $_POST["sumaReal"]){
-	header("Location:".REDIRECT_ROUTE."/index.php?error=3&inst=".base64_encode($_POST["bd"]));
-	exit();
-}
 
 $rst_usr = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_usuario='".trim($_POST["Usuario"])."' AND uss_clave=SHA1('".$_POST["Clave"]."') AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL AND TRIM(uss_clave)!='' AND uss_clave IS NOT NULL");
 
