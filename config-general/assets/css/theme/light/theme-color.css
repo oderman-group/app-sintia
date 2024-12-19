@@ -15,7 +15,7 @@
 /*
   --white-color: #ffffff;
   --dark-color: #222c3c;
-  --blue-color: #1880c9;
+  --blue-color: #283655;
   --indigo-color: #6017dc;
   --cyan-color: #41c4c4;
   --green-color: #3FCC7E;
@@ -329,14 +329,14 @@
 
 /* Blue sidebar color */
 .blue-sidebar-color .sidemenu-container {
-    background-color: #1880c9;
+    background-color: #283655;
     margin-top: 45px;
 }
 .blue-sidebar-color .sidemenu-container .sidemenu>li.active.open>a,
 .blue-sidebar-color .sidemenu-container .sidemenu>li.active>a,
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li.active.open>a,
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li.active>a {
-    background-color: #186fad;
+    background-color: #4D648D;
     border-top-color: transparent;
     color: #fff;
 }
@@ -355,7 +355,7 @@
 .blue-sidebar-color .sidemenu-container .sidemenu>li:hover>a, 
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li.open>a, 
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a {
-    background-color: #1880c9;
+    background-color: #283655;
     color: #fff;
 }
 .blue-sidebar-color .sidemenu-container .sidemenu>li.open>a>.arrow.open:before, 
@@ -374,7 +374,7 @@
 }
 .blue-sidebar-color .sidemenu-container .sidemenu .sub-menu, 
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu{
-	    background-color: #186fad
+	    background-color: #4D648D
 }
 .blue-sidebar-color .sidemenu-container .sidemenu .sub-menu>li>a, 
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li>a{
@@ -403,7 +403,7 @@
 	color: #fff;
 }
 .blue-sidebar-color .page-container{
-	background-color : #1880c9;
+	background-color : #283655;
 }
 .blue-sidebar-color .sidemenu-container .sidemenu>li.heading>h3, 
 .blue-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li.heading>h3{
@@ -771,7 +771,7 @@
 	background: #222c3c;
 }
 .logo-blue .page-header.navbar .page-logo{
-	background: #1880c9;
+	background: #283655;
 }
 .logo-indigo .page-header.navbar .page-logo{
 	background: #6017dc;
@@ -933,12 +933,12 @@
 	color:#fff;
 }
 .header-dark .navbar-custom {
-    background: #343d4c;
+    background: #283655;
 }
 
 /* header blue */
 .header-blue .page-header.navbar{
-	background-color: #1880c9;
+	background-color: #283655;
 }
 .header-blue form.search-form-opened .btn.submit {
     color: #fff;
@@ -1007,7 +1007,7 @@
 }
 .header-blue .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu {
     box-shadow: 5px 5px rgba(63, 79, 98, .2);
-    background: #186fad;
+    background: #4D648D;
 }
 .header-blue .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li>a,
 .header-blue .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li>a>i {

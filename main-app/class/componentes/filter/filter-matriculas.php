@@ -17,6 +17,10 @@ if (!empty($filtrosDecode['estadoM'])) {
     $filtro .= " AND mat_estado_matricula='" . $filtrosDecode['estadoM'] . "'";
 }
 
+if (!empty($filtrosDecode['grupo'])) {
+    $filtro .= " AND mat_grupo ='" . $filtrosDecode['grupo'] . "'";
+}
+
 $filtroLimite = 'LIMIT 0'.','.$config['conf_num_registros'];
 
 $result = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual,$valor);

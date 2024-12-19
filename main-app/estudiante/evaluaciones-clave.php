@@ -16,6 +16,7 @@ require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");?>
     <title>Plataforma SINTIA</title>
     <!-- google font -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 	<!-- icons -->
     <link href="fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
 	<link href="fonts/material-design-icons/material-icon.css" rel="stylesheet" type="text/css" />

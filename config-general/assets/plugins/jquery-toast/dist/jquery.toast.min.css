@@ -9,7 +9,7 @@
 	width: 250px;
 	pointer-events: none !important;
 	letter-spacing: normal;
-	z-index: 9000 !important
+	z-index: 10100 !important
 }
 
 .jq-toast-wrap.bottom-left {

@@ -137,7 +137,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
                                                 <select class="form-control  select2" name="grupo" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
 													<?php
-                        							$opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                        							$opcionesConsulta = Grupos::listarGrupos();
 													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 														$select = '';
 														if($opcionesDatos['gru_id']==$datosEditar['car_grupo']) $select = 'selected';

@@ -318,6 +318,7 @@ class Movimientos {
                 is_deleted=0 
             AND pay.institucion = {$config['conf_id_institucion']} 
             AND pay.year = {$_SESSION["bd"]}
+            ORDER BY pay.id DESC
             ");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -371,6 +372,7 @@ class Movimientos {
     {
 
         $comprobante= '';
+
         if (!empty($FILES['comprobante']['name'])) {
             $destino = ROOT_PATH.'/main-app/files/comprobantes';
             $explode = explode(".", $FILES['comprobante']['name']);
@@ -385,6 +387,7 @@ class Movimientos {
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
+
         $idRegistro = mysqli_insert_id($conexion);
 
         return $idRegistro;

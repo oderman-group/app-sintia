@@ -13,7 +13,7 @@ $contenidoMsj = '
 
 	<p>
 		<h3 style="text-align: center;">
-		<a href="https://demo.plataformasintia.com/app-sintia/main-app/index.php?inst='.$data['institucion_id'].'" target="_blank" style="color: #41c4c4; font-weight:bold;">ACCEDER A MI CUENTA DE DIRECTIVO AHORA</a>
+		<a href="'.REDIRECT_ROUTE.'/index.php?inst='.base64_encode($data['institucion_id']).'&year='.base64_encode($data['institucion_agno)']).'" target="_blank" style="color: #41c4c4; font-weight:bold;">ACCEDER A MI CUENTA DE DIRECTIVO AHORA</a>
 		</h3>
 	</p>
 

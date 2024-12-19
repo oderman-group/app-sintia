@@ -3,7 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php"); ?>
 <?php include("../compartido/head.php");
 require_once '../class/Estudiantes.php';
-require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
 
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -22,40 +22,14 @@ if (!Modulos::validarPermisoEdicion()) {
 <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
 
 <!-- data tables -->
-<link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
-
-
-<script type="text/javascript">
-	function guardarAjax(datos) {
-		var idR = datos.id;
-		var valor = 0;
-
-		if (document.getElementById(idR).checked) {
-			valor = 1;
-			document.getElementById("reg" + idR).style.backgroundColor = "#ff572238";
-		} else {
-			valor = 0;
-			document.getElementById("reg" + idR).style.backgroundColor = "white";
-		}
-		var operacion = 1;
-
-		$('#respuestaGuardar').empty().hide().html("").show(1);
-		datos = "idR=" + (idR) +
-			"&valor=" + (valor) +
-			"&operacion=" + (operacion);
-		$.ajax({
-			type: "POST",
-			url: "ajax-guardar.php",
-			data: datos,
-			success: function(data) {
-				$('#respuestaGuardar').empty().hide().html(data).show(1);
-			}
-		});
-	}
-</script>
+<link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css"
+	rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
-<?php include("../compartido/body.php"); ?>
+<?php
+	include("../compartido/body.php");
+	include("usuarios-bloquear-modal.php");
+?>
 <div class="page-wrapper">
 	<?php include("../compartido/encabezado.php"); ?>
 
@@ -82,15 +56,17 @@ if (!Modulos::validarPermisoEdicion()) {
 							<div class="col-md-12">
 								<?php include("../../config-general/mensajes-informativos.php");
 								// require "../../config-general/google-translate-php-master/vendor/autoload.php";
-                                // use Stichoza\GoogleTranslate\GoogleTranslate;
+								// use Stichoza\GoogleTranslate\GoogleTranslate;
 								// $tr = new GoogleTranslate();
 								// $tr->setSource('es'); // Traducir del inglés
 								// $tr->setTarget('en'); // Al español
 								// echo $tr->translate('Más Acciones'); // Hola Mundo
-
+								
 								?>
 
-								<?php include("includes/barra-superior-usuarios.php"); ?>
+								<?php include("includes/barra-superior-usuarios.php");
+
+								?>
 
 								<div class="card card-topline-purple">
 									<div class="card-head">
@@ -107,7 +83,8 @@ if (!Modulos::validarPermisoEdicion()) {
 											<div class="col-sm-12">
 												<div class="btn-group">
 													<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0123'])) { ?>
-														<a href="usuarios-agregar.php" id="addRow" class="btn deepPink-bgcolor">
+														<a href="usuarios-agregar.php" id="addRow"
+															class="btn deepPink-bgcolor">
 															Agregar nuevo <i class="fa fa-plus"></i>
 														</a>
 													<?php } ?>
@@ -134,145 +111,129 @@ if (!Modulos::validarPermisoEdicion()) {
 														<th><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
 													</tr>
 												</thead>
+												<tbody>
+													<?php
+													$permisoHistorial = Modulos::validarSubRol(['DT0327']);
+													$permisoPlantilla = Modulos::validarSubRol(['DT0239']);
+													$tipo = empty($_GET['tipo']) ? "" : base64_decode($_GET['tipo']);
+													$filtroLimite = '';
+													$selectSql = [
+														"uss_id",
+														"uss_usuario",
+														"uss_email",
+														"uss_fecha_nacimiento",
+														"uss_nombre",
+														"uss_nombre2",
+														"uss_foto",
+														"uss_estado",
+														"uss_apellido1",
+														"uss_ultimo_ingreso",
+														"uss_apellido2",
+														"uss_tipo",
+														"uss_permiso1",
+														"pes_nombre",
+														"uss_bloqueado",
+														"uss_ultimo_ingreso"
+													];
+													$tipos = empty($tipo) ? [] : [$tipo];
+													$lista = Usuarios::listar($selectSql, $tipos, "uss_id");
+													$contReg = 1;
+													
+													echo '<script type="text/javascript">document.getElementById("overlay").style.display = "flex";</script>';
+													foreach ($lista as $usuario) {
+														$bgColor = '';
+														if ($usuario['uss_bloqueado'] == 1)
+															$bgColor = '#ff572238';
 
-
-
-												<?php
-												include("includes/consulta-paginacion-usuarios.php");
-												try {
-													$consulta = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios uss
-														INNER JOIN " . $baseDatosServicios . ".general_perfiles ON pes_id=uss_tipo
-														WHERE uss_id!='{$_SESSION["id"]}' AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]} $filtro
-														ORDER BY uss_id
-														LIMIT $inicio,$registros;");
-												} catch (Exception $e) {
-													include("../compartido/error-catch-to-report.php");
-												}
-												$contReg = 1;
-												$bloqueado = array("NO", "SI");
-												while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-													if ($resultado['uss_tipo'] == TIPO_DEV && $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
-														continue;
-													}
-
-													$mostrarNumAcudidos = '';
-													if ($resultado['uss_tipo'] == TIPO_ACUDIENTE) {
-														try {
-															$consultaUsuarioAcudiente = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios_por_estudiantes upe
-																INNER JOIN " . BD_ACADEMICA . ".academico_matriculas mat ON mat_id=upe_id_estudiante AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-																WHERE upe_id_usuario='" . $resultado['uss_id'] . "' AND upe_id_estudiante IS NOT NULL AND upe.institucion={$config['conf_id_institucion']} AND upe.year={$_SESSION["bd"]}");
-														} catch (Exception $e) {
-															include("../compartido/error-catch-to-report.php");
+														$cheked = '';
+														if ($usuario['uss_bloqueado'] == 1) {
+															$cheked = 'checked';
 														}
-														$num = mysqli_num_rows($consultaUsuarioAcudiente);
 
-														$mostrarNumAcudidos = '<br><span style="font-size:9px; color:darkblue">(' . $num . ' Acudidos)</span>';
-													}
-
-													$backGroundMatricula = '';
-													if ($resultado['uss_tipo'] == TIPO_ESTUDIANTE) {
-														$tieneMatricula = Estudiantes::obtenerDatosEstudiantePorIdUsuario($resultado['uss_id']);
-														if (empty($tieneMatricula)) {
-															$backGroundMatricula = 'style="background-color:gold;" class="animate__animated animate__pulse animate__delay-2s" data-toggle="tooltip" data-placement="right" title="Este supuesto estudiante no cuenta con un registro en las matrículas."';
+														$mostrarNumAcudidos = '';
+														if (!empty($usuario['cantidad_acudidos']) && $usuario['uss_tipo'] == TIPO_ACUDIENTE ) {
+															$mostrarNumAcudidos = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_acudidos'] . ')  Acudidos)</span>';
 														}
-													}
 
-													$arrayEnviar = array("tipo" => 1, "descripcionTipo" => "Para ocultar fila del registro.");
-													$arrayDatos = json_encode($arrayEnviar);
-													$objetoEnviar = htmlentities($arrayDatos);
+														$mostrarNumCargas = '';
+														if (!empty($usuario['cantidad_cargas'])  && $usuario['uss_tipo'] == TIPO_DOCENTE) {
+															$numCarga         =  $usuario['cantidad_cargas'];
+															$mostrarNumCargas = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_cargas'] . ' Cargas)</span>';
+														}
 
-													$bgColor = '';
-													if ($resultado['uss_bloqueado'] == 1) $bgColor = '#ff572238';
+														
 
-													$cheked = '';
-													if ($resultado['uss_bloqueado'] == 1) {
-														$cheked = 'checked';
-													}
+														$managerPrimary = '';
+														if ($usuario['uss_permiso1'] == CODE_PRIMARY_MANAGER && $usuario['uss_tipo'] == TIPO_DIRECTIVO) {
+															$managerPrimary = '<i class="fa fa-user-circle text-primary" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Director principal"></i> ';
+														}
 
+														$fotoUsuario = $usuariosClase->verificarFoto($usuario['uss_foto']);
+														$estadoUsuario = !empty($usuario['uss_estado']) ? $opcionEstado[$usuario['uss_estado']] : '';
 
-													$mostrarNumCargas = '';
-													if ($resultado['uss_tipo'] == TIPO_DOCENTE) {
-														$consultaNumCarga = CargaAcademica::traerCargasDocentes($config, $resultado['uss_id']);
-														$numCarga = mysqli_num_rows($consultaNumCarga);
-
-														$mostrarNumCargas = '<br><span style="font-size:9px; color:darkblue">(' . $numCarga . ' Cargas)</span>';
-													}
-
-													try {
-														$consultaUsuariosRepetidos = mysqli_query($conexion, "SELECT count(uss_usuario) as rep 
-															FROM " . BD_GENERAL . ".usuarios 
-															WHERE uss_usuario='" . $resultado['uss_usuario'] . "' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-															GROUP BY uss_usuario
-															");
-													} catch (Exception $e) {
-														include("../compartido/error-catch-to-report.php");
-													}
-													$usuarioRepetido = mysqli_fetch_array($consultaUsuariosRepetidos, MYSQLI_BOTH);
-													$avisoRepetido = null;
-													if ($usuarioRepetido['rep'] > 1) $avisoRepetido = 'style="background-color:gold;"';
-
-													$fotoUsuario = $usuariosClase->verificarFoto($resultado['uss_foto']);
-
-													$estadoUsuario = !empty($resultado['uss_estado']) ? $opcionEstado[$resultado['uss_estado']] : '';
-
-													$infoTooltip = "
+														$infoTooltip = "
 														<p>
 															<img src='{$fotoUsuario}' class='img-thumbnail' width='120px;' height='120px;'>
 														</p>
 														<b>Sesión:</b><br>
 														{$estadoUsuario}<br>
 														<b>Último ingreso:</b><br>
-														{$resultado['uss_ultimo_ingreso']}<br><br>
+														{$usuario['uss_ultimo_ingreso']}<br><br>
 														<b>Email:</b><br>
-														{$resultado['uss_email']}<br>
+														{$usuario['uss_email']}<br>
 														<b>Fecha de nacimiento:</b><br>
-														{$resultado['uss_fecha_nacimiento']}
+														{$usuario['uss_fecha_nacimiento']}
 														";
-
-													$managerPrimary = '';
-													if ($resultado['uss_permiso1'] == CODE_PRIMARY_MANAGER && $resultado['uss_tipo'] == TIPO_DIRECTIVO) {
-														$managerPrimary = '<i class="fa fa-user-circle text-primary" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Director principal"></i> ';
-													}
-												?>
-													<tr id="reg<?= $resultado['uss_id']; ?>" style="background-color:<?= $bgColor; ?>;">
-														<td><?= $contReg; ?></td>
-														<td>
-															<?php if (Modulos::validarPermisoEdicion() && ($resultado['uss_tipo'] != TIPO_DIRECTIVO || $resultado['uss_permiso1'] != CODE_PRIMARY_MANAGER)) { ?>
-																<div class="input-group spinner col-sm-10">
-																	<label class="switchToggle">
-																		<input type="checkbox" id="<?= $resultado['uss_id']; ?>" name="bloqueado" value="1" onChange="guardarAjax(this)" <?= $cheked; ?> <?= $disabledPermiso; ?>>
-																		<span class="slider red round"></span>
-																	</label>
-																</div>
-															<?php } ?>
-														</td>
-														<td><?= $resultado['uss_id']; ?></td>
-														<td <?= $avisoRepetido ?>>
-															<?= $resultado['uss_usuario']; ?>
-															<?php if ($usuarioRepetido['rep'] > 1) {
-																echo " (" . $usuarioRepetido['rep'] . ")";
-															} ?>
-														</td>
-														<td><?= $managerPrimary; ?><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="<?= UsuariosPadre::nombreCompletoDelUsuario($resultado); ?>" data-content="<?= $infoTooltip; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= UsuariosPadre::nombreCompletoDelUsuario($resultado); ?></a></td>
-														<td <?= $backGroundMatricula; ?>><?= $resultado['pes_nombre'] . "" . $mostrarNumCargas . "" . $mostrarNumAcudidos; ?></td>
-														<td>
-															<span style="font-size: 11px;"><?= $resultado['uss_ultimo_ingreso']; ?></span>
-														</td>
-
-														<td>
-															<div class="btn-group">
-																<button type="button" class="btn btn-primary">Acciones</button>
-																<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-																	<i class="fa fa-angle-down"></i>
-																</button>
-																<ul class="dropdown-menu" role="menu">
+														?>
+														<tr id="reg<?= $usuario['uss_id']; ?>"
+															style="background-color:<?= $bgColor; ?>;">
+															<td><?= $contReg; ?></td>
+															<td>
+																<?php if (Modulos::validarPermisoEdicion() && ($usuario['uss_tipo'] != TIPO_DIRECTIVO || $usuario['uss_permiso1'] != CODE_PRIMARY_MANAGER)) { ?>
+																	<div class="input-group spinner col-sm-10">
+																		<label class="switchToggle">
+																			<input type="checkbox"
+																				id="<?= $usuario['uss_id']; ?>" name="bloqueado"
+																				value="1" onChange="ajaxBloqueoDesbloqueo(this)"
+																				<?= $cheked; ?> 		<?= $disabledPermiso; ?>>
+																			<span class="slider red round"></span>
+																		</label>
+																	</div>
+																<?php } ?>
+															</td>
+															<td><?= $usuario['uss_id']; ?></td>
+															<td><?= $usuario['uss_usuario']; ?></td>
+															<td><?= $managerPrimary; ?>
+																<a tabindex="0" role="button" data-toggle="popover"
+																	data-trigger="focus"
+																	title="<?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>"
+																	data-content="<?= $infoTooltip; ?>" data-html="true"
+																	data-placement="top"
+																	style="border-bottom: 1px dotted #000;"><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?></a>
+															</td>
+															<td <?= $backGroundMatricula; ?>>
+																<?= $usuario['pes_nombre'] . "" . $mostrarNumCargas . "" . $mostrarNumAcudidos; ?>
+															</td>
+															<td><span
+																	style="font-size: 11px;"><?= $usuario['uss_ultimo_ingreso']; ?></span>
+															</td>
+															<td>
+																<div class="btn-group">
+																	<button type="button"
+																		class="btn btn-primary">Acciones</button>
+																	<button type="button"
+																		class="btn btn-primary dropdown-toggle m-r-20"
+																		data-toggle="dropdown">
+																		<i class="fa fa-angle-down"></i>
+																	</button>
+																	<ul class="dropdown-menu" role="menu">
 																	<?php if (Modulos::validarPermisoEdicion()) { ?>
 
 																		<?php
-																		if (($resultado['uss_tipo'] == TIPO_ESTUDIANTE && !empty($tieneMatricula)) || $resultado['uss_tipo'] != TIPO_ESTUDIANTE) {
-																			if (Modulos::validarSubRol(['DT0124']) && ($resultado['uss_tipo'] != TIPO_DIRECTIVO || $resultado['uss_permiso1'] != CODE_PRIMARY_MANAGER)) {
+																		if (($usuario['uss_tipo'] == TIPO_ESTUDIANTE && !empty($tieneMatricula)) || $usuario['uss_tipo'] != TIPO_ESTUDIANTE) {
+																			if (Modulos::validarSubRol(['DT0124']) && ($usuario['uss_tipo'] != TIPO_DIRECTIVO || $usuario['uss_permiso1'] != CODE_PRIMARY_MANAGER)) {
 																		?>
-																				<li><a href="usuarios-editar.php?id=<?= base64_encode($resultado['uss_id']); ?>">Editar</a></li>
+																				<li><a href="usuarios-editar.php?id=<?= base64_encode($usuario['uss_id']); ?>">Editar</a></li>
 																		<?php }
 																		}
 																		?>
@@ -280,43 +241,46 @@ if (!Modulos::validarPermisoEdicion()) {
 
 																		<?php
 																		if (
-																			($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $resultado['uss_tipo'] != TIPO_DEV) ||
-																			($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $resultado['uss_tipo'] != TIPO_DEV && $resultado['uss_tipo'] != TIPO_DIRECTIVO && !isset($_SESSION['admin']) && !isset($_SESSION['devAdmin']))
+																			($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
+																			($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $usuario['uss_tipo'] != TIPO_DEV && $usuario['uss_tipo'] != TIPO_DIRECTIVO && !isset($_SESSION['admin']) && !isset($_SESSION['devAdmin']))
 																		) {
-																			if ($resultado['uss_tipo'] == TIPO_ESTUDIANTE && !empty($tieneMatricula) || $resultado['uss_tipo'] != TIPO_ESTUDIANTE) {
+																			if ($usuario['uss_tipo'] == TIPO_ESTUDIANTE && !empty($tieneMatricula) || $usuario['uss_tipo'] != TIPO_ESTUDIANTE) {
 																		?>
-																				<li><a href="auto-login.php?user=<?= base64_encode($resultado['uss_id']); ?>&tipe=<?= base64_encode($resultado['uss_tipo']); ?>">Autologin</a></li>
+																				<li><a href="auto-login.php?user=<?= base64_encode($usuario['uss_id']); ?>&tipe=<?= base64_encode($usuario['uss_tipo']); ?>">Autologin</a></li>
 																		<?php
 																			}
 																		}
 																		?>
 
-																		<?php if ($resultado['uss_tipo'] == TIPO_ACUDIENTE && Modulos::validarSubRol(['DT0137'])) { ?>
-																			<li><a href="usuarios-acudidos.php?id=<?= base64_encode($resultado['uss_id']); ?>">Acudidos</a></li>
+																		<?php if ($usuario['uss_tipo'] == TIPO_ACUDIENTE && Modulos::validarSubRol(['DT0137'])) { ?>
+																			<li><a href="usuarios-acudidos.php?id=<?= base64_encode($usuario['uss_id']); ?>">Acudidos</a></li>
 																		<?php } ?>
 
-																		<?php if ((isset($numCarga) && $numCarga == 0 && $resultado['uss_tipo'] == TIPO_DOCENTE) || $resultado['uss_tipo'] == TIPO_ACUDIENTE || ($resultado['uss_tipo'] == TIPO_ESTUDIANTE && empty($tieneMatricula)) || $resultado['uss_tipo'] == TIPO_CLIENTE || $resultado['uss_tipo'] == TIPO_PROVEEDOR) { ?>
-																			<li><a href="javascript:void(0);" title="<?= $objetoEnviar; ?>" name="usuarios-eliminar.php?id=<?= base64_encode($resultado['uss_id']); ?>" onClick="deseaEliminar(this)" id="<?= $resultado['uss_id']; ?>">Eliminar</a></li>
+																		<?php if ((isset($numCarga) && $numCarga == 0 && $usuario['uss_tipo'] == TIPO_DOCENTE) || $usuario['uss_tipo'] == TIPO_ACUDIENTE || ($usuario['uss_tipo'] == TIPO_ESTUDIANTE && empty($tieneMatricula)) || $usuario['uss_tipo'] == TIPO_CLIENTE || $usuario['uss_tipo'] == TIPO_PROVEEDOR) { ?>
+																			<li><a href="javascript:void(0);" title="<?= $objetoEnviar; ?>" name="usuarios-eliminar.php?id=<?= base64_encode($usuario['uss_id']); ?>" onClick="deseaEliminar(this)" id="<?= $usuario['uss_id']; ?>">Eliminar</a></li>
 																		<?php } ?>
 																	<?php } ?>
 
-																	<?php if ($resultado['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && Modulos::validarSubRol(['DT0239'])) { ?>
-																		<li><a href="../compartido/planilla-docentes.php?docente=<?= base64_encode($resultado['uss_id']); ?>" target="_blank">Planillas de las cargas</a></li>
+																	<?php if ($usuario['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && $permisoPlantilla) { ?>
+																		<li><a href="../compartido/planilla-docentes.php?docente=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Planillas de las cargas</a></li>
 																	<?php } ?>
 
-																	<?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $resultado['uss_tipo'] != TIPO_DEV) ||
-																			($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $resultado['uss_tipo'] != TIPO_DEV && $resultado['uss_tipo'] != TIPO_DIRECTIVO) && Modulos::validarSubRol(['DT0327'])) { ?>
-																		<li><a href="../compartido/informe-historial-ingreso.php?id=<?= base64_encode($resultado['uss_id']); ?>" target="_blank">Historial de Ingreso</a></li>
+																	<?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
+																			($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $usuario['uss_tipo'] != TIPO_DEV && $usuario['uss_tipo'] != TIPO_DIRECTIVO) && $permisoHistorial) { ?>
+																		<li><a href="../compartido/informe-historial-ingreso.php?id=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Historial de Ingreso</a></li>
 																	<?php } ?>
 
 																</ul>
-															</div>
-														</td>
-													</tr>
-												<?php
-													$contReg++;
-												}
-												?>
+																</div>
+															</td>
+
+														</tr>
+														<?php $contReg++;
+													}
+													echo '<script type="text/javascript">document.getElementById("overlay").style.display = "none";</script>';
+													?>
+
+												</tbody>
 
 											</table>
 
@@ -324,10 +288,6 @@ if (!Modulos::validarPermisoEdicion()) {
 
 									</div>
 								</div>
-								<?php 
-								include("enlaces-paginacion.php"); 
-								$consulta->free();
-								?>
 							</div>
 
 
@@ -345,6 +305,7 @@ if (!Modulos::validarPermisoEdicion()) {
 	<!-- end page container -->
 	<?php include("../compartido/footer.php"); ?>
 </div>
+<script src="../js/Usuarios.js" ></script>
 <!-- start js include path -->
 <script src="../../config-general/assets/plugins/jquery/jquery.min.js"></script>
 <script src="../../config-general/assets/plugins/popper/popper.js"></script>
@@ -369,7 +330,7 @@ if (!Modulos::validarPermisoEdicion()) {
 <!-- end js include path -->
 
 <script>
-	$(function() {
+	$(function () {
 		$('[data-toggle="popover"]').popover();
 	});
 

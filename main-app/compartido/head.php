@@ -61,6 +61,7 @@ if (!empty($datosPaginaActual)) {
 	<link rel="stylesheet" type="text/css" href="./../../librerias/modal-img-styles/estilos_redimencionar_fotos.css">
     <!-- google font -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
+	<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 	<!-- icons -->
     <link href="./../../config-general/fonts/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
     <link href="./../../config-general/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>

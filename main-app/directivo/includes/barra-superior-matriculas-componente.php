@@ -18,6 +18,12 @@ if (!empty($_GET['estadoM'])) {
   $filtro .= " AND mat_estado_matricula='" . $estadoM . "'";  
 }
 
+$grupo = "";
+if (!empty($_GET['grupo'])) {
+  $grupo = base64_decode($_GET['grupo']);
+  $filtro .= " AND mat_grupo ='" .  $grupo . "'";
+}
+
 $opciones[0] = [
   ComponenteFiltro::COMPB_OPCIONES_TEXTO   => 'Promedios estudiantiles',
   ComponenteFiltro::COMPB_OPCIONES_URL     => 'estudiantes-promedios.php',
@@ -101,14 +107,29 @@ while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
   $filtroCurso[$count] = [
     ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => $grado['gra_id'],
     ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => $grado['gra_nombre'],
-    ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($estadoM) . "&curso=" . base64_encode($grado['gra_id'])
+    ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($estadoM) . "&curso=" . base64_encode($grado['gra_id'])."&grupo=". base64_encode($grupo) 
   ];
   $count++;
 }
 $filtroCurso[$count] = [
   ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'VER TODOS',
-  ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF']. "?estadoM=" . base64_encode($estadoM) . "&curso=",
+  ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF']. "?estadoM=" . base64_encode($estadoM)."&grupo=". base64_encode($grupo)  . "&curso=",
   ComponenteFiltro::COMPB_FILTRO_LISTA_STYLE => 'font-weight: bold; text-align: center;'
+];
+
+$grupos = Grupos::listarGrupos();
+$count = 0;
+while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
+    $filtroGrupo[$count] = [
+        ComponenteFiltro::COMPB_FILTRO_LISTA_ID => $gru['gru_id'],
+        ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => $gru['gru_nombre'],
+        ComponenteFiltro::COMPB_FILTRO_LISTA_URL => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($estadoM) . "&curso=" . base64_encode($curso)."&grupo=" . base64_encode($gru['gru_id']) 
+    ];
+    $count++;
+}
+$filtroGrupo[$count] = [
+    ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'VER TODOS',
+    ComponenteFiltro::COMPB_FILTRO_LISTA_URL => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($estadoM) . "&curso=" . base64_encode($curso) ."&grupo="
 ];
 
 $count = 0;
@@ -117,13 +138,13 @@ foreach ($estadosMatriculasEstudiantes as $clave => $valor) {
   $listaEstado[$count] = [
     ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => $clave,
     ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => $valor,
-    ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($clave) . "&curso=" . base64_encode($curso)    
+    ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoM=" . base64_encode($clave) ."&grupo=". base64_encode($grupo) . "&curso=" . base64_encode($curso)    
   ];
   $count++;
 }
 $listaEstado[$count] = [
   ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'VER TODOS',
-  ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF']. "?estadoM=&curso=" . base64_encode($curso),
+  ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF']. "?estadoM=&curso=" . base64_encode($curso)."&grupo=". base64_encode($grupo) ,
   ComponenteFiltro::COMPB_FILTRO_LISTA_STYLE => 'font-weight: bold; text-align: center;'
 ];
 
@@ -135,6 +156,12 @@ $filtros[0] = [
 ];
 
 $filtros[1] = [
+  ComponenteFiltro::COMPB_FILTRO_GET => 'grupo',
+  ComponenteFiltro::COMPB_FILTRO_TEXTO => 'Grupo',
+  ComponenteFiltro::COMPB_FILTRO_LISTA => $filtroGrupo
+];
+
+$filtros[2] = [
   ComponenteFiltro::COMPB_FILTRO_GET   => 'estadoM',
   ComponenteFiltro::COMPB_FILTRO_TEXTO => 'Filtrar por estados',
   ComponenteFiltro::COMPB_FILTRO_LISTA => $listaEstado,

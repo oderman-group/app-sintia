@@ -1,6 +1,9 @@
 <?php $idPaginaInterna = 'DT0100';
+require_once("session.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
+include_once(ROOT_PATH."/main-app/compartido/ComponenteModal.php");
+$modaInfo = new ComponenteModal('informacion', $frases[115][$datosUsuarioActual['uss_idioma']], '../compartido/page-info-modal.php',null, 5000, '600px',false);
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -11,10 +14,18 @@ require_once("../class/Estudiantes.php");
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+<!--select2-->
+<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
+<script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
 <style>
 	.select2 {
         width: 100% !important;
     }
+    .modal {
+    z-index: 1050 !important;
+    outline: 0;
+    overflow-y: auto!important
+}
 </style>
 
 <!-- END HEAD -->
@@ -97,7 +108,7 @@ require_once("../class/Estudiantes.php");
                         <select class="form-control  select2" name="grupo">
                             <option value="">Seleccione una opción</option>
                             <?php
-                            $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                            $opcionesConsulta = Grupos::listarGrupos();
                             while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
                             ?>
                                 <option value="<?= $opcionesDatos['gru_id']; ?>"><?= $opcionesDatos['gru_id'] . ". " . strtoupper($opcionesDatos['gru_nombre']); ?></option>
@@ -110,7 +121,7 @@ require_once("../class/Estudiantes.php");
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Periodo</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="periodo" required>
+                        <select class="form-control  select2" id="periodo" name="periodo" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $p = 1;
@@ -128,9 +139,9 @@ require_once("../class/Estudiantes.php");
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Año</label>
+                    <label class="col-sm-2 control-label" >Año</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="year" required>
+                        <select class="form-control  select2"  style="z-index:10051 !important" name="year" id="year" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $yearStartC = $yearStart;
@@ -264,7 +275,7 @@ require_once("../class/Estudiantes.php");
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Año</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="year" required>
+                        <select class="form-control  select2" name="year" style="z-index:1051" id="year2" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $yearStartE = $yearStart;
@@ -286,7 +297,9 @@ require_once("../class/Estudiantes.php");
         </div>
     </div>
 </div>
-
+<!-- notifications -->
+<script src="../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.js"></script>
+<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
 <script>
 // Agregar el evento onchange al select
 var miSelect = document.getElementById('selectEstudiantes');
@@ -294,6 +307,89 @@ miSelect.onchange = function() {
     limitarSeleccion(this);
 };
 </script>
+<script>
+    // Función que se ejecuta antes de enviar el formulario
+    function ejecutarAntesDeEnviar1() {
+        var curso   = document.getElementById("curso").value;
+        var grupo   = document.getElementById("grupo").value;
+        var periodo = document.getElementById("periodo").value;
+        var year    = document.getElementById("year").value;
+        $.toast({
+            heading            : 'Consultando Notas',
+            position           : 'bottom-right',
+            showHideTransition : 'slide',
+            icon               : 'success',
+            hideAfter          : 3500,
+            stack              : 6
+        });
+        var data = {
+            "curso": curso,
+            "grupo": grupo,
+            "periodo": periodo,
+            "idEstudiante": '',
+            "year": year
+        };
+        metodoFetch('../compartido/ajax_contar_notas_curso.php', data, 'json', false, 'enviarFormulario1');
+        return false;
+    }
+    function enviarFormulario1(response) {
+        if (response["ok"]) {
+            resultData = response["result"];
+            console.log(resultData);
+            if (resultData["notas_registradas"] > 0) {
+                document.getElementById('formularioGuardar1').submit();
+            } else {
+                var data = {
+                    "idmsg": 306,
+                    "msj": 'No se encontraron notas finales '
+                };
+                <?php $data=json_encode([ 
+                       'idmsg' => '306',
+                       'msj'   => 'No se encontraron notas finales '                      
+                    ]);
+                    echo $modaInfo->getMetodoAbrirModal($data) ?>
+            }
+        }
+    }
+    // Función que se ejecuta antes de enviar el formulario
+    function ejecutarAntesDeEnviar2() {
+        
+        var idEstudiante = document.getElementById("selectEstudiantes").value;
+        var periodo      = document.getElementById("periodo2").value;
+        var year         = document.getElementById("year2").value;
+        $.toast({
+            heading            : 'Consultando Notas',
+            position           : 'bottom-right',
+            showHideTransition : 'slide',
+            icon               : 'success',
+            hideAfter          : 3500,
+            stack              : 6
+        });
+        var data = {
+            "curso": '',
+            "grupo": '',
+            "periodo": periodo,
+            "idEstudiante": idEstudiante,
+            "year": year
+        };
+        metodoFetch('../compartido/ajax_contar_notas_curso.php', data, 'json', false, 'enviarFormulario2');
+        return false;
+    }
+    
+    function enviarFormulario2(response) {
+        if (response["ok"]) {
+            resultData = response["result"];
+            console.log(resultData);
+            if (resultData["notas_registradas"] > 0) {
+                document.getElementById('formularioGuardar2').submit();
+            } else {
+                <?php $data=json_encode([ 
+                       'idmsg' => '306',
+                       'msj'   => 'No se encontraron notas finales para este estudiante'                      
+                    ]);
+                echo $modaInfo->getMetodoAbrirModal($data) ?>
+            }
+        }
+    }
 
-
-
+</script>

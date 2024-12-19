@@ -23,7 +23,20 @@
                             <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Las instituciones normalmente manejan 4 periodos. Los colegios semestralizados o de bachillerato acelerado manejan 2 periodos."><i class="fa fa-info"></i></button>
                         </label>
                         <div class="col-sm-8">
-                            <input type="number" name="periodoTrabajar" class="form-control col-sm-2" value="<?=$datosConfiguracion['conf_periodos_maximos'];?>" required pattern="[0-9]+" <?=$disabledPermiso;?>>
+                            <input 
+                                type="number" 
+                                name="periodoTrabajar" 
+                                class="form-control col-sm-2" 
+                                value="<?=$datosConfiguracion['conf_periodos_maximos'];?>" 
+                                required 
+                                pattern="[0-9]+" 
+                                <?php 
+                                if(!empty($disabledPermiso)) 
+                                    echo $disabledPermiso; 
+                                else 
+                                    echo $disabledCamposConfiguracion;
+                                ?>
+                            >
                         </div>
                     </div>
 
@@ -31,15 +44,50 @@
                     <div class="form-group row">
                         <label class="col-sm-3 control-label">Rango de las notas (Desde - Hasta) <span style="color: red;">(*)</span></label>
                         <div class="col-sm-9">
-                            <input type="number" style="margin-top: 20px;" name="desde" class="form-control col-sm-2" value="<?=$datosConfiguracion['conf_nota_desde'];?>" <?=$disabledPermiso;?>>
-                            <input type="number" style="margin-top: 20px;" name="hasta" class="form-control col-sm-2" value="<?=$datosConfiguracion['conf_nota_hasta'];?>" <?=$disabledPermiso;?>>
+                            <input 
+                                type="number" 
+                                style="margin-top: 20px;" 
+                                name="desde" 
+                                class="form-control col-sm-2" 
+                                value="<?=$datosConfiguracion['conf_nota_desde'];?>" 
+                                <?php 
+                                if(!empty($disabledPermiso)) 
+                                    echo $disabledPermiso; 
+                                else 
+                                    echo $disabledCamposConfiguracion;
+                                ?>
+                            >
+                            <input 
+                                type="number" 
+                                style="margin-top: 20px;" 
+                                name="hasta" 
+                                class="form-control col-sm-2" 
+                                value="<?=$datosConfiguracion['conf_nota_hasta'];?>" 
+                                <?php 
+                                if(!empty($disabledPermiso)) 
+                                    echo $disabledPermiso; 
+                                else 
+                                    echo $disabledCamposConfiguracion;
+                                ?>
+                            >
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <label class="col-sm-3 control-label">Nota minima para aprobar <span style="color: red;">(*)</span></label>
                         <div class="col-sm-2">
-                            <input type="text" name="notaMinima" class="form-control" value="<?=$datosConfiguracion['conf_nota_minima_aprobar'];?>" <?=$disabledPermiso;?>>
+                            <input 
+                                type="text" 
+                                name="notaMinima" 
+                                class="form-control" 
+                                value="<?=$datosConfiguracion['conf_nota_minima_aprobar'];?>" 
+                                <?php 
+                                if(!empty($disabledPermiso)) 
+                                    echo $disabledPermiso; 
+                                else 
+                                    echo $disabledCamposConfiguracion;
+                                ?>
+                            >
                         </div>
                     </div>
 
@@ -82,7 +130,7 @@
                         </div>
                     </div>
 
-                    <?php if (array_key_exists(23, $arregloModulos) && Modulos::validarModulosActivos($conexion, 23)) { ?>
+                    <?php if (array_key_exists(Modulos::MODULO_CUALITATIVO, $arregloModulos) && Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_CUALITATIVO)) { ?>
                     <div class="form-group row">
                         <label class="col-sm-3 control-label">Forma para mostrar las notas <span style="color: red;">(*)</span>
                             <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta opción mostrará a los usuarios las notas en formato numérico o con frases de desempeño que corresponden a las notas numéricas, dependiendo la opción que seleccione."><i class="fa fa-info"></i></button> </label>
@@ -99,7 +147,16 @@
                         <label class="col-sm-3 control-label">Generación de informes <span style="color: red;">(*)</span>
                             <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta opción define el comportamiento a la hora de generar los informes por parte de los docentes o directivos. Escoja la configuración deseada. Esto aplica para todas las cargas académicas."><i class="fa fa-info"></i></button></label>
                         <div class="col-sm-4">
-                            <select class="form-control" name="generarInforme" <?=$disabledPermiso;?>>
+                            <select 
+                                class="form-control" 
+                                name="generarInforme" 
+                                <?php 
+                                if(!empty($disabledPermiso)) 
+                                    echo $disabledPermiso; 
+                                else 
+                                    echo $disabledCamposConfiguracion;
+                                ?>
+                            >
                                 <option value="1" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==1){ echo "selected";} ?>>Es necesario que todos los estudiantes tengan el 100% de sus notas registradas</option>
                                 <option value="2" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==2){ echo "selected";} ?>>El sistema omitirá los estudiantes que no tengan el 100% de sus notas registradas</option>
                                 <option value="3" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==3){ echo "selected";} ?>>Registrar la definitiva con el porcentaje que tengan en ese momento.</option>

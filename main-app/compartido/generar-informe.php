@@ -80,6 +80,31 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 		continue;
 	}
 
+	if ($informacion_inst["info_institucion"] == ICOLVEN) {
+		//Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
+		$notasPorIndicador = Calificaciones::traerNotasPorIndicador($config, $carga, $resultado['mat_id'], $periodo);
+		$sumaNotaIndicador = 0; 
+
+		while ($notInd = mysqli_fetch_array($notasPorIndicador, MYSQLI_BOTH)) {
+			$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $notInd[1], $resultado['mat_id'], $carga, $periodo);
+			$num         = mysqli_num_rows($consultaNum);
+
+			$sumaNotaIndicador += $notInd[0];
+
+			if ($num == 0) {
+				Indicadores::eliminarRecuperacionIndicadorPeriodo($config, $notInd[1], $resultado['mat_id'], $carga, $periodo);				
+
+				Indicadores::guardarRecuperacionIndicador($conexionPDO, $config, $resultado['mat_id'], $carga, $notInd[0], $notInd[1], $periodo, $notInd[2]);
+			} else {
+				Indicadores::actualizarRecuperacionIndicador($config, $resultado['mat_id'], $carga, $notInd[0], $notInd[1], $periodo, $notInd[2]);
+			}
+		} 
+
+		$sumaNotaIndicador = round($sumaNotaIndicador, 1);
+	} else {
+		$sumaNotaIndicador = round($definitiva, 1);
+	}
+
 	$caso = 1; //Inserta la definitiva que viene normal 
 
 	if (!empty($boletinDatos['bol_id'])) {
@@ -106,31 +131,6 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 		} elseif (($boletinDatos['bol_tipo'] == Boletin::BOLETIN_TIPO_NOTA_RECUPERACION_INDICADOR || $boletinDatos['bol_tipo'] == Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA)) { //Si ya existe un registro previo de recuperación por Indicadores TIPO 3
 			$caso = 5; //Se actualiza la definitiva que viene y se cambia la recuperación del Indicador a nota anterior. 
 		}
-	}
-
-	if ($informacion_inst["info_institucion"] == ICOLVEN) {
-		//Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
-		$notasPorIndicador = Calificaciones::traerNotasPorIndicador($config, $carga, $resultado['mat_id'], $periodo);
-		$sumaNotaIndicador = 0; 
-
-		while ($notInd = mysqli_fetch_array($notasPorIndicador, MYSQLI_BOTH)) {
-			$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $notInd[1], $resultado['mat_id'], $carga, $periodo);
-			$num         = mysqli_num_rows($consultaNum);
-
-			$sumaNotaIndicador += $notInd[0];
-
-			if ($num == 0) {
-				Indicadores::eliminarRecuperacionIndicadorPeriodo($config, $notInd[1], $resultado['mat_id'], $carga, $periodo);				
-
-				Indicadores::guardarRecuperacionIndicador($conexionPDO, $config, $resultado['mat_id'], $carga, $notInd[0], $notInd[1], $periodo, $notInd[2]);
-			} else {
-				Indicadores::actualizarRecuperacionIndicador($config, $resultado['mat_id'], $carga, $notInd[0], $notInd[1], $periodo, $notInd[2]);
-			}
-		} 
-
-		$sumaNotaIndicador = round($sumaNotaIndicador, 1);
-	} else {
-		$sumaNotaIndicador = round($definitiva, 1);
 	}
 
 	if ($caso == 2 || $caso == 4 || $caso == 5) {

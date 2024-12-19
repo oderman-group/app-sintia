@@ -24,7 +24,7 @@ $institucionNombre = $institucion['ins_siglas'];
                     <span class="logo-default" style="font-weight: bold; font-size: 12px;"><?=$institucionNombre;?></span> </a>
                 </div>
                 <!-- logo end -->
-				<ul class="nav navbar-nav navbar-left in">
+				<ul class="nav navbar-nav navbar-left in" data-toggle="tooltip" data-placement="top" title="Expande y contrae el menú principal según tu preferencia.">
 					<li><a href="#" class="menu-toggler sidebar-toggler"><i class="icon-menu"></i></a></li>
 				</ul>
 				
@@ -55,7 +55,7 @@ $institucionNombre = $institucion['ins_siglas'];
                     <ul class="nav navbar-nav pull-right">
 						
 						
-                    	<li><a href="javascript:;" class="fullscreen-btn"><i class="fa fa-arrows-alt"></i></a></li>
+                    	<!--<li><a href="javascript:;" class="fullscreen-btn"><i class="fa fa-arrows-alt"></i></a></li>-->
 
                         <?php
                             if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
@@ -66,7 +66,7 @@ $institucionNombre = $institucion['ins_siglas'];
                         ?>
                                     <li class="dropdown dropdown-user">
                                         <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                        <i class="fa fa-home"></i>    
+                                        <i class="fa fa-home" data-toggle="tooltip" data-placement="top" title="Cambia de sede para consultar su información."></i>
                                         <span class="username username-hide-on-mobile"> SEDE ACTUAL: <b><?=$institucionNombre;?></b> </span>
                                             <?php echo '<i class="fa fa-angle-down"></i>'; ?>
                                         </a>
@@ -95,7 +95,7 @@ $institucionNombre = $institucion['ins_siglas'];
 
                             <li class="dropdown dropdown-user">
                                 <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <i class="fa fa-calendar-o"></i>
+                                <i class="fa fa-calendar-o" data-toggle="tooltip" data-placement="top" title="Consulta la información histórica de los años que anteriores."></i>
                                 <span class="username username-hide-on-mobile"> AÑO ACTUAL: <b><?=$_SESSION["bd"];?></b> </span>
                                     <?php if(Modulos::validarSubRol(['DT0030'])) { echo '<i class="fa fa-angle-down"></i>'; } ?>
                                 </a>
@@ -122,7 +122,7 @@ $institucionNombre = $institucion['ins_siglas'];
 
                             <li class="dropdown dropdown-user">
                                 <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <i class="fa fa-calendar-o"></i>    
+                                <i class="fa fa-calendar-o" data-toggle="tooltip" data-placement="top" title="Establece el periodo que necesites para consultas. Lo ideal es que sea el periodo en el cual están actualmente."></i>
                                 <span class="username username-hide-on-mobile"> PERIODO ACTUAL: <b><?=$config['conf_periodo'];?></b> </span>
                                     <?php if(Modulos::validarSubRol(['DT0053'])) { echo '<i class="fa fa-angle-down"></i>'; } ?>
                                 </a>
@@ -155,7 +155,7 @@ $institucionNombre = $institucion['ins_siglas'];
                         <?php } else { ?>
                             <li class="dropdown dropdown-user">
                                 <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <i class="fa fa-calendar-o"></i>    
+                                <i class="fa fa-calendar-o"></i>
                                 <span class="username username-hide-on-mobile"> AÑO ACTUAL: <b><?=$_SESSION["bd"];?></b> </span>
                                 </a>
                             </li>
@@ -176,7 +176,9 @@ $institucionNombre = $institucion['ins_siglas'];
 								break;
 							}
 							?>
-                            <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"> <img src="../../config-general/assets/img/flags/<?=$idiomaImg;?>" class="position-left" alt=""> <?=$idiomaNombre;?> <span class="fa fa-angle-down"></span>
+                            <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"> 
+                                <img src="../../config-general/assets/img/flags/<?=$idiomaImg;?>" class="position-left" alt="idiomas" data-toggle="tooltip" data-placement="top" title="Puedes cambiar el idioma en que ves la información de la plataforma"> <?=$idiomaNombre;?> 
+                                <span class="fa fa-angle-down"></span>
                             </a>
 							
                             <ul class="dropdown-menu">
@@ -198,7 +200,16 @@ $institucionNombre = $institucion['ins_siglas'];
 				
                         <!-- start message dropdown -->
                         <?php
-                            if($numAsignacionesEncuesta > 0  && ($idPaginaInterna != 'DC0146' && $idPaginaInterna != 'AC0038' && $idPaginaInterna != 'ES0062' && $idPaginaInterna != 'DT0324' && $idPaginaInterna != 'CM0060')){
+                            if(
+                                $numAsignacionesEncuesta > 0  && 
+                                (
+                                    $idPaginaInterna != 'DC0146' && 
+                                    $idPaginaInterna != 'AC0038' && 
+                                    $idPaginaInterna != 'ES0062' && 
+                                    $idPaginaInterna != 'DT0324' && 
+                                    $idPaginaInterna != 'CM0060'
+                                )
+                            ) {
                         ?>
                         <li class="dropdown dropdown-extended dropdown-inbox">
                             <a href="encuestas-pendientes.php" class="dropdown-toggle">
@@ -209,7 +220,7 @@ $institucionNombre = $institucion['ins_siglas'];
                         <?php } ?>
                         <li class="dropdown dropdown-extended dropdown-inbox" id="header_inbox_bar">
                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <i class="fa fa-envelope-o"></i>
+                                <i class="fa fa-envelope-o" data-toggle="tooltip" data-placement="top" title="Correo interno: Recibe y envía mensajes."></i>
                                 <span id="mensajes_numero"></span>
                             </a>
                             <span id="mensajes"></span>
@@ -248,7 +259,7 @@ $institucionNombre = $institucion['ins_siglas'];
  						<li class="dropdown dropdown-user" data-step="500" data-intro="<b>Cuenta personal:</b> Aquí puedes acceder a tu perfil a cambiar tus datos personales, y en la opción salir podrás cerrar tu sesión con seguirdad cuando hayas terminado de trabajar con la plataforma." data-position='bottom' data-scrollTo='tooltip'>
                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
                                 <img alt="" class="img-circle " src="../files/fotos/<?=$datosUsuarioActual['uss_foto'];?>"/>
-                                <span class="username username-hide-on-mobile"> <?=UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual);?> </span>
+                                <span class="username username-hide-on-mobile" data-toggle="tooltip" data-placement="top" title="Editar tu perfil, cambia tu clave y más..."> <?=UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual);?> </span>
                                 <i class="fa fa-angle-down"></i>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-default">
@@ -258,7 +269,7 @@ $institucionNombre = $institucion['ins_siglas'];
                                 <?php }?>
 								
                                 <li class="divider"> </li>
-								<li><a href="https://forms.gle/1NpXSwyqoomKdch76" target="_blank"><i class="icon-question"></i><?=$frases[16][$datosUsuarioActual['uss_idioma']];?>/<?=$frases[257][$datosUsuarioActual['uss_idioma']];?></a></li>
+								
                                 <?php if(Modulos::validarSubRol(["DT0202"])){?>
                                     <li><a href="../directivo/solicitud-cancelacion.php"><i class="fa fa-cut"></i><?=$frases[367][$datosUsuarioActual['uss_idioma']];?></a></li>
                                 <?php }?>
@@ -281,7 +292,7 @@ $institucionNombre = $institucion['ins_siglas'];
                         <!-- end manage user dropdown --
                         <li class="dropdown dropdown-quick-sidebar-toggler">
                              <a id="headerSettingButton" class="mdl-button mdl-js-button mdl-button--icon pull-right" data-upgraded=",MaterialButton">
-	                           <i class="fa fa-weixin" id="<?=$objetoEnviarE;?>" onclick="conectarme(this)"></i>
+	                           <i class="fa fa-weixin" id="" onclick="conectarme(this)"></i>
 	                        </a>
                         </li>-->
                     </ul>

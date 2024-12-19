@@ -13,6 +13,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
     require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
     require_once(ROOT_PATH."/main-app/class/Indicadores.php");
     require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+    require_once(ROOT_PATH."/main-app/class/Utilidades.php");
     require_once(ROOT_PATH . "/main-app/class/Disciplina.php");
     $Plataforma = new Plataforma;
 
@@ -62,15 +63,9 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
     }
 
     $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro, $year);
+    Utilidades::validarInfoBoletin($matriculadosPorCurso);
     $numeroEstudiantes = mysqli_num_rows($matriculadosPorCurso);
 
-    if ($numeroEstudiantes == 0) {
-
-        $url= UsuariosPadre::verificarTipoUsuario($datosUsuarioActual['uss_tipo'],'page-info.php?idmsg=306');
-        echo '<script type="text/javascript">window.location.href="' . $url . '";</script>';
-        exit();
-
-    }
 
     $idDirector="";
     $periodosCursados=$periodoActual-1;

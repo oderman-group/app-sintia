@@ -36,6 +36,7 @@ if(!empty($_REQUEST["curso"])){$filtro .= " AND mat_grado='".base64_decode($_REQ
 if(!empty($_REQUEST["grupo"])){$filtro .= " AND mat_grupo='".base64_decode($_REQUEST["grupo"])."'";}
 
 $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro,$year);
+Utilidades::validarInfoBoletin($matriculadosPorCurso);
 while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)){
 //contador materias
 $contPeriodos=0;

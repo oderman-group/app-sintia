@@ -1,4 +1,5 @@
 <?php $idPaginaInterna = 'DT0331';
+include("session.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -10,6 +11,9 @@ require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+<!--select2-->
+<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
+<script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
 <style>
 	.select2 {
         width: 100% !important;

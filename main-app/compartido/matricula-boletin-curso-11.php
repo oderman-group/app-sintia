@@ -59,6 +59,7 @@ if (!empty($_REQUEST["grupo"])) {
 }
 $contadorEstudiantes=0;
 $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro, $year);
+Utilidades::validarInfoBoletin($matriculadosPorCurso);
 $numeroEstudiantes = mysqli_num_rows($matriculadosPorCurso);
 while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
     $gradoActual = $matriculadosDatos['mat_grado'];

@@ -1,7 +1,7 @@
 <?php
-require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 
-require_once "vendor/twilio/sdk/src/Twilio/autoload.php";
+require_once ROOT_PATH . "/vendor/twilio/sdk/src/Twilio/autoload.php";
 
 use Twilio\Rest\Client;
 

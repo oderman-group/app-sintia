@@ -1,18 +1,29 @@
+<?php
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Estudiante.php';
+
+$Estudiante = new Administrativo_Usuario_Estudiante([
+	'mat_id' => $idMatricula
+]);
+
+$tieneRegistrosAcademicos = (bool) $Estudiante->tieneRegistrosAcademicos();
+
+$disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
+?>
+
 <fieldset>
 	<div class="row">
 		<div class="col-sm-12 col-xl-6">
 			<div class="form-group row">
 				<label class="col-sm-3 control-label">Curso <span style="color: red;">(*)</span></label>
 				<div class="col-sm-9">
-					<select class="form-control" name="grado" <?= $disabledPermiso; ?>>
-						<option value="">Seleccione una opción</option>
+					<select class="form-control" name="grado" id="gradoMatricula"  <?= $disabledPermiso; ?> onchange="listarGrupos(this.value)">
 						<?php 
 						$cv = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
 						while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
 							if ($rv['gra_id'] == $datosEstudianteActual['mat_grado'])
 								echo '<option value="' . $rv['gra_id'] . '" selected>' . $rv['gra_nombre'] . '</option>';
 							else
-								echo '<option value="' . $rv['gra_id'] . '">' . $rv['gra_nombre'] . '</option>';
+								echo '<option value="' . $rv['gra_id'] . '" '.$disabledCamposAcademicos.'>' . $rv['gra_nombre'] . '</option>';
 						} ?>
 					</select>
 				</div>
@@ -20,18 +31,31 @@
 
 			<div class="form-group row">
 				<label class="col-sm-3 control-label">Grupo</label>
-				<div class="col-sm-3">
-					<select class="form-control" name="grupo" <?= $disabledPermiso; ?>>
+				<div class="col-sm-4">
+					<span id="mensajeGrupos" style="color: #6017dc; display:none;">Espere un momento mientras se cargan los grupos.</span>
+					<select class="form-control" id="gruposMatricula" name="grupo"  <?= $disabledPermiso; ?>>
 						<?php 
-                        $cv = Grupos::traerGrupos($conexion, $config);
+                        $cv = Grupos::listarGrupos();
 						while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
 							if ($rv['gru_id'] == $datosEstudianteActual['mat_grupo'])
 								echo '<option value="' . $rv['gru_id'] . '" selected>' . $rv['gru_nombre'] . '</option>';
 							else
-								echo '<option value="' . $rv['gru_id'] . '">' . $rv['gru_nombre'] . '</option>';
+								echo '<option value="' . $rv['gru_id'] . '" '.$disabledCamposAcademicos.'>' . $rv['gru_nombre'] . '</option>';
 						} ?>
 					</select>
 				</div>
+				<?php 
+				$permisoCambiarGrupo      = Modulos::validarSubRol(['DT0083']);
+				$moduloMediaTecnica       = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MEDIA_TECNICA);
+				$marcaMediaTecnica        = '';
+				if ($datosEstudianteActual['mat_tipo_matricula'] == GRADO_INDIVIDUAL && array_key_exists(10, $arregloModulos) && $moduloMediaTecnica) {
+					$marcaMediaTecnica = 'Si';
+				}
+				if (!empty($datosEstudianteActual['mat_grado']) && $permisoCambiarGrupo  &&  empty($marcaMediaTecnica)) { ?>
+				<div class="col-sm-4">
+				<button type="button" class="btn btn-info" onclick="cambiarNotas('<?=  base64_encode($datosEstudianteActual['mat_id'])?>',true)" style="background-color:<?=$fondoBarra;?>; color:<?=$colorTexto;?>;">Cambiar notas a otro grupo</button>
+				</div>
+				<?php } ?>
 			</div>
 
 			<div class="form-group row">
@@ -58,7 +82,7 @@
 					<select class="form-control" name="matestM" <?= $disabledPermiso; ?>>
 						<option value="">Seleccione una opción</option>
 						<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { ?>
-							<option value="<?= $clave; ?>" <?php if ($datosEstudianteActual["mat_estado_matricula"] == $clave) echo 'selected'; ?>><?= $valor; ?></option>
+							<option value="<?= $clave; ?>" <?php if ($datosEstudianteActual["mat_estado_matricula"] == $clave) echo 'selected'; else echo $disabledCamposAcademicos ?>><?= $valor; ?></option>
 						<?php } ?>
 					</select>
 				</div>
@@ -149,7 +173,7 @@
 				<div style="display: none;">
 					<select id="grupoBase" multiple class="form-control select2-multiple">
 						<?php
-                        $cv = Grupos::traerGrupos($conexion, $config);
+                        $cv = Grupos::listarGrupos();
 						while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
 							echo '<option value="' . $rv['gru_id'] . '" selected >' . $rv['gru_nombre'] . '</option>';
 						} ?>
@@ -196,7 +220,7 @@
 											<td>
 												<select id="grupo-<?= $idCurso["gra_id"]; ?>" class="form-control" onchange="editarCurso('<?= $idCurso['gra_id']; ?>')" <?= $disabledPermiso; ?>>
 													<?php
-													$cv = Grupos::traerGrupos($conexion, $config);
+													$cv = Grupos::listarGrupos();
 													while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
 														if ($rv['gru_id'] == $idCurso['matcur_id_grupo'])
 															echo '<option value="' . $rv['gru_id'] . '" selected>' . $rv['gru_nombre'] . '</option>';
@@ -233,6 +257,38 @@
 		function agregarCurso(dato) {
 			crearFila(dato);
 		};
+
+		var selectcurso = $('#gradoMatricula');
+       var selectgrupos = $('#gruposMatricula');
+
+		async function listarGrupos(curso) {
+        var url = "../compartido/ajax_grupos_curso.php";
+        var data = {
+            "cursos": curso
+        };
+        $('#mensajeGrupos').show();
+        selectgrupos.empty();
+        // selectmaterias.empty();
+        resultado = await metodoFetchAsync(url, data, 'json', false);
+        resultData = resultado["data"];
+        if (resultData["ok"]) {
+            resultData["result"];
+            // Itera sobre el JSON y añade cada opción
+            resultData["result"].forEach(function(opcion) {
+                var nuevaOpcion = new Option(opcion.gru_nombre, opcion.car_grupo, false, false);
+                selectgrupos.append(nuevaOpcion);
+            });
+            $('#mensajeGrupos').hide();
+		};
+    }
+
+	async function cambiarNotas(mat_id,cambiar) {
+		var data = {
+			"id"   : mat_id,
+			"cambiar": cambiar
+		};
+		abrirModal("Cambiar de grupo", "estudiantes-cambiar-grupo-modal.php", data);
+	}
 
 		function editarCurso(id) {
 			var grupoSelect = document.getElementById("grupo-" + id);

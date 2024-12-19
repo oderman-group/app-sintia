@@ -17,6 +17,8 @@ $config = RedisInstance::getSystemConfiguration();
 $informacion_inst = $_SESSION["informacionInstConsulta"];
 
 $datosUnicosInstitucion = $_SESSION["datosUnicosInstitucion"];
+$_SESSION["datosUnicosInstitucion"]["config"] = $config;
+
 $yearArray = explode(",", $datosUnicosInstitucion['ins_years']);
 $yearStart = $yearArray[0];
 $yearEnd = $yearArray[1];

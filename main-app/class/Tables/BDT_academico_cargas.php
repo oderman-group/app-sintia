@@ -9,6 +9,7 @@ class BDT_AcademicoCargas extends BDT_Tablas {
     public const GENERACION_MANUAL = 'MANUAL';
     public const GENERACION_AUTO   = 'AUTOMATICA';
 
+    public static $schema    = BD_ACADEMICA;
     public static $tableName = 'academico_cargas';
 
 }
