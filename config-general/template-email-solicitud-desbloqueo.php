@@ -22,7 +22,7 @@ $Plataforma = new Plataforma;
 					<?=$data['motivo']?><br>
 				</p>
 
-				<?php if ($data['usuario_estado'] == Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_ACEPTADA) { ?>
+				<?php if ($data['usuario_estado'] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA) { ?>
 					<p>
 						<h3 style="text-align: center;">
 						<a href="<?=REDIRECT_ROUTE;?>" target="_blank" style="color: #41c4c4; font-weight:bold;">ACCEDER A MI CUENTA</a>

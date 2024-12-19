@@ -4,7 +4,7 @@ $idPaginaInterna = 'DT0122';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
-require_once(ROOT_PATH."/main-app/class/App/Administrativo/Solicitud_Desbloqueo/General_Solicitud.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Estudiante.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 
@@ -80,7 +80,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     'soli_year'        => $_SESSION['bd']
                                                 ];
                                             
-                                                $consulta = Administrativo_Solicitud_Desbloqueo_General_Solicitud::Select($predicado, "*", BD_GENERAL);
+                                                $consulta = Administrativo_General_Solicitud::Select($predicado, "*", BD_GENERAL);
 
 												while($resultado = $consulta->fetch(PDO::FETCH_ASSOC)){		
 

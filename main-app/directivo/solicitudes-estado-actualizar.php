@@ -1,7 +1,7 @@
 <?php 
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
-require_once(ROOT_PATH."/main-app/class/App/Administrativo/Solicitud_Desbloqueo/General_Solicitud.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0130';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
@@ -11,7 +11,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-if( $_GET["estado"] == Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_ACEPTADA ) {
+if( $_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA ) {
     $update = ['uss_bloqueado' => 0];
     UsuariosPadre::actualizarUsuarios($config, $_GET["idUsuario"], $update);
 }
@@ -23,13 +23,13 @@ try{
     include("../compartido/error-catch-to-report.php");
 }
 
-if($_GET["estado"] == Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_ACEPTADA || $_GET["estado"] == Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_RECHAZADA) {
+if($_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA || $_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_RECHAZADA) {
     require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
     require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 
     $estados = [
-        Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_ACEPTADA   => 'Aceptada',
-        Administrativo_Solicitud_Desbloqueo_General_Solicitud::SOLICITUD_RECHAZADA  => 'Rechazada'
+        Administrativo_General_Solicitud::SOLICITUD_ACEPTADA   => 'Aceptada',
+        Administrativo_General_Solicitud::SOLICITUD_RECHAZADA  => 'Rechazada'
     ];
 
     $predicado = [
