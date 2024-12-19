@@ -93,9 +93,10 @@ LIMIT ".$empezar.",1
 <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV){ ?>
 <script>
 	socket.on("notificar_solicitud_desbloqueo_<?=$_SESSION['idInstitucion']?>", (data) => {
+		contadorUsuariosBloqueados();
 		$.toast({
 			heading: 'SOLICITUD DE DESBLOQUEO',  
-			text: 'Ha recibido una nueva solicitud de desbloqueo para el estudiante '+data['nombre']+'.',
+			text: 'Ha recibido una nueva solicitud de desbloqueo para el usuario '+data['nombre']+'.',
 			position: 'bottom-right',
 			showHideTransition: 'slide',
 			loaderBg:'#26c281', 

@@ -22,8 +22,13 @@ if (!empty($filtrosDecode['grupo'])) {
 }
 
 $filtroLimite = 'LIMIT 0'.','.$config['conf_num_registros'];
+													
+$selectSql = ["mat.*",
+            "uss.uss_id","uss.uss_usuario","uss.uss_bloqueado",
+            "gra_nombre","gru_nombre","gra_formato_boletin",
+            "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2", "mat.id_nuevo AS mat_id_nuevo"];
 
-$result = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual,$valor);
+$result = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual, $valor, $selectSql);
 
 $index = 0;
 

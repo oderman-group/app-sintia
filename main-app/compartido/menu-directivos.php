@@ -213,7 +213,7 @@
 										
 										if(Modulos::validarSubRol(["DT0122"])){
 									?>
-										<li <?php agregarClass(MENU,["DT0122"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ADMINISTRATIVO, "solicitudes.php", MENU) ?> class="nav-link "> <span class="title">Solicitud desbloqueo</span></a></li>
+										<li <?php agregarClass(MENU,["DT0122"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ADMINISTRATIVO, "solicitudes.php", MENU) ?> class="nav-link "> <span class="title">Solicitud desbloqueo</span><span id="contador_solicitudes" class="badge headerBadgeColor2 hidden">0</span></a></li>
 									<?php
 										}
 										
