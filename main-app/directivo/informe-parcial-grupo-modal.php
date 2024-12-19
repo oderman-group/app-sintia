@@ -17,7 +17,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     <div class="panel-body">
 
 
-        <form action="../compartido/informe-parcial-grupo-detalle.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
+        <form action="../compartido/informe-parcial-grupo-detalle-fast.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Curso</label>
@@ -60,12 +60,12 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     <div class="panel">
         <header class="panel-heading panel-heading-red">POR ESTUDIANTE </header>
         <div class="panel-body">
-            <form name="formularioGuardar" action="../compartido/informe-parcial.php" method="post" target="_blank">
+            <form name="formularioGuardar" action="../compartido/informe-parcial-fast.php" method="post" target="_blank">
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Estudiante</label>
                     <div class="col-sm-8">
 
-                        <select id="selectEstudiantes" class="form-control  select2" name="estudiante" multiple required>
+                        <select id="selectEstudiantes" style="width: 100%;" class="form-control  select2" name="estudiante" multiple required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $grados = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
@@ -97,7 +97,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Periodo</label>
                     <div class="col-sm-4">
-                        <select class="form-control  select2" name="periodo" required>
+                        <select style="width: 100%;"  class="form-control  select2" name="periodo" required>
                             <option value="">Seleccione una opción</option>
                             <?php
                             $p = 1;

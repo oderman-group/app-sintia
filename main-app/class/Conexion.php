@@ -29,7 +29,7 @@ class Conexion extends Conexion_Factory{
         try {
             //if($this->conexionPDO === null) {
                 // Crear una instancia de PDO
-                $this->conexionPDO = new PDO("mysql:host=".SERVIDOR_CONEXION.";dbname=".BD_ADMIN, USUARIO_CONEXION, CLAVE_CONEXION);
+                $this->conexionPDO = new PDO("mysql:host=".SERVIDOR_CONEXION.";dbname=".BD_ADMIN.";charset=utf8mb4", USUARIO_CONEXION, CLAVE_CONEXION);
 
                 // Establecer el modo de error PDO a excepciones
                 $this->conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
