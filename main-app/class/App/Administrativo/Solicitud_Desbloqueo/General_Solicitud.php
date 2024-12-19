@@ -8,4 +8,7 @@ class Administrativo_Solicitud_Desbloqueo_General_Solicitud extends BDT_Tablas {
 
     public static $primaryKey = 'soli_id';
 
+    public const SOLICITUD_ACEPTADA  = 3;
+    public const SOLICITUD_RECHAZADA  = 4;
+
 }
