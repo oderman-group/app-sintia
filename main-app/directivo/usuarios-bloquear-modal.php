@@ -3,7 +3,7 @@
 		<div class="modal-content" style="border-radius: 20px;max-width: 1350px!important; ">
 
 			<div class="modal-header panel-heading-purple">
-				<h4 class="modal-title " id="motivoModalLabel">Motivo del bloqueo</h4>
+				<h4 class="modal-title " id="motivoModalLabel">Motivo</h4>
 				<a href="#" data-dismiss="modal" data-bs-dismiss="modal" data-bs-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-compra-modulo"><i class="fa fa-window-close"></i></a>
 			</div>
 

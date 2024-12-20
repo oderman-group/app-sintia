@@ -272,10 +272,39 @@ function cambiarEstados (data) {
     var idEstado = data.getAttribute('data-id-estado');
     var idRecurso = data.getAttribute('data-id-recurso');
     var idUsuario = data.getAttribute('data-id-usuario');
+
+    var motivo = "Su solicitud de desbloqueo a sido aceptada, ya puede ingresar a la plataforma.";
+    if (idEstado == 4) {
+        // Mostrar el modal
+        $('#motivoModal').modal('show');
+
+        // Al confirmar el motivo
+        $('#confirmarMotivo').off('click').on('click', function () {
+            motivo = "Su solicitud de desbloqueo a sido rechazada,<br><b>Motivo:</b><br>" + document.getElementById("motivo").value.trim();
+
+            if (motivo === "") {
+                alert("Debe ingresar un motivo.");
+                return;
+            }
+
+            // Ocultar el modal
+            $('#motivoModal').modal('hide');
+
+            // Limpiar el contenido del textarea para futuros usos
+            document.getElementById("motivo").value = "";
     
-    document.getElementById('estado'+idRegistro).innerHTML= estados[idEstado];
-    var url = 'solicitudes-estado-actualizar.php?idRegistro='+idRegistro+'&estado='+idEstado+'&idUsuario='+idUsuario;
-    fetchSoloAccion(url);
+            document.getElementById('estado' + idRegistro).innerHTML = estados[idEstado];
+            var url = 'solicitudes-estado-actualizar.php?idRegistro=' + idRegistro + '&estado=' + idEstado + '&idUsuario=' + idUsuario + '&motivo=' + motivo;
+            fetchSoloAccion(url);
+            contadorUsuariosBloqueados();
+        });
+    } else {
+    
+        document.getElementById('estado' + idRegistro).innerHTML = estados[idEstado];
+        var url = 'solicitudes-estado-actualizar.php?idRegistro=' + idRegistro + '&estado=' + idEstado + '&idUsuario=' + idUsuario + '&motivo=' + motivo;
+        fetchSoloAccion(url);
+        contadorUsuariosBloqueados();
+    }
 }
 
 /**
