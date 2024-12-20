@@ -45,9 +45,9 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                         <a href="indicadores-agregar.php?carga=<?= base64_encode($cargaConsultaActual); ?>&periodo=<?= base64_encode($periodoConsultaActual); ?>" id="addRow" class="btn deepPink-bgcolor">
                             Agregar nuevo<i class="fa fa-plus"></i>
                         </a>
-                        <?php if ($config['conf_id_institucion'] == DEVELOPER_PROD || $config['conf_id_institucion'] == DEVELOPER) {?>
-                        <a class="dropdown-toggle btn deepPink-bgcolor" title="Genera n indicadores con inteligencia artificial teniendo en cuenta la asginadtura y el nombre del curso " id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            IA <i class="fa-solid fa-list"></i>
+                        <?php if (Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_AI_INDICADORES)) {?>
+                        <a class="dropdown-toggle btn deepPink-bgcolor" title="Genera los indicadores con inteligencia artificial teniendo en cuenta la asginatura y el curso actual" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            IA <i class="fa fa-list"></i>
                         </a>
 
 
@@ -118,7 +118,7 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                     </tr>
                 </thead>
                 <tbody id="contenido-dinamico">
-                    <?php include 'listar-indicadores-tbody.php' ?>                   
+                    <?php include 'listar-indicadores-tbody.php' ?>
                 </tbody>
                 <tfoot>
                     <tr style="font-weight:bold;">

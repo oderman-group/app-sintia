@@ -51,6 +51,16 @@
                             </div>
                         </div>
 
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label">Mostrar nota y desempeño en el panel lateral a los estudiantes y acudientes <span style="color: red;">(*)</span></label>
+                            <div class="col-sm-8">
+                                <select class="form-control col-sm-2 select2" name="mostrarNotasPanelLateral" <?=$disabledPermiso;?>>
+                                    <option value="1" <?php if($datosConfiguracion['conf_ocultar_panel_lateral_notas_estudiantes'] == 1){ echo "selected";} ?>>SI</option>
+                                    <option value="0" <?php if($datosConfiguracion['conf_ocultar_panel_lateral_notas_estudiantes'] == '0'){ echo "selected";} ?>>NO</option>
+                                </select>
+                            </div>
+                        </div>
+
 
                     <?php $botones = new botonesGuardar("dev-instituciones.php",Modulos::validarPermisoEdicion() || $datosUsuarioActual['uss_tipo'] == TIPO_DEV); ?>
                 </form>

@@ -14,7 +14,7 @@ if (!Modulos::validarPermisoEdicion()) {
 <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
-<?php include("../compartido/body.php"); ?>
+<?php include_once("../compartido/body.php"); ?>
 <div class="panel">
                 <header class="panel-heading panel-heading-purple"><?= $frases[119][$datosUsuarioActual['uss_idioma']]; ?> </header>
                 <div class="panel-body">

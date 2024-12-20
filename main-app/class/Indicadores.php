@@ -178,11 +178,32 @@ class Indicadores {
         if (!empty($year)) {
             $yearConsulta = $year;
         }
-        $sql = "SELECT aipc.id_nuevo AS aipc_id_nuevo, aipc.ipc_id, aipc.ipc_carga, aipc.ipc_indicador, aipc.ipc_valor, aipc.ipc_periodo, aipc.ipc_creado, aipc.institucion, aipc.year, 
-        ai.id_nuevo, ai.ind_nombre, ai.ind_tematica, ai.ind_definitivo, ai.ind_id 
+        $sql = "SELECT 
+            aipc.id_nuevo AS aipc_id_nuevo, 
+            aipc.ipc_id, 
+            aipc.ipc_carga, 
+            aipc.ipc_indicador, 
+            aipc.ipc_valor, 
+            aipc.ipc_periodo, 
+            aipc.ipc_creado, 
+            aipc.institucion, 
+            aipc.year, 
+            ai.id_nuevo, 
+            ai.ind_nombre, 
+            ai.ind_tematica, 
+            ai.ind_definitivo, 
+            ai.ind_id AS ai_ind_id
         FROM ".BD_ACADEMICA.".academico_indicadores_carga aipc
-        INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON ai.ind_id=aipc.ipc_indicador AND ai.institucion=aipc.institucion AND ai.year=aipc.year
-        WHERE aipc.ipc_carga=? AND aipc.ipc_periodo=? AND aipc.institucion=? AND aipc.year=?";
+        INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai 
+            ON ai.ind_id=aipc.ipc_indicador 
+            AND ai.institucion=aipc.institucion 
+            AND ai.year=aipc.year
+        WHERE 
+            aipc.ipc_carga=? 
+        AND aipc.ipc_periodo=? 
+        AND aipc.institucion=? 
+        AND aipc.year=?
+        ";
 
         $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $yearConsulta];
         
@@ -616,8 +637,17 @@ class Indicadores {
     {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
-            WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
+        $sql = "
+        SELECT * 
+        FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
+        WHERE 
+            rind_carga=? 
+        AND rind_estudiante=? 
+        AND rind_periodo=? 
+        AND rind_indicador=? 
+        AND institucion=? 
+        AND year=?
+        ";
 
         $parametros = [$idCarga, $estudiante, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
         

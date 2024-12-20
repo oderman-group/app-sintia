@@ -53,7 +53,7 @@
                                             </div>
                                         </div>
 
-                                        <?php if(array_key_exists(16, $arregloModulos) && Modulos::validarModulosActivos($conexion, 16) && $usuarioPerfil['uss_tipo'] == TIPO_DIRECTIVO) {?>
+                                        <?php if(array_key_exists(Modulos::MODULO_SUB_ROLES, $arregloModulos) && Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_SUB_ROLES) && $usuarioPerfil['uss_tipo'] == TIPO_DIRECTIVO) {?>
 
                                             <div class="form-group row"  >
                                                 <label class="col-sm-2 control-label">Mis Sub Roles</label>

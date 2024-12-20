@@ -502,7 +502,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                             ?>
                                                         </div>
                                                         <?php
-                                                        $cv = Grupos::traerGrupos($conexion, $config);
+                                                        $cv = Grupos::listarGrupos();
                                                         ?>
                                                         <div style="display: none;">
                                                             <select id="grupoBase" multiple class="form-control select2-multiple">
@@ -556,7 +556,7 @@ if (!Modulos::validarPermisoEdicion()) {
                                                                         <td>
                                                                             <select id="grupo-<?= $idEstudiante["matcur_id_matricula"]; ?>" class="form-control" onchange="editarEstudainte('<?= $idEstudiante['matcur_id_matricula']; ?>')" <?= $disabledPermiso; ?>>
                                                                                 <?php
-                                                                                $cv = Grupos::traerGrupos($conexion, $config);
+                                                                                $cv = Grupos::listarGrupos();
                                                                                 while ($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)) {
                                                                                     if ($rv['gru_id'] == $idEstudiante['matcur_id_grupo'])
                                                                                         echo '<option value="' . $rv['gru_id'] . '" selected>' . $rv['gru_nombre'] . '</option>';

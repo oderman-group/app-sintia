@@ -188,7 +188,7 @@ if($config['conf_doble_buscador'] == 1) {
 													$selectSql = ["mat.*",
 																  "uss.uss_id","uss.uss_usuario","uss.uss_bloqueado",
 																  "gra_nombre","gru_nombre","gra_formato_boletin",
-																  "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2"];
+																  "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2", "mat.id_nuevo AS mat_id_nuevo"];
 
 													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual,null,$selectSql);
 													

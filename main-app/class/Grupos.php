@@ -82,24 +82,7 @@ class Grupos {
 
         return $resultado;
     }
-    
-    /**
-     * Este metodo me trae los grupos de la institución
-     * @param mysqli $conexion
-     * @param array $config
-     * 
-     * @return mysqli_result $consulta
-     */
-    public static function traerGrupos(mysqli $conexion, array $config){
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_grupos WHERE institucion=? AND year=?";
 
-        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
-        
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
-
-        return $resultado;
-    }
-    
     /**
      * Este metodo me guarda un grupo
      * @param mysqli $conexion
@@ -151,20 +134,5 @@ class Grupos {
         
         $resultado = BindSQL::prepararSQL($sql, $parametros);
     }
-
-
-    public static function listarGruposCache() {
-        $archivoCache = 'grupos.json';
-
-        if (file_exists($archivoCache)) {
-            $json_data = file_get_contents($archivoCache);
-            $data = json_decode($json_data, true);
-            return $data;
-        } else {
-            return [];
-        }
-    }
-
-
 
 }

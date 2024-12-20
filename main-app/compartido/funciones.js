@@ -883,3 +883,24 @@ function mostrarModalCompraPaquete(idPaquete) {
         console.error('Error:', error);
     });
 }
+
+function contadorUsuariosBloqueados(){
+    var contadorSolicitudes = document.getElementById("contador_solicitudes");
+
+    fetch('ajax-contar-solicitudes.php', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.numeroSolicitudes > 0) {
+            contadorSolicitudes.innerHTML = data.numeroSolicitudes;
+            contadorSolicitudes.classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        contadorSolicitudes.classList.add('hidden');
+        console.error('Error:', error);
+    });
+
+}
+document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);

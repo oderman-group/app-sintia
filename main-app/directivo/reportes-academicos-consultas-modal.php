@@ -1,4 +1,6 @@
 <?php
+include("session.php");
+$idPaginaInterna = 'DT0120';
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
@@ -38,7 +40,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                         <select class="form-control  select2" style="width: 100%;" name="gruposR">
                             <option value=""></option>
                             <?php
-                            $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                            $opcionesConsulta = Grupos::listarGrupos();
                             while ($r_grupos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
                                 echo '<option value="' . $r_grupos["gru_id"] . '">' . $r_grupos["gru_nombre"] . '</option>';
                             }

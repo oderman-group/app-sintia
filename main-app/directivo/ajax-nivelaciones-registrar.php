@@ -1,7 +1,7 @@
 <?php
 include("session.php");
-require_once("../class/AjaxNotas.php");
-$datosMensaje = AjaxNotas::ajaxNivelacionesRegistrar($_POST["codEst"],$_POST["carga"],$_POST["nota"]);
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+$datosMensaje = Calificaciones::ajaxNivelacionesRegistrar($_POST["codEst"],$_POST["carga"],$_POST["nota"]);
 include("../compartido/guardar-historial-acciones.php");
 ?>
 <script type="text/javascript">

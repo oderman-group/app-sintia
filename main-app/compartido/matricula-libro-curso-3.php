@@ -7,6 +7,7 @@ if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol
 	exit();
 }
 include(ROOT_PATH . "/main-app/compartido/historial-acciones-guardar.php");
+require_once(ROOT_PATH . "/main-app/compartido/overlay.php");
 require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/Plataforma.php");
 require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
@@ -101,11 +102,11 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 	for ($i = 1; $i <= $periodoFinal; $i++) {
 		$periodos[$i] = $i;
 	}
-	$datos = Boletin::datosBoletinPeriodos($curso, $grupo, $periodos, $year, $id);
+	$datos = Boletin::datosBoletin($curso, $grupo, $periodos, $year, $id,false);
 	while ($row = $datos->fetch_assoc()) {
 		$listaDatos[] = $row;
 	}
-	include("../compartido/agrupar-datos-boletin-periodos_mejorado.php");
+	include("../compartido/agrupar-datos-boletin-periodos-mejorado.php");
 }
 
 
@@ -113,27 +114,37 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 <!doctype html>
 
 <head>
-	<meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="shortcut icon" href="<?= $Plataforma->logo; ?>">
-	<link href="../../config-general/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+	<link href="../css/ButomDowloadPdf.css" rel="stylesheet" type="text/css" />
+	<script src="../js/ButomDowloadPdf.js"></script>
+	
+	<!-- <link href="../../config-general/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" /> -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <!-- Incluye Bootstrap CSS -->
+    <link href="../../config-general/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Incluye Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  
+    	<!-- notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<style type="text/css">
-		#saltoPagina {
-			PAGE-BREAK-AFTER: always;
-		}
+	  
 
-		@media print {
-			@page {
-				size: landscape;
-			}
-		}
+        #saltoPagina {
+            PAGE-BREAK-AFTER: always;
+        }
+      
 	</style>
 </head>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 
 <body style="font-family:Arial;">
+<div id="contenido">
 	<?php foreach ($estudiantes  as  $estudiante) {
 		$materiasPerdidas = 0;
-	?>
+	?><div class="page">
 		<?php
 		$nombreInforme = "REGISTRO DE VALORACIÓN";
 		if ($config['conf_mostrar_encabezado_informes'] == 1) {
@@ -178,7 +189,7 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 					<td align="center"></td>
 					<td align="center">
 						<?php
-						$notaArea = round($area["nota_area_acumulada"] / $area["cantidad_notas"], $config['conf_decimales_notas']);
+						$notaArea = $area["nota_area_acumulada"] ;
 						if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 							$notaFA = ceil($notaArea);
 							switch ($notaFA) {
@@ -199,7 +210,7 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 									break;
 							}
 						} else {
-							echo $notaArea;
+							echo Boletin::formatoNota($notaArea);
 						}
 
 						?></td>
@@ -211,13 +222,14 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 				<?php foreach ($area["cargas"]  as  $carga) {
 					$cantidadAreas = count($area["cargas"]);
 
-					$notaCarga = round($carga["nota_carga_acumulada"] / $carga["cantidad_notas"], $config['conf_decimales_notas']);
+					$notaCarga = $carga["nota_carga_acumulada"] ;
 
 					if ($notaCarga < $config['conf_nota_minima_aprobar']) {
 						$materiasPerdidas++;
 					}
 					$notaCargaDeseno = Boletin::determinarRango($notaCarga, $tiposNotas);
-
+					Utilidades::valordefecto($notaCargaDeseno["notip_desde"],0);
+					Utilidades::valordefecto($notaCargaDeseno["notip_hasta"],1);
 					if ($notaCarga >= $notaCargaDeseno["notip_desde"] && $notaCarga <= $notaCargaDeseno["notip_hasta"]) {
 						if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 							$notaFD = ceil($notaCarga);
@@ -249,7 +261,7 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 					<tr style="font-size:10px; font-weight:normal;">
 						<td style="font-size:10px;"><?php echo $carga["mat_nombre"]; ?></td>
 						<td align="center" style="font-size:10px;"><?= $carga["car_ih"] ?></td>
-						<td align="center" style="font-size:10px;"><?= $notaCarga ?></td>
+						<td align="center" style="font-size:10px;"><?= Boletin::formatoNota($notaCarga);  ?></td>
 						<td align="center" style="font-size:10px;"><?= $notaCargaDeseno["notip_nombre"] ?></td>
 						<td align="center" style="font-size:10px;"><?= $carga["fallas"] ?></td>
 						<td align="center"></td>
@@ -319,14 +331,16 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 				</td>
 			</tr>
 		</table>
-
+	</div>
 	<?php }  ?>
-	<div id="saltoPagina"></div>
+</div>
+<input type="button"  class="btn btn-flotante btn-with-icon" id="guardarPDF"
+onclick="generatePDF('contenido','LIBRO_FINAL_F1',20)" value="Descargar PDF">
+<i class="fa fa-briefcase" aria-hidden="true"></i>
+</input>
 
 	<?php include(ROOT_PATH . "/main-app/compartido/guardar-historial-acciones.php"); ?>
-	<script type="application/javascript">
-		print();
-	</script>
+
 </body>
 
 </html>

@@ -4,8 +4,11 @@ require_once(ROOT_PATH."/main-app/class/Tables/BDT_interface.php");
 
 abstract class BDT_Tablas implements BDT_Interface{
 
+    public const INNER = 'INNER';
+    public const LEFT = 'LEFT';
+    public static $schema;
     public static $tableName;
-
+    public static  $tableAs;
     /**
      * Obtiene el nombre de la tabla asociada a la clase.
      *
@@ -205,6 +208,127 @@ abstract class BDT_Tablas implements BDT_Interface{
             return false;
         }
     }
+ /**
+ * Ejecuta una consulta SQL utilizando una conexión PDO y retorna los resultados.
+ *
+ * @param string $sql Consulta SQL a ejecutar.
+ *
+ * @return array|null Devuelve un array asociativo con los resultados de la consulta en caso de éxito. 
+ *                    Retorna `null` en caso de una excepción.
+ *
+ * @throws PDOException Si ocurre algún error durante la preparación o ejecución de la consulta.
+ */
+    public static function ejecutarSQL(String $sql){
+
+        $conexionPDO = Conexion::newConnection('PDO');
+        try {
+            $stmt = $conexionPDO->prepare($sql);            
+            $stmt->execute();              
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC); 
+            return $result;
+        } catch (PDOException  $e) {
+            echo "Excepción capturada: ". $e->getMessage();
+            return null;
+        }
+    }
+
+    /**
+ * Construye y ejecuta dinámicamente una consulta SQL con múltiples `JOIN`, predicados y opciones de ordenamiento.
+ *
+ * @param array  $predicado    Array de condiciones para el filtro `WHERE`. Las claves son los campos o operadores (`AND`, `OR`), y los valores son los valores de comparación.
+ * @param string $campos       Campos a seleccionar en la consulta. Por defecto, selecciona todos los campos (`'*'`).
+ * @param string $ClasePrincipal Clase principal que define la tabla base. Debe extender de `BDT_Tablas`.
+ * @param array  $clasesJoin   Array de clases que representan las tablas para realizar `JOIN`. Deben implementar `BDT_JoinImplements`.
+ * @param string $joinString   Cláusula adicional para los `JOIN` (opcional).
+ * @param string $orderBy      Cláusula de ordenamiento `ORDER BY` (opcional).
+ *
+ * @return array|null Devuelve el resultado de la consulta SQL como un array. Retorna `null` en caso de excepción.
+ *
+ * @throws Exception Si la clase principal no extiende `BDT_Tablas` o las clases `JOIN` no implementan `BDT_JoinImplements`.
+ */
+    public static function SelectJoin(Array $predicado, $campos,$ClasePrincipal,array $clasesJoin,String $joinString = '',String $orderBy = ''): array|null{
+      
+        try {
+            $result ='';
+            $campos ??= '*';
+            $predicado ??= [];
+            $orderBy =  !empty($orderBy)? "ORDER BY ".$orderBy: ""; 
+
+            if (!is_subclass_of($ClasePrincipal, BDT_Tablas::class)) {
+                throw new Exception("la clase  \$clasePrincipal deben extender de BDT_Tablas.");
+            }
+            // extructura de la clase principal
+            $schema = $ClasePrincipal::$schema;
+            $table  = $ClasePrincipal::$tableName;
+            $as     = $ClasePrincipal::$tableAs;
+
+            // Construir JOIN dinámico
+            $joinClauses = '';
+            foreach ($clasesJoin as $clase) {               
+                if (in_array($clase, class_implements(BDT_JoinImplements::class))) {
+                    throw new Exception("Todas las clases Join en \$clasesJoin deben implmentar de BDT_JoinImplements.");
+                } 
+                $joinSchema = $clase::$schema;
+                $joinTable  = $clase::$tableName;
+                $joinAs     = $clase::$tableAs;
+                $joinKey    = $clase::getForeignKey(); 
+                $tipoJoin   = $clase::getTypeJoin();
+
+                if( !empty($joinKey) ) {
+                    $conditionsJoin = [];
+                    foreach( $joinKey as $onclave => $onvalor ) {                       
+                        if ($onclave === 'AND' || $onvalor === 'OR') {
+                            $conditionsJoin[] = "($onvalor)";
+                        }else{
+                            $asociacion = explode(" ",$onclave);
+                            if(empty($asociacion[1])){
+                                $conditionsJoin[] = $joinAs.'.'.$onclave ." = ".$onvalor;
+                            }else{
+                                $conditionsJoin[] = $joinAs.'.'.$onclave ." ".$onvalor;
+                            }                            
+                        }                        
+                    }
+                    $On = "ON " . implode("\n AND ", $conditionsJoin);
+                    $joinClauses .= "\n {$tipoJoin} JOIN {$joinSchema}.{$joinTable} AS {$joinAs}  {$On} \n";
+                } 
+            }
+
+             // Construir WHERE dinámico
+             if( !empty($predicado) ) {               
+                $conditions = [];
+                foreach( $predicado as $clave => $valor ) {
+
+                    if ($clave === 'AND' || $clave === 'OR') {
+                        $conditions[] = "($valor)";
+                    }else{
+                        $asociacion = explode(" ",$clave);
+                        if(empty($asociacion[1])){
+                            $conditions[] = $clave ." = ".$valor;
+                        }else{
+                            $conditions[] = $clave ." ".$valor;
+                        }
+                        
+                    }
+                    
+                }
+                $where = "\n WHERE " . implode("\n AND ", $conditions);
+            } 
+            
+
+            $consulta = "SELECT $campos FROM {$schema}.{$table} AS {$as}  \n            
+            {$joinClauses}
+            \n
+            {$joinString}
+             \n
+            {$where}
+            \n
+            {$orderBy} \n";
+            return self::ejecutarSQL($consulta); ;
+        } catch (PDOException  $e) {
+            echo "Excepción capturada: ". $e->getMessage();
+            return null;
+        }
+    }
 
     /**
      * Obtiene el número de filas resultantes de una consulta en la base de datos.
@@ -214,7 +338,13 @@ abstract class BDT_Tablas implements BDT_Interface{
      * @return int El número de filas resultantes de la consulta.
      */
     public static function numRows(array $predicado = []) {
-        $consulta   = self::Select($predicado);
+        $schema = BD_ACADEMICA;
+
+        if(property_exists(self::class, 'schema') && !empty(static::$schema)) {
+            $schema = static::$schema;
+        }
+
+        $consulta   = self::Select($predicado, '*', $schema);
         $numRecords = $consulta->rowCount();
 
         return $numRecords;

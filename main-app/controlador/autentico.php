@@ -5,6 +5,7 @@ require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.ph
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
 
 $auth = Autenticate::getInstance();
 
@@ -80,7 +81,7 @@ $fila = mysqli_fetch_array($rst_usr, MYSQLI_BOTH);
 if ($num>0)
 {	
 	if($fila['uss_bloqueado'] == 1){
-		header("Location:".REDIRECT_ROUTE."/index.php?error=6&inst=".base64_encode($_POST["bd"]));
+		header("Location:".REDIRECT_ROUTE."/index.php?error=6&inst=".base64_encode($_POST["bd"])."&idU=".base64_encode($fila['uss_id']));
 		exit();
 	}
 
@@ -109,11 +110,11 @@ if ($num>0)
 	if (empty($url)) {
 		switch($fila['uss_tipo']){
 			case 1:
-				$url = '../directivo/noticias.php';
+				$url = '../directivo/usuarios.php';
 			break;
 			
 			case 2:
-				$url = '../docente/noticias.php';
+				$url = '../docente/cargas.php';
 			break;
 			
 			case 3:
@@ -125,7 +126,7 @@ if ($num>0)
 			break;
 			
 			case 5:
-				$url = '../directivo/noticias.php';
+				$url = '../directivo/estudiantes.php';
 			break;
 			
 			default:
@@ -136,26 +137,26 @@ if ($num>0)
 
 	$config = RedisInstance::getSystemConfiguration(true);
 
-	$informacionInstConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion
-	LEFT JOIN ".$baseDatosServicios.".localidad_ciudades ON ciu_id=info_ciudad
-	LEFT JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
-	WHERE info_institucion='" . $config['conf_id_institucion'] . "' AND info_year='" . $_SESSION["bd"] . "'");
-	$informacionInstitucion = mysqli_fetch_array($informacionInstConsulta, MYSQLI_BOTH);
+	$informacionInstitucion = Instituciones::getGeneralInformationFromInstitution($config['conf_id_institucion'], $_SESSION["bd"]);
 	$_SESSION["informacionInstConsulta"] = $informacionInstitucion;
 
-	$datosUnicosInstitucionConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".instituciones 
-	WHERE ins_id='".$config['conf_id_institucion']."' AND ins_enviroment='".ENVIROMENT."'");
-	$datosUnicosInstitucion = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
-	$_SESSION["datosUnicosInstitucion"] = $datosUnicosInstitucion;
+	$datosUnicosInstitucionConsulta = Instituciones::getDataInstitution($config['conf_id_institucion']);
+	$datosUnicosInstitucion         = mysqli_fetch_array($datosUnicosInstitucionConsulta, MYSQLI_BOTH);
+	$_SESSION["datosUnicosInstitucion"]           = $datosUnicosInstitucion;
+	$_SESSION["datosUnicosInstitucion"]["config"] = $config;
 
 	$arregloModulos = RedisInstance::getModulesInstitution(true);
 	$_SESSION["modulos"] = $arregloModulos;
 
+	$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($fila['uss_id'], $config['conf_id_institucion']);
+
 	//RedisInstance::getMatriculas(true);
 
 	//INICIO SESION
-	$_SESSION["id"] = $fila['uss_id'];
-	$_SESSION["datosUsuario"] = $fila;
+	$_SESSION["id"]                                = $fila['uss_id'];
+	$_SESSION["datosUsuario"]                      = $fila;
+	$_SESSION["datosUsuario"]["sub_roles"]         = $infoRolesUsuario['datos_sub_roles_usuario'];
+	$_SESSION["datosUsuario"]["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'];
 
 	include("navegador.php");
 

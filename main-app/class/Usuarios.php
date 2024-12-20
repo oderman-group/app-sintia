@@ -206,4 +206,86 @@ class Usuarios {
         return $resultado;
     }
 
+
+        /**
+     * Listar todas las cargas.
+     * @param array  $selectSql - valores de los select que se van a nececitar para las consultas
+     * @param array  $tipos
+     * @param string $order
+     * @param string $limit
+
+     *
+     */
+    public static function listar(
+    $selectSql ,
+    $tipos     ,
+    $order     = 'uss_nombre',
+    $limit     = ""){
+    global $config,$conexion; 
+    try {
+        $stringSelect="*";
+        if (!empty($selectSql)) {
+            $stringSelect=implode(", ", $selectSql);
+        };
+
+        $andTipos="";
+        if (count($tipos) >= 1) {
+            $in_tipos = implode(', ', array_fill(0, count($tipos), '?'));
+            $andTipos = "AND us.uss_tipo   IN ($in_tipos)";
+        };
+        $sql="
+            SELECT 
+            $stringSelect
+            ,COALESCE(ca.cantidad_cargas, 0) AS cantidad_cargas,
+            COALESCE(ue.cantidad_acudidos, 0) AS cantidad_acudidos
+
+            FROM " . BD_GENERAL . ".usuarios us
+
+            INNER JOIN  " . BD_ADMIN . ".general_perfiles gp 
+            ON gp.pes_id = us.uss_tipo
+
+            LEFT JOIN (
+            SELECT 
+            car_docente,
+            COUNT(car_id) AS cantidad_cargas
+            FROM " . BD_ACADEMICA . ".academico_cargas
+            WHERE institucion = ".$config['conf_id_institucion']."
+            AND   year        =  ".$_SESSION["bd"]."
+            AND   car_activa  = 1
+            GROUP BY car_docente
+            )AS ca 
+            ON ca.car_docente = us.uss_id
+
+            LEFT JOIN (
+            SELECT 
+            upe_id_usuario,
+            COUNT(upe_id) as cantidad_acudidos 
+            FROM " . BD_GENERAL . ".usuarios_por_estudiantes as upe
+            WHERE upe.institucion    = ".$config['conf_id_institucion']."
+            AND   upe.year           = ".$_SESSION['bd']."
+            GROUP BY upe.upe_id_usuario
+
+            )AS ue 
+            ON ue.upe_id_usuario = us.uss_id
+
+            WHERE us.institucion = ?
+            AND us.year          = ?
+            AND us.uss_id       != '".$_SESSION["id"]."'
+            $andTipos
+            AND us.uss_tipo     != '". TIPO_ESTUDIANTE ."'
+            
+            ORDER BY $order
+            
+            $limit
+            ";
+            $parametros = [$config['conf_id_institucion'], $_SESSION["bd"],$tipos];
+            
+            $consulta = BindSQL::prepararSQL($sql, $parametros);
+            $consulta = BindSQL::resultadoArray($consulta);
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+        }
+        return $consulta;
+    }
+
 }

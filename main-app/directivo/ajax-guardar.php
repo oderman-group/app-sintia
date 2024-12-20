@@ -10,7 +10,8 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 $mensajeNot = 'Hubo un error al guardar las cambios';
 //Bloquear y desbloquear
 if($_POST["operacion"]==1){
-	UsuariosPadre::bloquearUsuario($config, $_POST["idR"], $_POST["valor"]);
+	$motivo = !empty($_POST["motivo"]) ? $_POST["motivo"] : '';
+	UsuariosPadre::bloquearUsuario($config, $_POST["idR"], $_POST["valor"], $motivo, Administrativo_Usuario_Usuario_Bloqueado::USUARIO_INDIVIDUAL);
 
 	$mensajeNot = 'El usuario ha cambiado de estado correctamente.';
 }

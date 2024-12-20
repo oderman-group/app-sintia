@@ -8,6 +8,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 <?php include("../compartido/head.php");?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
+    <link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -21,17 +22,21 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 			<!-- start page content -->
             <div class="page-content-wrapper">
                 <div class="page-content">
+                
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
                                 <div class="page-title">Informes</div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
+                                
                             </div>
                         </div>
                     </div>
                     
                     <div class="row">
+                    
                         <div class="col-md-12">
+                         <div id="gifCarga" class="gif-carga"><img alt="Cargando..."></div>
 							<h4>INFORMES ACADEMICOS</h4>
                             <div class="row">
 								
@@ -40,40 +45,36 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 									<div class="panel">
 										<header class="panel-heading panel-heading-blue">MATRICULAS</header>
 										<div class="panel-body">
-											<?php if(Modulos::validarSubRol(['DT0100'])){?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal1"  >1. Boletines</a></p>											
+											<?php if(Modulos::validarSubRol(['DT0100'])){
+                                                $modalBoletin = new ComponenteModal('boletines','Boletines','../directivo/informes-boletines-modal.php');
+                                                ?>
+												<p><a href="javascript:void(0);"  onclick="<?=$modalBoletin->getMetodoAbrirModal()?>"  >1. Boletines</a></p>											
 											<?php 
-												$idModal = "modal1"; $contenido = "informes-boletines-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0082'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal2"  >2. Certificados</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Certificados','estudiantes-certificados-modal.php')"  >2. Certificados</a></p>
 											<?php 
-												$idModal = "modal2"; $contenido  = "estudiantes-certificados-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0134'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal3"  >3. Consolidado de asignaturas perdidas</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Consolidado de asignaturas perdidas','consolidado-perdidos-modal.php')"   >3. Consolidado de asignaturas perdidas</a></p>
 											<?php 
-												$idModal = "modal3"; $contenido  = "consolidado-perdidos-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0135'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal4"  >4. Libro final</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Libro final','informe-libro-cursos-modal.php')"  >4. Libro final</a></p>
 											<?php 
-												$idModal = "modal4"; $contenido  = "informe-libro-cursos-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0133'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal5"  >5. Listado de estudiantes</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Listado de estudiantes','informe-estudiantes-modal.php')"  >5. Listado de estudiantes</a></p>
 											<?php 
-												$idModal = "modal5"; $contenido  = "informe-estudiantes-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0101'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal6"  >6. Informe parcial</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Informe parcial','informe-parcial-grupo-modal.php')"  >6. Informe parcial</a></p>
 											<?php 
-												$idModal = "modal6"; $contenido  = "informe-parcial-grupo-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0221'])){
 											?>
@@ -82,21 +83,18 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												} 
 												if(Modulos::validarSubRol(['DT0143'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal8"  >8. Informe de consolidado final</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Informe de consolidado final','consolidado-final-filtro-modal.php')"  >8. Informe de consolidado final</a></p>
 											<?php 
-												$idModal = "modal8"; $contenido  = "consolidado-final-filtro-modal.php";  include("../compartido/contenido-modal.php");
 												} 
 												if(Modulos::validarSubRol(['DT0136'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal9"  >9. Planilla de estudiantes</a></p>
-											<?php 
-												$idModal = "modal9"; $contenido  = "estudiantes-planilla-modal.php";  include("../compartido/contenido-modal.php");
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Planilla de estudiantes','estudiantes-planilla-modal.php')"  >9. Planilla de estudiantes</a></p>
+											<?php
 												} 
 												if(Modulos::validarSubRol(['DT0120'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal10" >10. Reporte general de estudiantes</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Reporte general de estudiantes','reportes-academicos-consultas-modal.php')" >10. Reporte general de estudiantes</a></p>
 											<?php 
-												$idModal = "modal10"; $contenido = "reportes-academicos-consultas-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0222'])){
 											?>
@@ -105,9 +103,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												}
 												if(Modulos::validarSubRol(['DT0147'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal12" >12. Reporte de asistencia a entrega de informes</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Reporte de asistencia a entrega de informes','asistencia-entrega-informes-filtros-modal.php')" >12. Reporte de asistencia a entrega de informes</a></p>
 											<?php 
-												$idModal = "modal12"; $contenido = "asistencia-entrega-informes-filtros-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0223'])){
 											?>
@@ -116,15 +113,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												}
 												if(Modulos::validarSubRol(['DT0307'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal14">14. Informe Matriculas retiradas</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Informe Matriculas retiradas','matriculas-retiradas-modal.php')">14. Informe Matriculas retiradas</a></p>
 											<?php 
-												$idModal = "modal14"; $contenido = "matriculas-retiradas-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0249','DT0251'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modal15">15. Hoja de Matricula</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Hoja de Matricula','hoja-matricula-modal.php')">15. Hoja de Matricula</a></p>
 											<?php 
-												$idModal = "modal15"; $contenido = "hoja-matricula-modal.php";  include("../compartido/contenido-modal.php");
 												}
 											?>
 										</div>
@@ -140,29 +135,25 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 											<?php if(Modulos::validarSubRol(['DT0234'])){?>
 												<p><a href="../compartido/informes-generales-docentes-cargas.php" target="_blank">1. Docentes y cargas académicas</a></p>
 											<?php } if(Modulos::validarSubRol(['DT0140'])){?>
-												<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalCont2">2. Informe de sábanas</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Informe de sábanas','informe-reporte-sabana-modal.php')">2. Informe de sábanas</a></p>
 											<?php
-												$idModal = "modalCont2"; $contenido = "informe-reporte-sabana-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0146'])){
 											?>
 												<p><a href="../compartido/informe-cargas-duplicadas.php" target="_blank">3. Informe de cargas duplicadas</a></p>
 											<?php } if(Modulos::validarSubRol(['DT0141'])){?>
-												<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalCont4" >4. Planilla de asistencia</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Planilla de asistencia','asistencia-planilla-modal.php')" >4. Planilla de asistencia</a></p>
 											<?php
-												$idModal = "modalCont4"; $contenido = "asistencia-planilla-modal.php";  include("../compartido/contenido-modal.php");
-												} 
+                                            } 
 												if(Modulos::validarSubRol(['DT0194'])){
 											?>
-												<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalCont5" >5. Planilla docentes con notas</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Planilla docentes con notas','planilla-docentes-filtros-modal.php')" >5. Planilla docentes con notas</a></p>
 											<?php 
-												$idModal = "modalCont5"; $contenido = "planilla-docentes-filtros-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0200'])){
 											?>
-												<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalCont6" >6. Notas declaradas y registradas</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Notas declaradas y registradas','notas-registradas-informes-filtros-modal.php')" >6. Notas declaradas y registradas</a></p>
 											<?php 
-												$idModal = "modalCont6"; $contenido = "notas-registradas-informes-filtros-modal.php";  include("../compartido/contenido-modal.php");
 												}
 											?>
 										</div>
@@ -182,9 +173,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 											<?php
 												if(Modulos::validarSubRol(['DT0331'])){
 											?>
-												<p><a href="javascript:void(0);"  data-toggle="modal" data-target="#modalFin2">2. Paz y salvo</a></p>
+												<p><a href="javascript:void(0);"  onclick="abrirModal('Paz y salvo','paz-salvo-modal.php')">2. Paz y salvo</a></p>
 											<?php 
-												$idModal = "modalFin2"; $contenido = "paz-salvo-modal.php";  include("../compartido/contenido-modal.php");
 												}
 											?>
 										</div>
@@ -198,9 +188,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 										<header class="panel-heading panel-heading-red">INFORMES DISCPLINARIOS</header>
 										<div class="panel-body">
 											<?php if(Modulos::validarSubRol(['DT0116'])){?>
-											<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalInfDist1" >1. Sacar reportes</a></p>
+											<p><a href="javascript:void(0);" onclick="abrirModal('Sacar reportes','reportes-sacar-filtro-modal.php')" >1. Sacar reportes</a></p>
 											<?php 
-												$idModal = "modalInfDist1"; $contenido = "reportes-sacar-filtro-modal.php";  include("../compartido/contenido-modal.php");
 												}
 												if(Modulos::validarSubRol(['DT0242'])){
 											?>
@@ -221,9 +210,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <p><a href="../compartido/excel-estudiantes.php" target="_blank">2. Exportar matrículas</a></p>
 											<?php }if(Modulos::validarSubRol(['DT0340'])){
 											?>
-												<p><a href="javascript:void(0);" data-toggle="modal" data-target="#modalCont7" >3. Exportar informe periodico</a></p>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Exportar informe periodico','informe-periodicos-filtros-modal.php')" >3. Exportar informe periodico</a></p>
 											<?php 
-												$idModal = "modalCont7"; $contenido = "informe-periodicos-filtros-modal.php";  include("../compartido/contenido-modal.php");
+												
 												}
 											?>
 										</div>

@@ -59,6 +59,7 @@ if (!empty($_REQUEST["grupo"])) {
 }
 
 $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro,$year);
+Utilidades::validarInfoBoletin($matriculadosPorCurso);
 while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
 
     //contador materias

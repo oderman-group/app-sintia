@@ -12,6 +12,10 @@ form.steps({
     headerTag: "h3",
     bodyTag: "fieldset",
     transitionEffect: "slideLeft",
+    onInit: function (event, currentIndex) {
+        // Agregar el botón extra al iniciar el wizard
+        addExtraButton();
+    },
     onStepChanging: function (event, currentIndex, newIndex)
     {
         // Allways allow previous action even if the current form is not valid!
@@ -46,6 +50,9 @@ form.steps({
         {
             form.steps("previous");
         }
+
+        // Asegurarse de que el botón extra esté en cada paso
+        addExtraButton();
     },
     onFinishing: function (event, currentIndex)
     {
@@ -64,6 +71,27 @@ form.steps({
         }
     }
 });
+
+// Función para agregar el botón extra en el primer <li> solo si el div #extraButtonTrigger está presente
+function addExtraButton() {
+    // Verificar si el div #extraButtonTrigger existe en la página
+    var trigger = $("#extraButtonTrigger");
+    if (trigger.length > 0 && $("#extraButtonLi").length === 0) {
+        // Crear un nuevo <li> para el botón extra
+        var extraButtonLi = $("<li>", { id: "extraButtonLi", class: "extra-button" });
+
+        // Crear el botón extra dentro del nuevo <li>
+        $("<a>", {
+            id: "extraButton",
+            href: trigger.data("url"),
+            text: trigger.data("text"),
+            class: trigger.data("btn")
+        }).appendTo(extraButtonLi);
+
+        // Insertar el nuevo <li> con el botón extra al inicio de la lista de acciones
+        $(".actions ul").prepend(extraButtonLi);
+    }
+}
 
 $("#example-vertical").steps({
     headerTag: "h3",

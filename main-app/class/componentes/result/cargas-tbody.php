@@ -25,10 +25,10 @@ foreach ($data["data"] as $resultado) {
 	$periodoSP = $resultado['car_periodo'];
 	$marcaMediaTecnica = '';
 	if ($resultado['gra_tipo'] == GRADO_INDIVIDUAL) {
-		$cantidadEstudiantes = $resultado['cantidad_estudaintes_mt'];
+		$cantidadEstudiantes = $resultado['cantidad_estudiantes_mt'];
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	} else {
-		$cantidadEstudiantes = $resultado['cantidad_estudaintes'];
+		$cantidadEstudiantes = $resultado['cantidad_estudiantes'];
 	}
 	$infoTooltipCargas = "<b>COD:</b> 
 	{$resultado['car_id']}<br>
@@ -51,8 +51,14 @@ foreach ($data["data"] as $resultado) {
 	if ($resultado['car_director_grupo'] == 1) {
 		$marcaDG = '<i class="fa fa-star text-info" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Director de grupo"></i> ';
 	}
+
+	$claseInactiva = '';
+
+	if (isset($resultado['car_activa']) && $resultado['car_activa'] != 1) {
+		$claseInactiva = 'class = "bg-secondary"';
+	}
 ?>
-	<tr>
+	<tr <?=$claseInactiva;?>>
 	   <td><?= $contReg; ?></td>
 		<td><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="Información adicional" data-content="<?= $infoTooltipCargas; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= $resultado['id_nuevo_carga']; ?></a></td>
 		<td><?= $marcaDG . "" . strtoupper($resultado['uss_nombre'] . " " . $resultado['uss_nombre2'] . " " . $resultado['uss_apellido1'] . " " . $resultado['uss_apellido2']); ?></td>
@@ -83,9 +89,10 @@ foreach ($data["data"] as $resultado) {
 								<a href="javascript:void(0);" title="Eliminar" onClick="sweetConfirmacion('Alerta!','Deseas eliminar esta accion?','question','cargas-eliminar.php?id=<?= base64_encode($resultado['car_id']); ?>')"><?= $frases[174][$datosUsuarioActual['uss_idioma']]; ?></a>
 							</li>
 						<?php }
-						if ($permisoAutologin) { ?>
+						if ($permisoAutologin && !empty($resultado['uss_id'])) { ?>
 							<li>
 								<a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta acción te permitirá entrar como docente y ver todos los detalles de esta carga. Deseas continuar?','question','auto-login.php?user=<?= base64_encode($resultado['car_docente']); ?>&tipe=<?= base64_encode(2) ?>&carga=<?= base64_encode($resultado['car_id']); ?>&periodo=<?= base64_encode($resultado['car_periodo']); ?>')">Ver como docente</a>
+							</li>
 							<?php }
 					}
 					if ($permisoAutologin) { ?>
@@ -112,18 +119,17 @@ foreach ($data["data"] as $resultado) {
 							$numSinNotas=0;
 							if ($actividadesDeclaradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
 								$generarInforme = false;
-								$msnajetooltip = "Las calidifaciones declaradas no completan el 100% ";
+								$msnajetooltip = "Las califaciones declaradas no completan el 100% ";
 							} else if ($actividadesRegistradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) { 
 								$generarInforme = false;
-								$msnajetooltip = "Las calidifaciones registradas no completan el 100% ";
+								$msnajetooltip = "Las califaciones registradas no completan el 100% ";
 							} else {
 								$generarInforme = true;
 							}
 							if ($generarInforme) {
 								switch (intval($configGenerarJobs)) {
 									case 1:
-										$consultaListaEstudantesSinNotas = Estudiantes::listarEstudiantesNotasFaltantes($resultado["car_id"],$resultado["car_periodo"],$resultado["gra_tipo"]);
-                                        $numSinNotas = mysqli_num_rows($consultaListaEstudantesSinNotas);
+										$numSinNotas            = $resultado["cantidad_estudiantes_sin_nota"];
 										if ($numSinNotas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
 											$generarInforme = false;
 											$msnajetooltip = "La institución no permite generar informe hasta que todos los estudiantes estén calificados un 100%";
@@ -139,34 +145,20 @@ foreach ($data["data"] as $resultado) {
 										$msnajetooltip = "La institución generará el informe con el porcentaje actual de cada estudiante";
 										break;
 								}
-							}
-							$parametros = [
-								"carga"   => $resultado["car_id"],
-								"periodo" => $resultado["car_periodo"],
-								"grado"   => $resultado["car_curso"],
-								"grupo"   => $resultado["car_grupo"]
-							];
+							}				
 
-							$parametrosBuscar = [
-								"tipo"        => JOBS_TIPO_GENERAR_INFORMES,
-								"responsable" => $_SESSION['id'],
-								"parametros"  => json_encode($parametros),
-								"agno"        => $config['conf_agno']
-							];
+							$jobsEncontrado = empty($resultado["job_id"]) ? false : true;
 
-							$buscarJobs     = SysJobs::consultar($parametrosBuscar);
-							$jobsEncontrado = mysqli_fetch_array($buscarJobs, MYSQLI_BOTH);
-
-							if (!empty($jobsEncontrado)) {
+							if ($jobsEncontrado) {
 								$generarInforme=false;
-								switch ($jobsEncontrado["job_estado"]) {
+								switch ($resultado["job_estado"]) {
 									case JOBS_ESTADO_ERROR:
-										$msnajetooltip =$jobsEncontrado["job_mensaje"];
+										$msnajetooltip =$resultado["job_mensaje"];
 										$generarInforme=true;
 										break;
 
 									case JOBS_ESTADO_PENDIENTE:
-										$msnajetooltip = $jobsEncontrado["job_mensaje"];
+										$msnajetooltip = $resultado["job_mensaje"];
 										break;
 
 									case JOBS_ESTADO_PROCESO:

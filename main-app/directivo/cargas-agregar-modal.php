@@ -66,7 +66,7 @@ if (!Modulos::validarPermisoEdicion()) {
                     <select id="multiple" class="form-control select2-multiple" style="width: 100%" name="grupo[]" required multiple <?= $disabledPermiso; ?>>
                         <option value="">Seleccione una opción</option>
                         <?php
-                        $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                        $opcionesConsulta = Grupos::listarGrupos();
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
                         ?>
                             <option value="<?= $opcionesDatos['gru_id']; ?>"><?= $opcionesDatos['gru_id'] . ". " . strtoupper($opcionesDatos['gru_nombre']); ?></option>

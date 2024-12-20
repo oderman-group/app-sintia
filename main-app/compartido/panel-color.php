@@ -1,3 +1,4 @@
+<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DEV) {?>
 <!-- start color quick setting -->
         <div class="quick-setting-main" data-scrollTo='tooltip'>
 			<button class="control-sidebar-btn btn" data-toggle="control-sidebar"><i class="fa fa-cog fa-spin"></i></button>
@@ -37,3 +38,4 @@
 			</div>
 		</div>
 		<!-- end color quick setting -->
+<?php }?>

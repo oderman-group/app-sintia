@@ -38,28 +38,6 @@
 	                                </div>
 	                            </div>
 	                        </li>
-							
-							<?php
-								if ($datosUsuarioActual['uss_tipo'] != TIPO_DOCENTE) {
-							?>
-
-								<li class="nav-item">
-								<a href="como-empezar.php" class="nav-link nav-toggle">
-										<i class="material-icons">toc</i>
-										<span class="title"><?=$frases[255][$datosUsuarioActual['uss_idioma']];?></span>
-										<span class="selected"></span>
-									</a>
-								</li>
-
-							<?php }?>
-							
-							<li class="nav-item start">
-								<a href="javascript:void(0);" onclick="javascript:introJs().start();" class="nav-link nav-toggle">
-									<i class="fa fa-life-ring"></i>
-									<span class="title">Tour SINTIA</span>
-									<span class="selected"></span>
-	                        	</a>
-	                        </li>
 
 							<?php include_once("menu-metodos.php");?>
 							<li <?php agregarClass(MENU,["DT0004"]) ?>>
@@ -69,14 +47,6 @@
                                 	<span class="selected"></span>
 	                            </a>
 	                        </li>
-							
-							<li class="nav-item">
-	                            <a href="noticias.php" class="nav-link nav-toggle">
-	                                <i class="material-icons">view_comfy</i>
-	                                <span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
-	                            </a>
-	                        </li>
-							
 
 							<?php include_once("menu-directivos.php");?>
 
@@ -87,11 +57,50 @@
 							<?php include_once("menu-estudiantes.php");?>
 
 							<li class="nav-item">
-	                            <a href="<?=REDIRECT_ROUTE."/releases.php";?>" target="_blank" class="nav-link nav-toggle">
-	                                <i class="fa fa-external-link-square"></i>
-	                                <span class="title">Lanzamientos</span>
+	                            <a href="noticias.php" class="nav-link nav-toggle">
+	                                <i class="fa fa-bullhorn"></i>
+	                                <span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
 	                            </a>
 	                        </li>
+
+							<li class="nav-item">
+								<a href="javascript:void(0);" class="nav-link nav-toggle"> 
+									<i class="fa fa-question-circle"></i>
+									<span class="title">Ayuda</span>
+								</a>
+								<ul class="sub-menu">
+									<li class="nav-item start">
+										<a href="javascript:void(0);" onclick="javascript:introJs().start();" class="nav-link">
+											<span class="title">Tour SINTIA</span>
+										</a>
+									</li>
+									<?php if ($datosUsuarioActual['uss_tipo'] != TIPO_DOCENTE) {?>
+										<li class="nav-item start">
+											<a href="como-empezar.php" class="nav-link">
+												<span class="title"><?=$frases[255][$datosUsuarioActual['uss_idioma']];?></span>
+											</a>
+										</li>
+									<?php }
+									if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
+									?>
+									<li class="nav-item start">
+										<a href="https://docs.google.com/document/d/1ZgtUFs0WJQD797Dp5fy8T-lsUs4BddArW-49mAi5JkQ/edit?usp=sharing" target="_blank" class="nav-link">
+											<span class="title">Manual de usuario</span>
+										</a>
+									</li>
+									<?php }?>
+									<li class="nav-item start">
+										<a href="https://forms.gle/1NpXSwyqoomKdch76" target="_blank" class="nav-link">
+											<span class="title"><?=$frases[16][$datosUsuarioActual['uss_idioma']];?>/<?=$frases[257][$datosUsuarioActual['uss_idioma']];?></span>
+										</a>
+									</li>
+									<li class="nav-item start">
+										<a href="https://docs.google.com/document/d/1ytMzsH-w3qPUVPF7ScPG3tzEXYcSKbAcaIgLN-VtuyM/edit?usp=sharing" target="_blank" class="nav-link">
+											<span class="title">Histórico de cambios</span>
+										</a>
+									</li>
+								</ul>
+							</li>
 
 	                    </ul>
 	                </div>

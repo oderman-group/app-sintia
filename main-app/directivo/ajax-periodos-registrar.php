@@ -1,6 +1,6 @@
 <?php 
 include("session.php");
-require_once("../class/AjaxNotas.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
 $data = [
 	'codEst'          => $_POST["codEst"],
