@@ -23,6 +23,8 @@ $saldoEC = ($resumenEC[0] - $resumenEC[1]) * -1;
 	<div id="loading-text">Cargando...</div>
 </div>
 
+<?php include("../compartido/ComponenteModal.php");?>
+
 <?php include("../compartido/modal-centralizado.php");?>
 
 <?php include("../compartido/modal-general.php");?>

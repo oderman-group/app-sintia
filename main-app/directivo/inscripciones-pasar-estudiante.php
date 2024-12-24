@@ -6,7 +6,7 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 
 $configAdmisiones=Inscripciones::configuracionAdmisiones($conexion,$baseDatosAdmisiones,$config['conf_id_institucion'],$_SESSION["bd"]);
 
-if (!empty($configAdmisiones["cfgi_year_inscripcion"]) && $configAdmisiones["cfgi_year_inscripcion"]!=$yearEnd) {
+if (!empty($configAdmisiones["cfgi_year_inscripcion"]) && $configAdmisiones["cfgi_year_inscripcion"] != $yearEnd) {
 	echo '<script type="text/javascript">window.location.href="inscripciones.php?error=ER_DT_18&yearPasar='.base64_encode($configAdmisiones["cfgi_year_inscripcion"]).'";</script>';
 	exit;
 }
@@ -15,19 +15,28 @@ $year=$agnoBD;
 $yearPasar=$agnoBD+1;
 
 $matricula="";
-if(!empty($_GET["matricula"])){ $matricula=base64_decode($_GET["matricula"]);}
 
-$existe=Estudiantes::validarExistenciaEstudiante($matricula,$bdApasar,$yearPasar);
+if (!empty($_GET["matricula"])) { 
+	$matricula = base64_decode($_GET["matricula"]);
+}
 
-if ($existe>0) {
+$existe = Estudiantes::validarExistenciaEstudiante($matricula, $bdApasar, $yearPasar);
+
+if ($existe > 0) {
 	echo '<script type="text/javascript">window.location.href="inscripciones.php?error=ER_DT_19&yearPasar='.base64_encode($configAdmisiones["cfgi_year_inscripcion"]).'";</script>';
 	exit;
 }
 
 	//SE CREA MATRICULA EN AÑO SIGUIENTE
 	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_matriculas(mat_id, mat_matricula, mat_fecha, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_lugar_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_religion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_estrato, mat_foto, mat_tipo, mat_estado_matricula, mat_id_usuario, mat_eliminado, mat_email, mat_acudiente, mat_privilegio1, mat_privilegio2, mat_privilegio3, mat_uso_sintia, mat_inicio, mat_meses, mat_fin, mat_folio, mat_codigo_tesoreria, mat_valor_matricula, mat_inclusion, mat_promocionado, mat_extranjero, mat_numero_matricula, mat_compromiso, mat_acudiente2, mat_institucion_procedencia, mat_estado_agno, mat_salon, mat_notificacion1, mat_acudiente_principal, mat_padre, mat_madre, mat_lugar_colegio_procedencia, mat_razon_ingreso_plantel, mat_motivo_retiro_anterior, mat_ciudad_actual, mat_solicitud_inscripcion, mat_tipo_sangre, mat_con_quien_vive, mat_quien_otro, mat_iniciar_proceso, mat_actualizar_datos, mat_pago_matricula, mat_contrato, mat_compromiso_academico, mat_manual, mat_mayores14, mat_hoja_firma, mat_soporte_pago, mat_firma_adjunta, mat_compromiso_convivencia, mat_compromiso_convivencia_opcion, mat_pagare, mat_modalidad_estudio, mat_informe_parcial, mat_informe_parcial_fecha, mat_eps, mat_celular2, mat_ciudad_residencia, mat_nombre2, mat_ciudad_recidencia, mat_tipo_matricula, institucion, year) 
-		SELECT mat_id, mat_matricula, mat_fecha, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_lugar_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_religion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_estrato, mat_foto, mat_tipo, mat_estado_matricula, mat_id_usuario, mat_eliminado, mat_email, mat_acudiente, mat_privilegio1, mat_privilegio2, mat_privilegio3, mat_uso_sintia, mat_inicio, mat_meses, mat_fin, mat_folio, mat_codigo_tesoreria, mat_valor_matricula, mat_inclusion, mat_promocionado, mat_extranjero, mat_numero_matricula, mat_compromiso, mat_acudiente2, mat_institucion_procedencia, mat_estado_agno, mat_salon, mat_notificacion1, mat_acudiente_principal, mat_padre, mat_madre, mat_lugar_colegio_procedencia, mat_razon_ingreso_plantel, mat_motivo_retiro_anterior, mat_ciudad_actual, mat_solicitud_inscripcion, mat_tipo_sangre, mat_con_quien_vive, mat_quien_otro, mat_iniciar_proceso, mat_actualizar_datos, mat_pago_matricula, mat_contrato, mat_compromiso_academico, mat_manual, mat_mayores14, mat_hoja_firma, mat_soporte_pago, mat_firma_adjunta, mat_compromiso_convivencia, mat_compromiso_convivencia_opcion, mat_pagare, mat_modalidad_estudio, mat_informe_parcial, mat_informe_parcial_fecha, mat_eps, mat_celular2, mat_ciudad_residencia, mat_nombre2, mat_ciudad_recidencia, mat_tipo_matricula, institucion, {$yearPasar} FROM ".BD_ACADEMICA.".academico_matriculas WHERE mat_id='".$matricula."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
+		mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_matriculas(mat_id, mat_matricula, mat_fecha, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_lugar_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_religion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_estrato, mat_foto, mat_tipo, mat_estado_matricula, mat_id_usuario, mat_eliminado, mat_email, mat_acudiente, mat_privilegio1, mat_privilegio2, mat_privilegio3, mat_uso_sintia, mat_inicio, mat_meses, mat_fin, mat_folio, mat_codigo_tesoreria, mat_valor_matricula, mat_inclusion, mat_promocionado, mat_extranjero, mat_numero_matricula, mat_compromiso, mat_acudiente2, mat_institucion_procedencia, mat_estado_agno, mat_salon, mat_notificacion1, mat_acudiente_principal, mat_padre, mat_madre, mat_lugar_colegio_procedencia, mat_razon_ingreso_plantel, mat_motivo_retiro_anterior, mat_ciudad_actual, mat_solicitud_inscripcion, mat_tipo_sangre, mat_con_quien_vive, mat_quien_otro, mat_iniciar_proceso, mat_actualizar_datos, mat_pago_matricula, mat_contrato, mat_compromiso_academico, mat_manual, mat_mayores14, mat_hoja_firma, mat_soporte_pago, mat_firma_adjunta, mat_compromiso_convivencia, mat_compromiso_convivencia_opcion, mat_pagare, mat_modalidad_estudio, mat_informe_parcial, mat_informe_parcial_fecha, mat_eps, mat_celular2, mat_ciudad_residencia, mat_nombre2, mat_ciudad_recidencia, mat_tipo_matricula, institucion, year, mat_forma_creacion) 
+		SELECT mat_id, mat_matricula, mat_fecha, mat_primer_apellido, mat_segundo_apellido, mat_nombres, mat_grado, mat_grupo, mat_genero, mat_fecha_nacimiento, mat_lugar_nacimiento, mat_tipo_documento, mat_documento, mat_lugar_expedicion, mat_religion, mat_direccion, mat_barrio, mat_telefono, mat_celular, mat_estrato, mat_foto, mat_tipo, mat_estado_matricula, mat_id_usuario, mat_eliminado, mat_email, mat_acudiente, mat_privilegio1, mat_privilegio2, mat_privilegio3, mat_uso_sintia, mat_inicio, mat_meses, mat_fin, mat_folio, mat_codigo_tesoreria, mat_valor_matricula, mat_inclusion, mat_promocionado, mat_extranjero, mat_numero_matricula, mat_compromiso, mat_acudiente2, mat_institucion_procedencia, mat_estado_agno, mat_salon, mat_notificacion1, mat_acudiente_principal, mat_padre, mat_madre, mat_lugar_colegio_procedencia, mat_razon_ingreso_plantel, mat_motivo_retiro_anterior, mat_ciudad_actual, mat_solicitud_inscripcion, mat_tipo_sangre, mat_con_quien_vive, mat_quien_otro, mat_iniciar_proceso, mat_actualizar_datos, mat_pago_matricula, mat_contrato, mat_compromiso_academico, mat_manual, mat_mayores14, mat_hoja_firma, mat_soporte_pago, mat_firma_adjunta, mat_compromiso_convivencia, mat_compromiso_convivencia_opcion, mat_pagare, mat_modalidad_estudio, mat_informe_parcial, mat_informe_parcial_fecha, mat_eps, mat_celular2, mat_ciudad_residencia, mat_nombre2, mat_ciudad_recidencia, mat_tipo_matricula, institucion, {$yearPasar}, '".Estudiantes::MOVIDO."' 
+		FROM ".BD_ACADEMICA.".academico_matriculas 
+		WHERE 
+			mat_id='".$matricula."' 
+		AND institucion={$config['conf_id_institucion']} 
+		AND year={$year}
+		");
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

@@ -1,6 +1,6 @@
 <?php
 include("session.php");
-require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once "../class/Modulos.php";
 require_once("../class/servicios/MediaTecnicaServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
@@ -102,7 +102,16 @@ if ($acudienteNum > 0) {
 $idEstudianteU = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar,uss_tema_header,uss_tema_logo, institucion, year, uss_id", [$_POST["nDoc"], $clavePorDefectoUsuarios, 4, mysqli_real_escape_string($conexion,$_POST["nombres"]), 0, strtolower($_POST["email"]), $_POST["fNac"], 0, $_POST["genero"], $_POST["celular"], 'default.png', 1, $_POST["tipoD"], $_POST["lugarD"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1"]), mysqli_real_escape_string($conexion,$_POST["apellido2"]), mysqli_real_escape_string($conexion,$_POST["nombre2"]), $_POST["nDoc"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 //Insertamos la matrícula
-$idEstudiante = Estudiantes::insertarEstudiantes($conexionPDO, $_POST, $idEstudianteU, $result_numMat, $procedencia, $idAcudiente);
+$idEstudiante = Estudiantes::insertarEstudiantes(
+	$conexionPDO, 
+	$_POST, 
+	$idEstudianteU, 
+	$result_numMat, 
+	$procedencia, 
+	$idAcudiente, 
+	$config['conf_id_institucion'], 
+	$_SESSION["bd"]
+);
 
 //Insertamos las matrículas Adicionales
 if ($_POST["tipoMatricula"]==GRADO_INDIVIDUAL && !empty($_POST["cursosAdicionales"])) { 

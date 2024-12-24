@@ -1,10 +1,11 @@
 <?php
 include("bd-conexion.php");
 include("php-funciones.php");
-require_once("../class/EnviarEmail.php");
+require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Inscripciones.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_aspirante.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 
 $idInst = "";
 
@@ -138,30 +139,37 @@ if ($newId > 0) {
     $madre->execute();
 
     //Matriculas
-    $matriculasQuery = "INSERT INTO ".BD_ACADEMICA.".academico_matriculas(mat_id, mat_tipo_documento, mat_documento, mat_solicitud_inscripcion, mat_estado_matricula, mat_id_usuario, mat_primer_apellido, mat_nombres, mat_acudiente, mat_padre, mat_madre, mat_grado, mat_grupo, institucion, year, mat_nombre2, mat_segundo_apellido)VALUES(:codigo, :tipoDocumento, :documento, :solicitud, 5, :idUss, :apellido1, :nombres, :acudiente, :padre, :madre, :grado, 1, :idInstitucion, :year, :nombre2, :apellido2)";
 
-    $codigoMAT  = Utilidades::getNextIdSequence($pdoI, BD_ACADEMICA, 'academico_matriculas');
-    $matriculas = $pdoI->prepare($matriculasQuery);
+    $codigoMAT  = strtotime("now");
 
-    $matriculas->bindParam(':codigo', $codigoMAT, PDO::PARAM_STR);
-    $matriculas->bindParam(':tipoDocumento', $_POST['tipoDocumento'], PDO::PARAM_INT);
-    $matriculas->bindParam(':documento', $_POST['documento'], PDO::PARAM_STR);
-    $matriculas->bindParam(':solicitud', $newId, PDO::PARAM_INT);
-    $matriculas->bindParam(':idUss', $estuId, PDO::PARAM_STR);
-    $matriculas->bindParam(':apellido1', $_POST['apellido1'], PDO::PARAM_STR);
-    $matriculas->bindParam(':nombres', $_POST['nombreEstudiante'], PDO::PARAM_STR);
-    $matriculas->bindParam(':acudiente', $acuId, PDO::PARAM_STR);
-    $matriculas->bindParam(':padre', $padreId, PDO::PARAM_STR);
-    $matriculas->bindParam(':madre', $madreId, PDO::PARAM_STR);
-    $matriculas->bindParam(':grado', $_POST['grado'], PDO::PARAM_STR);
-    $matriculas->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
-    $matriculas->bindParam(':year', $config['conf_agno'], PDO::PARAM_STR);
-    $matriculas->bindParam(':nombre2', $_POST['nombreEstudiante2'], PDO::PARAM_STR);
-    $matriculas->bindParam(':apellido2', $_POST['apellido2'], PDO::PARAM_STR);
-    $matriculas->execute();
+    $data = [
+        'tipoD'         => $_POST['tipoDocumento'],
+        'nDoc'          => $_POST['documento'],
+        'solicitudInsc' => $newId,
+        'apellido1'     => $_POST['apellido1'],
+        'apellido2'     => $_POST['apellido2'],
+        'nombres'       => $_POST['nombreEstudiante'],
+        'padre'         => $padreId,
+        'madre'         => $madreId,
+        'grado'         => $_POST['grado'],
+        'matestM'       => Estudiantes::ESTADO_EN_INSCRIPCION
+    ];
+
+    //Insertamos la matrícula
+    $idEstudiante = Estudiantes::insertarEstudiantes(
+        $pdoI,
+        $data,
+        $estuId,
+        $codigoMAT,
+        '',
+        $acuId,
+        Estudiantes::AUTO_INSCRIPCION,
+        $config['conf_id_institucion'],
+        $config['conf_agno']
+    );
 
     //Documentos
-    Inscripciones::guardarDocumentos($pdoI, $config, $codigoMAT);
+    Inscripciones::guardarDocumentos($pdoI, $config, $idEstudiante);
     Inscripciones::finalizarTransacion();
 
     //Mensaje para correo

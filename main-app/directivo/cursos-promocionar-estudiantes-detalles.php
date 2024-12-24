@@ -150,7 +150,7 @@ if(!empty($_POST['relacionCargas']) && $_POST['relacionCargas'] == 1){
                                             <select class="form-control  select2" style="width: 100%;" name="grupoDesde" id="grupoDesde" <?=$disabledPermiso;?> <?=$disabled;?>>
                                                 <option value="">Seleccione una opción</option>
                                                 <?php
-                                                    $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                                                    $opcionesConsulta = Grupos::listarGrupos();
                                                     while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
                                                         if(!empty($_POST['grupoDesde']) && $opcionesDatos['gru_id']==$_POST['grupoDesde'])
                                                             echo '<option value="'.$opcionesDatos['gru_id'].'" selected>'.$opcionesDatos['gru_nombre'].'</option>';
@@ -166,7 +166,7 @@ if(!empty($_POST['relacionCargas']) && $_POST['relacionCargas'] == 1){
                                             <select class="form-control  select2" style="width: 100%;" name="grupoPara" id="grupoPara" <?=$disabledPermiso;?> <?=$disabled;?>>
                                                 <option value="">Seleccione una opción</option>
                                                 <?php
-                                                    $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                                                    $opcionesConsulta = Grupos::listarGrupos();
                                                     while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
                                                         if(!empty($_POST['grupoPara']) && $opcionesDatos['gru_id']==$_POST['grupoPara'])
                                                             echo '<option value="'.$opcionesDatos['gru_id'].'" selected>'.$opcionesDatos['gru_nombre'].'</option>';
@@ -369,7 +369,7 @@ if(!empty($_POST['relacionCargas']) && $_POST['relacionCargas'] == 1){
                                                                                             <select class="form-control  select2" onchange="crearInputGrupoEstudiante(this, '<?=$datosEstudiante['mat_id'];?>', 'noGrupo')" id="grupo<?=$datosEstudiante['mat_id'];?>" <?=$disabledPermiso;?>>
                                                                                                 <option value="">Seleccione una opción</option>
                                                                                                 <?php
-                                                                                                $opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                                                                                                $opcionesConsulta = Grupos::listarGrupos();
                                                                                                 while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
                                                                                                     $selected="";
                                                                                                     if($datosEstudiante['mat_grupo']==$opcionesDatos['gru_id']){

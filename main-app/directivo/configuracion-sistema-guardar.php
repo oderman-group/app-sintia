@@ -52,9 +52,10 @@ if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_COMPORTAMIENTO) {
 }
 
 if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_PREFERENCIAS) {
-    $datos["conf_orden_nombre_estudiantes"]       = $_POST["ordenEstudiantes"];
-    $datos["conf_num_registros"]                  = $_POST["numRegistros"];
-    $datos["conf_mostrar_estudiantes_cancelados"] = $_POST["mostrarEstudiantesCancelados"];
+    $datos["conf_orden_nombre_estudiantes"]                = $_POST["ordenEstudiantes"];
+    $datos["conf_num_registros"]                           = $_POST["numRegistros"];
+    $datos["conf_mostrar_estudiantes_cancelados"]          = $_POST["mostrarEstudiantesCancelados"];
+    $datos["conf_ocultar_panel_lateral_notas_estudiantes"] = $_POST["mostrarNotasPanelLateral"];
 
     $tabActual = "#preferencias";
 }

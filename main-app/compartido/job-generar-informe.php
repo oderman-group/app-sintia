@@ -2,6 +2,12 @@
 session_start();
 $idPaginaInterna = 'CM0007';
 
+$acceso = explode("/", $_SERVER['HTTP_REFERER']);
+
+if (count($acceso) > 5) {
+    $carpeta_actual = $acceso[5] ;
+}
+
 include_once("../../config-general/config.php");
 require_once("../class/Sysjobs.php");
 
@@ -22,6 +28,8 @@ try {
 
 include("../compartido/guardar-historial-acciones.php");
 
-echo '<script type="text/javascript">window.location.href="../docente/cargas.php";</script>';
+
+
+echo '<script type="text/javascript">window.location.href="../'.$carpeta_actual.'/cargas.php";</script>';
 
 exit();

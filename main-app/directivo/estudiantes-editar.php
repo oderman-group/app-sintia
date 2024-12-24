@@ -15,14 +15,14 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php");
 
-$id="";
+$idMatricula="";
 if(!empty($_GET["id"])){
-	$id=base64_decode($_GET["id"]);
-	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($id);
+	$idMatricula=base64_decode($_GET["id"]);
+	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($idMatricula);
 } else if(!empty($_GET["idUsuario"])){ 
 	$idUsuario=base64_decode($_GET["idUsuario"]);
 	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiantePorIdUsuario($idUsuario);
-	$id=$datosEstudianteActual["mat_id"];
+	$idMatricula=$datosEstudianteActual["mat_id"];
 }
 
 if( empty($datosEstudianteActual) ){
@@ -38,6 +38,8 @@ if(!Modulos::validarPermisoEdicion()){
 
 	<!-- steps -->
 	<link rel="stylesheet" href="../../config-general/assets/plugins/steps/steps.css"> 
+	<!-- Theme Styles -->
+    <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
 
 	<!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
@@ -147,7 +149,7 @@ if(!Modulos::validarPermisoEdicion()){
                                  </div>
                                  <div class="card-body">
                                  	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-actualizar.php" method="post" enctype="multipart/form-data">
-									<input type="hidden" name="id" value="<?=$id;?>">
+									<input type="hidden" name="id" value="<?=$idMatricula;?>">
 									<input type="hidden" name="idU" value="<?=$datosEstudianteActual["mat_id_usuario"];?>">
 									  
 										<h3>Información personal</h3>

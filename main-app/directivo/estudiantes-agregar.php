@@ -492,7 +492,7 @@ if(!Modulos::validarPermisoEdicion()){
 													<select class="form-control" name="grupo" <?=$disabledPermiso;?>>
 														<option value="">Seleccione una opción</option>
 														<?php
-                        								$opcionesConsulta = Grupos::traerGrupos($conexion, $config);
+                        								$opcionesConsulta = Grupos::listarGrupos();
 														while($rv = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 															if($rv['gru_id']==$datosMatricula['grupo'])
 																echo '<option value="'.$rv['gru_id'].'" selected>'.$rv['gru_nombre'].'</option>';
@@ -593,7 +593,7 @@ if(!Modulos::validarPermisoEdicion()){
 															<div class="col-sm-4">
 																<select class="form-control" name="grupoMT">
 																<?php
-                        										$cv = Grupos::traerGrupos($conexion, $config); 
+                        										$cv = Grupos::listarGrupos(); 
 																while($rv = mysqli_fetch_array($cv, MYSQLI_BOTH)){
 																	echo '<option value="'.$rv['gru_id'].'">'.$rv['gru_nombre'].'</option>';
 																}?>

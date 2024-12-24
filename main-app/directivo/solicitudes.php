@@ -1,8 +1,12 @@
-<?php include("session.php");?>
-<?php $idPaginaInterna = 'DT0122';?>
-<?php include("../compartido/historial-acciones-guardar.php");?>
-<?php include("../compartido/head.php");
-require_once("../class/Estudiantes.php");
+<?php
+include("session.php");
+$idPaginaInterna = 'DT0122';
+include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
+include(ROOT_PATH."/main-app/compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Estudiante.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -12,14 +16,17 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 </head>
 <!-- END HEAD -->
-<?php include("../compartido/body.php");?>
+<?php
+	include(ROOT_PATH."/main-app/compartido/body.php");
+	include("usuarios-bloquear-modal.php");
+?>
     <div class="page-wrapper">
-        <?php include("../compartido/encabezado.php");?>
+        <?php include(ROOT_PATH."/main-app/compartido/encabezado.php");?>
 		
-        <?php include("../compartido/panel-color.php");?>
+        <?php include(ROOT_PATH."/main-app/compartido/panel-color.php");?>
         <!-- start page container -->
         <div class="page-container">
- 			<?php include("../compartido/menu.php");?>
+ 			<?php include(ROOT_PATH."/main-app/compartido/menu.php");?>
 			<!-- start page content -->
             <div class="page-content-wrapper">
                 <div class="page-content">
@@ -27,7 +34,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
                                 <div class="page-title">Solicitudes</div>
-								<?php include("../compartido/texto-manual-ayuda.php");?>
+								<?php include(ROOT_PATH."/main-app/compartido/texto-manual-ayuda.php");?>
                             </div>
                         </div>
                     </div>
@@ -67,23 +74,49 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 <tbody>
 												<?php
                                                 include("includes/consulta-paginacion-solicitudes.php");
-                                                try{
-                                                    $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".general_solicitudes 
-                                                    LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=soli_remitente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-                                                    LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat_id=soli_id_recurso AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-                                                    WHERE soli_institucion='".$config['conf_id_institucion']."' 
-                                                    AND soli_year='".$_SESSION["bd"]."' $filtro
-                                                    LIMIT $inicio,$registros");
-                                                } catch (Exception $e) {
-                                                    include("../compartido/error-catch-to-report.php");
-                                                }
-												while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){				
+
+                                                $predicado = [
+                                                    'soli_institucion' => $_SESSION['idInstitucion'],
+                                                    'soli_year'        => $_SESSION['bd']
+                                                ];
+                                            
+                                                $consulta = Administrativo_General_Solicitud::Select($predicado, "*", BD_GENERAL);
+
+												while($resultado = $consulta->fetch(PDO::FETCH_ASSOC)){		
+
+                                                    $predicadoRemitente = [
+                                                        'uss_id'      => $resultado['soli_remitente'],
+                                                        'institucion' => $_SESSION['idInstitucion'],
+                                                        'year'        => $_SESSION['bd']
+                                                    ];
+                                                
+                                                    $camposRemitente    = "uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2";
+                                                    $consultaRemitente  = Administrativo_Usuario_Usuario::Select($predicadoRemitente, $camposRemitente, BD_GENERAL);
+                                                    $resultadoRemitente = $consultaRemitente->fetch(PDO::FETCH_ASSOC);
+                                                    $nombreRemitente    = UsuariosPadre::nombreCompletoDelUsuario($resultadoRemitente);
+
+                                                    $nombreRecurso = $nombreRemitente;
+                                                    $IDUsuario = $resultado['soli_id_recurso'];
+                                                    if ($resultado['soli_id_recurso'] != $resultado['soli_remitente']) {
+
+                                                        $predicadoEstudiante = [
+                                                            'mat_id'      => $resultado['soli_id_recurso'],
+                                                            'institucion' => $_SESSION['idInstitucion'],
+                                                            'year'        => $_SESSION['bd']
+                                                        ];
+                                                    
+                                                        $camposEstudiante    = "mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido, mat_id_usuario";
+                                                        $consultaEstudiante  = Administrativo_Usuario_Estudiante::Select($predicadoEstudiante, $camposEstudiante, BD_ACADEMICA);
+                                                        $resultadoEstudiante = $consultaEstudiante->fetch(PDO::FETCH_ASSOC);
+                                                        $nombreRecurso       = Estudiantes::NombreCompletoDelEstudiante($resultadoEstudiante);
+                                                        $IDUsuario = $resultadoEstudiante['mat_id_usuario'];
+                                                    }
 												?>
 												<tr>
 													<td><?=$resultado['soli_id'];?></td>
 													<td><?=$resultado['soli_fecha'];?></td>
-													<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></td>
-													<td><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
+													<td><?=$nombreRemitente;?></td>
+													<td><?=$nombreRecurso;?></td>
 													<td><?=$resultado['soli_mensaje'];?></td>
                                                     <td id="estado<?=$resultado['soli_id'];?>"><?=$estadosSolicitudes[$resultado['soli_estado']];?></td>
                                                     <td>
@@ -92,9 +125,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 <i class="fa fa-angle-down"></i>
                                                             </button>
                                                             <ul class="dropdown-menu pull-left" role="menu" x-placement="bottom-start">
-                                                                <li data-id-estado="2" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">En proceso</a></li>
-                                                                <li data-id-estado="3" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">Aceptar</a></li>
-                                                                <li data-id-estado="4" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$resultado['mat_id_usuario'];?>" onclick="cambiarEstados(this)"><a href="#">Rechazar</a></li>
+                                                                <li data-id-estado="2" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">En proceso</a></li>
+                                                                <li data-id-estado="3" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">Aceptar</a></li>
+                                                                <li data-id-estado="4" data-id-registro="<?=$resultado['soli_id'];?>" data-id-recurso="<?=$resultado['soli_id_recurso'];?>" data-id-usuario="<?=$IDUsuario;?>" onclick="cambiarEstados(this)"><a href="#">Rechazar</a></li>
                                                             </ul>
                                                         </div>
                                                     </td>
@@ -112,11 +145,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     </div>
                 </div>
             </div>
-            <!-- end page content -->
-             <?php // include("../compartido/panel-configuracion.php");?>
         </div>
         <!-- end page container -->
-        <?php include("../compartido/footer.php");?>
+        <?php include(ROOT_PATH."/main-app/compartido/footer.php");?>
     </div>
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>

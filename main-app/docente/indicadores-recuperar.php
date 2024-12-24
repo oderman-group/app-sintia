@@ -58,44 +58,54 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 										<header class="panel-heading panel-heading-purple">TABLA DE VALORES</header>
 
 										<div class="panel-body">
-											  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered">
+											<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered">
 												<!-- BEGIN -->
 												<thead>
-												  <tr>
-													<th>Desde</th>
-													<th>Hasta</th>
-													<th>Resultado</th>
-												  </tr>
+													<tr>
+														<th>Desde</th>
+														<th>Hasta</th>
+														<th>Resultado</th>
+													</tr>
 												</thead>
 												<tbody>
-												 <?php
-												 $TablaNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
-												 while($tabla = mysqli_fetch_array($TablaNotas, MYSQLI_BOTH)){
-												 ?>
-												  <tr id="data1" class="odd grade">
+												<?php
+												$TablaNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
 
-													<td><?=$tabla["notip_desde"];?></td>
-													<td><?=$tabla["notip_hasta"];?></td>
-													<td><?=$tabla["notip_nombre"];?></td>
-												  </tr>
-												  <?php }
+												while ($tabla = mysqli_fetch_array($TablaNotas, MYSQLI_BOTH)) {
+												?>
+													<tr id="data1" class="odd grade">
+														<td><?=$tabla["notip_desde"];?></td>
+														<td><?=$tabla["notip_hasta"];?></td>
+														<td><?=$tabla["notip_nombre"];?></td>
+													</tr>
+												<?php }
 													mysqli_free_result($TablaNotas);
-													?>
+												?>
 												</tbody>
-											  </table>
+											</table>
 										</div>
 										
                                     </div>
-									
+
 									<div class="panel">
 										<header class="panel-heading panel-heading-purple"><?=strtoupper($frases[63][$datosUsuarioActual['uss_idioma']]);?> </header>
 										<div class="panel-body">
 											<p>Puedes cambiar a otro indicador rápidamente para calificar a tus estudiantes o hacer modificaciones de notas.</p>
 											<?php
-											$registrosEnComun = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
-											while($regComun = mysqli_fetch_array($registrosEnComun, MYSQLI_BOTH)){
+											$registrosEnComun = Indicadores::traerCargaIndicadorPorPeriodo(
+												$conexion, 
+												$config, 
+												$cargaConsultaActual, 
+												$periodoConsultaActual
+											);
+
+											while ($regComun = mysqli_fetch_array($registrosEnComun, MYSQLI_BOTH)) {
 											?>
-												<p><a href="<?=$_SERVER['PHP_SELF'];?>?idR=<?=base64_encode($regComun['ipc_indicador']);?>"><?=$regComun['ind_nombre']." (".$regComun['ipc_valor']."%)";?></a></p>
+												<p>
+													<a href="<?=$_SERVER['PHP_SELF'];?>?idR=<?=base64_encode($regComun['ipc_indicador']);?>">
+														<?=$regComun['ind_nombre']." (".$regComun['ipc_valor']."%)";?>
+													</a>
+												</p>
 											<?php }
 											mysqli_free_result($registrosEnComun);
 											?>
@@ -112,20 +122,13 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
                                             <header><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></header>
                                             <div class="tools">
                                                 <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
-			                                    <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
-			                                    <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
+												<a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
+												<a class="t-close btn-color fa fa-times" href="javascript:;"></a>
                                             </div>
                                         </div>
-										
-										
-									
-										
+
                                         <div class="card-body">
-											
-											
 										<span style="color: blue; font-size: 15px;" id="respRC"></span>
-											
-											
                                         <div class="table-responsive">
                                             <table class="table table-striped custom-table table-hover">
                                                 <thead>
@@ -140,44 +143,140 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
-													 $contReg = 1;
-													 $colorNota = "black";
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														 
-														//Consulta de recuperaciones si ya la tienen puestas.
-														$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $idR, $resultado['mat_id'], $cargaConsultaActual, $periodoConsultaActual);
-														$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
-														
+													$consulta  = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+													$contReg   = 1;
+													$colorNota = "black";
+
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+
+														$generarDefintivasIndicadores = true;
+														$iteraciones = 0;
+
+														while($generarDefintivasIndicadores) {
+															//Consulta de recuperaciones si ya la tienen puestas.
+															$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo(
+																$config, 
+																$idR, 
+																$resultado['mat_id'], 
+																$cargaConsultaActual, 
+																$periodoConsultaActual
+															);
+															$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
+
+															$iteraciones ++;
+															// Esto es para garantizar que maximo haga dos veces la entrada a este ciclo.
+															if ($iteraciones > 2) {
+																$generarDefintivasIndicadores = false;
+																break;
+															}
+
+															// Si no hay registro en la tabla de indicadores y el periodo actual es mayor al consultado
+															// Significa que no se registraron las notas de los indicadores por alguna motivo.
+															if (
+																empty($notas['rind_id']) && 
+																$datosCargaActual['car_periodo'] > $periodoConsultaActual && 
+																$informacion_inst["info_institucion"] == ICOLVEN
+															) {
+																//Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
+																$notasPorIndicador = Calificaciones::traerNotasPorIndicador(
+																	$config, 
+																	$cargaConsultaActual, 
+																	$resultado['mat_id'], 
+																	$periodoConsultaActual
+																);
+																$sumaNotaIndicador = 0; 
+
+																while ($notInd = mysqli_fetch_array($notasPorIndicador, MYSQLI_BOTH)) {
+																	$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo(
+																		$config, 
+																		$notInd[1], 
+																		$resultado['mat_id'], 
+																		$cargaConsultaActual, 
+																		$periodoConsultaActual
+																	);
+																	$num = mysqli_num_rows($consultaNum);
+																	$sumaNotaIndicador += $notInd[0];
+
+																	if ($num == 0) {
+																		Indicadores::eliminarRecuperacionIndicadorPeriodo(
+																			$config, 
+																			$notInd[1], 
+																			$resultado['mat_id'], 
+																			$cargaConsultaActual, 
+																			$periodoConsultaActual
+																		);
+
+																		Indicadores::guardarRecuperacionIndicador(
+																			$conexionPDO, 
+																			$config, 
+																			$resultado['mat_id'], 
+																			$cargaConsultaActual, 
+																			$notInd[0], 
+																			$notInd[1], 
+																			$periodoConsultaActual, 
+																			$notInd[2]
+																		);
+																	} else {
+																		Indicadores::actualizarRecuperacionIndicador(
+																			$config, 
+																			$resultado['mat_id'], 
+																			$cargaConsultaActual, 
+																			$notInd[0], 
+																			$notInd[1], 
+																			$periodoConsultaActual, 
+																			$notInd[2]
+																		);
+																	}
+																}
+															} else {
+																$generarDefintivasIndicadores = false;
+															}
+														}
 
 														//Promedio nota indicador según nota de actividades relacionadas
-														$notaIndicador = Calificaciones::consultaNotaIndicadoresPromedio($config, $idR, $cargaConsultaActual, $resultado['mat_id'], $periodoConsultaActual);
-														 
+														$notaIndicadorSegunActividades = Calificaciones::consultaNotaIndicadoresPromedio($config, $idR, $cargaConsultaActual, $resultado['mat_id'], $periodoConsultaActual);
+
 														$notaRecuperacion = "";
-														if(!empty($notas['rind_nota']) && $notas['rind_nota']>$notas['rind_nota_original'] and $notas['rind_nota']>$notaIndicador[0]){
+
+														if (
+															!empty($notas['rind_nota']) && 
+															$notas['rind_nota'] > $notas['rind_nota_original'] && 
+															$notas['rind_nota'] > $notaIndicadorSegunActividades[0]
+														) {
 															$notaRecuperacion = $notas['rind_nota'];
-															
+
 															//Color nota
-															if(!empty($notaRecuperacion) && $notaRecuperacion<$config[5]) $colorNota = $config[6]; elseif(!empty($notaRecuperacion) && $notaRecuperacion>=$config[5]) $colorNota = $config[7];
+															$colorNota = $notaRecuperacion < $config['conf_nota_minima_aprobar'] ? $config['conf_color_perdida'] : $config['conf_color_ganada'];
 														}
-														$notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoConsultaActual, $resultado['mat_id'], $cargaConsultaActual);
-														 
-														if(!empty($notaIndicador[0]) && $notaIndicador[0]<$config[5])$color = $config[6]; elseif(!empty($notaIndicador[0]) && $notaIndicador[0]>=$config[5]) $color = $config[7]; 
-														 
-														 
-														 $colorEstudiante = '#000;';
-														 if($resultado['mat_inclusion']==1){$colorEstudiante = 'blue;';}
 
-														$notaIndicadorFinal=$notaIndicador[0];
-														$atributosA='style="text-decoration:underline; color:'.$color.';"';
-														if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-															$atributosA='tabindex="0" role="button" data-toggle="popover" data-trigger="hover" data-content="<b>Nota Cuantitativa:</b><br>'.$notaIndicador[0].'" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000; color:'.$color.';"';
+														$notasResultado = Boletin::traerNotaBoletinCargaPeriodo(
+															$config, 
+															$periodoConsultaActual, 
+															$resultado['mat_id'], 
+															$cargaConsultaActual
+														);
 
-															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaIndicador[0]);
+														if (!empty($notaIndicadorSegunActividades[0]) && $notaIndicadorSegunActividades[0] < $config['conf_nota_minima_aprobar'])
+															$color = $config['conf_color_perdida']; 
+														elseif (!empty($notaIndicadorSegunActividades[0]) && $notaIndicadorSegunActividades[0] >= $config['conf_nota_minima_aprobar']) 
+															$color = $config['conf_color_ganada']; 
+
+														$colorEstudiante = '#000;';
+
+														if ($resultado['mat_inclusion'] == 1) {
+															$colorEstudiante = 'blue;';
+														}
+
+														$notaIndicadorFinal = $notaIndicadorSegunActividades[0];
+														$atributosA = 'style="text-decoration:underline; color:'.$color.';"';
+
+														if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+															$atributosA='tabindex="0" role="button" data-toggle="popover" data-trigger="hover" data-content="<b>Nota Cuantitativa:</b><br>'.$notaIndicadorSegunActividades[0].'" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000; color:'.$color.';"';
+
+															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaIndicadorSegunActividades[0]);
 															$notaIndicadorFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 														}
-													 ?>
-                                                    
+													?>
 													<tr>
                                                         <td><?=$contReg;?></td>
 														<td><?=$resultado['mat_id'];?></td>
@@ -188,70 +287,89 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 														<td>
 															<a href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>&carga=<?=base64_encode($cargaConsultaActual);?>&indicador=<?=$_GET["idR"];?>" <?=$atributosA?>>
 																<?=$notaIndicadorFinal;?>
-															</a>	
+															</a>
 														</td>
+
 														<td>
-															<?php 
-															$estiloNotaRecuperacionFinal="";
-														 	if(empty($notaIndicador[0])){
-																echo "<span title='No hay notas relacionadas este indicador. Revise las actividades.'>-</span>";	
+														<?php 
+														$estiloNotaRecuperacionFinal = "";
+
+														if (empty($notaIndicadorSegunActividades[0])) {
+															echo "<span title='No hay notas relacionadas este indicador. Revise las actividades.'>-</span>";	
+														} elseif (empty($notas['rind_id'])) {
+															echo "<span title='No hay un registro de definitiva para este Indicador. Por favor Genere Informe.'>?</span>";	
+														} elseif ($notaIndicadorSegunActividades[0] >= $config['conf_nota_minima_aprobar']) {
+															echo "";	
+														} else {
+															if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+																$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaRecuperacion);
+																$estiloNotaRecuperacionFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 															}
-															elseif(empty($notas['rind_id'])){
-																echo "<span title='No hay un registro de definitiva para este Indicador. Por favor Genere Informe.'>?</span>";	
-															}
-															elseif($notaIndicador[0]>=$config[5]){
-																echo "";	
-															}
-															else{
-																if($config['conf_forma_mostrar_notas'] == CUALITATIVA){		
-																	$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaRecuperacion);
-																	$estiloNotaRecuperacionFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-																}	
-															?>
-															<input type="text" style="text-align: center; color:<?=$colorNota;?>" size="5" maxlength="3" value="<?=$notaRecuperacion;?>" name="<?=$notas['rind_nota_actual'];?>" step="<?=$cargaConsultaActual;?>_<?=$periodoConsultaActual;?>" id="<?=$resultado['mat_id'];?>" alt="<?=$idR;?>" title="<?=($calificacion['ipc_valor']/100);?>" onChange="recuperarIndicador(this)" tabindex="<?=$contReg;?>">
-															<?php }?>
-															
-															
-															<?php if(!empty($notas['cal_nota'])){?>
+														?>
+															<input 
+																type="text" 
+																style="text-align: center; color:<?=$colorNota;?>" 
+																size="5"  
+																value="<?=$notaRecuperacion;?>" 
+																name="<?=$notas['rind_nota_actual'];?>" 
+																step="<?=$cargaConsultaActual;?>_<?=$periodoConsultaActual;?>" 
+																id="<?=$resultado['mat_id'];?>" 
+																alt="<?=$idR;?>" 
+																title="<?=($calificacion['ipc_valor']/100);?>" 
+																onChange="recuperarIndicador(this)" 
+																tabindex="<?=$contReg;?>"
+															>
+														<?php 
+														}
+
+														if (!empty($notas['cal_nota'])) {
+														?>
 															<a href="#" name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notas['cal_id']);?>" onClick="deseaEliminar(this)">X</a>
-															<?php }?>
-															<br><span style="text-decoration:underline; color:<?=$colorNota;?>; margin-left: 15px" id="CU<?=$resultado['mat_id'].$cargaConsultaActual;?>"><?=$estiloNotaRecuperacionFinal?></span>
+														<?php }?>
+
+														<br>
+														<span 
+															style="text-decoration:underline; color:<?=$colorNota;?>; margin-left: 15px" 
+															id="CU<?=$resultado['mat_id'].$cargaConsultaActual;?>"
+														>
+															<?=$estiloNotaRecuperacionFinal?>
+														</span>
 														</td>
 														
 														<td>
 															<?php
-																if(!empty($notasResultado['bol_nota'])){
-														 
-																	if($notasResultado['bol_nota']<$config[5])$color = $config[6]; elseif($notasResultado['bol_nota']>=$config[5]) $color = $config[7]; 
+																if (!empty($notasResultado['bol_nota'])) {
 
-																	$notasResultadoFinal=$notasResultado['bol_nota'];
-																	$atributosA='style="text-decoration:underline; color:'.$color.';"';
-																	if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+																	if ($notasResultado['bol_nota'] < $config['conf_nota_minima_aprobar'])
+																		$color = $config['conf_color_perdida']; 
+																	elseif($notasResultado['bol_nota'] >= $config['conf_nota_minima_aprobar']) 
+																		$color = $config['conf_color_ganada']; 
+
+																	$notasResultadoFinal = $notasResultado['bol_nota'];
+																	$atributosA = 'style="text-decoration:underline; color:'.$color.';"';
+
+																	if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 																		$atributosA='tabindex="0" role="button" data-toggle="popover" data-trigger="hover" data-content="<b>Nota Cuantitativa:</b><br>'.$notasResultado['bol_nota'].'" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000; color:'.$color.';"';
 
 																		$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasResultado['bol_nota']);
-																		$notasResultadoFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+																		$notasResultadoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 																	}
 															?>
 																<a href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>&carga=<?=base64_encode($cargaConsultaActual);?>" <?=$atributosA?>><?=$notasResultadoFinal;?></a>
 															<?php }?>
 														</td>
-														
                                                     </tr>
 													<?php 
-														 $contReg++;
-													  }
+														$contReg++;
+													}
 													mysqli_free_result($consulta);
-															
-													  ?>
+													?>
                                                 </tbody>
                                             </table>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-								
-							
                             </div>
                         </div>
                     </div>

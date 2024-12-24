@@ -2,12 +2,12 @@
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $periodo=$config['conf_periodo'];
 $periodoConsultaActual=$config['conf_periodo'];
-if(!isset($_GET["carga"]) or !is_numeric(base64_decode($_GET["carga"]))){
-	if($_COOKIE["carga"]!="" and $_COOKIE["periodo"]!=""){
+if (!isset($_GET["carga"])) {
+	if ($_COOKIE["carga"]!="" and $_COOKIE["periodo"]!="") {
 		$cargaConsultaActual = $_COOKIE["carga"];
 		$periodoConsultaActual = $_COOKIE["periodo"];
-	}else{
-			echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=100";</script>';
+	} else {
+			echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=100&op=1";</script>';
 			exit();
 	}
 }else{
@@ -41,7 +41,7 @@ $dgArray = array ("NO","SI");
 
 if(empty($datosCargaActual))
 {
-	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=100";</script>';
+	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=100&op=2";</script>';
 	exit();		
 }
 ?>

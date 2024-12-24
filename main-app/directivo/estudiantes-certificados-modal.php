@@ -1,4 +1,6 @@
 <?php
+include("session.php");
+$idPaginaInterna = 'DT0082';
 require_once("../class/Estudiantes.php");
 
 if (!Modulos::validarSubRol([$idPaginaInterna])) {

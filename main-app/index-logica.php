@@ -43,6 +43,13 @@ if (isset($_SESSION["id"]) and $_SESSION["id"] != "") {
 
 try {
 	$conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
+
+	if (!mysqli_set_charset($conexionBaseDatosServicios, "utf8mb4")) 
+    {
+		printf("Error cargando el conjunto de caracteres utf8mb4: %s\n", mysqli_error($link));
+		exit();
+    }
+	
 	$institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".instituciones 
 	WHERE ins_estado = 1 AND ins_enviroment='".ENVIROMENT."'");
 } catch(Exception $e){

@@ -4,6 +4,7 @@ $logoWidth = 250;
 
 if(!isset($_GET['nodb'])) {
     require_once("index-logica.php");
+    require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Informativos.php");
 
     if (!empty($_GET['inst']) && !empty($_GET['year'])) {
         try {
@@ -17,6 +18,24 @@ if(!isset($_GET['nodb'])) {
         } catch(Exception $e){
             header("Location:".REDIRECT_ROUTE."?error=".$e->getMessage());
         }
+    }
+    
+    if (!empty($_GET['error']) && $_GET['error'] == Mensajes_Informativos::USUARIO_BLOQUEADO) {
+        require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario_Bloqueado.php");
+        require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
+
+        $predicado = [
+            'usblo_id_usuario'  => base64_decode($_GET['idU']),
+            'usblo_institucion' => base64_decode($_GET['inst']),
+            'usblo_year'        => date("Y")
+        ];
+    
+        $campos = "usblo_motivo";
+        $consultaMotivo = Administrativo_Usuario_Usuario_Bloqueado::Select($predicado, $campos, BD_ADMIN);
+        $datosMotivo = $consultaMotivo->fetch(PDO::FETCH_ASSOC);
+        
+        $motivo = !empty($datosMotivo['usblo_motivo']) ? $datosMotivo['usblo_motivo'] : "Motivo no registrado";
+        $telefono = !empty($informacion_inst['info_telefono']) ? $informacion_inst['info_telefono'] : "";
     }
 }
 ?>
@@ -47,7 +66,7 @@ if(!isset($_GET['nodb'])) {
 
 <body>
     <div class="login-container">
-        <div class=" vertical-center text-center">
+        <div class="vertical-center text-center">
             <div class="container">
                 <div class="row">
                     <div class="col-md-8 offset-md-2" id="login">
@@ -112,6 +131,11 @@ if(!isset($_GET['nodb'])) {
 
                         <div class="d-flex justify-content-center mt-3">
                             <p><a href="https://docs.google.com/forms/d/e/1FAIpQLSdiugXhzAj0Ysmt2gthO07tbvjxTA7CHcZqgzBpkefZC6T2qg/viewform" class="text-body btn-sm" target="_blank">¿Requieres soporte?</a></p>
+                        </div>
+
+                        <div class="d-block justify-content-center mt-4">
+                            <p>¿Quieres registrar tu Institución?</p>
+                            <a href="registro.php" class="btn btn-xs btn-secondary btn-rounded">Crear cuenta ahora</a>
                         </div>
                     </div>
                 </div>
