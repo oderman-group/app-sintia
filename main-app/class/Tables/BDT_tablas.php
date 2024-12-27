@@ -5,6 +5,7 @@ require_once(ROOT_PATH."/main-app/class/Tables/BDT_interface.php");
 abstract class BDT_Tablas implements BDT_Interface{
 
     public const INNER = 'INNER';
+    public const OTHER_PREDICATE = 'OTHER_PREDICATE';
     public const LEFT = 'LEFT';
     public static $schema;
     public static $tableName;
@@ -42,7 +43,12 @@ abstract class BDT_Tablas implements BDT_Interface{
         if( !empty($predicado) ) {
             $where = "WHERE ";
             foreach( $predicado as $clave => $valor ) {
-                $where .= $clave ."='".$valor."' AND ";
+                if ($clave === self::OTHER_PREDICATE) {
+                    $where.= " {$valor} AND ";
+                }else{
+                    $where .= $clave ." = {$valor} AND ";
+                }
+                
             }
             $where = substr($where, 0, -5);
         }
@@ -132,7 +138,12 @@ abstract class BDT_Tablas implements BDT_Interface{
         $where = '';
         
         foreach( $predicado as $clave => $valor ) {
-            $where.= $clave."='{$valor}' AND ";
+            if ($clave === OTHER_PREDICATE) {
+                $where.= $clave."  {$valor} ";
+            }else{
+                $where.= $clave."='{$valor}' AND ";
+            }
+            
         }
         
         $where = substr($where, 0, -5);
