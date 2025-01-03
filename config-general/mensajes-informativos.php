@@ -220,9 +220,9 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 $mensaje = base64_decode($_GET["summary"]);
             break;
 
-            case 'SC_DT_5':
+            case Mensajes_Informativos::CONTRASENA_GENERADA:
                 $tipo = 'success';
-                $mensaje = 'Una nueva contraseña fue generada y enviada a tu correo electrónico: <b>' . $_GET["email"] . '</b>';
+                $mensaje = 'Una nueva contraseña fue generada y enviada a tu correo electrónico: <b>' . base64_decode($_GET["email"]) . '</b>';
             break;
 
             case 'SC_DT_6':
