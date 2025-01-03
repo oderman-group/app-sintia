@@ -169,6 +169,11 @@ function ajaxBloqueoDesbloqueo(datos) {
 
             enviarAjaxBloqueoDesbloqueo(datos);
         });
+
+        // Al cancelar el motivo
+        $('#cancelarMotivo').off('click').on('click', function () {
+            document.getElementById(idR).checked = false;
+        });
     } else {
         valor = 0;
         document.getElementById("reg" + idR).style.backgroundColor = "white";
