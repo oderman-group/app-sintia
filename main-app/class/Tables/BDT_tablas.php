@@ -46,7 +46,7 @@ abstract class BDT_Tablas implements BDT_Interface{
                 if ($clave === self::OTHER_PREDICATE) {
                     $where.= " {$valor} AND ";
                 }else{
-                    $where .= $clave ." = {$valor} AND ";
+                    $where .= $clave ." = ".self::formatValor($valor)." AND ";
                 }
                 
             }
@@ -97,7 +97,6 @@ abstract class BDT_Tablas implements BDT_Interface{
 
     public static function Update(array $datos, array $predicado, $bd = BD_ACADEMICA): bool {
         global $conexionPDO;
-
         if (is_null($conexionPDO)) {
             $conexionPDO = Conexion::newConnection('PDO');
         }
@@ -112,11 +111,15 @@ abstract class BDT_Tablas implements BDT_Interface{
         $where = '';
 
         foreach( $predicado as $clave => $valor ) {
-            $where.= $clave."='{$valor}' AND ";
+            if ($clave === self::OTHER_PREDICATE) {
+                $where.= " {$valor} AND ";
+            }else{
+                $where .= $clave ." = ".self::formatValor($valor)." AND ";
+            }
         }
 
         $where = substr($where, 0, -5);
-        $consulta = "UPDATE {$bd}.".static::$tableName." SET {$sets} WHERE {$where}";
+        $consulta = " UPDATE ".static::$schema.".".static::$tableName." SET {$sets} WHERE {$where}";
 
         try {
             $stmt = $conexionPDO->prepare($consulta);
@@ -141,7 +144,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             if ($clave === OTHER_PREDICATE) {
                 $where.= $clave."  {$valor} ";
             }else{
-                $where.= $clave."='{$valor}' AND ";
+                $where.= $clave." = " .self::formatValor($valor)." AND ";
             }
             
         }
@@ -416,5 +419,23 @@ abstract class BDT_Tablas implements BDT_Interface{
         $numRecords = $consulta->rowCount();
 
         return $numRecords;
+    }
+    /**
+     * Valida el tipo de un valor dado y ajusta su formato.
+     *
+     * - Si el valor es numérico o booleano, lo convierte a su formato numérico correspondiente.
+     * - Si el valor no es numérico ni booleano, lo retorna como está.
+     *
+     * @param mixed $valor El valor a validar y ajustar.
+     *
+     * @return string Devuelve el valor convertido como cadena.
+     */
+    public static function formatValor($valor): string  {
+            if ( is_numeric($valor) || is_bool($valor)) {
+                $result = $valor+0;;
+            } else{
+                $result = "'".$valor."'";
+            }
+        return $result;
     }
 }

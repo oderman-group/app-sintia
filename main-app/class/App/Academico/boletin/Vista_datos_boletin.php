@@ -8,7 +8,7 @@ class Vista_datos_boletin extends BDT_Tablas implements BDT_JoinImplements
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'vista_datos_boletin';
-    public static $tableAs = 'dbol';
+    public static $tableAs = 'vdbol';
 
     use BDT_Join;
 

@@ -19,7 +19,7 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         string $grupo,
         array $periodos,
         string $year,
-        array $estudiantesGradosGrupo = [],
+        string  $idEstudiante="",
         bool $traerIndicadores = false,
         array $andAdicional = []
     ) {
@@ -29,30 +29,7 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         $year = empty($year) ? $_SESSION["bd"] : $year;
         $in_periodos2 = implode(', ', $periodos);
 
-        $in_estudiantesGradosGrupos = "";
-        if (!empty($estudiantesGradosGrupo)) {
-
-            foreach ($estudiantesGradosGrupo as $grupo) {
-                $formatGrupo[] = "(" . implode(",", $grupo) . ")";
-            }
-
-            $in_estudiantesGradosGrupos = implode(', ', $formatGrupo);
-
-            $predicados =
-            [
-                    self::OTHER_PREDICATE => " ({$clasePrincipal::$tableAs}.mat_id,{$clasePrincipal::$tableAs}.mat_grado,{$clasePrincipal::$tableAs}.mat_grupo) IN 
-                                               ($in_estudiantesGradosGrupos)"
-                   
-            ];
-            
-        }else{
-            $predicados =
-            [
-                    $clasePrincipal::$tableAs . ".mat_grado" => $grado,
-                    $clasePrincipal::$tableAs . ".mat_grupo" => $grupo,
-                   
-            ];
-        }
+     
 
         $clasePrincipal = Vista_datos_boletin::class;
         if ($traerIndicadores) {
@@ -70,8 +47,8 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
 
         Administrativo_Usuario_Usuario::foreignKey(self::LEFT, [
             "institucion" => $clasePrincipal::$tableAs . '.institucion',
-            "year" => $clasePrincipal::$tableAs . '.year',
-            "uss_id" => $clasePrincipal::$tableAs . '.car_docente'
+            "year"        => $clasePrincipal::$tableAs . '.year',
+            "uss_id"      => $clasePrincipal::$tableAs . '.car_docente'
         ]);
 
 
@@ -80,10 +57,12 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
 
         $predicados =
             [
-                    $clasePrincipal::$tableAs . ".institucion" => $_SESSION["idInstitucion"],
-                    $clasePrincipal::$tableAs . ".year" => $year,
-                    $clasePrincipal::$tableAs . ".mat_eliminado" => 0,
-                    $clasePrincipal::$tableAs . ".bol_periodo IN" => "(" . $in_periodos2 . ")",
+                $clasePrincipal::$tableAs . ".mat_grado" => $grado,
+                $clasePrincipal::$tableAs . ".mat_grupo" => $grupo,
+                $clasePrincipal::$tableAs . ".institucion" => $_SESSION["idInstitucion"],
+                $clasePrincipal::$tableAs . ".year" => $year,
+                $clasePrincipal::$tableAs . ".mat_eliminado" => 0,
+                $clasePrincipal::$tableAs . ".bol_periodo IN" => "(" . $in_periodos2 . ")",
                 "AND" => $clasePrincipal::$tableAs . '.mat_estado_matricula = ' . MATRICULADO . ' OR ' . $clasePrincipal::$tableAs . '.mat_estado_matricula=' . ASISTENTE
             ];
         if (!empty($andAdicional)) {
