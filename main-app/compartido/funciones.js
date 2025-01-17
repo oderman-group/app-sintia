@@ -607,6 +607,51 @@ function cambiarBloqueo(data) {
     }
 }
 
+function enviarAjaxCambiarBloqueo(data, datos) {
+
+    let tr   = document.getElementById("EST"+data.id_estudiante);
+
+    if(estudiantesPorEstadosBloqueo[data.id_estudiante] == 0) {
+        estudiantesPorEstadosBloqueo[data.id_estudiante] = 1;
+    } else {
+        estudiantesPorEstadosBloqueo[data.id_estudiante] = 0;
+    }
+
+    $.ajax({
+        type: "GET",
+        url: "usuarios-cambiar-estado.php",
+        data: datos,
+        success: function(data){
+            var mensaje = 'Ocurrió un error inesperado';
+            var icon    = 'error';
+            if(data == 1) {
+                mensaje = 'El estudiante fue bloqueado';
+                icon    = 'success';
+                tr.style.backgroundColor="#ff572238";
+            } else if(data == 0) {
+                mensaje = 'El estudiante fue desbloqueado';
+                icon    = 'success';
+                tr.style.backgroundColor="";
+            } else if(data == 2) {
+                mensaje = 'Usted no tiene permisos para esta acción';
+                icon    = 'error';
+            }
+
+            $.toast({
+                heading: 'Acción realizada',
+                text: mensaje,
+                position: 'bottom-right',
+                showHideTransition: 'slide',
+                loaderBg: '#26c281',
+                icon: icon,
+                hideAfter: 5000,
+                stack: 6
+            });
+        }
+
+    });
+}
+
 function minimoUno(data) {
     if( parseInt(data.value) <= 0 ) {
         data.value = 1;
