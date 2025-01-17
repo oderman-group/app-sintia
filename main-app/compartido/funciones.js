@@ -565,56 +565,46 @@ function cambiarBloqueo(data) {
         data.bloqueado = 0;
     }
 
-    let tr   = document.getElementById("EST"+data.id_estudiante);
-    
     if (!estudiantesPorEstadosBloqueo.hasOwnProperty(data.id_estudiante)) {
         estudiantesPorEstadosBloqueo[data.id_estudiante] = data.bloqueado;
     }
 
     var estadoFinal = estudiantesPorEstadosBloqueo[data.id_estudiante];
     let datos = "&idR="+btoa(data.id_usuario.toString())+
-                "&lock="+btoa(estadoFinal.toString())
-                ;
+                "&lock="+btoa(estadoFinal.toString());
 
-    if(estudiantesPorEstadosBloqueo[data.id_estudiante] == 0) {
-        estudiantesPorEstadosBloqueo[data.id_estudiante] = 1;
-    } else {
-        estudiantesPorEstadosBloqueo[data.id_estudiante] = 0;
-    }
+    // Determinar el nuevo estado del checkbox
+    if (data.bloqueado == 0) {
+        // Mostrar el modal
+        $('#motivoModal').modal('show');
 
-    $.ajax({
-        type: "GET",
-        url: "usuarios-cambiar-estado.php",
-        data: datos,
-        success: function(data){
-            var mensaje = 'Ocurrió un error inesperado';
-            var icon    = 'error';
-            if(data == 1) {
-                mensaje = 'El estudiante fue bloqueado';
-                icon    = 'success';
-                tr.style.backgroundColor="#ff572238";
-            } else if(data == 0) {
-                mensaje = 'El estudiante fue desbloqueado';
-                icon    = 'success';
-                tr.style.backgroundColor="";
-            } else if(data == 2) {
-                mensaje = 'Usted no tiene permisos para esta acción';
-                icon    = 'error';
+        // Al confirmar el motivo
+        $('#confirmarMotivo').off('click').on('click', function () {
+            var motivo = document.getElementById("motivo").value.trim();
+
+            if (motivo === "") {
+                alert("Debe ingresar un motivo.");
+                return;
             }
 
-            $.toast({
-                heading: 'Acción realizada',
-                text: mensaje,
-                position: 'bottom-right',
-                showHideTransition: 'slide',
-                loaderBg: '#26c281',
-                icon: icon,
-                hideAfter: 5000,
-                stack: 6
-            });
-        }
+            // Ocultar el modal
+            $('#motivoModal').modal('hide');
 
-    });
+            // Limpiar el contenido del textarea para futuros usos
+            document.getElementById("motivo").value = "";
+
+            datos = datos + "&motivo=" + encodeURIComponent(motivo);
+
+            enviarAjaxCambiarBloqueo(data, datos);
+        });
+
+        // Al cancelar el motivo
+        $('#cancelarMotivo').off('click').on('click', function () {
+            document.getElementById("checkboxCambiarBloqueo" + data.id_estudiante).checked = false;
+        });
+    } else {
+        enviarAjaxCambiarBloqueo(data, datos);
+    }
 }
 
 function minimoUno(data) {
