@@ -108,8 +108,8 @@ LIMIT ".$empezar.",1
 </script>
 <?php } ?>
 <!-- boton de chat -->
-<?php if($idPaginaInterna != 'DT0209' && $datosUsuarioActual['uss_tipo'] == TIPO_DEV ){ ?>
-<a id="boton_notificacion" style="text-shadow: none;color: #fefefe;font-family:arial; background:<?= $Plataforma->colorUno; ?>;" href="../directivo/chat2.php" class="float"> <!-- "fa-beat-fade" se agregará una clase cuando hay una nueva notificacion  -->
+<?php if(($idPaginaInterna != 'DT0209' || $idPaginaInterna != 'DC0148') && ($datosUsuarioActual['uss_tipo'] == TIPO_DEV || (($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE || $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) && $_SESSION["idPlan"] == Plataforma::PLAN_PREMIUM))){ ?>
+<a id="boton_notificacion" style="text-shadow: none;color: #fefefe;font-family:arial; background:<?= $Plataforma->colorUno; ?>;" href="chat2.php" class="float"> <!-- "fa-beat-fade" se agregará una clase cuando hay una nueva notificacion  -->
 	<i class="fa fa-comments my-float"></i>
 	<?php
 
