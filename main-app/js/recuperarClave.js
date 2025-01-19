@@ -1,7 +1,7 @@
 let interval  = null;
 let idRegistro = null;
 let finishButton  = null;
-let intento = 0;
+let intento = 3;
 
 document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
   // Manejar el evento de pegar (paste)
@@ -91,7 +91,6 @@ function startCountdown(durationInSeconds) {
 
         enviarSMS.style.color = colorCambio;
         enviarSMS.onclick = function () {
-          intento++;
           enviarCodigoSMS();
         };
       }
@@ -152,6 +151,7 @@ function enviarCodigoSMS() {
   var intputIdRegistro  = document.getElementById('idRegistro');
   var usuarioId         = document.getElementById('usuarioId').value;
   const enviarSMS       = document.getElementById('enviarCodigoSMS');
+  intento++;
 
   enviarSMS.style.color = '#000';
   enviarSMS.onclick = null;

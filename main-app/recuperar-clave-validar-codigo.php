@@ -75,7 +75,7 @@ $ultimos4Digitos = substr($numeroCelular, -4);
                                 <img class="mt-4 mb-4" src="<?=$Plataforma->logoCian;?>" width="100">
                                 <h1 class="mt-4">Revisa tu bandeja de entrada</h1>
                                 <p class="mt-4">Hemos enviado un código de 6 caracteres a <strong id="emailCode"><?=$datosUsuario['usuario_email']?></strong>. Este código será válido durante <strong><span id="contMin">10</span> <span id="textMin">minutos</span></strong>.</p>
-                                <p class="mt-4"> <a href="javascript:void(0);" id="enviarCodigoSMS" class="text-decoration-none" style="color: <?=$Plataforma->colorUno;?>;">Enviar código a tu número telefónico (<b>3** *** <?=$ultimos4Digitos?></b>) registrado en SINTIA.</a></p>
+                                <p class="mt-4"> <a href="javascript:void(0);" id="enviarCodigoSMS" class="text-decoration-none" style="color: <?=$Plataforma->colorUno;?>;" onclick="enviarCodigoSMS()">Enviar código a tu número telefónico (<b>3** *** <?=$ultimos4Digitos?></b>) registrado en SINTIA.</a></p>
                                 
                                 <!-- Contenedor para los inputs del código -->
                                 <div class="d-flex justify-content-center align-items-center mt-4">
@@ -127,7 +127,7 @@ $ultimos4Digitos = substr($numeroCelular, -4);
     <!-- Core theme JS-->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script>
-        startCountdown(10 * 60);
+        startCountdown(0.2 * 60);
     </script>
 
 </body>
