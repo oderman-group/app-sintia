@@ -1,5 +1,5 @@
 <?php include("session.php"); ?>
-<?php $idPaginaInterna = 'DT0209'; ?>
+<?php $idPaginaInterna = 'DC0148'; ?>
 <?php include("../compartido/historial-acciones-guardar.php"); ?>
 <?php include("../compartido/head.php"); ?>
 
@@ -36,13 +36,7 @@
     <?php include("../compartido/encabezado.php"); ?>
     <?php include("../compartido/panel-color.php"); ?>
     <!-- start page container -->
-    <div class="page-container">
-
-        <?php include("../compartido/menu.php"); ?>
-        <!-- start page content -->
-        <?php include("../compartido/chat-contenido.php"); ?>
-        <!-- end page content -->
-    </div>
+    <?php include("../compartido/chat-contenido.php"); ?>
     <!-- end page container -->
     <?php include("../compartido/footer.php"); ?>
 </div>
