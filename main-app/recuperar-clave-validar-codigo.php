@@ -127,7 +127,7 @@ $ultimos4Digitos = substr($numeroCelular, -4);
     <!-- Core theme JS-->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script>
-        startCountdown(0.2 * 60);
+        startCountdown(10 * 60);
     </script>
 
 </body>
