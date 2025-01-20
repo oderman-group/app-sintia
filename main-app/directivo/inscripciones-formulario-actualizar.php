@@ -90,18 +90,20 @@ if($_POST['enviarCorreo'] == 1){
     if(!empty($archivo2) and file_exists(ROOT_PATH.'/main-app/admisiones/files/adjuntos/'.$archivo2)){
         $archivos[2] = ROOT_PATH.'/main-app/admisiones/files/adjuntos/'.$archivo2;
     }
+
     $data = [
-        'usuario_email'     => $_POST['emailAcudiente'],
-        'usuario_nombre'    => $_POST['nombreAcudiente'],
-        'usuario2_email'    => $datosUss['uss_email'],
-        'usuario2_nombre'   => $nombreUss,
-        'solicitud_id'      => $_POST["solicitud"],
-        'observaciones'     => $_POST['observacion'],
-        'institucion_id'    => $datosInfo['info_institucion'],
-        'id_aspirante'      => $_POST['documentoAspirante']
+        'usuario_email'   => $_POST['emailAcudiente'],
+        'usuario_nombre'  => $_POST['nombreAcudiente'],
+        'usuario2_email'  => $datosUss['uss_email'],
+        'usuario2_nombre' => $nombreUss,
+        'solicitud_id'    => $_POST["solicitud"],
+        'observaciones'   => $_POST['observacion'],
+        'institucion_id'  => $config['conf_id_institucion'],
+        'id_aspirante'    => $_POST['documentoAspirante']
     ];
+
     $asunto = 'Actualización de solicitud de admisión '.$_POST["solicitud"];
-	$bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-formulario-inscripcion.php';
+    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-formulario-inscripcion.php';
 
     EnviarEmail::enviar($data,$asunto,$bodyTemplateRoute,null,$archivos);
 }
