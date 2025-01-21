@@ -10,16 +10,16 @@ $conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, 
 
 $year_actual=date('Y');
 
+$usuariosEncontrados = 1;
 if (!empty($_REQUEST['Usuario'])) {
     $datosUsuario = Usuarios::buscarUsuariosRecuperarClave($_REQUEST['Usuario'],$year_actual);
+	$usuariosEncontrados = count($datosUsuario);
 } elseif (!empty($_REQUEST['usuarioId'])) {
     $datosUsuario = Usuarios::buscarUsuarioIdNuevo($_REQUEST['usuarioId']);
 }
 
-$usuariosEncontrados = count($datosUsuario);
-
 if ($usuariosEncontrados == 1) {
-	$datosUsuario = $datosUsuario[0];
+	$datosUsuario = !empty($_REQUEST['Usuario']) ? $datosUsuario[0] : $datosUsuario;
 	if (!empty($datosUsuario)) {
         $data = [
             'usuario_nombre'      => $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1'],
@@ -42,6 +42,7 @@ if ($usuariosEncontrados == 1) {
 			$arrayIdInsercion=[
 				"success"=>true,
 				"message"=>"Código enviado exitosamente",
+				'usuarioEmail'=> $datosUsuario['uss_email'],
 				"code"=>$datosCodigo
 			];
 
