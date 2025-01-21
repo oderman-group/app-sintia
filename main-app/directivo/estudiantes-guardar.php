@@ -109,6 +109,7 @@ $idEstudiante = Estudiantes::insertarEstudiantes(
 	$result_numMat, 
 	$procedencia, 
 	$idAcudiente, 
+	Estudiantes::CREAR_MATRICULA, 
 	$config['conf_id_institucion'], 
 	$_SESSION["bd"]
 );
