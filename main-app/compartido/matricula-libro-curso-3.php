@@ -98,11 +98,11 @@ while ($row = $cosnultaTiposNotas->fetch_assoc()) {
 
 $listaDatos         = [];
 if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) {
-	$periodos = [];
+	$periodosArray = [];
 	for ($i = 1; $i <= $periodoFinal; $i++) {
-		$periodos[$i] = $i;
+		$periodosArray[$i] = $i;
 	}
-	$datos = Boletin::datosBoletin($curso, $grupo, $periodos, $year, $id,false);
+	$datos = Boletin::datosBoletin($curso, $grupo, $periodosArray, $year, $id,false);
 	while ($row = $datos->fetch_assoc()) {
 		$listaDatos[] = $row;
 	}
