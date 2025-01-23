@@ -32,7 +32,7 @@ class Sms {
             ]
         );
 
-        print $message->body . " - ". $message->status;
+        // print $message->body . " - ". $message->status;
     }
 
     // TODO: Implementar métodos para listar todos los mensajes enviados

@@ -1,7 +1,7 @@
 let interval  = null;
 let idRegistro = null;
 let finishButton  = null;
-let intento = 1;
+let intento = 3;
 
 document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
   // Manejar el evento de pegar (paste)
@@ -55,9 +55,12 @@ function startCountdown(durationInSeconds) {
   const contMinElement = document.getElementById('contMin');
   const textMinElement = document.getElementById('textMin');
   const intNuevoElement = document.getElementById('intNuevo');
+  const enviarSMS         = document.getElementById('enviarCodigoSMS');
   var colorCambio = intNuevoElement.getAttribute('data-color-cambio')
   let remainingTime = durationInSeconds;
+
   intNuevoElement.style.color = '#000';
+  intNuevoElement.onclick = null;
 
   // Actualiza cada segundo
   interval = setInterval(() => {
@@ -76,18 +79,29 @@ function startCountdown(durationInSeconds) {
     if (remainingTime === 0) {
       clearInterval(interval); // Detén la cuenta regresiva al llegar a 0
 
-      // Cambiar el color del texto
-      intNuevoElement.style.color = colorCambio;
-      intNuevoElement.onclick = function () {
-        intento++;
-        enviarCodigo();
-      };
+      if (intento === 3) {
+        notificarDirectivos();
+      } else {
+        // Cambiar el color del texto
+        intNuevoElement.style.color = colorCambio;
+        intNuevoElement.onclick = function () {
+          intento++;
+          enviarCodigo();
+        };
+
+        enviarSMS.style.color = colorCambio;
+        enviarSMS.onclick = function () {
+          enviarCodigoSMS();
+        };
+      }
     }
-  
-    miFuncionConDelay(message, 'alert-success');
 
     remainingTime -= 1; // Reduce el tiempo restante en 1 segundo
   }, 1000);
+  
+  setTimeout(() => {
+    miFuncionConDelay(message, 'alert-success');
+  }, 2000);
 }
 
 async function miFuncionConDelay(element, alert = '') {
@@ -102,7 +116,7 @@ async function miFuncionConDelay(element, alert = '') {
 
 function enviarCodigo() {
   var intputIdRegistro  = document.getElementById('idRegistro');
-  var usuarioId         =   document.getElementById('usuarioId').value;
+  var usuarioId         = document.getElementById('usuarioId').value;
 
   // Enviar el código al correo electrónico
   fetch('recuperar-clave-enviar-codigo.php?usuarioId=' + usuarioId + '&async=true', {
@@ -111,20 +125,55 @@ function enviarCodigo() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
+        document.getElementById('emailCode').innerHTML = data.usuarioEmail;
 
         // Mostrar mensaje si es un nuevo intento
-        if (intento > 1) {
+        if (intento > 0) {
           const message = document.getElementById('message');
 
-          message.innerHTML = 'Hemos enviado un nuevo código a tu correo electrónico,<br> si no ves el correo revisa tu carpeta de spam o<br> verifica que hayas ingresado bien tu correo electrónico.';
+          message.innerHTML = 'Hemos enviado un nuevo código a tu correo electrónico,<br> si no ves el correo revisa tu carpeta de spam o<br> verifica que hayas ingresado bien tu correo electrónico.<br> Te quedan <b>' + (3 - intento) + ' intentos</b>.';
           message.style.visibility = 'visible';
           message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-          miFuncionConDelay(message, 'alert-success');
         }
 
         idRegistro = data.code.idRegistro;
         intputIdRegistro.value = idRegistro;
 
+        clearInterval(interval);
+        startCountdown(10 * 60); // Inicia la cuenta regresiva con 10 minutos
+      } else {
+        alert(data.message);
+      }
+    });
+}
+
+function enviarCodigoSMS() {
+  var intputIdRegistro  = document.getElementById('idRegistro');
+  var usuarioId         = document.getElementById('usuarioId').value;
+  const enviarSMS       = document.getElementById('enviarCodigoSMS');
+  intento++;
+
+  enviarSMS.style.color = '#000';
+  enviarSMS.onclick = null;
+
+  // Enviar el código al correo electrónico
+  fetch('enviar-codigo-sms.php?usuarioId=' + usuarioId, {
+    method: 'GET'
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('emailCode').innerHTML = data.telefono;
+        const message = document.getElementById('message');
+
+        message.innerHTML = 'Hemos enviado un nuevo código a tu número telefónico registrado o<br>verifica que hayas ingresado bien tu número telefónico.<br> Te quedan <b>' + (3 - intento) + ' intentos</b>.';
+        message.style.visibility = 'visible';
+        message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
+
+        idRegistro = data.code.idRegistro;
+        intputIdRegistro.value = idRegistro;
+
+        clearInterval(interval);
         startCountdown(10 * 60); // Inicia la cuenta regresiva con 10 minutos
       } else {
         alert(data.message);
@@ -260,4 +309,32 @@ function enableButton(btn) {
     finishButton.classList.remove('disabled');
     finishButton.style.pointerEvents = 'auto';
     finishButton.style.opacity = '1';
+}
+
+function notificarDirectivos() {
+  var usuarioId         = document.getElementById('usuarioId').value;
+
+  // Enviar el código al correo electrónico
+  fetch('recuperar-clave-notificar-directivos.php?usuarioId=' + usuarioId, {
+    method: 'GET'
+  })
+    .then(response => response.json())
+    .then(data => {
+      disableButton("btnValidarCodigo");
+      const message = document.getElementById('message');
+      message.style.visibility = 'visible';
+
+      if (data.success) {
+        message.classList.add('alert-success');
+
+        setTimeout(() => {
+            window.location.href = 'index.php';
+        }, 5000);
+      } else {
+        message.classList.add('alert-danger');
+      }
+
+      message.classList.add('animate__animated', 'animate__flash', 'animate__repeat-2');
+      message.innerHTML = data.message;
+    });
 }

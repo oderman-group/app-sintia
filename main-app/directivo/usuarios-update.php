@@ -6,6 +6,7 @@ include("../compartido/guardar-historial-acciones.php");
 require_once("../class/SubRoles.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
 
 $archivoSubido = new Archivos;
 
@@ -70,6 +71,19 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 	$update = ['uss_clave' => $claveEncriptada];
 	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
+	$data = [
+		'institucion_id'   => $_SESSION["idInstitucion"],
+		'institucion_agno' => $_SESSION["bd"],
+		'usuario_id'       => $_POST["idR"],
+		'usuario_email'    => $_POST["email"],
+		'usuario_nombre'   => $datosUsuario['uss_nombre'],
+		'usuario_usuario'  => $_POST["usuario"],
+		'nueva_clave'      => $_POST["clave"],
+	];
+	$asunto = 'Tus credenciales han llegado';
+	$bodyTemplateRoute = ROOT_PATH . '/config-general/template-email-recuperar-clave.php';
+
+	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
 }
 
 
