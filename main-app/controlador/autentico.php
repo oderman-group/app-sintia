@@ -88,7 +88,7 @@ $fila = mysqli_fetch_array($rst_usr, MYSQLI_BOTH);
 if ($num>0)
 {	
 	if($fila['uss_bloqueado'] == 1){
-		header("Location:".REDIRECT_ROUTE."/index.php?error=6&inst=".base64_encode($_POST["bd"])."&idU=".base64_encode($fila['uss_id']));
+		header("Location:".REDIRECT_ROUTE."/index.php?error=6&inst=".base64_encode($_POST["bd"])."&idU=".base64_encode($fila['uss_id'])."&year=".base64_encode($_SESSION["bd"]));
 		exit();
 	}
 

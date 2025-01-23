@@ -565,16 +565,51 @@ function cambiarBloqueo(data) {
         data.bloqueado = 0;
     }
 
-    let tr   = document.getElementById("EST"+data.id_estudiante);
-    
     if (!estudiantesPorEstadosBloqueo.hasOwnProperty(data.id_estudiante)) {
         estudiantesPorEstadosBloqueo[data.id_estudiante] = data.bloqueado;
     }
 
     var estadoFinal = estudiantesPorEstadosBloqueo[data.id_estudiante];
     let datos = "&idR="+btoa(data.id_usuario.toString())+
-                "&lock="+btoa(estadoFinal.toString())
-                ;
+                "&lock="+btoa(estadoFinal.toString());
+
+    // Determinar el nuevo estado del checkbox
+    if (data.bloqueado == 0) {
+        // Mostrar el modal
+        $('#motivoModal').modal('show');
+
+        // Al confirmar el motivo
+        $('#confirmarMotivo').off('click').on('click', function () {
+            var motivo = document.getElementById("motivo").value.trim();
+
+            if (motivo === "") {
+                alert("Debe ingresar un motivo.");
+                return;
+            }
+
+            // Ocultar el modal
+            $('#motivoModal').modal('hide');
+
+            // Limpiar el contenido del textarea para futuros usos
+            document.getElementById("motivo").value = "";
+
+            datos = datos + "&motivo=" + encodeURIComponent(motivo);
+
+            enviarAjaxCambiarBloqueo(data, datos);
+        });
+
+        // Al cancelar el motivo
+        $('#cancelarMotivo').off('click').on('click', function () {
+            document.getElementById("checkboxCambiarBloqueo" + data.id_estudiante).checked = false;
+        });
+    } else {
+        enviarAjaxCambiarBloqueo(data, datos);
+    }
+}
+
+function enviarAjaxCambiarBloqueo(data, datos) {
+
+    let tr   = document.getElementById("EST"+data.id_estudiante);
 
     if(estudiantesPorEstadosBloqueo[data.id_estudiante] == 0) {
         estudiantesPorEstadosBloqueo[data.id_estudiante] = 1;
