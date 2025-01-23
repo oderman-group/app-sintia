@@ -102,6 +102,47 @@ if (!Modulos::validarPermisoEdicion()) {
 												<thead>
 													<tr>
 														<th>#</th>
+														<th>
+															<div class="col-sm-12">
+																<ul class="navbar-nav mr-auto">
+																	<li class="nav-item dropdown">
+																		<a class="nav-link dropdown-toggle"
+																					href="javascript:void(0);"
+																					id="navbarDropdown" role="button"
+																					data-toggle="dropdown"
+																					aria-haspopup="true"
+																					aria-expanded="false"
+																					style="color:<?= $Plataforma->colorUno; ?>;">
+																					Seleccionados
+																			<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
+																			<span class="fa fa-angle-down"></span>
+																		</a>
+																		<?php if (Modulos::validarPermisoEdicion()) { ?>
+																			<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+																				<a class="dropdown-item"
+																					href="javascript:void(0);"
+																					onClick="actualizarBloqueo(true)">
+																					Bloquear
+																				</a>
+																				<a class="dropdown-item"
+																					href="javascript:void(0);"
+																					onClick="actualizarBloqueo(false)">
+																					Desbloquear
+																				</a>
+																			</div>
+																		<?php } ?>
+																	</li>
+																</ul>
+															</div>
+															<div class="input-group spinner col-sm-10">
+																<label class="switchToggle"
+																		title="Seleccionar todos">
+																	<input  type="checkbox"
+																			onChange="seleccionarCheck('example1','selecionado','lblCantSeleccionados',this.checked)" value="1"  <?= $disabledPermiso; ?>>
+																	<span class="slider aqua round"></span>
+																</label>
+															</div>
+														</th>
 														<th>Bloq.</th>
 														<th>ID</th>
 														<th>Usuario (REP)</th>
@@ -112,6 +153,7 @@ if (!Modulos::validarPermisoEdicion()) {
 													</tr>
 												</thead>
 												<tbody>
+												<script type="text/javascript">document.getElementById("overlay").style.display = "flex"</script>
 													<?php
 													$permisoHistorial = Modulos::validarSubRol(['DT0327']);
 													$permisoPlantilla = Modulos::validarSubRol(['DT0239']);
@@ -139,7 +181,6 @@ if (!Modulos::validarPermisoEdicion()) {
 													$lista = Usuarios::listar($selectSql, $tipos, "uss_id");
 													$contReg = 1;
 													
-													echo '<script type="text/javascript">document.getElementById("overlay").style.display = "flex";</script>';
 													foreach ($lista as $usuario) {
 														$bgColor = '';
 														if ($usuario['uss_bloqueado'] == 1)
@@ -189,6 +230,17 @@ if (!Modulos::validarPermisoEdicion()) {
 															style="background-color:<?= $bgColor; ?>;">
 															<td><?= $contReg; ?></td>
 															<td>
+																<div class="input-group spinner col-sm-10">
+																	<label class="switchToggle">
+																		<input type="checkbox"
+																				onChange="getSelecionados('example1','selecionado','lblCantSeleccionados')"
+																				id="<?= $usuario['uss_id']; ?>_select"
+																				name="selecionado">
+																		<span class="slider aqua round"></span>
+																	</label>
+																</div>
+															</td>
+															<td>
 																<?php if (Modulos::validarPermisoEdicion() && ($usuario['uss_tipo'] != TIPO_DIRECTIVO || $usuario['uss_permiso1'] != CODE_PRIMARY_MANAGER)) { ?>
 																	<div class="input-group spinner col-sm-10">
 																		<label class="switchToggle">
@@ -211,7 +263,7 @@ if (!Modulos::validarPermisoEdicion()) {
 																	data-placement="top"
 																	style="border-bottom: 1px dotted #000;"><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?></a>
 															</td>
-															<td <?= $backGroundMatricula; ?>>
+															<td >
 																<?= $usuario['pes_nombre'] . "" . $mostrarNumCargas . "" . $mostrarNumAcudidos; ?>
 															</td>
 															<td><span
@@ -276,10 +328,8 @@ if (!Modulos::validarPermisoEdicion()) {
 
 														</tr>
 														<?php $contReg++;
-													}
-													echo '<script type="text/javascript">document.getElementById("overlay").style.display = "none";</script>';
-													?>
-
+													}?>
+													<script type="text/javascript">document.getElementById("overlay").style.display = "none";</script>
 												</tbody>
 
 											</table>
@@ -328,8 +378,14 @@ if (!Modulos::validarPermisoEdicion()) {
 <!-- Material -->
 <script src="../../config-general/assets/plugins/material/material.min.js"></script>
 <!-- end js include path -->
+<style>
+    .sorting_1 {
+		background-color: #red !important;
+    }
 
+  </style>
 <script>
+
 	$(function () {
 		$('[data-toggle="popover"]').popover();
 	});
@@ -337,6 +393,66 @@ if (!Modulos::validarPermisoEdicion()) {
 	$('.popover-dismiss').popover({
 		trigger: 'focus'
 	});
+
+	function actualizarBloqueo(bloqueo){
+		let selecionados=getSelecionados('example1','selecionado','lblCantSeleccionados');
+		if(selecionados.length>0){
+			sweetConfirmacion(
+					'Alerta!',
+					'Desea '+(bloqueo?'Bloquear':'Desbloquear')+' a todos los usuarios seleccionados?',
+					'question',
+					'usuarios-bloquear.php',
+					true,
+					null,
+					'POST',
+					{ 
+					  bloquear: bloqueo, 
+					  usuarios:getSelecionados('example1','selecionado','lblCantSeleccionados'),
+				      tipo:'<?= $_GET["tipo"] ?>'
+					},
+					'marcarbloqueados'
+		           );
+		}else{
+			Swal.fire(
+						{
+						title: "No tiene datos selecionado!",
+						icon: "question",
+						draggable: true
+						}
+					);
+		}
+		
+	}
+
+	function marcarbloqueados(result,data) {
+		let  resultado = result["data"];
+		const table = $('#example1').DataTable();
+		const rows = table.rows().nodes(); // Obtén todas las filas
+		if(resultado["ok"]){
+			let usuarios = data["usuarios"];
+			let bloquear = data["bloquear"];
+    		
+			usuarios.forEach(element => {				
+				const selectedCheckboxes = table.rows().nodes().to$().find('input[id="'+element+'"]');
+    			selectedCheckboxes.prop('checked', bloquear); 
+				const trElement = selectedCheckboxes.closest('tr');
+				trElement.css('background-color', '#ff572238'); // Cambia el color del <tr>
+				
+			});
+			$.toast({
+					heading: 'Acción realizada',
+					text: resultado["msg"],
+					position: 'bottom-right',
+					showHideTransition: 'slide',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 5000,
+					stack: 6
+					});
+		};
+		console.log(data);
+
+	};
 </script>
 </body>
 

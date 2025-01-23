@@ -342,3 +342,39 @@ function mostrarSubroles(enviada) {
         document.getElementById("subRoles").style.display='none';
     }
 }
+
+/**
+ * Seleciona  un conjunto de check 
+ * esta busca un cojunto de check con un prefiujo en comun y los habilita o los deshabilita
+ * deacuerdo su estado actual
+ */
+function seleccionarCheck(tabla,name,label,isChecked) {
+    const table = $('#'+tabla).DataTable();
+    const selectedCheckboxes = table.rows().nodes().to$().find('input[name="'+name+'"]');
+    selectedCheckboxes.prop('checked', isChecked);  
+    return getSelecionados(tabla,name,label);
+}
+
+/**
+ * Cuenta cuantos check estan habilitados
+ * esta busca un cojunto de check habilitados con un prefiujo en comun 
+ */
+function getSelecionados(tabla,name,label) {
+    const seleccionados = [];
+    const table = $('#'+tabla).DataTable();
+
+     // Recorrer todas las filas y seleccionar los que tengan el atributo 'name="seleccionado"'
+     const selectedCheckboxes = table.rows().nodes().to$().find('input[name="'+name+'"]');
+     selectedCheckboxes.each(function () {
+         if ($(this).is(':checked')) {
+             let id = $(this).attr('id').split("_");
+             seleccionados.push(id[0]);
+         }
+     });
+     if(label){
+        document.getElementById(''+label+'').textContent  = seleccionados.length+"/"+selectedCheckboxes.length ; 
+     }
+
+    return seleccionados;
+
+}

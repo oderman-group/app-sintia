@@ -8,10 +8,12 @@ if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol
 }
 include(ROOT_PATH . "/main-app/compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH . "/main-app/class/UsuariosPadre.php");
-require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/boletin/Boletin.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Notas_tipo.php");
+require_once(ROOT_PATH . "/main-app/class/App/Academico/Matricula.php");
+
+//Estudaintes
 $estudiante = "";
 if (!empty($_GET["estudiante"])) {
   $estudiante = base64_decode($_GET["estudiante"]);
@@ -19,24 +21,54 @@ if (!empty($_GET["estudiante"])) {
 if (!empty($_POST["estudiante"])) {
   $estudiante = $_POST["estudiante"];
 }
-$year = date("Y");
+
+//Año
+$year =  $_SESSION["bd"];
+
+if (isset($_GET["year"])) {
+  $year = base64_decode($_GET["year"]);
+}
+if (isset($_POST["year"])) {
+  $year = $_POST["year"];
+}
+
+//Periodo Actual
 $cPeriodo = $config["conf_periodo"];
 if (isset($_GET["periodo"])) {
-  $cPeriodo = $_GET["periodo"];
+  $cPeriodo = base64_decode($_GET["periodo"]);
 }
 if (isset($_POST["periodo"])) {
   $cPeriodo = $_POST["periodo"];
 }
 $periodoActual = $cPeriodo;
 
+//Grados
+$grado = ""; 
+if (isset($_GET["grado"])) {
+  $grado = base64_decode($_GET["grado"]);
+}
+if (isset($_POST["grado"])) {
+  $grado = $_POST["grado"];
+}
+
+//Grupos
+$grupo = "" ;
+if (isset($_GET["grupo"])) {
+  $grupo = base64_decode($_GET["grupo"]);
+}
+if (isset($_POST["grupo"])) {
+  $grupo = $_POST["grupo"];
+}
+
+
 if (!empty($estudiante)) {
   $filtro = " AND mat_id='" . $estudiante . "'";
-  $matriculadosPorCurso = Estudiantes::estudiantesMatriculados($filtro, $year);
-  $estudiante = $matriculadosPorCurso->fetch_assoc();
-  if (!empty($estudiante)) {
-    $idEstudiante = $estudiante["mat_id"];
-    $grado = $estudiante["mat_grado"];
-    $grupo = $estudiante["mat_grupo"];
+  $estudiantes[] = $estudiante;
+  $matriculadosPorCurso = Matricula::getCursosEstudiante($estudiantes, $year);
+  if (!empty($matriculadosPorCurso)) {
+    $idEstudiante = $matriculadosPorCurso[0]["mat_id"];
+    $grado = $matriculadosPorCurso[0]["mat_grado"];
+    $grupo = $matriculadosPorCurso[0]["mat_grupo"];
   }
 }
 

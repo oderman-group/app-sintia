@@ -17,11 +17,8 @@ $saldoEC = ($resumenEC[0] - $resumenEC[1]) * -1;
 	
 <script src="../js/Mensajes.js" ></script>
 <div class="loader"></div>
-
-<div id="overlay">
-	<div id="loader"></div>
-	<div id="loading-text">Cargando...</div>
-</div>
+ 
+<?php include("../compartido/overlay.php");?>
 
 <?php include("../compartido/ComponenteModal.php");?>
 
