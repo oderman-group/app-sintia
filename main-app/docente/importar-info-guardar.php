@@ -51,7 +51,7 @@ if(!empty($_POST["calificaciones"])){
 
 	$datosInsertInd = '';
 	while($indImpDatos = mysqli_fetch_array($indImpConsulta, MYSQLI_BOTH)){
-		$idRegInd = $indImpDatos['ind_id'];
+		$idRegInd = $indImpDatos['ai_ind_id'];
 
 		//Si el indicador NO es de los obligatorios lo REcreamos.
 		if($indImpDatos['ind_obligatorio']==0){
@@ -64,7 +64,7 @@ if(!empty($_POST["calificaciones"])){
 		Indicadores::guardarRelacionIndicadorCarga($conexionPDO, "ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado, institucion, year, ipc_id", [$cargaConsultaActual, $idRegInd, $indImpDatos['ipc_valor'], $periodoConsultaActual, 1, $copiado, $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 		//Consultamos las calificaciones del indicador a Importar
-		$calImpConsulta = Actividades::traerActividadesCargaIndicador($config, $indImpDatos['ind_id'], $_POST["cargaImportar"], $_POST["periodoImportar"]);
+		$calImpConsulta = Actividades::traerActividadesCargaIndicador($config, $indImpDatos['ai_ind_id'], $_POST["cargaImportar"], $_POST["periodoImportar"]);
 
 		while($calImpDatos = mysqli_fetch_array($calImpConsulta, MYSQLI_BOTH)){
 			Actividades::guardarCalificacionManual($conexionPDO, $config, mysqli_real_escape_string($conexion,$calImpDatos['act_descripcion']), $calImpDatos['act_fecha'], $cargaConsultaActual, $idRegInd, $periodoConsultaActual, $calImpDatos['act_compartir'], $calImpDatos['act_valor']);
