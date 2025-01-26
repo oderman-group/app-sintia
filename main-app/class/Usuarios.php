@@ -1,5 +1,6 @@
 <?php
 require_once(ROOT_PATH."/main-app/class/Conexion.php");
+require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 
 class Usuarios {
     /**
@@ -78,7 +79,7 @@ class Usuarios {
         global $conexion;
         $resultado = [];
 
-        $sql = "SELECT id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, institucion, year FROM " . BD_GENERAL . ".usuarios WHERE (uss_email=? || uss_usuario=? || uss_documento=?) AND year=?";
+        $sql = "SELECT id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, uss_celular, institucion, year FROM " . BD_GENERAL . ".usuarios WHERE (uss_email=? || uss_usuario=? || uss_documento=?) AND year=?";
         $parametros = [$valor, $valor, $valor,$year];
         $consulta = BindSQL::prepararSQL($sql, $parametros);
         $resultado = $consulta->fetch_all(MYSQLI_ASSOC);
@@ -94,13 +95,15 @@ class Usuarios {
      */
     public static function buscarUsuarioIdNuevo($id)
     {
-        global $conexion;
         $resultado = [];
 
-        $sql = "SELECT id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, institucion, year FROM " . BD_GENERAL . ".usuarios WHERE id_nuevo=?";
-        $parametros = [$id];
-        $consulta = BindSQL::prepararSQL($sql, $parametros);
-        $resultado = $consulta->fetch_all(MYSQLI_ASSOC);
+        $predicado = [
+            'id_nuevo'  =>$id
+        ];
+    
+        $campos = "id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, uss_celular, institucion, year";
+        $consultaMotivo = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD_GENERAL);
+        $resultado = $consultaMotivo->fetch(PDO::FETCH_ASSOC);
 
         return $resultado;
     }

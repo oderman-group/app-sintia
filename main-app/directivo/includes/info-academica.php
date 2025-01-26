@@ -117,7 +117,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 				$parametros = ['gra_tipo' => GRADO_INDIVIDUAL, 'gra_estado' => 1, 'institucion' => $config['conf_id_institucion'], 'year' => $_SESSION["bd"]];
 
 				$listaIndividuales = GradoServicios::listarCursos($parametros);
-				$parametros = ['matcur_id_matricula' => $id];
+				$parametros = ['matcur_id_matricula' => $idMatricula];
 				$listaMediaTenicaActual = MediaTecnicaServicios::listar($parametros);
 				$listaMediaActual = array();
 				if (!is_null($listaMediaTenicaActual) && count($listaMediaTenicaActual) > 0) {
@@ -201,7 +201,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 							<tbody>
 								<?php
 								$parametros = [
-									'matcur_id_matricula' => $id,
+									'matcur_id_matricula' => $idMatricula,
 									'matcur_id_institucion' => $config['conf_id_institucion'],
 									'matcur_years' => $config['conf_agno'],
 									'arreglo' => false
@@ -240,7 +240,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 												</select>
 											</td>
 											<td>
-												<button type="button" title="<?= $objetoEnviar; ?>" name="fetch-estudiante-mediatecnica.php?tipo=<?= base64_encode(ACCION_ELIMINAR) ?>&curso=<?= base64_encode($idCurso["gra_id"]) ?>&matricula=<?= $id?>" id="<?= $idCurso["gra_id"]; ?>" onClick="deseaEliminar(this)" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+												<button type="button" title="<?= $objetoEnviar; ?>" name="fetch-estudiante-mediatecnica.php?tipo=<?= base64_encode(ACCION_ELIMINAR) ?>&curso=<?= base64_encode($idCurso["gra_id"]) ?>&matricula=<?= $idMatricula?>" id="<?= $idCurso["gra_id"]; ?>" onClick="deseaEliminar(this)" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
 											</td>
 										</tr>
 								<?php  }
@@ -297,7 +297,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 				"curso": id,
 				"grupo": grupoSelect.value,
 				"estado": estadoSelect.value,
-				"matricula": '<?=$id?>'
+				"matricula": '<?=$idMatricula?>'
 			};
 			accionCursoMatricula(data, '<?php echo ACCION_MODIFICAR ?>');
 		};
@@ -391,7 +391,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 					boton.name = "fetch-estudiante-mediatecnica.php?" +
 						"tipo=<?php echo base64_encode(ACCION_ELIMINAR) ?>" +
 						"&curso=" + btoa(valor) +
-						"&matricula=<?=$id?>";
+						"&matricula=<?=$idMatricula?>";
 					boton.classList.add('btn', 'btn-danger', 'btn-sm');
 					var icon = document.createElement('i'); // se crea la icono
 					icon.classList.add('fa', 'fa-trash');
@@ -406,7 +406,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 					// se guarda en la base de datos
 					var data = {
 						"curso": valor,
-						"matricula": '<?=$id?>'
+						"matricula": '<?=$idMatricula?>'
 					};
 					accionCursoMatricula(data, '<?php echo ACCION_CREAR ?>');
 					// Crear una nueva fila                                                                
