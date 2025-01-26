@@ -41,7 +41,7 @@ if(!Modulos::validarPermisoEdicion()){
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[248][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-10">
-                                                <select id="multiple" name="faltas[]" class="form-control select2-multiple" multiple <?=$disabledPermiso;?>>
+                                                <select id="multiple" name="faltas[]" class="form-control select2-multiple" multiple <?=$disabledPermiso;?> required>
 												<?php
 												$datosConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disciplina_faltas 
 												INNER JOIN ".BD_DISCIPLINA.".disciplina_categorias ON dcat_id=dfal_id_categoria AND dcat_institucion={$config['conf_id_institucion']} AND dcat_year={$_SESSION["bd"]}
@@ -55,7 +55,7 @@ if(!Modulos::validarPermisoEdicion()){
                                             </div>
                                         </div>
 										
-										<?php if($datosUsuarioActual['uss_tipo']==5){?>
+										<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV){?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label"><?=$frases[75][$datosUsuarioActual['uss_idioma']];?></label>
 												<div class="col-sm-10">
