@@ -1,4 +1,5 @@
 <?php
+require_once("index-logica.php");
 $logoIndex = "../sintia-gris.png";
 $logoWidth = 250;
 ?>
