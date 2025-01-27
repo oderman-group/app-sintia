@@ -34,9 +34,12 @@ try {
 
 	if ( $e->getCode() == -3 ) {
 
-		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$_POST["Usuario"]."'");
+        $consultaUsuario = mysqli_query($conexion, "SELECT uss_id, institucion, year FROM ".BD_GENERAL.".usuarios uss  WHERE uss_usuario='".trim($_POST["Usuario"])."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL");
+        $datosUsuario = mysqli_fetch_array($consultaUsuario, MYSQLI_ASSOC);
 
-		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave)VALUES('".$_POST["Usuario"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."')");
+		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."'");
+
+		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$datosUsuario["uss_id"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$datosUsuario["institucion"]."', '".$datosUsuario["year"]."')");
 
 		header("Location:".REDIRECT_ROUTE."/index.php?error=2&inst=".base64_encode($_POST["bd"]));
 		exit();
