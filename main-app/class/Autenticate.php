@@ -9,6 +9,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios/Directivo.php");
 require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 class Autenticate {
 
@@ -63,9 +64,8 @@ class Autenticate {
 
         $conexion = Conexion::newConnection('MYSQL');
 
-        $usuarioExiste = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios uss  WHERE uss_usuario='".trim($user)."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL");
-        $numUsuario = mysqli_num_rows($usuarioExiste);
-        if($numUsuario==0){
+        $usuarioExiste = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id");
+        if(empty($usuarioExiste)){
             throw new Exception("El usuario no fue encontrado, por favor verifique.", -2);
         }
 

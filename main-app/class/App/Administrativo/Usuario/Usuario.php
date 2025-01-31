@@ -13,4 +13,32 @@ class Administrativo_Usuario_Usuario extends BDT_Tablas implements BDT_JoinImple
 
     use BDT_Join;
 
+    /**
+     * Consulta el último ingreso de un usuario.
+     *
+     * Esta función recupera el registro más reciente de ingreso de un usuario desde la base de datos,
+     * ordenando por el campo `uss_ultimo_ingreso` (última fecha de ingreso) en orden descendente, 
+     * y limitando el resultado a solo un registro.
+     *
+     * @param string $campos (opcional) Los campos a recuperar. El valor por defecto es "*" (todos los campos).
+     * @param string $usuario El nombre de usuario para el cual se consulta el último ingreso.
+     *
+     * @return array|null Retorna un array asociativo con el registro encontrado, o null si no se encuentra ningún registro.
+     */
+    public static function consultarUltimoIngresoPorUsuario( 
+        string $usuario,
+        string $campos = "*"
+    ) {
+        $conexion = Conexion::newConnection('MYSQL');
+
+        $consulta = mysqli_query($conexion, "SELECT $campos FROM " . self::$schema . "." . self::$tableName . "
+        WHERE uss_usuario='".trim($usuario)."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL 
+        ORDER BY uss_ultimo_ingreso DESC 
+        LIMIT 1");
+        $datos = mysqli_fetch_array($consulta, MYSQLI_ASSOC);
+
+        return $datos;
+
+    }
+
 }
