@@ -151,12 +151,12 @@ if (!Modulos::validarPermisoEdicion()) {
 														}
 
 														$mostrarNumAcudidos = '';
-														if (!empty($usuario['cantidad_acudidos']) && $usuario['uss_tipo'] == TIPO_ACUDIENTE ) {
+														if (isset($usuario['cantidad_acudidos']) && $usuario['uss_tipo'] == TIPO_ACUDIENTE ) {
 															$mostrarNumAcudidos = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_acudidos'] . ')  Acudidos)</span>';
 														}
 
 														$mostrarNumCargas = '';
-														if (!empty($usuario['cantidad_cargas'])  && $usuario['uss_tipo'] == TIPO_DOCENTE) {
+														if (isset($usuario['cantidad_cargas'])  && $usuario['uss_tipo'] == TIPO_DOCENTE) {
 															$numCarga         =  $usuario['cantidad_cargas'];
 															$mostrarNumCargas = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_cargas'] . ' Cargas)</span>';
 														}
