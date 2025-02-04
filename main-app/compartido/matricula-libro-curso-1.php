@@ -100,10 +100,6 @@ if ($numUsr == 0) {
 $datosUsr = mysqli_fetch_array($usr, MYSQLI_BOTH);
 $idGrado=$datosUsr["mat_grado"];
 $idGrupo=$datosUsr["mat_grupo"];
-if($matriculadosDatos["mat_tipo_matricula"]==GRADO_INDIVIDUAL){
-	$idGrado=$matriculadosDatos["matcur_id_curso"];
-	$idGrupo=$matriculadosDatos["matcur_id_grupo"];
-}
 $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 
 $contadorPeriodos=0;
@@ -326,7 +322,7 @@ while($fila2=mysqli_fetch_array($consultaAMat, MYSQLI_BOTH)){
 }}//while fin areas
 
 //MEDIA TECNICA
-if (array_key_exists(10, $_SESSION["modulos"]) && $matriculadosDatos["mat_tipo_matricula"]!=GRADO_INDIVIDUAL){
+if (array_key_exists(10, $_SESSION["modulos"]) && $matriculadosDatos["mat_tipo_matricula"]==GRADO_INDIVIDUAL){
 	$consultaEstudianteActualMT = MediaTecnicaServicios::existeEstudianteMT($config,$year,$matriculadosDatos['mat_id']);
 	while($datosEstudianteActualMT = mysqli_fetch_array($consultaEstudianteActualMT, MYSQLI_BOTH)){
 		if(!empty($datosEstudianteActualMT)){
