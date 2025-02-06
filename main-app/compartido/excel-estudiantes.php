@@ -101,7 +101,7 @@ while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
             <td align="center"><?=$resultado['mat_numero_matricula'];?></td>
 
             <td><?=$datosA['ogen_nombre'];?></td>
-            <td><?=$datosA['uss_usuario'];?></td>
+            <td><?=$datosA['uss_documento'];?></td>
             <td align="center"><?php
                 if(!empty($datosA['uss_apellido1'])){ 
                     $nombreCompleto = !empty($datosA['uss_apellido1']) ? 
