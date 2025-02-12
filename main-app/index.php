@@ -72,7 +72,7 @@ if(!isset($_GET['nodb'])) {
                                     <i class="bi bi-eye-slash"></i>
                                 </button>
                                 <label for="password">Contraseña</label>
-                                <div class="invalid-feedback">Por favor ingresa tu contraseña para continuar</div>
+                                <div class="invalid-feedback">Por favor ingresa tu contraseña para continuar******</div>
                                 <div class="form-text" id="caps-lock-message" style="display: none;">Mayúsculas
                                     activadas</div>
                             </div><br>
@@ -89,7 +89,7 @@ if(!isset($_GET['nodb'])) {
                             <input type="hidden" name="sumaReal" value="<?= md5($resultadoA); ?>" />
                                 <input type="text" class="form-control input-login" id="suma" name="suma" placeholder="Cuánto es <?= $numA1 . "+" . $numA2; ?>?" autocomplete="off" required>
                                 <label for="suma">Cuánto es <?= $numA1 . "+" . $numA2; ?>?</label>
-                                <div class="invalid-feedback">Por favor ingrese un numero válido.</div>
+                                <div class="invalid-feedback">Por favor ingrese unálido.</div>
                             </div>
                             <?php } ?>
                             
