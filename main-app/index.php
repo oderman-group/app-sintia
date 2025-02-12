@@ -100,7 +100,7 @@ if(!isset($_GET['nodb'])) {
                                     <option value="2022" selected>2022</option>
                                 </select>
                                 <label for="year">Año</label>
-                                <div class="invalid-feedback">Por favor seleccione un año.</div>
+                                <div class="invalid-feedback">Por favor seleccione un año.222</div>
                             </div>
 
                             <div class="d-flex justify-content-end mt-5">
