@@ -23,6 +23,7 @@ if(!isset($_GET['nodb'])) {
 	
 <!DOCTYPE html>
 <html lang="en">
+	
 
 <head>
     <meta charset="UTF-8">
