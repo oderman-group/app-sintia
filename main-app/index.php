@@ -103,7 +103,7 @@ if(!isset($_GET['nodb'])) {
                             </div>
 
                             <div class="d-flex justify-content-end mt-5">
-                                <a class="forgot-password" id="forgot-password" href="recuperar-clave.php">¿Ha olvidado su contraseña ?</a>
+                                <a class="forgot-password" id="forgot-password" href="recuperar-clave.php">¿Ha olvidado su contraseña?</a>
                             </div>
                             <button class="w-75 btn btn-lg btn-primary btn-rounded mt-3" type="submit">Empezar la aventura ya</button>
                             <div class="d-flex justify-content-center mt-5">
