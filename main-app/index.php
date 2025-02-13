@@ -50,7 +50,7 @@ if(!isset($_GET['nodb'])) {
             <div class="container">
                 <div class="row">
                     <div class="col-md-8 offset-md-2" id="login">
-                        <form method="post" action="controlador/autentico.php" class="needs-validation" novalidate>
+                        <form method="post" action="controlador/autentico.php" class="needs-validation" novalidate> 
                             <?php include("../config-general/mensajes-informativos.php"); ?>
 		                        <input type="hidden" name="urlDefault" value="<?php if(isset($_GET["urlDefault"])) echo $_GET["urlDefault"];?>" />
                                 <input type="hidden" name="directory"  value="<?php if(isset($_GET["directory"]))  echo $_GET["directory"]; ?>" />
