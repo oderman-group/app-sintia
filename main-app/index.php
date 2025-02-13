@@ -42,7 +42,6 @@ if(!isset($_GET['nodb'])) {
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css" />
     <link href="../config-general/assets-login-2023/css/styles.css" rel="stylesheet" />
-
 </head>
 
 <body>
