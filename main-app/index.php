@@ -73,7 +73,7 @@ if(!isset($_GET['nodb'])) {
                                 </button>
                                 <label for="password">Contraseña</label>
                                 <div class="invalid-feedback">Por favor ingresa tu contraseña para continuar******</div>
-                                <div class="form-text" id="caps-lock-message" style="display: none;">Mayúsculas activadas</div>
+                                <div class="form-text" id="caps-lock-message" style="display: none;">Mayúsculas activadas </div>
                             </div><br>
 
                             <?php
