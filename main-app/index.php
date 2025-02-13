@@ -20,7 +20,6 @@ if(!isset($_GET['nodb'])) {
     }
 }
 ?>
-
 	
 <!DOCTYPE html>
 <html lang="en">
