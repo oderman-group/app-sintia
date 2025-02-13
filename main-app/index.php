@@ -96,7 +96,7 @@ if(!isset($_GET['nodb'])) {
                                 <select class="form-select select-invalid" id="year" name="year"
                                     aria-label="Default select example">
                                     <option value="" disabled selected>Seleccione un año.</option>
-                                    <option value="2022" selected>2022</option>
+                                    <option value="2022" selected>2025</option>
                                 </select>
                                 <label for="year">Año</label>
                                 <div class="invalid-feedback">Por favor seleccione un año</div>
