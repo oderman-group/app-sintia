@@ -61,7 +61,7 @@ if(!isset($_GET['nodb'])) {
                                 <input type="text" class="form-control input-login" id="emailInput" name="Usuario"
                                     placeholder="Usuario" required>
                                 <label for="emailInput">Usuario</label>
-                                <div class="invalid-feedback">Por favor ingrese un usuario válido.3</div>
+                                <div class="invalid-feedback">Por favor ingrese un usuario válido</div>
                             </div>
 
                             <div class="form-floating input-group mt-3">
