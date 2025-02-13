@@ -88,7 +88,7 @@ if(!isset($_GET['nodb'])) {
                             <input type="hidden" name="sumaReal" value="<?= md5($resultadoA); ?>" />
                                 <input type="text" class="form-control input-login" id="suma" name="suma" placeholder="Cuánto es <?= $numA1 . "+" . $numA2; ?>?" autocomplete="off" required>
                                 <label for="suma">Cuánto es <?= $numA1 . "+" . $numA2;  ?>?</label>
-                                <div class="invalid-feedback">Por favor ingrese unálido.</div>
+                                <div class="invalid-feedback">Por favor ingrese unálido</div>
                             </div>
                             <?php } ?>
                             
