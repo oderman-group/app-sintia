@@ -4,7 +4,6 @@ $logoWidth = 100;
 
 if(!isset($_GET['nodb'])) {
     require_once("index-logica.php");
-
     if (!empty($_GET['inst']) && !empty($_GET['year'])) {
         try {
             $informacionInstConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion='" . base64_decode($_GET['inst']) . "' AND info_year=".base64_decode($_GET['year']));
