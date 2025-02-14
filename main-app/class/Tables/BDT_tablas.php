@@ -46,7 +46,13 @@ abstract class BDT_Tablas implements BDT_Interface{
                 if ($clave === self::OTHER_PREDICATE) {
                     $where.= " {$valor} AND ";
                 }else{
-                    $where .= $clave ." = ".self::formatValor($valor)." AND ";
+                    $asociacion = explode(" ",$clave);
+                    if(empty($asociacion[1])){
+                        $where .= $clave ." = ".self::formatValor($valor)." AND ";
+                    }else{
+                        $where .= $clave ."  ".$valor." AND ";
+                    }
+                    
                 }
                 
             }
@@ -432,7 +438,7 @@ abstract class BDT_Tablas implements BDT_Interface{
      */
     public static function formatValor($valor): string  {
             if ( is_numeric($valor) || is_bool($valor)) {
-                $result = $valor+0;;
+                $result = $valor+0;
             } else{
                 $result = "'".$valor."'";
             }
