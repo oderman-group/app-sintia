@@ -81,7 +81,8 @@ if (!empty($grado) && !empty($grupo) && !empty($cPeriodo) && !empty($year)) {
   for ($i = 1; $i <= $cPeriodo; $i++) {
     $periodos[$i] = $i;
   }
-  $listaEstudiantes = Academico_boletin::datosBoletin($grado, $grupo, $periodos, $year, $idEstudiante);
+  $estudiantes[0]=$matriculadosPorCursoEstudainte;
+  $listaEstudiantes = Academico_boletin::datosBoletin($grado, $grupo, $periodos, $year, $estudiantes);
 }
 
 $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);

@@ -63,7 +63,8 @@ if (!empty($grado) && !empty($grupo) && !empty($cPeriodo) && !empty($year)) {
   $andString=[
     "AND" => "bol_nota < ".$config['conf_nota_minima_aprobar']." AND bol_periodo =".$cPeriodo
   ];
-  $listaEstudiantes = Academico_boletin::datosBoletin($grado, $grupo, $periodos, $year, $idEstudiante,false,$andString);
+  $estudiantes[0]=$idEstudiante;
+  $listaEstudiantes = Academico_boletin::datosBoletin($grado, $grupo, $periodos, $year, $estudiantes,false,$andString);
 }
 ?>
 
