@@ -119,7 +119,7 @@ if(
 													<?php
 													while($indicadoresDatos = mysqli_fetch_array($indicadoresConsulta, MYSQLI_BOTH)){
 													?>
-                                                    	<option value="<?=$indicadoresDatos['ind_id'];?>"><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
+                                                    	<option value="<?=$indicadoresDatos['ai_ind_id'];?>"><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
 													<?php }?>
                                                 </select>
                                             </div>
