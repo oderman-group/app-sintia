@@ -14,10 +14,6 @@
 		contenido.innerHTML = resultData;
 		ejecutarScriptsCargados(contenido);
 
-
-		contenido.innerHTML = resultData;
-		ejecutarScriptsCargados(contenido);
-
 		document.getElementById('tituloModal').textContent = titulo;
 
 		if (overlay) {
