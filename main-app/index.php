@@ -1,6 +1,6 @@
 <?php
 $logoIndex = "../config-general/assets-login-2023/img/logo.png";
-$logoWidth = 115;
+$logoWidth = 100;
 
 if(!isset($_GET['nodb'])) {
     require_once("index-logica.php");
