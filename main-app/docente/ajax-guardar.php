@@ -21,12 +21,17 @@ if($_POST["operacion"]==1){
 }
 
 //Agregar respuesta a una pregunta
-if($_POST["operacion"]==2){
-	Evaluaciones::guardarRespuesta($conexion, $config, $_POST);
-
-	include("../compartido/guardar-historial-acciones.php");
-	$mensajeNot = 'La respuesta se ha agregado correctamente.';
+if($_POST["operacion"] == 2){
+    try {
+        Evaluaciones::guardarRespuesta($config, $_POST);
+        $mensajeNot = 'La respuesta se ha agregado correctamente.';
+        include("../compartido/guardar-historial-acciones.php");
+    } catch (Exception $e) {
+        $mensajeNot = 'Problema para guardar la respuesta: '.$e;
+    }
+    
 }
+
 //Clase disponible o no
 if($_POST["operacion"]==3){
 	
@@ -35,6 +40,7 @@ if($_POST["operacion"]==3){
 	include("../compartido/guardar-historial-acciones.php");
 	$mensajeNot = 'La clase ha cambiado de estado correctamente.';
 }
+
 //Impedir retrasos o no en las actividades
 if($_POST["operacion"]==4){
 	

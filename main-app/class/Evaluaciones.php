@@ -910,19 +910,24 @@ class Evaluaciones extends BindSQL{
 
     /**
      * Este metodo me guarda una respuesta
-     * @param mysqli $conexion
      * @param array $config
      * @param array $POST
      */
-    public static function guardarRespuesta(mysqli $conexion, array $config, array $POST){
+    public static function guardarRespuesta(array $config, array $POST){
         global $conexionPDO;
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_actividad_respuestas');
 
-        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividad_respuestas(resp_id, resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year)VALUES('".$codigo."', '".$POST["valor"]."', 0, '".$POST["pregunta"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})";
-        
-        $parametros = [$codigo, mysqli_real_escape_string($conexion,$POST["valor"]), 0, $POST["pregunta"], $config['conf_id_institucion'], $_SESSION["bd"]];
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividad_respuestas(resp_id, resp_descripcion, resp_correcta, resp_id_pregunta, institucion, year)VALUES(?, ?, 0, ?, ?, ?)";
 
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $asp = $conexionPDO->prepare($sql);
+
+        $asp->bindParam(1, $codigo, PDO::PARAM_STR);
+        $asp->bindParam(2, $POST["valor"], PDO::PARAM_STR);
+        $asp->bindParam(3, $POST["pregunta"], PDO::PARAM_STR);
+        $asp->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_STR);
+        $asp->bindParam(5, $_SESSION["bd"], PDO::PARAM_STR);
+
+        $asp->execute();
     }
 
     /**

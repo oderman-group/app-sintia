@@ -86,6 +86,8 @@ include("../compartido/head-informes.php") ?>
 	$horas[8] = 'OCHO';
 	$horas[9] = 'NUEVE';
 	$horas[10] = 'DIEZ';
+	$horas[11] = 'ONCE';
+	$horas[12] = 'DOCE';
 
 	$restaAgnos = ($hasta - $desde) + 1;
 
@@ -279,7 +281,7 @@ include("../compartido/head-informes.php") ?>
 				while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
 
 					//CONSULTAMOS LAS MATERIAS DEL AREA
-					$materias = Asignaturas::consultarAsignaturasArea($conexion, $config, $matricula["gra_id"], $matricula["gru_id"], $cargas["ar_id"], $inicio);
+					$materias = Asignaturas::consultarAsignaturasArea($conexion, $config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $cargas["ar_id"], $inicio);
 
 					$numMat = mysqli_num_rows($materias);
 
@@ -320,7 +322,7 @@ include("../compartido/head-informes.php") ?>
 
 					<?php
 					//INCLUIR LA MATERIA, LA DEFINITIVA Y LA I.H POR CADA ÁREA
-					$materiasDA = Asignaturas::consultarAsignaturaDefinitivaIntensidad($conexion, $config, $matricula["gra_id"], $matricula["mat_grado"], $matricula["gru_id"], $cargas["ar_id"], $inicio);
+					$materiasDA = Asignaturas::consultarAsignaturaDefinitivaIntensidad($conexion, $config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $cargas["ar_id"], $inicio);
 
 					while ($mda = mysqli_fetch_array($materiasDA, MYSQLI_BOTH)) {
 						$notaDefMateria = Boletin::traerDefinitivaBoletinCarga($config, $mda["car_id"], $id, $inicio);
@@ -330,7 +332,7 @@ include("../compartido/head-informes.php") ?>
 						}
 						$desempeno = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaDefMateria, $inicio);
 						//PARA PREESCOLARES
-						if ($matricula["gra_id"] >= 12 and $matricula["gra_id"] <= 15) {
+						if ($datosEstudianteActualMT["matcur_id_curso"] >= 12 and $datosEstudianteActualMT["matcur_id_curso"] <= 15) {
 							$nota = ceil($nota);
 							if ($notaDefMateria == 1) $notaDefMateria = 'DEFICIENTE';
 							if ($notaDefMateria == 2) $notaDefMateria = 'INSUFICIENTE';
@@ -341,7 +343,7 @@ include("../compartido/head-informes.php") ?>
 					?>
 						<tr style="font-size:11px;">
 							<td><?= $mda["mat_nombre"]; ?></td>
-							<td><?= $notaDefMateria; ?> <?php if ($matricula["gra_id"] < 12) { ?> (<?= strtoupper($desempeno['notip_nombre']); ?>) <?php } ?></td>
+							<td><?= $notaDefMateria; ?> (<?= strtoupper($desempeno['notip_nombre']); ?>)</td>
 							<td><?= $mda["ipc_intensidad"] . " (" . $horas[$mda["ipc_intensidad"]] . ")"; ?></td>
 						</tr>
 					<?php } ?>

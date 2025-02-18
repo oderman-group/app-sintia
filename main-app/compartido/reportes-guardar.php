@@ -12,7 +12,8 @@ $usuariosClase = new UsuariosFunciones;
 $datosEstudiante = Estudiantes::obtenerDatosEstudiante($_POST["estudiante"]);
 $nombre = trim(Estudiantes::NombreCompletoDelEstudiante($datosEstudiante));
 
-$cont = count($_POST["faltas"]);
+
+$cont = !empty($_POST["faltas"]) ? count($_POST["faltas"]) : 0;
 $i = 0;
 while ($i < $cont) {
     $idInsercion=Utilidades::generateCode("DR");

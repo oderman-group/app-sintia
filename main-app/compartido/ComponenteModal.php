@@ -27,7 +27,7 @@ class ComponenteModal
 	{
 		?>
 		<div class="modal fade" id="ComponeteModal-<?= $this->id ?>" tabindex="-1" role="dialog" aria-labelledby="basicModal"
-			<?= $this->estatico ? 'data-backdrop="static"' : '' ?> aria-hidden="true">
+			<?= $this->estatico ? 'data-backdrop="static" data-bs-backdrop="static"' : '' ?> aria-hidden="true">
 			<div class="modal-dialog" style="max-width: 1350px!important;">
 				<div class="modal-content" style="border-radius: 20px;max-width: 1350px!important; ">
 

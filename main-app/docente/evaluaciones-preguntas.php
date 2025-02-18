@@ -13,27 +13,27 @@ if(!empty($_GET["idE"])){ $idE=base64_decode($_GET["idE"]);}
 <script src="../../config-general/assets/plugins/chart-js/Chart.bundle.js"></script>
 
 <script type="text/javascript">
-function guardarAjax(datos){ 
-  var idR = datos.id;
-  var valor = datos.value;
-  var operacion = datos.alt;
-  var pregunta = datos.title;	
+function guardarAjax(datos) {
+    var valor     = datos.value;
+    var operacion = datos.alt;
+    var pregunta  = datos.title;
 
-$('#respuestaGuardar').empty().hide().html("Guardando información, espere por favor...").show(1);
-	datos = "idR="+(idR)+
-			"&valor="+(valor)+
-			"&pregunta="+(pregunta)+
-			"&operacion="+(operacion);
-		   $.ajax({
-			   type: "POST",
-			   url: "ajax-guardar.php",
-			   data: datos,
-			   success: function(data){
-			   	$('#respuestaGuardar').empty().hide().html(data).show(1);
-		   	   }
-		  });
+    $('#respuestaGuardar').empty().hide().html("Guardando información, espere por favor...").show(1);
+
+    datos = "valor="+(valor)+
+    "&pregunta="+(pregunta)+
+    "&operacion="+(operacion);
+
+    $.ajax({
+        type: "POST",
+        url: "ajax-guardar.php",
+        data: datos,
+        success: function(data) {
+            $('#respuestaGuardar').empty().hide().html(data).show(1);
+        }
+    });
 }
-	
+
 function mostrarNuevaRespuesta(datos){ 
   	var id = "pr"+datos.id;
 	document.getElementById(id).style.display="block";
@@ -56,7 +56,7 @@ function mostrarNuevaRespuesta(datos){
 			   });
 
 	}
-	setInterval('realizando()',5000);
+	//setInterval('realizando()',5000);
 	
 	function finalizado(){
   	var eva = '<?=$idE;?>';	
@@ -74,7 +74,7 @@ function mostrarNuevaRespuesta(datos){
 			   });
 
 	}
-	setInterval('finalizado()',5000);
+	//setInterval('finalizado()',5000);
 	
 	window.onload = realizando();
 	window.onload = finalizado();
@@ -259,7 +259,13 @@ function mostrarNuevaRespuesta(datos){
 													<div id="pr<?=$preguntas['preg_id'];?>" style="display: none;">
 														<hr>
 														<b>Nueva respuesta:</b><br>
-														<input size="65" placeholder="Escriba la respuesta y Enter para guardar" alt="2" title="<?=$preguntas['preg_id'];?>" onChange="guardarAjax(this)">
+														<input 
+															size="65" 
+															placeholder="Escriba la respuesta y Enter para guardar" 
+															alt="2" 
+															title="<?=$preguntas['preg_id'];?>" 
+															onChange="guardarAjax(this)"
+														>
 													</div>
 											<?php		
 												$contPreguntas ++;

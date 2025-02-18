@@ -55,7 +55,7 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
                         echo '<th style="text-align:center; font-size:11px; width:100px;"><a href="indicadores-editar.php?idR=' . base64_encode($rA['ipc_id']) . '">' . $rA['ind_nombre'] . '<br>
 
-                    ' . $rA['ind_id'] . '<br>
+                    ' . $rA['ai_ind_id'] . '<br>
 
                     (' . $rA['ipc_valor'] . '%)</a>
 

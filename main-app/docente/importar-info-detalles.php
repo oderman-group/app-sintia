@@ -86,7 +86,7 @@ require_once(ROOT_PATH."/main-app/class/Actividades.php");
 												echo "<span'>".$contIndicadores.") ".$indImpDatos['ind_nombre']." (".$indImpDatos['ipc_valor']."%)</span><br>";
 
 												//Consultamos las calificaciones del indicador a Importar
-												$calImpConsulta = Actividades::traerActividadesCargaIndicador($config, $indImpDatos['ind_id'], $_POST["cargaImportar"], $_POST["periodoImportar"]);
+												$calImpConsulta = Actividades::traerActividadesCargaIndicador($config, $indImpDatos['ai_ind_id'], $_POST["cargaImportar"], $_POST["periodoImportar"]);
 												$numCalificaciones = mysqli_num_rows($calImpConsulta);
 												if ($numCalificaciones > 0) {
 													echo "<b style='margin-left: 40px;'>Calificaciones a importar de este indicador:</b><br>";

@@ -3,7 +3,10 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="navbar-collapse" id="navbarSupportedContent">
-  <a data-hint="Agrega una nueva publicación que tenga más contenido (Imagen, video, etc.)."   onclick="abrirModal('<?= $frases[212][$datosUsuarioActual['uss_idioma']]; ?>','../compartido/noticias-agregar-modal.php')" class="btn deepPink-bgcolor"><?=$frases[263][$datosUsuarioActual['uss_idioma']];?>  <i class="fa fa-plus"></i></a>
+    <?php $modalPublicacion = new ComponenteModal('nuevoPublicacion',$frases[212][$datosUsuarioActual['uss_idioma']],'../compartido/noticias-agregar-modal.php');?>
+  <a data-hint="Agrega una nueva publicación que tenga más contenido (Imagen, video, etc.)."  
+  onclick="<?=$modalPublicacion->getMetodoAbrirModal()?>" class="btn deepPink-bgcolor">
+   <?=$frases[263][$datosUsuarioActual['uss_idioma']];?>  <i class="fa fa-plus"></i></a>
 
   <ul class="navbar-nav mr-auto">
     

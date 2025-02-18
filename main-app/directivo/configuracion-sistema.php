@@ -47,7 +47,11 @@ if ($idPaginaInterna == 'DV0032')
     $configDEV =1; $institucion = "de <b>".$datosConfiguracion['ins_siglas']."</b> (". $year .")"; 
 }
 
-$hayRegistroEnCalificaciones = Academico_Calificacion::contarRegistrosEnCalificaciones() > 0 ? true : false;
+$predicado = [
+    'institucion'   => $id,
+    'year'          => $year
+];
+$hayRegistroEnCalificaciones = Academico_Calificacion::contarRegistrosEnCalificaciones($predicado) > 0 ? true : false;
 $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'disabled' : '';
 ?>
 

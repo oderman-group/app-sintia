@@ -215,8 +215,8 @@ if (php_sapi_name() === 'cli') {
 } else {
     switch ($_SERVER['HTTP_HOST']) {
         case 'localhost':
-            ini_set('display_errors', 0);
-            ini_set('display_startup_errors', 0);
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
             ini_set('error_log', __DIR__ . '/errores_local.log');
             define('REDIRECT_ROUTE', 'http://localhost/app-sintia/main-app');
             define('ENVIROMENT', 'TEST');
@@ -224,8 +224,8 @@ if (php_sapi_name() === 'cli') {
         break;
 
         case 'developer.plataformasintia.com':
-            ini_set('display_errors', 0);
-            ini_set('display_startup_errors', 0);
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
             ini_set('error_log', __DIR__ . '/errores_dev.log');
             define('REDIRECT_ROUTE', 'https://developer.plataformasintia.com/app-sintia/main-app');
             define('ENVIROMENT', 'TEST');

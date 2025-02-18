@@ -33,6 +33,12 @@ class Conexion extends Conexion_Factory{
 
                 // Establecer el modo de error PDO a excepciones
                 $this->conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                // Validar el conjunto de caracteres
+                $charset = $this->conexionPDO->query("SELECT @@character_set_connection AS charset")->fetch(PDO::FETCH_ASSOC);
+                if (strcasecmp($charset['charset'], 'utf8mb4') !== 0) {
+                    throw new Exception("Error: El conjunto de caracteres no es utf8mb4, es " . $charset['charset']);
+                }
             //}
 
             return $this->conexionPDO;
@@ -52,6 +58,12 @@ class Conexion extends Conexion_Factory{
 
             if (mysqli_connect_errno()) {
                 die("Conexión MySQLi fallida: " . mysqli_connect_error());
+            }
+
+            // Validar el conjunto de caracteres
+            if (!mysqli_set_charset($this->conexionMysql, "utf8mb4")) {
+                printf("Error cargando el conjunto de caracteres utf8mb4: %s\n", mysqli_error($this->conexionMysql));
+                exit();
             }
         //}
 
