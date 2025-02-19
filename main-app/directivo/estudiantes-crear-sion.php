@@ -33,7 +33,7 @@
         "SexoEstudiante" => $datosEstudianteActual["mat_genero"],
 
         "IdTipoDocumentoAcudiente" => $acudiente["uss_tipo_documento"],
-        "DocumentoAcudiente" => $acudiente["uss_usuario"],
+        "DocumentoAcudiente" => $acudiente["uss_documento"],
         "Apellido1Acudiente" => $acudiente["uss_apellido1"],
         "Apellido2Acudiente" => $acudiente["uss_apellido2"],
         "Nombre1Acudiente" => $acudiente["uss_nombre"],
