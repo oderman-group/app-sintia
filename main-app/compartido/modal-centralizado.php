@@ -11,9 +11,6 @@
 		resultado = await metodoFetchAsync(url, data, 'html', false);
 		resultData = resultado["data"];
 
-		contenido.innerHTML = resultData;
-		ejecutarScriptsCargados(contenido);
-
 
 		contenido.innerHTML = resultData;
 		ejecutarScriptsCargados(contenido);

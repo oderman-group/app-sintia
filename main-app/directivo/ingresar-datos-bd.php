@@ -17,6 +17,8 @@ try {
             FROM ".BD_ACADEMICA.".academico_grados 
             WHERE institucion={$idInsti} AND year={$yearAnterior}
             ");
+
+            mysqli_query($conexion, "UPDATE ".BD_ACADEMICA.".academico_grados SET gra_periodos=4");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
