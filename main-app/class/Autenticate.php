@@ -66,7 +66,7 @@ class Autenticate {
         AND TRIM(uss_usuario)!='' 
         AND uss_clave=SHA1('".$pass."')  
         AND uss_usuario IS NOT NULL  
-        ORDER BY uss_ultimo_ingreso DESC 
+        ORDER BY id_nuevo DESC 
         LIMIT 1";
 
         $conexion = Conexion::newConnection('MYSQL');
