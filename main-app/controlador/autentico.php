@@ -6,6 +6,7 @@ require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 $auth = Autenticate::getInstance();
 
@@ -34,9 +35,11 @@ try {
 
 	if ( $e->getCode() == -3 ) {
 
-		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$_POST["Usuario"]."'");
+        $datosUsuario = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id, institucion, year");
 
-		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave)VALUES('".$_POST["Usuario"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."')");
+		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."'");
+
+		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$datosUsuario["uss_id"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$datosUsuario["institucion"]."', '".$datosUsuario["year"]."')");
 
 		header("Location:".REDIRECT_ROUTE."/index.php?error=2&inst=".base64_encode($_POST["bd"]));
 		exit();
