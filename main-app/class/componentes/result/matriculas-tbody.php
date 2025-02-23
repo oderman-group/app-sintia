@@ -109,7 +109,7 @@ foreach ($data["data"] as $resultado) {
 			<?php if (!empty($resultado['uss_usuario']) && $permisoBloquearUsuario) { ?>
 				<div class="input-group spinner col-sm-10" style="padding-top: 5px;">
 					<label class="switchToggle">
-						<input type="checkbox" value="1" onChange='cambiarBloqueo(<?= $dataParaJavascript; ?>)' <?= $cheked; ?>>
+						<input type="checkbox" id="checkboxCambiarBloqueo<?= $resultado['mat_id']; ?>" value="1" onChange='cambiarBloqueo(<?= $dataParaJavascript; ?>)' <?= $cheked; ?>>
 						<span class="slider red round"></span>
 					</label>
 				</div>

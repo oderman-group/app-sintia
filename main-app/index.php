@@ -27,7 +27,7 @@ if(!isset($_GET['nodb'])) {
         $predicado = [
             'usblo_id_usuario'  => base64_decode($_GET['idU']),
             'usblo_institucion' => base64_decode($_GET['inst']),
-            'usblo_year'        => date("Y")
+            'usblo_year'        => base64_decode($_GET['year'])
         ];
     
         $campos = "usblo_motivo";
