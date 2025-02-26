@@ -131,6 +131,7 @@ class Estudiantes {
                     'matcur_id_curso'       => $cursoActual["gra_id"],
                     'mat_eliminado'         => 0,
                     'matcur_id_institucion' => $config['conf_id_institucion'],
+                    'matcur_years'          => $_SESSION["bd"],
                     'limite'                => $filtroLimite,
                     'and'                   => $filtroAdicional,
                     'select'                => $stringSelect,
