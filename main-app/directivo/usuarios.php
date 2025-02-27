@@ -106,16 +106,18 @@ if (!Modulos::validarPermisoEdicion()) {
 															<div class="col-sm-12">
 																<ul class="navbar-nav mr-auto">
 																	<li class="nav-item dropdown">
-																		<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
+																		
 																		<a class="nav-link dropdown-toggle"
 																					href="javascript:void(0);"
 																					id="navbarDropdown" role="button"
 																					data-toggle="dropdown"
 																					aria-haspopup="true"
 																					aria-expanded="false"
-																					style="color:<?= $Plataforma->colorUno; ?>;">																					
-																			
+																					style="color:<?= $Plataforma->colorUno; ?>;">	
+																					Seleccionados																				
+																					<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
 																			<span class="fa fa-angle-down"></span>
+																			
 																		</a>
 																		<?php if (Modulos::validarPermisoEdicion()) { ?>
 																			<div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -396,6 +398,7 @@ if (!Modulos::validarPermisoEdicion()) {
 	});
 
 	function actualizarBloqueo(bloqueo){
+		console.log(bloqueo);
 		let selecionados=getSelecionados('example1','selecionado','lblCantSeleccionados');
 		if(selecionados.length>0){
 			sweetConfirmacion(
@@ -409,7 +412,7 @@ if (!Modulos::validarPermisoEdicion()) {
 					{ 
 					  bloquear: bloqueo, 
 					  usuarios:getSelecionados('example1','selecionado','lblCantSeleccionados'),
-				      tipo:'<?= $_GET["tipo"] ?>'
+				      tipo:'<?= $_GET["tipo"] ??=null ?>'
 					},
 					'marcarbloqueados'
 		           );
