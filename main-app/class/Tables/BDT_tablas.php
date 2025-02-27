@@ -114,7 +114,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             if ($clave === self::OTHER_PREDICATE) {
                 $where.= " {$valor} AND ";
             }else{
-                $where .= $clave ." = ".self::formatValor($valor)." AND ";
+                $where .= $clave ." = '{$valor}' AND ";
             }
         }
 
@@ -144,7 +144,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             if ($clave === OTHER_PREDICATE) {
                 $where.= $clave."  {$valor} ";
             }else{
-                $where.= $clave." = " .self::formatValor($valor)." AND ";
+                $where.= $clave." = '{$valor}' AND ";
             }
             
         }
