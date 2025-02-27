@@ -74,7 +74,7 @@ class Autenticate {
         AND TRIM(uss_usuario)!='' 
         AND uss_clave=SHA1('".$pass."')  
         AND uss_usuario IS NOT NULL  
-        ORDER BY id_nuevo DESC 
+        ORDER BY uss_ultimo_ingreso DESC 
         LIMIT 1";
 
         $consulta = mysqli_query($conexion, $sql);
