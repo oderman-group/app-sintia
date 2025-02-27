@@ -588,11 +588,12 @@ function cambiarBloqueo(data) {
     }
 
     var estadoFinal = estudiantesPorEstadosBloqueo[data.id_estudiante];
+    var checkEstudiantes = document.getElementById("checkboxCambiarBloqueo" + data.id_estudiante);
     let datos = "&idR="+btoa(data.id_usuario.toString())+
                 "&lock="+btoa(estadoFinal.toString());
 
     // Determinar el nuevo estado del checkbox
-    if (data.bloqueado == 0) {
+    if (checkEstudiantes.checked) {
         // Mostrar el modal
         $('#motivoModal').modal('show');
 
@@ -618,7 +619,12 @@ function cambiarBloqueo(data) {
 
         // Al cancelar el motivo
         $('#cancelarMotivo').off('click').on('click', function () {
-            document.getElementById("checkboxCambiarBloqueo" + data.id_estudiante).checked = false;
+            checkEstudiantes.checked = false;
+        });
+   
+        // Al cancelar el motivo
+        $('#boton-cerrar-modal-motivo').off('click').on('click', function () {
+            checkEstudiantes.checked = false;
         });
     } else {
         enviarAjaxCambiarBloqueo(data, datos);
