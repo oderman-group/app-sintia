@@ -240,7 +240,8 @@ class Usuarios {
             SELECT 
             $stringSelect
             ,COALESCE(ca.cantidad_cargas, 0) AS cantidad_cargas,
-            COALESCE(ue.cantidad_acudidos, 0) AS cantidad_acudidos
+            COALESCE(ue.cantidad_acudidos, 0) AS cantidad_acudidos,
+            mat_id_usuario
 
             FROM " . BD_GENERAL . ".usuarios us
 
@@ -270,6 +271,12 @@ class Usuarios {
 
             )AS ue 
             ON ue.upe_id_usuario = us.uss_id
+
+            LEFT JOIN " . BD_ACADEMICA . ".academico_matriculas mat
+            ON    mat.institucion       = ".$config['conf_id_institucion']."
+            AND   mat.year              = '".$_SESSION["bd"]."'
+            AND   mat.mat_eliminado     = 0
+            AND   mat.mat_id_usuario    = us.uss_id
 
             WHERE us.institucion = ?
             AND us.year          = ?

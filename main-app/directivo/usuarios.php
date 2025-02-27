@@ -161,7 +161,12 @@ if (!Modulos::validarPermisoEdicion()) {
 															$mostrarNumCargas = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_cargas'] . ' Cargas)</span>';
 														}
 
-														
+														$tieneMatricula = '';
+														$backGroundMatricula = 'style="background-color:gold;" class="animate__animated animate__pulse animate__delay-2s" data-toggle="tooltip" data-placement="right" title="Este supuesto estudiante no cuenta con un registro en las matrículas."';
+														if ($usuario['uss_tipo'] == TIPO_ESTUDIANTE && !empty($usuario['mat_id_usuario'])) {
+															$tieneMatricula = $usuario['mat_id_usuario'];
+															$backGroundMatricula = '';
+														}
 
 														$managerPrimary = '';
 														if ($usuario['uss_permiso1'] == CODE_PRIMARY_MANAGER && $usuario['uss_tipo'] == TIPO_DIRECTIVO) {
