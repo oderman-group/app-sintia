@@ -28,6 +28,7 @@ if($valores[1]>=$datosCargaActual['car_maximas_calificaciones']){
 $infoCompartir=0;
 if(!empty($_POST["compartir"]) && $_POST["compartir"]==1) $infoCompartir=1;
 $fecha = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
+$_POST["contenido"] = str_replace(['ﬁ', 'ﬂ', 'ﬀ', 'ﬃ', 'ﬄ', 'ﬆ'], ['fi', 'fl', 'ff', 'ffi', 'ffl', 'st'], $_POST["contenido"]);
 
 if(empty($_POST["bancoDatos"]) || $_POST["bancoDatos"]==0){
 	//Si los valores de las calificaciones son de forma automática.

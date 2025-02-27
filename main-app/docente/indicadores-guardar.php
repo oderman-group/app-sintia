@@ -20,6 +20,7 @@ if($sumaIndicadores[2]>=$datosCargaActual['car_maximos_indicadores']){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=209";</script>';
 	exit();
 }
+$_POST["contenido"] = str_replace(['ﬁ', 'ﬂ', 'ﬀ', 'ﬃ', 'ﬄ', 'ﬆ'], ['fi', 'fl', 'ff', 'ffi', 'ffl', 'st'], $_POST["contenido"]);
 
 $infoCompartir=0;
 if(!empty($_POST["compartir"]) && $_POST["compartir"]==1) $infoCompartir=1;
