@@ -36,7 +36,7 @@ $datosConfiguracion = mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH);
 $disabledPermiso = "";
 
 if (!Modulos::validarPermisoEdicion() && $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
-	$disabledPermiso = "disabled";
+	$disabledPermiso = "readonly";
 }
 
 $configDEV   = 0;
@@ -52,7 +52,7 @@ $predicado = [
     'year'          => $year
 ];
 $hayRegistroEnCalificaciones = Academico_Calificacion::contarRegistrosEnCalificaciones($predicado) > 0 ? true : false;
-$disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'disabled' : '';
+$disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
 ?>
 
 	<!--bootstrap -->
