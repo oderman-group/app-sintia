@@ -223,8 +223,14 @@ class UsuariosPadre {
         $sql = "SELECT uss_id, uss_apellido1, uss_apellido2, uss_nombre, uss_nombre2, pes_nombre FROM ".BD_GENERAL.".usuarios uss 
         INNER JOIN ".BD_ADMIN.".general_perfiles 
             ON pes_id=uss_tipo
-        WHERE 
-            CONCAT(uss_apellido1,' ',uss_apellido2,' ',uss_nombre,' ',uss_nombre2) LIKE '%".$nombre."%' 
+        WHERE (TRIM(uss_nombre) LIKE '%".$nombre."%'
+        OR TRIM(uss_nombre2) LIKE '%".$nombre."%'
+        OR TRIM(uss_apellido1) LIKE '%".$nombre."%'
+        OR TRIM(uss_apellido2) LIKE '%".$nombre."%'
+        OR CONCAT(TRIM(uss_nombre), ' ', TRIM(uss_nombre2), ' ', TRIM(uss_apellido1), ' ', TRIM(uss_apellido2)) LIKE '%".$nombre."%'
+        OR CONCAT(TRIM(uss_nombre), TRIM(uss_nombre2), TRIM(uss_apellido1), TRIM(uss_apellido2)) LIKE '%".$nombre."%'
+        OR CONCAT(TRIM(uss_apellido1), ' ', TRIM(uss_apellido2), ' ', TRIM(uss_nombre), ' ', TRIM(uss_nombre2)) LIKE '%".$nombre."%'
+        OR CONCAT(TRIM(uss_apellido1), TRIM(uss_apellido2), TRIM(uss_nombre), TRIM(uss_nombre2)) LIKE '%".$nombre."%') 
         AND uss.institucion=? 
         AND uss.year=? 
         ORDER BY uss_apellido1, uss_apellido2, uss_nombre 
@@ -258,6 +264,7 @@ class UsuariosPadre {
 
         $sql = "SELECT * FROM ".BD_GENERAL.".usuarios uss 
         INNER JOIN ".BD_ADMIN.".general_perfiles ON pes_id=uss_tipo 
+        LEFT JOIN ".BD_ADMIN.".opciones_generales ON ogen_id = uss.uss_tipo_documento
         WHERE uss.institucion=? AND uss.year=? {$filtroBusqueda}";
         $parametros = [$idInsti, $year];
         $consultaUsuario = BindSQL::prepararSQL($sql, $parametros);
@@ -615,7 +622,7 @@ class UsuariosPadre {
     ){
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 10";
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND (uss_tipo=" . TIPO_DOCENTE . " OR  uss_tipo=" . TIPO_DIRECTIVO . " OR  uss_tipo=" . TIPO_DEV . ") AND uss_id!=? AND institucion=? AND year=? LIMIT 10";
 
         $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
         
@@ -634,7 +641,7 @@ class UsuariosPadre {
     ){
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 5";
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND (uss_tipo=" . TIPO_DOCENTE . " OR  uss_tipo=" . TIPO_DIRECTIVO . " OR  uss_tipo=" . TIPO_DEV . ") AND uss_id!=? AND institucion=? AND year=? LIMIT 5";
 
         $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
         

@@ -3,6 +3,10 @@ require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Plataforma {
 
+    public const PLAN_BASICO        = 1;
+    public const PLAN_INTERMEDIO    = 2;
+    public const PLAN_PREMIUM       = 3;
+
     /**
      * Colores principales de la plataforma: Encabezado, logo y menú principal.
      * 

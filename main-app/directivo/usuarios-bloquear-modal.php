@@ -4,7 +4,7 @@
 
 			<div class="modal-header panel-heading-purple">
 				<h4 class="modal-title " id="motivoModalLabel">Motivo</h4>
-				<a href="#" data-dismiss="modal" data-bs-dismiss="modal" data-bs-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-compra-modulo"><i class="fa fa-window-close"></i></a>
+				<a href="#" data-dismiss="modal" data-bs-dismiss="modal" data-bs-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-modal-motivo"><i class="fa fa-window-close"></i></a>
 			</div>
 
 			<div class="modal-body">

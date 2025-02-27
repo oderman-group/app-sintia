@@ -648,7 +648,7 @@ $frases[314][$l] = 'Pagos';
 
 $frases[315][$l] = 'Saldo';
 
-$frases[316][$l] = 'Recuerde que su código para hacer el pago es el siguiente';
+$frases[316][$l] = 'Recuerde que su código para hacer el pago es';
 
 $frases[317][$l] = 'Link de pago';
 
@@ -1463,7 +1463,7 @@ $frases[314][$l] = 'Payments';
 
 $frases[315][$l] = 'Balance';
 
-$frases[316][$l] = 'Remember that your payment code is as follows';
+$frases[316][$l] = 'Remember that your payment code is';
 
 $frases[317][$l] = 'Payment link';
 

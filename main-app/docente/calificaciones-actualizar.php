@@ -22,6 +22,7 @@ $porcentajeRestante = $indicadoresDatosC['ipc_valor'] - $valores[0];
 $porcentajeRestante = ($porcentajeRestante + $valorCalificacion);
 
 $fecha = date('Y-m-d', strtotime(str_replace('-', '/', $_POST["fecha"])));
+$_POST["contenido"] = str_replace(['ﬁ', 'ﬂ', 'ﬀ', 'ﬃ', 'ﬄ', 'ﬆ'], ['fi', 'fl', 'ff', 'ffi', 'ffl', 'st'], $_POST["contenido"]);
 
 //Si las calificaciones son de forma automática.
 if($datosCargaActual['car_configuracion']==0){

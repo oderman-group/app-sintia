@@ -59,7 +59,7 @@ $ultimos4Digitos = substr($numeroCelular, -4);
 </head>
 
 <body>
-    <a href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, me gustaria recibir mas información de la plataforma." class="float" target="_blank"><i class="fa fa-whatsapp my-float"></i></a>
+    <a href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, requiero soporte para ingresar a mi cuenta SINTIA." class="float" target="_blank"><i class="fa fa-whatsapp my-float"></i></a>
 
     <div class="login-container register-container">
         <div class=" vertical-center text-center">
@@ -112,7 +112,7 @@ $ultimos4Digitos = substr($numeroCelular, -4);
                 <h3 class="mt-5">¿Necesitas ayuda?</h3>
 
                 <div class="button-container d-flex justify-content-center mt-3" style="gap: 15px;">
-                    <a class="btn deepPink-bgcolor btn-lg btn-rounded" target="_blank" href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, me gustaria recibir mas información de la plataforma.">3006075800 </a>
+                    <a class="btn deepPink-bgcolor btn-lg btn-rounded" target="_blank" href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, requiero soporte para ingresar a mi cuenta SINTIA.">3006075800 </a>
                     <a class="btn btn-primary btn-lg btn-rounded" target="_blank" href="mailto:info@plataformasintia.com">info@plataformasintia.com</a>
                 </div>
             </div>

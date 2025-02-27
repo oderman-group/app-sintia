@@ -17,7 +17,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     <div class="panel-body">
 
 
-        <form action="../compartido/informe-parcial-grupo-detalle-fast.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
+        <form action="../compartido/informe-parcial-grupo-detalle.php" method="post" class="form-horizontal" enctype="multipart/form-data" target="_blank">
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Curso</label>

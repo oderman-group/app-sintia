@@ -63,8 +63,8 @@ $yearArray   = explode(",", $institucion['ins_years']);
 $yearStart   = $yearArray[0];
 $yearEnd     = $yearArray[1];
 
-$_SESSION["inst"]          = $institucion['ins_bd'];
-$_SESSION["idInstitucion"] = $institucion['ins_id'];
+$_SESSION["inst"]			= $institucion['ins_bd'];
+$_SESSION["idInstitucion"]	= $institucion['ins_id'];
 
 if( !empty($institucion['ins_year_default']) && is_numeric($institucion['ins_year_default']) ) {
 	$_SESSION["bd"] = $institucion['ins_year_default'];

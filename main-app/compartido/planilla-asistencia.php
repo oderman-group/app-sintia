@@ -35,10 +35,11 @@ include("../compartido/head-informes.php") ?>
   font-size:11px;
   ">
   <tr style="font-weight:bold; height:30px; background:#6017dc; color:#FFF;">
-  <th rowspan="2">ID</th>      
+  <th rowspan="2">Nº</th>
+  <th rowspan="2">ID</th>  
   <th rowspan="2">Documento</th>
-        <th rowspan="2">Estudiante</th>
-        <th colspan="20">NOTAS</th>
+  <th rowspan="2">Estudiante</th>
+  <th colspan="20">NOTAS</th>
   </tr>
   <tr style="font-weight:bold; font-size:12px; height:30px; background:#6017dc;">
         <th>&nbsp;</th>
@@ -78,29 +79,30 @@ include("../compartido/head-informes.php") ?>
   <tr style="
   border-color:#41c4c4;
   ">
-      <td><?=$resultado['mat_id'];?></td>
-      <td><?=$resultado['mat_documento'];?></td>
-      <td><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
+      <td width="2%"><?=$cont;?></td>
+      <td width="5%"><?=$resultado['mat_id'];?></td>
+      <td width="5%"><?=$resultado['mat_documento'];?></td>
+      <td width="20%"><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
+      <td width="3.4%">&nbsp;</td>
 </tr>
   <?php
   $cont++;

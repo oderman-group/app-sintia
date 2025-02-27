@@ -14,6 +14,7 @@ $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $ca
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 $porcentajeRestante = ($porcentajeRestante + $_POST["valorIndicador"]);
+$_POST["contenido"] = str_replace(['ﬁ', 'ﬂ', 'ﬀ', 'ﬃ', 'ﬄ', 'ﬆ'], ['fi', 'fl', 'ff', 'ffi', 'ffl', 'st'], $_POST["contenido"]);
 
 $update = [
 	'ind_nombre' => mysqli_real_escape_string($conexion,$_POST["contenido"])

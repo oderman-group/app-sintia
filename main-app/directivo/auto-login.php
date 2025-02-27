@@ -41,6 +41,10 @@ switch (base64_decode($_GET['tipe'])) {
 	break;
 
 	case 5:
+		$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($_SESSION["id"], $config['conf_id_institucion']);
+		$_SESSION["datosUsuario"]["sub_roles"]         = $infoRolesUsuario['datos_sub_roles_usuario'];
+		$_SESSION["datosUsuario"]["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'];
+		
 		$url = '../directivo/noticias.php';
 	break;
 
