@@ -36,7 +36,13 @@
     <?php include("../compartido/encabezado.php"); ?>
     <?php include("../compartido/panel-color.php"); ?>
     <!-- start page container -->
-    <?php include("../compartido/chat-contenido.php"); ?>
+    <div class="page-container">
+
+        <?php include("../compartido/menu.php"); ?>
+        <!-- start page content -->
+        <?php include("../compartido/chat-contenido.php"); ?>
+        <!-- end page content -->
+    </div>
     <!-- end page container -->
     <?php include("../compartido/footer.php"); ?>
 </div>
