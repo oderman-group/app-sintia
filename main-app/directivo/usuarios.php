@@ -162,10 +162,12 @@ if (!Modulos::validarPermisoEdicion()) {
 														}
 
 														$tieneMatricula = '';
-														$backGroundMatricula = 'style="background-color:gold;" class="animate__animated animate__pulse animate__delay-2s" data-toggle="tooltip" data-placement="right" title="Este supuesto estudiante no cuenta con un registro en las matrículas."';
-														if ($usuario['uss_tipo'] == TIPO_ESTUDIANTE && !empty($usuario['mat_id_usuario'])) {
+														$backGroundMatricula = '';
+														if ($usuario['uss_tipo'] == TIPO_ESTUDIANTE) {
 															$tieneMatricula = $usuario['mat_id_usuario'];
-															$backGroundMatricula = '';
+															if (empty($usuario['mat_id_usuario'])) {
+																$backGroundMatricula = 'style="background-color:gold;" class="animate__animated animate__pulse animate__delay-2s" data-toggle="tooltip" data-placement="right" title="Este supuesto estudiante no cuenta con un registro en las matrículas."';
+															}
 														}
 
 														$managerPrimary = '';
