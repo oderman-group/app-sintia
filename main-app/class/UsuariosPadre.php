@@ -622,7 +622,7 @@ class UsuariosPadre {
     ){
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 10";
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=1 AND uss_bloqueado=0 AND (uss_tipo=" . TIPO_DOCENTE . " OR  uss_tipo=" . TIPO_DIRECTIVO . " OR  uss_tipo=" . TIPO_DEV . ") AND uss_id!=? AND institucion=? AND year=? LIMIT 10";
 
         $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
         
@@ -641,7 +641,7 @@ class UsuariosPadre {
     ){
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND uss_id!=? AND institucion=? AND year=? LIMIT 5";
+        $sql = "SELECT uss_id, uss_nombre, uss_apellido1, uss_foto, uss_estado FROM ".BD_GENERAL.".usuarios WHERE uss_estado=0 AND uss_bloqueado=0 AND (uss_tipo=" . TIPO_DOCENTE . " OR  uss_tipo=" . TIPO_DIRECTIVO . " OR  uss_tipo=" . TIPO_DEV . ") AND uss_id!=? AND institucion=? AND year=? LIMIT 5";
 
         $parametros = [$idUsuario, $config['conf_id_institucion'], $year];
         
