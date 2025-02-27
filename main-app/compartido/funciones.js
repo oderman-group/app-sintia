@@ -92,7 +92,7 @@ function deseaRegresar(dato){
  * @param tipos  [success,error,warning,info,question]
  * @return boolean 
  */
-function sweetConfirmacion(titulo, mensaje, tipo ='question', varHeref, async = false, idRegistroTabla = null) {
+ function sweetConfirmacion(titulo, mensaje, tipo ='question', varHeref, async = false, idRegistroTabla = null, method = 'GET',data = null,funcion =null) {
     Swal.fire({
         title: titulo,
         text: mensaje,
@@ -100,37 +100,55 @@ function sweetConfirmacion(titulo, mensaje, tipo ='question', varHeref, async = 
         showCancelButton: true,
         confirmButtonText: 'Si!',
         cancelButtonText: 'No!'
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
             if(varHeref === null) {
                 return true;
             } else {
                 if(async == true) { 
-                    fetch(varHeref, {
-                        method: 'GET'
-                    })
-                    .then(response => response.text()) // Convertir la respuesta a texto
-                    .then(data => {
-                        if (idRegistroTabla != null) {
-                            document.getElementById('registro_'+idRegistroTabla).style.display = 'none';
+                    if(data != null){
+                        try {
+                             document.getElementById("overlay").style.display = "flex"
+                            const resultado = await metodoFetchAsync(varHeref, data, 'json', method == 'GET');
+                           
+                            if (typeof window[funcion] === "function") {
+                                window[funcion](resultado, data);
+                            } else {
+                                console.error(`La función "${funcion}" no existe o no está definida.`);
+                            }
+                            document.getElementById("overlay").style.display = "none"
+                        } catch (error) {
+                            console.error("Error al ejecutar la función:", error);
                         }
-
-                        $.toast({
-                            heading: 'Proceso completado', 
-                            text: 'Se ha completado el proceso correctamente.', 
-                            position: 'bottom-right',
-                            showHideTransition: 'slide',
-                            loaderBg:'#26c281', 
-                            icon: 'success', 
-                            hideAfter: 3000, 
-                            stack: 2
-                
+                    }else{
+                        fetch(varHeref, {
+                            method: method
+                        })
+                        .then(response => response.text()) // Convertir la respuesta a texto
+                        .then(data => {
+                            if (idRegistroTabla != null) {
+                                document.getElementById('registro_'+idRegistroTabla).style.display = 'none';
+                            }
+    
+                            $.toast({
+                                heading: 'Proceso completado', 
+                                text: 'Se ha completado el proceso correctamente.', 
+                                position: 'bottom-right',
+                                showHideTransition: 'slide',
+                                loaderBg:'#26c281', 
+                                icon: 'success', 
+                                hideAfter: 3000, 
+                                stack: 2
+                    
+                            });
+                        })
+                        .catch(error => {
+                            // Manejar errores
+                            console.error('Error:', error);
                         });
-                    })
-                    .catch(error => {
-                        // Manejar errores
-                        console.error('Error:', error);
-                    });
+
+                    }
+                    
                 } else {
                     window.location.href=varHeref;
                 }
