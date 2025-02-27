@@ -345,6 +345,63 @@ abstract class BDT_Tablas implements BDT_Interface{
     }
 
     /**
+     * Ejecuta una consulta SELECT con opciones de ordenación y límite.
+     * 
+     * @param array $predicado  Condiciones para filtrar los resultados (clave => valor).
+     * @param string $campos    Campos que se deben seleccionar, separados por comas (por defecto '*').
+     * @param string $orderBy   Cláusula ORDER BY para ordenar los resultados.
+     * @param string $limit     Cláusula LIMIT para limitar la cantidad de resultados.
+     * 
+     * @return PDOStatement|null Retorna un objeto PDOStatement con los resultados de la consulta si tiene éxito,
+     *                           o null si ocurre un error.
+     * 
+     * @throws Exception Si ocurre un error al preparar la consulta.
+     */
+    public static function SelectOrderLimit(
+        Array $predicado    = [],
+        string $campos      = '*', 
+        string $orderBy     = '', 
+        string $limit       = ''
+    ) {
+        $schema = BD_ACADEMICA;
+
+        if(property_exists(self::class, 'schema') && !empty(static::$schema)) {
+            $schema = static::$schema;
+        }
+        $conexionPDO = Conexion::newConnection('PDO');
+        $where = '';
+
+        $campos ??= '*';
+
+        if( !empty($predicado) ) {
+            $where = "WHERE ";
+            foreach( $predicado as $clave => $valor ) {
+                $where .= $clave ."='".$valor."' AND ";
+            }
+            $where = substr($where, 0, -5);
+        }
+        
+        try {
+            $consulta = "SELECT $campos FROM {$schema}.".static::$tableName." {$where} {$orderBy} {$limit}";
+            $stmt = $conexionPDO->prepare($consulta);
+
+            if ($stmt) {
+
+                $stmt->execute();
+
+                return $stmt;
+
+            } else {
+                throw new Exception("Error al preparar la consulta.");
+            }
+        } catch (PDOException  $e) {
+            echo "Excepción capturada: " . $e->getMessage();
+            return null;
+        }
+
+    }
+
+    /**
      * Obtiene el número de filas resultantes de una consulta en la base de datos.
      *
      * @param Array $predicado Un arreglo opcional de predicados para filtrar los resultados.

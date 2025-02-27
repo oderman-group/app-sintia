@@ -665,11 +665,11 @@ class Movimientos {
         array $POST
     )
     {
-        $fechaFinal = !empty($POST["fechaFinal"]) ? $POST["fechaFinal"] : NULL;
+        $fechaFinal = !empty($_POST["fechaFinal"]) ? "'{$_POST["fechaFinal"]}'" : "NULL";
         $dias = implode(',',$POST["dias"]);
 
         try{
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, payment_method, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "','" . $POST["valor"] . "','" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', '" . $fechaFinal . "','" . $POST["frecuencia"] . "', '" . $dias . "', '" . $POST["metodoPago"] . "','{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, payment_method, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "','" . $POST["valor"] . "','" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '" . $POST["metodoPago"] . "','{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }

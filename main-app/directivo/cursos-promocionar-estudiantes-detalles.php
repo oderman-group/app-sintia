@@ -2,22 +2,24 @@
 include("session.php");
 $idPaginaInterna = 'DT0145';
 include("../compartido/historial-acciones-guardar.php");
-    include("../compartido/head.php");
+include("../compartido/head.php");
 
-    Utilidades::validarParametros($_GET);
+Utilidades::validarParametros($_GET);
 
-    if(!Modulos::validarSubRol([$idPaginaInterna])){
-        echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
-        exit();
-    }
-    require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
-    require_once(ROOT_PATH."/main-app/class/Grados.php");
-    require_once(ROOT_PATH."/main-app/class/Grupos.php");
-    require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+if(!Modulos::validarSubRol([$idPaginaInterna])){
+    echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
+    exit();
+}
 
-    $disabledPermiso = "";
-    if(!Modulos::validarPermisoEdicion()){
-        $disabledPermiso = "disabled";
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/Grupos.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+
+$disabledPermiso = "";
+
+if(!Modulos::validarPermisoEdicion()){
+    $disabledPermiso = "disabled";
 }
 
 $disabled = "";
@@ -282,21 +284,24 @@ if(!empty($_POST['relacionCargas']) && $_POST['relacionCargas'] == 1){
                                 <?php 
                                     }
 
-                                    if(!empty($_POST['relacionoMaterias']) || (!empty($_POST['escogioCursos']) && empty($_POST['relacionCargas']))){ 
+                                    if (!empty($_POST['relacionoMaterias']) || (!empty($_POST['escogioCursos']) && empty($_POST['relacionCargas']))) { 
                                         $filtro = " AND (mat_promocionado=0 OR mat_promocionado=NULL)";
                                         $curso='';
+
                                         if(!empty($_POST['desde'])) {
                                             $curso=$_POST["desde"];
                                             $filtro .= " AND mat_grado='".$curso."'";
                                         }
+
                                         $grupo='';
+
                                         if(!empty($_POST['grupoDesde'])) {
-                                            $grupo=$_POST["grupoDesde"];
+                                            $grupo = $_POST["grupoDesde"];
                                             $filtro .= " AND mat_grupo='".$grupo."'";
                                         }
                                         
                                         $consultaEstudiantes = Estudiantes::listarEstudiantesEnGrados($filtro);
-                                        $numeroEstudiantes=mysqli_num_rows($consultaEstudiantes);
+                                        $numeroEstudiantes = mysqli_num_rows($consultaEstudiantes);
                                 ?>
                                     <form action="cursos-promocionar-estudiantes.php" method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="desde" value="<?=$_POST["desde"];?>">
@@ -388,7 +393,7 @@ if(!empty($_POST['relacionCargas']) && $_POST['relacionCargas'] == 1){
                                                                                 <?php if($datosEstudiante['mat_estado_matricula'] != MATRICULADO){ ?>
                                                                                     <div class="input-group spinner">
                                                                                         <label class="switchToggle">
-                                                                                            <input type="checkbox" id="cambiarEstado<?=$datosEstudiante['mat_id'];?>" data-id-estudiante="<?=$datosEstudiante['mat_id'];?>" onchange="crearInputEstadoEstudiante(this)" value="1" disabled>
+                                                                                            <input type="checkbox" id="cambiarEstado<?=$datosEstudiante['mat_id'];?>" data-id-estudiante="<?=$datosEstudiante['mat_id'];?>" onchange="crearInputEstadoEstudiante(this)" value="1">
                                                                                             <span class="slider green round"></span>
                                                                                         </label>
                                                                                     </div>

@@ -132,7 +132,7 @@ class Asignaturas {
         AND am.institucion=? 
         AND am.year=? 
         AND car.institucion=am.institucion 
-        AND car.year=am.institucion
+        AND car.year=am.year
         ";
 
         $parametros = [$idArea, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];

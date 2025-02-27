@@ -21,3 +21,4 @@ config-general/errores_dev.log
 config-general/errores_prod.log
 config-general/errores_copy_prod.log
 config-general/errores_default_env.log
+.codegpt

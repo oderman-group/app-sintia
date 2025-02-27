@@ -13,7 +13,7 @@
 				<h4 class="modal-title" id="tituloModulo" align="center">Se econtraron varios usuarios con la misma informacion:</h4>
 				<a href="#" data-bs-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-compra-modulo"><i class="fa fa-window-close"></i></a>
 			</div>
-			<form action="recuperar-clave-guardar.php" method="post">
+			<form action="recuperar-clave-enviar-codigo.php" method="post">
 			<div class="modal-body" align="center">
 				
 				

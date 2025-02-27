@@ -39,7 +39,7 @@ $estadosMatriculasEstudiantes = [
     5 => "En inscripción"
 ];
 $clavePorDefectoUsuarios = SHA1('12345678');
-$estadosEtiquetasMatriculas = array("","text-success","text-warning","text-danger","text-warning");
+$estadosEtiquetasMatriculas = array("","text-success","text-warning","text-danger","text-warning","text-warning");
 $opcionesGenerales = array("","T. Documento","Religion","Estratos","Generos","Nuevo/Antiguo","Dias","Nivel Educativo","Estado Civil","Estado Laboral","T. de Empresa","Si/No","T. de Vivienda","T. de Trasporte","T. de Sangre","Boletines");
 
 $fechaDeInicio     = strtotime('2023-04-07 21:00:00');

@@ -131,6 +131,7 @@ class Estudiantes {
                     'matcur_id_curso'       => $cursoActual["gra_id"],
                     'mat_eliminado'         => 0,
                     'matcur_id_institucion' => $config['conf_id_institucion'],
+                    'matcur_years'          => $_SESSION["bd"],
                     'limite'                => $filtroLimite,
                     'and'                   => $filtroAdicional,
                     'select'                => $stringSelect,
@@ -803,12 +804,12 @@ class Estudiantes {
 
         try {
             $resultado = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".mediatecnica_matriculas_cursos
-            LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat.mat_eliminado=0 AND (mat.mat_estado_matricula=1 OR mat.mat_estado_matricula=2) AND mat.mat_id=matcur_id_matricula AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=matcur_id_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=matcur_id_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat.mat_id_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
+            LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat.mat_eliminado=0 AND (mat.mat_estado_matricula=1 OR mat.mat_estado_matricula=2) AND mat.mat_id=matcur_id_matricula AND mat.institucion=matcur_id_institucion AND mat.year=matcur_years
+            LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=matcur_id_curso AND gra.institucion=matcur_id_institucion AND gra.year=matcur_years
+            LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=matcur_id_grupo AND gru.institucion=matcur_id_institucion AND gru.year=matcur_years
+            LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat.mat_id_usuario AND uss.institucion=matcur_id_institucion AND uss.year=matcur_years
             LEFT JOIN ".$baseDatosServicios.".opciones_generales ON ogen_id=mat.mat_genero
-            WHERE matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."'
+            WHERE matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."' AND matcur_years='".$_SESSION["bd"]."'
             ORDER BY mat.mat_primer_apellido, mat.mat_segundo_apellido, mat.mat_nombres;
             ");
         } catch (Exception $e) {
@@ -832,12 +833,12 @@ class Estudiantes {
 
         try {
             $consulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".mediatecnica_matriculas_cursos
-            LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat.mat_eliminado=0 AND (mat.mat_estado_matricula=1 OR mat.mat_estado_matricula=2) AND mat.mat_grupo='".$datosCargaActual['car_grupo']."' AND mat.mat_id=matcur_id_matricula AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=matcur_id_curso AND gra.institucion={$config['conf_id_institucion']} AND gra.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=matcur_id_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat.mat_id_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
+            LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat.mat_eliminado=0 AND (mat.mat_estado_matricula=1 OR mat.mat_estado_matricula=2) AND mat.mat_grupo='".$datosCargaActual['car_grupo']."' AND mat.mat_id=matcur_id_matricula AND mat.institucion=matcur_id_institucion AND mat.year=matcur_years
+            LEFT JOIN ".BD_ACADEMICA.".academico_grados gra ON gra_id=matcur_id_curso AND gra.institucion=matcur_id_institucion AND gra.year=matcur_years
+            LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=matcur_id_grupo AND gru.institucion=matcur_id_institucion AND gru.year=matcur_years
+            LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mat.mat_id_usuario AND uss.institucion=matcur_id_institucion AND uss.year=matcur_years
             LEFT JOIN ".$baseDatosServicios.".opciones_generales ON ogen_id=mat.mat_genero
-            WHERE matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."'
+            WHERE matcur_id_curso='".$datosCargaActual['car_curso']."' AND matcur_id_grupo='".$datosCargaActual['car_grupo']."' AND matcur_estado='".ACTIVO."' AND matcur_id_institucion='".$config['conf_id_institucion']."' AND matcur_years='".$_SESSION["bd"]."'
             ORDER BY mat.mat_primer_apellido, mat.mat_segundo_apellido, mat.mat_nombres;
             ");
             $cantidad = mysqli_num_rows($consulta);
@@ -940,36 +941,36 @@ class Estudiantes {
         global $conexion;
         $codigoMAT = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas');
 
-        $tipoD         = isset($POST["tipoD"])          ? $POST["tipoD"]                                          : "";
-        $nDoc          = isset($POST["nDoc"])           ? $POST["nDoc"]                                           : "";
-        $religion      = isset($POST["religion"])       ? $POST["religion"]                                       : "";
-        $email         = isset($POST["email"])          ? strtolower($POST["email"])                              : "";
-        $direccion     = isset($POST["direccion"])      ? $POST["direccion"]                                      : "";
-        $barrio        = isset($POST["barrio"])         ? $POST["barrio"]                                         : "";
-        $telefono      = isset($POST["telefono"])       ? $POST["telefono"]                                       : "";
-        $celular       = isset($POST["celular"])        ? $POST["celular"]                                        : "";
-        $estrato       = isset($POST["estrato"])        ? $POST["estrato"]                                        : "";
-        $genero        = isset($POST["genero"])         ? $POST["genero"]                                         : "";
-        $apellido1     = isset($POST["apellido1"])      ? mysqli_real_escape_string($conexion,$POST["apellido1"]) : "";
-        $apellido2     = isset($POST["apellido2"])      ? mysqli_real_escape_string($conexion,$POST["apellido2"]) : "";
-        $nombres       = isset($POST["nombres"])        ? mysqli_real_escape_string($conexion,$POST["nombres"])   : "";
-        $nombre2       = isset($POST["nombre2"])        ? mysqli_real_escape_string($conexion,$POST["nombre2"])   : "";
-        $grado         = isset($POST["grado"])          ? $POST["grado"]                                          : "";
+        $tipoD         = isset($POST["tipoD"])          ? $POST["tipoD"]                                          : null;
+        $nDoc          = isset($POST["nDoc"])           ? $POST["nDoc"]                                           : null;
+        $religion      = isset($POST["religion"])       ? $POST["religion"]                                       : null;
+        $email         = isset($POST["email"])          ? strtolower($POST["email"])                              : null;
+        $direccion     = isset($POST["direccion"])      ? $POST["direccion"]                                      : null;
+        $barrio        = isset($POST["barrio"])         ? $POST["barrio"]                                         : null;
+        $telefono      = isset($POST["telefono"])       ? $POST["telefono"]                                       : null;
+        $celular       = isset($POST["celular"])        ? $POST["celular"]                                        : null;
+        $estrato       = isset($POST["estrato"])        ? $POST["estrato"]                                        : null;
+        $genero        = isset($POST["genero"])         ? $POST["genero"]                                         : null;
+        $apellido1     = isset($POST["apellido1"])      ? mysqli_real_escape_string($conexion,$POST["apellido1"]) : null;
+        $apellido2     = isset($POST["apellido2"])      ? mysqli_real_escape_string($conexion,$POST["apellido2"]) : null;
+        $nombres       = isset($POST["nombres"])        ? mysqli_real_escape_string($conexion,$POST["nombres"])   : null;
+        $nombre2       = isset($POST["nombre2"])        ? mysqli_real_escape_string($conexion,$POST["nombre2"])   : null;
+        $grado         = isset($POST["grado"])          ? $POST["grado"]                                          : null;
         $grupo         = isset($POST["grupo"])          ? $POST["grupo"]                                          : 1;
-        $tipoEst       = isset($POST["tipoEst"])        ? $POST["tipoEst"]                                        : "";
-        $lugarD        = isset($POST["lugarD"])         ? $POST["lugarD"]                                         : "";
-        $matestM       = isset($POST["matestM"])        ? $POST["matestM"]                                        : "";
-        $folio         = isset($POST["folio"])          ? $POST["folio"]                                          : "";
-        $codTesoreria  = isset($POST["codTesoreria"])   ? $POST["codTesoreria"]                                   : "";
-        $va_matricula  = isset($POST["va_matricula"])   ? $POST["va_matricula"]                                   : "";
-        $inclusion     = isset($POST["inclusion"])      ? $POST["inclusion"]                                      : "";
-        $extran        = isset($POST["extran"])         ? $POST["extran"]                                         : "";
-        $tipoSangre    = isset($POST["tipoSangre"])     ? $POST["tipoSangre"]                                     : "";
-        $eps           = isset($POST["eps"])            ? $POST["eps"]                                            : "";
-        $celular2      = isset($POST["celular2"])       ? $POST["celular2"]                                       : "";
-        $ciudadR       = isset($POST["ciudadR"])        ? $POST["ciudadR"]                                        : "";
-        $fNac          = isset($POST["fNac"])           ? $POST["fNac"]                                           : "";
-        $tipoMatricula = isset($_POST["tipoMatricula"]) ? $POST["tipoMatricula"]                                  : "";
+        $tipoEst       = isset($POST["tipoEst"])        ? $POST["tipoEst"]                                        : null;
+        $lugarD        = isset($POST["lugarD"])         ? $POST["lugarD"]                                         : null;
+        $matestM       = isset($POST["matestM"])        ? $POST["matestM"]                                        : null;
+        $folio         = isset($POST["folio"])          ? $POST["folio"]                                          : null;
+        $codTesoreria  = isset($POST["codTesoreria"])   ? $POST["codTesoreria"]                                   : null;
+        $va_matricula  = isset($POST["va_matricula"])   ? $POST["va_matricula"]                                   : null;
+        $inclusion     = isset($POST["inclusion"])      ? $POST["inclusion"]                                      : null;
+        $extran        = isset($POST["extran"])         ? $POST["extran"]                                         : null;
+        $tipoSangre    = isset($POST["tipoSangre"])     ? $POST["tipoSangre"]                                     : null;
+        $eps           = isset($POST["eps"])            ? $POST["eps"]                                            : null;
+        $celular2      = isset($POST["celular2"])       ? $POST["celular2"]                                       : null;
+        $ciudadR       = isset($POST["ciudadR"])        ? $POST["ciudadR"]                                        : null;
+        $fNac          = isset($POST["fNac"])           ? $POST["fNac"]                                           : null;
+        $tipoMatricula = isset($_POST["tipoMatricula"]) ? $POST["tipoMatricula"]                                  : GRADO_GRUPAL;
         $grupoEtnico   = isset($POST["grupoEtnico"])    ? $POST["grupoEtnico"]                                    : 1;
         $discapacidad  = isset($POST["discapacidad"])   ? $POST["discapacidad"]                                   : 1;
         $tipoSituacion = isset($POST["tipoSituacion"])  ? $POST["tipoSituacion"]                                  : 1;
@@ -1165,42 +1166,42 @@ class Estudiantes {
     ) {
         global $config, $conexion;
 
-        $tipoD         = isset($POST["tipoD"]) ? $POST["tipoD"] : "";
-        $nDoc          = isset($POST["nDoc"]) ? $POST["nDoc"] : "";
-        $religion      = isset($POST["religion"]) ? $POST["religion"] : "";
-        $email         = isset($POST["email"]) ? strtolower($POST["email"]) : "";
-        $direccion     = isset($POST["direccion"]) ? $POST["direccion"] : "";
-        $barrio        = isset($POST["barrio"]) ? $POST["barrio"] : "";
-        $telefono      = isset($POST["telefono"]) ? $POST["telefono"] : "";
-        $celular       = isset($POST["celular"]) ? $POST["celular"] : "";
-        $estrato       = isset($POST["estrato"]) ? $POST["estrato"] : "";
-        $genero        = isset($POST["genero"]) ? $POST["genero"] : "";
-        $apellido1     = isset($POST["apellido1"]) ? mysqli_real_escape_string($conexion,$POST["apellido1"]) : "";
-        $apellido2     = isset($POST["apellido2"]) ? mysqli_real_escape_string($conexion,$POST["apellido2"]) : "";
-        $nombres       = isset($POST["nombres"]) ? mysqli_real_escape_string($conexion,$POST["nombres"]) : "";
-        $grado         = isset($POST["grado"]) ? $POST["grado"] : "";
-        $grupo         = isset($POST["grupo"]) ? $POST["grupo"] : "";
-        $tipoEst       = isset($POST["tipoEst"]) ? $POST["tipoEst"] : "";
-        $lugarD        = isset($POST["lugarD"]) ? $POST["lugarD"] : "";
-        $matestM       = isset($POST["matestM"]) ? $POST["matestM"] : "";
-        $matricula     = isset($POST["matricula"]) ? $POST["matricula"] : "";
-        $folio         = isset($POST["folio"]) ? $POST["folio"] : "";
-        $codTesoreria  = isset($POST["codTesoreria"]) ? $POST["codTesoreria"] : "";
-        $va_matricula  = isset($POST["va_matricula"]) ? $POST["va_matricula"] : "";
-        $inclusion     = isset($POST["inclusion"]) ? $POST["inclusion"] : "";
-        $extran        = isset($POST["extran"]) ? $POST["extran"] : "";
-        $NumMatricula  = isset($POST["NumMatricula"]) ? $POST["NumMatricula"] : "";
-        $estadoAgno    = isset($POST["estadoAgno"]) ? $POST["estadoAgno"] : "";
-        $tipoSangre    = isset($POST["tipoSangre"]) ? $POST["tipoSangre"] : "";
-        $eps           = isset($POST["eps"]) ? $POST["eps"] : "";
-        $celular2      = isset($POST["celular2"]) ? $POST["celular2"] : "";
-        $ciudadR       = isset($POST["ciudadR"]) ? $POST["ciudadR"] : "";
-        $nombre2       = isset($POST["nombre2"]) ? mysqli_real_escape_string($conexion,$POST["nombre2"]) : "";
-        $id            = isset($POST["id"]) ? $POST["id"] : "";
-        $tipoMatricula = isset($POST["tipoMatricula"]) ? $_POST["tipoMatricula"] : GRADO_GRUPAL;
-        $grupoEtnico   = isset($POST["grupoEtnico"]) ? $_POST["grupoEtnico"] : 1;
-        $discapacidad  = isset($POST["discapacidad"]) ? $_POST["discapacidad"] : 1;
-        $tipoSituacion = isset($POST["tipoSituacion"])? $POST["tipoSituacion"] : 1;
+        $tipoD         = !empty($POST["tipoD"]) ? $POST["tipoD"] : null;
+        $nDoc          = !empty($POST["nDoc"]) ? $POST["nDoc"] : null;
+        $religion      = !empty($POST["religion"]) ? $POST["religion"] : null;
+        $email         = !empty($POST["email"]) ? strtolower($POST["email"]) : null;
+        $direccion     = !empty($POST["direccion"]) ? $POST["direccion"] : null;
+        $barrio        = !empty($POST["barrio"]) ? $POST["barrio"] : null;
+        $telefono      = !empty($POST["telefono"]) ? $POST["telefono"] : null;
+        $celular       = !empty($POST["celular"]) ? $POST["celular"] : null;
+        $estrato       = !empty($POST["estrato"]) ? $POST["estrato"] : null;
+        $genero        = !empty($POST["genero"]) ? $POST["genero"] : null;
+        $apellido1     = !empty($POST["apellido1"]) ? mysqli_real_escape_string($conexion,$POST["apellido1"]) : null;
+        $apellido2     = !empty($POST["apellido2"]) ? mysqli_real_escape_string($conexion,$POST["apellido2"]) : null;
+        $nombres       = !empty($POST["nombres"]) ? mysqli_real_escape_string($conexion,$POST["nombres"]) : null;
+        $grado         = !empty($POST["grado"]) ? $POST["grado"] : null;
+        $grupo         = !empty($POST["grupo"]) ? $POST["grupo"] : null;
+        $tipoEst       = !empty($POST["tipoEst"]) ? $POST["tipoEst"] : null;
+        $lugarD        = !empty($POST["lugarD"]) ? $POST["lugarD"] : null;
+        $matestM       = !empty($POST["matestM"]) ? $POST["matestM"] : null;
+        $matricula     = !empty($POST["matricula"]) ? $POST["matricula"] : null;
+        $folio         = !empty($POST["folio"]) ? $POST["folio"] : null;
+        $codTesoreria  = !empty($POST["codTesoreria"]) ? $POST["codTesoreria"] : null;
+        $va_matricula  = !empty($POST["va_matricula"]) ? $POST["va_matricula"] : null;
+        $inclusion     = !empty($POST["inclusion"]) ? $POST["inclusion"] : null;
+        $extran        = !empty($POST["extran"]) ? $POST["extran"] : null;
+        $NumMatricula  = !empty($POST["NumMatricula"]) ? $POST["NumMatricula"] : null;
+        $estadoAgno    = !empty($POST["estadoAgno"]) ? $POST["estadoAgno"] : null;
+        $tipoSangre    = !empty($POST["tipoSangre"]) ? $POST["tipoSangre"] : null;
+        $eps           = !empty($POST["eps"]) ? $POST["eps"] : null;
+        $celular2      = !empty($POST["celular2"]) ? $POST["celular2"] : null;
+        $ciudadR       = !empty($POST["ciudadR"]) ? $POST["ciudadR"] : null;
+        $nombre2       = !empty($POST["nombre2"]) ? mysqli_real_escape_string($conexion,$POST["nombre2"]) : null;
+        $id            = !empty($POST["id"]) ? $POST["id"] : null;
+        $tipoMatricula = !empty($POST["tipoMatricula"]) ? $_POST["tipoMatricula"] : GRADO_GRUPAL;
+        $grupoEtnico   = !empty($POST["grupoEtnico"]) ? $_POST["grupoEtnico"] : 1;
+        $discapacidad  = !empty($POST["discapacidad"]) ? $_POST["discapacidad"] : 1;
+        $tipoSituacion = !empty($POST["tipoSituacion"])? $POST["tipoSituacion"] : 1;
 
         try {
             

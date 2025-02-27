@@ -49,7 +49,7 @@ if (isset($_POST['usuariosEncontrados'])) {
             <div class="container">
                 <div class="row">
                     <div class="col-md-8 offset-md-2" id="login">
-                        <form method="post" action="recuperar-clave-guardar.php" class="needs-validation" novalidate>
+                        <form method="post" action="recuperar-clave-enviar-codigo.php" class="needs-validation" novalidate>
 
                             <?php include '../config-general/mensajes-informativos.php'; ?>
 

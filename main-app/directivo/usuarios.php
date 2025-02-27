@@ -178,6 +178,7 @@ if (!Modulos::validarPermisoEdicion()) {
 														"uss_ultimo_ingreso"
 													];
 													$tipos = empty($tipo) ? [TIPO_DEV,TIPO_DOCENTE,TIPO_DIRECTIVO,TIPO_CLIENTE,TIPO_PROVEEDOR] : [$tipo];
+													$tipos = empty($tipo) ? [TIPO_DEV,TIPO_DOCENTE,TIPO_DIRECTIVO,TIPO_CLIENTE,TIPO_PROVEEDOR] : [$tipo];
 													$lista = Usuarios::listar($selectSql, $tipos, "uss_id");
 													$contReg = 1;
 													
@@ -192,12 +193,12 @@ if (!Modulos::validarPermisoEdicion()) {
 														}
 
 														$mostrarNumAcudidos = '';
-														if (!empty($usuario['cantidad_acudidos']) && $usuario['uss_tipo'] == TIPO_ACUDIENTE ) {
+														if (isset($usuario['cantidad_acudidos']) && $usuario['uss_tipo'] == TIPO_ACUDIENTE ) {
 															$mostrarNumAcudidos = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_acudidos'] . ')  Acudidos)</span>';
 														}
 
 														$mostrarNumCargas = '';
-														if (!empty($usuario['cantidad_cargas'])  && $usuario['uss_tipo'] == TIPO_DOCENTE) {
+														if (isset($usuario['cantidad_cargas'])  && $usuario['uss_tipo'] == TIPO_DOCENTE) {
 															$numCarga         =  $usuario['cantidad_cargas'];
 															$mostrarNumCargas = '<br><span style="font-size:9px; color:darkblue">(' . $usuario['cantidad_cargas'] . ' Cargas)</span>';
 														}
@@ -263,7 +264,7 @@ if (!Modulos::validarPermisoEdicion()) {
 																	data-placement="top"
 																	style="border-bottom: 1px dotted #000;"><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?></a>
 															</td>
-															<td >
+															<td <?= $backGroundMatricula ??=null; ?>>
 																<?= $usuario['pes_nombre'] . "" . $mostrarNumCargas . "" . $mostrarNumAcudidos; ?>
 															</td>
 															<td><span

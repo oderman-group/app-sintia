@@ -65,6 +65,22 @@ $nombreUsuario = $data['usuario_nombre'];
         font-size: 16px;
     }
 
+    .code {
+        border-collapse: collapse;
+        padding: 20px;
+        word-break: break-word;
+        border:1px solid #eae8f0;
+        text-align:center;
+        font-size: 15px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .code h1 {
+        margin: 0;
+        padding: 0;
+    }
+
     .footer {
         background-color: #f4f4f4;
         padding: 15px;
@@ -116,13 +132,22 @@ $nombreUsuario = $data['usuario_nombre'];
 
     <!-- Message Body -->
     <div class="message-body">
-        <h2>Hola <?=$nombreUsuario;?>,</h2>
-        <p>Tu codigo de verificación es <span style="font-size:large; font-weight: bold;"><?=$data['codigo'];?></span>.</p>
+        <p>Estimado/a <b><?=$nombreUsuario;?></b>,</p>
+        <p>Te enviamos este correo porque hemos recibido una petición para recuperar tu contraseña en SINTIA.</p>
+        <p>Para continuar, utiliza el siguiente código de un solo uso:</p>
+        <div class="code">
+            <h1>
+                <b><?=$data['codigo'];?></b>
+            </h1>
+        </div>
+        <p>Este código es válido por 10 minutos. Si no solicitaste este código, puedes ignorar este mensaje.</p>
+        <p style="margin-bottom: 0;">Saludos,</p>
+        <p style="font-weight: bold; margin-top: 0;">El equipo de SINTIA</p>
     </div>
 
     <!-- Footer Section -->
     <div class="footer">
-        <p>Este es un mensaje automático. No respondas a este correo.</p>
+        <p>Por favor, no respondas a este correo electrónico. Este buzón no está siendo supervisado y no podremos responder a las preguntas enviadas a esta dirección.</p>
         <p>&copy; <?=date("Y");?> Oderman Inc. Todos los derechos reservados.</p>
     </div>
     </div>

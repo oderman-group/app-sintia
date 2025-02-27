@@ -114,9 +114,9 @@ $porcentajeRestante = 100 - $valores[0];
 													<?php
 													while($indicadoresDatos = mysqli_fetch_array($indicadoresConsulta, MYSQLI_BOTH)){
 														$select = '';
-														if($indicadoresDatos['ind_id']==$calificacion['act_id_tipo']) $select = 'selected';
+														if($indicadoresDatos['ai_ind_id']==$calificacion['act_id_tipo']) $select = 'selected';
 													?>
-                                                    	<option value="<?=$indicadoresDatos['ind_id'];?>" <?=$select;?>><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
+                                                    	<option value="<?=$indicadoresDatos['ai_ind_id'];?>" <?=$select;?>><?=$indicadoresDatos['ind_nombre']." (".$indicadoresDatos['ipc_valor']."%)"?></option>
 													<?php }?>
                                                 </select>
                                             </div>

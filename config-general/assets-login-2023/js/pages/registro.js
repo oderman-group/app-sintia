@@ -115,6 +115,8 @@ function startCountdown(durationInSeconds) {
         enviarCodigo();
       };
     }
+  
+    miFuncionConDelay(message, 'alert-success');
 
     remainingTime -= 1; // Reduce el tiempo restante en 1 segundo
   }, 1000);
@@ -153,12 +155,14 @@ function enviarCodigo() {
           message.innerHTML = 'Hemos enviado un nuevo código a tu correo electrónico,<br> si no ves el correo revisa tu carpeta de spam o<br> verifica que hayas ingresado bien tu correo electrónico.';
           message.style.visibility = 'visible';
           message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-          miFuncionConDelay(message, 'alert-success');
         }
 
         idRegistro = data.code.idRegistro;
         intputIdRegistro.value = idRegistro;
 
+        if (interval !== null) {
+          clearInterval(interval);
+        }
         startCountdown(10 * 60); // Inicia la cuenta regresiva con 10 minutos
       } else {
         alert(data.message);

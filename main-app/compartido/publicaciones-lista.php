@@ -113,29 +113,6 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                     </div>
                 </div>
 
-                <script>
-                    var images = document.getElementsByClassName('imagenes');
-                    var modal = document.getElementById('myModal');
-                    var modalImg = document.getElementById("img");
-                    var captionText = document.getElementById("caption");
-                    for (var i = 0; i < images.length; i++) {
-                        images[i].onclick = function() {
-                            modal.style.display = "block";
-                            modalImg.src = this.src;
-                            modalImg.alt = this.alt;
-
-                        }
-                    }
-                    var span = document.getElementsByClassName("close")[0];
-                    span.onclick = function() {
-                        modal.style.display = "none";
-                    }
-                    window.onclick = function(event) {
-                        if (event.target == document.getElementById("myModal"))
-                            modal.style.display = "none";
-                    }
-                </script>
-
                 <div id="myModal" class="modal">
                     <span class="close"></span>
                     <img class="modal-content" id="img">
@@ -255,6 +232,29 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 
                     </div>
                 </div>
+
+                <script>
+                    var images = document.getElementsByClassName('imagenes');
+                    var modal = document.getElementById('myModal');
+                    var modalImg = document.getElementById("img");
+                    var captionText = document.getElementById("caption");
+                    for (var i = 0; i < images.length; i++) {
+                        images[i].onclick = function() {
+                            modal.style.display = "block";
+                            modalImg.src = this.src;
+                            modalImg.alt = this.alt;
+
+                        }
+                    }
+                    var span = document.getElementsByClassName("close")[0];
+                    span.onclick = function() {
+                        modal.style.display = "none";
+                    }
+                    window.onclick = function(event) {
+                        if (event.target == document.getElementById("myModal"))
+                            modal.style.display = "none";
+                    }
+                </script>
 
             </div>
         </div>

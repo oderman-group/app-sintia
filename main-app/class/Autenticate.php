@@ -9,6 +9,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios/Directivo.php");
 require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 class Autenticate {
 
@@ -61,21 +62,26 @@ class Autenticate {
             throw new Exception("La contraseña es invalida");
         }
 
+        $conexion = Conexion::newConnection('MYSQL');
+
+        $usuarioExiste = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id");
+        if(empty($usuarioExiste)){
+            throw new Exception("El usuario no fue encontrado, por favor verifique.", -2);
+        }
+
         $sql = "SELECT id_nuevo, uss_usuario, uss_id, institucion, uss_intentos_fallidos FROM ".BD_GENERAL.".usuarios 
         WHERE uss_usuario='".trim($user)."' 
         AND TRIM(uss_usuario)!='' 
         AND uss_clave=SHA1('".$pass."')  
         AND uss_usuario IS NOT NULL  
-        ORDER BY uss_ultimo_ingreso DESC 
+        ORDER BY id_nuevo DESC 
         LIMIT 1";
-
-        $conexion = Conexion::newConnection('MYSQL');
 
         $consulta = mysqli_query($conexion, $sql);
         $data     = mysqli_fetch_array($consulta, MYSQLI_ASSOC);
 
         if (empty($data)) {
-            throw new Exception("El usuario o la clave son incorrectos");
+            throw new Exception("El usuario o la clave son incorrectos", -3);
         }
 
         return $data;
