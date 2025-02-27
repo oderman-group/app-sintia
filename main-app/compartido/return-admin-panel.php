@@ -23,6 +23,10 @@ require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 
 $_SESSION["datosUsuario"] = UsuariosPadre::sesionUsuario($_SESSION['id']);
 
+$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($_SESSION["id"], $config['conf_id_institucion']);
+$_SESSION["datosUsuario"]["sub_roles"]         = $infoRolesUsuario['datos_sub_roles_usuario'];
+$_SESSION["datosUsuario"]["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'];
+
 $auth = Autenticate::getInstance();
 $auth->limpiarCookiesDocentes();
 $auth->limpiarCookiesEstudiantes();
