@@ -602,6 +602,11 @@ function cambiarBloqueo(data) {
         $('#cancelarMotivo').off('click').on('click', function () {
             checkEstudiantes.checked = false;
         });
+
+        // Al cancelar el motivo
+        $('#boton-cerrar-modal-motivo').off('click').on('click', function () {
+            checkEstudiantes.checked = false;
+        });
     } else {
         enviarAjaxCambiarBloqueo(data, datos);
     }
