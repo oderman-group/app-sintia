@@ -137,6 +137,7 @@ function validarDocumento(datos) {
 function ajaxBloqueoDesbloqueo(datos) {
     var idR = datos.id;
     var operacion = 1;
+    var checkUsurio = document.getElementById(idR);
 
     $('#respuestaGuardar').empty().hide().html("").show(1);
 
@@ -172,7 +173,12 @@ function ajaxBloqueoDesbloqueo(datos) {
 
         // Al cancelar el motivo
         $('#cancelarMotivo').off('click').on('click', function () {
-            document.getElementById(idR).checked = false;
+            checkUsurio.checked = false;
+        });
+
+        // Al cancelar el motivo
+        $('#boton-cerrar-compra-modulo').off('click').on('click', function () {
+            checkUsurio.checked = false;
         });
     } else {
         valor = 0;
