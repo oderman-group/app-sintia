@@ -604,7 +604,7 @@ function cambiarBloqueo(data) {
         });
 
         // Al cancelar el motivo
-        $('#boton-cerrar-compra-modulo').off('click').on('click', function () {
+        $('#boton-cerrar-modal-motivo').off('click').on('click', function () {
             checkEstudiantes.checked = false;
         });
     } else {

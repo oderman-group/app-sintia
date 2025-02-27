@@ -177,7 +177,7 @@ function ajaxBloqueoDesbloqueo(datos) {
         });
 
         // Al cancelar el motivo
-        $('#boton-cerrar-compra-modulo').off('click').on('click', function () {
+        $('#boton-cerrar-modal-motivo').off('click').on('click', function () {
             checkUsurio.checked = false;
         });
     } else {
