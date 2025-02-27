@@ -12,8 +12,21 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
     public static $tableAs = 'matri';
 
     use BDT_Join;
-
-    public static function getCursosEstudiante($estudiantes, string $yearBd    = ''){
+/**
+ * Obtiene los cursos de un conjunto de estudiantes para un año específico.
+ *
+ * Esta función recupera los datos de los cursos de los estudiantes especificados
+ * en el parámetro `$estudiantes` para el año indicado en `$yearBd`.
+ *
+ * @param array  $estudiantes  Arreglo de IDs de estudiantes para los cuales se desean obtener los cursos.
+ * @param string $yearBd       Año académico para filtrar los cursos. Si se deja vacío, se usará el año por defecto.
+ *
+ * @return array  Retorna un arreglo asociativo con los datos de los cursos de los estudiantes,
+ *                incluyendo los campos: `mat_id`, `mat_grado`, `mat_grupo`.
+ *
+ * @throws Exception Si ocurre un error en la consulta a la base de datos.
+ */
+    public static function getCursosEstudiante(array $estudiantes, string $yearBd    = ''):array{
         $campos     = "mat_id,mat_grado,mat_grupo"; 
         $in_estudiantes = implode(', ', $estudiantes);
         $predicado =

@@ -106,15 +106,15 @@ if (!Modulos::validarPermisoEdicion()) {
 															<div class="col-sm-12">
 																<ul class="navbar-nav mr-auto">
 																	<li class="nav-item dropdown">
+																		<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
 																		<a class="nav-link dropdown-toggle"
 																					href="javascript:void(0);"
 																					id="navbarDropdown" role="button"
 																					data-toggle="dropdown"
 																					aria-haspopup="true"
 																					aria-expanded="false"
-																					style="color:<?= $Plataforma->colorUno; ?>;">
-																					Seleccionados
-																			<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
+																					style="color:<?= $Plataforma->colorUno; ?>;">																					
+																			
 																			<span class="fa fa-angle-down"></span>
 																		</a>
 																		<?php if (Modulos::validarPermisoEdicion()) { ?>
