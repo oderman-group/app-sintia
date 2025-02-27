@@ -62,7 +62,10 @@ if($config['conf_doble_buscador'] == 1) {
 	<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css"/>
 </head>
 <!-- END HEAD -->
-<?php include("../compartido/body.php"); //6 consultas para optmizar: Enuar ?>
+<?php
+	include("../compartido/body.php");
+	include("usuarios-bloquear-modal.php");
+?>
     <div class="page-wrapper">
         <?php include("../compartido/encabezado.php"); //1 por otimizar, parece estar repetida ?>
 		
