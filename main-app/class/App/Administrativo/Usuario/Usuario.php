@@ -27,17 +27,18 @@ class Administrativo_Usuario_Usuario extends BDT_Tablas implements BDT_JoinImple
  * @throws Exception Si la consulta a la base de datos falla o si los parámetros son inválidos.
  *
  */
-    public static function bloquearUsuarios(array $usuarios, $bloquear = true){
+    public static function bloquearUsuarios(array $usuarios, bool $bloquear = true, int $year = null){
         
         foreach ($usuarios as $user) {
-            $users[] = parent::formatValor($user);
+            $users[] = "'$user'" ;
         };
         $in_usuarios = implode(', ', $users);
 
         $predicado =
         [
             self::OTHER_PREDICATE   => "uss_id IN ($in_usuarios)",
-            "institucion"           => $_SESSION["idInstitucion"]
+            "institucion"           => $_SESSION["idInstitucion"],
+            "year"                  => $year??= $_SESSION["bd"]
         ];
 
         $datos =
