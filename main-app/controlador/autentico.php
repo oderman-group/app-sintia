@@ -6,6 +6,7 @@ require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/SubRoles.php';
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 $auth = Autenticate::getInstance();
 
@@ -25,6 +26,25 @@ if(!empty($_GET)) {
 try {
 	$usrE = $auth->getUserData($_POST["Usuario"], $_POST["Clave"]);
 } catch (Exception $e) {
+
+	if ( $e->getCode() == -2 ) {
+
+		header("Location:".REDIRECT_ROUTE."/index.php?error=1");
+		exit();
+	}
+
+	if ( $e->getCode() == -3 ) {
+
+        $datosUsuario = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id, institucion, year");
+
+		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."'");
+
+		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$datosUsuario["uss_id"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$datosUsuario["institucion"]."', '".$datosUsuario["year"]."')");
+
+		header("Location:".REDIRECT_ROUTE."/index.php?error=2&inst=".base64_encode($_POST["bd"]));
+		exit();
+	}
+
 	header("Location:".REDIRECT_ROUTE."/index.php?error=10&genericError=".$e->getMessage());
 	exit();
 }
@@ -43,8 +63,8 @@ $yearArray   = explode(",", $institucion['ins_years']);
 $yearStart   = $yearArray[0];
 $yearEnd     = $yearArray[1];
 
-$_SESSION["inst"]          = $institucion['ins_bd'];
-$_SESSION["idInstitucion"] = $institucion['ins_id'];
+$_SESSION["inst"]			= $institucion['ins_bd'];
+$_SESSION["idInstitucion"]	= $institucion['ins_id'];
 
 if( !empty($institucion['ins_year_default']) && is_numeric($institucion['ins_year_default']) ) {
 	$_SESSION["bd"] = $institucion['ins_year_default'];
@@ -59,17 +79,7 @@ require_once("../class/Plataforma.php");
 require_once("../class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
-
-$rst_usrE = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_usuario='".trim($_POST["Usuario"])."' AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL");
-
-$numE = mysqli_num_rows($rst_usrE);
-if($numE==0){
-	header("Location:".REDIRECT_ROUTE."/index.php?error=1&inst=".base64_encode($_POST["bd"]));
-	exit();
-}
-$usrE = mysqli_fetch_array($rst_usrE, MYSQLI_BOTH);
-
-if($usrE['uss_intentos_fallidos']>=3 && md5($_POST["suma"]) != $_POST["sumaReal"]){
+if($usrE['uss_intentos_fallidos']>=3 && (!array_key_exists("suma", $_POST) || md5($_POST["suma"]) != $_POST["sumaReal"])){
 	header("Location:".REDIRECT_ROUTE."/index.php?error=3&inst=".base64_encode($_POST["bd"]));
 	exit();
 }

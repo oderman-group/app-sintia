@@ -19,7 +19,9 @@ if (!empty($_GET["estudiante"])) {
 if (!empty($_POST["estudiante"])) {
   $estudiante = $_POST["estudiante"];
 }
-$year = date("Y");
+
+$year = $_SESSION["bd"];
+
 $cPeriodo = $config["conf_periodo"];
 if (isset($_GET["periodo"])) {
   $cPeriodo = $_GET["periodo"];

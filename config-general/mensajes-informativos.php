@@ -16,7 +16,8 @@ if(isset($_GET['error']) || isset($_GET['success'])){
 
             case 3:
                 $tipo = 'primary';
-                $mensaje = 'Ha superado el número máximo de intentos fallidos. Por favor comúniquese con la administración.';
+                $mensaje = 'Ha superado el número máximo de intentos fallidos.<br>
+                            Restablezca su contraseña dando click abajo en "<b>¿Has olvidado tu contraseña?</b>"<br> o comuníquese con la administración de su institución para que le generen una nueva.';
             break;
 
             case 4:

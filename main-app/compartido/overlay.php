@@ -34,6 +34,7 @@
 	100% { transform: rotate(360deg); }
 }
 </style>
+
 <div id="overlay">
 	<div id="loader"></div>
 	<div id="loading-text">Cargando...</div>
