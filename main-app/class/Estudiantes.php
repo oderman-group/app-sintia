@@ -191,6 +191,7 @@ class Estudiantes {
                     'matcur_id_curso'=>$cursoActual["gra_id"],
                     'matcur_id_grupo'=>$grupoActual,
                     'matcur_id_institucion'=>$config['conf_id_institucion'],
+                    'matcur_years' => $year,
                     'limite'=>$filtroLimite,
                     'arreglo'=>false
                 ];
@@ -493,6 +494,7 @@ class Estudiantes {
                       'matcur_id_curso'=>$cursoActual["gra_id"],
                       'matcur_id_grupo'=>$grupoActual,
                       'matcur_id_institucion'=>$config['conf_id_institucion'],
+                      'matcur_years' => $_SESSION["bd"],
                       'and'=>'AND (mat_estado_matricula=1 OR mat_estado_matricula=2)',
                       'arreglo'=>false
                   ];
