@@ -107,8 +107,8 @@ Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $proc
 $update = [
 	'uss_fecha_nacimiento'	=> !empty($_POST["fNac"]) ? $_POST["fNac"] : NULL,
 	'uss_usuario'			=> $_POST["nDoc"],
-    "uss_documento"			=> $_POST["documento"],
-    "uss_nombre"			=> mysqli_real_escape_string($conexion, $_POST["nombre"]),
+    "uss_documento"			=> $_POST["nDoc"],
+    "uss_nombre"			=> mysqli_real_escape_string($conexion, $_POST["nombres"]),
     "uss_nombre2"			=> mysqli_real_escape_string($conexion, $_POST["nombre2"]),
     "uss_apellido1"			=> mysqli_real_escape_string($conexion, $_POST["apellido1"]),
     "uss_apellido2"			=> mysqli_real_escape_string($conexion, $_POST["apellido2"]),
