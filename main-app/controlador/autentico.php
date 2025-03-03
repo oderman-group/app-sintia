@@ -37,7 +37,7 @@ try {
 
         $datosUsuario = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id, institucion, year");
 
-		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."'");
+		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."' AND institucion='".$datosUsuario["institucion"]."' AND year='".$datosUsuario["year"]."'");
 
 		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$datosUsuario["uss_id"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$datosUsuario["institucion"]."', '".$datosUsuario["year"]."')");
 
