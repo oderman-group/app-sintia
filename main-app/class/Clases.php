@@ -262,6 +262,8 @@ class Clases  extends Servicios{
         $findme   = '?v=';
         $pos = strpos($POST["video"], $findme) + 3;
         $video = substr($POST["video"],$pos,11);
+        $POST["descripcion"] = str_replace(["\r\n", "\r", "\n"], ' ', $POST["descripcion"]);
+        $POST["descripcion"] = trim(preg_replace('/\s+/', ' ', $POST["descripcion"]));
         
         $disponible=0;
         if($POST["disponible"]==1) $disponible=1;
@@ -381,6 +383,8 @@ class Clases  extends Servicios{
         $findme   = '?v=';
         $pos = strpos($POST["video"], $findme) + 3;
         $video = substr($POST["video"],$pos,11);
+        $POST["descripcion"] = str_replace(["\r\n", "\r", "\n"], ' ', $POST["descripcion"]);
+        $POST["descripcion"] = trim(preg_replace('/\s+/', ' ', $POST["descripcion"]));
         
         if(empty($POST["bancoDatos"]) || $POST["bancoDatos"]==0){
             $date = date('Y-m-d', strtotime(str_replace('-', '/', $POST["fecha"])));
