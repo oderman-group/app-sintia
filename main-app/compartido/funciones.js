@@ -107,8 +107,9 @@ function deseaRegresar(dato){
             } else {
                 if(async == true) { 
                     if(data != null){
+                         document.getElementById("overlay").style.display = "flex"
                         try {
-                             document.getElementById("overlay").style.display = "flex"
+                            
                             const resultado = await metodoFetchAsync(varHeref, data, 'json', method == 'GET');
                            
                             if (typeof window[funcion] === "function") {
@@ -116,10 +117,11 @@ function deseaRegresar(dato){
                             } else {
                                 console.error(`La función "${funcion}" no existe o no está definida.`);
                             }
-                            document.getElementById("overlay").style.display = "none"
+                           
                         } catch (error) {
                             console.error("Error al ejecutar la función:", error);
                         }
+                         document.getElementById("overlay").style.display = "none"
                     }else{
                         fetch(varHeref, {
                             method: method
