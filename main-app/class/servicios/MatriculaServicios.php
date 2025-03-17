@@ -59,10 +59,17 @@ class MatriculaServicios
     public static function listarEstudianteNombre($nombre = '')
     {
       global $config;
-      $sqlInicial = "SELECT mat_id,mat_primer_apellido,mat_segundo_apellido,mat_nombres,mat_nombre2 FROM " . BD_ACADEMICA . ".academico_matriculas
-      WHERE CONCAT(mat_primer_apellido,' ',mat_segundo_apellido,' ',mat_nombres,' ',mat_nombre2) LIKE '%" . $nombre . "%'"; 	  
-      $sqlFinal = "AND mat_eliminado IN (0) AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} ORDER BY mat_grado, mat_grupo, mat_primer_apellido, mat_segundo_apellido, mat_nombres";
-      $sql = $sqlInicial . $sqlFinal;
+      $sql = "SELECT mat_id,mat_primer_apellido,mat_segundo_apellido,mat_nombres,mat_nombre2 FROM " . BD_ACADEMICA . ".academico_matriculas
+      WHERE mat_eliminado IN (0) AND institucion={$config['conf_id_institucion']} AND year = '{$_SESSION["bd"]}' AND (
+      mat_nombres LIKE '%" . $nombre . "%' OR
+      mat_nombre2 LIKE '%" . $nombre . "%' OR
+      mat_primer_apellido LIKE '%" . $nombre . "%' OR
+      mat_segundo_apellido LIKE '%" . $nombre . "%' OR
+      CONCAT(TRIM(mat_nombres),TRIM(mat_nombre2),TRIM(mat_primer_apellido),TRIM(mat_segundo_apellido)) LIKE '%" . $nombre . "%' OR
+      CONCAT(TRIM(mat_nombres),' ',TRIM(mat_nombre2),' ',TRIM(mat_primer_apellido),' ',TRIM(mat_segundo_apellido)) LIKE '%" . $nombre . "%' OR
+      CONCAT(TRIM(mat_primer_apellido),TRIM(mat_segundo_apellido),TRIM(mat_nombres),TRIM(mat_nombre2)) LIKE '%" . $nombre . "%' OR
+      CONCAT(TRIM(mat_primer_apellido),' ',TRIM(mat_segundo_apellido),' ',TRIM(mat_nombres),' ',TRIM(mat_nombre2)) LIKE '%" . $nombre . "%')
+      ORDER BY mat_grado, mat_grupo, mat_primer_apellido, mat_segundo_apellido, mat_nombres";
       return Servicios::SelectSql($sql, 'LIMIT 5');
     }
 
