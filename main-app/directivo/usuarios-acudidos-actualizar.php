@@ -35,12 +35,12 @@ if (!empty($_POST["acudidos"])) {
 				"year"				=> $_SESSION["bd"]
 			], BD_GENERAL);
 
-			//SE CONSULTA ACUDIENTE PRINCIPAL ACTUAL DEL ESTUDIANTE
+			//SE CONSULTA ACUDIENTES ACTUALES DEL ESTUDIANTE
 			$consultaAcudienteActual = Matricula::Select([
 				"mat_id"		=> $acudido,
 				"institucion"	=> $_SESSION["idInstitucion"],
 				"year"			=> $_SESSION["bd"]
-			], "mat_acudiente");
+			], "mat_acudiente, mat_acudiente2");
 			$acudienteActual = $consultaAcudienteActual->fetch(PDO::FETCH_ASSOC);
 
 			//SE ACTUALIZARA EL ACUDIENTE PRINCIPAL DEL ESTUDIANTE
@@ -60,6 +60,16 @@ if (!empty($_POST["acudidos"])) {
 				"institucion"	=> $_SESSION["idInstitucion"],
 				"year"			=> $_SESSION["bd"]
 			]);
+
+			//SE ELIMINA LA RELACIÓN DEL ACUDIENTE 2 EN USUARIOS POR ESTUDIANTES
+			if( !empty($acudienteActual['mat_acudiente2']) ) {
+				Administrativo_Usuarios_Por_Estudiantes::Delete([
+					"upe_id_usuario"	=> $acudienteActual['mat_acudiente2'],
+					"upe_id_estudiante"	=> $acudido,
+					"institucion"		=> $_SESSION["idInstitucion"],
+					"year"				=> $_SESSION["bd"]
+				], BD_GENERAL);
+			}
 		}
 	}
 
