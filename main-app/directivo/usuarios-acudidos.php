@@ -89,16 +89,17 @@ if(!Modulos::validarPermisoEdicion()){
                                             $parametros = array("upe_id_usuario"=>$acudienteActual["uss_id"],"institucion"=>$config['conf_id_institucion'],"year"=>$_SESSION["bd"]);
                                             $listaAcudidos = UsuarioServicios::listarUsuariosEstudiante($parametros);
                                             ?>
-                                            <select id="select_estudiante" class="form-control  select2-multiple" name="acudidos[]" required multiple <?=$disabledPermiso;?>>
+                                            <select id="select_estudiante" class="form-control  select2-multiple" name="acudidos[]" multiple <?=$disabledPermiso;?>>
                                                 <option value="">Seleccione una opción</option>
                                                 <?php
-                                                foreach($listaAcudidos as $idEstudiante){
-                                                    $matricualaEstudiante=MatriculaServicios::consultar($idEstudiante["upe_id_estudiante"]);
-                                                    if(!is_null($matricualaEstudiante)){
-                                                    $nombre = Estudiantes::NombreCompletoDelEstudiante($matricualaEstudiante);
+                                                    if (!empty($listaAcudidos)) {
+                                                        foreach($listaAcudidos as $idEstudiante){
+                                                            $matricualaEstudiante=MatriculaServicios::consultar($idEstudiante["upe_id_estudiante"]);
+                                                            if(!is_null($matricualaEstudiante)){
+                                                            $nombre = Estudiantes::NombreCompletoDelEstudiante($matricualaEstudiante);
                                                  ?>
                                                  <option value="<?= $matricualaEstudiante['mat_id']; ?>" selected><?= $nombre; ?></option>
-                                                 <?php }} ?>
+                                                 <?php }}} ?>
                                                
                                             </select>
                                         </div>
