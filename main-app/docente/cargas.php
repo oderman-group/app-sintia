@@ -252,7 +252,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                 if ($generarInforme) {
                                                     switch (intval($configGenerarJobs)) {
                                                         case 1:
-                                                            if ($numSinNotas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
+                                                            if ($actividadesRegistradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
                                                                 $generarInforme     = false;
                                                                 $msj                = "hay $numSinNotas estudiantes sin notas, El informe no se puede generar, coloque las notas a todos los estudiantes para generar el informe.";
                                                                 $tipoAlerta         = "alert-danger";
