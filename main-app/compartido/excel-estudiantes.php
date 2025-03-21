@@ -15,6 +15,7 @@ require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
 $consulta = Estudiantes::listarEstudiantes(0, '', '');
+$colspan = $config['conf_solicitar_acudiente_2'] === SI ? 26 : 22;
 ?>
 
 <!DOCTYPE html>
@@ -31,7 +32,7 @@ $consulta = Estudiantes::listarEstudiantes(0, '', '');
 <table  width="100%" border="1" rules="all">
     <thead>
     	<tr>
-        	<th colspan="22" style="background:#6017dc; color:#FFF;">MATRICULAS ACTUALES <?=date('Y');?></th>
+        	<th colspan="<?=$colspan ?? 22;?>" style="background:#6017dc; color:#FFF;">MATRICULAS ACTUALES <?=date('Y');?></th>
         </tr>
     	<tr>
             <th scope="col" align="center">No.</th>
@@ -57,6 +58,13 @@ $consulta = Estudiantes::listarEstudiantes(0, '', '');
             <th scope="col" align="center">Documento Acudiente</th>
             <th scope="col" align="center">Nombre Acudiente</th>
 			<th scope="col" align="center">Email Acudiente</th>
+            
+            <?php if($config['conf_solicitar_acudiente_2'] === SI){?>
+                <th scope="col" align="center">Tipo de documento Acudiente 2</th>
+                <th scope="col" align="center">Documento Acudiente 2</th>
+                <th scope="col" align="center">Nombre Acudiente 2</th>
+                <th scope="col" align="center">Email Acudiente 2</th>
+            <?php }?>
         </tr>
     </thead>
     <tbody>
@@ -100,22 +108,21 @@ while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
             <td align="center"><?=$resultado['mat_codigo_tesoreria'];?></td>
             <td align="center"><?=$resultado['mat_numero_matricula'];?></td>
 
-            <td><?=$datosA['ogen_nombre'];?></td>
-            <td><?=$datosA['uss_documento'];?></td>
-            <td align="center"><?php
-                if(!empty($datosA['uss_apellido1'])){ 
-                    $nombreCompleto = !empty($datosA['uss_apellido1']) ? 
-                    $datosA['uss_apellido1']." ".$datosA['uss_apellido2']." ".$datosA['uss_nombre']." ".$datosA['uss_nombre2'] 
-                    :  $datosA['uss_nombre'];
-
-                    echo strtoupper($nombreCompleto);
-                }
-            ?></td>
-			<td><?php
-            if(!empty($datosA['uss_email'])){ 
-                echo strtolower($datosA['uss_email']);
-            }
-            ?></td>
+            <td><?=$datosA['ogen_nombre'] ?? "";?></td>
+            <td><?=$datosA['uss_documento'] ?? "";?></td>
+            <td align="center"><?php UsuariosPadre::nombreCompletoDelUsuario($datosA); ?></td>
+            <td><?= !empty($datosA['uss_email']) ? strtolower($datosA['uss_email']) : "";?></td>
+            
+            <?php
+                if($config['conf_solicitar_acudiente_2'] === SI){
+                    $consultaDatosA2 = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['mat_acudiente2']."'");
+                    $datosA2 = mysqli_fetch_array($consultaDatosA2, MYSQLI_BOTH);
+            ?>
+                    <td><?=$datosA2['ogen_nombre'] ?? "";?></td>
+                    <td><?=$datosA2['uss_documento'] ?? "";?></td>
+                    <td align="center"><?php UsuariosPadre::nombreCompletoDelUsuario($datosA2); ?></td>
+                    <td><?= !empty($datosA2['uss_email']) ? strtolower($datosA2['uss_email']) : "";?></td>
+            <?php }?>
         </tr>   
 
 <?php
