@@ -11,7 +11,7 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'academico_boletin';
-    public static $tableAs = 'bol';
+    public  static $tableAs = 'bol';
 
     use BDT_Join;
     public static function datosBoletin(
