@@ -9,7 +9,8 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'academico_matriculas';
-    public  static $tableAs = 'matri';
+    public static $primaryKey = 'mat_id';
+    public static $tableAs = 'matri';
 
     use BDT_Join;
 /**
@@ -28,10 +29,9 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
  */
     public static function getCursosEstudiante(array $estudiantes, string $yearBd    = ''):array{
         $campos     = "mat_id,mat_grado,mat_grupo"; 
-        $in_estudiantes = implode(', ', $estudiantes);
+        $in_estudiantes = implode(', ', array_map(fn($id) => "'$id'", $estudiantes));
         $predicado =
         [
-           
             "institucion"           => $_SESSION["idInstitucion"],
             "year"                  => $yearBd,
             self::OTHER_PREDICATE   => "mat_id IN ({$in_estudiantes})"

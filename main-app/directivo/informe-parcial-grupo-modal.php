@@ -60,7 +60,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
     <div class="panel">
         <header class="panel-heading panel-heading-red">POR ESTUDIANTE </header>
         <div class="panel-body">
-            <form name="formularioGuardar" action="../compartido/informe-parcial-fast.php" method="post" target="_blank">
+            <form name="formularioGuardar" action="../compartido/informe-parcial.php" method="post" target="_blank">
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Estudiante</label>
                     <div class="col-sm-8">
