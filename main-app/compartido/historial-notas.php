@@ -130,26 +130,7 @@ try {
 
   <?php
   include_once("sintia-funciones.php");
-  function retornarColor($valor, bool $recuperado = false)
-  {
-    $color = "";
-    $valor ??= 0;
 
-    if ($valor <= 5) {
-      $color = "bg-danger";
-    } else if ($valor > 5 && $valor < 50) {
-      $color = "bg-warning";
-    } elseif ($valor > 50 && $valor < 99) {
-      $color = "";
-    } elseif ($valor >= 100) {
-      $color = "bg-success";
-    }
-    if ($recuperado) {
-      $color = "bg-success";
-    }
-
-    return $color;
-  }
   //Instancia de Clases generales
   foreach ($listaEstudiantes as $estudiante) {
     ?>
@@ -216,7 +197,7 @@ try {
               <?php foreach ($estudiante["periodos"] as $periodo) {
                 $llave_curso_periodo_defaul = $estudiante["mat_id"] . "-" . $year . "-" . $estudiante["gra_id"] . "-" . $estudiante["gru_id"] . "-1";
                 $llave_curso_periodo = $estudiante["mat_id"] . "-" . $estudiante["year"] . '-' . $estudiante["gra_id"] . '-' . $estudiante["gru_id"] . "-" . $periodo["periodo"];
-                $llave_curso_final = $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo;
+                $llave_curso_final = $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo;                
                 ?>
                 <li class="nav-item" role="presentation">
                   <button class="nav-link <?php if ($llave_curso_periodo == $llave_curso_periodo_defaul) {
@@ -229,7 +210,7 @@ try {
                 </li>
               <?php } ?>
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="btn-<?= $llave_curso_final ?>-final" data-bs-toggle="tab"
+                <button class="nav-link" id="btn-<?= $estudiante["mat_id"] ?>-final" data-bs-toggle="tab"
                   data-bs-target="#contend-<?= $llave_curso_final ?>-final" type="button" role="tab"
                   aria-controls="contend-<?= $llave_curso_final ?>-final" aria-selected="true">FINAL</button>
               </li>
@@ -238,16 +219,8 @@ try {
 
 
 
-              <?php include(ROOT_PATH . "/main-app/compartido/historial-notas-periodos.php"); ?>
-
-
-
-              <div class="tab-pane panel-<?= $estudiante["mat_id"] ?> fade show" id="contend-<?= $llave_curso ?>-final" role="tabpanel"
-                aria-labelledby="btn-<?= $llave_curso ?>-final">
-                <?php if ($llave_curso == $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo) { ?>
-                  <?php include(ROOT_PATH . "/main-app/compartido/historial-notas-final.php"); ?>
-                <?php } ?>
-              </div>
+              <?php include(ROOT_PATH . "/main-app/compartido/historial-notas-periodos.php"); ?>   
+            </div>
 
             </div>
           </div>
@@ -285,28 +258,25 @@ try {
         const target = element.getAttribute('data-bs-target');
         const llaves = target.split("-");
 
-
-
-        let periodo = llaves[5];
+        let Iperiodo = llaves[5];
         if (target.includes(estudiante)) {
-          let newPart = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-' + periodo;
+          let newPart = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-' + Iperiodo;
           element.setAttribute('data-bs-target', newPart)
         }
-        const btnFinal = document.getElementById(`btn-${estudiante}-${year}-${curso}-${grupo}-final`);
-        //targe de la nota final
-        if (btnFinal) {
-          const targetFinal = btnFinal.getAttribute('data-bs-target');
-          if (targetFinal.includes(estudiante)) {
-            let newPart = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-final';
-            btnFinal.setAttribute('data-bs-target', newPart)
-          }
-
-        }
-
       });
 
+      //targe de la nota final
+      const elementsFinal = document.getElementById(`btn-${estudiante}-final`);
+
+      targetFinal = elementsFinal.getAttribute('data-bs-target');
+      if (targetFinal.includes(estudiante)) {
+        let newPartFinal = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-final';
+        elementsFinal.setAttribute('data-bs-target', newPartFinal)
+      }
+
+
       // Simula un clic en el enlace de la pestaña
-      let otrosTabs = document.querySelectorAll(".panel-"+ estudiante);
+      let otrosTabs = document.querySelectorAll(".panel-" + estudiante);
       otrosTabs.forEach(el => {
         el.classList.remove("show", "active");
       });
@@ -320,7 +290,7 @@ try {
       contendP1 = document.getElementById("contend-" + estudiante + '-' + year + '-' + curso + '-' + grupo + '-1');
       if (contendP1 !== null && contendP1.children.length > 0) {
         console.log("El contend tiene contenido.");
-      } else {        
+      } else {
         try {
           var overlay = document.getElementById("overlay");
 
@@ -338,7 +308,7 @@ try {
 
           resultData = resultado["data"];
           if (resultData["ok"]) {
-            contend = document.getElementById("tab-content-"+ estudiante);
+            contend = document.getElementById("tab-content-" + estudiante);
             var sendData = {
               "estudiante": estudiante,
               "periodos": <?php echo $config['conf_periodos_maximos'] ?>,
@@ -354,12 +324,8 @@ try {
             if (overlay) {
               document.getElementById("overlay").style.display = "none";
             }
-            /*
-              contendFinal = document.getElementById(`contend-${estudiante}-${year}-${curso}-${grupo}-final`);
-  
-  
-              resultHtml = await metodoFetchAsync("historial-notas-final.php", sendData, 'html', false);
-              contendFinal.innerHTML = resultHtml["data"];*/
+            
+        
           }
 
 

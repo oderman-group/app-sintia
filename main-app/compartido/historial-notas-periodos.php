@@ -1,9 +1,29 @@
 <?php
 $active = "active";
+function retornarColor($valor, bool $recuperado = false)
+{
+	$color = "";
+	$valor ??= 0;
+
+	if ($valor <= 5) {
+		$color = "bg-danger";
+	} else if ($valor > 5 && $valor < 50) {
+		$color = "bg-warning";
+	} elseif ($valor > 50 && $valor < 99) {
+		$color = "";
+	} elseif ($valor >= 100) {
+		$color = "bg-success";
+	}
+	if ($recuperado) {
+		$color = "bg-success";
+	}
+
+	return $color;
+}
 $input = json_decode(file_get_contents("php://input"), true);
 if (!empty($input)) {
 	$datos = $input;
-	$active ="";
+	$active = "";
 	$estudiantes = $datos["data"];
 	$periodos_cant = $datos["periodos"];
 	$year = $datos["year"];
@@ -30,26 +50,8 @@ if (!empty($input)) {
 	}
 	include("session-compartida.php");
 	$tiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year)->fetch_all(MYSQLI_ASSOC);
-	function retornarColor($valor, bool $recuperado = false)
-	{
-		$color = "";
-		$valor ??= 0;
+	$llave_curso_final = $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo;
 
-		if ($valor <= 5) {
-			$color = "bg-danger";
-		} else if ($valor > 5 && $valor < 50) {
-			$color = "bg-warning";
-		} elseif ($valor > 50 && $valor < 99) {
-			$color = "";
-		} elseif ($valor >= 100) {
-			$color = "bg-success";
-		}
-		if ($recuperado) {
-			$color = "bg-success";
-		}
-
-		return $color;
-	}
 }
 
 ?>
@@ -61,10 +63,8 @@ if (!empty($input)) {
 		?>
 		<?php if ($llave_curso_periodo == $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo . "-" . $periodo) { ?>
 			<div class="tab-pane panel-<?= $estudiante["mat_id"] ?> fade show <?php if ($llave_curso_periodo == $llave_curso_periodo_defaul) {
-				echo $active;
-			} ?>" id="contend-<?= $llave_curso_periodo ?>" role="tabpanel" aria-labelledby="btn-<?= $llave_curso_periodo ?>">
-
-				Home <?= $periodo ?> 			<?= $llave_curso_periodo ?>
+				   echo $active;
+			   } ?>" id="contend-<?= $llave_curso_periodo ?>" role="tabpanel" aria-labelledby="btn-<?= $llave_curso_periodo ?>">
 
 				<table class="table table-striped table-bordered">
 					<thead>
@@ -83,9 +83,6 @@ if (!empty($input)) {
 						</tr>
 					</thead>
 					<tbody id="tbody-<?= $llave_curso_periodo ?>">
-
-
-
 						<!-- AREAS -->
 						<?php foreach ($estudiante["areas"] as $area) {
 							$llave_curso_periodo_area = $llave_curso_periodo . "-" . $area["ar_id"];
@@ -330,3 +327,72 @@ if (!empty($input)) {
 		<?php } ?>
 	<?php } ?>
 <?php } ?>
+<div class="tab-pane panel-<?= $estudiante["mat_id"] ?> fade show" id="contend-<?= $llave_curso_final ?>-final"
+	role="tabpanel" aria-labelledby="btn-<?= $llave_curso_final ?>-final">
+
+	<table class="table table-striped table-bordered">
+		<thead>
+			<tr style="font-weight:bold; text-align:center;" class="table-active" style="border-style: hidden;">
+				<th scope="col" weight="70%"
+					style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
+					ASIGNATURAS
+				</th>
+				<?php foreach ($estudiante["periodos"] as $periodo) {
+					?>
+					<th scope="col" weight="100px"
+						style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
+						P <?= $periodo["periodo"] ?> (<?= $periodo["porcentaje_periodo"] ?>%)
+					</th>
+				<?php } ?>
+				<th scope="col" weight="70%"
+					style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
+					NOTA FINAL
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php foreach ($estudiante["areas"] as $area) { ?>
+				<?php foreach ($area["cargas"] as $carga) { ?>
+					<tr>
+						<td>
+							<span class="col-2 toggle-collapse">
+								<?= $carga['mat_nombre'] ?>
+							</span>
+						</td>
+						<?php foreach ($estudiante["periodos"] as $periodo) {
+							?>
+							<td scope="col" weight="100px"
+								style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
+								<span class="col-4">
+									<div class="input-group">
+										<?php $tooltipCarga = $carga['periodos'][$periodo["periodo"]]['bol_nota'] != $carga['periodos'][$periodo["periodo"]]['nota_carga_calculada'] ? " data-bs-toggle='popover' data-bs-placement='right' data-bs-trigger='hover focus' title='Nota carga calculada' data-bs-content='{$carga['periodos'][$periodo["periodo"]]['nota_carga_calculada']}' " : ""; ?>
+										<input type="number" class="form-control" <?= $tooltipCarga ?>
+											style="height: 40px;font-size: 16px;border-radius: .25rem .0rem .0rem .0rem;" readonly
+											value="<?=  Boletin::notaDecimales($carga['periodos'][$periodo["periodo"]]["bol_nota"])  ?>" />
+											<input type="text" class="form-control" <?= $tooltipCarga ?>
+											style="height: 40px;font-size: 16px;border-radius: .0rem .25rem .0rem .0rem;" readonly
+											value="<?= Boletin::determinarRango($carga['periodos'][$periodo["periodo"]]["bol_nota"], $tiposNotas)["notip_nombre"]   ?>" />
+
+									</div>
+								</span>
+							</td>
+						<?php } ?>
+						<td>
+
+
+							<div class="input-group">
+								<input type="number" class="form-control" readonly data-bs-toggle="popover"
+									style="height: 30px;font-size: 20px;border-radius: .25rem .0rem .0rem .0rem;"
+									value="<?= Boletin::notaDecimales($carga['nota_final']) ?>" />
+								<input type="text" class="form-control" readonly data-bs-toggle="popover"
+									style="height: 30px;font-size: 15px;border-radius: .0rem .25rem .0rem .0rem;"
+									value="<?= Boletin::determinarRango($carga['nota_final'], $tiposNotas)["notip_nombre"] ?>" />
+							</div>
+						</td>
+					</tr>
+				<?php } ?>
+			<?php } ?>
+		</tbody>
+	</table>
+
+</div>
