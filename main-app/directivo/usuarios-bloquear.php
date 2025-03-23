@@ -14,7 +14,7 @@ include(ROOT_PATH . "/main-app/compartido/historial-acciones-guardar.php");
 if (!empty($input)) {
 	$_POST = $input;
 	$response = array();
-	require_once '../class/App/Administrativo/usuario/Usuario.php';
+	require_once '../class/App/Administrativo/Usuario/Usuario.php';
 	try {
 		Administrativo_Usuario_Usuario::BloquearUsuarios($_POST["usuarios"], $_POST["bloquear"]);
 		$response["ok"]   = true;
