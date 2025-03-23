@@ -2,7 +2,7 @@
 include_once("session-compartida.php");
 require_once(ROOT_PATH . "/main-app/class/componentes/Excel/ExcelUtil.php");
 require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
-
+require_once(ROOT_PATH . "/main-app/compartido/overlay.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/boletin/Boletin.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Notas_tipo.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Calificacion/Vista_historial_calificaiones.php");
@@ -25,8 +25,10 @@ try {
     $periodos[$i] = $i;
   }
 
-  $listaCursoEstudiantes = Vista_cursos_estudiante::listarCursosEstudiates($estudiantes);
+  $tiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year)->fetch_all(MYSQLI_ASSOC); //obenemos los tipos de notas
+  $listaCursoEstudiantes = Vista_cursos_estudiante::listarCursosEstudiates($estudiantes);//obenemos los cursos  de cada estudiante en caso de que alguno tenga registros en otros cursos el mismo año 
   $listaCalificaionesEstudiantes = Vista_historial_calificaciones::listarHistorialCalificaiones($grado, $grupo, $estudiantes);
+
   $listaEstudiantes = [];
 
   foreach ($listaCalificaionesEstudiantes as $item1) {
@@ -54,7 +56,7 @@ try {
   <style>
     body {
       font-family: 'revert-layer' !important, sans-serif;
-      font-size: x-small !important;
+      font-size: 12px !important;
       margin: 0;
       padding: 0;
       background-image: url(./../../config-general/assets-login-2023/img/bg-login.png);
@@ -62,23 +64,24 @@ try {
     }
 
     .progress-indicador {
-    display: flex
-;
-    height: 0.6rem;
-    overflow: hidden;
-    font-size: .5rem;
-    background-color: #e9ecef;
-    border-radius: .25rem;
-}
+      display: flex;
+      height: 0.6rem;
+      overflow: hidden;
+      font-size: .5rem;
+      background-color: #e9ecef;
+      border-radius: .25rem;
+    }
 
     .collapse-container {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.5s ease;
-}
-.collapse-container.show {
-  max-height: 1000px; /* Ajusta esto según el contenido */
-}
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.5s ease;
+    }
+
+    .collapse-container.show {
+      max-height: 1000px;
+      /* Ajusta esto según el contenido */
+    }
 
     .form-control:disabled,
     .form-control[readonly] {
@@ -108,40 +111,63 @@ try {
       margin-right: auto;
     }
   </style>
-  <link rel="stylesheet" href="../../config-general/assets/plugins/steps/steps.css">
+  <!-- <link rel="stylesheet" href="../../config-general/assets/plugins/steps/steps.css"> -->
 
 
   <!--Bootstrap-->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"  integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" /> -->
 
 
 </head>
 
 <body style="font-family:Arial;">
-
+  <script src="funciones.js"></script>
 
 
 
   <?php
   include_once("sintia-funciones.php");
+  function retornarColor($valor, bool $recuperado = false)
+  {
+    $color = "";
+    $valor ??= 0;
 
+    if ($valor <= 5) {
+      $color = "bg-danger";
+    } else if ($valor > 5 && $valor < 50) {
+      $color = "bg-warning";
+    } elseif ($valor > 50 && $valor < 99) {
+      $color = "";
+    } elseif ($valor >= 100) {
+      $color = "bg-success";
+    }
+    if ($recuperado) {
+      $color = "bg-success";
+    }
+
+    return $color;
+  }
   //Instancia de Clases generales
   foreach ($listaEstudiantes as $estudiante) {
     ?>
+
+
     <br>
     <div class="row justify-content-md-center">
 
       <div class="col-10">
         <div class="media">
-         
+
           <div class="media-body">
             <table width="100%" cellspacing="5" cellpadding="5" border="1" rules="all">
               <tr>
-              <td rowspan="3"  width='120px;'> <img class="mr-3" src="<?= $estudiante["foto"] ?>" class='img-thumbnail' height='140px;'></td>
-              <td><b>C&oacute;digo:</b><br>
-                
+                <td rowspan="3" width='120px;'> <img class="mr-3" src="<?= $estudiante["foto"] ?>" class='img-thumbnail'
+                    height='140px;'></td>
+                <td><b>C&oacute;digo:</b><br>
+
                   <?= strpos($estudiante["mat_documento"], '.') !== true && is_numeric($estudiante["mat_documento"]) ? number_format($estudiante["mat_documento"], 0, ",", ".") : $estudiante["mat_documento"]; ?>
                 </td>
                 <td><b>Nombre:</b><br> <?= $estudiante["nombre"] ?></td>
@@ -164,264 +190,66 @@ try {
         <div class="row">
           <div class="col-2">
             <a class="nav-link disabled" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home"
-            aria-selected="true">Curso / Periodo</a>
+              aria-selected="true">Curso / Periodo</a>
             <div class="list-group" id="list-tab" role="tablist">
-            <?php foreach ($estudiante["cursos"] as $curso) {
-              $curso_active        = false;
-              $llave_cruso_default = $estudiante["mat_id"].'-'.$estudiante["gra_id"] . '-' . $estudiante["gru_id"];
-              $llave_cruso         = $estudiante["mat_id"].'-'.$curso["curso"] . '-' . $curso["grupo"];
-              if (  $llave_cruso  == $llave_cruso_default ) {
-                $curso_active = true;
-              }
-              ?>
-              <a class="list-group-item list-group-item-action <?php if ($curso_active) { echo "active";} ?>" " 
-                id="tab-<?=$llave_cruso?>" 
-                data-bs-toggle="list" 
-                href="#contend-<?=$llave_cruso?>-1"
-                role="tab" 
-                aria-controls="list-home">
-                <?= $curso["gra_nombre"] . "- " . $curso["gru_nombre"]; ?>
-              </a>
-              
+              <?php foreach ($estudiante["cursos"] as $curso) {
+                $curso_active = false;
+                $llave_cruso_default = $estudiante["mat_id"] . '-' . $estudiante["year"] . '-' . $estudiante["gra_id"] . '-' . $estudiante["gru_id"];
+                $llave_cruso = $estudiante["mat_id"] . '-' . $curso["year"] . '-' . $curso["curso"] . '-' . $curso["grupo"];
+                if ($llave_cruso == $llave_cruso_default) {
+                  $curso_active = true;
+                }
+                ?>
+                <a class="list-group-item list-group-item-action <?php if ($curso_active) {
+                  echo "active";
+                } ?>" id="tab-<?= $llave_cruso ?>" data-bs-toggle="list"
+                  onclick="selecionarCurso('<?= $estudiante['mat_id'] ?>','<?= $curso['year'] ?>','<?= $curso['curso'] ?>','<?= $curso['grupo'] ?>')"
+                  href="#contend-<?= $llave_cruso ?>-1" role="tab" aria-controls="contend-<?= $llave_cruso ?>-1">
+                  <?= $curso["gra_nombre"] . " - " . $curso["gru_nombre"]; ?>
+                </a>
+
               <?php } ?>
             </div>
-             <!-- <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
-                <a class="nav-link disabled" data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home"
-                  aria-selected="true">Curso / Periodo</a>
-                <?php foreach ($estudiante["cursos"] as $curso) {
-                  $curso_active = false;
-                  if ($estudiante["gra_id"] . '-' . $estudiante["gru_id"] == $curso["curso"] . '-' . $curso["grupo"]) {
-                    $curso_active = true;
-                  }
-
-                  ?>
-                  <a class="nav-link <?php if ($curso_active) { echo "active";} ?>" id="tab-<?= $estudiante["mat_id"] . "-" . $curso["curso"] . "-" . $curso["grupo"] ?>"
-                    data-toggle="pill"
-                    onclick="selecionarCurso('<?= $estudiante['mat_id'] ?>','<?= $curso['curso'] ?>','<?= $curso['grupo'] ?>')"
-                    href="#contend-<?= $estudiante["mat_id"] . "-" . $curso["curso"] . "-" . $curso["grupo"] . "-1" ?>"
-                    role="tab" aria-controls="v-pills-profile"
-                    aria-selected="false"><?= $curso["gra_nombre"] . "- " . $curso["gru_nombre"]; ?></a>
-                <?php } ?>
-              </div>-->
           </div>
-          <div class="col-8" style="padding-right: 0px;padding-left: 0px;">
-            <ul class="nav nav-tabs"  role="tablist">
-                  <?php foreach ($periodos as $periodo) {
-                    $llave_curso_periodo_defaul = $estudiante["mat_id"]."-".$estudiante["gra_id"]."-".$estudiante["gru_id"] . "-1";
-                    $llave_curso_periodo        = $estudiante["mat_id"].'-'.$estudiante["gra_id"].'-'.$estudiante["gru_id"] ."-" . $periodo;
-                    ?>
-                    <li class="nav-item" role="presentation">
-                      <button class="nav-link <?php if ($llave_curso_periodo == $llave_curso_periodo_defaul) { echo "active";} ?>" id="btn-<?=$llave_curso_periodo?>" data-bs-toggle="tab" data-bs-target="#contend-<?=$llave_curso_periodo?>" type="button" role="tab" aria-controls="home" aria-selected="true"> Periodo <?= $periodo ?> </button>
-                    </li>
-                    <?php } ?>
-              </ul>
-           <!-- <nav>
-              <div class="nav nav-tabs" role="tablist">
-                <?php foreach ($periodos as $periodo) { ?>
-                  <a class="nav-item nav-link " id="h-<?= $estudiante["mat_id"] . "-" . $periodo ?>" data-toggle="tab"
-                    href="#contend-<?= $estudiante["mat_id"] . "-" . $estudiante["gra_id"] . "-" . $estudiante["gru_id"] . "-" . $periodo ?>"
-                    role="tab" aria-controls="nav-home" aria-selected="true">Periodo <?= $periodo ?></a>
+          <div class="col-10" style="padding-right: 0px;padding-left: 0px;">
+            <ul class="nav nav-tabs" role="tablist">
+              <?php foreach ($estudiante["periodos"] as $periodo) {
+                $llave_curso_periodo_defaul = $estudiante["mat_id"] . "-" . $year . "-" . $estudiante["gra_id"] . "-" . $estudiante["gru_id"] . "-1";
+                $llave_curso_periodo = $estudiante["mat_id"] . "-" . $estudiante["year"] . '-' . $estudiante["gra_id"] . '-' . $estudiante["gru_id"] . "-" . $periodo["periodo"];
+                $llave_curso_final = $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo;
+                ?>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link <?php if ($llave_curso_periodo == $llave_curso_periodo_defaul) {
+                    echo "active";
+                  } ?>" id="btn-periodos-<?= $estudiante["mat_id"] . "-" . $periodo["periodo"] ?>" data-bs-toggle="tab"
+                    data-bs-target="#contend-<?= $llave_curso_periodo ?>" type="button" role="tab"
+                    aria-controls="contend-<?= $llave_curso_periodo ?>" aria-selected="true"> Periodo
+                    <?= $periodo["periodo"] ?> (<?= $periodo["porcentaje_periodo"] ?>%)
+                  </button>
+                </li>
+              <?php } ?>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="btn-<?= $llave_curso_final ?>-final" data-bs-toggle="tab"
+                  data-bs-target="#contend-<?= $llave_curso_final ?>-final" type="button" role="tab"
+                  aria-controls="contend-<?= $llave_curso_final ?>-final" aria-selected="true">FINAL</button>
+              </li>
+            </ul>
+            <div id="tab-content-<?= $estudiante["mat_id"] ?>" class="tab-content">
+
+
+
+              <?php include(ROOT_PATH . "/main-app/compartido/historial-notas-periodos.php"); ?>
+
+
+
+              <div class="tab-pane panel-<?= $estudiante["mat_id"] ?> fade show" id="contend-<?= $llave_curso ?>-final" role="tabpanel"
+                aria-labelledby="btn-<?= $llave_curso ?>-final">
+                <?php if ($llave_curso == $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo) { ?>
+                  <?php include(ROOT_PATH . "/main-app/compartido/historial-notas-final.php"); ?>
                 <?php } ?>
               </div>
-            </nav>-->
-            <div class="tab-content">
-           
-              <?php foreach ($estudiante["cursos"] as $curso) { ?>
-                <?php foreach ($periodos as $periodo) {                  
-                  $llave_curso_periodo_defaul = $estudiante["mat_id"] . "-" . $estudiante["gra_id"] . "-" . $estudiante["gru_id"] . "-1";
-                  $llave_curso_periodo        = $estudiante["mat_id"] . "-" . $curso["curso"] . "-" . $curso["grupo"] . "-" . $periodo;
-                  ?>
-                  <div class="tab-pane fade show <?php if ($llave_curso_periodo == $llave_curso_periodo_defaul) { echo "active";} ?>" id="contend-<?= $llave_curso_periodo ?>" role="tabpanel" aria-labelledby="btn-<?=$llave_curso_periodo?>">
-                     Home <?= $periodo ?> <?=$llave_curso_periodo?>
-                     
-                      <table class="table table-striped table-bordered">
-                        <thead>
-                          <tr class="table-active" style="border-style: hidden;">
-                            <th scope="col" weight="10%"
-                                style="font-weight:bold; text-align:center;vertical-align: middle;">
-                            AREAS
-                            </th>
-                            <th scope="col"weight="70%"
-                                style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
-                            ASIGNATURAS
-                            </th>
-                            <th scope="col" weight="20%"
-                                style="font-weight:bold; font-size: 16px;text-align:center;vertical-align: middle;">
-                            NOTA
-                            </th>
-                          </tr>
-                        </thead>
-                        <?php if ($llave_curso_periodo == $estudiante["mat_id"] . "-" . $grado . "-" . $grupo . "-" . $periodo) { ?>
-                          <tbody>
-                            <!-- AREAS -->
-                            <?php foreach ($estudiante["areas"] as $area) { 
-                              $llave_curso_periodo_area=$llave_curso_periodo."-".$area["ar_id"];
-                              ?>
-                              <tr>
-                               <td class=" col-3"
-                                        style="font-weight:bold; font-size: 13px;text-align:left;vertical-align: middle;"
-                                        scope="row">
-                                <?= strtoupper($area['ar_nombre']); ?>
-                                      
-                                </td>
-                                <td class="col-7">
-                                  <!-- ASIGNATURAS -->
-                                  <div class="card">
-                                    <?php foreach ($area["cargas"] as $carga) { 
-                                      $llave_curso_periodo_area_carga=$llave_curso_periodo_area."-".$carga["car_id"];
-                                      ?>
-                                    
-                                        <div style="cursor:pointer;font-weight:bold;font-size: 12px"
-                                                    class="card-header list-group-item d-flex justify-content-between">
 
-                                          <span class="col-2 toggle-collapse" 
-                                                data-target="#carga_<?= $llave_curso_periodo_area_carga ?>">
-                                            <?= $carga['mat_valor'] ?>%
-                                          </span>
-                                          <span class="col-7 toggle-collapse"
-                                                data-target="#carga_<?= $llave_curso_periodo_area_carga ?>">
-                                            <?= strtoupper($carga['mat_nombre']); ?>
-                                            <div class="progress" style="height: 3px;margin-right: 20px;">
-                                              <div class="progress-bar" role="progressbar" style="width:  <?= $carga["progreso_carga"] ?>%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                            <!-- <div class="progress" style="margin-right: 20px;" >
-                                                  <div class="progress-bar progress-bar-striped" role="progressbar" style="width: 10%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100">10%</div>
-                                            </div> -->
-                                          </span>
-                                          <?php if(!empty($carga['periodos'][$periodo]["bol_tipo"]) && $carga['periodos'][$periodo]["bol_tipo"]=="2") {?>
-                                            <div class="input-group">
-                                              <?php if(!empty($carga['periodos'][$periodo]["bol_nota_anterior"])) {?>
-                                                 <input type="number" class="form-control"
-                                                        style="font-size: 11px;color:red" readonly title="Nota anterior"
-                                                        value="<?= $carga['periodos'][$periodo]["bol_nota_anterior"] ?>" />
-                                              <?php }?>
-                                              <input type="number"  class="form-control"
-                                                     style="font-size: 11px;color:blue" readonly title="Nota Recuperada"
-                                                     value="<?= $carga['periodos'][$periodo]["bol_nota"] ?>" />
-                                            </div>
-                                          <?php }else {?>
-                                            <span class="col-3">
-                                              <input type="number" width="200px" class="form-control"
-                                                     style="height: 30px;font-size: 14px;" readonly 
-                                                     value="<?= $carga['periodos'][$periodo]["bol_nota"] ?>" />
-                                              </span>
-                                          <?php }?>
-                                        </div>
-                                          <div class="collapse-container" id="carga_<?= $llave_curso_periodo_area_carga ?>" >
-                                            <!-- INDICADORES -->
-                                            <table class="table" width="100%" cellspacing="5" cellpadding="5" rules="all">
-                                              <thead  class="toggle-collapse"
-                                                      data-target="#carga_<?= $llave_curso_periodo_area_carga ?>">
-                                                <tr class="table-active" style="height: 30px; font-weight: bold;font-size: 11px;text-align: center;padding: 5px;cursor:pointer;border-style: hidden;">
-                                                  <td > INDICADORES</td>
-                                               </tr>
-                                              </thead>
-                                              <tbody>
-                                                <tr style="font-weight: bold;font-size: 11px;">
-                                                  <td >
-                                                     <?php foreach ($carga['periodos'][$periodo]["indicadores"] as $indicador) { 
-                                                           $llave_curso_periodo_area_carga_indicador=$llave_curso_periodo_area_carga."-".$indicador["ind_id"];?>
-                                                      <div style="cursor:pointer"
-                                                           class="card-header list-group-item d-flex justify-content-between align-items-center">
-                                                               
-                                                                <span class="col-2 toggle-collapse"  data-target="#indicador_<?= $llave_curso_periodo_area_carga_indicador ?>" ><?= $indicador['ipc_valor'] ?>%</span>
-                                                                <span class="col-7 toggle-collapse"  data-target="#indicador_<?= $llave_curso_periodo_area_carga_indicador ?>"
-                                                                  style="font-weight: lighter;font-size: 11px;">
-                                                                  <?= strtolower($indicador["ind_nombre"]);?>
-                                                                  
-                                                                   <div class="progress-indicador" style="margin-right: 20px;" >
-                                                                    <div class="progress-bar progress-bar-striped" role="progressbar" style="width: <?= $indicador["progreso_indicador"] ?>%" aria-valuenow="<?= $indicador["progreso_indicador"] ?>" aria-valuemin="0" aria-valuemax="100"><?= $indicador["progreso_indicador"] ?>%</div>
-                                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: <?= 100-$indicador["progreso_indicador"]?>%" aria-valuenow="<?= 100-$indicador["progreso_indicador"] ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                                                                  </div>
-                                                                </span>
-                                                                <span class="col-3">
-                                                                <?php if($indicador['recuperado']) {?>
-                                                                    <div class="input-group">
-                                                                      <input type="number" class="form-control" readonly
-                                                                            style="height: 25px;font-size: 10px;color:red"
-                                                                            value="<?= $indicador['nota_indicador'] ?>" />
-                                                                      <input type="number" class="form-control" readonly
-                                                                            style="height: 25px;font-size: 10px;color:blue""
-                                                                            value="<?= $indicador['nota_indicador_recuperado'] ?>" />
-                                                                    </div>
-                                                                  <?php }else {?>
-                                                                    <input type="number" class="form-control" readonly
-                                                                         style="height: 25px;font-size: 13px;"
-                                                                         value="<?= $indicador['nota_indicador'] ?>" />
-                                                                  <?php }?> 
-                                                                  
-                                                                </span>
-                                                          </div>
-                                                          <div class="collapse-container" id="indicador_<?= $llave_curso_periodo_area_carga_indicador ?>" >
-                                                             <!-- ACTIVIDADES -->
-                                                             <table class="table table-striped table-bordered"  style="border: darkgray;" width="100%"
-                                                                  rules="all">
-                                                                  <thead  class="toggle-collapse" data-target="#indicador_<?= $llave_curso_periodo_area_carga_indicador ?>">
-                                                                    <tr class="table-active" style="font-weight: bold;font-size: 11px;text-align: center;padding: 5px;cursor:pointer;border-style: hidden;">
-                                                                      <td colspan="3"> ACTIVIDADES</td>
-                                                                    </tr>
-                                                                  </thead>
-                                                                  <?php foreach ($indicador['actividades'] as $actividad) { 
-                                                                    ?>
-                                                                    <tr style="height: 30px;font-size: 11px; ">
-                                                                      <td>
-                                                                        <span class="col-2"><?= $actividad['act_valor'] ?>%</span>
-                                                                      </td>
-                                                                      <td width="400px"
-                                                                        style="height: 30px;font-weight: lighter;font-size: 10px">
-                                                                        <?= $actividad['act_descripcion'] ?>
-                                                                      </td>
-                                                                      <td width="100px">
-                                                                        <input type="number" class="form-control" readonly
-                                                                          style="height: 25px;font-size: 12px;"
-                                                                          value="<?= $actividad['cal_nota'] ?>">
-                                                                      </td>
-                                                                    </tr>
-                                                                  <?php } ?>
-                                                                </table>
-
-                                                          </div>
-                                                        <?php } ?>
-                                                      </td>
-                                                    </tr>
-                                                  </tbody>                                                  
-                                                </table>
-                                          </div>
-                                        
-                                    <?php } ?>
-                                  </div> 
-                                </td>
-                                <td class="col-2"
-                                        style="height: 30px; font-weight: bold;font-size: 16px;vertical-align: middle;">
-                                        <input type="number" class="form-control"
-                                          style="height: 60px;font-size: 30px;" readonly
-                                          placeholder="<?= $area['periodos'][$periodo]["porcentaje_periodo"] ?>"
-                                          value="<?= $area['periodos'][$periodo]["porcentaje_periodo"] ?>">
-                                      </td>
-                              </tr>
-
-                            <?php } ?>
-
-                          </tbody>
-                        <?php } ?>
-                      </table>
-                      
-                  </div>
-                 
-                <?php } ?>
-              <?php } ?>
             </div>
-          </div>
-          <div class="col-2">
-            <table width="100%" cellspacing="5" cellpadding="5" rules="all" border="1">
-              <thead>
-                <tr style="font-weight:bold; text-align:center; background-color: #74cc82;">
-                  <td>ASING</td>
-                  <td>ACUM</td>
-                  <td>DEF</td>
-                </tr>
-              </thead>
-            </table>
           </div>
         </div>
 
@@ -432,48 +260,138 @@ try {
     <?php ?>
   <?php } ?>
   <script>
-document.addEventListener('click', function (event) { 
-  const toggler = event.target.closest('.toggle-collapse');
-  
-  if (toggler) {
-    event.preventDefault();
-    const targetId = toggler.getAttribute('data-target');
-    const targetElement = document.querySelector(targetId);
+    document.addEventListener('click', function (event) {
+      const toggler = event.target.closest('.toggle-collapse');
 
-    if (!targetElement) return;
+      if (toggler) {
+        event.preventDefault();
+        const targetId = toggler.getAttribute('data-target');
+        const targetElement = document.querySelector(targetId);
 
-    // Alterna la clase 'show' para activar la animación
-    targetElement.classList.toggle('show');
-  }
-});
-    function selecionarCurso(estudiante, curso, grupo) {
-      console.log('-Estudainte:' + estudiante + '-Cruso:' + curso + '-Grupo:' + grupo);
-      const elements = document.querySelectorAll(`[id*="h-${estudiante}"]`);
+        if (!targetElement) return;
+
+        // Alterna la clase 'show' para activar la animación
+        targetElement.classList.toggle('show');
+      }
+    });
+
+    async function selecionarCurso(estudiante, year, curso, grupo) {
+      console.log('-Estudainte:' + estudiante + ' -Año:' + year + ' -Cruso:' + curso + ' Grupo:' + grupo);
+
+      const elements = document.querySelectorAll(`[id*="btn-periodos-${estudiante}"]`);
+
+
       elements.forEach(element => {
+        const target = element.getAttribute('data-bs-target');
+        const llaves = target.split("-");
 
-        const llaves = element.href.split("-");
-        let periodo = llaves[7];
-        if (element.href.includes(estudiante)) {
-          let newPart = '#contend-' + estudiante + '-' + curso + '-' + grupo + '-' + periodo;
-          element.href = element.href = newPart;
+
+
+        let periodo = llaves[5];
+        if (target.includes(estudiante)) {
+          let newPart = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-' + periodo;
+          element.setAttribute('data-bs-target', newPart)
         }
+        const btnFinal = document.getElementById(`btn-${estudiante}-${year}-${curso}-${grupo}-final`);
+        //targe de la nota final
+        if (btnFinal) {
+          const targetFinal = btnFinal.getAttribute('data-bs-target');
+          if (targetFinal.includes(estudiante)) {
+            let newPart = '#contend-' + estudiante + '-' + year + '-' + curso + '-' + grupo + '-final';
+            btnFinal.setAttribute('data-bs-target', newPart)
+          }
+
+        }
+
       });
 
-      const tabLink = document.getElementById(`h-${estudiante}-1`);
+      // Simula un clic en el enlace de la pestaña
+      let otrosTabs = document.querySelectorAll(".panel-"+ estudiante);
+      otrosTabs.forEach(el => {
+        el.classList.remove("show", "active");
+      });
+
+      const tabLink = document.getElementById(`btn-periodos-${estudiante}-1`);
       // Simula un clic en el enlace de la pestaña
       if (tabLink) {
         tabLink.click();
       }
+
+      contendP1 = document.getElementById("contend-" + estudiante + '-' + year + '-' + curso + '-' + grupo + '-1');
+      if (contendP1 !== null && contendP1.children.length > 0) {
+        console.log("El contend tiene contenido.");
+      } else {        
+        try {
+          var overlay = document.getElementById("overlay");
+
+          if (overlay) {
+            document.getElementById("overlay").style.display = "flex";
+          }
+          var data = {
+            "estudiante": estudiante,
+            "year": year,
+            "grado": curso,
+            "grupo": grupo
+          };
+
+          resultado = await metodoFetchAsync("historial-notas-ajax.php", data, 'json', false);
+
+          resultData = resultado["data"];
+          if (resultData["ok"]) {
+            contend = document.getElementById("tab-content-"+ estudiante);
+            var sendData = {
+              "estudiante": estudiante,
+              "periodos": <?php echo $config['conf_periodos_maximos'] ?>,
+              "year": year,
+              "grado": curso,
+              "grupo": grupo,
+              "data": resultData["data"]
+            };
+            resultHtml = await metodoFetchAsync("historial-notas-periodos.php", sendData, 'html', false);
+            contend.insertAdjacentHTML("beforeend", resultHtml["data"]);
+            contendP1 = document.getElementById("contend-" + estudiante + '-' + year + '-' + curso + '-' + grupo + '-1');
+            contendP1.classList.add("show", "active");
+            if (overlay) {
+              document.getElementById("overlay").style.display = "none";
+            }
+            /*
+              contendFinal = document.getElementById(`contend-${estudiante}-${year}-${curso}-${grupo}-final`);
+  
+  
+              resultHtml = await metodoFetchAsync("historial-notas-final.php", sendData, 'html', false);
+              contendFinal.innerHTML = resultHtml["data"];*/
+          }
+
+
+        } catch (error) {
+          if (overlay) {
+            document.getElementById("overlay").style.display = "none";
+          }
+        }
+      }
+
+
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+      var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+      });
+    });
   </script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
     crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"
-    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"
+    integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB"
     crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
- <!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"
+    integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13"
+    crossorigin="anonymous"></script>
+
+  <!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
     integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
     crossorigin="anonymous"></script> -->
 
