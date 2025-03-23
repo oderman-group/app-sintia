@@ -34,7 +34,7 @@ abstract class BDT_Tablas implements BDT_Interface{
      * @return PDOStatement|false Un objeto PDOStatement que contiene los resultados de la consulta o false en caso de error.
      * @throws Exception Si ocurre un error al preparar la consulta.
      */
-    public static function Select(Array $predicado = [], $campos = '*', $bd = BD_ACADEMICA) {
+    public static function Select(Array $predicado = [], $campos = '*', $bd = BD_ACADEMICA,string $sqlfooter ="") {
         $conexionPDO = Conexion::newConnection('PDO');
         $where = '';
 
@@ -60,7 +60,7 @@ abstract class BDT_Tablas implements BDT_Interface{
         }
         
         try {
-            $consulta = "SELECT $campos FROM {$bd}.".static::$tableName." {$where}";
+            $consulta = "SELECT $campos FROM {$bd}.".static::$tableName." {$where} ".$sqlfooter;
             $stmt = $conexionPDO->prepare($consulta);
 
             if ($stmt) {
@@ -247,8 +247,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC); 
             return $result;
         } catch (PDOException  $e) {
-            echo "Excepción capturada: ". $e->getMessage();
-            return null;
+           throw new Exception("Excepción capturada: ". $e->getMessage());
         }
     }
 
@@ -344,9 +343,8 @@ abstract class BDT_Tablas implements BDT_Interface{
             \n
             {$orderBy} \n";
             return self::ejecutarSQL($consulta); ;
-        } catch (PDOException  $e) {
-            echo "Excepción capturada: ". $e->getMessage();
-            return null;
+        } catch (Exception  $e) {
+            throw new Exception("Excepción capturada: ". $e->getMessage());
         }
     }
 
