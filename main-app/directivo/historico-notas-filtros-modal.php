@@ -81,7 +81,6 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <div class="col-12">
                         <select class="form-control  select2" style="width:100%;" name="formato" id="tipoGeneracion">
                             <option value="1">Modo Edicion</option>
-                            <option value="2">Generar Excel</option>
                         </select>
 
 
@@ -226,8 +225,8 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     opcion['nombre_completo']
                 ]).draw();
 
-                checkTodos.checked = true;
-                seleccionarCheck('tablaEstudiantes', 'selecionado', 'lblCantSeleccionados', true);
+                // checkTodos.checked = true;
+                // seleccionarCheck('tablaEstudiantes', 'selecionado', 'lblCantSeleccionados', true);
                 $('#mensajeEstudiantes').hide();
                 document.getElementById('generarInforme').removeAttribute('disabled');
             });

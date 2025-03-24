@@ -12,12 +12,12 @@ require_once("../class/Informes.php");
 
 $num = 0;
 try {
-  $grado = $_POST["grado"];
-  $grupo = $_POST["grupo"];
-  $formato = $_POST["formato"];
-  $estudiantes = $_POST["estudiantes"];
-  $cPeriodo = $config['conf_periodos_maximos'];
-  $year = $_SESSION["bd"];
+  $grado        = $_POST["grado"];
+  $grupo        = $_POST["grupo"];
+  $formato      = $_POST["formato"];
+  $estudiantes  = $_POST["estudiantes"];
+  $cPeriodo     = $config['conf_periodos_maximos'];
+  $year         = $_SESSION["bd"];
 
   $periodos = [];
 
@@ -117,8 +117,6 @@ try {
   <!--Bootstrap-->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"  integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous"> -->
-  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" /> -->
 
 
 </head>
@@ -130,7 +128,26 @@ try {
 
   <?php
   include_once("sintia-funciones.php");
-
+  function retornarColor($valor, bool $recuperado = false)
+  {
+    $color = "";
+    $valor ??= 0;
+  
+    if ($valor <= 5) {
+      $color = "bg-danger";
+    } else if ($valor > 5 && $valor < 50) {
+      $color = "bg-warning";
+    } elseif ($valor > 50 && $valor < 99) {
+      $color = "";
+    } elseif ($valor >= 100) {
+      $color = "bg-success";
+    }
+    if ($recuperado) {
+      $color = "bg-success";
+    }
+  
+    return $color;
+  }
   //Instancia de Clases generales
   foreach ($listaEstudiantes as $estudiante) {
     ?>
@@ -299,9 +316,9 @@ try {
           }
           var data = {
             "estudiante": estudiante,
-            "year": year,
-            "grado": curso,
-            "grupo": grupo
+            "year"      : year,
+            "grado"     : curso,
+            "grupo"     : grupo
           };
 
           resultado = await metodoFetchAsync("historial-notas-ajax.php", data, 'json', false);
@@ -311,11 +328,11 @@ try {
             contend = document.getElementById("tab-content-" + estudiante);
             var sendData = {
               "estudiante": estudiante,
-              "periodos": <?php echo $config['conf_periodos_maximos'] ?>,
-              "year": year,
-              "grado": curso,
-              "grupo": grupo,
-              "data": resultData["data"]
+              "periodos"  : <?php echo $config['conf_periodos_maximos'] ?>,
+              "year"      : year,
+              "grado"     : curso,
+              "grupo"     : grupo,
+              "data"      : resultData["data"]
             };
             resultHtml = await metodoFetchAsync("historial-notas-periodos.php", sendData, 'html', false);
             contend.insertAdjacentHTML("beforeend", resultHtml["data"]);
@@ -357,8 +374,5 @@ try {
     integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13"
     crossorigin="anonymous"></script>
 
-  <!--    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
-    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-    crossorigin="anonymous"></script> -->
 
 </body>
