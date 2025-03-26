@@ -1,25 +1,6 @@
 <?php
 $active = "active";
-function retornarColor($valor, bool $recuperado = false)
-{
-	$color = "";
-	$valor ??= 0;
 
-	if ($valor <= 5) {
-		$color = "bg-danger";
-	} else if ($valor > 5 && $valor < 50) {
-		$color = "bg-warning";
-	} elseif ($valor > 50 && $valor < 99) {
-		$color = "";
-	} elseif ($valor >= 100) {
-		$color = "bg-success";
-	}
-	if ($recuperado) {
-		$color = "bg-success";
-	}
-
-	return $color;
-}
 $input = json_decode(file_get_contents("php://input"), true);
 if (!empty($input)) {
 	$datos = $input;
@@ -51,6 +32,27 @@ if (!empty($input)) {
 	include("session-compartida.php");
 	$tiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year)->fetch_all(MYSQLI_ASSOC);
 	$llave_curso_final = $estudiante["mat_id"] . "-" . $year . "-" . $grado . "-" . $grupo;
+
+	function retornarColor($valor, bool $recuperado = false)
+{
+	$color = "";
+	$valor ??= 0;
+
+	if ($valor <= 5) {
+		$color = "bg-danger";
+	} else if ($valor > 5 && $valor < 50) {
+		$color = "bg-warning";
+	} elseif ($valor > 50 && $valor < 99) {
+		$color = "";
+	} elseif ($valor >= 100) {
+		$color = "bg-success";
+	}
+	if ($recuperado) {
+		$color = "bg-success";
+	}
+
+	return $color;
+}
 
 }
 
@@ -267,7 +269,7 @@ if (!empty($input)) {
 																		id="indicador_<?= $llave_curso_periodo_area_carga_indicador ?>">
 																		<!-- ACTIVIDADES -->
 																		<table class="table table-striped table-bordered"
-																			style="border: darkgray;" width="100%" rules="all">
+																			 width="100%" rules="all">
 																			<thead class="toggle-collapse"
 																				data-target="#indicador_<?= $llave_curso_periodo_area_carga_indicador ?>">
 																				<tr class="table-active"
@@ -278,7 +280,7 @@ if (!empty($input)) {
 																			<?php foreach ($indicador['actividades'] as $actividad) {
 																				?>
 																				<tr style="height: 30px;font-size: 11px; ">
-																					<td>
+																					<td width="30px"> 
 																						<span class="col-2"><?= $actividad['act_valor'] ?>%</span>
 																					</td>
 																					<td width="400px"
