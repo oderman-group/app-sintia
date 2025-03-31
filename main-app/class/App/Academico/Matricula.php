@@ -48,7 +48,9 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
             "institucion"           => $_SESSION["idInstitucion"],
             "year"                  => $_SESSION["bd"],
             "mat_grado"             => $curso,
-            "mat_grupo"             => $grupo
+            "mat_grupo"             => $grupo,
+            "mat_eliminado"         => 0,            
+            self::OTHER_PREDICATE  => "(mat_estado_matricula=1 OR mat_estado_matricula=2)"
         ];
         $sql = parent::Select($predicado,$campos);
         $result = $sql->fetchAll(PDO::FETCH_ASSOC);
