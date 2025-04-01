@@ -167,7 +167,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
                                             <p align="center" <?= $induccionSabanas; ?>>
                                                 <?php for ($i = 1; $i < $carga["car_periodo"]; $i++) { ?><a
-                                                        href="../compartido/reportes-sabanas-fast.php?curso=<?= base64_encode($carga["car_curso"]); ?>&grupo=<?= base64_encode($carga["car_grupo"]); ?>&per=<?= base64_encode($i); ?>"
+                                                        href="../compartido/reportes-sabanas.php?curso=<?= base64_encode($carga["car_curso"]); ?>&grupo=<?= base64_encode($carga["car_grupo"]); ?>&per=<?= base64_encode($i); ?>"
                                                         target="_blank" style="text-decoration:underline; color:#00F;"
                                                         title="Sabanas"><?= $i; ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<?php } ?>
                                             </p>

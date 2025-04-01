@@ -102,28 +102,28 @@
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="text" value="<?=$usuarioPerfil["uss_nombre"];?>" name="nombre" class="form-control" <?php if($usuarioPerfil['uss_tipo']==4) echo "readonly"; else echo "required";?> style="text-transform: uppercase;">
+                                                <input type="text" value="<?=$usuarioPerfil["uss_nombre"];?>" name="nombre" class="form-control" <?= $usuarioPerfil['uss_tipo'] == TIPO_ESTUDIANTE ? "readonly" : "required";?> style="text-transform: uppercase;">
                                             </div>
                                         </div>
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Otro Nombre</label>
                                             <div class="col-sm-4">
-                                                <input type="text" value="<?=$usuarioPerfil["uss_nombre2"];?>" name="nombre2" class="form-control" style="text-transform: uppercase;">
+                                                <input type="text" value="<?=$usuarioPerfil["uss_nombre2"];?>" name="nombre2" class="form-control"  <?= $usuarioPerfil['uss_tipo'] == TIPO_ESTUDIANTE ? "readonly" : "";?> style="text-transform: uppercase;">
                                             </div>
                                         </div>
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Primer Apellido <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="text" value="<?=$usuarioPerfil["uss_apellido1"];?>" name="apellido1" class="form-control" <?php if($usuarioPerfil['uss_tipo']==4) echo "readonly"; else echo "required";?> style="text-transform: uppercase;">
+                                                <input type="text" value="<?=$usuarioPerfil["uss_apellido1"];?>" name="apellido1" class="form-control" <?= $usuarioPerfil['uss_tipo'] == TIPO_ESTUDIANTE ? "readonly" : "required";?> style="text-transform: uppercase;">
                                             </div>
                                         </div>
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Segundo Apellido</label>
                                             <div class="col-sm-4">
-                                                <input type="text" value="<?=$usuarioPerfil["uss_apellido2"];?>" name="apellido2" class="form-control" style="text-transform: uppercase;">
+                                                <input type="text" value="<?=$usuarioPerfil["uss_apellido2"];?>" name="apellido2" class="form-control" <?= $usuarioPerfil['uss_tipo'] == TIPO_ESTUDIANTE ? "readonly" : "";?> style="text-transform: uppercase;">
                                             </div>
                                         </div>
 
