@@ -48,6 +48,12 @@ if (!empty($_GET["grupo"])) {
 }
 
 $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
+
+$tiposNotas = [];
+$cosnultaTiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year);
+while ($row = $cosnultaTiposNotas->fetch_assoc()) {
+	$tiposNotas[] = $row;
+}
 ?>
 
 <head>
@@ -151,14 +157,9 @@ $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
 					else $color = '#417BC4';
 					$suma = ($suma + $defini);
 
-					$notaFinalTotal = $notaFinal;
-					$title = '';
-					if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-						$title = 'title="Nota Cuantitativa: ' . $notaFinal . '"';
-						$notaFinalTotal = !empty($mat1['notip_nombre']) ? $mat1['notip_nombre'] : "";
-					}
+					$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $notaFinal . '"' : '';
 				?>
-					<td align="center" style="color:<?= $color; ?>;" <?= $title; ?>><?= $notaFinalTotal; ?></td>
+					<td align="center" style="color:<?= $color; ?>;" <?= $title; ?>><?=  Boletin::formatoNota($notaFinal, $tiposNotas); ?></td>
 				<?php
 				}
 				if ($numero > 0) {
@@ -174,15 +175,9 @@ $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
 				$notas1[$cont] = $def;
 				$grupo1[$cont] = $nombre;
 
-				$defTotal = $def;
-				$title = '';
-				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-					$title = 'title="Nota Cuantitativa: ' . $def . '"';
-					$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $def, $year);
-					$defTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-				}
+				$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $def . '"' : '';
 				?>
-				<td align="center" style="font-weight:bold; color:<?= $color; ?>;" <?= $title; ?>><?= $defTotal; ?></td>
+				<td align="center" style="font-weight:bold; color:<?= $color; ?>;" <?= $title; ?>><?=  Boletin::formatoNota($def, $tiposNotas); ?></td>
 			</tr>
 		<?php
 			$cont++;
@@ -232,18 +227,12 @@ $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
 					break;
 				}
 
-				$valTotal = $val;
-				$title = '';
-				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-					$title = 'title="Nota Cuantitativa: ' . $val . '"';
-					$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $val, $year);
-					$valTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-				}
+				$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $val . '"' : '';
 		?>
 				<tr style="border-color:#41c4c4; background-color:<?= $color; ?>">
 					<td align="center"><?= $j; ?></td>
 					<td><?= $grupo1[$key]; ?></td>
-					<td align="center" <?= $title; ?>><?= $valTotal; ?></td>
+					<td align="center" <?= $title; ?>><?=  Boletin::formatoNota($val, $tiposNotas); ?></td>
 					<td align="center"><?= $puesto; ?></td>
 				</tr>
 		<?php

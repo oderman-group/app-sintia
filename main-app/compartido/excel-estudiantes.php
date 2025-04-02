@@ -110,7 +110,7 @@ while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
 
             <td><?=$datosA['ogen_nombre'] ?? "";?></td>
             <td><?=$datosA['uss_documento'] ?? "";?></td>
-            <td align="center"><?php UsuariosPadre::nombreCompletoDelUsuario($datosA); ?></td>
+            <td align="center"><?= UsuariosPadre::nombreCompletoDelUsuario($datosA); ?></td>
             <td><?= !empty($datosA['uss_email']) ? strtolower($datosA['uss_email']) : "";?></td>
             
             <?php
@@ -120,7 +120,7 @@ while($resultado=mysqli_fetch_array($consulta, MYSQLI_BOTH))
             ?>
                     <td><?=$datosA2['ogen_nombre'] ?? "";?></td>
                     <td><?=$datosA2['uss_documento'] ?? "";?></td>
-                    <td align="center"><?php UsuariosPadre::nombreCompletoDelUsuario($datosA2); ?></td>
+                    <td align="center"><?= UsuariosPadre::nombreCompletoDelUsuario($datosA2); ?></td>
                     <td><?= !empty($datosA2['uss_email']) ? strtolower($datosA2['uss_email']) : "";?></td>
             <?php }?>
         </tr>   
