@@ -220,6 +220,18 @@
                         </div>
                     </div>
 
+                    <div class="form-group row">
+                        <label class="col-sm-3 control-label">Mostrar campo para firma e inasistencia en planilla de docentes con notas<span style="color: red;">(*)</span>
+                        <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta opción permite mostrar campo para firma e inasistencia en planilla de docentes con notas."><i class="fa fa-info"></i></button> 
+                        </label>
+                        <div class="col-sm-8">
+                            <select class="form-control col-sm-3" name="firmaAsistencia" <?=$disabledPermiso;?>>
+                                <option value="<?=SI?>" <?=$datosConfiguracion['conf_firma_inasistencia_planilla_notas_doc'] == SI ? "selected" : ""; ?> >SI</option>
+                                <option value="<?=NO?>" <?=$datosConfiguracion['conf_firma_inasistencia_planilla_notas_doc'] == NO ? "selected" : ""; ?> >NO</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <?php $botones = new botonesGuardar("dev-instituciones.php",Modulos::validarPermisoEdicion() || $datosUsuarioActual['uss_tipo'] == TIPO_DEV); ?>
                 </form>
             </div>
