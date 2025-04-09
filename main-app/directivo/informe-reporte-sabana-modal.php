@@ -15,7 +15,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 <div class="panel">
     <header class="panel-heading panel-heading-purple">POR CURSO </header>
     <div class="panel-body">
-        <form name="formularioGuardar" action="../compartido/reportes-sabanas.php" method="post" target="_blank">
+        <form name="formularioGuardar" action="../compartido/reportes-sabanas-fast.php" method="post" target="_blank">
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Curso</label>
                 <div class="col-sm-8">
