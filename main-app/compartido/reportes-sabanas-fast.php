@@ -75,7 +75,7 @@ if (!empty($curso) && !empty($grupo) && !empty($year)) {
 $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
 
 $numeroMaterias = 0;
-$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo, $year, "", "ar_posicion");
+$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo, $year, "", "ar_posicion,car_id");
 while ($row = $materias1->fetch_assoc()) {
 	$materias[$row["car_id"]] = $row;
 	$numeroMaterias ++;
