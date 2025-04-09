@@ -61,19 +61,20 @@ if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_PREFERENCIAS) {
 }
 
 if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_INFORMES) {
-    $datos["conf_formato_boletin"]                     = $_POST["formatoBoletin"];
-    $datos["conf_estampilla_certificados"]             = $_POST["estampilla"];
-    $datos["conf_libro_final"]                         = $_POST["libroFinal"];
-    $datos["conf_mostrar_encabezado_informes"]         = $_POST["mostrarEncabezadoInformes"];
-    $datos["conf_firma_estudiante_informe_asistencia"] = $_POST["firmaEstudiante"];
-    $datos["conf_certificado"]                         = $_POST["certificado"];
-    $datos["conf_mostrar_nombre"]                      = $_POST["mostrarNombre"];
-    $datos["conf_alto_imagen"]                         = $_POST["logoAlto"];
-    $datos["conf_ancho_imagen"]                        = $_POST["logoAncho"];
-    $datos["conf_fecha_parcial"]                       = $_POST["fechapa"];
-    $datos["conf_descripcion_parcial"]                 = $_POST["descrip"];
-    $datos["conf_reporte_sabanas_nota_indocador"]      = $_POST["notasReporteSabanas"];
-    $datos["conf_promedio_libro_final"]                = $_POST["promedioLibroFinal"];
+    $datos["conf_formato_boletin"]                          = $_POST["formatoBoletin"];
+    $datos["conf_estampilla_certificados"]                  = $_POST["estampilla"];
+    $datos["conf_libro_final"]                              = $_POST["libroFinal"];
+    $datos["conf_mostrar_encabezado_informes"]              = $_POST["mostrarEncabezadoInformes"];
+    $datos["conf_firma_estudiante_informe_asistencia"]      = $_POST["firmaEstudiante"];
+    $datos["conf_certificado"]                              = $_POST["certificado"];
+    $datos["conf_mostrar_nombre"]                           = $_POST["mostrarNombre"];
+    $datos["conf_alto_imagen"]                              = $_POST["logoAlto"];
+    $datos["conf_ancho_imagen"]                             = $_POST["logoAncho"];
+    $datos["conf_fecha_parcial"]                            = $_POST["fechapa"];
+    $datos["conf_descripcion_parcial"]                      = $_POST["descrip"];
+    $datos["conf_reporte_sabanas_nota_indocador"]           = $_POST["notasReporteSabanas"];
+    $datos["conf_promedio_libro_final"]                     = $_POST["promedioLibroFinal"];
+    $datos["conf_firma_inasistencia_planilla_notas_doc"]    = $_POST["firmaAsistencia"];
 
     $tabActual = "#informes";
 }

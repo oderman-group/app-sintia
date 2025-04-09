@@ -40,7 +40,7 @@ if(!empty($_REQUEST["grupo"])){
     $filtro .= " AND mat_grupo='".base64_decode($_REQUEST["grupo"])."'";
 }
 
-$estudiantesCache = 'estudiantes_' . base64_decode($_REQUEST["curso"]) . '_' .base64_decode($_REQUEST["grupo"]) . '_P' .$periodoActual. '.json';
+$estudiantesCache = 'estudiantes_' . $_SESSION["idInstitucion"] . '_' . $year . '_' . base64_decode($_REQUEST["curso"]) . '_' .base64_decode($_REQUEST["grupo"]) . '_P' .$periodoActual. '.json';
 
 if (!empty($_GET["id"])) {
 
