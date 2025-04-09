@@ -221,7 +221,7 @@
                     </div>
 
                     <div class="form-group row">
-                        <label class="col-sm-3 control-label">Mostrar campos planilla con notas<span style="color: red;">(*)</span>
+                        <label class="col-sm-3 control-label">Mostrar columnas de inasistencia<span style="color: red;">(*)</span>
                         <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta opción permite mostrar campo para la firma del docente e inasistencias en planilla de docentes con notas."><i class="fa fa-info"></i></button> 
                         </label>
                         <div class="col-sm-8">
