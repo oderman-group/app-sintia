@@ -271,7 +271,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                     '&tipoGrado='.base64_encode($carga["gra_tipo"]);
                                                     
                                                     ?>
-                                                <div class="btn-group mt-2">
+                                                <div class="btn-group mt-2" style="width: 90%;">
                                                     <button type="button" class="btn red">Generar Informe</button>
                                                     <button type="button" class="btn red dropdown-toggle m-r-20" data-toggle="dropdown">
                                                         <i class="fa fa-angle-down"></i>
