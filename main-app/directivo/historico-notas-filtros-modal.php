@@ -187,6 +187,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             });
             grupos.removeAttribute('disabled');
             $('#mensajeGrupos').hide();
+        }else{
+            $('#mensajeGrupos').text(resultData["msg"]);
+            $('#mensajeGrupos').css('color', 'red');
         }
     }
 
