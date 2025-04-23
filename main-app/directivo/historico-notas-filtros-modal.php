@@ -230,6 +230,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 $('#mensajeEstudiantes').hide();
                 document.getElementById('generarInforme').removeAttribute('disabled');
             });
+        }else{
+            $('#mensajeEstudiantes').text(resultData["msg"]);
+            $('#mensajeEstudiantes').css('color', 'red');
         }
     }
 </script>
