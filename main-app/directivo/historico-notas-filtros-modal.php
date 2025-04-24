@@ -187,6 +187,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             });
             grupos.removeAttribute('disabled');
             $('#mensajeGrupos').hide();
+        }else{
+            $('#mensajeGrupos').text(resultData["msg"]);
+            $('#mensajeGrupos').css('color', 'red');
         }
     }
 
@@ -230,6 +233,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 $('#mensajeEstudiantes').hide();
                 document.getElementById('generarInforme').removeAttribute('disabled');
             });
+        }else{
+            $('#mensajeEstudiantes').text(resultData["msg"]);
+            $('#mensajeEstudiantes').css('color', 'red');
         }
     }
 </script>

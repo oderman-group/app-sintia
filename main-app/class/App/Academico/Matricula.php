@@ -40,7 +40,7 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
         return $sql->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public static function listarEsdutiantes($curso, $grupo){
+    public static function listarEsdutiantes(string $curso, string $grupo){
         $campos     = "mat_id,mat_grado,mat_grupo,mat_nombres,mat_nombre2,mat_primer_apellido,mat_segundo_apellido,mat_documento"; 
         $predicado =
         [
@@ -50,7 +50,7 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
             "mat_grado"             => $curso,
             "mat_grupo"             => $grupo,
             "mat_eliminado"         => 0,            
-            self::OTHER_PREDICATE  => "(mat_estado_matricula=1 OR mat_estado_matricula=2)"
+            self::OTHER_PREDICATE  => "(mat_estado_matricula=".MATRICULADO." OR mat_estado_matricula=".ASISTENTE.")"
         ];
         $sql = parent::Select($predicado,$campos);
         $result = $sql->fetchAll(PDO::FETCH_ASSOC);

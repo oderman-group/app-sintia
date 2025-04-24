@@ -18,8 +18,12 @@ try {
     $listadoGrupos = Matricula::listarEsdutiantes($cursosSelect, $gruposSelect);
     if ($listadoGrupos) {
         $response["result"] = $listadoGrupos;
+        $response["ok"] = true;
+    }else{
+        $response["ok"] = false;
+        $response["msg"] = 'No se encontraron estudiantes matriculados en el curso '.$cursosSelect.' con el grupo '.$gruposSelect. ' para el año '.$_SESSION["bd"];
     }
-    $response["ok"] = true;
+    
 } catch (Exception $e) {
     $response["ok"] = false;
     $response["msg"] = $e;

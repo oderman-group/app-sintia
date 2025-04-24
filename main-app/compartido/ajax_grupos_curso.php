@@ -20,9 +20,13 @@ try {
 
     if ($listadoGrupos) {
         $response['result'] = $listadoGrupos;
+        $response['ok'] = true;
+    }else{
+        $response['ok'] = false;
+        $response['msg'] = 'No se encontraron Grupos para el curso '.$_POST['cursos'].' en el año '.$_SESSION["bd"];
     }
 
-    $response['ok'] = true;
+    
 } catch (Exception $e) {
     $response['ok'] = false;
     $response['msg'] = $e;
