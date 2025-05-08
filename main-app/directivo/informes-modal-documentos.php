@@ -35,7 +35,7 @@ $modaInfo = new ComponenteModal('informacion', $frases[115][$datosUsuarioActual[
 <div class="col-sm-12">
     <?php include("../../config-general/mensajes-informativos.php"); ?>
     <div class="panel">
-        <form name="formularioGuardar" action="informes-documentos-matricula.php" method="post" target="_blank">
+        <form name="formularioGuardar" action="../compartido/informes-documentos-inscripcion.php" method="post" target="_blank">
             <div class="form-group row">
                 <div class="col-sm-8">
                     <label for="selectEstudiantes" class="control-label">Seleccione el estudiante</label>
