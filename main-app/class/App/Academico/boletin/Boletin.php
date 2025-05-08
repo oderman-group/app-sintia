@@ -57,12 +57,12 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
 
         $predicados =
             [
-                $clasePrincipal::$tableAs . ".mat_grado" => "'".$grado."'",
-                $clasePrincipal::$tableAs . ".mat_grupo" => "'".$grupo."'",
-                $clasePrincipal::$tableAs . ".institucion" => $_SESSION["idInstitucion"],
-                $clasePrincipal::$tableAs . ".year" => "'".$year."'",
-                $clasePrincipal::$tableAs . ".mat_eliminado" => 0,
-                $clasePrincipal::$tableAs . ".bol_periodo IN" => "(" . $in_periodos2 . ")",
+                "mat_grado" => "'".$grado."'",
+                "mat_grupo" => "'".$grupo."'",
+                "institucion" => $_SESSION["idInstitucion"],
+                "year" => "'".$year."'",
+                "mat_eliminado" => 0,
+                "bol_periodo IN" => "(" . $in_periodos2 . ")",
                 "AND" => $clasePrincipal::$tableAs . '.mat_estado_matricula = ' . MATRICULADO . ' OR ' . $clasePrincipal::$tableAs . '.mat_estado_matricula=' . ASISTENTE
             ];
         if (!empty($andAdicional)) {
@@ -79,8 +79,9 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         $result = parent::SelectJoin(
             $predicados,
             $campos,
-            $clasePrincipal,
             $listaClases,
+            '',
+            '',
             '',
             $order
         );
