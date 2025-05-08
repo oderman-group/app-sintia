@@ -46,7 +46,7 @@ include("../compartido/head.php");
 		<img src="../files/images/logo/<?= $informacion_inst["info_logo"] ?>" width="200"><br>
 		<div>&nbsp;</div>
 		<?= $informacion_inst["info_nombre"] ?><br>
-		<b><?=$datosDocumentos['matd_pazysalvo'] . " - " . Estudiantes::NombreCompletoDelEstudiante($datosDocumentos);?></b>
+		<b><?=$datosDocumentos['matd_matricula'] . " - " . Estudiantes::NombreCompletoDelEstudiante($datosDocumentos);?></b>
 		</br>
 	</div>
 
