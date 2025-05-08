@@ -234,6 +234,22 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                 	</div>
 								</div>
 								<?php }?>
+
+								<?php if(Modulos::verificarModulosDeInstitucion($_SESSION["idInstitucion"], Modulos::MODULO_ADMISIONES) && Modulos::validarSubRol(['DT0347'])){?>
+									<div class="col-md-4">
+										<div class="panel">
+											<header class="panel-heading panel-heading-red">INFORMES DE INSCRIPCIÓN</header>
+											<div class="panel-body">
+												<?php 
+													if(Modulos::validarSubRol(['DT0347'])){
+													$modalInsDocumentos = new ComponenteModal('insDocumentos','Documentos de Inscripción','../directivo/informes-modal-documentos.php');
+                                                ?>
+													<p><a href="javascript:void(0);"  onclick="<?=$modalInsDocumentos->getMetodoAbrirModal()?>"  >1. Documentos de Inscripción</a></p>
+												<?php }?>
+											</div>
+										</div>
+									</div>
+								<?php }?>
                             </div>
                         </div>
                     </div>
