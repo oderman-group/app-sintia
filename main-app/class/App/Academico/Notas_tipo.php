@@ -9,7 +9,7 @@ class Notas_tipo extends BDT_Tablas implements BDT_JoinImplements
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'academico_notas_tipos';
-    public static $tableAs = 'notip';
+    public  static $tableAs = 'notip';
 
     use BDT_Join;
 
