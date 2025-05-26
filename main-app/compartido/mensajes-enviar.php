@@ -5,6 +5,8 @@ $idPaginaInterna = 'CM0040';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
+require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Social_Email.php");
 $usuariosClase = new UsuariosFunciones;
 
 try{
@@ -23,8 +25,21 @@ while ($i < $cont) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
 
+    $datos = [
+        'ema_de'             => $_SESSION["id"],
+        'ema_para'           => $_POST["para"][$i],
+        'ema_asunto'         => mysqli_real_escape_string($conexion,$_POST["asunto"]),
+        'ema_contenido'      => mysqli_real_escape_string($conexion,$_POST["contenido"]),
+        'ema_fecha'          => date("Y-m-d h:i:s"),
+        'ema_visto'          => 0,
+        'ema_eliminado_de'   => 0,
+        'ema_eliminado_para' => 0,
+        'ema_institucion'    => $config['conf_id_institucion'],
+        'ema_year'           => $_SESSION["bd"]
+    ];
+
     try{
-        mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_emails(ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto, ema_eliminado_de, ema_eliminado_para, ema_institucion, ema_year) VALUES('" . $_SESSION["id"] . "', '" . $_POST["para"][$i] . "', '" . mysqli_real_escape_string($conexion,$_POST["asunto"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', now(), 0, 0, 0,'" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "')");
+        Comunicativo_Social_Email::Insert($datos, BD_ADMIN);
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
