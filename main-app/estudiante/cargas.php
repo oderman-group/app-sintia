@@ -121,7 +121,7 @@ if($config['conf_activar_encuesta']==1){
 		                            <div class="text-muted">
 										<span class="m-r-10" style="font-size: 10px;"><?=$ultimoAcceso;?></span> 
 										
-		                            	<?php if($datosUsuarioActual['uss_bloqueado']!=1 and $config['conf_sin_nota_numerica']!=1){?><a class="course-likes m-l-10" href="#"> <?=$definitivaFinal;?></a><?php }?>
+		                            	<?php if($datosUsuarioActual['uss_bloqueado'] != 1 && $config['conf_sin_nota_numerica'] != 1 && $config['conf_mostrar_calificaciones_estudiantes'] == 1){?><a class="course-likes m-l-10" href="#"> <?=$definitivaFinal;?></a><?php }?>
 										
 		                            </div>
 		                            <p><span><i class="fa fa-clock-o"></i> <?=$frases[101][$datosUsuarioActual['uss_idioma']];?>: <?=$rCargas['car_periodo'];?></span></p>
@@ -183,7 +183,7 @@ if($config['conf_activar_encuesta']==1){
 											<div class="text-muted">
 												<span class="m-r-10" style="font-size: 10px;"><?= $ultimoAcceso; ?></span>
 
-												<?php if ($datosUsuarioActual['uss_bloqueado'] != 1 and $config['conf_sin_nota_numerica'] != 1) { ?><a class="course-likes m-l-10" href="#"> <?= $definitiva; ?></a><?php } ?>
+												<?php if ($datosUsuarioActual['uss_bloqueado'] != 1 && $config['conf_sin_nota_numerica'] != 1 && $config['conf_mostrar_calificaciones_estudiantes'] == 1) { ?><a class="course-likes m-l-10" href="#"> <?= $definitiva; ?></a><?php } ?>
 
 											</div>
 											<p><span><i class="fa fa-clock-o"></i> <?= $frases[101][$datosUsuarioActual['uss_idioma']]; ?>: <?= $cargaMediaTecnica['car_periodo']; ?></span></p>

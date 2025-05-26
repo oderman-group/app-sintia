@@ -16,11 +16,44 @@ require_once(ROOT_PATH . "/main-app/class/Grados.php");
 require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php");
 
 $year = $_SESSION["bd"];
-if (isset($_POST["year"])) {
+if (!empty($_POST["year"])) {
 	$year = $_POST["year"];
 }
+if (!empty($_GET["year"])) {
+	$year = base64_decode($_GET["year"]);
+}
 
-$grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grupo"], $year);
+$periodoActual = 1;
+if (!empty($_POST["per"])) {
+	$periodoActual = $_POST["per"];
+} 
+if (!empty($_GET["per"])) {
+	$periodoActual = base64_decode($_GET["per"]);
+} 
+
+$curso = "";
+if (!empty($_POST["curso"])) {
+	$curso = $_POST["curso"];
+}
+if (!empty($_GET["curso"])) {
+	$curso = base64_decode($_GET["curso"]);
+}
+
+$grupo = 1;
+if (!empty($_POST["grupo"])) {
+	$grupo = $_POST["grupo"];
+}
+if (!empty($_GET["grupo"])) {
+	$grupo = base64_decode($_GET["grupo"]);
+}
+
+$grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
+
+$tiposNotas = [];
+$cosnultaTiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year);
+while ($row = $cosnultaTiposNotas->fetch_assoc()) {
+	$tiposNotas[] = $row;
+}
 ?>
 
 <head>
@@ -31,7 +64,7 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 
 <body style="font-family:Arial;">
 	<?php
-	$nombreInforme = "INFORME DE SABANAS" . "<br>" . "PERIDODO " . $_REQUEST["per"] . "<br>" . $grados["gra_nombre"] . " " . $grados["gru_nombre"] . " " . $year;
+	$nombreInforme = "INFORME DE SABANAS" . "<br>" . "PERIDODO " . $periodoActual . "<br>" . $grados["gra_nombre"] . " " . $grados["gru_nombre"] . " " . $year;
 	include("../compartido/head-informes.php") ?>
 
 
@@ -42,7 +75,7 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 			<td align="center">Estudiante</td>
 			<?php
 			$numero = 0;
-			$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $_REQUEST["curso"], $_REQUEST["grupo"], $year);
+			$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo, $year);
 			while ($mat1 = mysqli_fetch_array($materias1, MYSQLI_BOTH)) {
 			?>
 				<td align="center"><?= $mat1['mat_siglas']; ?></td>
@@ -54,8 +87,8 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 		</tr>
 		<?php
 		$cont = 1;
-		$filtroAdicional= "AND mat_grado='".$_REQUEST["curso"]."' AND mat_grupo='".$_REQUEST["grupo"]."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
-		$asig =Estudiantes::listarEstudiantesEnGrados($filtroAdicional, "", $grados, $_REQUEST["grupo"], $year);
+		$filtroAdicional= "AND mat_grado='".$curso."' AND mat_grupo='".$grupo."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
+		$asig =Estudiantes::listarEstudiantesEnGrados($filtroAdicional, "", $grados, $grupo, $year);
 		while ($fila = mysqli_fetch_array($asig, MYSQLI_BOTH)) {
 			$nombre = Estudiantes::NombreCompletoDelEstudiante($fila);
 			$def = '0.0';
@@ -68,7 +101,7 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 
 				<?php
 				$suma = 0;
-				$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $_REQUEST["curso"], $_REQUEST["grupo"], $year);
+				$materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo, $year);
 				while ($mat1 = mysqli_fetch_array($materias1, MYSQLI_BOTH)) {
 
 					$materias2 = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin 
@@ -76,7 +109,7 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 					AND bol_estudiante='". $fila['mat_id']. "' 
 					AND year={$year} 
 					AND institucion={$config['conf_id_institucion']} 
-					AND bol_periodo='". $_REQUEST["per"]. "'
+					AND bol_periodo='". $periodoActual. "'
 					");
 
 					$materias2Data = mysqli_fetch_array($materias2, MYSQLI_BOTH);
@@ -96,7 +129,7 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 						INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON aic.ipc_indicador=ai.ind_id AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$year}
 						INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo=aic.ipc_indicador AND act_id_carga=car_id AND act_estado=1 AND act_registrada=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$year}
 						INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$year}
-						WHERE car_curso='".$_REQUEST["curso"]."'  and car_grupo='".$_REQUEST["grupo"]."' and mat_id='".$mat1['car_materia']."'  AND ipc_periodo='".$_REQUEST["per"]."' AND cal_id_estudiante='".$fila['mat_id']."' and act_periodo='".$_REQUEST["per"]."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
+						WHERE car_curso='".$curso."'  and car_grupo='".$grupo."' and mat_id='".$mat1['car_materia']."'  AND ipc_periodo='".$periodoActual."' AND cal_id_estudiante='".$fila['mat_id']."' and act_periodo='".$periodoActual."' AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
 						group by act_id_tipo, act_id_carga
 						order by mat_id,ipc_periodo,ind_id;");
 
@@ -124,14 +157,9 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 					else $color = '#417BC4';
 					$suma = ($suma + $defini);
 
-					$notaFinalTotal = $notaFinal;
-					$title = '';
-					if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-						$title = 'title="Nota Cuantitativa: ' . $notaFinal . '"';
-						$notaFinalTotal = !empty($mat1['notip_nombre']) ? $mat1['notip_nombre'] : "";
-					}
+					$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $notaFinal . '"' : '';
 				?>
-					<td align="center" style="color:<?= $color; ?>;" <?= $title; ?>><?= $notaFinalTotal; ?></td>
+					<td align="center" style="color:<?= $color; ?>;" <?= $title; ?>><?=  Boletin::formatoNota($notaFinal, $tiposNotas); ?></td>
 				<?php
 				}
 				if ($numero > 0) {
@@ -147,15 +175,9 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 				$notas1[$cont] = $def;
 				$grupo1[$cont] = $nombre;
 
-				$defTotal = $def;
-				$title = '';
-				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-					$title = 'title="Nota Cuantitativa: ' . $def . '"';
-					$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $def, $year);
-					$defTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-				}
+				$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $def . '"' : '';
 				?>
-				<td align="center" style="font-weight:bold; color:<?= $color; ?>;" <?= $title; ?>><?= $defTotal; ?></td>
+				<td align="center" style="font-weight:bold; color:<?= $color; ?>;" <?= $title; ?>><?=  Boletin::formatoNota($def, $tiposNotas); ?></td>
 			</tr>
 		<?php
 			$cont++;
@@ -205,18 +227,12 @@ $grados = Grados::traerGradosGrupos($config, $_REQUEST["curso"], $_REQUEST["grup
 					break;
 				}
 
-				$valTotal = $val;
-				$title = '';
-				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-					$title = 'title="Nota Cuantitativa: ' . $val . '"';
-					$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $val, $year);
-					$valTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-				}
+				$title = $config['conf_forma_mostrar_notas'] == CUALITATIVA ? 'title="Nota Cuantitativa: ' . $val . '"' : '';
 		?>
 				<tr style="border-color:#41c4c4; background-color:<?= $color; ?>">
 					<td align="center"><?= $j; ?></td>
 					<td><?= $grupo1[$key]; ?></td>
-					<td align="center" <?= $title; ?>><?= $valTotal; ?></td>
+					<td align="center" <?= $title; ?>><?=  Boletin::formatoNota($val, $tiposNotas); ?></td>
 					<td align="center"><?= $puesto; ?></td>
 				</tr>
 		<?php

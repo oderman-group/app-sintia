@@ -97,12 +97,14 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
     <table bgcolor="#FFFFFF" width="100%" cellspacing="0" cellpadding="0" rules="all" border="1">
       <tr style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; border-color:#4c9858; height:20px; color:#FFF; font-size:12px;">
-        <td align="center" width="15%" colspan="3">Información del Estudiante</td>
+        <td align="center" width="5%" colspan="3">Información del Estudiante</td>
         <td width="10%" colspan="5" align="center">Resumen de Periodos</td>
-        <td width="10%" colspan="15" align="center">TEMAS</td>
-        <td align="center" width="3%">Auto</td>
-        <td align="center" width="3%">Coo</td>
-        <td colspan="7" width="2%"></td>
+        <td width="78%" colspan="15" align="center">TEMAS</td>
+        <td align="center" class="vertical" width="1%">Auto</td>
+        <td align="center" class="vertical" width="1%">Coo</td>
+        <?php if($config['conf_firma_inasistencia_planilla_notas_doc'] == SI) { ?>
+          <td colspan="7" width="5%"></td>
+        <?php } ?>
       </tr>
 
       <tr style="height:150px; font-weight:bold; font-size:12px;">
@@ -112,24 +114,28 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
       <?php
         for($i=1;$i<=4;$i++){
       ?>
-        <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;" width="2%"><?= $i.". ".$materiaSiglas; ?></td>
+        <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;"><?= $i.". ".$materiaSiglas; ?></td>
       <?php
         }
       ?>
-        <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;" width="2%" title="Representa la suma de definitivas de cada periodo dividido sobre el periodo actual global, en el que está la Institución.">FINAL <?= $materiaSiglas; ?></td>
+        <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;" title="Representa la suma de definitivas de cada periodo dividido sobre el periodo actual global, en el que está la Institución.">FINAL <?= $materiaSiglas; ?></td>
       <?php
         for($i=1;$i<=17;$i++){
       ?>
-        <td align="center" width="2%">&nbsp;</td>
+        <td align="center">&nbsp;</td>
       <?php
         }
       ?>
-        <td colspan="7" align="center">______________________<br> Firma Docente</td>
+        <?php if($config['conf_firma_inasistencia_planilla_notas_doc'] == SI) { ?>
+          <td colspan="7" align="center">______________________<br> Firma Docente</td>
+        <?php } ?>
       </tr>
 
       <tr style="font-weight:bold; font-size:12px; height:35px; background:<?=$Plataforma->colorUno;?>; border-color:#4c9858; color:#FFF;">
-        <td align="center" colspan="17" width="2%">NOTAS</td>
-        <td align="center" colspan="7">Inasistencia</td>
+        <td align="center" colspan="17">NOTAS</td>
+        <?php if($config['conf_firma_inasistencia_planilla_notas_doc'] == SI) { ?>
+          <td align="center" colspan="7">Inasistencia</td>
+        <?php } ?>
         <?php
           $estudiantes = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($resultadoCargas);
 
@@ -139,9 +145,9 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
         ?>
 
       <tr style="font-size:10px; height:25px;">
-        <td align="center" width="2%"><?= $n; ?></td>
-        <td align="center" width="5%"><?= $e['mat_id']; ?></td>
-        <td width="20%"><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
+        <td align="center"><?= $n; ?></td>
+        <td align="center"><?= $e['mat_id']; ?></td>
+        <td><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
       <?php
         $acomuladoNota=0;
         for($i=1;$i<=4;$i++){
@@ -166,7 +172,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
             $notaEstudianteFinal= !empty($estiloNotaEstudiante['notip_nombre']) ? $estiloNotaEstudiante['notip_nombre'] : "";
           }
       ?>
-        <td align="center" <?=$estiloNota?> <?=$title;?> width="3%"><?=$notaEstudianteFinal?></td>
+        <td align="center" <?=$estiloNota?> <?=$title;?> ><?=$notaEstudianteFinal?></td>
       <?php
           // $acomuladoNota+=$notaEstudiante;
         }
@@ -182,20 +188,21 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
           $totalAcomuladoNotaFinal= !empty($estiloTotalAcomuladoNota['notip_nombre']) ? $estiloTotalAcomuladoNota['notip_nombre'] : "Bajo";
         }
       ?>
-        <td align="center" style="background:<?=$Plataforma->colorTres;?>;" width="3%" <?=$title;?>><?=$totalAcomuladoNotaFinal?></td>
+        <td align="center" style="padding: 8px; background:<?=$Plataforma->colorTres;?>;" <?=$title;?>><?=$totalAcomuladoNotaFinal?></td>
       <?php
         for($i=1;$i<=17;$i++){
       ?>
-        <td align="center" width="3%">&nbsp;</td>
+        <td align="center" style="padding: 8px;">&nbsp;</td>
       <?php
         }
       ?>
       <?php
-        for($i=1;$i<=7;$i++){
+        if($config['conf_firma_inasistencia_planilla_notas_doc'] == SI) {
+          for($i=1;$i<=7;$i++){
       ?>
-        <td width="1%">&nbsp;</td>
+        <td>&nbsp;</td>
       <?php
-        }
+        } }
       ?>
       </tr>
 

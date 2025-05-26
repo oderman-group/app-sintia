@@ -3,6 +3,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Informativos.php");
+require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
+require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Social_Email.php");
+require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Usuarios_Notificaciones.php");
 require_once(ROOT_PATH."/main-app/compartido/socket.php");
 
 $datosMotivo = [
@@ -27,24 +30,52 @@ $campos = "TRIM(CONCAT(IFNULL(uss_nombre, ''), ' ', IFNULL(uss_nombre2, ''), ' '
 $consultaNombre = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD_GENERAL);
 $nombreUsuario = $consultaNombre->fetch(PDO::FETCH_ASSOC);
 
-$predicadoD = [
-	'uss_tipo'      => TIPO_DIRECTIVO,
-	'institucion'   => $_POST['inst'],
-	'year'          => $datosMotivo["soli_year"]
-];
+$consultaDirectivosDesbloqueo = Comunicativo_Usuarios_Notificaciones::ejecutarSQL(Comunicativo_Usuarios_Notificaciones::SQL_DATOS_DIRECTIVOS_NOTIFICACION_DESBLOQUEO);
 
-$camposD = "uss_id";
-$consultaDirectivos = Administrativo_Usuario_Usuario::Select($predicadoD, $camposD, BD_GENERAL);
-while ($datosDirectivo = $consultaDirectivos->fetch(PDO::FETCH_ASSOC)) {
+$asunto = 'SOLICITUD DE DESBLOQUEO PARA DIRECTIVOS';
+$contenido = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'];
+
+while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
+
+	//Envío al correo interno de la plataforma
+	$datos = [
+        'ema_de'             => $_POST['usuario'],
+        'ema_para'           => $datosDirectivosDesbloqueo['uss_id'],
+        'ema_asunto'         => $asunto,
+        'ema_contenido'      => $contenido,
+        'ema_fecha'          => date("Y-m-d h:i:s"),
+        'ema_visto'          => 0,
+        'ema_eliminado_de'   => 0,
+        'ema_eliminado_para' => 0,
+        'ema_institucion'    => $_POST['inst'],
+        'ema_year'           => $datosMotivo["soli_year"]
+    ]; 
+
+	Comunicativo_Social_Email::Insert($datos, BD_ADMIN);
+
+
+	//Envío al correo real del directivo
+        $contenidoMsj = '<p style="color:navy;">'.$contenido.'</p>';
+
+        $data = [
+			'asunto' => $asunto,
+            'contenido_msj'    => $contenidoMsj,
+            'directivo_email'  => $datosDirectivosDesbloqueo['uss_email'],
+            'directivo_nombre' => $datosDirectivosDesbloqueo['uss_nombre']
+        ];
+
+        $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';
+        
+        EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
 	?>
 		<script>
 			var year            = '<?=($datosMotivo["soli_year"])?>';
 			var institucion     = <?=($_POST['inst'])?>;
 			var emisor          = '<?=($_POST['usuario'])?>';
 			var nombreEmisor    = '<?=($nombreUsuario['uss_nombre'])?>';
-			var asunto          = 'SOLICITUD DE DESBLOQUEO';
-			var contenido       = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' + nombreEmisor + '.';
-			var receptor        = '<?=($datosDirectivo['uss_id'])?>';
+			var asunto          = '<?=($asunto)?>';
+			var contenido       = '<?=($contenido)?>';
+			var receptor        = '<?=($datosDirectivosDesbloqueo['uss_id'])?>';
 			socket.emit("enviar_mensaje_correo", {
 				year: year,
 				institucion: institucion,

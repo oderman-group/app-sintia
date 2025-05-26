@@ -167,7 +167,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
                                             <p align="center" <?= $induccionSabanas; ?>>
                                                 <?php for ($i = 1; $i < $carga["car_periodo"]; $i++) { ?><a
-                                                        href="../compartido/reportes-sabanas-fast.php?curso=<?= base64_encode($carga["car_curso"]); ?>&grupo=<?= base64_encode($carga["car_grupo"]); ?>&per=<?= base64_encode($i); ?>"
+                                                        href="../compartido/reportes-sabanas.php?curso=<?= base64_encode($carga["car_curso"]); ?>&grupo=<?= base64_encode($carga["car_grupo"]); ?>&per=<?= base64_encode($i); ?>"
                                                         target="_blank" style="text-decoration:underline; color:#00F;"
                                                         title="Sabanas"><?= $i; ?></a>&nbsp;&nbsp;&nbsp;&nbsp;<?php } ?>
                                             </p>
@@ -252,7 +252,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                 if ($generarInforme) {
                                                     switch (intval($configGenerarJobs)) {
                                                         case 1:
-                                                            if ($numSinNotas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
+                                                            if ($actividadesRegistradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
                                                                 $generarInforme     = false;
                                                                 $msj                = "hay $numSinNotas estudiantes sin notas, El informe no se puede generar, coloque las notas a todos los estudiantes para generar el informe.";
                                                                 $tipoAlerta         = "alert-danger";
@@ -271,7 +271,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                     '&tipoGrado='.base64_encode($carga["gra_tipo"]);
                                                     
                                                     ?>
-                                                <div class="btn-group mt-2">
+                                                <div class="btn-group mt-2" style="width: 90%;">
                                                     <button type="button" class="btn red">Generar Informe</button>
                                                     <button type="button" class="btn red dropdown-toggle m-r-20" data-toggle="dropdown">
                                                         <i class="fa fa-angle-down"></i>
