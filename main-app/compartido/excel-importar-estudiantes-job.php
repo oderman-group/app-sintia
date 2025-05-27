@@ -269,7 +269,7 @@ while($resultadoJobs = mysqli_fetch_array($listadoCrobjobs, MYSQLI_BOTH)){
 					if(!empty($arrayIndividual['mat_estrato'])) {
 						$estrato = $estratosArray[$arrayIndividual['mat_estrato']];
 					}
-					$email = $arrayIndividual['mat_matricula'].'@plataformasintia.com';
+					$email = NULL;
 					if(!empty($arrayIndividual['mat_email'])) {
 						$email = strtolower($arrayIndividual['mat_email']);
 					}
