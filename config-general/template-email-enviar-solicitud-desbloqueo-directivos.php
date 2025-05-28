@@ -18,7 +18,7 @@ $Plataforma = new Plataforma;
 
 			<div style="font-family:arial; background:#FAFAFA; width:600px; color:#000; text-align:justify; padding:15px;">
 				<p>
-					Estimado <b><?=strtoupper($data['directivo_nombre'])?></b>,<br>
+					Estimado <b><?=strtoupper($data['usuario_nombre'])?></b>,<br>
 					<?=$data['contenido_msj'];?>
 				</p>
 			</div>

@@ -30,7 +30,17 @@ $campos = "TRIM(CONCAT(IFNULL(uss_nombre, ''), ' ', IFNULL(uss_nombre2, ''), ' '
 $consultaNombre = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD_GENERAL);
 $nombreUsuario = $consultaNombre->fetch(PDO::FETCH_ASSOC);
 
-$consultaDirectivosDesbloqueo = Comunicativo_Usuarios_Notificaciones::ejecutarSQL(Comunicativo_Usuarios_Notificaciones::SQL_DATOS_DIRECTIVOS_NOTIFICACION_DESBLOQUEO);
+Administrativo_Usuario_Usuario::foreignKey(self::INNER, [
+	'uss_id' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario'
+]);
+
+$predicadoJoin = [
+	Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO
+];
+
+$camposJoin = Comunicativo_Usuarios_Notificaciones::$tableAs.'.uss_id,' . Comunicativo_Usuarios_Notificaciones::$tableAs . '.uss_email, '.Comunicativo_Usuarios_Notificaciones::$tableAs.'.uss_nombre';
+
+$consultaDirectivosDesbloqueo = Comunicativo_Usuarios_Notificaciones::SelectJoin($predicadoJoin, $camposJoin, Comunicativo_Usuarios_Notificaciones::class, [Administrativo_Usuario_Usuario::class]);
 
 $asunto = 'SOLICITUD DE DESBLOQUEO PARA DIRECTIVOS';
 $contenido = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'];
@@ -58,10 +68,12 @@ while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
         $contenidoMsj = '<p style="color:navy;">'.$contenido.'</p>';
 
         $data = [
-			'asunto' => $asunto,
-            'contenido_msj'    => $contenidoMsj,
-            'directivo_email'  => $datosDirectivosDesbloqueo['uss_email'],
-            'directivo_nombre' => $datosDirectivosDesbloqueo['uss_nombre']
+			'asunto'         => $asunto,
+            'contenido_msj'  => $contenidoMsj,
+            'usuario_email'  => $datosDirectivosDesbloqueo['uss_email'],
+            'usuario_nombre' => $datosDirectivosDesbloqueo['uss_nombre'],
+			'institucion_id' => $_SESSION["idInstitucion"],
+			'usuario_id'     => null
         ];
 
         $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';
