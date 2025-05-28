@@ -68,10 +68,12 @@ while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
         $contenidoMsj = '<p style="color:navy;">'.$contenido.'</p>';
 
         $data = [
-			'asunto' => $asunto,
-            'contenido_msj'    => $contenidoMsj,
-            'directivo_email'  => $datosDirectivosDesbloqueo['uss_email'],
-            'directivo_nombre' => $datosDirectivosDesbloqueo['uss_nombre']
+			'asunto'         => $asunto,
+            'contenido_msj'  => $contenidoMsj,
+            'usuario_email'  => $datosDirectivosDesbloqueo['uss_email'],
+            'usuario_nombre' => $datosDirectivosDesbloqueo['uss_nombre'],
+			'institucion_id' => $_SESSION["idInstitucion"],
+			'usuario_id'     => null
         ];
 
         $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';
