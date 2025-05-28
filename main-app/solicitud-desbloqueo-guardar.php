@@ -30,27 +30,29 @@ $campos = "TRIM(CONCAT(IFNULL(uss_nombre, ''), ' ', IFNULL(uss_nombre2, ''), ' '
 $consultaNombre = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD_GENERAL);
 $nombreUsuario = $consultaNombre->fetch(PDO::FETCH_ASSOC);
 
-Administrativo_Usuario_Usuario::foreignKey(self::INNER, [
-	'uss_id' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario'
+Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
+	'uss_id' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario',
+	'year'   => Comunicativo_Usuarios_Notificaciones::$tableAs.'.year'
 ]);
 
 $predicadoJoin = [
-	Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO
+	Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO,
+	Comunicativo_Usuarios_Notificaciones::$tableAs.'.year'                  => $datosMotivo["soli_year"],
 ];
 
-$camposJoin = Comunicativo_Usuarios_Notificaciones::$tableAs.'.uss_id,' . Comunicativo_Usuarios_Notificaciones::$tableAs . '.uss_email, '.Comunicativo_Usuarios_Notificaciones::$tableAs.'.uss_nombre';
+$camposJoin = Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario,' . Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
 
-$consultaDirectivosDesbloqueo = Comunicativo_Usuarios_Notificaciones::SelectJoin($predicadoJoin, $camposJoin, Comunicativo_Usuarios_Notificaciones::class, [Administrativo_Usuario_Usuario::class]);
+$consultaDirectivoDesbloqueo = Comunicativo_Usuarios_Notificaciones::SelectJoin($predicadoJoin, $camposJoin, Comunicativo_Usuarios_Notificaciones::class, [Administrativo_Usuario_Usuario::class]);
 
 $asunto = 'SOLICITUD DE DESBLOQUEO PARA DIRECTIVOS';
 $contenido = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'];
 
-while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
+foreach ($consultaDirectivoDesbloqueo as $datosDirectivosDesbloqueo) {
 
 	//Envío al correo interno de la plataforma
 	$datos = [
         'ema_de'             => $_POST['usuario'],
-        'ema_para'           => $datosDirectivosDesbloqueo['uss_id'],
+        'ema_para'           => $datosDirectivosDesbloqueo['upn_usuario'],
         'ema_asunto'         => $asunto,
         'ema_contenido'      => $contenido,
         'ema_fecha'          => date("Y-m-d h:i:s"),
@@ -72,8 +74,8 @@ while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
             'contenido_msj'  => $contenidoMsj,
             'usuario_email'  => $datosDirectivosDesbloqueo['uss_email'],
             'usuario_nombre' => $datosDirectivosDesbloqueo['uss_nombre'],
-			'institucion_id' => $_SESSION["idInstitucion"],
-			'usuario_id'     => null
+			'institucion_id' => $_POST['inst'],
+			'usuario_id'     => $datosDirectivosDesbloqueo['upn_usuario']
         ];
 
         $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';
@@ -87,7 +89,7 @@ while ($datosDirectivosDesbloqueo = $consultaDirectivosDesbloqueo) {
 			var nombreEmisor    = '<?=($nombreUsuario['uss_nombre'])?>';
 			var asunto          = '<?=($asunto)?>';
 			var contenido       = '<?=($contenido)?>';
-			var receptor        = '<?=($datosDirectivosDesbloqueo['uss_id'])?>';
+			var receptor        = '<?=($datosDirectivosDesbloqueo['upn_usuario'])?>';
 			socket.emit("enviar_mensaje_correo", {
 				year: year,
 				institucion: institucion,

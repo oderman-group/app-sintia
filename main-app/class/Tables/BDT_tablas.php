@@ -342,7 +342,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             {$where}
             \n
             {$orderBy} \n";
-            return self::ejecutarSQL($consulta); ;
+            return self::ejecutarSQL($consulta);
         } catch (Exception  $e) {
             throw new Exception("Excepción capturada: ". $e->getMessage());
         }
