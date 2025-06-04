@@ -31,13 +31,15 @@ $consultaNombre = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD
 $nombreUsuario = $consultaNombre->fetch(PDO::FETCH_ASSOC);
 
 Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
-	'uss_id' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario',
-	'year'   => Comunicativo_Usuarios_Notificaciones::$tableAs.'.year'
+	'uss_id'      => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario',
+	'year'        => Comunicativo_Usuarios_Notificaciones::$tableAs.'.year',
+	'institucion' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.institucion'
 ]);
 
 $predicadoJoin = [
 	Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO,
 	Comunicativo_Usuarios_Notificaciones::$tableAs.'.year'                  => $datosMotivo["soli_year"],
+	Comunicativo_Usuarios_Notificaciones::$tableAs.'.institucion'           => $_POST['inst'],
 ];
 
 $camposJoin = Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario,' . Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
