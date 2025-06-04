@@ -32,6 +32,7 @@ class Modulos {
     public const MODULO_REP_FIN_GRAFICO = 31;
     public const MODULO_CHAT_ATENCION   = 34;
     public const MODULO_AI_INDICADORES  = 35;
+    public const MODULO_NOTIFICACIONES  = 36;
 
     /**
      * Verifica los permisos de acceso a una página interna según el ID de la página.
