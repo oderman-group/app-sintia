@@ -828,7 +828,7 @@ $frases[429][$l] = 'Cursos Adicionales';
 $frases[430][$l] = 'Búsqueda... (Presiona Enter) ';
 $frases[431][$l] = 'Presiona Enter Para Buscar';
 $frases[432][$l] = 'Tipos de notificaciones';
-$frases[433][$l] = 'Suscribir';
+$frases[433][$l] = 'Suscribir usuarios';
 
 //ENGLISH
 
@@ -1646,4 +1646,4 @@ $frases[429][$l] = 'Additional courses';
 $frases[430][$l] = 'Search... (Press Enter)';
 $frases[431][$l] = 'Press Enter To Search';
 $frases[432][$l] = 'Notifications type';
-$frases[433][$l] = 'Subscribe';
+$frases[433][$l] = 'Subscribe users';

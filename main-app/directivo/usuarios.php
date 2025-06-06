@@ -435,7 +435,7 @@ if (!Modulos::validarPermisoEdicion()) {
 		
 	}
 
-	function marcarbloqueados(result,data) {
+	function marcarbloqueados(result,data,respuetaSweet) {
 		let  resultado = result["data"];
 		const table = $('#example1').DataTable();
 		const rows = table.rows().nodes(); // Obtén todas las filas
