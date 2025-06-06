@@ -113,7 +113,7 @@ function deseaRegresar(dato){
                             const resultado = await metodoFetchAsync(varHeref, data, 'json', method == 'GET');
                            
                             if (typeof window[funcion] === "function") {
-                                window[funcion](resultado, data);
+                                window[funcion](resultado, data, true);
                             } else {
                                 console.error(`La función "${funcion}" no existe o no está definida.`);
                             }
@@ -160,8 +160,11 @@ function deseaRegresar(dato){
 
             if(varHeref === null) {
                 return false;
-            } else {
+            } else {                
                 window.location.href='#';
+                if (typeof window[funcion] === "function") {
+                    window[funcion](null, data, false);
+                }
             }
 
         }
