@@ -1,8 +1,7 @@
 <?php include("session.php"); ?>
 <?php $idPaginaInterna = 'DT0350'; ?>
-<?php include("../compartido/historial-acciones-guardar.php"); ?>
-<?php include("../compartido/head.php");
-require_once '../class/Estudiantes.php';
+<?php include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php"); ?>
+<?php include(ROOT_PATH."/main-app/compartido/head.php");
 require_once ROOT_PATH . '/main-app/class/App/Comunicativo/Usuarios_Notificaciones.php';
 
 $parametrosObligatorios =["id"];
@@ -59,13 +58,7 @@ $Plataforma = new Plataforma;
 						<div class="row">
 
 							<div class="col-md-12">
-								<?php include("../../config-general/mensajes-informativos.php");
-								// require "../../config-general/google-translate-php-master/vendor/autoload.php";
-								// use Stichoza\GoogleTranslate\GoogleTranslate;
-								// $tr = new GoogleTranslate();
-								// $tr->setSource('es'); // Traducir del inglés
-								// $tr->setTarget('en'); // Al español
-								// echo $tr->translate('Más Acciones'); // Hola Mundo
+								<?php include(ROOT_PATH."/config-general/mensajes-informativos.php");
 								
 								?>
 
@@ -130,18 +123,15 @@ $Plataforma = new Plataforma;
 												<script type="text/javascript">document.getElementById("overlay").style.display = "flex"</script>
 													<?php													
 													$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosSuscripcion($_SESSION["bd"],$_SESSION["idInstitucion"]);
-													$contReg = 0;
-													$contRegSuscrito = 0;
+													$contReg = 1;
 													
-													foreach ($lista as $usuario) {
-														$contReg++;
-														$bgColor = '';
-														if ($usuario['uss_bloqueado'] == 1)
-															$bgColor = '#ff572238';
+													foreach ($lista as $usuario) {														
 
+														$bgColor = '';														
 														$chekedBloqueado = '';
 														if ($usuario['uss_bloqueado'] == 1) {
 															$chekedBloqueado = 'checked';
+															$bgColor = '#ff572238';
 														}	
 														?>
 														<tr id="reg<?= $usuario['uss_id']; ?>"
@@ -169,13 +159,9 @@ $Plataforma = new Plataforma;
 															</td>
 
 														</tr>
-														<?php $usuario['upn_id'] > 0 ? $contRegSuscrito++ : '' ;
-													}?>
 													<?php 
-														if ($contRegSuscrito == $contReg) { 
-															echo '<script type="text/javascript">$("#checkboxAll").prop("checked", true);</script>';
-														}
-													?>
+														$contReg++;
+													}?>
 													<script type="text/javascript">document.getElementById("overlay").style.display = "none";</script>
 												</tbody>
 
