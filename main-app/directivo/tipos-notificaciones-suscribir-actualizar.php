@@ -13,7 +13,7 @@ require_once ROOT_PATH . '/main-app/class/App/Comunicativo/Usuarios_Notificacion
 $_POST = json_decode(file_get_contents("php://input"), true);
 $respuesta = array();
 
-IF($_POST["suscribirTodos"] == "true"){
+if($_POST["suscribirTodos"] == "true"){
 
 	
 
@@ -25,7 +25,7 @@ IF($_POST["suscribirTodos"] == "true"){
 
 	Comunicativo_Usuarios_Notificaciones::Delete($camposBorrar,BD_GENERAL);
 
-	IF($_POST["suscribir"] == "true"){
+	if($_POST["suscribir"] == "true"){
 		try {
 			$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosSuscripcion($_POST["year"],$_POST["idInstitucion"]);
 			foreach ($lista as $usuario) {
@@ -63,7 +63,7 @@ IF($_POST["suscribirTodos"] == "true"){
 
 }else{
 
-	IF($_POST["suscribir"] == "true"){
+	if($_POST["suscribir"] == "true"){
 		
 		try {
 			$campos = [
