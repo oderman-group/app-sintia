@@ -12,6 +12,8 @@ class Administrativo_Usuario_Usuario extends BDT_Tablas implements BDT_JoinImple
     public static $tableAs = 'uss';
 
     use BDT_Join;
+
+    CONST USUARIO_DEFAULT_SINTIA = 1;
 /**
  * Bloquea o desbloquea a un conjunto de usuarios en función de los parámetros proporcionados.
  *

@@ -19,7 +19,7 @@
 		                                    <div class="inbox-body no-pad">
 		                                        <div class="mail-list">
 		                                            <div class="compose-mail">
-		                                                <form method="post" action="#../compartido/mensajes-enviar.php">
+		                                                <form id="formularioEnviarMensajes" method="post" action="#../compartido/mensajes-enviar.php">
 															<label>Para:</label>
 		                                                    <div class="form-group">
 																<select id="select_usuario" class="form-control select2-multiple" multiple name="para[]" required>
@@ -78,7 +78,12 @@
 		                                                    </div>
 															
 		                                                    <div class="btn-group margin-top-20 ">
-				                                                <button type="button" onclick="enviarMensajes(<?=$_SESSION['bd']?>,<?=$_SESSION['idInstitucion']?>,'<?=$_SESSION['id']?>','<?=$nombreEmisor?>')" class="btn btn-primary btn-sm margin-right-10"><i class="fa fa-check"></i> Enviar</button>
+				                                                <button
+																	id="btnEnviarMensaje"
+																	type="button" 
+																	onclick="enviarMensajes(<?=$_SESSION['bd']?>,<?=$_SESSION['idInstitucion']?>,'<?=$_SESSION['id']?>','<?=$nombreEmisor?>')" 
+																	class="btn btn-primary btn-sm margin-right-10"
+																><i class="fa fa-check"></i> Enviar</button>
 				                                                <button type="reset" class="btn btn-sm btn-default margin-right-10"><i class="fa fa-times"></i> Cancelar</button>
 				                                            </div>
 		                                                </form>
@@ -94,29 +99,56 @@
                     </div>
                 </div>
 				<script>
+					var cantidadEmailsEnviados = 0;
 					socket.on("envio_correo_<?=$_SESSION['id']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
 						if (data["ema_id"] != null || data["ema_id"] !== '' || data["ema_id"] !== undefined) {
-							$.toast({
-								heading: 'Notificación',  
-								text: 'Mensaje enviado correctamente.',
-								position: 'bottom-right',
-								showHideTransition: 'slide',
-								loaderBg:'#26c281', 
-								icon: 'success', 
-								hideAfter: 5000, 
-								stack: 6,
-							})
 
-							function redireccionarMensajes() {
-								// Cambia la URL a la que deseas redirigir
+							var contenido = encodeURIComponent(data['contenido']);
+							var receptor = data['receptor'];
+
+							const resultado = await metodoFetchAsync('../compartido/mensajes-enviar.php', data, 'json', false);
+
+							const statusResponse = resultado['data']['status'];
+
+							if (statusResponse) {
+								$.toast({
+									heading: 'Notificación',  
+									text: 'Mensaje enviado correctamente a usuario ' + receptor,
+									position: 'bottom-right',
+									showHideTransition: 'slide',
+									loaderBg:'#26c281', 
+									icon: 'success', 
+									hideAfter: 5000, 
+									stack: 6,
+								});
+							} else {
+									$.toast({
+									heading: 'Notificación',  
+									text: 'Mensaje no enviado a ' + receptor +'. Intente nuevamente.',
+									position: 'bottom-right',
+									showHideTransition: 'slide',
+									loaderBg:'#ff6849',
+									icon: 'warning',
+									hideAfter: 5000, 
+									stack: 6
+								})
+							}
+
+							cantidadEmailsEnviados ++;
+
+							/* 
+							/ Cuando se complete el número de envíos entonces destruimos la variable en
+							/ localStorage y luego redireccionamos.
+							*/
+							if(localStorage.getItem("cantidadDestinatarios") == cantidadEmailsEnviados) {
+								localStorage.removeItem('cantidadDestinatarios');
 								location.href='mensajes.php?opt=Mg==';
 							}
-							setTimeout(redireccionarMensajes, 4000);
 
-						}else{
+						} else {
 							$.toast({
 								heading: 'Notificación',  
-								text: 'Mensaje no enviado, intente nuevamente.',
+								text: 'Hubo algun problema en el envío de correo interno.',
 								position: 'bottom-right',
 								showHideTransition: 'slide',
 								loaderBg:'#ff6849',
