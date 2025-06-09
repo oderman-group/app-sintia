@@ -1,7 +1,7 @@
 <?php 
 include("session.php");
 Modulos::validarAccesoDirectoPaginas();
-$idPaginaInterna = 'DT0350';
+$idPaginaInterna = 'DT0351';
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
