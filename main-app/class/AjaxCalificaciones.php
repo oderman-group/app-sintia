@@ -6,6 +6,11 @@ require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/App/Academico/Actividad.php");
+require_once(ROOT_PATH."/main-app/class/App/Academico/Carga.php");
+require_once(ROOT_PATH."/main-app/class/App/Academico/Materia.php");
 
 class AjaxCalificaciones {
 
@@ -49,6 +54,57 @@ class AjaxCalificaciones {
         $rowCount = $asp->rowCount();
 
         Actividades::marcarActividadRegistrada($config, $data['codNota'], $_SESSION["bd"]);
+
+        if ($data['nota'] < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
+
+            $predicadoActividad = [
+                Actividad::$tableAs . '.act_id'      => "'".$data['codNota']."'",
+                Actividad::$tableAs . '.institucion' => $config['conf_id_institucion'],
+                Actividad::$tableAs . '.year'        => $_SESSION["bd"]
+            ];
+
+            Carga::foreignKey(Carga::INNER, [
+                'car_id'      => Actividad::$tableAs.'.act_id_carga',
+                'institucion' => Actividad::$tableAs.'.institucion',
+                'year'        => Actividad::$tableAs.'.year'
+            ]);
+
+            Materia::foreignKey(Materia::INNER, [
+                'mat_id'      => Carga::$tableAs.'.car_materia',
+                'institucion' => Carga::$tableAs.'.institucion',
+                'year'        => Carga::$tableAs.'.year'
+            ]);
+
+            $datosActividad = Actividad::SelectJoin($predicadoActividad, '*', Actividad::class, [Carga::class, Materia::class]);
+
+            $datosEstudiante = Estudiantes::obtenerDatosEstudiante($data['codEst']);
+            $nombre = trim(Estudiantes::NombreCompletoDelEstudiante($datosEstudiante));
+
+            $consultaDatosAcudiente = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$datosEstudiante['mat_acudiente']."'");
+            $datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
+
+            //INICIO ENVÍO DE MENSAJE
+            $tituloMsj    = 'Nota baja para ' .$nombre;
+            $contenidoMsj = '
+                <p style="color:navy;">
+                    Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado una nota baja en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
+                    Por favor ingresa a la plataforma y verifica. 
+                </p>
+            ';
+
+            $data = [
+                'contenido_msj'  => $contenidoMsj,
+                'usuario_email'  => $datosAcudiente['uss_email'],
+                'usuario_nombre' => $datosAcudiente['uss_nombre'],
+                'institucion_id' => $config['conf_id_institucion'],
+                'usuario_id'     => $datosAcudiente['uss_id']
+            ];
+
+            $asunto            = $tituloMsj;
+            $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
+            
+            EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+        }
 
         $datosMensaje = [
             'success' => true,
