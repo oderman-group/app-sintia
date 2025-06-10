@@ -231,7 +231,7 @@ require_once("../class/Estudiantes.php");
 																		} else {
 																			echo "
 																			<span style='color:red;'>".$frases[268][$datosUsuarioActual['uss_idioma']]."</span><br>
-																			<a href='".$_SERVER['PHP_SELF']."?req=1&idE=".base64_encode($resultado['mat_id'])."&nameE=".base64_encode($resultado['uss_nombre'])."' style='text-decoration:underline;'>".$frases[269][$datosUsuarioActual['uss_idioma']]."</a>
+																			<a href='".$_SERVER['PHP_SELF']."?req=1&idE=".base64_encode($resultado['mat_id_usuario'])."&nameE=".base64_encode($resultado['uss_nombre'])."' style='text-decoration:underline;'>".$frases[269][$datosUsuarioActual['uss_idioma']]."</a>
 																			";
 																		}
 																	}	
