@@ -34,13 +34,13 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
             'institucion'            => Administrativo_Usuario_Usuario::$tableAs.'.institucion'
         ]);
 
-        $predicadoJoin = [
+        $camposWhere = [
             Administrativo_Usuario_Usuario::$tableAs.'.uss_tipo'     => TIPO_DIRECTIVO,
             Administrativo_Usuario_Usuario::$tableAs.'.year'         => $anno,
             Administrativo_Usuario_Usuario::$tableAs.'.institucion'  => $institucion,
         ];
 
-        $camposJoin = Administrativo_Usuario_Usuario::$tableAs.'.uss_id, '.
+        $camposSelect = Administrativo_Usuario_Usuario::$tableAs.'.uss_id, '.
                         Administrativo_Usuario_Usuario::$tableAs.'.uss_usuario, '.
                         Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.
                         Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre, '.
@@ -48,7 +48,7 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
                         Administrativo_Usuario_Usuario::$tableAs.'.uss_estado, '.
                         'IFNULL('.self::$tableAs.'.upn_id, 0) upn_id';
 
-        return self::SelectJoin($predicadoJoin, $camposJoin, Administrativo_Usuario_Usuario::class, [self::class]);
+        return self::SelectJoin($camposWhere, $camposSelect, Administrativo_Usuario_Usuario::class, [self::class]);
 
     }
 }
