@@ -26,7 +26,6 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
      */
     public static function ObtenerUsuariosDirectivosxTipoNotificacionSuscripcion($tipoNotificacion,$anno,$institucion)
     {  
-
         self::foreignKey(self::LEFT, [
             'upn_tipo_notificacion'  => $tipoNotificacion,
             'upn_usuario'            => Administrativo_Usuario_Usuario::$tableAs.'.uss_id',
@@ -49,6 +48,37 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
                         'IFNULL('.self::$tableAs.'.upn_id, 0) upn_id';
 
         return self::SelectJoin($camposWhere, $camposSelect, Administrativo_Usuario_Usuario::class, [self::class]);
+
+    }
+
+    /**
+     * Obtiene los usuarios suscritos a un tipo de notificación específico.
+     * 
+     * @param int $tipoNotificacion Tipo de notificación a consultar.
+     * @param int $anno Año a consultar.
+     * @param int $institucion ID de la institución a consultar.
+     * @return array Lista de usuarios suscritos con su información.
+     * 
+     */
+    public static function ObtenerUsuariosSuscritosxTipoNotificacion($tipoNotificacion,$anno,$institucion)
+    {  
+        Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
+            'uss_id'      => self::$tableAs.'.upn_usuario',
+            'year'        => self::$tableAs.'.year',
+            'institucion' => self::$tableAs.'.institucion'
+        ]);
+
+        $camposWhere = [
+            self::$tableAs.'.upn_tipo_notificacion' => $tipoNotificacion,
+            self::$tableAs.'.year'                  => $anno,
+            self::$tableAs.'.institucion'           => $institucion,
+        ];
+
+        $camposSelect = self::$tableAs.'.upn_usuario,' .
+                        Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.
+                        Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
+
+        return self::SelectJoin($camposWhere, $camposSelect, self::class, [Administrativo_Usuario_Usuario::class]);
 
     }
 }
