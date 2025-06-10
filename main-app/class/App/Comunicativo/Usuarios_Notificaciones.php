@@ -13,20 +13,22 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
     use BDT_Join;
 
     CONST TIPO_NOTIFICACION_DESBLOQUEO_USUARIO = 1;
+    CONST TIPO_NOTIFICACION_ADJUNTAR_DOCUMENTO_ESTUDIANTE_ACUDIENTE = 2;
 
     /**
-     * Obtiene los usuarios directivos y si tienen suscripción a las notificaciones de desbloqueo de usuario.
+     * Obtiene los usuarios directivos por tipo de notificacion y si tienen suscripción a este.
      * 
+     * @param int $tipoNotificacion Tipo de notificación a consultar.
      * @param int $anno Año a consultar.
      * @param int $institucion ID de la institución a consultar.
      * @return array Lista de usuarios directivos con su información y estado de suscripción a las notificaciones.
      * 
      */
-    public static function ObtenerUsuariosDirectivosSuscripcion($anno,$institucion)
+    public static function ObtenerUsuariosDirectivosxTipoNotificacionSuscripcion($tipoNotificacion,$anno,$institucion)
     {  
 
         self::foreignKey(self::LEFT, [
-            'upn_tipo_notificacion'  => self::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO,
+            'upn_tipo_notificacion'  => $tipoNotificacion,
             'upn_usuario'            => Administrativo_Usuario_Usuario::$tableAs.'.uss_id',
             'year'                   => Administrativo_Usuario_Usuario::$tableAs.'.year',
             'institucion'            => Administrativo_Usuario_Usuario::$tableAs.'.institucion'
@@ -49,5 +51,4 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
         return self::SelectJoin($predicadoJoin, $camposJoin, Administrativo_Usuario_Usuario::class, [self::class]);
 
     }
-
 }
