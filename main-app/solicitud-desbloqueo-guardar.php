@@ -3,7 +3,13 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
 require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Informativos.php");
-require_once(ROOT_PATH."/main-app/compartido/socket.php");
+echo '
+	<script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+	<script>
+		var socket = io("' . URL_API . '", {
+			transports: ["websocket", "polling", "flashsocket"]
+		});
+	</script>';
 
 $datosMotivo = [
 	'soli_id_recurso'   => $_POST["usuario"],
@@ -34,17 +40,17 @@ $predicadoD = [
 ];
 
 $camposD = "uss_id";
-$consultaDirectivos = Administrativo_Usuario_Usuario::Select($predicadoD, $camposD, BD_GENERAL);
-while ($datosDirectivo = $consultaDirectivos->fetch(PDO::FETCH_ASSOC)) {
-	?>
-		<script>
-			var year            = '<?=($datosMotivo["soli_year"])?>';
-			var institucion     = <?=($_POST['inst'])?>;
-			var emisor          = '<?=($_POST['usuario'])?>';
-			var nombreEmisor    = '<?=($nombreUsuario['uss_nombre'])?>';
-			var asunto          = 'SOLICITUD DE DESBLOQUEO';
-			var contenido       = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' + nombreEmisor + '.';
-			var receptor        = '<?=($datosDirectivo['uss_id'])?>';
+$consultaDirectivos = Administrativo_Usuario_Usuario::Select($predicadoD, $camposD, BD_GENERAL)->fetchAll(PDO::FETCH_ASSOC);
+foreach ($consultaDirectivos as $datosDirectivo) {
+	echo '
+		<script type="text/javascript">
+			var year            = "' . $datosMotivo["soli_year"] . '";
+			var institucion     = ' . $_POST['inst'] . ';
+			var emisor          = "' . $_POST['usuario'] . '";
+			var nombreEmisor    = "' . $nombreUsuario['uss_nombre'] . '";
+			var asunto          = "SOLICITUD DE DESBLOQUEO";
+			var contenido       = "Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'] . '.";
+			var receptor        = "' . $datosDirectivo['uss_id'] . '";
 			socket.emit("enviar_mensaje_correo", {
 				year: year,
 				institucion: institucion,
@@ -54,24 +60,22 @@ while ($datosDirectivo = $consultaDirectivos->fetch(PDO::FETCH_ASSOC)) {
 				contenido: contenido,
 				receptor: receptor
 			});
-		</script>
-	<?php
+		</script>';
 }
 
-?>
-	<script>
-		var year        = '<?=($datosMotivo["soli_year"])?>';
-		var institucion = <?=($_POST['inst'])?>;
-		var idRecurso   = '<?=($_POST['usuario'])?>';
-		var ENVIROMENT  = '<?=ENVIROMENT?>';
+echo '
+	<script type="text/javascript">
+		var year        = "' . $datosMotivo["soli_year"] . '";
+		var institucion = ' . $_POST['inst'] . ';
+		var idRecurso   = "' . $_POST['usuario'] . '";
+		var ENVIROMENT  = "' . ENVIROMENT . '";
 		socket.emit("solicitud_desbloqueo", {
 			year: year,
 			institucion: institucion,
 			idRecurso: idRecurso,
 			ENVIROMENT: ENVIROMENT
 		});
-	</script>
-<?php
+	</script>';
 
 echo '<script type="text/javascript">window.location.href="index.php?success='.Mensajes_Informativos::SOLICITUD_DESBLOQUEO.'&inst='.base64_encode($_POST["inst"]).'";</script>';
 exit();
