@@ -218,9 +218,8 @@ require_once("../class/Estudiantes.php");
 																	} else {
 																		$consultaSolicitudes = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".general_solicitudes 
 																		LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=soli_remitente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-																		LEFT JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat.mat_id=soli_id_recurso AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
 																		WHERE soli_institucion='".$config['conf_id_institucion']."' 
-																		AND soli_year='".$_SESSION["bd"]."' AND soli_id_recurso='{$resultado['mat_id']}' AND soli_estado!=3");
+																		AND soli_year='".$_SESSION["bd"]."' AND soli_id_recurso='{$resultado['mat_id_usuario']}' AND soli_estado!=3");
 																		$solicitudPendiente = mysqli_fetch_array($consultaSolicitudes, MYSQLI_BOTH);
 																		
 																		if( !empty($solicitudPendiente) ) {
@@ -231,7 +230,7 @@ require_once("../class/Estudiantes.php");
 																		} else {
 																			echo "
 																			<span style='color:red;'>".$frases[268][$datosUsuarioActual['uss_idioma']]."</span><br>
-																			<a href='".$_SERVER['PHP_SELF']."?req=1&idE=".base64_encode($resultado['mat_id'])."&nameE=".base64_encode($resultado['uss_nombre'])."' style='text-decoration:underline;'>".$frases[269][$datosUsuarioActual['uss_idioma']]."</a>
+																			<a href='".$_SERVER['PHP_SELF']."?req=1&idE=".base64_encode($resultado['mat_id_usuario'])."&nameE=".base64_encode($resultado['uss_nombre'])."' style='text-decoration:underline;'>".$frases[269][$datosUsuarioActual['uss_idioma']]."</a>
 																			";
 																		}
 																	}	
