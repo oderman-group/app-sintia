@@ -13,7 +13,49 @@ $id = !empty($_GET['id']) ? base64_decode($_GET['id']) : "";
 
 mysqli_query($conexion, "SET lc_time_names = 'es_ES';");
 
-$consulta = mysqli_query($conexion, "SELECT DATE_FORMAT(hil_fecha, '%W, %d-%b-%Y') AS fecha, TIME(hil_fecha) AS hora FROM ".BD_ADMIN.".seguridad_historial_acciones WHERE hil_usuario='".$id."' AND hil_titulo='GN0001' AND hil_institucion={$config['conf_id_institucion']} AND YEAR(hil_fecha)={$_SESSION['bd']} ORDER BY hil_id DESC");
+$consulta = mysqli_query($conexion,
+"
+SELECT 
+  DATE_FORMAT(hil_fecha, '%W, %d-%b-%Y') AS fecha, 
+  TIME(hil_fecha) AS hora,
+    hil_titulo,
+    pp.pagp_pagina,
+    hil_url,
+    hil_ip 
+FROM ".BD_ADMIN.".seguridad_historial_acciones 
+INNER JOIN ".BD_ADMIN.".paginas_publicidad pp
+ON pp.pagp_id = hil_titulo
+WHERE 
+  hil_usuario='".$id."' 
+  AND hil_titulo='GN0001' 
+  AND hil_institucion={$config['conf_id_institucion']} 
+  AND YEAR(hil_fecha)={$_SESSION['bd']}
+ORDER BY hil_id DESC
+");
+
+if (isset($_GET['desde']) && isset($_GET['hasta'])) {
+  $fechaFiltro = " AND hil_fecha >= '".$_GET['desde']."' AND hil_fecha <= '".$_GET['hasta']."'";
+  $consulta = mysqli_query($conexion,
+  "
+  SELECT 
+    DATE_FORMAT(hil_fecha, '%W, %d-%b-%Y') AS fecha, 
+    TIME(hil_fecha) AS hora,
+    hil_titulo,
+    pp.pagp_pagina,
+    hil_url,
+    hil_ip 
+  FROM ".BD_ADMIN.".seguridad_historial_acciones 
+  INNER JOIN ".BD_ADMIN.".paginas_publicidad pp
+  ON pp.pagp_id = hil_titulo
+  WHERE 
+    hil_usuario='".$id."' 
+    AND hil_institucion={$config['conf_id_institucion']} 
+    AND YEAR(hil_fecha)={$_SESSION['bd']}
+    $fechaFiltro
+  ORDER BY hil_id ASC
+  ");
+}
+
 $numDatos = mysqli_num_rows($consulta);
 
 $datosUsuario = UsuariosPadre::sesionUsuario($id);
@@ -37,11 +79,24 @@ $datosUsuario = UsuariosPadre::sesionUsuario($id);
   </div>
 
   <div style="margin: 20px;">
+    </p>
+      <div class="p-3 mb-2 bg-info text-white">Al utilizar el filtro de fechas podrás ver el historial completo de acciones de este usuario. Tenga en cuenta que si el rango de fechas es muy amplio, la plataforma puede demorarse cargando toda la información. Recomendamos que el rango sea no mayor a 30 días.</div>
+      <form action="<?=$_SERVER['PHP_SELF'];?>" method="get">
+        <input type="hidden" name="id" value="<?=$_GET['id'];?>">
+        Desde: <input type="date" name="desde" value="<?php if(!empty($_GET['desde'])) echo $_GET['desde'];?>">&nbsp;&nbsp;
+        Hasta: <input type="date" name="hasta" value="<?php if(!empty($_GET['hasta'])) echo $_GET['hasta'];?>">&nbsp;&nbsp;
+        <input type="submit" value="Filtrar">
+      </form>
+    <p>
+      
     <table width="100%" border="1" rules="all" align="center" style="border-color:#6017dc;">
       <tr style="font-weight:bold; font-size:12px; height:30px; text-align: center; text-transform: uppercase; background:#6017dc; color:#FFF;">
         <td>Nº</td>
         <td>Fecha</td>
         <td>Hora</td>
+        <td>Pagina</td>
+        <td>Ruta</td>
+        <td>IP</td>
       </tr>
       <?php
       if ($numDatos > 0) {
@@ -52,6 +107,9 @@ $datosUsuario = UsuariosPadre::sesionUsuario($id);
           <td align="center"><?= $i; ?></td>
           <td><?= $datos['fecha']; ?></td>
           <td><?= $datos['hora']; ?></td>
+          <td><?= $datos['pagp_pagina']; ?></td>
+          <td><?= $datos['hil_url']; ?></td>
+          <td><?= $datos['hil_ip']; ?></td>
         </tr>
       <?php
           $i++;
@@ -59,7 +117,7 @@ $datosUsuario = UsuariosPadre::sesionUsuario($id);
       } else {
       ?>
         <tr>
-          <td colspan="3" align="center"><b>ESTE USUARIO NO TIENE REGISTROS DE INGRESOS</b></td>
+          <td colspan="5" align="center"><b>ESTE USUARIO NO TIENE RESULTADOS PARA ESTA CONSULTA</b></td>
         </tr>
       <?php
       }
