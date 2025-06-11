@@ -9,6 +9,8 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !Modulos::validarSubRol(
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
 
+require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
+
 $id = !empty($_GET['id']) ? base64_decode($_GET['id']) : "";
 
 mysqli_query($conexion, "SET lc_time_names = 'es_ES';");
@@ -21,7 +23,8 @@ SELECT
     hil_titulo,
     pp.pagp_pagina,
     hil_url,
-    hil_ip 
+    hil_ip,
+    pp.pagp_crud 
 FROM ".BD_ADMIN.".seguridad_historial_acciones 
 INNER JOIN ".BD_ADMIN.".paginas_publicidad pp
 ON pp.pagp_id = hil_titulo
@@ -43,7 +46,8 @@ if (isset($_GET['desde']) && isset($_GET['hasta'])) {
     hil_titulo,
     pp.pagp_pagina,
     hil_url,
-    hil_ip 
+    hil_ip,
+    pp.pagp_crud 
   FROM ".BD_ADMIN.".seguridad_historial_acciones 
   INNER JOIN ".BD_ADMIN.".paginas_publicidad pp
   ON pp.pagp_id = hil_titulo
@@ -97,6 +101,7 @@ $datosUsuario = UsuariosPadre::sesionUsuario($id);
         <td>Pagina</td>
         <td>Ruta</td>
         <td>IP</td>
+        <td>OPERACIÓN</td>
       </tr>
       <?php
       if ($numDatos > 0) {
@@ -110,6 +115,7 @@ $datosUsuario = UsuariosPadre::sesionUsuario($id);
           <td><?= $datos['pagp_pagina']; ?></td>
           <td><?= $datos['hil_url']; ?></td>
           <td><?= $datos['hil_ip']; ?></td>
+          <td><?= Utilidades::crudTranslation($datos['pagp_crud']); ?></td>
         </tr>
       <?php
           $i++;
