@@ -8,7 +8,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-$id="";$idMatricula="";
+$id="";
+$idMatricula="";
 if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
 if(!empty($_GET["idMatricula"])){ $idMatricula=base64_decode($_GET["idMatricula"]);}
 
