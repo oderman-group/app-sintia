@@ -1,14 +1,12 @@
 <?php include("session.php");?>
-<?php $idPaginaInterna = 'DT0352';?>
+<?php $idPaginaInterna = 'AC0039';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 
-Utilidades::validarParametros($_GET,['id','idMatricula']);
+require_once("../class/Estudiantes.php");
 
-if(!Modulos::validarSubRol([$idPaginaInterna])){
-	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
-	exit();
-}
+
+Utilidades::validarParametros($_GET,['id','idMatricula']);
 
 $id="";
 $idMatricula="";
@@ -71,12 +69,12 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
             <div class="col-sm-12">
                 <div class="btn-group">
                     <a href='estudiantes.php' class='btn btn-secondary'  style='text-transform:uppercase;margin-right:20px;'><i class='fa fa-long-arrow-left'></i><?=$frases[184][$datosUsuarioActual['uss_idioma']]?></a>
-                    <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0353'])){?>
-                        <a href="javascript:void(0);" onclick="btnNuevoClic();" style='text-transform:uppercase;' class="btn deepPink-bgcolor">  Agregar <i class="fa fa-plus"></i></a>
+                    
+                    <a href="javascript:void(0);" onclick="btnNuevoClic();" style='text-transform:uppercase;' class="btn deepPink-bgcolor">  Agregar <i class="fa fa-plus"></i></a>
                     <?php 
                         $idModal = "documentoAdjuntoModal";
                         include("matriculas-adjuntar-documentos-agregar-modal.php");
-                    }?>
+                    ?>
                 </div>
             </div>
         </div>
@@ -109,39 +107,40 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
 
                                     $documento = '<a href="../files/documentos_adjuntos_estudiantes/'.$resultado['ama_documento'].'" target="_blank"> Ver documento</a>';
                                 ?>
-                                    <?php if(($ocultar == "NO" && $resultado['ama_id_responsable'] <> $_SESSION["id"]) || $resultado['ama_id_responsable'] == $_SESSION["id"]) {?>
-                                    <tr>
-                                        <td><?= $contReg; ?></td>
-                                        <td><?= $resultado["ama_id"]; ?></td>
-                                        <td><?= $resultado['ama_fecha_registro']; ?></td>
-                                        <td><?= $resultado['categoria']; ?></td>
-                                        <td><?= $documento; ?></td>
-                                        <td><?= $resultado['ama_titulo']; ?></td>
-                                        <td><?= $resultado['uss_usuario']; ?></td>
-                                        <td><?= $resultado['uss_nombre']; ?></td>
-                                        <td><?= $ocultar; ?></td>                                        
-                                        <td>
-                                            <?php if($resultado['ama_id_responsable'] == $_SESSION["id"] ) {?>
-                                            <div class="btn-group">
-                                                <button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
-                                                <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-                                                    <i class="fa fa-angle-down"></i>
-                                                </button>                                                
-                                                    <ul class="dropdown-menu" role="menu">
-                                                        <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0354'])) { ?>
-                                                            <li><a href="javascript:void(0);" onclick="btnEditarClic('<?= $resultado['ama_id']; ?>')"><?= $frases[375][$datosUsuarioActual['uss_idioma']]; ?></a></li>
-                                                        <?php } 
-                                                        if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0355'])) { ?>
-                                                            <li><a href="javascript:void(0);" onclick="btnEliminarClic('<?= $resultado['ama_id']; ?>','<?= $resultado['ama_documento']; ?>')"><?= $frases[174][$datosUsuarioActual['uss_idioma']]; ?></a></li>
-                                                        <?php } ?>
-                                                    </ul>                                                
-                                            </div>
-                                            <?php } ?>
-                                        </td>                                        
-                                    </tr>
+                                    <?php if($resultado['uss_tipo'] == TIPO_ACUDIENTE) {
+
+                                                if(($ocultar == "NO" && $resultado['ama_id_responsable'] <> $_SESSION["id"]) || $resultado['ama_id_responsable'] == $_SESSION["id"]) {?>
+                                                    <tr>
+                                                        <td><?= $contReg; ?></td>
+                                                        <td><?= $resultado["ama_id"]; ?></td>
+                                                        <td><?= $resultado['ama_fecha_registro']; ?></td>
+                                                        <td><?= $resultado['categoria']; ?></td>
+                                                        <td><?= $documento; ?></td>
+                                                        <td><?= $resultado['ama_titulo']; ?></td>
+                                                        <td><?= $resultado['uss_usuario']; ?></td>
+                                                        <td><?= $resultado['uss_nombre']; ?></td>
+                                                        <td><?= $ocultar; ?></td>                                        
+                                                        <td>
+                                                            <?php if($resultado['ama_id_responsable'] == $_SESSION["id"] ) {?>
+                                                            <div class="btn-group">
+                                                                <button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
+                                                                <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
+                                                                    <i class="fa fa-angle-down"></i>
+                                                                </button>
+                                                                
+                                                                <ul class="dropdown-menu" role="menu">
+                                                                    <li><a href="javascript:void(0);" onclick="btnEditarClic('<?= $resultado['ama_id']; ?>')"><?= $frases[375][$datosUsuarioActual['uss_idioma']]; ?></a></li>                                                  
+                                                                    <li><a href="javascript:void(0);" onclick="btnEliminarClic('<?= $resultado['ama_id']; ?>','<?= $resultado['ama_documento']; ?>')"><?= $frases[174][$datosUsuarioActual['uss_idioma']]; ?></a></li>
+                                                                    
+                                                                </ul>
+                                                            </div>
+                                                            <?php } ?>
+                                                        </td>                                        
+                                                    </tr>
                                 <?php
-                                        $contReg++;
-                                    }
+                                    $contReg++;
+                                                }
+                                            }
                                 }
                                 ?>
                             </tbody>
