@@ -13,7 +13,7 @@ $idMatricula="";
 if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
 if(!empty($_GET["idMatricula"])){ $idMatricula=base64_decode($_GET["idMatricula"]);}
 
-require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
+require_once ROOT_PATH . '/main-app/class/App/Academico/Matricula_Adjuntos.php';
 ?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
