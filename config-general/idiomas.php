@@ -829,6 +829,7 @@ $frases[430][$l] = 'Búsqueda... (Presiona Enter) ';
 $frases[431][$l] = 'Presiona Enter Para Buscar';
 $frases[432][$l] = 'Tipos de notificaciones';
 $frases[433][$l] = 'Suscribir usuarios';
+$frases[434][$l] = 'Adjuntar documentos';
 
 //ENGLISH
 
@@ -1647,3 +1648,4 @@ $frases[430][$l] = 'Search... (Press Enter)';
 $frases[431][$l] = 'Press Enter To Search';
 $frases[432][$l] = 'Notifications type';
 $frases[433][$l] = 'Subscribe users';
+$frases[434][$l] = 'Attach documents';

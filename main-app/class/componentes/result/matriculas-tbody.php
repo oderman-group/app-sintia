@@ -43,6 +43,7 @@ $permisoHojaMatricula     = Modulos::validarSubRol(['DT0249']);
 $permisoAspectos          = Modulos::validarSubRol(['DT0023']);
 $permisoFinanzas          = Modulos::validarSubRol(['DT0093']);
 $permisoReportes          = Modulos::validarSubRol(['DT0117']);
+$permisoAdjuntarDocumento = Modulos::validarSubRol(['DT0352']);
 
 foreach ($data["data"] as $resultado) {
 
@@ -228,6 +229,9 @@ foreach ($data["data"] as $resultado) {
 							<!-- <li><a href="reportes-lista.php?est=<?= base64_encode($resultado["mat_id_usuario"]); ?>&filtros=<?= base64_encode(1); ?>" target="_blank">Disciplina</a></li> -->
 					<?php }
 					} ?>
+					<?php if ($permisoAdjuntarDocumento) { ?>
+						<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
+					<?php } ?>
 				</ul>
 			</div>
 

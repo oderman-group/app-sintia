@@ -122,7 +122,7 @@ $Plataforma = new Plataforma;
 												<tbody>
 												<script type="text/javascript">document.getElementById("overlay").style.display = "flex"</script>
 													<?php													
-													$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosSuscripcion($_SESSION["bd"],$_SESSION["idInstitucion"]);
+													$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosxTipoNotificacionSuscripcion($id,$_SESSION["bd"],$_SESSION["idInstitucion"]);
 													$contReg = 1;
 													
 													foreach ($lista as $usuario) {														
