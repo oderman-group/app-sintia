@@ -6,7 +6,13 @@ require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Infor
 require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
 require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Social_Email.php");
 require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Usuarios_Notificaciones.php");
-require_once(ROOT_PATH."/main-app/compartido/socket.php");
+echo '
+	<script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+	<script>
+		var socket = io("' . URL_API . '", {
+			transports: ["websocket", "polling", "flashsocket"]
+		});
+	</script>';
 
 $datosMotivo = [
 	'soli_id_recurso'   => $_POST["usuario"],
@@ -31,20 +37,20 @@ $consultaNombre = Administrativo_Usuario_Usuario::Select($predicado, $campos, BD
 $nombreUsuario = $consultaNombre->fetch(PDO::FETCH_ASSOC);
 
 Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
-	'uss_id'      => Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario',
+	'uss_id'      => 'upn_usuario',
 	'year'        => Comunicativo_Usuarios_Notificaciones::$tableAs.'.year',
 	'institucion' => Comunicativo_Usuarios_Notificaciones::$tableAs.'.institucion'
 ]);
 
 $predicadoJoin = [
-	Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO,
-	Comunicativo_Usuarios_Notificaciones::$tableAs.'.year'                  => $datosMotivo["soli_year"],
-	Comunicativo_Usuarios_Notificaciones::$tableAs.'.institucion'           => $_POST['inst'],
+	'upn_tipo_notificacion' => Comunicativo_Usuarios_Notificaciones::TIPO_NOTIFICACION_DESBLOQUEO_USUARIO,
+	'year'                  => $datosMotivo["soli_year"],
+	'institucion'           => $_POST['inst'],
 ];
 
-$camposJoin = Comunicativo_Usuarios_Notificaciones::$tableAs.'.upn_usuario,' . Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
+$camposJoin = 'upn_usuario, uss_email,  uss_nombre';
 
-$consultaDirectivoDesbloqueo = Comunicativo_Usuarios_Notificaciones::SelectJoin($predicadoJoin, $camposJoin, Comunicativo_Usuarios_Notificaciones::class, [Administrativo_Usuario_Usuario::class]);
+$consultaDirectivoDesbloqueo = Comunicativo_Usuarios_Notificaciones::SelectJoin($predicadoJoin, $camposJoin, [Administrativo_Usuario_Usuario::class]);
 
 $asunto = 'SOLICITUD DE DESBLOQUEO PARA DIRECTIVOS';
 $contenido = 'Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'];
@@ -83,15 +89,15 @@ foreach ($consultaDirectivoDesbloqueo as $datosDirectivosDesbloqueo) {
         $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';
         
         EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
-	?>
-		<script>
-			var year            = '<?=($datosMotivo["soli_year"])?>';
-			var institucion     = <?=($_POST['inst'])?>;
-			var emisor          = '<?=($_POST['usuario'])?>';
-			var nombreEmisor    = '<?=($nombreUsuario['uss_nombre'])?>';
-			var asunto          = '<?=($asunto)?>';
-			var contenido       = '<?=($contenido)?>';
-			var receptor        = '<?=($datosDirectivosDesbloqueo['upn_usuario'])?>';
+	echo '
+		<script type="text/javascript">
+			var year            = "' . $datosMotivo["soli_year"] . '";
+			var institucion     = ' . $_POST['inst'] . ';
+			var emisor          = "' . $_POST['usuario'] . '";
+			var nombreEmisor    = "' . $nombreUsuario['uss_nombre'] . '";
+			var asunto          = "SOLICITUD DE DESBLOQUEO";
+			var contenido       = "Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'] . '.";
+			var receptor        = "' . $datosDirectivo['uss_id'] . '";
 			socket.emit("enviar_mensaje_correo", {
 				year: year,
 				institucion: institucion,
@@ -101,24 +107,22 @@ foreach ($consultaDirectivoDesbloqueo as $datosDirectivosDesbloqueo) {
 				contenido: contenido,
 				receptor: receptor
 			});
-		</script>
-	<?php
+		</script>';
 }
 
-?>
-	<script>
-		var year        = '<?=($datosMotivo["soli_year"])?>';
-		var institucion = <?=($_POST['inst'])?>;
-		var idRecurso   = '<?=($_POST['usuario'])?>';
-		var ENVIROMENT  = '<?=ENVIROMENT?>';
+echo '
+	<script type="text/javascript">
+		var year        = "' . $datosMotivo["soli_year"] . '";
+		var institucion = ' . $_POST['inst'] . ';
+		var idRecurso   = "' . $_POST['usuario'] . '";
+		var ENVIROMENT  = "' . ENVIROMENT . '";
 		socket.emit("solicitud_desbloqueo", {
 			year: year,
 			institucion: institucion,
 			idRecurso: idRecurso,
 			ENVIROMENT: ENVIROMENT
 		});
-	</script>
-<?php
+	</script>';
 
 echo '<script type="text/javascript">window.location.href="index.php?success='.Mensajes_Informativos::SOLICITUD_DESBLOQUEO.'&inst='.base64_encode($_POST["inst"]).'";</script>';
 exit();
