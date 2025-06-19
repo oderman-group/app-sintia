@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (respuesta["estado"] === 'ok') {
                                 mtdMostrarMensaje(respuesta["mensaje"]);
                                 hizoCambio = true;
+                                mtdLimpiarInputs();
 
                             }
                             if (respuesta["estado"] === 'ko') {
@@ -144,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (respuesta["estado"] === 'ok') {
                         mtdMostrarMensaje(respuesta["mensaje"]);
                         hizoCambio = true;
-
+                        setTimeout(() => {$('#documentoAdjuntoModal').modal('hide');}, 1000);
                     }
                     if (respuesta["estado"] === 'ko') {
                         mtdMostrarMensaje(respuesta["mensaje"], "error");
@@ -254,15 +255,19 @@ document.addEventListener('DOMContentLoaded', () => {
             mtdActivarLoadPagina();
             location.reload();
         }else{
-            txtIdDocumento.value = 0;
-            txtTitulo.value = null;
-            txtDescripcion.value = null;
-            uplDocumento.value = null;
-            chkVisible.checked = false;
+            mtdLimpiarInputs();
         }
     });
     
 });
+
+function mtdLimpiarInputs() {
+    txtIdDocumento.value = 0;
+    txtTitulo.value = null;
+    txtDescripcion.value = null;
+    uplDocumento.value = null;
+    chkVisible.checked = false;
+}
 
 /**
  * Muestra el modal para agregar un nuevo documento adjunto.
@@ -273,11 +278,7 @@ function btnNuevoClic() {
     txtOpcion = "agregar";
     txtVerDocumento.classList.add("d-none");
 
-    txtIdDocumento.value = 0;
-    txtTitulo.value = null;
-    txtDescripcion.value = null;
-    uplDocumento.value = null;
-    chkVisible.checked = false;
+    mtdLimpiarInputs();
 
     $('#documentoAdjuntoModal').modal('show');
 }
