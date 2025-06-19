@@ -261,6 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
 });
 
+/**
+ * Limpia los campos del formulario de adjuntar documentos.
+ * 
+ */
 function mtdLimpiarInputs() {
     txtIdDocumento.value = 0;
     txtTitulo.value = null;
