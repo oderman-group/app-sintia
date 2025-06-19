@@ -59,40 +59,38 @@ class Vista_historial_calificaciones extends BDT_Tablas
             $year = empty($year) ? $_SESSION["bd"] : $year;
 
             $campos = "*,"
-                . Matricula::$tableAs . ".mat_id as id_materia,"
-                . Grado_periodo::$tableAs . ".gvp_periodo as periodo,"
-                . Grado_periodo::$tableAs . ".gvp_valor as periodo_valor";
+                . Matricula::$tableAs . ".mat_id as id_materia, gvp_periodo as periodo, gvp_valor as periodo_valor";
 
             $predicado =
                 [
-                    Carga::$tableAs . ".institucion" => $_SESSION["idInstitucion"],
-                    Carga::$tableAs . ".year" => $year,
-                    Carga::$tableAs . ".car_curso" => $grado,
-                    Carga::$tableAs . ".car_grupo" => $grupo
+                    "institucion" => $_SESSION["idInstitucion"],
+                    "year" => $year,
+                    "car_curso" => $grado,
+                    "car_grupo" => $grupo
                 ];
 
             Grado_periodo::foreignKey(self::INNER, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "gvp_grado" => Carga::$tableAs . '.car_curso'
+                "gvp_grado" => 'car_curso'
             ]);
 
             Grado::foreignKey(self::INNER, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "gra_id" => Carga::$tableAs . '.car_curso'
+                "gra_id" => 'car_curso'
             ]);
 
             Grupo::foreignKey(self::INNER, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "gru_id" => Carga::$tableAs . '.car_grupo'
+                "gru_id" => 'car_grupo'
             ]);
 
             Materia::foreignKey(self::INNER, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "mat_id" => Carga::$tableAs . '.car_materia'
+                "mat_id" => 'car_materia'
             ]);
 
             Area::foreignKey(self::INNER, [
@@ -104,22 +102,22 @@ class Vista_historial_calificaciones extends BDT_Tablas
             Indicador_carga::foreignKey(self::LEFT, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "ipc_carga" => Carga::$tableAs . '.car_id',
-                "ipc_periodo" => Grado_periodo::$tableAs . '.gvp_periodo'
+                "ipc_carga" => 'car_id',
+                "ipc_periodo" => 'gvp_periodo'
             ]);
 
             Indicador::foreignKey(self::LEFT, [
                 "institucion" => Indicador_carga::$tableAs . '.institucion',
                 "year" => Indicador_carga::$tableAs . '.year',
-                "ind_id" => Indicador_carga::$tableAs . '.ipc_indicador'
+                "ind_id" => 'ipc_indicador'
             ]);
 
             Actividad::foreignKey(self::LEFT, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "act_id_carga" => Carga::$tableAs . '.car_id',
-                "act_id_tipo" => Indicador::$tableAs . '.ind_id',
-                "act_periodo" => Grado_periodo::$tableAs . '.gvp_periodo',
+                "act_id_carga" => 'car_id',
+                "act_id_tipo" => 'ind_id',
+                "act_periodo" => 'gvp_periodo',
             ]);
 
             Matricula::foreignKey(self::INNER, [
@@ -137,26 +135,26 @@ class Vista_historial_calificaciones extends BDT_Tablas
             Academico_boletin::foreignKey(self::LEFT, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
-                "bol_carga" => Carga::$tableAs . '.car_id',
+                "bol_carga" => 'car_id',
                 "bol_estudiante" => Matricula::$tableAs . '.mat_id',
-                "bol_periodo" => Grado_periodo::$tableAs . '.gvp_periodo',
+                "bol_periodo" => 'gvp_periodo',
             ]);
 
             Academico_Calificacion::foreignKey(self::LEFT, [
                 "institucion" => Carga::$tableAs . '.institucion',
                 "year" => Carga::$tableAs . '.year',
                 "cal_id_estudiante" => Matricula::$tableAs . '.mat_id',
-                "cal_id_actividad" => Actividad::$tableAs . '.act_id',
+                "cal_id_actividad" => 'act_id',
             ]);
 
             Indicador_recuperacion::foreignKey(self::LEFT, [
                 "institucion" => Matricula::$tableAs . '.institucion',
                 "year" => Matricula::$tableAs . '.year',
                 "rind_estudiante" => Matricula::$tableAs . '.mat_id',
-                "rind_carga" => Carga::$tableAs . '.car_id',
-                "rind_nota >" => Indicador_recuperacion::$tableAs . '.rind_nota_original',
-                "rind_indicador" => Indicador_carga::$tableAs . '.ipc_indicador',
-                "rind_periodo" => Indicador_carga::$tableAs . '.ipc_periodo',
+                "rind_carga" => 'car_id',
+                "rind_nota >" => 'rind_nota_original',
+                "rind_indicador" => 'ipc_indicador',
+                "rind_periodo" => 'ipc_periodo',
             ]);
 
             $listaClases = [
@@ -175,12 +173,11 @@ class Vista_historial_calificaciones extends BDT_Tablas
                 Indicador_recuperacion::class,
             ];
 
-            $order = Area::$tableAs . ".ar_posicion," . Carga::$tableAs . ".car_id," . Grado_periodo::$tableAs . ".gvp_periodo";
+            $order = "ar_posicion, car_id, gvp_periodo";
 
             $result = parent::SelectJoin(
                 predicado: $predicado,
                 campos: $campos,
-                ClasePrincipal: Carga::class,
                 clasesJoin: $listaClases,
                 joinString: '',
                 orderBy: $order

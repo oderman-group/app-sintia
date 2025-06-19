@@ -58,24 +58,24 @@ class AjaxCalificaciones {
         if ($data['nota'] < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
 
             $predicadoActividad = [
-                Actividad::$tableAs . '.act_id'      => "'".$data['codNota']."'",
-                Actividad::$tableAs . '.institucion' => $config['conf_id_institucion'],
-                Actividad::$tableAs . '.year'        => $_SESSION["bd"]
+                'act_id'      => "'".$data['codNota']."'",
+                'institucion' => $config['conf_id_institucion'],
+                'year'        => $_SESSION["bd"]
             ];
 
             Carga::foreignKey(Carga::INNER, [
-                'car_id'      => Actividad::$tableAs.'.act_id_carga',
+                'car_id'      => 'act_id_carga',
                 'institucion' => Actividad::$tableAs.'.institucion',
                 'year'        => Actividad::$tableAs.'.year'
             ]);
 
             Materia::foreignKey(Materia::INNER, [
-                'mat_id'      => Carga::$tableAs.'.car_materia',
+                'mat_id'      => 'car_materia',
                 'institucion' => Carga::$tableAs.'.institucion',
                 'year'        => Carga::$tableAs.'.year'
             ]);
 
-            $datosActividad = Actividad::SelectJoin($predicadoActividad, '*', Actividad::class, [Carga::class, Materia::class]);
+            $datosActividad = Actividad::SelectJoin($predicadoActividad, '*', [Carga::class, Materia::class]);
 
             $datosEstudiante = Estudiantes::obtenerDatosEstudiante($data['codEst']);
             $nombre = trim(Estudiantes::NombreCompletoDelEstudiante($datosEstudiante));

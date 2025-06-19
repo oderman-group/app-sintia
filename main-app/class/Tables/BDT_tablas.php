@@ -252,99 +252,99 @@ abstract class BDT_Tablas implements BDT_Interface{
     }
 
     /**
- * Construye y ejecuta dinámicamente una consulta SQL con múltiples `JOIN`, predicados y opciones de ordenamiento.
- *
- * @param array  $predicado    Array de condiciones para el filtro `WHERE`. Las claves son los campos o operadores (`AND`, `OR`), y los valores son los valores de comparación.
- * @param string $campos       Campos a seleccionar en la consulta. Por defecto, selecciona todos los campos (`'*'`).
- * @param string $ClasePrincipal Clase principal que define la tabla base. Debe extender de `BDT_Tablas`.
- * @param array  $clasesJoin   Array de clases que representan las tablas para realizar `JOIN`. Deben implementar `BDT_JoinImplements`.
- * @param string $joinString   Cláusula adicional para los `JOIN` (opcional).
- * @param string $orderBy      Cláusula de ordenamiento `ORDER BY` (opcional).
- *
- * @return array|null Devuelve el resultado de la consulta SQL como un array. Retorna `null` en caso de excepción.
- *
- * @throws Exception Si la clase principal no extiende `BDT_Tablas` o las clases `JOIN` no implementan `BDT_JoinImplements`.
- */
-    public static function SelectJoin(Array $predicado, $campos,$ClasePrincipal,array $clasesJoin,String $joinString = '',String $orderBy = ''): array|null{
-      
+     * Construye y ejecuta dinámicamente una consulta SQL con múltiples `JOIN`, predicados y opciones de ordenamiento.
+     *
+     * @param array  $predicado    Array de condiciones para el filtro `WHERE`. Las claves son los campos o operadores (`AND`, `OR`), y los valores son los valores de comparación.
+     * @param string $campos       Campos a seleccionar en la consulta. Por defecto, selecciona todos los campos (`'*'`).
+     * @param array  $clasesJoin   Array de clases que representan las tablas para realizar `JOIN`. Deben implementar `BDT_JoinImplements`.
+     * @param string $joinString   Cláusula adicional para los `JOIN` (opcional).
+     * @param string $groupBy      Cláusula de agrupamiento `GROUP BY` (opcional).
+     * @param string $having       Cláusula de having `HAVING` (opcional).
+     * @param string $orderBy      Cláusula de ordenamiento `ORDER BY` (opcional).
+     * @param string $limit        Cláusula de limitación `LIMIT` (opcional).
+     *
+     * @return array|null Devuelve el resultado de la consulta SQL como un array. Retorna `null` en caso de excepción.
+     *
+     * @throws Exception Si la clase principal no extiende `BDT_Tablas` o las clases `JOIN` no implementan `BDT_JoinImplements`.
+     */
+    public static function SelectJoin(
+        array $predicado,
+        string $campos,
+        array $clasesJoin,
+        String $joinString = '',
+        String $groupBy = '',
+        String $having = '',
+        String $orderBy = '',
+        String $limit = ''
+    ): array|null {
+
         try {
-            $result ='';
             $campos ??= '*';
             $predicado ??= [];
-            $orderBy =  !empty($orderBy)? "ORDER BY ".$orderBy: ""; 
-
-            if (!is_subclass_of($ClasePrincipal, BDT_Tablas::class)) {
-                throw new Exception("la clase  \$clasePrincipal deben extender de BDT_Tablas.");
-            }
-            // extructura de la clase principal
-            $schema = $ClasePrincipal::$schema;
-            $table  = $ClasePrincipal::$tableName;
-            $as     = $ClasePrincipal::$tableAs;
+            $groupBy    =  !empty($groupBy) ? "GROUP BY " . $groupBy : "";
+            $having     =  !empty($having) ? "HAVING " . $having : "";
+            $orderBy    =  !empty($orderBy) ? "ORDER BY " . $orderBy : "";
 
             // Construir JOIN dinámico
             $joinClauses = '';
-            foreach ($clasesJoin as $clase) {               
+            foreach ($clasesJoin as $clase) {
                 if (in_array($clase, class_implements(BDT_JoinImplements::class))) {
                     throw new Exception("Todas las clases Join en \$clasesJoin deben implmentar de BDT_JoinImplements.");
-                } 
-                $joinSchema = $clase::$schema;
-                $joinTable  = $clase::$tableName;
-                $joinAs     = $clase::$tableAs;
-                $joinKey    = $clase::getForeignKey(); 
-                $tipoJoin   = $clase::getTypeJoin();
+                }
 
-                if( !empty($joinKey) ) {
+                $joinKey    = $clase::getForeignKey();
+                if (!empty($joinKey)) {
                     $conditionsJoin = [];
-                    foreach( $joinKey as $onclave => $onvalor ) {                       
+                    foreach ($joinKey as $onclave => $onvalor) {
                         if ($onclave === 'AND' || $onvalor === 'OR') {
                             $conditionsJoin[] = "($onvalor)";
-                        }else{
-                            $asociacion = explode(" ",$onclave);
-                            if(empty($asociacion[1])){
-                                $conditionsJoin[] = $joinAs.'.'.$onclave ." = ".$onvalor;
-                            }else{
-                                $conditionsJoin[] = $joinAs.'.'.$onclave ." ".$onvalor;
-                            }                            
-                        }                        
+                        } else {
+                            $asociacion = explode(" ", $onclave);
+                            if (empty($asociacion[1])) {
+                                $conditionsJoin[] = $clase::$tableAs . "." . $onclave . " = " . $onvalor;
+                            } else {
+                                $conditionsJoin[] = $clase::$tableAs . "." . $onclave . " " . $onvalor;
+                            }
+                        }
                     }
                     $On = "ON " . implode("\n AND ", $conditionsJoin);
-                    $joinClauses .= "\n {$tipoJoin} JOIN {$joinSchema}.{$joinTable} AS {$joinAs}  {$On} \n";
-                } 
+                    $joinClauses .= "\n {$clase::getTypeJoin()} JOIN {$clase::$schema}.{$clase::$tableName} AS {$clase::$tableAs}  {$On} \n";
+                }
             }
 
-             // Construir WHERE dinámico
-             if( !empty($predicado) ) {               
+            // Construir WHERE dinámico
+            if (!empty($predicado)) {
                 $conditions = [];
-                foreach( $predicado as $clave => $valor ) {
-
-                    if ($clave === 'AND' || $clave === 'OR') {
+                foreach ($predicado as $clave => $valor) {
+                    if ($clave === self::OTHER_PREDICATE) {
+                        $conditions[] = " {$valor} ";
+                    } elseif ($clave === 'AND' || $clave === 'OR') {
                         $conditions[] = "($valor)";
-                    }else{
-                        $asociacion = explode(" ",$clave);
-                        if(empty($asociacion[1])){
-                            $conditions[] = $clave ." = ".$valor;
-                        }else{
-                            $conditions[] = $clave ." ".$valor;
+                    } else {
+                        $asociacion = explode(" ", $clave);
+                        if (empty($asociacion[1])) {
+                            $conditions[] = static::$tableAs . "." . $clave . " = " . self::formatValor($valor);
+                        } else {
+                            $conditions[] = static::$tableAs . "." . $clave . " " . self::formatValor($valor);
                         }
-                        
                     }
-                    
                 }
                 $where = "\n WHERE " . implode("\n AND ", $conditions);
-            } 
-            
+            }
 
-            $consulta = "SELECT $campos FROM {$schema}.{$table} AS {$as}  \n            
-            {$joinClauses}
-            \n
-            {$joinString}
-             \n
-            {$where}
-            \n
-            {$orderBy} \n";
-            return self::ejecutarSQL($consulta);
-        } catch (Exception  $e) {
-            throw new Exception("Excepción capturada: ". $e->getMessage());
+
+            $consulta = "SELECT $campos FROM " . static::$schema . "." . static::$tableName . " AS " . static::$tableAs . "  \n            
+            {$joinClauses} \n
+            {$joinString} \n
+            {$where} \n
+            {$groupBy} \n
+            {$having} \n
+            {$orderBy} \n
+            {$limit} \n";
+            return self::ejecutarSQL($consulta);;
+        } catch (PDOException  $e) {
+            echo "Excepción capturada: " . $e->getMessage();
+            return null;
         }
     }
 

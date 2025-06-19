@@ -25,35 +25,22 @@ class Academico_Matriculas_Adjuntos extends BDT_Tablas implements BDT_JoinImplem
     public static function ObtenerDocumentosxEstudiante($idEstudiante,$anno,$idInstitucion)
     {  
         Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
-            'uss_id'      => self::$tableAs.'.ama_id_responsable',
+            'uss_id'      => 'ama_id_responsable',
             'year'        => self::$tableAs.'.year',
             'institucion' => self::$tableAs.'.institucion'
         ]);
 
         $camposWhere = [
-            self::$tableAs.'.ama_id_estudiante' => $idEstudiante,
-            self::$tableAs.'.year'                  => $anno,
-            self::$tableAs.'.institucion'           => $idInstitucion,
+            'ama_id_estudiante' => $idEstudiante,
+            'year'              => $anno,
+            'institucion'       => $idInstitucion,
         ];
 
-        $camposSelect = self::$tableAs.'.ama_id,' .
-                        self::$tableAs.'.ama_fecha_registro,' .
-                        self::$tableAs.'.ama_id_estudiante,' .
-                        self::$tableAs.'.ama_titulo,' .
-                        self::$tableAs.'.ama_descripcion,' .
-                        'IF('.Administrativo_Usuario_Usuario::$tableAs .'.uss_tipo = 1, "Proceso interno", "Evidencia") categoria,' .
-                        self::$tableAs.'.ama_documento,' .
-                        self::$tableAs.'.ama_visible,' .
-                        self::$tableAs.'.ama_id_responsable,' .
-                        self::$tableAs.'.institucion,' .
-                        self::$tableAs.'.year,' .
-                        Administrativo_Usuario_Usuario::$tableAs . '.uss_usuario, '.
-                        Administrativo_Usuario_Usuario::$tableAs . '.uss_tipo, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
+        $camposSelect = 'ama_id, ama_fecha_registro, ama_id_estudiante, ama_titulo, ama_descripcion, IF(uss_tipo = 1, "Proceso interno", "Evidencia") categoria, ama_documento, ama_visible, ama_id_responsable,' . self::$tableAs.'.institucion,' . self::$tableAs.'.year, uss_usuario, uss_tipo, uss_nombre';
 
-        $orderBy = self::$tableAs.'.ama_fecha_registro DESC';
+        $orderBy = 'ama_fecha_registro DESC';
 
-        return self::SelectJoin($camposWhere, $camposSelect, self::class, [Administrativo_Usuario_Usuario::class], '', $orderBy);
+        return self::SelectJoin($camposWhere, $camposSelect, [Administrativo_Usuario_Usuario::class], '', $orderBy);
 
     }
 
