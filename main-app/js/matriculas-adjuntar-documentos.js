@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (respuesta["estado"] === 'ko') {
                         $.ajax({
-                            url: "cargar_documento.php",
+                            url: "../compartido/cargar-documentos.php",
                             type: "POST",
                             dataType: 'json',
                             data: {
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 // Eliminar el documento anterior si se ha cambiado
                                 $.ajax({
-                                    url: "cargar_documento.php",
+                                    url: "../compartido/cargar-documentos.php",
                                     type: "POST",
                                     dataType: 'json',
                                     data: {
@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     if (respuestaEliminacion["estado"] === 'ok') {
                                         mtdMostrarMensaje(respuesta["mensaje"]);
                                         hizoCambio = true;
+                                        setTimeout(() => {$('#documentoAdjuntoModal').modal('hide');}, 1000);
                                     }
                                 }); 
                             }
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (respuesta["estado"] === 'ko') {
                         $.ajax({
-                            url: "cargar_documento.php",
+                            url: "../compartido/cargar-documentos.php",
                             type: "POST",
                             dataType: 'json',
                             data: {
