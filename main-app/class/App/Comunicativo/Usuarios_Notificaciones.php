@@ -28,26 +28,20 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
     {  
         self::foreignKey(self::LEFT, [
             'upn_tipo_notificacion'  => $tipoNotificacion,
-            'upn_usuario'            => Administrativo_Usuario_Usuario::$tableAs.'.uss_id',
+            'upn_usuario'            => 'uss_id',
             'year'                   => Administrativo_Usuario_Usuario::$tableAs.'.year',
             'institucion'            => Administrativo_Usuario_Usuario::$tableAs.'.institucion'
         ]);
 
         $camposWhere = [
-            Administrativo_Usuario_Usuario::$tableAs.'.uss_tipo'     => TIPO_DIRECTIVO,
-            Administrativo_Usuario_Usuario::$tableAs.'.year'         => $anno,
-            Administrativo_Usuario_Usuario::$tableAs.'.institucion'  => $institucion,
+            'uss_tipo'     => TIPO_DIRECTIVO,
+            'year'         => $anno,
+            'institucion'  => $institucion,
         ];
 
-        $camposSelect = Administrativo_Usuario_Usuario::$tableAs.'.uss_id, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_usuario, '.
-                        Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_bloqueado, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_estado, '.
-                        'IFNULL('.self::$tableAs.'.upn_id, 0) upn_id';
+        $camposSelect = 'uss_id, uss_usuario, uss_email, uss_nombre, uss_bloqueado, uss_estado, IFNULL(upn_id, 0) as upn_id';
 
-        return self::SelectJoin($camposWhere, $camposSelect, Administrativo_Usuario_Usuario::class, [self::class]);
+        return self::SelectJoin($camposWhere, $camposSelect, [self::class]);
 
     }
 
@@ -63,22 +57,20 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
     public static function ObtenerUsuariosSuscritosxTipoNotificacion($tipoNotificacion,$anno,$institucion)
     {  
         Administrativo_Usuario_Usuario::foreignKey(Administrativo_Usuario_Usuario::INNER, [
-            'uss_id'      => self::$tableAs.'.upn_usuario',
+            'uss_id'      => 'upn_usuario',
             'year'        => self::$tableAs.'.year',
             'institucion' => self::$tableAs.'.institucion'
         ]);
 
         $camposWhere = [
-            self::$tableAs.'.upn_tipo_notificacion' => $tipoNotificacion,
-            self::$tableAs.'.year'                  => $anno,
-            self::$tableAs.'.institucion'           => $institucion,
+            'upn_tipo_notificacion' => $tipoNotificacion,
+            'year'                  => $anno,
+            'institucion'           => $institucion,
         ];
 
-        $camposSelect = self::$tableAs.'.upn_usuario,' .
-                        Administrativo_Usuario_Usuario::$tableAs . '.uss_email, '.
-                        Administrativo_Usuario_Usuario::$tableAs.'.uss_nombre';
+        $camposSelect = 'upn_usuario, uss_email, uss_nombre';
 
-        return self::SelectJoin($camposWhere, $camposSelect, self::class, [Administrativo_Usuario_Usuario::class]);
+        return self::SelectJoin($camposWhere, $camposSelect, [Administrativo_Usuario_Usuario::class]);
 
     }
 }
