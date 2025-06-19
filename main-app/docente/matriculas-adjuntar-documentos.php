@@ -13,7 +13,7 @@ $idMatricula="";
 if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
 if(!empty($_GET["idMatricula"])){ $idMatricula=base64_decode($_GET["idMatricula"]);}
 
-require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
+require_once ROOT_PATH . '/main-app/class/App/Academico/Matricula_adjuntos.php';
 ?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
@@ -105,7 +105,7 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
 
                                     $documento = '<a href="../files/documentos_adjuntos_estudiantes/'.$resultado['ama_documento'].'" target="_blank"> Ver documento</a>';
                                 ?>
-                                    <?php if(($resultado['uss_tipo'] == TIPO_DIRECTIVO ||$resultado['uss_tipo'] == TIPO_DEV ) && $ocultar == "NO") {?>
+                                    <?php if(($resultado['uss_tipo'] == TIPO_DIRECTIVO || $resultado['uss_tipo'] == TIPO_DEV ) && $ocultar == "NO") {?>
                                             <tr>
                                                 <td><?= $contReg; ?></td>
                                                 <td><?= $resultado["ama_id"]; ?></td>

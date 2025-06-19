@@ -7,6 +7,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
+
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once ROOT_PATH . '/main-app/class/App/Academico/Matricula_Adjuntos.php';
 
