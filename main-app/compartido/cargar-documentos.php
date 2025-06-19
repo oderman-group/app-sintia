@@ -25,11 +25,13 @@ if (isset($_POST['opcion']) and $_POST["opcion"] == "adjuntar_documento_estudian
         $archivoSubido->validarArchivo($_FILES['uplDocumento']['size'], $_FILES['uplDocumento']['name']);
         $explode=explode(".", $_FILES['uplDocumento']['name']);
         $extension = end($explode);
-        $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_documento_') . "." . $extension;        
+        $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_documento_') . "." . $extension;   
+        $ruta = "../files/documentos_adjuntos_estudiantes/";
+        $destino = $ruta . $archivo;     
         while (file_exists($destino)) {
             $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_documento_') . "." . $extension;
-        }
-        $destino = "../files/documentos_adjuntos_estudiantes/" . $archivo;  
+            $destino = $ruta . $archivo; 
+        }          
         if (move_uploaded_file($_FILES['uplDocumento']['tmp_name'], $destino)) {
             $respuesta["estado"] = "ok";
             $respuesta["mensaje"] = "informacion del archivo" ;
