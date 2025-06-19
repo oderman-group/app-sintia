@@ -2,7 +2,9 @@
 <?php $idPaginaInterna = 'DT0352';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+
 Utilidades::validarParametros($_GET,['id','idMatricula']);
+
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
@@ -107,6 +109,7 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
 
                                     $documento = '<a href="../files/documentos_adjuntos_estudiantes/'.$resultado['ama_documento'].'" target="_blank"> Ver documento</a>';
                                 ?>
+                                    <?php if(($ocultar == "NO" && $resultado['ama_id_responsable'] <> $_SESSION["id"]) || $resultado['ama_id_responsable'] == $_SESSION["id"]) {?>
                                     <tr>
                                         <td><?= $contReg; ?></td>
                                         <td><?= $resultado["ama_id"]; ?></td>
@@ -118,12 +121,12 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
                                         <td><?= $resultado['uss_nombre']; ?></td>
                                         <td><?= $ocultar; ?></td>                                        
                                         <td>
+                                            <?php if($resultado['ama_id_responsable'] == $_SESSION["id"] ) {?>
                                             <div class="btn-group">
                                                 <button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
                                                 <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
                                                     <i class="fa fa-angle-down"></i>
-                                                </button>
-                                                <?php if($resultado['ama_id_responsable'] == $_SESSION["id"] ) {?>
+                                                </button>                                                
                                                     <ul class="dropdown-menu" role="menu">
                                                         <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0354'])) { ?>
                                                             <li><a href="javascript:void(0);" onclick="btnEditarClic('<?= $resultado['ama_id']; ?>')"><?= $frases[375][$datosUsuarioActual['uss_idioma']]; ?></a></li>
@@ -131,13 +134,14 @@ require_once ROOT_PATH . '/main-app/class/App/academico/Matricula_adjuntos.php';
                                                         if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0355'])) { ?>
                                                             <li><a href="javascript:void(0);" onclick="btnEliminarClic('<?= $resultado['ama_id']; ?>','<?= $resultado['ama_documento']; ?>')"><?= $frases[174][$datosUsuarioActual['uss_idioma']]; ?></a></li>
                                                         <?php } ?>
-                                                    </ul>
-                                                <?php } ?>
+                                                    </ul>                                                
                                             </div>
+                                            <?php } ?>
                                         </td>                                        
                                     </tr>
                                 <?php
-                                    $contReg++;
+                                        $contReg++;
+                                    }
                                 }
                                 ?>
                             </tbody>
