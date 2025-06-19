@@ -6,6 +6,7 @@ $idPaginaInterna = 'AC0040';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once ROOT_PATH . '/main-app/class/App/Academico/Matricula_Adjuntos.php';
 require_once ROOT_PATH . '/main-app/class/App/Comunicativo/Usuarios_Notificaciones.php';
+require_once ROOT_PATH . '/main-app/class/App/Comunicativo/Social_Email.php';
 
 $_POST = json_decode(file_get_contents("php://input"), true);
 $respuesta = array();
