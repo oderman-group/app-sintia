@@ -40,6 +40,7 @@ function actualizarSuscriptor(inputCheckbox) {
  * Pregunta si se quiere suscribir o desuscribir a todos los usuarios a una notificación.
  * 
  * @param checked  - El estado del checkbox que indica si se deben suscribir o desuscribir todos los usuarios.
+ * 
  */
 function actualizarSuscriptorTodos(checked){
     suscribeChecked = checked;    

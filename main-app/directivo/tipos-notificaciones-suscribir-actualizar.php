@@ -27,7 +27,7 @@ if($_POST["suscribirTodos"] == "true"){
 
 	if($_POST["suscribir"] == "true"){
 		try {
-			$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosSuscripcion($_POST["year"],$_POST["idInstitucion"]);
+			$lista = Comunicativo_Usuarios_Notificaciones::ObtenerUsuariosDirectivosxTipoNotificacionSuscripcion($_POST["idNotificacion"],$_POST["year"],$_POST["idInstitucion"]);
 			foreach ($lista as $usuario) {
 				$campos = [
 					'upn_tipo_notificacion' => $_POST["idNotificacion"],
