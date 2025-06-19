@@ -97,7 +97,7 @@ foreach ($consultaDirectivoDesbloqueo as $datosDirectivosDesbloqueo) {
 			var nombreEmisor    = "' . $nombreUsuario['uss_nombre'] . '";
 			var asunto          = "SOLICITUD DE DESBLOQUEO";
 			var contenido       = "Ha recibido una nueva solicitud de desbloqueo para el usuario ' . $nombreUsuario['uss_nombre'] . '.";
-			var receptor        = "' . $datosDirectivo['uss_id'] . '";
+			var receptor        = "' . $datosDirectivosDesbloqueo['uss_id'] . '";
 			socket.emit("enviar_mensaje_correo", {
 				year: year,
 				institucion: institucion,
