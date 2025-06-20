@@ -86,7 +86,7 @@ class Academico_Indicadores_Estudiantes_Inclusion extends BDT_Tablas implements 
             self::class
         ];
 
-        return Matricula::SelectJoin($camposWhere, $camposSelect, Matricula::class, $clasesJoin, '', $orderBy);
+        return Matricula::SelectJoin($camposWhere, $camposSelect, $clasesJoin, '', $orderBy);
 
     }
 
