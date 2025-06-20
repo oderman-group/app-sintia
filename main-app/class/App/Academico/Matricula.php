@@ -11,6 +11,8 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
     public static $tableName = 'academico_matriculas';
     public static $primaryKey = 'mat_id';
     public static $tableAs = 'matri';
+    
+    CONST ESTUDIANTE_INCLUSION = 1;
 
     use BDT_Join;
 /**
