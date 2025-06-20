@@ -44,6 +44,8 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                     <?php if ($periodoConsultaActual < $datosCargaActual['car_periodo']) { ?>
                         <li><a href="indicadores-recuperar.php?idR=<?= base64_encode($resultado['ipc_indicador']); ?>">Recuperar</a></li>
                     <?php } ?>
+
+                    <li><a href="indicadores-estudiantes-inclusion.php?idIndicadorNuevo=<?= base64_encode($resultado['aipc_id_nuevo']); ?>&idIndicador=<?= base64_encode($resultado['ipc_id']); ?>">E. Inclusión</a></li>
                 </ul>
             </div>
 
