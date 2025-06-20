@@ -1363,7 +1363,7 @@ class CargaAcademica {
     {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT am.mat_id, am.mat_nombre, ar.ar_id, ar.ar_nombre, car.car_id, ind.ind_nombre, aic.ipc_periodo, ROUND(SUM(aac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), 2) AS nota, ROUND(rind_nota, 2) AS rind_nota, ind.ind_id
+        $sql = "SELECT am.mat_id, am.mat_nombre, ar.ar_id, ar.ar_nombre, car.car_id, IFNULL(aii.aii_descripcion_indicador,ind.ind_nombre)ind_nombre, aic.ipc_periodo, ROUND(SUM(aac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), 2) AS nota, ROUND(rind_nota, 2) AS rind_nota, ind.ind_id, aii.aii_descripcion_indicador
         FROM ".BD_ACADEMICA.".academico_cargas car
         INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car.car_materia AND am.institucion = car.institucion  AND am.year = car.year
         INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id = am.mat_area AND ar.institucion = car.institucion  AND ar.year = car.year
@@ -1373,6 +1373,7 @@ class CargaAcademica {
         INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo = aic.ipc_indicador AND aa.act_id_carga = car.car_id AND aa.act_estado = 1 AND aa.act_registrada = 1 AND aa.institucion = car.institucion  AND aa.year = car.year
         INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad = aa.act_id AND aac.institucion = car.institucion  AND aac.year = car.year
         LEFT JOIN ".BD_ACADEMICA.".academico_indicadores_recuperacion rec ON rind_estudiante=? AND rind_carga=car.car_id AND rind_periodo=? AND rind_indicador=ind_id AND rec.institucion=car.institucion AND rec.year=car.year
+        LEFT JOIN ".BD_ACADEMICA.".academico_indicadores_inclusion aii ON aii.aii_id_indicador = ind.ind_id AND aii.aii_id_estudiante = bol.bol_estudiante AND aii.institucion=am.institucion AND aii.year= am.year
         WHERE car.car_curso=? AND car.car_grupo=? AND car.institucion=?  AND car.year=? AND bol.bol_estudiante=? AND bol.bol_periodo IN (" . $periodos . ") AND aac.cal_id_estudiante=? AND aa.act_periodo=?
         GROUP BY ar.ar_id, am.mat_id, ind.ind_id
         HAVING nota < ? AND (rind_nota IS NULL OR (rind_nota < nota AND rind_nota < ?))
@@ -1829,11 +1830,13 @@ class CargaAcademica {
         string  $idEstudiante,
         string  $idCurso,
         string  $idGrupo,
+        string  $periodo = "",
         string  $filtroOR = "",
         string  $yearBd = ""
     )
     {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $periodoActual= !empty($periodo) ? $periodo : $config['conf_periodo'];
 
         $sql = "SELECT car_id, mat_id, mat_nombre, mat_sumar_promedio, SUM(aa.act_valor) AS porcentaje, ROUND(SUM(ac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), 2) AS nota, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 FROM ".BD_ACADEMICA.".academico_cargas car 
         INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion=car.institucion AND am.year=car.year
@@ -1845,7 +1848,7 @@ class CargaAcademica {
         GROUP BY car_id
         HAVING porcentaje > 0";
 
-        $parametros = [$config['conf_periodo'], $idEstudiante, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
+        $parametros = [$periodoActual, $idEstudiante, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
 
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
