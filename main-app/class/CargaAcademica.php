@@ -1830,11 +1830,13 @@ class CargaAcademica {
         string  $idEstudiante,
         string  $idCurso,
         string  $idGrupo,
+        string  $periodo = "",
         string  $filtroOR = "",
         string  $yearBd = ""
     )
     {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $periodoActual= !empty($periodo) ? $periodo : $config['conf_periodo'];
 
         $sql = "SELECT car_id, mat_id, mat_nombre, mat_sumar_promedio, SUM(aa.act_valor) AS porcentaje, ROUND(SUM(ac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), 2) AS nota, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 FROM ".BD_ACADEMICA.".academico_cargas car 
         INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car_materia AND am.institucion=car.institucion AND am.year=car.year
@@ -1846,7 +1848,7 @@ class CargaAcademica {
         GROUP BY car_id
         HAVING porcentaje > 0";
 
-        $parametros = [$config['conf_periodo'], $idEstudiante, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
+        $parametros = [$periodoActual, $idEstudiante, $idCurso, $idGrupo, $config['conf_id_institucion'], $year];
 
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 

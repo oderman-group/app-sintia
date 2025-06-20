@@ -46,24 +46,24 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         }
 
         Administrativo_Usuario_Usuario::foreignKey(self::LEFT, [
-            "institucion" => $clasePrincipal::$tableAs . '.institucion',
-            "year"        => $clasePrincipal::$tableAs . '.year',
-            "uss_id"      => $clasePrincipal::$tableAs . '.car_docente'
+            "institucion" => static::$tableAs . '.institucion',
+            "year"        => static::$tableAs . '.year',
+            "uss_id"      => 'car_docente'
         ]);
 
 
-        $campos = $clasePrincipal::$tableAs . ".*," . Administrativo_Usuario_Usuario::$tableAs . ".*";
+        $campos = static::$tableAs . ".*," . Administrativo_Usuario_Usuario::$tableAs . ".*";
 
 
         $predicados =
             [
-                $clasePrincipal::$tableAs . ".mat_grado" => "'".$grado."'",
-                $clasePrincipal::$tableAs . ".mat_grupo" => "'".$grupo."'",
-                $clasePrincipal::$tableAs . ".institucion" => $_SESSION["idInstitucion"],
-                $clasePrincipal::$tableAs . ".year" => "'".$year."'",
-                $clasePrincipal::$tableAs . ".mat_eliminado" => 0,
-                $clasePrincipal::$tableAs . ".bol_periodo IN" => "(" . $in_periodos . ")",
-                "AND" => $clasePrincipal::$tableAs . '.mat_estado_matricula = ' . MATRICULADO . ' OR ' . $clasePrincipal::$tableAs . '.mat_estado_matricula=' . ASISTENTE
+                "mat_grado" => "'".$grado."'",
+                "mat_grupo" => "'".$grupo."'",
+                "institucion" => $_SESSION["idInstitucion"],
+                "year" => "'".$year."'",
+                "mat_eliminado" => 0,
+                "bol_periodo IN" => "(" . $in_periodos . ")",
+                "AND" => 'mat_estado_matricula = ' . MATRICULADO . ' OR mat_estado_matricula=' . ASISTENTE
             ];
         if (!empty($andAdicional)) {
 
@@ -74,7 +74,7 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
                 $estudiante = parent::formatValor($estudiante);
             };
             $in_estudiantes = implode(', ', $idEstudiantes);
-            $predicados[$clasePrincipal::$tableAs . '.mat_id IN'] = "(" . $in_estudiantes . ")";
+            $predicados['mat_id IN'] = "(" . $in_estudiantes . ")";
         }
         
         $order = "$odenNombres mat_id,ar_posicion,car_id,bol_periodo";
@@ -84,8 +84,9 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         $result = parent::SelectJoin(
             $predicados,
             $campos,
-            $clasePrincipal,
             $listaClases,
+            '',
+            '',
             '',
             $order
         );

@@ -72,7 +72,7 @@ if (isset($_POST["periodo"])) {
     <!-- BEGIN -->
     <tbody>
       <?php
-      $cCargas = CargaAcademica::consultaInformeParcialTodas($config, $datosEstudianteActual['mat_id'], $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
+      $cCargas = CargaAcademica::consultaInformeParcialTodas($config, $datosEstudianteActual['mat_id'], $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo'], $cPeriodo);
       $nCargas = mysqli_num_rows($cCargas);
       $materiasDividir = 0;
       $promedioG = 0;
@@ -118,7 +118,7 @@ if (isset($_POST["periodo"])) {
         $consultaEstudianteActualMT = MediaTecnicaServicios::existeEstudianteMT($config, $year, $estudiante);
         while ($datosEstudianteActualMT = mysqli_fetch_array($consultaEstudianteActualMT, MYSQLI_BOTH)) {
           if (!empty($datosEstudianteActualMT)) {
-            $cCargas = CargaAcademica::consultaInformeParcialTodas($config, $datosEstudianteActualMT['mat_id'], $datosEstudianteActualMT['mat_grado'], $datosEstudianteActualMT['mat_grupo']);
+            $cCargas = CargaAcademica::consultaInformeParcialTodas($config, $datosEstudianteActualMT['mat_id'], $datosEstudianteActualMT['matcur_id_curso'], $datosEstudianteActualMT['matcur_id_grupo'], $cPeriodo);
             $nCargas = mysqli_num_rows($cCargas);
             while ($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)) {
               //COLOR DE LA BARRA Y DE LAS DEFINITIVAS

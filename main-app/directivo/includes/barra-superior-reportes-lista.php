@@ -47,21 +47,21 @@ if (!empty($_GET['busqueda'])) {
       <?php
         if(!empty($_GET["est"])){
       ?>
-        <input type="hidden" name="est" value="<?= base64_decode($_GET['est']); ?>"/>
+        <input type="hidden" name="est" value="<?= $_GET['est']; ?>"/>
       <?php
         }
         if(!empty($_GET["falta"])){
       ?>
-        <input type="hidden" name="falta" value="<?= base64_decode($_GET['falta']); ?>"/>
+        <input type="hidden" name="falta" value="<?= $_GET['falta']; ?>"/>
       <?php
         }
         if($datosUsuarioActual['uss_tipo']!=5 and !empty($_GET["fest"])){
       ?>
-        <input type="hidden" name="fest" value="<?= base64_decode($_GET['fest']); ?>"/>
+        <input type="hidden" name="fest" value="<?= $_GET['fest']; ?>"/>
       <?php
         }
       ?>
-      <input type="hidden" name="filtros" value="1"/>
+      <input type="hidden" name="filtros" value="<?= base64_encode(1); ?>"/>
       <input class="form-control mr-sm-2" type="search" placeholder="<?=$frases[386][$datosUsuarioActual['uss_idioma']];?>..." aria-label="Search" name="busqueda" value="<?=$busqueda; ?>">
       <button class="btn deepPink-bgcolor my-2 my-sm-0" type="submit"><?=$frases[8][$datosUsuarioActual['uss_idioma']];?></button>
     </form>

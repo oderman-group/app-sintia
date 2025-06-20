@@ -65,7 +65,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<th>ID</th>
 														<th>Fecha</th>
 														<th>Remitente</th>
-														<th>Estudiante</th>
+														<th>Usuario Bloqueado</th>
 														<th>Mensaje</th>
                                                         <th>Estado</th>
                                                         <th>Acciones</th>
@@ -100,16 +100,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     if ($resultado['soli_id_recurso'] != $resultado['soli_remitente']) {
 
                                                         $predicadoEstudiante = [
-                                                            'mat_id'      => $resultado['soli_id_recurso'],
+                                                            'uss_id'      => $resultado['soli_id_recurso'],
                                                             'institucion' => $_SESSION['idInstitucion'],
                                                             'year'        => $_SESSION['bd']
                                                         ];
                                                     
-                                                        $camposEstudiante    = "mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido, mat_id_usuario";
-                                                        $consultaEstudiante  = Administrativo_Usuario_Estudiante::Select($predicadoEstudiante, $camposEstudiante, BD_ACADEMICA);
+                                                        $camposEstudiante    = "uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2";
+                                                        $consultaEstudiante  = Administrativo_Usuario_Usuario::Select($predicadoEstudiante, $camposEstudiante, BD_GENERAL);
                                                         $resultadoEstudiante = $consultaEstudiante->fetch(PDO::FETCH_ASSOC);
-                                                        $nombreRecurso       = Estudiantes::NombreCompletoDelEstudiante($resultadoEstudiante);
-                                                        $IDUsuario = $resultadoEstudiante['mat_id_usuario'];
+                                                        $nombreRecurso       = UsuariosPadre::nombreCompletoDelUsuario($resultadoEstudiante) . " [ESTUDIANTE]";
                                                     }
 												?>
 												<tr>
