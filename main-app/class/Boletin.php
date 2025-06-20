@@ -669,7 +669,7 @@ class Boletin {
             INNER JOIN ".BD_ACADEMICA.".academico_indicadores ai ON aic.ipc_indicador=ai.ind_id AND ai.institucion={$config['conf_id_institucion']} AND ai.year={$year}
             INNER JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo=aic.ipc_indicador AND act_id_carga=car_id AND act_estado=1 AND act_registrada=1 AND aa.institucion={$config['conf_id_institucion']} AND aa.year={$year}
             INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad=aa.act_id AND aac.institucion={$config['conf_id_institucion']} AND aac.year={$year}
-            LEFT JOIN ".BD_ACADEMICA.".academico_indicadores_inclusion aii ON aii.aii_id_indicador = ind_id AND aii.aii_id_estudiante = cal_id_estudiante AND aii.aii_institucion={$config['conf_id_institucion']} AND aii.year={$year}
+            LEFT JOIN ".BD_ACADEMICA.".academico_indicadores_inclusion aii ON aii.aii_id_indicador = ind_id AND aii.aii_id_estudiante = cal_id_estudiante AND aii.institucion={$config['conf_id_institucion']} AND aii.year={$year}
             WHERE car_curso='" . $grado . "'  and car_grupo='" . $grupo . "' and mat_area='" . $area . "' AND ipc_periodo in (" . $condicion . ") AND cal_id_estudiante='" . $estudiante . "' and act_periodo=" . $condicion2 . " AND am.institucion={$config['conf_id_institucion']} AND am.year={$year}
             group by act_id_tipo, act_id_carga
             order by mat_id,ipc_periodo,ind_id;");

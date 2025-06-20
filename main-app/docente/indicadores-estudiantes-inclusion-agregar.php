@@ -14,7 +14,7 @@ try {
 		'aii_id_estudiante'   		=> $_POST["aii_id_estudiante"],
 		'aii_id_indicador'       	=> $_POST["aii_id_indicador"],
 		'aii_descripcion_indicador'	=> $_POST["aii_descripcion_indicador"] ,
-		'aii_institucion'         	=> $_SESSION["idInstitucion"],
+		'institucion'         		=> $_SESSION["idInstitucion"],
 		'year'              		=> $_SESSION["bd"]
 	];
 

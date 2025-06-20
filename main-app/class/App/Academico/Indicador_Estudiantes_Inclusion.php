@@ -55,7 +55,7 @@ class Academico_Indicadores_Estudiantes_Inclusion extends BDT_Tablas implements 
             'aii_id_indicador'  => Indicador::$tableAs.'.ind_id',
             'aii_id_estudiante' => Matricula::$tableAs.'.mat_id',
             'year'              => Indicador::$tableAs.'.year',
-            'aii_institucion'   => Indicador::$tableAs.'.institucion'
+            'institucion'       => Indicador::$tableAs.'.institucion'
         ]);
 
 
