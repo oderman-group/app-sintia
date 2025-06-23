@@ -11,6 +11,8 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
     public static $tableName = 'academico_matriculas';
     public static $primaryKey = 'mat_id';
     public static $tableAs = 'matri';
+    
+    CONST ESTUDIANTE_INCLUSION = 1;
 
     use BDT_Join;
 /**
@@ -38,5 +40,26 @@ class Matricula extends BDT_Tablas implements BDT_JoinImplements
         ];
         $sql = parent::Select($predicado,$campos);
         return $sql->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function listarEsdutiantes(string $curso, string $grupo){
+        $campos     = "mat_id,mat_grado,mat_grupo,mat_nombres,mat_nombre2,mat_primer_apellido,mat_segundo_apellido,mat_documento"; 
+        $predicado =
+        [
+           
+            "institucion"           => $_SESSION["idInstitucion"],
+            "year"                  => $_SESSION["bd"],
+            "mat_grado"             => $curso,
+            "mat_grupo"             => $grupo,
+            "mat_eliminado"         => 0,            
+            self::OTHER_PREDICATE  => "(mat_estado_matricula=".MATRICULADO." OR mat_estado_matricula=".ASISTENTE.")"
+        ];
+        $sql = parent::Select($predicado,$campos);
+        $result = $sql->fetchAll(PDO::FETCH_ASSOC);
+        foreach($result as &$row){
+            $nombreCompleto         = Estudiantes::NombreCompletoDelEstudiante($row);
+            $row['nombre_completo'] = $nombreCompleto;
+        }
+        return $result;
     }
 }

@@ -11,25 +11,25 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'academico_boletin';
-    public static $tableAs = 'bol';
+    public  static $tableAs = 'bol';
 
     use BDT_Join;
     public static function datosBoletin(
         string $grado,
         string $grupo,
-        array $periodos,
+        array  $periodos,
         string $year,
-        string  $idEstudiante="",
-        bool $traerIndicadores = false,
-        array $andAdicional = []
+        array  $idEstudiantes    = [],
+        bool   $traerIndicadores = false,
+        array  $andAdicional     = []
     ) {
 
         global $config;
         $listaClases = [];
         $year = empty($year) ? $_SESSION["bd"] : $year;
-        $in_periodos2 = implode(', ', $periodos);
+        $in_periodos = implode(', ', $periodos);
 
-     
+       
 
         $clasePrincipal = Vista_datos_boletin::class;
         if ($traerIndicadores) {
@@ -46,13 +46,13 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
         }
 
         Administrativo_Usuario_Usuario::foreignKey(self::LEFT, [
-            "institucion" => $clasePrincipal::$tableAs . '.institucion',
-            "year"        => $clasePrincipal::$tableAs . '.year',
-            "uss_id"      => $clasePrincipal::$tableAs . '.car_docente'
+            "institucion" => static::$tableAs . '.institucion',
+            "year"        => static::$tableAs . '.year',
+            "uss_id"      => 'car_docente'
         ]);
 
 
-        $campos = $clasePrincipal::$tableAs . ".*," . Administrativo_Usuario_Usuario::$tableAs . ".*";
+        $campos = static::$tableAs . ".*," . Administrativo_Usuario_Usuario::$tableAs . ".*";
 
 
         $predicados =
@@ -62,17 +62,22 @@ class Academico_boletin extends BDT_Tablas implements BDT_JoinImplements
                 "institucion" => $_SESSION["idInstitucion"],
                 "year" => "'".$year."'",
                 "mat_eliminado" => 0,
-                "bol_periodo IN" => "(" . $in_periodos2 . ")",
-                "AND" => $clasePrincipal::$tableAs . '.mat_estado_matricula = ' . MATRICULADO . ' OR ' . $clasePrincipal::$tableAs . '.mat_estado_matricula=' . ASISTENTE
+                "bol_periodo IN" => "(" . $in_periodos . ")",
+                "AND" => 'mat_estado_matricula = ' . MATRICULADO . ' OR mat_estado_matricula=' . ASISTENTE
             ];
         if (!empty($andAdicional)) {
 
             $predicados = array_merge($predicados, $andAdicional);
         }
-        if (!empty($idEstudiante)) {
-            $predicados[$clasePrincipal::$tableAs . '.mat_id'] = "'" . $idEstudiante . "'";
+        if (!empty($idEstudiantes)) {
+            foreach ($idEstudiantes as &$estudiante) {
+                $estudiante = parent::formatValor($estudiante);
+            };
+            $in_estudiantes = implode(', ', $idEstudiantes);
+            $predicados['mat_id IN'] = "(" . $in_estudiantes . ")";
         }
-        $order = "$odenNombres mat_id,car_id,bol_periodo";
+        
+        $order = "$odenNombres mat_id,ar_posicion,car_id,bol_periodo";
 
         $listaClases = [Administrativo_Usuario_Usuario::class];
 

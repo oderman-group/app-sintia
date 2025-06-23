@@ -156,6 +156,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 											<?php 
 												}
 											?>
+											<?php
+												if(Modulos::validarSubRol(['DT0346'])){
+											?>
+												<p><a href="javascript:void(0);" onclick="abrirModal('Historico de notas','historico-notas-filtros-modal.php')" >7. Historicos de notas</a></p>
+											<?php 
+												}
+											?>
 										</div>
                                 	</div>
 								</div>

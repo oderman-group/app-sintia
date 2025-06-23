@@ -7,13 +7,43 @@ include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
+
 $usuariosClase = new UsuariosFunciones;
 
 $datosEstudiante = Estudiantes::obtenerDatosEstudiante($_POST["estudiante"]);
 $nombre = trim(Estudiantes::NombreCompletoDelEstudiante($datosEstudiante));
 
+$consultaDatosAcudiente = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$datosEstudiante['mat_acudiente']."'");
+$datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
+
 
 $cont = !empty($_POST["faltas"]) ? count($_POST["faltas"]) : 0;
+
+if ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER) {
+    //INICIO ENVÍO DE MENSAJE
+    $tituloMsj    = 'Reporte disciplinario';
+    $contenidoMsj = '
+        <p style="color:navy;">
+            Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han hecho un nuevo reporte disciplinario con '.$cont.' faltas.<br>
+            Por favor ingresa a la plataforma y verificar dicho reporte. 
+        </p>
+    ';
+
+    $data = [
+        'contenido_msj'  => $contenidoMsj,
+        'usuario_email'  => $datosAcudiente['uss_email'],
+        'usuario_nombre' => $datosAcudiente['uss_nombre'],
+        'institucion_id' => $config['conf_id_institucion'],
+        'usuario_id'     => $datosAcudiente['uss_id']
+    ];
+
+    $asunto            = $tituloMsj;
+    $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
+    
+    EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+}
+
 $i = 0;
 while ($i < $cont) {
     $idInsercion=Utilidades::generateCode("DR");

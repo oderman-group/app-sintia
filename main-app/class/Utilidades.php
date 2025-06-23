@@ -3,6 +3,12 @@ require_once(dirname(__DIR__, 2) . '/config-general/constantes.php');
 require_once ROOT_PATH."/main-app/class/Conexion.php";
 class Utilidades {
 
+    public const CRUD_CREATE      = 'CREATE';
+    public const CRUD_READ        = 'READ';
+    public const CRUD_UPDATE      = 'UPDATE';
+    public const CRUD_DELETE      = 'DELETE';
+    public const CRUD_DESCONOCIDO = 'DESCONOCIDO';
+
 /**
  * Valida si el resultado de una consulta SQL o un array está vacío.
  *
@@ -434,4 +440,52 @@ public static  function valordefecto(&$valor,$valorDefecto="")
   $valor=empty($valor)?$valorDefecto:$valor;
   
 }
+
+    /**
+     * Traduce un tipo de operación CRUD (Crear, Leer, Actualizar, Borrar) a su descripción en español con formato HTML.
+     *
+     * Este método estático toma una cadena de texto que representa una operación CRUD
+     * y devuelve una cadena de texto HTML con la descripción correspondiente en español,
+     * estilizada con clases de color para una mejor visualización.
+     *
+     * @param string $operacion La cadena de texto que representa la operación CRUD.
+     * Los valores esperados son:
+     * - 'READ': Para operaciones de lectura.
+     * - 'UPDATE': Para operaciones de actualización.
+     * - 'INSERT': Para operaciones de creación/inserción.
+     * - 'DELETE': Para operaciones de eliminación.
+     * Cualquier otro valor resultará en 'Desconocido'.
+     *
+     * @return string Una cadena de texto HTML con la descripción traducida de la operación.
+     * Ejemplos de retorno:
+     * - '<span class="text-info">Lectura</span>'
+     * - '<span class="text-warning">Actualización</span>'
+     * - '<span class="text-success">Creación</span>'
+     * - '<span class="text-danger">Eliminación</span>'
+     * - '<span class="text-secondary">Desconocido</span>'
+     */
+    public static function crudTranslation(string $operacion): string {
+        switch($operacion) {
+            case self::CRUD_CREATE:
+                return '<span class="text-success">Creación</span>';
+                break;
+
+            case self::CRUD_READ;
+                return '<span class="text-info">Lectura</span>';
+                break;
+            
+            case self::CRUD_UPDATE:
+                return '<span class="text-warning">Actualización</span>';
+                break;
+
+
+            case self::CRUD_DELETE:
+                return '<span class="text-danger">Eliminación</span>';
+                break;
+
+            default;
+                return '<span class="text-secondary">Desconocido</span>';
+                break;
+        }
+    }
 }

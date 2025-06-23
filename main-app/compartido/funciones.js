@@ -113,7 +113,7 @@ function deseaRegresar(dato){
                             const resultado = await metodoFetchAsync(varHeref, data, 'json', method == 'GET');
                            
                             if (typeof window[funcion] === "function") {
-                                window[funcion](resultado, data);
+                                window[funcion](resultado, data, true);
                             } else {
                                 console.error(`La función "${funcion}" no existe o no está definida.`);
                             }
@@ -160,8 +160,11 @@ function deseaRegresar(dato){
 
             if(varHeref === null) {
                 return false;
-            } else {
+            } else {                
                 window.location.href='#';
+                if (typeof window[funcion] === "function") {
+                    window[funcion](null, data, false);
+                }
             }
 
         }
@@ -964,4 +967,61 @@ function contadorUsuariosBloqueados(){
     });
 
 }
+
+/**
+ * Muestra un mensaje de notificación en la esquina inferior derecha.
+ * @param {string} mensaje - El mensaje a mostrar.
+ * @param {string} [tipo="success"] - El tipo de mensaje, puede ser
+ */
+function mtdMostrarMensaje(mensaje, tipo = "success") {
+    $.toast({
+        heading: tipo === "success" ? "Acción realizada" : "Error",
+        text: mensaje,
+        position: 'bottom-right',
+        showHideTransition: 'slide',
+        loaderBg: '#26c281',
+        icon: tipo,
+        hideAfter: 5000,
+        stack: 6
+    });
+}
+
+/**
+ * Desactiva el botón con un mensaje de carga.
+ * @param {HTMLElement} boton - El botón a activar o desactivar.
+ * @param {string} [texto="cargando... "] - El texto que se mostrará en el botón mientras está cargando.
+ *  
+ */
+function mtdActivarLoadBoton(boton,texto = "cargando... ") {
+    boton.innerHTML ='<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + texto;
+    boton.disabled = true;
+}
+
+/**
+ * Activa el botón y restablece su texto.
+ * @param {HTMLElement} boton - El botón a desactivar.
+ * @param {string} [texto="Cargar"] - El texto que se mostrará en el botón cuando esté desactivado.
+ * 
+ */
+function mtdDesactivarLoadBoton(boton,texto = "Cargar") {
+    boton.innerHTML = texto;
+    boton.disabled = false;
+}
+
+/**
+ * Muestra un overlay de carga en la página.
+ * 
+ */
+function mtdActivarLoadPagina() {
+   document.getElementById("overlay").style.display = "flex";
+}
+
+/**
+ * Oculta el overlay de carga en la página.
+ * 
+ */
+function mtdDesactivarLoadPagina() {
+    document.getElementById("overlay").style.display = "none";
+}
+
 document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);

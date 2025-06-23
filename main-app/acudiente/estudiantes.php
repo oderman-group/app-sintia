@@ -197,20 +197,22 @@ require_once("../class/Estudiantes.php");
 																		<li><a href="../compartido/matricula-boletin-curso-<?=$resultado['gra_formato_boletin'];?>.php?id=<?=base64_encode($resultado["mat_id"]);?>&periodo=<?=base64_encode($config[2]);?>" target="_blank" ><?=$frases[267][$datosUsuarioActual['uss_idioma']];?></a></li>
 
 																		<?php
-																				}
 																			}
+																		}
 
-																		  if($config['conf_informe_parcial']==1){?>
-																		  	<li><a href="../compartido/informe-parcial.php?estudiante=<?=base64_encode($resultado["mat_id"]);?>&acu=1" target="_blank" ><?=$frases[265][$datosUsuarioActual['uss_idioma']];?></a></li>
-																		  <?php }
+																		if($config['conf_informe_parcial']==1){?>
+																			<li><a href="../compartido/informe-parcial.php?estudiante=<?=base64_encode($resultado["mat_id"]);?>&acu=1" target="_blank" ><?=$frases[265][$datosUsuarioActual['uss_idioma']];?></a></li>
+																		<?php }
 
-																		  if( $config['conf_ficha_estudiantil']==1 && !empty($resultado['mat_id_usuario']) ){?>
-																		  	<li><a href="ficha-estudiantil.php?idR=<?=base64_encode($resultado["mat_id_usuario"]);?>"><?=$frases[266][$datosUsuarioActual['uss_idioma']];?></a></li>
-																		  <?php }?>
+																		if( $config['conf_ficha_estudiantil']==1 && !empty($resultado['mat_id_usuario']) ){?>
+																			<li><a href="ficha-estudiantil.php?idR=<?=base64_encode($resultado["mat_id_usuario"]);?>"><?=$frases[266][$datosUsuarioActual['uss_idioma']];?></a></li>
+																		<?php }?>
 
-																		  <?php if( !isset($_SESSION['admin']) && !empty($resultado['mat_id_usuario']) ){?>
-																		  	<li><a href="auto-login.php?user=<?=base64_encode($resultado['mat_id_usuario']);?>">Autologin</a></li>
-																		  <?php }?>
+																		<?php if( !isset($_SESSION['admin']) && !empty($resultado['mat_id_usuario']) ){?>
+																			<li><a href="auto-login.php?user=<?=base64_encode($resultado['mat_id_usuario']);?>">Autologin</a></li>
+																		<?php }?>
+
+																		<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
 
 																	  </ul>
 																  </div>

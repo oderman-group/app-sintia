@@ -238,6 +238,21 @@
 										</li>
 									<?php
 										}
+									if (
+											Modulos::validarSubRol(["DT0349"]) &&
+											Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_NOTIFICACIONES)
+										) {
+									?>
+										<li <?php agregarClass(MENU,["DT0349","DT0350"]) ?>>
+											<a 
+												<?php validarModuloMenu(Modulos::MODULO_NOTIFICACIONES, "tipos-notificaciones-listar.php", MENU) ?> 
+												class="nav-link"
+											> 
+												<span class="title"><?=$frases[432][$datosUsuarioActual['uss_idioma']];?></span>
+											</a>
+										</li>
+									<?php
+										}
 									?>
 	                            </ul>
 	                        </li>

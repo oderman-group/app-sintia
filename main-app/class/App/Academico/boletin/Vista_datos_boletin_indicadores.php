@@ -8,7 +8,7 @@ class Vista_datos_boletin_indicadores extends BDT_Tablas implements BDT_JoinImpl
 
     public static $schema = BD_ACADEMICA;
     public static $tableName = 'vista_datos_boletin_indicadores';
-    public static $tableAs = 'dbolin';
+    public  static $tableAs = 'dbolin';
 
     use BDT_Join;
 
