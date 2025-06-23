@@ -61,7 +61,7 @@ $indicador = Indicadores::traerDatosIndicador($conexion, $config, $idIndicador);
                                         <div class="card-body">
 
 										<div class="row">
-											<div class="col-sm-1">
+											<div class="col-sm-2">
 												<div class="btn-group">
 													<a href='indicadores.php' class='btn btn-secondary'  style='text-transform:uppercase;'><i class='fa fa-long-arrow-left'></i><?=$frases[184][$datosUsuarioActual['uss_idioma']]?></a>													
 													<?php 
@@ -70,7 +70,7 @@ $indicador = Indicadores::traerDatosIndicador($conexion, $config, $idIndicador);
 													?>
 												</div>
 											</div>
-											<div class="col-sm-11">
+											<div class="col-sm-10">
 												<input type="text" class="form-control" value="<?= $indicador['ind_nombre']; ?>" readonly>
 											</div>
 										</div>

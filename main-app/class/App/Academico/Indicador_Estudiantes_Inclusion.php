@@ -29,54 +29,47 @@ class Academico_Indicadores_Estudiantes_Inclusion extends BDT_Tablas implements 
     {         
 
         BDT_OpcionesGenerales::foreignKey(BDT_OpcionesGenerales::INNER, [
-            'ogen_id'      => Matricula::$tableAs.'.mat_genero'
+            'ogen_id'      => 'mat_genero'
         ]);
 
         Carga::foreignKey(Carga::INNER, [
-            'car_curso'   => Matricula::$tableAs.'.mat_grado',
-            'car_grupo'   => Matricula::$tableAs.'.mat_grupo',
+            'car_curso'   => 'mat_grado',
+            'car_grupo'   => 'mat_grupo',
             'year'        => Matricula::$tableAs.'.year',
             'institucion' => Matricula::$tableAs.'.institucion'
         ]);
 
         Indicador_carga::foreignKey(Indicador_carga::INNER, [
-            'ipc_carga'   => Carga::$tableAs.'.car_id',
+            'ipc_carga'   => 'car_id',
+            'id_nuevo'    => $idIndicadorNuevo,
             'year'        => Carga::$tableAs.'.year',
             'institucion' => Carga::$tableAs.'.institucion'
         ]);
 
         Indicador::foreignKey(Indicador::INNER, [
-            'ind_id'      => Indicador_carga::$tableAs.'.ipc_indicador',
+            'ind_id'      => 'ipc_indicador',
             'year'        => Indicador_carga::$tableAs.'.year',
             'institucion' => Indicador_carga::$tableAs.'.institucion'
         ]);
 
         self::foreignKey(self::LEFT, [
-            'aii_id_indicador'  => Indicador::$tableAs.'.ind_id',
-            'aii_id_estudiante' => Matricula::$tableAs.'.mat_id',
+            'aii_id_indicador'  => 'ind_id',
+            'aii_id_estudiante' => 'mat_id',
             'year'              => Indicador::$tableAs.'.year',
             'institucion'       => Indicador::$tableAs.'.institucion'
         ]);
 
 
         $camposWhere = [
-            Matricula::$tableAs.'.mat_estado_matricula' => MATRICULADO,
-            Indicador_carga::$tableAs.'.id_nuevo'       => $idIndicadorNuevo,
-            Matricula::$tableAs.'.mat_inclusion'         => Matricula::ESTUDIANTE_INCLUSION,
+            'mat_estado_matricula'  => MATRICULADO,
+            'mat_inclusion'         => Matricula::ESTUDIANTE_INCLUSION,
+            'year'                  => $_SESSION['bd'],
+            'institucion'           => $_SESSION['idInstitucion'],
         ];
 
-        $camposSelect = Matricula::$tableAs.'.mat_id,' .
-                        Matricula::$tableAs.'.mat_documento,' .
-                        Matricula::$tableAs.'.mat_nombres,' .
-                        Matricula::$tableAs.'.mat_nombre2,' .
-                        Matricula::$tableAs.'.mat_primer_apellido,' .
-                        Matricula::$tableAs.'.mat_segundo_apellido,' .
-                        BDT_OpcionesGenerales::$tableAs.'.ogen_nombre genero,' .
-                        'IFNULL('.self::$tableAs.'.aii_id,0) aii_id,'.
-                        self::$tableAs.'.aii_fecha,' .
-                        self::$tableAs.'.aii_descripcion_indicador indicador_inclusion' ;
+        $camposSelect = 'mat_id, mat_documento, mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido, ogen_nombre genero, IFNULL(aii_id,0) AS aii_id, aii_fecha, aii_descripcion_indicador AS indicador_inclusion' ;
 
-        $orderBy = Matricula::$tableAs.'.mat_nombres';
+        $orderBy = 'mat_nombres';
 
         $clasesJoin = [
             BDT_OpcionesGenerales::class,
