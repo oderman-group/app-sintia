@@ -1,5 +1,6 @@
 <?php
 require_once ROOT_PATH.'/main-app/class/Tables/BDT_tablas.php';
+require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_JoinImplements{
     public static $schema = BD_GENERAL;
@@ -41,7 +42,7 @@ class Comunicativo_Usuarios_Notificaciones extends BDT_Tablas implements BDT_Joi
 
         $camposSelect = 'uss_id, uss_usuario, uss_email, uss_nombre, uss_bloqueado, uss_estado, IFNULL(upn_id, 0) as upn_id';
 
-        return self::SelectJoin($camposWhere, $camposSelect, [self::class]);
+        return Administrativo_Usuario_Usuario::SelectJoin($camposWhere, $camposSelect, [self::class]);
 
     }
 
