@@ -213,10 +213,19 @@ if (php_sapi_name() === 'cli') {
     }
 
 } else {
+
+    $displayErrorsLocal = 0;
+    $displayErrorsProd = 0;
+
+    if(!empty($_SESSION) && isset($_SESSION['admin']) || !empty($_SESSION['datosUsuario']) && $_SESSION['datosUsuario']['uss_tipo'] == TIPO_DEV){
+        $displayErrorsLocal = 1;
+        $displayErrorsProd = 1;
+    }
+
     switch ($_SERVER['HTTP_HOST']) {
         case 'localhost':
-            ini_set('display_errors', 1);
-            ini_set('display_startup_errors', 1);
+            ini_set('display_errors', $displayErrorsLocal);
+            ini_set('display_startup_errors', $displayErrorsLocal);
             ini_set('error_log', __DIR__ . '/errores_local.log');
             define('REDIRECT_ROUTE', 'http://localhost/app-sintia/main-app');
             define('ENVIROMENT', 'TEST');
@@ -233,8 +242,8 @@ if (php_sapi_name() === 'cli') {
         break;
 
         case 'main.plataformasintia.com':
-            ini_set('display_errors', 0);
-            ini_set('display_startup_errors', 0);
+            ini_set('display_errors', $displayErrorsProd);
+            ini_set('display_startup_errors', $displayErrorsProd);
             ini_set('error_log', __DIR__ . '/errores_prod.log');
             define('REDIRECT_ROUTE', 'https://main.plataformasintia.com/app-sintia/main-app');
             define('ENVIROMENT', 'PROD');
@@ -242,8 +251,8 @@ if (php_sapi_name() === 'cli') {
         break;
 
         case 'copyprod.plataformasintia.com':
-            ini_set('display_errors', 0);
-            ini_set('display_startup_errors', 0);
+            ini_set('display_errors', $displayErrorsProd);
+            ini_set('display_startup_errors', $displayErrorsProd);
             ini_set('error_log', __DIR__ . '/errores_copy_prod.log');
             define('REDIRECT_ROUTE', 'https://copyprod.plataformasintia.com/app-sintia/main-app');
             define('ENVIROMENT', 'PROD');
@@ -273,7 +282,7 @@ switch (ENVIROMENT) {
     include(ROOT_PATH."/conexion-datos-developer.php");
     define('BD_PREFIX', 'mobiliar_');
     define('EPAYCO_TEST', 'true');
-    define('EMAIL_METHOD', 'NORMAL');
+    define('EMAIL_METHOD', 'MAILPIT');
     break;
 
     case 'PROD':
