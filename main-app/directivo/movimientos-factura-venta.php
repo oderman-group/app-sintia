@@ -52,7 +52,7 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta name="description" content="Plataforma Educativa SINTIA | Para Colegios y Universidades" />
         <meta name="author" content="ODERMAN" />
-        <title>INVOICE</title>
+        <title><?=$tipoFactura;?> No. <?=$resultado["id_nuevo_finanzas"];?> Para <?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?> del <?=$fechaReplace;?>  </title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -189,7 +189,7 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                                 </tr>
                                 <tr>
                                     <td>
-                                        <?=$configFinanzas['invoice_footer']?>
+                                        <?php if(!empty($configFinanzas['invoice_footer'])) echo $configFinanzas['invoice_footer'];?>
                                     </td>
                                 </tr>
                             </table>
