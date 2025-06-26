@@ -3,6 +3,12 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
 <?php
+require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+
+$parametrosObligatorios = ["id"];
+
+Utilidades::validarParametros($_GET, $parametrosObligatorios);
+
 require_once(ROOT_PATH."/main-app/class/Movimientos.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){

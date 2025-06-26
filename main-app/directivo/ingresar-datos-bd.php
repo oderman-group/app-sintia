@@ -191,6 +191,38 @@ try {
             include("../compartido/error-catch-to-report.php");
         }
 
+        //DOCUMENTOS ADJUNTOS PARA ESTUDIANTES
+        try {
+            mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_matriculas_adjuntos(
+                ama_id_estudiante, ama_documento, ama_id_responsable, ama_visible, ama_fecha_registro, institucion, year, ama_titulo, ama_descripcion
+            ) 
+            SELECT 
+                ama_id_estudiante, ama_documento, ama_id_responsable, ama_visible, ama_fecha_registro, institucion, {$year}, ama_titulo, ama_descripcion 
+            FROM ".BD_ACADEMICA.".academico_matriculas_adjuntos 
+            WHERE 
+                institucion={$idInsti} 
+            AND year={$yearAnterior}
+            ");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+        }
+
+        //SUSCRIPCIÓN DE USUARIOS DIRECTIVOS A LAS NOTIFIACIONES
+        try {
+            mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_notificaciones(
+                upn_tipo_notificacion, upn_usuario, institucion, year
+            ) 
+            SELECT 
+                upn_tipo_notificacion, upn_usuario, institucion, {$year}
+            FROM ".BD_GENERAL.".usuarios_notificaciones 
+            WHERE 
+                institucion={$idInsti} 
+            AND year={$yearAnterior}
+            ");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+        }
+
         //CREAMOS LA NUEVA CONFIGURACIÓN DE LA INSTITUCIÓN
         try {
             mysqli_query($conexion, "INSERT INTO ".BD_ADMIN.".configuracion (
