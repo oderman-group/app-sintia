@@ -58,7 +58,7 @@ switch ($resultado['payment_method']) {
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta name="description" content="Plataforma Educativa SINTIA | Para Colegios y Universidades" />
         <meta name="author" content="ODERMAN" />
-        <title>RECIBO DE CAJA</title>
+        <title>RECIBO DE CAJA NO. <?=$resultado["id"]?></title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -161,7 +161,7 @@ switch ($resultado['payment_method']) {
                 </thead>
                 <tbody>
                     <tr>
-                        <td><div style="height: 200px;">Pago de factura de venta No. <?=$resultado['invoiced'];?></div></td>
+                        <td><div style="height: 200px;">Abono a la factura no. <?=$resultado['numeroFactura'];?></div></td>
                         <td align="right" style="vertical-align: top;">$<?=number_format($resultado['valorAbono'], 0, ",", ".")?></td>
                     </tr>
                 </tbody>
