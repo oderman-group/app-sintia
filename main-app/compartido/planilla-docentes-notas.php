@@ -109,8 +109,8 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
       <tr style="height:150px; font-weight:bold; font-size:12px;">
         <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">No</b></td>
-        <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">C&oacute;digo</td>
-        <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">Estudiante</td>
+        <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">Documento</td>
+        <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px; width: 200px;" rowspan="2">Estudiante</td>
       <?php
         for($i=1;$i<=4;$i++){
       ?>
@@ -146,7 +146,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
       <tr style="font-size:10px; height:25px;">
         <td align="center"><?= $n; ?></td>
-        <td align="center"><?= $e['mat_id']; ?></td>
+        <td align="center"><?= $e['mat_documento']; ?></td>
         <td><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
       <?php
         $acomuladoNota=0;
