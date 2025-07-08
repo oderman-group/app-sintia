@@ -147,7 +147,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
       <tr style="font-size:10px; height:25px;">
         <td align="center"><?= $n; ?></td>
         <td align="center"><?= $e['mat_documento']; ?></td>
-        <td><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
+        <td style="width: 20%;"><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
       <?php
         $acomuladoNota=0;
         for($i=1;$i<=4;$i++){
