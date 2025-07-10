@@ -1129,15 +1129,23 @@ class Movimientos {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
                 SUM(CASE WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
-                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos
+                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN IFNULL(totalAbonos, 0) ELSE 0 END) AS abonosRecibidos,
+                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0) - IFNULL(totalAbonos, 0)) ELSE 0 END) AS totalEgresos
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti 
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
                 GROUP BY ti.id_transaction
-            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
+            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
+            LEFT JOIN (
+                SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
+                FROM ".BD_FINANCIERA.".payments_invoiced pi 
+                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
+                WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
+                GROUP BY pi.invoiced
+            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
             WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
@@ -1163,15 +1171,22 @@ class Movimientos {
         try {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalPorCobrar
+                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0) - IFNULL(totalAbonos, 0)) ELSE 0 END) AS totalPorCobrar
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
                 GROUP BY ti.id_transaction
-            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
+            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
+            LEFT JOIN (
+                SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
+                FROM ".BD_FINANCIERA.".payments_invoiced pi 
+                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
+                WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
+                GROUP BY pi.invoiced
+            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
             WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");

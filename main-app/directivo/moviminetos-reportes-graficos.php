@@ -161,7 +161,7 @@ include("../compartido/head.php");
             $egresos = array();
             while ($row = mysqli_fetch_assoc($consultaIngresosEgresos)) {
                 $nombres1 .= "'".$mesesAgno[$row['mes']]."', ";
-                $ingresos[] = $row['totalIngresos'];
+                $ingresos[] = $row['totalIngresos'] + $row['abonosRecibidos'];
                 $egresos[] = $row['totalEgresos'];
             }
 
