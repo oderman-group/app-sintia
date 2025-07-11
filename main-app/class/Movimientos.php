@@ -1130,7 +1130,7 @@ class Movimientos {
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
                 SUM(CASE WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
                 SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN IFNULL(totalAbonos, 0) ELSE 0 END) AS abonosRecibidos,
-                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0) - IFNULL(totalAbonos, 0)) ELSE 0 END) AS totalEgresos
+                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
