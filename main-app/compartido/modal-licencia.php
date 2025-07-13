@@ -24,7 +24,7 @@ if($dfDias==90 || $dfDias==30 || $dfDias==5 || $dfDias==1){
 			<div class="modal-body" align="center">
 
 				<p>Hola! <b><?=$datosUsuarioActual['uss_nombre'];?></b><br>
-				<b><?=strtoupper($datosUnicosInstitucion['ins_nombre'])?></b>, su licencia con la plataforma SINTIA esta por vencer<br>
+				<b><?=strtoupper($datosUnicosInstitucion['ins_nombre'])?></b>, su licencia con la plataforma SINTIA está por vencer<br>
 				faltan <b><?=$falta;?></b> para su vencimiento<br></p>
 
 			</div>
