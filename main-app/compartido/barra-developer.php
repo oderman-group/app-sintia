@@ -49,6 +49,7 @@ $datosUsuarioActual['uss_tipo'] == TIPO_DEV
 		<b>Host:&nbsp;</b> <?=$_SERVER['HTTP_HOST']." (".http_response_code().")"; ?>&nbsp;|&nbsp;
     <!-- <b>Peso página:&nbsp;</b> <?php echo number_format(filesize($nombre_fichero)) . ' bytes'; ?>&nbsp;|&nbsp; -->
     <b>ENV:&nbsp;</b> <?=ENVIROMENT;?>&nbsp;|&nbsp;
+    <b>EMAIL METHOD:&nbsp;</b> <?=EMAIL_METHOD;?>&nbsp;|&nbsp;
 
     <?php if( isset($_SESSION['admin']) ){?>
 			<b>User Admin:&nbsp;</b> <?=$_SESSION['admin']; ?>&nbsp;|&nbsp;
