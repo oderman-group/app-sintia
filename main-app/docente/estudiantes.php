@@ -90,25 +90,28 @@ include("../compartido/head.php");
 														<td><?=$genero[1];?></td>
 														<td><a href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>&carga=<?=base64_encode($cargaConsultaActual);?>" style="text-decoration:underline; color:<?=$colorNota;?>;"><?=$definitiva;?></a></td>
 														<td>
-														<?php if($datosCargaActual['car_director_grupo']==1 || empty($_SESSION['admin']) ){?>
+														
 															<div class="btn-group">
-																	  <button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
-																	  <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-																		  <i class="fa fa-angle-down"></i>
-																	  </button>
-																	  <ul class="dropdown-menu" role="menu">
-																		<?php if(!isset($_SESSION['admin'])){?>
-																	  <li><a href="auto-login.php?user=<?=base64_encode($resultado['mat_id_usuario']);?>">Autologin</a></li>
-																	  <?php }?>
+																<button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
 
-															<?php if($datosCargaActual['car_director_grupo']==1){?>
-																		  <li><a href="reportes-lista.php?est=<?=base64_encode($resultado['mat_id_usuario']);?>&filtros=<?=base64_encode(1);?>">R. Disciplina</a></li>
-																		  <li><a href="aspectos-estudiantiles.php?idR=<?=base64_encode($resultado['mat_id_usuario']);?>">Ficha estudiantil</a></li>
-															<?php }?>
+																<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
+																	<i class="fa fa-angle-down"></i>
+																</button>
+
+																<ul class="dropdown-menu" role="menu">
+																	<?php if(!isset($_SESSION['admin'])){?>
+																		<li><a href="auto-login.php?user=<?=base64_encode($resultado['mat_id_usuario']);?>">Autologin</a></li>
+																	<?php }?>
+
+																	<?php if($datosCargaActual['car_director_grupo']==1){?>
+																		<li><a href="reportes-lista.php?est=<?=base64_encode($resultado['mat_id_usuario']);?>&filtros=<?=base64_encode(1);?>">R. Disciplina</a></li>
+																		<li><a href="aspectos-estudiantiles.php?idR=<?=base64_encode($resultado['mat_id_usuario']);?>">Ficha estudiantil</a></li>
+																	<?php }?>
+
 																	<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
-															</ul>
+																</ul>
 															</div>
-															<?php }?>
+
 								
 														</td>
                                                     </tr>
