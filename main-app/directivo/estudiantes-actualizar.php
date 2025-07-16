@@ -86,7 +86,7 @@ if (!empty($_FILES['fotoMat']['name'])) {
 	$explode   = explode(".", $_FILES['fotoMat']['name']);
 	$extension = end($explode);
 
-	if($extension != 'jpg' && $extension != 'png'){
+	if($extension != 'jpg' && $extension != 'png' && $extension != 'jpeg'){
 		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_8";</script>';
 		exit();
 	}
