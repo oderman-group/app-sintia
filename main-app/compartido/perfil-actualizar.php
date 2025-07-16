@@ -132,6 +132,12 @@ if (!empty($_FILES['fotoPerfil']['name'])) {
     $update = ['uss_foto' => $archivo];
     UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 
+    $updateEstudiantes = [
+        "mat_foto" => $archivo
+    ];
+    
+    Estudiantes::actualizarMatriculasPorIdUsuario($config, $_SESSION["id"], $updateEstudiantes);
+
     $file = $destino . "/" . $archivo;  // Dirección de la imagen
     $imagen = getimagesize($file);    //Sacamos la información
     $ancho = $imagen[0];              //Ancho
