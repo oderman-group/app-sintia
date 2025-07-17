@@ -109,7 +109,7 @@ if ($_POST["tipoUsuario"] == TIPO_ESTUDIANTE) {
     UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 }
 
-if (!empty($_FILES['firmaDigital']['name'])) {
+if (!empty($_FILES['firmaDigital']['name']) && $datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE) {
     $archivoSubido->validarArchivo($_FILES['firmaDigital']['size'], $_FILES['firmaDigital']['name']);
     $explode=explode(".", $_FILES['firmaDigital']['name']);
     $extension = end($explode);
@@ -121,7 +121,7 @@ if (!empty($_FILES['firmaDigital']['name'])) {
     UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 }
 
-if (!empty($_FILES['fotoPerfil']['name'])) {
+if (!empty($_FILES['fotoPerfil']['name']) && $datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE) {
     $archivoSubido->validarArchivo($_FILES['fotoPerfil']['size'], $_FILES['fotoPerfil']['name']);
     $explode=explode(".", $_FILES['fotoPerfil']['name']);
     $extension = end($explode);
