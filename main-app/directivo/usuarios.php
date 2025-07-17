@@ -390,7 +390,7 @@ if (!Modulos::validarPermisoEdicion()) {
 <!-- end js include path -->
 <style>
     .sorting_1 {
-		background-color: #red !important;
+		background-color: red !important;
     }
 
   </style>
