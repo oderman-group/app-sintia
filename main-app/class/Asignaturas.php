@@ -417,7 +417,9 @@ class Asignaturas {
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_materias');
     
         if(empty($POST["siglasM"])) {$POST["siglasM"] = substr($POST["nombreM"], 0, 3);}
-        if(empty($POST["porcenAsigna"])) {$POST["porcenAsigna"] = '';}
+
+        $POST["porcenAsigna"] = empty($POST["porcenAsigna"]) ? 100 : $POST["porcenAsigna"];
+
         $POST["sumarPromedio"] = !empty($POST["sumarPromedio"]) ? $POST["sumarPromedio"] : SI;
         $codigoAsignatura = "ASG".strtotime("now");
 
@@ -442,7 +444,7 @@ class Asignaturas {
         array  $POST
     )
     {
-        if(empty($POST["porcenAsigna"])) {$POST["porcenAsigna"] = '';}
+        $POST["porcenAsigna"] = empty($POST["porcenAsigna"]) ? 100 : $POST["porcenAsigna"];
         $POST["sumarPromedio"] = !empty($POST["sumarPromedio"]) ? $POST["sumarPromedio"] : SI;
 
         $sql = "UPDATE ".BD_ACADEMICA.".academico_materias SET mat_codigo=?, mat_nombre=?, mat_siglas=?, mat_area=?, mat_oficial=?, mat_valor=?, mat_sumar_promedio=? WHERE mat_id=? AND institucion=? AND year=?";
@@ -555,5 +557,22 @@ class Asignaturas {
         $resultado = BindSQL::prepararSQL($sql, $parametros);
         $resultado = BindSQL::resultadoArray($resultado)[0];
         return $resultado;
+    }
+
+    /**
+     * Consulta si alguna materia no tiene valor en su columna mat_valor
+     * 
+     * @return boolean - Un conjunto de resultados (`boolean`)
+     */
+    public static function hayAsignaturaSinValor (): bool {
+        global $config;
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_materias WHERE institucion=? AND year=? AND (mat_valor='' OR mat_valor IS NULL)";
+
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        return mysqli_num_rows($resultado) > 0 ? true : false;
     }
 }
