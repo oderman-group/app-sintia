@@ -3,6 +3,7 @@ require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.ph
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 require_once ROOT_PATH."/main-app/class/Conexion.php";
 require_once ROOT_PATH."/main-app/class/UsuariosPadre.php";
+require_once ROOT_PATH."/main-app/class/Asignaturas.php";
 require_once(ROOT_PATH."/main-app/class/App/Academico/boletin/Boletin.php");
 
 class Boletin {
@@ -154,7 +155,76 @@ class Boletin {
      * }
      * ```
      */
-    public static function obtenerPuestoYpromedioEstudiante(
+    /**
+     * Obtiene el puesto y el promedio de estudiantes en un grado y grupo específicos para un periodo académico determinado.
+     *
+     * @param int    $periodo El periodo académico para el cual se desea obtener el puesto y el promedio.
+     * @param string $grado El grado del estudiante.
+     * @param string $grupo El grupo al que pertenece el estudiante.
+     * @param string $yearBd (Opcional) El año académico para el cual se desea obtener el puesto y el promedio. Si no se proporciona, se utiliza el año académico actual de la sesión.
+     *
+     * @return mysqli_result Un conjunto de resultados (`mysqli_result`) que contiene información sobre el puesto y el promedio de los estudiantes.
+     *
+     * @throws Exception Si hay algún problema durante la ejecución de la consulta SQL, se captura una excepción y se imprime un mensaje de error.
+     *
+     * @example
+     * ```php
+     * // Ejemplo de uso
+     * $periodoEjemplo = 1;
+     * $gradoEjemplo = "10";
+     * $grupoEjemplo = "A";
+     * $resultadosEstudiantes = obtenerPuestoYpromedioEstudiante($periodoEjemplo, $gradoEjemplo, $grupoEjemplo, "2023");
+     * while ($estudiante = mysqli_fetch_assoc($resultadosEstudiantes)) {
+     *     // Procesar información de cada estudiante
+     *     echo "Matrícula: ".$estudiante['mat_id']." - Puesto: ".$estudiante['puesto']." - Promedio: ".$estudiante['prom']."<br>";
+     * }
+     * ```
+     */
+    public static function obtenerPuestoYpromedioEstudianteOriginal(
+        int    $periodo = 0,
+        string $grado   = "",
+        string $grupo   = "",
+        string $yearBd  = ''
+    )
+    {
+        global $conexion, $config;
+        $resultado = [];
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        try {
+            $consulta = mysqli_query($conexion, "SELECT mat_id as estudiante_id, bol_estudiante, bol_carga, mat_nombres, mat_grado, bol_periodo, AVG(bol_nota) as prom, ROW_NUMBER() OVER(ORDER BY prom desc) as puesto FROM ".BD_ACADEMICA.".academico_matriculas mat
+            INNER JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_estudiante=mat.mat_id AND bol_periodo='".$periodo."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}
+            WHERE  mat.mat_grado='".$grado."' AND mat.mat_grupo='".$grupo."' AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$year}
+            AND (mat_estado_matricula=1 OR mat_estado_matricula=2)
+            GROUP BY mat.mat_id 
+            ORDER BY prom DESC");
+
+            // Recorrer los resultados y almacenarlos en el array $resultado
+            while ($row = mysqli_fetch_assoc($consulta)) {
+                $resultado[] = $row;
+            }
+
+        } catch (Exception $e) {
+            echo "Excepción catpurada: ".$e->getMessage();
+            exit();
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Obtiene el puesto el promedio de los estudiantes de un curso, grupo y periodo
+     * basado en el valor de las asignaturas dentro de cada área.
+     * 
+     * @param int $periodo 
+     * @param string $grado 
+     * @param string $grupo 
+     * @param string $yearBd 
+     * 
+     * @return array
+     * 
+     */
+    public static function obtenerPuestoYpromedioEstudianteConPorcentaje(
     int    $periodo = 0,
     string $grado   = "",
     string $grupo   = "",
@@ -162,6 +232,7 @@ class Boletin {
     )
     {
         global $conexion, $config;
+
         $resultado = []; // Este será el array de datos que devolveremos
 
         // Determinar el año a usar, priorizando $yearBd si no está vacío
@@ -267,6 +338,32 @@ class Boletin {
         }
 
         return $resultado;
+    }
+
+    /**
+     * Se encarga de direccionar al método correcto de obtención de promedios
+     * y puestos, basado en la configuración de la Institución
+     * 
+     * @param int $periodo
+     * @param string $grado
+     * @param string $grupo
+     * @param string $yearBd
+     * 
+     * @return array
+     */
+    public static function obtenerPuestoYpromedioEstudiante(
+    int    $periodo = 0,
+    string $grado   = "",
+    string $grupo   = "",
+    string $yearBd  = ''
+    ) {
+        global $config;
+
+        if($config['conf_agregar_porcentaje_asignaturas'] == 'SI' && !Asignaturas::hayAsignaturaSinValor()) {
+            return self::obtenerPuestoYpromedioEstudianteConPorcentaje($periodo, $grado, $grupo, $yearBd);
+        }
+
+        return self::obtenerPuestoYpromedioEstudianteOriginal($periodo, $grado, $grupo, $yearBd);
     }
 
     /**
@@ -902,7 +999,102 @@ class Boletin {
      * ```
      */
 
+    /**
+     * Se encarga de la obtención del puesto del estudiante en la institución
+     * basado en la configuración que la Institución tenga.
+     *
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd
+     * 
+     * @return array Un arreglo que contiene el puesto del estudiante en la institución.
+     */
     public static function obtenerPuestoEstudianteEnInstitucion(
+    int    $periodo = 0,
+    string $yearBd  = ''
+    ) {
+        global $config;
+
+        if($config['conf_agregar_porcentaje_asignaturas'] == 'SI' && !Asignaturas::hayAsignaturaSinValor()) {
+            return self::obtenerPuestoEstudianteEnInstitucionConPorcentaje($periodo, $yearBd);
+        }
+
+        return self::obtenerPuestoEstudianteEnInstitucionOriginal($periodo, $yearBd);
+    }
+
+    /**
+     * Obtiene el puesto del estudiante en la institución para un periodo académico determinado.
+     *
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd (Opcional) El año académico para el cual se desea obtener la información. Si no se proporciona, se utiliza el año académico actual de la sesión.
+     *
+     * @return mysqli_result Un conjunto de resultados (`mysqli_result`) que contiene el puesto del estudiante en la institución para un periodo académico determinado.
+     *
+     * @throws Exception Si hay algún problema durante la ejecución de la consulta SQL, se captura una excepción y se imprime un mensaje de error.
+     *
+     * @example
+     * ```php
+     * // Ejemplo de uso
+     * $periodoEjemplo = 1;
+     * $resultadosPuesto = obtenerPuestoEstudianteEnInstitucion($periodoEjemplo, "2023");
+     * while ($row = mysqli_fetch_assoc($resultadosPuesto)) {
+     *     echo "Estudiante: " . $row['mat_nombres'] . ", Puesto: " . $row['puesto'] . "\n";
+     * }
+     * ```
+     */
+    public static function obtenerPuestoEstudianteEnInstitucionOriginal(
+        int    $periodo      = 0,
+        string $yearBd    = ''
+    )
+    {
+        global $conexion, $config;
+        $resultado = [];
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        try {
+            $consulta = mysqli_query($conexion, "
+            SELECT mat_id as estudiante_id,
+            bol_estudiante,
+            bol_carga, mat_nombres,
+            mat_grado, bol_periodo,
+            avg(bol_nota) as prom,
+            ROW_NUMBER() OVER(ORDER BY prom desc) as puesto
+            FROM ".BD_ACADEMICA.".academico_matriculas mat
+
+            INNER JOIN ".BD_ACADEMICA.".academico_boletin bol 
+            ON bol_estudiante=mat.mat_id AND bol_periodo='".$periodo."' 
+            AND bol.institucion={$config['conf_id_institucion']} 
+            AND bol.year={$year}
+
+            WHERE  mat.mat_eliminado=0 
+            AND mat.institucion={$config['conf_id_institucion']} 
+            AND mat.year={$year} 
+            AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.")
+            GROUP BY mat.mat_id 
+            ORDER BY prom DESC");
+
+            // Recorrer los resultados y almacenarlos en el array $resultado
+            while ($row = mysqli_fetch_assoc($consulta)) {
+                $resultado[] = $row;
+            }
+
+        } catch (Exception $e) {
+            echo "Excepción catpurada: ".$e->getMessage();
+            exit();
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Mediante una CTE se hace la consulta para obtener los puestos y promedios
+     * estudiantes de la Institución.
+     * 
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd
+     * 
+     * @return array
+     */
+    public static function obtenerPuestoEstudianteEnInstitucionConPorcentaje(
         int    $periodo = 0,
         string $yearBd  = ''
     )
