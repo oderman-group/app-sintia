@@ -113,8 +113,8 @@ if ($periodoSeleccionado == 4) $periodoActuales = "Final";
 
     $puestosCurso = [];
     $consultaPuestos = Boletin::obtenerPuestoYpromedioEstudiante($periodo, $grado, $grupo, $year);
-    while ($puesto = mysqli_fetch_array($consultaPuestos, MYSQLI_BOTH)) {
-        $puestosCurso[$puesto['bol_estudiante']] = $puesto['puesto'];
+    foreach ($consultaPuestos as $puesto) {
+        $puestosCurso[$puesto['estudiante_id']] = $puesto['puesto'];
     }
 
     ?>
