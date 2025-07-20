@@ -115,8 +115,8 @@ $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
 
 $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoSeleccionado, $grado, $grupo, $year);
 $puestoCurso = [];
-while ($puesto = mysqli_fetch_array($puestos, MYSQLI_BOTH)) {
-    $puestoCurso[$puesto['bol_estudiante']] = $puesto['puesto'];
+foreach ($puestos as $puesto) {
+    $puestoCurso[$puesto['estudiante_id']] = $puesto['puesto'];
 }
 
 $listaCargas = [];
