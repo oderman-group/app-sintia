@@ -26,7 +26,13 @@ function enviarMensajes(year, institucion, emisor, nombreEmisor) {
     
     // Obtener el asunto y contenido del mensaje
     var asunto = document.getElementById('asunto').value;
-    var contenido = document.getElementById('editor1').value;
+    var contenido;
+
+    if (CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.editor1) {
+        contenido = CKEDITOR.instances.editor1.getData();
+    } else {
+        contenido = document.getElementById('editor1').value;
+    }
     
     // Almacenar los receptores seleccionados en el select múltiple
     var receptores = [];
