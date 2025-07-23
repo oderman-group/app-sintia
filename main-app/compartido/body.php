@@ -15,7 +15,7 @@ $saldoEC = ($resumenEC[0] - $resumenEC[1]) * -1;
 <?=$datosUsuarioActual['uss_tipo_menu'];?> 
 "> <!-- chat-sidebar-open-->
 	
-<script src="../js/Mensajes.js" ></script>
+<script src="../js/Mensajes.js?v=<?php echo getFileVersion('../js/Mensajes.js'); ?>" ></script>
 <div class="loader"></div>
  
 <?php include("../compartido/overlay.php");?>
