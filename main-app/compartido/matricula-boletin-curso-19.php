@@ -63,7 +63,7 @@ if (!empty($_GET["id"])) {
     }
 }
 $ultimoPeriodoAreas = $config["conf_periodos_maximos"];
-$tamañoLogo         = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50;
+$tamañoLogo         = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50; //TODO: Esto debe ser una configuración
 
 switch ($periodoSeleccionado) {
     case 1:

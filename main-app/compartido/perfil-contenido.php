@@ -15,7 +15,8 @@
 								</div>
 							</div>
 
-                            <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) {?>
+                            <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) { //TODO: Esto debe ser una configuración
+                                ?>
 							<div class="panel">
 								<header class="panel-heading panel-heading-blue">Firma digital</header>
 								<div class="panel-body">
@@ -87,7 +88,8 @@
                                             </div>
                                         <?php } ?>
 
-                                        <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) {?>
+                                        <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) {//TODO: Esto debe ser una configuración
+                                            ?>
 										
                                             <div class="form-group row">
                                                 <label class="col-sm-2 control-label"><?=$frases[219][$datosUsuarioActual['uss_idioma']];?> <mark>(Cuadrada)</mark></label>

@@ -18,7 +18,7 @@ if(isset($_GET["year"])){
 $year=base64_decode($_GET["year"]);
 }
 
-$tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50;
+$tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50; //TODO: Esto debe ser una configuración
 
 $modulo = 1;
 if(empty($_GET["periodo"])){

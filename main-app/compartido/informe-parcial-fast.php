@@ -107,7 +107,7 @@ $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
       <?= $config["conf_fecha_parcial"]; ?><br>
       <?php
       $tamano = 'height="100" width="150"';
-      if ($config['conf_id_institucion'] == ICOLVEN) {
+      if ($config['conf_id_institucion'] == ICOLVEN) { //TODO: Esto debe ser una configuración
         $tamano = 'width="100%"';
       }
       ?>
