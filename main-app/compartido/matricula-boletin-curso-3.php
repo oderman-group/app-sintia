@@ -71,7 +71,7 @@ if (!empty($_GET["id"])) {
     $rows = Estudiantes::estudiantesMatriculadosCache($estudiantesCache);
 }
 Utilidades::validarInfoBoletin($rows);
-$tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50;
+$tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50; //TODO: Esto debe ser una configuración
 
 $modulo = 1;
 

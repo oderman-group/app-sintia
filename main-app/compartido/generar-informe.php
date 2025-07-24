@@ -80,7 +80,7 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 		continue;
 	}
 
-	if ($informacion_inst["info_institucion"] == ICOLVEN) {
+	if ($informacion_inst["info_institucion"] == ICOLVEN) { //TODO: Esto debe ser una configuración
 		//Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
 		$notasPorIndicador = Calificaciones::traerNotasPorIndicador($config, $carga, $resultado['mat_id'], $periodo);
 		$sumaNotaIndicador = 0; 

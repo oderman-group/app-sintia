@@ -20,7 +20,7 @@ $datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
 
 $cont = !empty($_POST["faltas"]) ? count($_POST["faltas"]) : 0;
 
-if ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER) {
+if ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER) { //TODO: Esto debe aplicarsele el módulo
     //INICIO ENVÍO DE MENSAJE
     $tituloMsj    = 'Reporte disciplinario';
     $contenidoMsj = '

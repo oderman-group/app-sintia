@@ -45,7 +45,8 @@ if (isset($_POST["year"])) {
     PERIODO: <?= $per; ?></br>
     <b><?= strtoupper($grados["gra_nombre"] . " " . $grados["gru_nombre"]); ?></b><br>
 
-    <?php if ($informacion_inst["info_institucion"] == ICOLVEN) { ?>
+    <?php if ($informacion_inst["info_institucion"] == ICOLVEN) { //TODO: Esto debe ser una configuración
+      ?>
       <p><a href="reportes-sabanas-indicador.php?curso=<?= $_GET["curso"]; ?>&grupo=<?= $_GET["grupo"]; ?>&per=<?= $_GET["per"]; ?>" target="_blank">VER SABANAS CON INDICADORES</a></p>
     <?php } ?>
   </div>

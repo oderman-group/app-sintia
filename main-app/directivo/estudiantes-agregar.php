@@ -195,7 +195,8 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 											
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
+												?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Folio</label>
 												<div class="col-sm-2">
@@ -292,7 +293,8 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
+												?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Grupo Sanguineo</label>
 												<div class="col-sm-2">
@@ -432,7 +434,8 @@ if(!Modulos::validarPermisoEdicion()){
 													</select>
 												</div>
 											</div>
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>	
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
+												?>	
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Estrato</label>
 												<div class="col-sm-2">
@@ -660,7 +663,8 @@ if(!Modulos::validarPermisoEdicion()){
 													</select>
 												</div>
 
-												<?php if($config['conf_id_institucion'] ==  ICOLVEN){ ?>
+												<?php if($config['conf_id_institucion'] ==  ICOLVEN){ //TODO: Esto debe ser una configuración
+													?>
 												<label class="col-sm-2 control-label">Ocupaci&oacute;n</label>
 												<div class="col-sm-3">
 													<input type="text" name="ocupacionA" class="form-control" autocomplete="off" value="<?=$datosMatricula['ocupacionA'];?>" <?=$disabledPermiso;?>>
@@ -693,7 +697,8 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>	
 												
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
+												?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Fecha de nacimiento</label>
 												<div class="col-sm-3">
