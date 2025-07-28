@@ -25,7 +25,7 @@ if( empty($datosEditar) ){
 }
 
 
-if($datosEditar['uss_tipo'] == 1 and $datosUsuarioActual['uss_tipo']!=1){
+if ($datosEditar['uss_tipo'] == TIPO_DEV && $datosUsuarioActual['uss_tipo'] != TIPO_DEV) {
 	echo '<script type="text/javascript">window.location.href="usuarios.php?error=ER_DT_2&usuario='.$_GET["id"].'";</script>';
 	exit();
 }
