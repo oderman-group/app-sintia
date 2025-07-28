@@ -4,9 +4,7 @@ $idPaginaInterna = 'DT0078';
 include("../compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
 
-$parametrosObligatorios =["id"];
-
-Utilidades::validarParametros($_GET,$parametrosObligatorios);
+Utilidades::validarParametros($_GET);
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
