@@ -1,4 +1,5 @@
 <?php
+require_once 'constantes.php';
 require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Informativos.php");
 if(isset($_GET['error']) || isset($_GET['success'])){
     /* MENSAJES DE ERROR O INFORMATIVOS */
