@@ -16,6 +16,7 @@ include("../compartido/historial-acciones-guardar.php");
 		echo "<span style='font-family:Arial; color:red;'>Debe llenar todos los campos.</samp>";
 		exit();
 	}
+
 	if ($_FILES['logo']['name'] != "") {
 		$explode = explode(".", $_FILES['logo']['name']);
 		$extension = end($explode);
