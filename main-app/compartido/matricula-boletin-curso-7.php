@@ -51,7 +51,8 @@ while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH
 $contp = 1;
 $puestoCurso = 0;
 $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
-$numMatriculados = mysqli_num_rows($puestos);
+$numMatriculados = count($puestos);
+
 foreach($puestos as $puesto){
 	if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){$puestoCurso = $contp;}
 	$contp ++;
