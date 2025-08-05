@@ -192,6 +192,25 @@ function notasGuardar(enviada, fila = null, tabla_notas = null) {
                 console.error("Error en la petición AJAX:", error);
             },
             complete: function() {
+                // --- LÓGICA CLAVE PARA MOVER EL FOCO ---
+                
+                // 1. Obtener el tabindex actual y el siguiente
+                const currentTabindex = parseInt(enviada.tabIndex);
+                const nextTabindex = currentTabindex + 1;
+                
+                // 2. Usar querySelector para encontrar el input con el siguiente tabindex
+                const nextInput = document.querySelector(`[tabindex="${nextTabindex}"]`);
+                console.log(enviada.tabIndex);
+                
+                // 3. Mover el foco si se encuentra el siguiente input
+                if (nextInput) {
+                    // Usamos setTimeout para que el focus se ejecute al final de la cola de eventos
+                    // Esto asegura que el bloque `complete` y cualquier otra manipulación del DOM haya terminado.
+                    setTimeout(() => {
+                        nextInput.focus();
+                    }, 10); // Un pequeño retraso de 10ms
+                }
+
                 enviada.disabled = false;
                 spinner.remove();
                 tabla_notas.querySelectorAll("input").forEach(input => input.disabled = false);

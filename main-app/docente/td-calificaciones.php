@@ -23,7 +23,7 @@ if (!empty($notasResultado['cal_fecha_modificada'])) {
         data-origen="2"
         value="<?php if(!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>"
         onChange="notasGuardar(this, 'fila_<?=$resultado['mat_id'];?>', 'tabla_notas')" 
-        tabindex="2" 
+        tabindex="<?=10+$contReg;?>" 
         style="font-size: 13px; text-align: center; color:<?=$colorNota;?>;" 
         <?=$habilitado;?>
         title="<?php if(!empty($notasResultado['cal_nota'])) echo 'Valor en decimal: '.$notasResultado['cal_nota_equivalente_cien'];?>"
@@ -70,7 +70,7 @@ if (!empty($notasResultado['cal_fecha_modificada'])) {
             alt="<?=$resultado['mat_nombres'];?>" 
             name="<?php if (!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>" 
             onChange="notaRecuperacion(this)" 
-            tabindex="2" 
+            tabindex="<?=20+$contReg;?>" 
             style="
                 font-size: 13px; 
                 text-align: center;
