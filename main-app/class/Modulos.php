@@ -27,7 +27,7 @@ class Modulos {
     public const MODULO_MARKETPLACE               = 20;
     public const MODULO_IMPORTAR_INFO             = 21;
     public const MODULO_INFORMES_BASE             = 22;
-    public const MODULO_CUALITATIVO               = 23; //Calificaciones cualitativas
+    public const MODULO_CUALITATIVO               = 23; //Calificaciones cualitativas (Con descripción o solo desempeño)
     public const MODULO_API_SION                  = 24; //Se conecta con el sistema SION de la UNAC
     public const MODULO_NOT_NOTAS_BAJAS           = 25; //Envía un mensaje por correo al acudiente cuando un estudiante obtiene una nota baja.
     public const MODULO_NOT_DISCIPLINA            = 26; //Envía un mensaje por correo al acudiente cuando un estudiante le hacen un reporte disciplinario
@@ -35,7 +35,7 @@ class Modulos {
     public const MODULO_RECUPERAR_INDICADOR       = 28; //Permite a los docentes insertar recuperación a los indicadores de los estudiantes
     public const MODULO_ADJUNTAR_DOCUMENTOS       = 29; //Permite adjuntar documentos a los estudiantes
     public const MODULO_FACTURA_RECURRENTES       = 30;
-    public const MODULO_REPORTE_FIN_GRAFICO       = 31;
+    public const MODULO_REPORTE_FIN_GRAFICO       = 31; //Reportes gráficos en las finanzas
     public const MODULO_AI_GENERAR_IMAGEN_MT      = 32; //Genera imagenes para los cursos de media técnica
     public const MODULO_AI_GENERAR_DESCRIPCION_MT = 33; //Genera descripciones para los cursos de media técnica
     public const MODULO_CHAT_ATENCION             = 34;

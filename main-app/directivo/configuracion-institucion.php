@@ -114,7 +114,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <div class="form-group row">
                                                 <label class="col-sm-2 control-label">Ciudad</label>
                                                 <div class="col-sm-4">
-                                                    <select class="form-control  select2" name="ciudad">
+                                                    <select class="form-control  select2" name="ciudad" required>
                                                         <option value="">Seleccione una opción</option>
                                                         <?php
                                                         try{
@@ -227,7 +227,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												<?php
                                                 $consulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=".TIPO_DIRECTIVO." and uss_bloqueado=0");
 												?>
-                                                <select class="form-control" name="rectorI">
+                                                <select class="form-control" name="rectorI" required>
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
                                                     while($r=mysqli_fetch_array($consulta, MYSQLI_BOTH)){
@@ -249,7 +249,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Secretario(a) Académico(a)</label>
                                             <div class="col-sm-4">
-                                                <select class="form-control" name="secretarioI">
+                                                <select class="form-control" name="secretarioI" required>
                                                     <option value="">Seleccione una opción</option>
                                                     <?php 
                                                     $consulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=".TIPO_DIRECTIVO." and uss_bloqueado=0");
