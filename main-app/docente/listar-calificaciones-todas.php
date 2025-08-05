@@ -143,6 +143,7 @@ $porcentajeRestante = 100 - $valores[0];
 
                     <?php
                         $cA = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+                        $contRegActividades = 1;
                         while($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)){
                         //LAS CALIFICACIONES
                         $notasResultado = Calificaciones::traerCalificacionActividadEstudiante($config, $rA['act_id'], $resultado['mat_id']);
@@ -166,7 +167,8 @@ $porcentajeRestante = 100 - $valores[0];
 
                         <?php include("td-calificaciones.php");?>
 
-                    <?php		
+                    <?php
+                        $contRegActividades ++;
                     }
 
                     include("td-porcentaje-definitiva.php");
