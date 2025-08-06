@@ -321,9 +321,11 @@ class AjaxCalificaciones {
     public static function ajaxGuardarObservacionDisciplina($conexion, $codEstudiante, $carga, $observacion, $periodo)
     {
         global $config;
+
+        $observacionText = mysqli_real_escape_string($conexion,$observacion);
+
         if(trim($observacion)==""){
-            $datosMensaje=["heading"=>"Nota vacia","estado"=>"warning","mensaje"=>"Digite una observación correcta."];
-            return $datosMensaje;
+            $observacionText = NULL;
         }
 
         try{
@@ -336,17 +338,44 @@ class AjaxCalificaciones {
         if($numD==0){
             $idInsercion=Utilidades::generateCode("DN");
             try{
-                mysqli_query($conexion, "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(dn_id, dn_cod_estudiante, dn_id_carga, dn_observacion, dn_fecha, dn_periodo, institucion, year)VALUES('" .$idInsercion . "', '".$codEstudiante."','".$carga."','".mysqli_real_escape_string($conexion,$observacion)."', now(),'".$periodo."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+                mysqli_query($conexion, "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(dn_id, dn_cod_estudiante, dn_id_carga, dn_observacion, dn_fecha, dn_periodo, institucion, year)VALUES('" .$idInsercion . "', '".$codEstudiante."','".$carga."','".$observacionText."', now(),'".$periodo."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
             } catch (Exception $e) {
                 include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
             }
         }else{
             try{
-                mysqli_query($conexion, "UPDATE ".BD_DISCIPLINA.".disiplina_nota SET dn_observacion='".mysqli_real_escape_string($conexion,$observacion)."', dn_fecha=now() WHERE dn_cod_estudiante='".$codEstudiante."'  AND dn_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+
+                // 1. Prepara la sentencia SQL con un marcador de posición (?)
+                $sql = "UPDATE ".BD_DISCIPLINA.".disiplina_nota 
+                SET 
+                    dn_observacion=?,
+                    dn_fecha=now() 
+                WHERE 
+                    dn_cod_estudiante='".$codEstudiante."'
+                AND dn_periodo='".$periodo."' 
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]}
+                ";
+
+                $stmt = $conexion->prepare($sql);
+
+                if ($stmt === false) {
+                    die("Error en la preparación de la sentencia: " . $conexion->error);
+                }
+
+                // 2. Vincula el parámetro.
+                $stmt->bind_param("s", $observacionText);
+
+                // 3. Ejecuta la sentencia
+                $stmt->execute();
+
+                // 4. Cierra la sentencia
+                $stmt->close();
             } catch (Exception $e) {
                 include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
             }
         }
+
         $datosEstudiante =Estudiantes::obtenerDatosEstudiante($codEstudiante);
 
         $datosMensaje=["heading"=>"Cambios guardados","estado"=>"success","mensaje"=>"La observación de comportamiento se ha guardado correctamente para el estudiante <b>".Estudiantes::NombreCompletoDelEstudiante($datosEstudiante)."</b>"];
