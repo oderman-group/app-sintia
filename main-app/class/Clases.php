@@ -125,7 +125,7 @@ class Clases  extends Servicios{
      * @return mysqli_result $consulta
      */
     public static function traerClasesCargaPeriodo(mysqli $conexion, array $config, string $idCarga, int $periodo){
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_clases WHERE cls_id_carga=? AND cls_periodo=? AND cls_registrada=1 AND cls_estado=1 AND institucion=? AND year=?";
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_clases WHERE cls_id_carga=? AND cls_periodo=? AND cls_estado=1 AND institucion=? AND year=?";
 
         $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $_SESSION["bd"]];
         
