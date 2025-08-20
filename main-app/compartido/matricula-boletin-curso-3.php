@@ -352,13 +352,17 @@ foreach($rows as $matriculadosDatos) {
                                       $notaIndicadorFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
                                     }
 
+                                    $indicador_inclusion = "";
+
+                                    if(!empty($fila4["aii_descripcion_indicador"])){$indicador_inclusion ="<br> <i>&nbsp;&nbsp;&nbsp;&nbsp;Modificado: ". $fila4["aii_descripcion_indicador"]."</i>";}
+
                         ?>
 
                                     <tr bgcolor="#FFF" style="font-size:12px;">
 
                                         <td align="center">&nbsp;</td>
 
-                                        <td style="font-size:12px; height:15px;"><?php echo $contador_indicadores . "." . $fila4["ind_nombre"]; ?></td>
+                                        <td style="font-size:12px; height:15px;"><?php echo $contador_indicadores . ". " . $fila4["ind_nombre"].$indicador_inclusion; ?></td>
 
                                         <td>&nbsp;</td>
 
