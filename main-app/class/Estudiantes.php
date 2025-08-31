@@ -961,7 +961,7 @@ class Estudiantes {
         $grupo         = isset($POST["grupo"])          ? $POST["grupo"]                                          : 1;
         $tipoEst       = isset($POST["tipoEst"])        ? $POST["tipoEst"]                                        : null;
         $lugarD        = isset($POST["lugarD"])         ? $POST["lugarD"]                                         : null;
-        $matestM       = isset($POST["matestM"])        ? $POST["matestM"]                                        : null;
+        $matestM       = isset($POST["matestM"])        ? $POST["matestM"]                                        : self::ESTADO_NO_MATRICULADO;
         $folio         = isset($POST["folio"])          ? $POST["folio"]                                          : null;
         $codTesoreria  = isset($POST["codTesoreria"])   ? $POST["codTesoreria"]                                   : null;
         $va_matricula  = isset($POST["va_matricula"])   ? $POST["va_matricula"]                                   : null;
