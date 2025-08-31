@@ -29,7 +29,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
     .elemento-draggable .blogThumb {
         height: 250px; /* Establece la altura que desees */
-        overflow: hidden; /* Oculta el contenido que sobrepase la altura */
+        overflow: visible;
     }
 </style>
 <!-- END HEAD -->
