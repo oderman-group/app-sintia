@@ -160,7 +160,7 @@ include("../compartido/head-informes.php") ?>
 	?>
 		<p align="center" style="font-weight:bold;">
 			<?= strtoupper(Utilidades::getToString($matricula["gra_nombre"])); ?> GRADO DE EDUCACIÓN <?=$educacion." ".$inicio?><br>
-			MATRÍCULA <?= strtoupper(Utilidades::getToString($matricula["mat_matricula"])); ?> FOLIO <?= strtoupper(Utilidades::getToString($matricula["mat_folio"])); ?>
+			MATRÍCULA <?= strtoupper(Utilidades::getToString($matricula["mat_numero_matricula"])); ?> FOLIO <?= strtoupper(Utilidades::getToString($matricula["mat_folio"])); ?>
 		</p>
 
 
