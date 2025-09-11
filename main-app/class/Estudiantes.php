@@ -1465,6 +1465,7 @@ class Estudiantes {
 
                  INNER JOIN ".BD_ADMISIONES.".aspirantes asp
                  ON asp_id    = mat.mat_solicitud_inscripcion
+                 AND asp_oculto = '".BDT_Aspirante::ESTADO_OCULTO_FALSO."'
                  
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
                  ON gra_id            = asp_grado 
