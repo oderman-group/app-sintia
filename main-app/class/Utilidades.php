@@ -488,4 +488,83 @@ public static  function valordefecto(&$valor,$valorDefecto="")
                 break;
         }
     }
+
+    /**
+     * Sanitiza un texto para evitar problemas de codificación en MySQL
+     * - Convierte a UTF-8 válido
+     * - Elimina caracteres de control invisibles
+     * - Aplica trim para remover espacios innecesarios
+     *
+     * @param string $texto Texto a sanitizar
+     * @return string Texto limpio y seguro para almacenar en DB
+     */
+    public static function sanitizarTexto(string $texto): string {
+        $texto = mb_convert_encoding($texto, 'UTF-8', 'UTF-8');
+        $texto = preg_replace('/[\x00-\x1F\x7F]/u', '', $texto);
+        return trim($texto);
+    }
+
+    /**
+     * Sanitiza un número entero
+     * - Convierte el valor a int
+     * - Si no es numérico, devuelve 0
+     *
+     * @param mixed $valor Valor a sanitizar
+     * @return int Entero validado
+     */
+    public static function sanitizarEntero($valor): int {
+        return is_numeric($valor) ? (int)$valor : 0;
+    }
+
+    /**
+     * Sanitiza un número decimal (float)
+     * - Convierte a float
+     * - Si no es numérico, devuelve 0.0
+     *
+     * @param mixed $valor Valor a sanitizar
+     * @return float Número en formato float
+     */
+    public static function sanitizarDecimal($valor): float {
+        return is_numeric($valor) ? (float)$valor : 0.0;
+    }
+
+    /**
+     * Sanitiza un email
+     * - Elimina caracteres no válidos
+     * - Devuelve null si el correo no es válido
+     *
+     * @param string $email Correo electrónico a sanitizar
+     * @return string|null Email válido o null si no lo es
+     */
+    public static function sanitizarEmail(string $email): ?string {
+        $email = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+    }
+
+    /**
+     * Sanitiza una fecha
+     * - Verifica si cumple con el formato especificado
+     * - Devuelve la fecha formateada o null si es inválida
+     *
+     * @param string $fecha Fecha a validar
+     * @param string $formato Formato esperado (ej: 'Y-m-d')
+     * @return string|null Fecha válida o null
+     */
+    public static function sanitizarFecha(string $fecha, string $formato = 'Y-m-d'): ?string {
+        $d = DateTime::createFromFormat($formato, $fecha);
+        return ($d && $d->format($formato) === $fecha) ? $fecha : null;
+    }
+
+    /**
+     * Sanitiza un array asociativo (ej: $_POST)
+     * - Aplica sanitización de texto a todos los valores tipo string
+     *
+     * @param array $data Array con datos a sanitizar
+     * @return array Array limpio con los valores sanitizados
+     */
+    public static function sanitizarArray(array $data): array {
+        return array_map(function($valor) {
+            return is_string($valor) ? self::sanitizarTexto($valor) : $valor;
+        }, $data);
+    }
 }
