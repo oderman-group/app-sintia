@@ -10,10 +10,10 @@ $usuariosClase = new UsuariosFunciones;
 $idInsercion=Utilidades::generateCode("MATA");
 
 try {
-    $tratamiento = Utilidades::sanitizarTexto($_POST["tratamiento"] ?? '');
     $positivos   = Utilidades::sanitizarTexto($_POST["positivos"] ?? '');
-    $descripcion = Utilidades::sanitizarTexto($_POST["descripcion"] ?? '');
     $mejorar     = Utilidades::sanitizarTexto($_POST["mejorar"] ?? '');
+    $tratamiento = Utilidades::sanitizarTexto($_POST["tratamiento"] ?? '');
+    $descripcion = Utilidades::sanitizarTexto($_POST["descripcion"] ?? '');
 
     mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".matriculas_aspectos(mata_id, mata_estudiante, mata_usuario, mata_fecha_evento, mata_aspectos_positivos, mata_aspectos_mejorar, mata_tratamiento, mata_descripcion, mata_periodo, institucion, year)VALUES('" .$idInsercion . "', '" . $_POST["estudiante"] . "', '" . $_SESSION['id'] . "', '" . $_POST["fecha"] . "', '" . $positivos . "', '" . $mejorar . "', '" . $tratamiento . "', '" . $descripcion . "', '" . $_POST["periodo"] . "', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
     $idRegistro = mysqli_insert_id($conexion);
