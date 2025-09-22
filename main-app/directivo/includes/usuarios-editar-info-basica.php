@@ -272,7 +272,7 @@
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Intentos de acceso fallidos</label>
                 <div class="col-sm-1">
-                    <input type="number" name="intentosFallidos" class="form-control" value="<?=$datosEditar['uss_intentos_fallidos'];?>" <?=$disabledPermiso;?>>
+                    <input type="number" name="intentosFallidos" class="form-control" value="<?=$datosEditar['uss_intentos_fallidos'];?>" <?=$disabledPermiso;?> min="0" step="1">
                 </div>
             </div>
 
