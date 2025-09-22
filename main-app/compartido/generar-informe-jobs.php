@@ -188,9 +188,9 @@ try {
                     'tcbe_id_job_referencia'    => $resultadoJobs['job_id'],
                     'tcbe_estado'               => BDT_tempCalculoBoletinEstudiantes::ESTADO_ESTUDIANTE_PENDIENTE,
                     'tcbe_datos_estudiante'     => json_encode($estudianteResultado),
-                    'tcbe_calcular_indicadores' => $_SESSION["idInstitucion"] == ICOLVEN || 
-                                                   $_SESSION["idInstitucion"] == DEVELOPER || 
-                                                   $_SESSION["idInstitucion"] == DEVELOPER_PROD ? 1 : 0
+                    'tcbe_calcular_indicadores' => $_SESSION["idInstitucion"] == ICOLVEN || //TODO: Esto debe ser una configuración
+                                                   $_SESSION["idInstitucion"] == DEVELOPER || //TODO: Esto debe ser una configuración
+                                                   $_SESSION["idInstitucion"] == DEVELOPER_PROD ? 1 : 0 //TODO: Esto debe ser una configuración
                 ];
 
                 try {

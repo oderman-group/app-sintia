@@ -29,7 +29,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
     .elemento-draggable .blogThumb {
         height: 250px; /* Establece la altura que desees */
-        overflow: hidden; /* Oculta el contenido que sobrepase la altura */
+        overflow: visible;
     }
 </style>
 <!-- END HEAD -->
@@ -268,7 +268,10 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                     '&periodo='.base64_encode($carga["car_periodo"]).
                                                     '&grado='.base64_encode($carga["car_curso"]).
                                                     '&grupo='.base64_encode($carga["car_grupo"]).
-                                                    '&tipoGrado='.base64_encode($carga["gra_tipo"]);
+                                                    '&tipoGrado='.base64_encode($carga["gra_tipo"]).
+                                                    '&area='.base64_encode($carga["mat_area"]).
+                                                    '&valorAsignatura='.base64_encode($carga["mat_valor"])
+                                                    ;
                                                     
                                                     ?>
                                                 <div class="btn-group mt-2" style="width: 90%;">

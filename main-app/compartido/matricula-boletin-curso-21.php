@@ -67,8 +67,8 @@ if (!empty($_GET["id"])) {
 
 $consultaPuestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual, $curso, $grupo, $year);
 $puestosCurso = [];
-while ($puesto = mysqli_fetch_array($consultaPuestos, MYSQLI_BOTH)) {
-    $puestosCurso[$puesto['bol_estudiante']] = $puesto['puesto'];
+foreach ($consultaPuestos as $puesto) {
+    $puestosCurso[$puesto['estudiante_id']] = $puesto['puesto'];
 }
 
 $tiposNotas = [];

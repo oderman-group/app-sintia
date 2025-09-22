@@ -5,34 +5,42 @@ require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 class Modulos {
 
-    public const MODULO_ACADEMICO       = 1;
-    public const MODULO_FINANCIERO      = 2;
-    public const MODULO_DISCIPLINARIO   = 3;
-    public const MODULO_ADMINISTRATIVO  = 4;
-    public const MODULO_COMUNICATIVO    = 5;
-    public const MODULO_MERCADEO        = 6;
-    public const MODULO_GENERAL         = 7;
-    public const MODULO_ADMISIONES      = 8;
-    public const MODULO_RESERVA_CUPO    = 9;
-    public const MODULO_MEDIA_TECNICA   = 10;
-    public const MODULO_CLASES          = 11; // También incluye las unidades temáticas
-    public const MODULO_EVALUACIONES    = 12;
-    public const MODULO_FOROS           = 13;
-    public const MODULO_ACTIVIDAES      = 14; // Tareas para la casa
-    public const MODULO_CRONOGRAMA      = 15;
-    public const MODULO_SUB_ROLES       = 16;
-    public const MODULO_MI_CUENTA       = 17;
-    public const MODULO_CUESTIONARIOS   = 18;
-    public const MODULO_CARPETAS        = 19;
-    public const MODULO_MARKETPLACE     = 20;
-    public const MODULO_IMPORTAR_INFO   = 21;
-    public const MODULO_INFORMES_BASE   = 22;
-    public const MODULO_CUALITATIVO     = 23; // Calificaciones cualitativas
-    public const MODULO_FAC_RECURRENTES = 30;
-    public const MODULO_REP_FIN_GRAFICO = 31;
-    public const MODULO_CHAT_ATENCION   = 34;
-    public const MODULO_AI_INDICADORES  = 35;
-    public const MODULO_NOTIFICACIONES  = 36;
+    public const MODULO_ACADEMICO                 = 1;
+    public const MODULO_FINANCIERO                = 2;
+    public const MODULO_DISCIPLINARIO             = 3;
+    public const MODULO_ADMINISTRATIVO            = 4;
+    public const MODULO_COMUNICATIVO              = 5;
+    public const MODULO_MERCADEO                  = 6;
+    public const MODULO_GENERAL                   = 7;
+    public const MODULO_ADMISIONES                = 8;
+    public const MODULO_RESERVA_CUPO              = 9;
+    public const MODULO_MEDIA_TECNICA             = 10;
+    public const MODULO_CLASES                    = 11; //También incluye las unidades temáticas
+    public const MODULO_EVALUACIONES              = 12;
+    public const MODULO_FOROS                     = 13;
+    public const MODULO_ACTIVIDAES                = 14; //Tareas para la casa
+    public const MODULO_CRONOGRAMA                = 15;
+    public const MODULO_SUB_ROLES                 = 16;
+    public const MODULO_MI_CUENTA                 = 17;
+    public const MODULO_CUESTIONARIOS             = 18;
+    public const MODULO_CARPETAS                  = 19;
+    public const MODULO_MARKETPLACE               = 20;
+    public const MODULO_IMPORTAR_INFO             = 21;
+    public const MODULO_INFORMES_BASE             = 22;
+    public const MODULO_CUALITATIVO               = 23; //Calificaciones cualitativas (Con descripción o solo desempeño)
+    public const MODULO_API_SION                  = 24; //Se conecta con el sistema SION de la UNAC
+    public const MODULO_NOT_NOTAS_BAJAS           = 25; //Envía un mensaje por correo al acudiente cuando un estudiante obtiene una nota baja.
+    public const MODULO_NOT_DISCIPLINA            = 26; //Envía un mensaje por correo al acudiente cuando un estudiante le hacen un reporte disciplinario
+    public const MODULO_MENSAJES_CORREO           = 27; //Envía un mensaje por correo a los usuarios cuando se envían mensajes por el correo interno
+    public const MODULO_RECUPERAR_INDICADOR       = 28; //Permite a los docentes insertar recuperación a los indicadores de los estudiantes
+    public const MODULO_ADJUNTAR_DOCUMENTOS       = 29; //Permite adjuntar documentos a los estudiantes
+    public const MODULO_FACTURA_RECURRENTES       = 30;
+    public const MODULO_REPORTE_FIN_GRAFICO       = 31; //Reportes gráficos en las finanzas
+    public const MODULO_AI_GENERAR_IMAGEN_MT      = 32; //Genera imagenes para los cursos de media técnica
+    public const MODULO_AI_GENERAR_DESCRIPCION_MT = 33; //Genera descripciones para los cursos de media técnica
+    public const MODULO_CHAT_ATENCION             = 34;
+    public const MODULO_AI_INDICADORES            = 35; //Permite a los docentes generar indicadores para sus cursos y asignaturas
+    public const MODULO_NOTIFICACIONES            = 36; //Ver y suscribir usuarios los tipos de notificaciones
 
     /**
      * Verifica los permisos de acceso a una página interna según el ID de la página.

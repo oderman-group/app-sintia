@@ -479,8 +479,8 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                     $puestoEstudiantesCurso = 0;
                     $puestosCursos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual, $gradoActual, $grupoActual,$year);
                     
-                    while($puestoCurso = mysqli_fetch_array($puestosCursos, MYSQLI_BOTH)){
-                        if($puestoCurso['bol_estudiante']==$matriculadosDatos['mat_id']){
+                    foreach($puestosCursos as $puestoCurso){
+                        if($puestoCurso['estudiante_id']==$matriculadosDatos['mat_id']){
                             $puestoEstudiantesCurso = $puestoCurso['puesto'];
                         }
                     }
@@ -492,8 +492,8 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                     $puestoEstudiantesInstitucion = 0;
                     $puestosInstitucion = Boletin::obtenerPuestoEstudianteEnInstitucion($periodoActual, $year);
                     
-                    while($puestoInstitucion = mysqli_fetch_array($puestosInstitucion, MYSQLI_BOTH)){
-                        if($puestoInstitucion['bol_estudiante']==$matriculadosDatos['mat_id']){
+                    foreach($puestosInstitucion as $puestoInstitucion){
+                        if($puestoInstitucion['estudiante_id']==$matriculadosDatos['mat_id']){
                             $puestoEstudiantesInstitucion = $puestoInstitucion['puesto'];
                         }
                     }

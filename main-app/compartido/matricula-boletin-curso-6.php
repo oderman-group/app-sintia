@@ -64,8 +64,8 @@ $puestoCurso = 0;
 $promedioPuesto = 0;
 $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
 
-while($puesto = mysqli_fetch_array($puestos, MYSQLI_BOTH)){
-	if($puesto['bol_estudiante']==$matriculadosDatos['mat_id']){
+foreach($puestos as $puesto){
+	if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){
 		$puestoCurso = $puesto['puesto'];
 		$promedioPuesto = round($puesto['prom'],2);
 	}

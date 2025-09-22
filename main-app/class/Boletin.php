@@ -3,6 +3,7 @@ require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.ph
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 require_once ROOT_PATH."/main-app/class/Conexion.php";
 require_once ROOT_PATH."/main-app/class/UsuariosPadre.php";
+require_once ROOT_PATH."/main-app/class/Asignaturas.php";
 require_once(ROOT_PATH."/main-app/class/App/Academico/boletin/Boletin.php");
 
 class Boletin {
@@ -154,7 +155,32 @@ class Boletin {
      * }
      * ```
      */
-    public static function obtenerPuestoYpromedioEstudiante(
+    /**
+     * Obtiene el puesto y el promedio de estudiantes en un grado y grupo específicos para un periodo académico determinado.
+     *
+     * @param int    $periodo El periodo académico para el cual se desea obtener el puesto y el promedio.
+     * @param string $grado El grado del estudiante.
+     * @param string $grupo El grupo al que pertenece el estudiante.
+     * @param string $yearBd (Opcional) El año académico para el cual se desea obtener el puesto y el promedio. Si no se proporciona, se utiliza el año académico actual de la sesión.
+     *
+     * @return mysqli_result Un conjunto de resultados (`mysqli_result`) que contiene información sobre el puesto y el promedio de los estudiantes.
+     *
+     * @throws Exception Si hay algún problema durante la ejecución de la consulta SQL, se captura una excepción y se imprime un mensaje de error.
+     *
+     * @example
+     * ```php
+     * // Ejemplo de uso
+     * $periodoEjemplo = 1;
+     * $gradoEjemplo = "10";
+     * $grupoEjemplo = "A";
+     * $resultadosEstudiantes = obtenerPuestoYpromedioEstudiante($periodoEjemplo, $gradoEjemplo, $grupoEjemplo, "2023");
+     * while ($estudiante = mysqli_fetch_assoc($resultadosEstudiantes)) {
+     *     // Procesar información de cada estudiante
+     *     echo "Matrícula: ".$estudiante['mat_id']." - Puesto: ".$estudiante['puesto']." - Promedio: ".$estudiante['prom']."<br>";
+     * }
+     * ```
+     */
+    public static function obtenerPuestoYpromedioEstudianteOriginal(
         int    $periodo = 0,
         string $grado   = "",
         string $grupo   = "",
@@ -166,18 +192,178 @@ class Boletin {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
         try {
-            $resultado = mysqli_query($conexion, "SELECT mat_id, bol_estudiante, bol_carga, mat_nombres, mat_grado, bol_periodo, AVG(bol_nota) as prom, ROW_NUMBER() OVER(ORDER BY prom desc) as puesto FROM ".BD_ACADEMICA.".academico_matriculas mat
+            $consulta = mysqli_query($conexion, "SELECT mat_id as estudiante_id, bol_estudiante, bol_carga, mat_nombres, mat_grado, bol_periodo, AVG(bol_nota) as prom, ROW_NUMBER() OVER(ORDER BY prom desc) as puesto FROM ".BD_ACADEMICA.".academico_matriculas mat
             INNER JOIN ".BD_ACADEMICA.".academico_boletin bol ON bol_estudiante=mat.mat_id AND bol_periodo='".$periodo."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}
             WHERE  mat.mat_grado='".$grado."' AND mat.mat_grupo='".$grupo."' AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$year}
             AND (mat_estado_matricula=1 OR mat_estado_matricula=2)
             GROUP BY mat.mat_id 
             ORDER BY prom DESC");
+
+            // Recorrer los resultados y almacenarlos en el array $resultado
+            while ($row = mysqli_fetch_assoc($consulta)) {
+                $resultado[] = $row;
+            }
+
         } catch (Exception $e) {
             echo "Excepción catpurada: ".$e->getMessage();
             exit();
         }
 
         return $resultado;
+    }
+
+    /**
+     * Obtiene el puesto el promedio de los estudiantes de un curso, grupo y periodo
+     * basado en el valor de las asignaturas dentro de cada área.
+     * 
+     * @param int $periodo 
+     * @param string $grado 
+     * @param string $grupo 
+     * @param string $yearBd 
+     * 
+     * @return array
+     * 
+     */
+    public static function obtenerPuestoYpromedioEstudianteConPorcentaje(
+    int    $periodo = 0,
+    string $grado   = "",
+    string $grupo   = "",
+    string $yearBd  = ''
+    )
+    {
+        global $conexion, $config;
+
+        $resultado = []; // Este será el array de datos que devolveremos
+
+        // Determinar el año a usar, priorizando $yearBd si no está vacío
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $institucion = $config['conf_id_institucion']; // Obtener el ID de la institución
+
+        try {
+            // La consulta SQL con CTEs
+            $sql = "
+            WITH NotasDefinitivasPorArea AS (
+                -- Paso 1: Calcular la nota definitiva para cada área por estudiante y periodo.
+                SELECT
+                    ab.bol_estudiante AS estudiante_id,
+                    ab.bol_periodo,
+                    ab.bol_area AS area_id,
+                    SUM(ab.bol_nota_equivalente) AS nota_definitiva_area
+                FROM
+                    ".BD_ACADEMICA.".academico_boletin AS ab
+                INNER JOIN
+                    ".BD_ACADEMICA.".academico_matriculas AS m
+                    ON ab.bol_estudiante = m.mat_id
+                WHERE
+                    ab.bol_periodo = ?
+                    AND ab.institucion = ?
+                    AND ab.year = ?
+                    AND m.mat_grado = ?
+                    AND m.mat_grupo = ?
+                    AND m.institucion = ?
+                    AND m.year = ?
+                    AND (m.mat_estado_matricula=1 OR m.mat_estado_matricula=2)
+                GROUP BY
+                    ab.bol_estudiante, ab.bol_periodo, ab.bol_area
+            ),
+            PromedioGeneralEstudiante AS (
+                -- Paso 2: Calcular el promedio general del estudiante basado en la definitiva de las áreas.
+                SELECT
+                    ndpa.estudiante_id,
+                    ndpa.bol_periodo,
+                    AVG(ndpa.nota_definitiva_area) AS promedio_general
+                FROM
+                    NotasDefinitivasPorArea AS ndpa
+                GROUP BY
+                    ndpa.estudiante_id, ndpa.bol_periodo
+            )
+            -- Paso 3: Obtener el resultado final con el puesto del estudiante.
+            SELECT
+                m.mat_id AS estudiante_id,
+                m.mat_nombres AS nombre_estudiante,
+                pge.bol_periodo,
+                ROUND(pge.promedio_general, 2) AS promedio_general,
+                ROW_NUMBER() OVER(ORDER BY pge.promedio_general DESC) AS puesto
+            FROM
+                PromedioGeneralEstudiante AS pge
+            INNER JOIN
+                ".BD_ACADEMICA.".academico_matriculas AS m
+                ON pge.estudiante_id = m.mat_id
+                AND m.mat_grado = ?
+                AND m.mat_grupo = ?
+                AND m.institucion = ?
+                AND m.year = ?
+                AND (m.mat_estado_matricula=1 OR m.mat_estado_matricula=2)
+            ORDER BY
+                puesto DESC;
+            ";
+
+            // Preparar la sentencia
+            if ($stmt = mysqli_prepare($conexion, $sql)) {
+                // Vincular los parámetros
+                // 's' para string, 'i' para integer
+                // Hay 11 marcadores '?' en la consulta.
+                // Los parámetros se repiten: periodo, institucion, year, grado, grupo, institucion, year (para la primera CTE)
+                // Y luego: grado, grupo, institucion, year (para el JOIN final)
+                mysqli_stmt_bind_param(
+                    $stmt,
+                    "isiisiisiii", // Tipos de los 11 parámetros: i=int, s=string
+                    $periodo, $institucion, $year, $grado, $grupo, $institucion, $year, // Para la primera CTE
+                    $grado, $grupo, $institucion, $year // Para el JOIN final
+                );
+
+                // Ejecutar la sentencia
+                mysqli_stmt_execute($stmt);
+
+                // Obtener los resultados
+                $result_query = mysqli_stmt_get_result($stmt);
+
+                // Recorrer los resultados y almacenarlos en el array $resultado
+                while ($row = mysqli_fetch_assoc($result_query)) {
+                    $resultado[] = $row;
+                }
+
+                // Cerrar la sentencia preparada
+                mysqli_stmt_close($stmt);
+
+            } else {
+                // Manejo de errores si la preparación falla
+                throw new Exception("Error al preparar la sentencia SQL: " . mysqli_error($conexion));
+            }
+
+        } catch (Exception $e) {
+            echo "Excepción capturada: ".$e->getMessage();
+            // Puedes loggear el error o manejarlo de otra forma
+            exit();
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Se encarga de direccionar al método correcto de obtención de promedios
+     * y puestos, basado en la configuración de la Institución
+     * 
+     * @param int $periodo
+     * @param string $grado
+     * @param string $grupo
+     * @param string $yearBd
+     * 
+     * @return array
+     */
+    public static function obtenerPuestoYpromedioEstudiante(
+    int    $periodo = 0,
+    string $grado   = "",
+    string $grupo   = "",
+    string $yearBd  = ''
+    ) {
+        global $config;
+
+        if($config['conf_agregar_porcentaje_asignaturas'] == 'SI' && !Asignaturas::hayAsignaturaSinValor()) {
+            return self::obtenerPuestoYpromedioEstudianteConPorcentaje($periodo, $grado, $grupo, $yearBd);
+        }
+
+        return self::obtenerPuestoYpromedioEstudianteOriginal($periodo, $grado, $grupo, $yearBd);
     }
 
     /**
@@ -812,7 +998,50 @@ class Boletin {
      * }
      * ```
      */
+
+    /**
+     * Se encarga de la obtención del puesto del estudiante en la institución
+     * basado en la configuración que la Institución tenga.
+     *
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd
+     * 
+     * @return array Un arreglo que contiene el puesto del estudiante en la institución.
+     */
     public static function obtenerPuestoEstudianteEnInstitucion(
+    int    $periodo = 0,
+    string $yearBd  = ''
+    ) {
+        global $config;
+
+        if($config['conf_agregar_porcentaje_asignaturas'] == 'SI' && !Asignaturas::hayAsignaturaSinValor()) {
+            return self::obtenerPuestoEstudianteEnInstitucionConPorcentaje($periodo, $yearBd);
+        }
+
+        return self::obtenerPuestoEstudianteEnInstitucionOriginal($periodo, $yearBd);
+    }
+
+    /**
+     * Obtiene el puesto del estudiante en la institución para un periodo académico determinado.
+     *
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd (Opcional) El año académico para el cual se desea obtener la información. Si no se proporciona, se utiliza el año académico actual de la sesión.
+     *
+     * @return mysqli_result Un conjunto de resultados (`mysqli_result`) que contiene el puesto del estudiante en la institución para un periodo académico determinado.
+     *
+     * @throws Exception Si hay algún problema durante la ejecución de la consulta SQL, se captura una excepción y se imprime un mensaje de error.
+     *
+     * @example
+     * ```php
+     * // Ejemplo de uso
+     * $periodoEjemplo = 1;
+     * $resultadosPuesto = obtenerPuestoEstudianteEnInstitucion($periodoEjemplo, "2023");
+     * while ($row = mysqli_fetch_assoc($resultadosPuesto)) {
+     *     echo "Estudiante: " . $row['mat_nombres'] . ", Puesto: " . $row['puesto'] . "\n";
+     * }
+     * ```
+     */
+    public static function obtenerPuestoEstudianteEnInstitucionOriginal(
         int    $periodo      = 0,
         string $yearBd    = ''
     )
@@ -822,8 +1051,8 @@ class Boletin {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
         try {
-            $resultado = mysqli_query($conexion, "
-            SELECT mat_id,
+            $consulta = mysqli_query($conexion, "
+            SELECT mat_id as estudiante_id,
             bol_estudiante,
             bol_carga, mat_nombres,
             mat_grado, bol_periodo,
@@ -842,6 +1071,12 @@ class Boletin {
             AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.")
             GROUP BY mat.mat_id 
             ORDER BY prom DESC");
+
+            // Recorrer los resultados y almacenarlos en el array $resultado
+            while ($row = mysqli_fetch_assoc($consulta)) {
+                $resultado[] = $row;
+            }
+
         } catch (Exception $e) {
             echo "Excepción catpurada: ".$e->getMessage();
             exit();
@@ -849,6 +1084,130 @@ class Boletin {
 
         return $resultado;
     }
+
+    /**
+     * Mediante una CTE se hace la consulta para obtener los puestos y promedios
+     * estudiantes de la Institución.
+     * 
+     * @param int $periodo El número de periodo académico.
+     * @param string $yearBd
+     * 
+     * @return array
+     */
+    public static function obtenerPuestoEstudianteEnInstitucionConPorcentaje(
+        int    $periodo = 0,
+        string $yearBd  = ''
+    )
+    {
+        global $conexion, $config;
+        $resultado = []; // This will be the array of data we return
+
+        // Determine the year to use, prioritizing $yearBd if not empty
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $institucion = $config['conf_id_institucion']; // Get the institution ID
+
+        try {
+            // The SQL query with CTEs, simplified for institution-level average and rank
+            $sql = "
+            WITH NotasDefinitivasPorArea AS (
+                -- Step 1: Calculate the final grade for each area per student and period.
+                SELECT
+                    ab.bol_estudiante AS estudiante_id,
+                    ab.bol_periodo,
+                    ab.bol_area AS area_id,
+                    SUM(ab.bol_nota_equivalente) AS nota_definitiva_area
+                FROM
+                    ".BD_ACADEMICA.".academico_boletin AS ab
+                INNER JOIN
+                    ".BD_ACADEMICA.".academico_matriculas AS m
+                    ON ab.bol_estudiante = m.mat_id
+                WHERE
+                    ab.bol_periodo = ?
+                    AND ab.institucion = ?
+                    AND ab.year = ?
+                    -- Filters for m.mat_grado and m.mat_grupo are removed for institution-level calculation
+                    AND m.institucion = ?
+                    AND m.year = ?
+                    AND (m.mat_estado_matricula=1 OR m.mat_estado_matricula=2)
+                GROUP BY
+                    ab.bol_estudiante, ab.bol_periodo, ab.bol_area
+            ),
+            PromedioGeneralEstudiante AS (
+                -- Step 2: Calculate the student's general average based on the area's final grades.
+                SELECT
+                    ndpa.estudiante_id,
+                    ndpa.bol_periodo,
+                    AVG(ndpa.nota_definitiva_area) AS promedio_general
+                FROM
+                    NotasDefinitivasPorArea AS ndpa
+                GROUP BY
+                    ndpa.estudiante_id, ndpa.bol_periodo
+            )
+            -- Step 3: Get the final result with the student's rank,
+            -- including only the required columns for institution-level average and rank.
+            SELECT
+                m.mat_id AS estudiante_id, -- Using mat_id as the primary identifier
+                m.mat_nombres AS nombre_estudiante,
+                pge.bol_periodo,
+                ROUND(pge.promedio_general, 2) AS promedio_general,
+                ROW_NUMBER() OVER(ORDER BY pge.promedio_general DESC) AS puesto
+            FROM
+                PromedioGeneralEstudiante AS pge
+            INNER JOIN
+                ".BD_ACADEMICA.".academico_matriculas AS m
+                ON pge.estudiante_id = m.mat_id
+                -- Filters for m.mat_grado and m.mat_grupo are removed for institution-level calculation
+                AND m.institucion = ?
+                AND m.year = ?
+                AND m.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.") -- Use constants directly
+            ORDER BY
+                promedio_general DESC; -- Order by the calculated general average
+            ";
+
+            // Prepare the statement
+            if ($stmt = mysqli_prepare($conexion, $sql)) {
+                // Bind parameters
+                // There are 7 '?' markers in the query:
+                // 1-3: periodo, institucion, year (for the first CTE)
+                // 4-5: institucion, year (for the first CTE)
+                // 6-7: institucion, year (for the final JOIN to academico_matriculas)
+                mysqli_stmt_bind_param(
+                    $stmt,
+                    "iiiiiii", // Types of the 7 parameters: i=int
+                    $periodo, $institucion, $year, // Parameters 1-3 for the first CTE
+                    $institucion, $year, // Parameters 4-5 for the first CTE (repeated)
+                    $institucion, $year // Parameters 6-7 for the final JOIN to academico_matriculas (repeated)
+                );
+
+                // Execute the statement
+                mysqli_stmt_execute($stmt);
+
+                // Get the results
+                $result_query = mysqli_stmt_get_result($stmt);
+
+                // Loop through the results and store them in the $resultado array
+                while ($row = mysqli_fetch_assoc($result_query)) {
+                    $resultado[] = $row;
+                }
+
+                // Close the prepared statement
+                mysqli_stmt_close($stmt);
+
+            } else {
+                // Error handling if preparation fails
+                throw new Exception("Error al preparar la sentencia SQL: " . mysqli_error($conexion));
+            }
+
+        } catch (Exception $e) {
+            echo "Excepción capturada: ".$e->getMessage();
+            // You can log the error or handle it differently
+            exit();
+        }
+
+        return $resultado;
+    }
+
+
 
     /**
      * Este metodo me elimina la nota del boletin por ID

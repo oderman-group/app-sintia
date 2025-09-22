@@ -66,7 +66,7 @@ $consulta = Estudiantes::listarMatriculasAspirantes($config);
 
                     <td bgcolor="<?= $fondoSolicitud[$resultado["asp_estado_solicitud"]]; ?>"><?= $estadosSolicitud[$resultado["asp_estado_solicitud"]]; ?></td>
 
-                    <td><a href="https://plataformasintia.com/admisiones/files/comprobantes/<?= $resultado["asp_comprobante"]; ?>" target="_blank" style="text-decoration: underline;"><?= $resultado["asp_comprobante"]; ?></a></td>
+                    <td><a href="<?=REDIRECT_ROUTE;?>/admisiones/files/comprobantes/<?= $resultado["asp_comprobante"]; ?>" target="_blank" style="text-decoration: underline;"><?= $resultado["asp_comprobante"]; ?></a></td>
                 </tr>
 
             <?php

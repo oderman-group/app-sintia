@@ -3,12 +3,15 @@ include("session.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/docente/verificar-carga.php");
 
+$notaFormateada = str_replace(',', '.', $_POST["nota"]);
+$notaAnteriorFormateada = str_replace(',', '.', $_POST["notaAnterior"]);
+
 $data = [
 	'codEst'           => $_POST["codEst"],
 	'nombreEst'        => null,
 	'codNota'          => null,
-	'nota'             => $_POST["nota"],
-	'notaAnterior'     => $_POST["notaAnterior"],
+	'nota'             => $notaFormateada,
+	'notaAnterior'     => $notaAnteriorFormateada,
 	'tipoNota'         => 2,
 	'target'           => Calificaciones::TIPO_GUARDAR_RECUPERACION_PERIODO,
 	'carga'            => $_COOKIE["carga"],

@@ -63,7 +63,7 @@ if (!empty($_GET["id"])) {
     }
 }
 $ultimoPeriodoAreas = $config["conf_periodos_maximos"];
-$tamañoLogo         = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50;
+$tamañoLogo         = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50; //TODO: Esto debe ser una configuración
 
 switch ($periodoSeleccionado) {
     case 1:
@@ -125,14 +125,14 @@ $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
 
 $consultaPuestos = Boletin::obtenerPuestoYpromedioEstudiante($periodo, $grado, $grupo, $year);
 $puestosCurso = [];
-while ($puesto = mysqli_fetch_array($consultaPuestos, MYSQLI_BOTH)) {
-    $puestosCurso[$puesto['bol_estudiante']] = $puesto['puesto'];
+foreach ($consultaPuestos as $puesto) {
+    $puestosCurso[$puesto['estudiante_id']] = $puesto['puesto'];
 }
 
 $puestosInstitucion = [];
 $consultaPuestosInstitucion = Boletin::obtenerPuestoEstudianteEnInstitucion($periodo, $year);
-while ($puesto = mysqli_fetch_array($consultaPuestosInstitucion, MYSQLI_BOTH)) {
-    $puestosInstitucion[$puesto['bol_estudiante']] = $puesto['puesto'];
+foreach ($consultaPuestosInstitucion as $puesto ) {
+    $puestosInstitucion[$puesto['estudiante_id']] = $puesto['puesto'];
 }
 
 $listaCargas = [];

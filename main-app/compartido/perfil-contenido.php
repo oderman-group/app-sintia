@@ -15,6 +15,8 @@
 								</div>
 							</div>
 
+                            <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) { //TODO: Esto debe ser una configuración
+                                ?>
 							<div class="panel">
 								<header class="panel-heading panel-heading-blue">Firma digital</header>
 								<div class="panel-body">
@@ -23,6 +25,7 @@
 	                                </div>
 								</div>
 							</div>
+                            <?php }?>
 						</div>	
 
 						<div class="col-sm-9">
@@ -84,20 +87,25 @@
                                                 </div>
                                             </div>
                                         <?php } ?>
-										
-										<div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[219][$datosUsuarioActual['uss_idioma']];?> <mark>(Cuadrada)</mark></label>
-                                            <div class="col-sm-4">
-                                                <input type="file" name="fotoPerfil" onChange="validarPesoArchivo(this)" accept=".png, .jpg, .jpeg" class="form-control">
-                                            </div>
-                                        </div>
 
-										<div class="form-group row">
-                                            <label class="col-sm-2 control-label">Firma digital</label>
-                                            <div class="col-sm-4">
-                                                <input type="file" name="firmaDigital" onChange="validarPesoArchivo(this)" accept=".png, .jpg, .jpeg" class="form-control">
+                                        <?php if($usuarioPerfil['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN) {//TODO: Esto debe ser una configuración
+                                            ?>
+										
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label"><?=$frases[219][$datosUsuarioActual['uss_idioma']];?> <mark>(Cuadrada)</mark></label>
+                                                <div class="col-sm-4">
+                                                    <input type="file" name="fotoPerfil" onChange="validarPesoArchivo(this)" accept=".png, .jpg, .jpeg" class="form-control">
+                                                </div>
                                             </div>
-                                        </div>
+
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label">Firma digital</label>
+                                                <div class="col-sm-4">
+                                                    <input type="file" name="firmaDigital" onChange="validarPesoArchivo(this)" accept=".png, .jpg, .jpeg" class="form-control">
+                                                </div>
+                                            </div>
+
+                                        <?php }?>
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
