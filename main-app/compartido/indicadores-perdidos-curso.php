@@ -129,10 +129,14 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                 </tr>
                 <?php
                     }
+
+                    $indicador_inclusion = "";
+
+                    if(!empty($fila["aii_descripcion_indicador"])){$indicador_inclusion ="<br> <i>&nbsp;&nbsp;&nbsp;&nbsp;Modificado: ". $fila["aii_descripcion_indicador"]."</i>";}
                 ?>
                     <tr bgcolor="#FFF" style="font-size:12px;">
                         <td align="center">&nbsp;</td>
-                        <td style="font-size:12px; height:15px;"><?=$fila["ind_nombre"]; ?></td>
+                        <td style="font-size:12px; height:15px;"><?=$fila["ind_nombre"].$indicador_inclusion; ?></td>
                         <td align="center" style="font-weight:bold; font-size:12px;"><?= $nota_indicador." ".$leyendaRI; ?></td>
                     </tr>
                 <?php

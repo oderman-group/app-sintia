@@ -146,6 +146,8 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 let nuevaOpcion = new Option(element, element, true, true);
                 selectEstudiantes.append(nuevaOpcion);
             });
+            // Enviar el formulario manualmente
+            this.submit();
         } else {
             Swal.fire(
                 {
@@ -155,11 +157,6 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 }
             );
         }
-
-
-
-        // Enviar el formulario manualmente
-        this.submit();
     });
 
     async function habilitarGrupos() {
