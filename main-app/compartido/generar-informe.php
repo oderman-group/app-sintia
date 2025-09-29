@@ -27,6 +27,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_academico_cargas.php");
+require_once ROOT_PATH."/main-app/class/Asignaturas.php";
 
 $conexionPDO = Conexion::newConnection('PDO');
 
@@ -35,6 +36,10 @@ $grupo     = base64_decode($_GET["grupo"]);
 $carga     = base64_decode($_GET["carga"]);
 $periodo   = base64_decode($_GET["periodo"]);
 $tipoGrado = base64_decode($_GET["tipoGrado"]);
+
+$area            = null;
+$valorAsignatura = null;
+$notaEquivalente = null;
 
 if ($config['conf_porcentaje_completo_generar_informe'] == Boletin::GENERAR_CON_PORCENTAJE_COMPLETO) {
 	$consultaListaEstudantesError = Estudiantes::listarEstudiantesNotasFaltantes($carga, $periodo, $tipoGrado);
@@ -58,6 +63,9 @@ $datosCarga = [
 
 //Consultamos los estudiantes del grado y grupo
 $consulta = Estudiantes::listarEstudiantesConInfoBasica($datosCarga);
+
+//Validar configuración de porcentaje de peso sobre las áreas
+$obtenerNotaEquivalente = $config['conf_agregar_porcentaje_asignaturas'] == 'SI' && !Asignaturas::hayAsignaturaSinValor() ? true : false;
 
 $contBol = 1;
 while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
@@ -114,6 +122,14 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 			if($boletinDatos['bol_nota'] != $definitiva || $boletinDatos['bol_porcentaje'] != $porcentajeActual) {
 				$caso = 2; //Se cambia la definitiva que tenía por la que viene. Sea menor o mayor.
 			} else {
+				$updateBoletin = [
+					'bol_estado' => Boletin::ESTADO_GENERADO,
+				];
+
+				$where = "bol_id='{$boletinDatos['bol_id']}'";
+
+				Boletin::actualizarBoletin($config, $updateBoletin, $where);
+
 				//No se hacen cambios. Todo sigue igual
 				continue;
 			}
@@ -122,6 +138,14 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 
 			//Si la definitiva que viene está perdida 
 			if ($definitiva < $config[5]) {
+				$updateBoletin = [
+					'bol_estado' => Boletin::ESTADO_GENERADO,
+				];
+
+				$where = "bol_id='{$boletinDatos['bol_id']}'";
+
+				Boletin::actualizarBoletin($config, $updateBoletin, $where);
+
 				//No se hacen cambios. Todo sigue igual
 				continue;
 			} else {
@@ -177,6 +201,13 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 			Boletin::eliminarNotaBoletinID($config, $boletinDatos['bol_id']);
 		}
 
+		if($obtenerNotaEquivalente) {
+			$area            = base64_decode($_GET["area"]);
+			$valorAsignatura = base64_decode($_GET["valorAsignatura"]);
+			$notaEquivalente = isset($valorAsignatura) && is_numeric($valorAsignatura) && $valorAsignatura > 0 ? 
+							   $definitiva * ($valorAsignatura / 100) : 0;
+		}
+
 		//INSERTAR LOS DATOS EN LA TABLA BOLETIN - Para el campo bol_id el código se genera automáticamente en el método guardarNotaBoletin
 		Boletin::guardarNotaBoletin(
 			$conexionPDO, 
@@ -193,6 +224,9 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 				institucion, 
 				year, 
 				bol_estado, 
+				bol_area,
+				bol_valor_asignatura,
+				bol_nota_equivalente,
 				bol_id
 			", 
 			[
@@ -207,7 +241,10 @@ while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
 				$porcentajeActual, 
 				$config['conf_id_institucion'], 
 				$_SESSION["bd"], 
-				Boletin::ESTADO_GENERADO
+				Boletin::ESTADO_GENERADO,
+				$area,
+				$valorAsignatura,
+				$notaEquivalente
 			]
 		);
 

@@ -5,6 +5,7 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_aspirante.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/App/Academico/MatriculaCambios.php");
 
 class Estudiantes {
 
@@ -1203,7 +1204,9 @@ class Estudiantes {
         $tipoMatricula = !empty($POST["tipoMatricula"]) ? $_POST["tipoMatricula"] : GRADO_GRUPAL;
         $grupoEtnico   = !empty($POST["grupoEtnico"]) ? $_POST["grupoEtnico"] : 1;
         $discapacidad  = !empty($POST["discapacidad"]) ? $_POST["discapacidad"] : 1;
-        $tipoSituacion = !empty($POST["tipoSituacion"])? $POST["tipoSituacion"] : 1;
+        $tipoSituacion = !empty($POST["tipoSituacion"]) ? $POST["tipoSituacion"] : 1;
+        $gradoActual   = !empty($POST["gradoActual"]) ? $POST["gradoActual"] : null;
+        $grupoActual   = !empty($POST["grupoActual"]) ? $POST["grupoActual"] : null;
 
         try {
             
@@ -1294,6 +1297,22 @@ class Estudiantes {
 
             if ($stmt) {
                 $stmt->execute();
+
+                //Su hubo cambio de curso o grupo
+                if (!empty($gradoActual) && !empty($grupoActual) && ($gradoActual != $grado || $grupoActual != $grupo)) {
+                    $datos = [
+                        'mtca_id_matricula' => $id,
+                        'mtca_grado_actual' => $gradoActual,
+                        'mtca_grado_nuevo'  => $grado,
+                        'mtca_grupo_actual' => $grupoActual,
+                        'mtca_grupo_nuevo'  => $grupo,  
+                        'institucion'       => $config['conf_id_institucion'],
+                        'year'              => $_SESSION["bd"],
+                        'created_by'        => $_SESSION["id"]
+                    ];
+
+                    MatriculaCambio::Insert($datos);
+                }
 
                 return $stmt;
             } else {

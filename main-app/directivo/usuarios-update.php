@@ -38,6 +38,13 @@ if (!empty($_FILES['fotoUss']['name'])) {
 	}
 }
 
+$intentosFallidos = filter_var($_POST["intentosFallidos"], FILTER_VALIDATE_INT, array("options" => array("min_range" => 0)));
+
+// Si la validación falla (el valor no es un entero >= 0), $intentosFallidos será false.
+if ($intentosFallidos === false) {
+    $intentosFallidos = 0;
+}
+
 $update = [
     "uss_usuario" => $_POST["usuario"],
     "uss_tipo" => $_POST["tipoUsuario"],
@@ -49,7 +56,7 @@ $update = [
     "uss_lugar_expedicion" => $_POST["lExpedicion"],
     "uss_direccion" => $_POST["direccion"],
     "uss_telefono" => $_POST["telefono"],
-    "uss_intentos_fallidos" => $_POST["intentosFallidos"],
+    "uss_intentos_fallidos" => $intentosFallidos,
     "uss_tipo_documento" => $_POST["tipoD"],
     "uss_apellido1" => mysqli_real_escape_string($conexion, $_POST["apellido1"]),
     "uss_apellido2" => mysqli_real_escape_string($conexion, $_POST["apellido2"]),

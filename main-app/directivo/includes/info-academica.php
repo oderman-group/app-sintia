@@ -7,14 +7,23 @@ $Estudiante = new Administrativo_Usuario_Estudiante([
 
 $tieneRegistrosAcademicos = (bool) $Estudiante->tieneRegistrosAcademicos();
 
+$disabledCampoGradoGrupo = $tieneRegistrosAcademicos && $config['conf_puede_cambiar_grado_y_grupo'] != 1 ? 'disabled' : '';
 $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 ?>
 
 <fieldset>
 	<div class="row">
 		<div class="col-sm-12 col-xl-6">
+
+			<?php if ($tieneRegistrosAcademicos && $config['conf_puede_cambiar_grado_y_grupo'] == 1) {?>
+				<div id="advertenciaCambioCurso" style="display:none;" class="alert alert-block alert-warning animate__animated animate__flash animate__delay-1s">
+					<p>Tenga en cuenta que al cambiar de curso o grupo a un estudiante con notas ya registradas estas podrían perderse.</p>
+				</div>
+			<?php }?>
+
 			<div class="form-group row">
 				<label class="col-sm-3 control-label">Curso <span style="color: red;">(*)</span></label>
+				<input type="hidden" name="gradoActual" id="gradoActual" value="<?=$datosEstudianteActual['mat_grado'];?>">
 				<div class="col-sm-9">
 					<select class="form-control" name="grado" id="gradoMatricula"  <?= $disabledPermiso; ?> onchange="listarGrupos(this.value)">
 						<?php 
@@ -23,7 +32,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 							if ($rv['gra_id'] == $datosEstudianteActual['mat_grado'])
 								echo '<option value="' . $rv['gra_id'] . '" selected>' . $rv['gra_nombre'] . '</option>';
 							else
-								echo '<option value="' . $rv['gra_id'] . '" '.$disabledCamposAcademicos.'>' . $rv['gra_nombre'] . '</option>';
+								echo '<option value="' . $rv['gra_id'] . '" '.$disabledCampoGradoGrupo.'>' . $rv['gra_nombre'] . '</option>';
 						} ?>
 					</select>
 				</div>
@@ -31,6 +40,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 
 			<div class="form-group row">
 				<label class="col-sm-3 control-label">Grupo</label>
+				<input type="hidden" name="grupoActual" id="grupoActual" value="<?=$datosEstudianteActual['mat_grupo'];?>">
 				<div class="col-sm-4">
 					<span id="mensajeGrupos" style="color: #6017dc; display:none;">Espere un momento mientras se cargan los grupos.</span>
 					<select class="form-control" id="gruposMatricula" name="grupo"  <?= $disabledPermiso; ?>>
@@ -40,10 +50,11 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 							if ($rv['gru_id'] == $datosEstudianteActual['mat_grupo'])
 								echo '<option value="' . $rv['gru_id'] . '" selected>' . $rv['gru_nombre'] . '</option>';
 							else
-								echo '<option value="' . $rv['gru_id'] . '" '.$disabledCamposAcademicos.'>' . $rv['gru_nombre'] . '</option>';
+								echo '<option value="' . $rv['gru_id'] . '" '.$disabledCampoGradoGrupo.'>' . $rv['gru_nombre'] . '</option>';
 						} ?>
 					</select>
 				</div>
+
 				<?php 
 				$permisoCambiarGrupo      = Modulos::validarSubRol(['DT0083']);
 				$moduloMediaTecnica       = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MEDIA_TECNICA);
@@ -112,6 +123,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 					</select>
 				</div>
 			</div>
+
 			<?php if (array_key_exists(10, $arregloModulos)) {
 				require_once("../class/servicios/MediaTecnicaServicios.php");
 				$parametros = ['gra_tipo' => GRADO_INDIVIDUAL, 'gra_estado' => 1, 'institucion' => $config['conf_id_institucion'], 'year' => $_SESSION["bd"]];
@@ -262,10 +274,20 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
        var selectgrupos = $('#gruposMatricula');
 
 		async function listarGrupos(curso) {
-        var url = "../compartido/ajax_grupos_curso.php";
-        var data = {
-            "cursos": curso
-        };
+			var advertenciaCambioCurso = document.getElementById("advertenciaCambioCurso");
+			var cursoActual = document.getElementById("gradoActual").value;
+
+			if (cursoActual != curso) {
+				advertenciaCambioCurso.style.display = "block";
+			} else {
+				advertenciaCambioCurso.style.display = "none";
+			}
+
+			var url = "../compartido/ajax_grupos_curso.php";
+			var data = {
+				"cursos": curso
+			};
+
         $('#mensajeGrupos').show();
         selectgrupos.empty();
         // selectmaterias.empty();
