@@ -564,7 +564,7 @@ function notaCualitativa(nota, idEstudiante, idCarga, color='black') {
 
         href.innerHTML = '<span style="color:gray;">Calculando...</span>';
 
-        fetch('../compartido/ajax-estilo-notas.php?nota='+nota, {method: 'GET'})
+        fetch('../compartido/ajax-estilo-notas.php?nota='+nota+'&idEstudiante='+idEstudiante+'&idCarga='+idCarga, {method: 'GET'})
         .then(response => response.text()) // Convertir la respuesta a texto
         .then(data => {
             href.innerHTML = '<span style="color:'+color+';">'+data+'</span>';

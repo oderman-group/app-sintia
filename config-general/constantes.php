@@ -228,7 +228,7 @@ if (php_sapi_name() === 'cli') {
             ini_set('display_startup_errors', $displayErrorsLocal);
             ini_set('error_log', __DIR__ . '/errores_local.log');
             define('REDIRECT_ROUTE', 'http://localhost/app-sintia/main-app');
-            define('ENVIROMENT', 'TEST');
+            define('ENVIROMENT', 'LOCAL');
             error_reporting (E_ALL);
         break;
 
