@@ -1164,7 +1164,7 @@ document.getElementById('formularioDatosAdmision').addEventListener('submit', fu
   })
   .catch(error => {
     console.error('Error al enviar el formulario:', error);
-    alert('Hubo un problema al enviar el formulario. Inténtalo de nuevo.');
+    alert('Hubo un problema al enviar el formulario. Inténtalo de nuevo. Error: ' + error);
 
     // Rehabilitar el botón en caso de error
     submitBtn.disabled = false;
