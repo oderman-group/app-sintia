@@ -1152,8 +1152,7 @@ document.getElementById('formularioDatosAdmision').addEventListener('submit', fu
     resultShow.innerHTML = result;
 
     // Habilitar el botón después de la respuesta (opcional, si deseas que el usuario pueda reenviar el formulario)
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Enviar';
+    submitBtn.textContent = 'Guardar y enviar formulario';
 
     //refrescar la página en caso de que se haya completado el envío correctamente
     if (result.includes('Los datos fueron guardados correctamente.')) {
