@@ -36,7 +36,7 @@ require_once("../class/Estudiantes.php");
 									
 								<div class="col-md-12">
 									
-									<?php if(!empty($_GET["req"]) && $_GET["req"]==1){?>
+									<?php if(!empty($_GET["req"]) && $_GET["req"]==1 && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_USUARIOS)){?>
 										<div class="card card-topline-red">
 											<div class="card-head">
 												<header><?=$frases[269][$datosUsuarioActual['uss_idioma']];?></header>
@@ -62,7 +62,7 @@ require_once("../class/Estudiantes.php");
 										</div>
 									<?php }?>
 									
-									<?php if(!empty($_GET["req"]) && $_GET["req"]==2){?>
+									<?php if(!empty($_GET["req"]) && $_GET["req"]==2 && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RESERVA_CUPO)){?>
 										<div class="card card-topline-green">
 											<div class="card-head">
 												<header><?=$frases[277][$datosUsuarioActual['uss_idioma']];?></header>
@@ -175,7 +175,7 @@ require_once("../class/Estudiantes.php");
 																	  		<?php 
 																			if(!empty($resultado['mat_id_usuario'])) {
 																				if(
-																					array_key_exists(Modulos::MODULO_ACADEMICO, $arregloModulos) && Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ACADEMICO) && 
+																					array_key_exists(Modulos::MODULO_CALIFICACIONES, $arregloModulos) && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CALIFICACIONES) && 
 																					$config['conf_calificaciones_acudientes']==1 
 																				){?>
 																					<?php if($config['conf_sin_nota_numerica']!=1){?>
@@ -184,14 +184,14 @@ require_once("../class/Estudiantes.php");
 																					<li><a href="notas-actuales.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>"><?=$frases[242][$datosUsuarioActual['uss_idioma']];?></a></li>
 																				<?php }?>
 
-																			<?php if (array_key_exists(Modulos::MODULO_DISCIPLINARIO, $arregloModulos) && Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_DISCIPLINARIO)) { ?>
+																			<?php if (array_key_exists(Modulos::MODULO_DISCIPLINARIO, $arregloModulos) && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO)) { ?>
 																			<li><a href="reportes-disciplinarios.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>"><?=$frases[105][$datosUsuarioActual['uss_idioma']];?></a></li>
 																			<li><a href="aspectos.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($config[2]);?>"><?=$frases[264][$datosUsuarioActual['uss_idioma']];?></a></li>
 																			<?php }?>
 																		  <?php }?>
 																		  
 																		<?php 
-																			if($config['conf_permiso_descargar_boletin'] == 1){
+																			if($config['conf_permiso_descargar_boletin'] == 1 && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INFORMES_ACADEMICOS_BASICOS)){
 																				if(!empty($aspectos1["dn_aprobado"]) && !empty($aspectos["dn_aprobado"]) && $aspectos1["dn_aprobado"] == 1 and $aspectos["dn_aprobado"] == 1){ 
 																		?>
 																		<li><a href="../compartido/matricula-boletin-curso-<?=$resultado['gra_formato_boletin'];?>.php?id=<?=base64_encode($resultado["mat_id"]);?>&periodo=<?=base64_encode($config[2]);?>" target="_blank" ><?=$frases[267][$datosUsuarioActual['uss_idioma']];?></a></li>
@@ -200,7 +200,7 @@ require_once("../class/Estudiantes.php");
 																			}
 																		}
 
-																		if($config['conf_informe_parcial']==1){?>
+																		if($config['conf_informe_parcial']==1 && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INFORMES_ACADEMICOS_BASICOS)){?>
 																			<li><a href="../compartido/informe-parcial.php?estudiante=<?=base64_encode($resultado["mat_id"]);?>&acu=1" target="_blank" ><?=$frases[265][$datosUsuarioActual['uss_idioma']];?></a></li>
 																		<?php }
 
@@ -212,12 +212,14 @@ require_once("../class/Estudiantes.php");
 																			<li><a href="auto-login.php?user=<?=base64_encode($resultado['mat_id_usuario']);?>">Autologin</a></li>
 																		<?php }?>
 
-																		<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
+																		<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ADJUNTAR_DOCUMENTOS)) {?>
+																			<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
+																		<?php }?>
 
 																	  </ul>
 																  </div>
 															<?php
-																	} else {
+																	} else if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_USUARIOS)) {
 																		$consultaSolicitudes = mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".general_solicitudes 
 																		LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=soli_remitente AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
 																		WHERE soli_institucion='".$config['conf_id_institucion']."' 
@@ -238,7 +240,7 @@ require_once("../class/Estudiantes.php");
 																	}	
 																}
 																else{}
-															}else{
+															}else if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RESERVA_CUPO)){
 																echo "
 																<a href='".$_SERVER['PHP_SELF']."?req=2&idE=".base64_encode($resultado['mat_id'])."&nameE=".base64_encode($resultado['uss_nombre'])."' style='text-decoration:underline;'>".$frases[270][$datosUsuarioActual['uss_idioma']]."</a>
 																";	

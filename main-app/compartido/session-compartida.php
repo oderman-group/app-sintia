@@ -2,11 +2,10 @@
 session_start();
 //Si otro usuario de mayor rango entra como él
 if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){$idSession = $_SESSION["idO"];}else{$idSession = $_SESSION["id"];}
-if($idSession==""){
+
+if ($idSession=="") {
 	header("Location:../controlador/salir.php");
-}
-else
-{
+} else {
 	require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 	require_once(ROOT_PATH."/config-general/config.php");
 	require_once(ROOT_PATH."/config-general/idiomas.php");

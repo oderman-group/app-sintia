@@ -1,4 +1,4 @@
-<?php include_once("session.php");?>
+<?php include_once("../session.php");?>
 <?php $idPaginaInterna = 'AC0003';?>
 <?php include_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");?>
 <?php include_once(ROOT_PATH."/main-app/compartido/head.php");?>

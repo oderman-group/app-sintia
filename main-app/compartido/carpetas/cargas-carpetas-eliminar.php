@@ -1,5 +1,5 @@
 <?php
-include("session-compartida.php");
+include("../session-compartida.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'CM0025';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
@@ -17,5 +17,6 @@ try{
 $url= $usuariosClase->verificarTipoUsuario($datosUsuarioActual['uss_tipo'],'cargas-carpetas.php');
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+
 echo '<script type="text/javascript">window.location.href="'.$url.'";</script>';
 exit();

@@ -27,6 +27,7 @@ if(ENVIROMENT === 'PROD') {
 			<b>Cod. Error:</b> '.$numError.'<br>
 			<b>Current URL:</b> '.$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING'].'<br>
 			<b>URL Reference:</b> '.$_SERVER['HTTP_REFERER'].'<br>
+			<b>URL Origin:</b> '.$_SESSION["urlOrigin"].'<br>
 			<b>Error detail:</b> '.$detalleError.'<br>
 			<b>Line of error:</b> '.$lineaError.'<br>
 			<b>Request:</b> '.$request_data_sanitizado.'<br>
@@ -66,7 +67,7 @@ try {
 			<b>ID del reporte del error:</b> <?=$idReporteError;?>.<br>
 			<b>Número del error:</b> <?=$numError;?>.
 
-			<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DEV){?>
+			<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DEV || true){?>
 				<hr>
 				<b>Detalle del error:</b> <?=$detalleError;?><br>
 				<b>Linea del error:</b> <?=$lineaError;?><br>

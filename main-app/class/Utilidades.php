@@ -421,6 +421,9 @@ class Utilidades {
 
         $request_data_sanitizado = mysqli_real_escape_string($conexion, $request_data);
 
+        $_SESSION["id"] ??=null;
+        $_SESSION["bd"] ??=date("Y");
+
         mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".reporte_errores(rperr_numero, rperr_fecha, rperr_ip, rperr_usuario, rperr_pagina_referencia, rperr_pagina_actual, rperr_so, rperr_linea, rperr_institucion, rperr_error, rerr_request, rperr_year, rperr_trace_php)
         VALUES('".$numError."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SESSION["id"]."', '".$_SERVER['HTTP_REFERER']."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', '".$_SERVER['HTTP_USER_AGENT']."', '".$lineaError."', '".$config['conf_id_institucion']."','".$detalleError."', '".$request_data_sanitizado."', '".$_SESSION["bd"]."', '".json_encode(debug_backtrace())."')");
 
@@ -430,16 +433,77 @@ class Utilidades {
     }
 
     /**
- * Asigna un valor por defecto a un campo que sea unullo o vacio.
- *
- * @param  string|double|float|bool|array $valorDefecto Puede ser un resultado de consulta SQL o un array.
- * @return string|double|float|bool|array manda mensjae informativo si no cumple las condiciones
- */
-public static  function valordefecto(&$valor,$valorDefecto="")
-{   
-  $valor=empty($valor)?$valorDefecto:$valor;
-  
-}
+     * Escribe un registro detallado en el archivo de logs del sistema.
+     *
+     * El archivo se crea (si no existe) dentro de la carpeta /Logs, localizada
+     * dentro del directorio MAIN_PATH.  El nombre del archivo de log tiene el
+     * siguiente formato:
+     *
+     *     log_<NombreDeLaClase>.log
+     *
+     * De esta forma, cada clase genera su propio archivo de log independiente.
+     *
+     * El contenido de cada línea incluye:
+     *   - Fecha y hora en formato "YYYY-MM-DD HH:MM:SS"
+     *   - Usuario que ejecuta (si existe en $_SESSION['datosUsuario']['uss_usuario'])
+     *   - Clase y método desde el cual fue invocada la función
+     *   - Mensaje de log recibido por parámetro
+     *   - Línea y archivo donde se ejecutó
+     *
+     * Ejemplo de línea en un log:
+     *
+     *   [2024-08-15 08:12:41] [admin] [Boletin::generarBoletin] Error al generar reporte
+     *   [linea:335] [archivo:C:\xampp\htdocs\app-sintia\main-app\class\Boletin.php]
+     *
+     * @param string $mensaje  Mensaje o excepción que se desea registrar en el log.
+     *
+     * @return void
+     */
+    public static function writeLog($mensaje)
+    {
+        // ─────────────────────────────────────────────────────────────
+        // 1) ID DE TRANSACCIÓN: se genera una sola vez por petición HTTP
+        // ─────────────────────────────────────────────────────────────
+        if (!isset($GLOBALS['LOG_TRANSACTION_ID'])) {
+            // puedes cambiar uniqid() por random_bytes si quieres algo más largo
+            $GLOBALS['LOG_TRANSACTION_ID'] = uniqid('TX-');
+        }
+        $txId = $GLOBALS['LOG_TRANSACTION_ID'];
+
+        // Carpeta de logs
+        $logDir = MAIN_PATH . '/Logs/Class';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0777, true);
+        }
+
+        $usuario  = isset($_SESSION['datosUsuario']['uss_usuario']) ? $_SESSION['datosUsuario']['uss_usuario'] : 'SIN_SESION';
+        $fecha    = date('Y-m-d H:i:s');
+
+        // Backtrace para saber desde dónde fue llamado
+        $trace      = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $clase      = $trace[1]['class']   ?? 'Global';
+        $funcion    = $trace[1]['function'] ?? 'N/A';
+        $linea      = $trace[0]['line']    ?? 'N/A';
+        $archivo    = $trace[0]['file']    ?? 'N/A';
+
+        // Mensaje final
+        $line = "[{$fecha}] [{$txId}] [{$usuario}] [{$clase}::{$funcion}] {$mensaje}";
+        $line .= " [linea:{$linea}] [archivo:{$archivo}]" . PHP_EOL;
+
+        $logFile = $logDir . '/log_' . $clase . '.log';
+        error_log($line, 3, $logFile);
+    }
+
+    /**
+     * Asigna un valor por defecto a un campo que sea unullo o vacio.
+     *
+     * @param  string|double|float|bool|array $valorDefecto Puede ser un resultado de consulta SQL o un array.
+     * @return string|double|float|bool|array manda mensjae informativo si no cumple las condiciones
+     */
+    public static  function valordefecto(&$valor,$valorDefecto="")
+    {
+        $valor=empty($valor)?$valorDefecto:$valor;
+    }
 
     /**
      * Traduce un tipo de operación CRUD (Crear, Leer, Actualizar, Borrar) a su descripción en español con formato HTML.
@@ -566,5 +630,43 @@ public static  function valordefecto(&$valor,$valorDefecto="")
         return array_map(function($valor) {
             return is_string($valor) ? self::sanitizarTexto($valor) : $valor;
         }, $data);
+    }
+
+    /**
+     * Redirige al usuario a una nueva página.
+     *
+     * Utiliza un encabezado HTTP 302 para realizar una redirección del lado del servidor.
+     * Se asegura de limpiar cualquier salida en el buffer antes de enviar el encabezado.
+     * La redirección es de tipo temporal.
+     *
+     * @param string $redirectPageUrl La URL de la página a la que se redirigirá al usuario.
+     * @param int $messageCode El código de mensaje (ej. de advertencia o éxito) que se añadirá a la URL.
+     * El valor por defecto es 2.
+     * @param array $additionalParams Parametros adicionales que se necesiten enviar por URL de redirección
+     * @return void
+     */
+    public static function redirect(string $redirectPageUrl, int $messageCode = 2, array $additionalParams = []) {
+        // Limpia cualquier salida que se haya enviado antes.
+        if (ob_get_contents()) {
+            ob_end_clean();
+        }
+
+        $complement = null;
+
+        // Construye los parametros adicioales para la URL final.
+        if (!empty($additionalParams)) {
+            foreach ($additionalParams as $key => $value) {
+                $complement .= '&'.$key . '=' . $value;
+            }
+        }
+
+        // Construye la URL de forma segura
+        $finalUrl = $redirectPageUrl . '?idmsg=' . $messageCode . $complement;
+
+        // Redirige usando el encabezado Location, estableciendo el código 302 explícitamente
+        header("Location: " . $finalUrl, true, 302);
+        
+        // Termina la ejecución del script inmediatamente
+        exit();
     }
 }

@@ -7,7 +7,9 @@
 
 $(document).ready(function() {
 	'use strict';
-    $('#example1').DataTable();
+    if (!$.fn.DataTable.isDataTable('#example1')) {
+        $('#example1').DataTable();
+    }
 
     $('#tablaItems').DataTable();
     

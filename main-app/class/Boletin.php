@@ -332,9 +332,11 @@ class Boletin {
             }
 
         } catch (Exception $e) {
-            echo "Excepción capturada: ".$e->getMessage();
+            Utilidades::writeLog('Se jodió esta vaina porque '.$e->getMessage());
+
+            echo "Ocurrió un error mientras se obtenía el puesto y promedio del estudiante.";
             // Puedes loggear el error o manejarlo de otra forma
-            exit();
+            //exit();
         }
 
         return $resultado;

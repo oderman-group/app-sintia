@@ -122,7 +122,7 @@
 												 
 												 <a href="cargas-carpetas-editar.php?idR=<?=base64_encode($carpeta['fold_id']);?>&carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" style="color: black;"><i class="fa fa-edit"></i></a>
 												 
-												 <a href="#" name="../compartido/cargas-carpetas-eliminar.php?idR=<?=base64_encode($carpeta['fold_id']);?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
+												 <a href="#" name="../compartido/carpetas/cargas-carpetas-eliminar.php?idR=<?=base64_encode($carpeta['fold_id']);?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
 											</p>	
 												
 											</div>
@@ -147,7 +147,7 @@
 												<p align="right">
 													<a href="cargas-carpetas-editar.php?idR=<?=base64_encode($carpeta['fold_id']);?>&carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" style="color: black;"><i class="fa fa-edit"></i></a>
 													
-													<a href="#" name="../compartido/cargas-carpetas-eliminar.php?idR=<?=$carpeta['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
+													<a href="#" name="../compartido/carpetas/cargas-carpetas-eliminar.php?idR=<?=$carpeta['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
 												</p>
 												
 											</div>
@@ -194,7 +194,7 @@
 											 <p align="right">
 												 <a href="cargas-carpetas-editar.php?idR=<?=$carpetaCompartida['fold_id'];?>&carga=<?=$cargaConsultaActual;?>&periodo=<?=$periodoConsultaActual;?>" style="color: black;"><i class="fa fa-edit"></i></a>
 												 
-												 <a href="#" name="../compartido/cargas-carpetas-eliminar.php?idR=<?=$carpetaCompartida['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
+												 <a href="#" name="../compartido/carpetas/cargas-carpetas-eliminar.php?idR=<?=$carpetaCompartida['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
 											</p>
 											-->
 												
@@ -221,7 +221,7 @@
 												<p align="right">
 													<a href="cargas-carpetas-editar.php?idR=<?=$carpetaCompartida['fold_id'];?>&carga=<?=$cargaConsultaActual;?>&periodo=<?=$periodoConsultaActual;?>" style="color: black;"><i class="fa fa-edit"></i></a>
 													
-													<a href="#" name="../compartido/cargas-carpetas-eliminar.php?idR=<?=$carpetaCompartida['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
+													<a href="#" name="../compartido/carpetas/cargas-carpetas-eliminar.php?idR=<?=$carpetaCompartida['fold_id'];?>" onClick="deseaEliminar(this)" style="color: black;"><i class="fa fa-trash-o"></i></a>
 												</p>
 												-->
 												
