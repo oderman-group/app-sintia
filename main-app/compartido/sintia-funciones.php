@@ -6,7 +6,7 @@ class Archivos {
 
 	function validarArchivo($archivoSize, $archivoName){
 
-		include("../../config-general/config.php");
+		include(ROOT_PATH."/config-general/config.php");
 
 		$maxPeso = $config['conf_max_peso_archivos'];
 
@@ -91,13 +91,13 @@ class UsuariosFunciones{
 
 		
 
-		$fotoUsr = '../files/fotos/default.png';
+		$fotoUsr = BASE_URL.'/main-app/files/fotos/default.png';
 
 		
 
-		if($foto!="" and file_exists('../files/fotos/'.$foto)){
+		if($foto!="" and file_exists(BASE_URL.'/main-app/files/fotos/'.$foto)){
 
-			$fotoUsr = '../files/fotos/'.$foto;
+			$fotoUsr = BASE_URL.'/main-app/files/fotos/'.$foto;
 
 		}
 
@@ -117,17 +117,17 @@ class UsuariosFunciones{
 
 		switch($tipoUsuario){	
 
-			case 1: $url = '../directivo/'.$paginaRedireccion; break;
+			case 1: $url = BASE_URL.'/main-app/directivo/'.$paginaRedireccion; break;
 
-			case 2: $url = '../docente/'.$paginaRedireccion; break;
+			case 2: $url = BASE_URL.'/main-app/docente/'.$paginaRedireccion; break;
 
-			case 3: $url = '../acudiente/'.$paginaRedireccion; break;
+			case 3: $url = BASE_URL.'/main-app/acudiente/'.$paginaRedireccion; break;
 
-			case 4: $url = '../estudiante/'.$paginaRedireccion; break;
+			case 4: $url = BASE_URL.'/main-app/estudiante/'.$paginaRedireccion; break;
 
-			case 5: $url = '../directivo/'.$paginaRedireccion; break;
+			case 5: $url = BASE_URL.'/main-app/directivo/'.$paginaRedireccion; break;
 
-			default: $url = '../controlador/salir.php'; break;
+			default: $url = BASE_URL.'/main-app/controlador/salir.php'; break;
 
 	  	}
 
@@ -150,7 +150,7 @@ class Cargas {
 	
 
 	function verificarNumCargas($num, $idioma=1){
-		include("../../config-general/idiomas.php");
+		include(ROOT_PATH."/config-general/idiomas.php");
 
 		if($num>0){
 
@@ -208,23 +208,23 @@ function validarClave($clave) {
 function validarUsuarioActual($datosUsuarioActual) {
 	switch ($datosUsuarioActual['uss_tipo']) {
 		case 5:
-			$destinos = "../directivo/";
+			$destinos = BASE_URL."/main-app/directivo/";
 			break;
 		case 3:
-			$destinos = "../acudiente/";
+			$destinos = BASE_URL."/main-app/acudiente/";
 			break;
 		case 4:
-			$destinos =  "../estudiante/";
+			$destinos =  BASE_URL."/main-app/estudiante/";
 			break;
 		case 2:
-			$destinos = "../docente/";
+			$destinos = BASE_URL."/main-app/docente/";
 			break;
 		case 1:
-			$destinos = "../directivo/";
+			$destinos = BASE_URL."/main-app/directivo/";
 			break;	
 
 		default:
-			echo '<script type="text/javascript">window.location.href="../controlador/salir.php";</script>'; exit();
+			echo '<script type="text/javascript">window.location.href='.BASE_URL.'/controlador/salir.php";</script>'; exit();
 			break;
 	}
 	return $destinos;
