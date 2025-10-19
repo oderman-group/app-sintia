@@ -126,6 +126,7 @@ try {
     Inscripciones::actualizarDocumentos($pdoI, $config, $_FILES, $_POST, $yearConsultar);
 } catch (Exception $e) {
     echo $e->getMessage();
+	exit();
 }
 
 try {
@@ -241,5 +242,5 @@ try {
 //header('Location:formulario.php?msg='.base64_encode(3).'&token=' . md5($_POST['solicitud']) . '&idInst=' . $_REQUEST['idInst'] . '&id=' . base64_encode($_POST['solicitud']) . '&fa=' . base64_encode($filasAfectadas) . '&faa=' . base64_encode($filasAfectadasAcu));
 ?>
 <div class="alert alert-success" role="alert">
-	Los datos fueron guardados correctamente.
+	Los datos fueron guardados correctamente. Por favor espere un momento mientras la pagina vuelve a cargar...
 </div>
