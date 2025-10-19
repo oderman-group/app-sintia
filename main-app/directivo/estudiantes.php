@@ -171,15 +171,16 @@ if($config['conf_doble_buscador'] == 1) {
 												</div>
                                                 <thead>
                                                     <tr>
+                                                        <th></th>
                                                         <th>ID</th>
-														<th>Bloq.</th>
-														<th><?=$frases[246][$datosUsuarioActual['uss_idioma']];?></th>
-														<th><?=$frases[241][$datosUsuarioActual['uss_idioma']];?></th>
-														<th><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></th>
-														<th><?=$frases[26][$datosUsuarioActual['uss_idioma']];?></th>
-														<th>Usuario</th>
-														<th>Acudiente</th>
-														<th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
+              <th>Bloq.</th>
+              <th><?=$frases[246][$datosUsuarioActual['uss_idioma']];?></th>
+              <th><?=$frases[241][$datosUsuarioActual['uss_idioma']];?></th>
+              <th><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></th>
+              <th><?=$frases[26][$datosUsuarioActual['uss_idioma']];?></th>
+              <th>Usuario</th>
+              <th>Acudiente</th>
+              <th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="matriculas_result">

@@ -101,23 +101,24 @@ if (!Modulos::validarPermisoEdicion()) {
 											<table id="example1" class="display" style="width:100%;">
 												<thead>
 													<tr>
+														<th></th>
 														<th>#</th>
 														<th>
 															<div class="col-sm-12">
 																<ul class="navbar-nav mr-auto">
 																	<li class="nav-item dropdown">
-																		
+
 																		<a class="nav-link dropdown-toggle"
 																					href="javascript:void(0);"
 																					id="navbarDropdown" role="button"
 																					data-toggle="dropdown"
 																					aria-haspopup="true"
 																					aria-expanded="false"
-																					style="color:<?= $Plataforma->colorUno; ?>;">	
-																					Seleccionados																				
+																					style="color:<?= $Plataforma->colorUno; ?>;">
+																					Seleccionados
 																					<label id="lblCantSeleccionados" type="text" style="text-align: center;"></label>
 																			<span class="fa fa-angle-down"></span>
-																			
+
 																		</a>
 																		<?php if (Modulos::validarPermisoEdicion()) { ?>
 																			<div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -238,6 +239,26 @@ if (!Modulos::validarPermisoEdicion()) {
 														?>
 														<tr id="reg<?= $usuario['uss_id']; ?>"
 															style="background-color:<?= $bgColor; ?>;">
+															<td>
+																<button class="btn btn-sm btn-info expand-btn"
+																	data-id="<?= $usuario['uss_id']; ?>"
+																	data-foto="<?= $fotoUsuario; ?>"
+																	data-nombre="<?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>"
+																	data-usuario="<?= $usuario['uss_usuario']; ?>"
+																	data-email="<?= $usuario['uss_email'] ?: 'No registrado'; ?>"
+																	data-fecha-nacimiento="<?= $usuario['uss_fecha_nacimiento'] ?: 'No registrada'; ?>"
+																	data-tipo="<?= $usuario['pes_nombre']; ?>"
+																	data-estado="<?= $estadoUsuario ?: 'No definido'; ?>"
+																	data-ultimo-ingreso="<?= $usuario['uss_ultimo_ingreso'] ?: 'Nunca'; ?>"
+																	data-bloqueado="<?= $usuario['uss_bloqueado'] ? 'Sí' : 'No'; ?>"
+																	data-num-carga="<?= isset($numCarga) ? $numCarga : ''; ?>"
+																	data-cantidad-acudidos="<?= isset($usuario['cantidad_acudidos']) ? $usuario['cantidad_acudidos'] : ''; ?>"
+																	data-tiene-matricula="<?= $tieneMatricula ? 'Activa' : 'Sin matrícula registrada'; ?>"
+																	data-tipo-usuario="<?= $usuario['uss_tipo']; ?>"
+																	title="Ver detalles">
+																	<i class="fa fa-plus"></i>
+																</button>
+															</td>
 															<td><?= $contReg; ?></td>
 															<td>
 																<div class="input-group spinner col-sm-10">
@@ -403,6 +424,149 @@ if (!Modulos::validarPermisoEdicion()) {
 	$('.popover-dismiss').popover({
 		trigger: 'focus'
 	});
+
+	// DataTable initialization with child rows
+	$(document).ready(function() {
+		if (!$.fn.DataTable.isDataTable('#example1')) {
+			var table = $('#example1').DataTable({
+				"columnDefs": [
+					{
+						"targets": 0,
+						"orderable": false,
+						"searchable": false
+					}
+				],
+				"order": [[1, 'asc']]
+			});
+		} else {
+			var table = $('#example1').DataTable();
+		}
+
+		// Expandable rows functionality using DataTable child rows
+		$('#example1 tbody').on('click', '.expand-btn', function () {
+			var tr = $(this).closest('tr');
+			var row = table.row(tr);
+			var button = $(this);
+			var icon = button.find('i');
+
+			// Get data from button attributes
+			var foto = button.data('foto');
+			var nombre = button.data('nombre');
+			var usuario = button.data('usuario');
+			var email = button.data('email');
+			var fechaNacimiento = button.data('fecha-nacimiento');
+			var tipo = button.data('tipo');
+			var estado = button.data('estado');
+			var ultimoIngreso = button.data('ultimo-ingreso');
+			var bloqueado = button.data('bloqueado');
+			var numCarga = button.data('num-carga');
+			var cantidadAcudidos = button.data('cantidad-acudidos');
+			var tieneMatricula = button.data('tiene-matricula');
+			var tipoUsuario = button.data('tipo-usuario');
+			var userId = button.data('id');
+
+			if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				icon.removeClass('fa-minus').addClass('fa-plus');
+				button.removeClass('btn-warning').addClass('btn-info');
+			} else {
+				// Open this row
+				row.child(formatDetails(foto, nombre, usuario, email, fechaNacimiento, tipo, estado, ultimoIngreso, bloqueado, numCarga, cantidadAcudidos, tieneMatricula, tipoUsuario, userId)).show();
+				icon.removeClass('fa-plus').addClass('fa-minus');
+				button.removeClass('btn-info').addClass('btn-warning');
+			}
+		});
+	});
+
+	function formatDetails(foto, nombre, usuario, email, fechaNacimiento, tipo, estado, ultimoIngreso, bloqueado, numCarga, cantidadAcudidos, tieneMatricula, tipoUsuario, userId) {
+		var estadoBadgeClass = estado !== 'No definido' ? 'success' : 'warning';
+		var bloqueadoBadgeClass = bloqueado === 'Sí' ? 'danger' : 'success';
+		var matriculaAlertClass = tieneMatricula === 'Activa' ? 'success' : 'warning';
+
+		var html = '<div class="expandable-content bg-light border">' +
+			'<div class="row no-gutters">' +
+				'<div class="col-md-3 text-center p-3">' +
+					'<img src="' + foto + '" class="img-fluid rounded-circle shadow-sm" style="max-width: 120px; max-height: 120px;" alt="Foto de ' + nombre + '">' +
+					'<h6 class="mt-2 text-primary font-weight-bold">' + nombre + '</h6>' +
+				'</div>' +
+				'<div class="col-md-9 p-3">' +
+					'<div class="row">' +
+						'<div class="col-md-6">' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">ID:</strong>' +
+								'<span class="badge badge-secondary ml-2">#' + userId + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Usuario:</strong>' +
+								'<span class="text-dark">@' + usuario + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Email:</strong>' +
+								'<span class="text-dark">' + email + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Fecha de Nacimiento:</strong>' +
+								'<span class="text-dark">' + fechaNacimiento + '</span>' +
+							'</div>' +
+						'</div>' +
+						'<div class="col-md-6">' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Tipo:</strong>' +
+								'<span class="badge badge-info">' + tipo + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Estado:</strong>' +
+								'<span class="badge badge-' + estadoBadgeClass + '">' + estado + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Último Ingreso:</strong>' +
+								'<span class="text-dark">' + ultimoIngreso + '</span>' +
+							'</div>' +
+							'<div class="info-item mb-2">' +
+								'<strong class="text-muted">Bloqueado:</strong>' +
+								'<span class="badge badge-' + bloqueadoBadgeClass + '">' + bloqueado + '</span>' +
+							'</div>' +
+						'</div>' +
+					'</div>';
+
+		if (tipoUsuario == 2 && numCarga) { // TIPO_DOCENTE
+			html += '<div class="row mt-2">' +
+				'<div class="col-12">' +
+					'<div class="alert alert-info py-2">' +
+						'<i class="fa fa-book mr-2"></i>' +
+						'<strong>Cargas Académicas:</strong> ' + numCarga + ' asignadas' +
+					'</div>' +
+				'</div>' +
+			'</div>';
+		}
+
+		if (tipoUsuario == 4 && cantidadAcudidos) { // TIPO_ACUDIENTE
+			html += '<div class="row mt-2">' +
+				'<div class="col-12">' +
+					'<div class="alert alert-success py-2">' +
+						'<i class="fa fa-users mr-2"></i>' +
+						'<strong>Estudiantes a Cargo:</strong> ' + cantidadAcudidos + ' estudiantes' +
+					'</div>' +
+				'</div>' +
+			'</div>';
+		}
+
+		if (tipoUsuario == 3) { // TIPO_ESTUDIANTE
+			html += '<div class="row mt-2">' +
+				'<div class="col-12">' +
+					'<div class="alert alert-' + matriculaAlertClass + ' py-2">' +
+						'<i class="fa fa-graduation-cap mr-2"></i>' +
+						'<strong>Matrícula:</strong> ' + tieneMatricula +
+					'</div>' +
+				'</div>' +
+			'</div>';
+		}
+
+		html += '</div></div></div>';
+
+		return html;
+	}
 
 	function actualizarBloqueo(bloqueo){
 		console.log(bloqueo);

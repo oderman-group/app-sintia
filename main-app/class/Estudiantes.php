@@ -703,7 +703,9 @@ class Estudiantes {
      */
     public static function estudiantesMatriculados(
         string    $filtro      = '',
-        string $yearBd    = ''
+        string $yearBd    = '',
+        int $limit = 0,
+        int $offset = 0
     )
     {
         global $config;
@@ -711,15 +713,24 @@ class Estudiantes {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
         $filtroCancelados = $config['conf_mostrar_estudiantes_cancelados'] == NO ? "AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.")" : " AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.", ".CANCELADO.")";
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat 
+        $limitClause = "";
+        if ($limit > 0) {
+            $limitClause = "LIMIT $limit";
+            if ($offset > 0) {
+                $limitClause .= " OFFSET $offset";
+            }
+        }
+
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
         INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON mat.mat_grupo=gru.gru_id AND gru.institucion=mat.institucion AND gru.year=mat.year
-        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year 
-        WHERE mat.mat_eliminado=0 {$filtroCancelados} AND mat.institucion=? AND mat.year=? {$filtro} 
+        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year
+        WHERE mat.mat_eliminado=0 {$filtroCancelados} AND mat.institucion=? AND mat.year=? {$filtro}
         GROUP BY mat.mat_id
-        ORDER BY mat.mat_grupo, mat.mat_primer_apellido";
+        ORDER BY mat.mat_grupo, mat.mat_primer_apellido
+        {$limitClause}";
 
         $parametros = [$config['conf_id_institucion'], $year];
-        
+
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
