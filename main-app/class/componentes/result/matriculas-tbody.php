@@ -76,21 +76,6 @@ foreach ($data["data"] as $resultado) {
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	}
 
-	$infoTooltipEstudiante = "<p>
-								<img src='{$fotoEstudiante}' class='img-thumbnail' width='120px;' height='120px;'>
-							  </p>
-							  <b>Fecha de matrícula:</b><br>
-							  {$resultado['mat_fecha']}<br>
-							  <b>Teléfono:</b><br>
-							  {$resultado['mat_telefono']}<br>
-							  <b>Documento:</b><br>
-							  {$resultado['mat_documento']}<br>
-							  <b>Email:</b><br>
-							  {$resultado['mat_email']}<br>
-							  <b>Fecha de nacimiento:</b><br>
-							  {$resultado['mat_fecha_nacimiento']}
-							";
-
 	$acudiente       = $resultado["mat_acudiente"];
 	$nombreAcudiente = UsuariosPadre::nombreCompletoDelUsuario($resultado);
 	$idAcudiente     = $acudiente;
@@ -135,7 +120,7 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $resultado['mat_documento']; ?></td>
 		<?php $nombre = Estudiantes::NombreCompletoDelEstudiante($resultado); ?>
 
-		<td <?= $color; ?>><?= $marcaMediaTecnica; ?><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="<?= Estudiantes::NombreCompletoDelEstudiante($resultado); ?>" data-content="<?= $infoTooltipEstudiante; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= $nombre; ?></a></td>
+		<td <?= $color; ?>><?= $marcaMediaTecnica; ?><?= $nombre; ?></td>
 		<td><?= strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= $resultado['uss_usuario']; ?></td>
 		<?php

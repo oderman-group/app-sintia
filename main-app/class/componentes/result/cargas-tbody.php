@@ -26,26 +26,10 @@ foreach ($data["data"] as $resultado) {
 	$marcaMediaTecnica = '';
 	if ($resultado['gra_tipo'] == GRADO_INDIVIDUAL) {
 		$cantidadEstudiantes = $resultado['cantidad_estudiantes_mt'];
-		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
+		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i>';
 	} else {
 		$cantidadEstudiantes = $resultado['cantidad_estudiantes'];
 	}
-	$infoTooltipCargas = "<b>COD:</b> 
-	{$resultado['car_id']}<br>
-	<b>Director de grupo:</b> 
-	{$opcionSINO[$resultado['car_director_grupo']]}<br>
-	<b>I.H:</b> 
-	{$resultado['car_ih']}<br>
-	<b>Puede editar en otros periodos?:</b> 
-	{$opcionSINO[$resultado['car_permiso2']]}<br>
-	<b>Indicadores automáticos?:</b> 
-	{$opcionSINO[$resultado['car_indicador_automatico']]}<br>
-	<b>Max. Indicadores:</b> 
-	{$resultado['car_maximos_indicadores']}<br>
-	<b>Max. Calificaciones:</b> 
-	{$resultado['car_maximas_calificaciones']}<br>
-	<b>Nro. Estudiantes:</b> 
-	{$cantidadEstudiantes}";
 
 	$marcaDG = '';
 	if ($resultado['car_director_grupo'] == 1) {
@@ -64,7 +48,7 @@ foreach ($data["data"] as $resultado) {
 			   data-id="<?=$resultado['car_id'];?>"
 			   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
 			   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
-			   data-curso="<?=$marcaMediaTecnica . "[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
+			   data-curso="<?="[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
 			   data-asignatura="[<?=$resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)";?>"
 			   data-ih="<?=$resultado['car_ih'];?>"
 			   data-periodo="<?=$resultado['car_periodo'];?>"
@@ -83,10 +67,10 @@ foreach ($data["data"] as $resultado) {
 	   </td>
 	   <td><input type="checkbox" class="carga-checkbox" value="<?=$resultado['car_id'];?>"></td>
 	   <td><?= $contReg; ?></td>
-		<td><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="Información adicional" data-content="<?= $infoTooltipCargas; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= $resultado['id_nuevo_carga']; ?></a></td>
+		<td><?= $resultado['id_nuevo_carga']; ?></td>
 		<td><?= $marcaDG . "" . strtoupper($resultado['uss_nombre'] . " " . $resultado['uss_nombre2'] . " " . $resultado['uss_apellido1'] . " " . $resultado['uss_apellido2']); ?></td>
-		<td><?= $marcaMediaTecnica . "[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
-		<td><?= "[" . $resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)"; ?></td>
+		<td><?= $marcaMediaTecnica . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
+		<td><?= strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)"; ?></td>
 		<td><?= $resultado['car_ih']; ?></td>
 		<td><?= $resultado['car_periodo']; ?></td>
 		<?php
