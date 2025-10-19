@@ -108,64 +108,131 @@ if(!Modulos::validarPermisoEdicion()){
 					</div>
 
                     <span style="color: blue; font-size: 15px;" id="nDocu"></span>
-                    <!-- wizard with validation-->
+
+                    <!-- Horizontal Tabs -->
                     <div class="row">
                     	<div class="col-sm-12">
-							<?php include("../../config-general/mensajes-informativos.php"); ?>
-							<?php
-							if($config['conf_id_institucion'] == ICOLVEN){
-								if(isset($_GET['msgsion']) AND $_GET['msgsion']!=''){
-									$aler='alert-success';
-									$mensajeSion=base64_decode($_GET['msgsion']);
-									if(base64_decode($_GET['stadsion'])!=true){
-										$aler='alert-danger';
-									}
-								?>
-									<div class="alert alert-block <?=$aler;?>">
-										<button type="button" class="close" data-dismiss="alert">×</button>
-										<h4 class="alert-heading">SION!</h4>
-										<p><?=$mensajeSion;?></p>
-									</div>
-								<?php 
-								}
-							}
-							if(isset($_GET['msgsintia'])){
-								$aler='alert-success';
-								if(base64_decode($_GET['stadsintia'])!=true){
-								$aler='alert-danger';
-								}
-							?>
-							<div class="alert alert-block <?=$aler;?>">
-								<button type="button" class="close" data-dismiss="alert">×</button>
-								<h4 class="alert-heading">SINTIA!</h4>
-								<p><?=base64_decode($_GET['msgsintia']);?></p>
-							</div>
-							<?php }?>
-                             <div class="card-box">
-                                 <div class="card-head">
-                                     <header>Matrículas</header>
-                                 </div>
-                                 <div class="card-body">
-                                 	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-actualizar.php" method="post" enctype="multipart/form-data">
-									<input type="hidden" name="id" value="<?=$idMatricula;?>">
-									<input type="hidden" name="idU" value="<?=$datosEstudianteActual["mat_id_usuario"];?>">
-									  
-										<h3>Información personal</h3>
-									    <?php include("includes/info-personal.php");?>
-										
-										<h3>Información académica</h3>
-										<?php include("includes/info-academica.php");?>
-											
-										<h3>Información del Acudiente</h3>
-										<fieldset>
-											<?php include("includes/acudiente-1.php");?>
+       <?php include("../../config-general/mensajes-informativos.php"); ?>
+       <?php
+       if($config['conf_id_institucion'] == ICOLVEN){
+        if(isset($_GET['msgsion']) AND $_GET['msgsion']!=''){
+         $aler='alert-success';
+         $mensajeSion=base64_decode($_GET['msgsion']);
+         if(base64_decode($_GET['stadsion'])!=true){
+          $aler='alert-danger';
+         }
+        ?>
+         <div class="alert alert-block <?=$aler;?>">
+          <button type="button" class="close" data-dismiss="alert">×</button>
+          <h4 class="alert-heading">SION!</h4>
+          <p><?=$mensajeSion;?></p>
+         </div>
+        <?php
+        }
+       }
+       if(isset($_GET['msgsintia'])){
+        $aler='alert-success';
+        if(base64_decode($_GET['stadsintia'])!=true){
+        $aler='alert-danger';
+        }
+       ?>
+       <div class="alert alert-block <?=$aler;?>">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <h4 class="alert-heading">SINTIA!</h4>
+        <p><?=base64_decode($_GET['msgsintia']);?></p>
+       </div>
+       <?php }?>
 
-											<?php include("includes/acudiente-2.php");?>
-											
-										</fieldset>
-										
-									</form>
+                             <!-- Nav tabs -->
+                             <ul class="nav nav-tabs" id="estudianteTabs" role="tablist">
+                                 <li class="nav-item">
+                                     <a class="nav-link active" id="formulario-tab" data-toggle="tab" href="#formulario" role="tab" aria-controls="formulario" aria-selected="true">Formulario</a>
+                                 </li>
+                                 <?php
+                                 $mostrarMaterias = !empty($datosEstudianteActual['mat_grupo']) && in_array($datosEstudianteActual['mat_estado_matricula'], [1, 2]);
+                                 if($mostrarMaterias){
+                                 ?>
+                                 <li class="nav-item">
+                                     <a class="nav-link" id="materias-tab" data-toggle="tab" href="#materias" role="tab" aria-controls="materias" aria-selected="false">Materias</a>
+                                 </li>
+                                 <?php } ?>
+                                 <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INSCRIPCIONES)){ ?>
+                                 <li class="nav-item">
+                                     <a class="nav-link" id="documentos-tab" data-toggle="tab" href="#documentos" role="tab" aria-controls="documentos" aria-selected="false">Documentos de Inscripción</a>
+                                 </li>
+                                 <?php } ?>
+                             </ul>
+
+                             <!-- Tab panes -->
+                             <div class="tab-content" id="estudianteTabContent">
+                                 <div class="tab-pane fade show active" id="formulario" role="tabpanel" aria-labelledby="formulario-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Matrículas</header>
+                                         </div>
+                                         <div class="card-body">
+                                         	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-actualizar.php" method="post" enctype="multipart/form-data">
+           <input type="hidden" name="id" value="<?=$idMatricula;?>">
+           <input type="hidden" name="idU" value="<?=$datosEstudianteActual["mat_id_usuario"];?>">
+
+           <h3>Información personal</h3>
+              <?php include("includes/info-personal.php");?>
+
+           <h3>Información académica</h3>
+           <?php include("includes/info-academica.php");?>
+
+           <h3>Información del Acudiente</h3>
+           <fieldset>
+            <?php include("includes/acudiente-1.php");?>
+
+            <?php include("includes/acudiente-2.php");?>
+
+           </fieldset>
+
+           </form>
+                                         </div>
+                                     </div>
                                  </div>
+
+                                 <?php if($mostrarMaterias){ ?>
+                                 <div class="tab-pane fade" id="materias" role="tabpanel" aria-labelledby="materias-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Materias del Estudiante</header>
+                                         </div>
+                                         <div class="card-body">
+                                             <div id="materias-content">
+                                                 <div class="text-center">
+                                                     <div class="spinner-border" role="status">
+                                                         <span class="sr-only">Cargando...</span>
+                                                     </div>
+                                                     <p>Cargando materias...</p>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <?php } ?>
+
+                                 <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INSCRIPCIONES)){ ?>
+                                 <div class="tab-pane fade" id="documentos" role="tabpanel" aria-labelledby="documentos-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Documentos de Inscripción</header>
+                                         </div>
+                                         <div class="card-body">
+                                             <div id="documentos-content">
+                                                 <div class="text-center">
+                                                     <div class="spinner-border" role="status">
+                                                         <span class="sr-only">Cargando...</span>
+                                                     </div>
+                                                     <p>Cargando documentos...</p>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <?php } ?>
                              </div>
                          </div>
                     </div>
@@ -209,7 +276,80 @@ if(!Modulos::validarPermisoEdicion()){
 	<!-- notifications -->
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.js"></script>
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
-    <!-- end js include path -->
+
+	<script>
+		$(document).ready(function() {
+			// Load subjects when the tab is clicked
+			$('#materias-tab').on('shown.bs.tab', function (e) {
+				loadMaterias();
+			});
+
+			function loadMaterias() {
+			    var idEstudiante = '<?php echo base64_encode($idMatricula); ?>';
+			    $('#materias-content').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div><p>Cargando materias...</p></div>');
+
+			    $.ajax({
+			        url: 'ajax-estudiantes-materias.php',
+			        type: 'GET',
+			        data: { idEstudiante: idEstudiante },
+			        success: function(response) {
+			            $('#materias-content').html(response);
+			        },
+			        error: function(xhr, status, error) {
+			            $('#materias-content').html('<div class="alert alert-danger">Error al cargar las materias. Por favor, inténtelo de nuevo.</div>');
+			            console.error('Error loading subjects:', error);
+			        }
+			    });
+			}
+
+			// Load documents when the tab is clicked
+			$('#documentos-tab').on('shown.bs.tab', function (e) {
+			    loadDocumentos();
+			});
+
+			window.loadDocumentos = function() {
+			    var idEstudiante = '<?php echo base64_encode($idMatricula); ?>';
+			    $('#documentos-content').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div><p>Cargando documentos...</p></div>');
+
+			    $.ajax({
+			        url: 'ajax-estudiantes-documentos.php',
+			        type: 'GET',
+			        data: { idEstudiante: idEstudiante },
+			        success: function(response) {
+			            var data = response;
+			            if (data.success) {
+			                var buttonHtml = '<button type="button" class="btn btn-primary mb-3" onclick="loadDocumentos()"><i class="fas fa-sync-alt"></i> Actualizar documentos</button>';
+			                var tableHtml = '<table class="table table-striped table-bordered table-hover">';
+			                tableHtml += '<thead><tr><th>Documento</th><th>Estado</th></tr></thead>';
+			                tableHtml += '<tbody>';
+			                for (var key in data.documentos) {
+			                    var doc = data.documentos[key];
+			                    tableHtml += '<tr>';
+			                    tableHtml += '<td>' + doc.titulo + '</td>';
+			                    if (doc.estado === 'Subido') {
+			                        var fileUrl = (doc.titulo === "Comprobante de Pago") ? '../../main-app/admisiones/files/comprobantes/' + doc.archivo : '../../main-app/admisiones/files/otros/' + doc.archivo;
+			                        tableHtml += '<td><a href="' + fileUrl + '" target="_blank" class="btn btn-sm btn-success">Descargar</a></td>';
+			                    } else {
+			                        tableHtml += '<td><span class="badge badge-warning">Pendiente</span></td>';
+			                    }
+			                    tableHtml += '</tr>';
+			                }
+			                tableHtml += '</tbody></table>';
+			                $('#documentos-content').html(buttonHtml + tableHtml);
+			            } else {
+			                $('#documentos-content').html('<div class="alert alert-warning">' + data.message + '</div>');
+			            }
+			        },
+			        error: function(xhr, status, error) {
+			            alert('Error al cargar los documentos. Por favor, inténtelo de nuevo.');
+			            console.error('Error loading documents:', error);
+			        }
+			    });
+			}
+});
+	</script>
+
+	   <!-- end js include path -->
 
 </body>
 

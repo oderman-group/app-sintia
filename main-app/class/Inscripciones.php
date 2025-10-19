@@ -108,24 +108,32 @@ class Inscripciones extends BindSQL{
         try {
 
             //Documentos
-            $documentosQuery = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas_documentos 
-            WHERE matd_matricula = :id 
-            AND institucion= :idInstitucion 
+            $documentosQuery = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas_documentos
+            WHERE matd_matricula = :id
+            AND institucion= :idInstitucion
             AND year= :year
             ";
             $documentos = $conexionPDO->prepare($documentosQuery);
+            if (!$documentos) {
+                error_log("Error al preparar consulta de documentos: " . implode(", ", $conexionPDO->errorInfo()));
+                throw new Exception("Error al preparar la consulta.");
+            }
+
             $documentos->bindParam(':id', $id, PDO::PARAM_STR);
             $documentos->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
             $documentos->bindParam(':year', $year, PDO::PARAM_STR);
 
-            if ($documentos) {
-                $documentos->execute();
+            if ($documentos->execute()) {
                 $datosDocumentos = $documentos->fetch();
+                error_log("Consulta de documentos ejecutada exitosamente para matricula {$id}, institucion {$config['conf_id_institucion']}, year {$year}. Resultados: " . ($datosDocumentos ? 'Encontrados' : 'No encontrados'));
                 return $datosDocumentos;
             } else {
-                throw new Exception("Error al preparar la consulta.");
+                $errorInfo = $documentos->errorInfo();
+                error_log("Error al ejecutar consulta de documentos: " . implode(", ", $errorInfo));
+                throw new Exception("Error al ejecutar la consulta.");
             }
         } catch (Exception $e) {
+            error_log("Excepción en traerDocumentos: " . $e->getMessage());
             include("../compartido/error-catch-to-report.php");
         }
     }
