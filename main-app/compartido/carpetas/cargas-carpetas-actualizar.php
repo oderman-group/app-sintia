@@ -1,5 +1,5 @@
 <?php
-include("session-compartida.php");
+include("../session-compartida.php");
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'CM0024';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
