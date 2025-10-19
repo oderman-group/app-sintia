@@ -20,10 +20,10 @@ if (!empty($data["dataTotal"])) {
 }
 
 $contReg               = 1;
-$moduloMediaTecnica    = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MEDIA_TECNICA);
-$moduloAdministrativo  = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ADMINISTRATIVO);
-$moduloFinanciero      = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_FINANCIERO);
-$moduloConvivencia     = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_DISCIPLINARIO);
+$moduloMediaTecnica    = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MEDIA_TECNICA);
+$moduloAdministrativo  = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ADMINISTRATIVO);
+$moduloFinanciero      = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_TRANSACCIONES);
+$moduloConvivencia     = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO);
 
 $permisoBloquearUsuario   = Modulos::validarSubRol(['DT0087']);
 $permisoCambiarEstado     = Modulos::validarSubRol(['DT0217']);
@@ -98,6 +98,7 @@ foreach ($data["data"] as $resultado) {
 
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
+		<td><button class="btn btn-sm btn-outline-primary expand-btn" data-id="<?= $resultado['mat_id']; ?>"><i class="fa fa-plus"></i></button></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -237,6 +238,26 @@ foreach ($data["data"] as $resultado) {
 
 		</td>
 	</tr>
+	<tr class="expandable-row" id="expand-<?= $resultado['mat_id']; ?>" style="display: none;">
+		<td colspan="10" style="background-color: #f8f9fa; padding: 15px;">
+			<div class="row">
+				<div class="col-md-6">
+					<h6>Información Adicional del Estudiante</h6>
+					<p><strong>Dirección:</strong> <?= $resultado['mat_direccion'] ?? 'No disponible'; ?></p>
+					<p><strong>Teléfono:</strong> <?= $resultado['mat_telefono'] ?? 'No disponible'; ?></p>
+					<p><strong>Email:</strong> <?= $resultado['mat_email'] ?? 'No disponible'; ?></p>
+					<p><strong>Fecha de Nacimiento:</strong> <?= $resultado['mat_fecha_nacimiento'] ?? 'No disponible'; ?></p>
+				</div>
+				<div class="col-md-6">
+					<h6>Información Académica</h6>
+					<p><strong>Grado:</strong> <?= $resultado['gra_nombre'] ?? 'No disponible'; ?></p>
+					<p><strong>Grupo:</strong> <?= $resultado['gru_nombre'] ?? 'No disponible'; ?></p>
+					<p><strong>Estado Matrícula:</strong> <?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']] ?? 'No disponible'; ?></p>
+					<p><strong>Fecha de Matrícula:</strong> <?= $resultado['mat_fecha'] ?? 'No disponible'; ?></p>
+				</div>
+			</div>
+		</td>
+	</tr>
 <?php
 	$contReg++;
 }
@@ -255,4 +276,21 @@ foreach ($data["data"] as $resultado) {
 		};
 		abrirModal("Retirar Estudiante", "estudiantes-retirar-modal.php", data);
 	}
+
+	$(document).ready(function() {
+		// Use event delegation for dynamically loaded content
+		$(document).on('click', '.expand-btn', function() {
+			var id = $(this).data('id');
+			var row = $('#expand-' + id);
+			var icon = $(this).find('i');
+
+			if (row.is(':visible')) {
+				row.hide();
+				icon.removeClass('fa-minus').addClass('fa-plus');
+			} else {
+				row.show();
+				icon.removeClass('fa-plus').addClass('fa-minus');
+			}
+		});
+	});
 </script>

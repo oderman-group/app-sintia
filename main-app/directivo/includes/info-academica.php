@@ -57,7 +57,7 @@ $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
 
 				<?php 
 				$permisoCambiarGrupo      = Modulos::validarSubRol(['DT0083']);
-				$moduloMediaTecnica       = Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MEDIA_TECNICA);
+				$moduloMediaTecnica       = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MEDIA_TECNICA);
 				$marcaMediaTecnica        = '';
 				if ($datosEstudianteActual['mat_tipo_matricula'] == GRADO_INDIVIDUAL && array_key_exists(10, $arregloModulos) && $moduloMediaTecnica) {
 					$marcaMediaTecnica = 'Si';

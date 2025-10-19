@@ -59,6 +59,29 @@ foreach ($data["data"] as $resultado) {
 	}
 ?>
 	<tr <?=$claseInactiva;?>>
+	   <td>
+		   <button class="btn btn-sm btn-info expand-btn"
+			   data-id="<?=$resultado['car_id'];?>"
+			   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
+			   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
+			   data-curso="<?=$marcaMediaTecnica . "[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
+			   data-asignatura="[<?=$resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)";?>"
+			   data-ih="<?=$resultado['car_ih'];?>"
+			   data-periodo="<?=$resultado['car_periodo'];?>"
+			   data-actividades="<?=$resultado['actividades'];?>"
+			   data-actividades-registradas="<?=$resultado['actividades_registradas'];?>"
+			   data-director-grupo="<?=$opcionSINO[$resultado['car_director_grupo']];?>"
+			   data-permiso2="<?=$opcionSINO[$resultado['car_permiso2']];?>"
+			   data-indicador-automatico="<?=$opcionSINO[$resultado['car_indicador_automatico']];?>"
+			   data-max-indicadores="<?=$resultado['car_maximos_indicadores'];?>"
+			   data-max-calificaciones="<?=$resultado['car_maximas_calificaciones'];?>"
+			   data-cantidad-estudiantes="<?=$cantidadEstudiantes;?>"
+			   data-activa="<?=isset($resultado['car_activa']) ? $resultado['car_activa'] : 1;?>"
+			   title="Ver detalles">
+			   <i class="fa fa-plus"></i>
+		   </button>
+	   </td>
+	   <td><input type="checkbox" class="carga-checkbox" value="<?=$resultado['car_id'];?>"></td>
 	   <td><?= $contReg; ?></td>
 		<td><a tabindex="0" role="button" data-toggle="popover" data-trigger="focus" title="Información adicional" data-content="<?= $infoTooltipCargas; ?>" data-html="true" data-placement="top" style="border-bottom: 1px dotted #000;"><?= $resultado['id_nuevo_carga']; ?></a></td>
 		<td><?= $marcaDG . "" . strtoupper($resultado['uss_nombre'] . " " . $resultado['uss_nombre2'] . " " . $resultado['uss_apellido1'] . " " . $resultado['uss_apellido2']); ?></td>
