@@ -126,6 +126,7 @@ try {
     Inscripciones::actualizarDocumentos($pdoI, $config, $_FILES, $_POST, $yearConsultar);
 } catch (Exception $e) {
     echo $e->getMessage();
+	exit();
 }
 
 try {

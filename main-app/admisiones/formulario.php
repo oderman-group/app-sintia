@@ -1068,7 +1068,7 @@ $datosMadre = $madre->fetch();
 
                     <label class="form-check-label" for="gridCheck">
 
-                        Estoy suficientemente informado del Manual de Convivencia y del Sistema Institucional de Evaluación que rigen en el <b><?=strtoupper($datosInfo['info_nombre'])?></b>, según aparecen en la página web y en caso de ser aceptado me comprometo a acatarlos y cumplirlos fiel y cabalmente.
+                        Estoy suficientemente informado del Manual de Convivencia y del Sistema Institucional de Evaluación que rigen en el <b><?php if(!empty($datosInfo['info_nombre'])) echo strtoupper($datosInfo['info_nombre']);?></b>, según aparecen en la página web y en caso de ser aceptado me comprometo a acatarlos y cumplirlos fiel y cabalmente.
 
                     </label>
 
@@ -1085,11 +1085,13 @@ $datosMadre = $madre->fetch();
 
                 </div>
 
-                <div class="p-2 mt-4 mb-4 bg-warning text-dark" style="text-align: center;">
+                <?php if(!empty($config['cfgi_frase_formulario_inscripcion_2'])) {?>
+                    <div class="p-2 mt-4 mb-4 bg-warning text-dark" style="text-align: center;">
 
-                    <p style="font-size: 20px; font-weight: bold;"><?=$config['cfgi_frase_formulario_inscripcion_2'];?></p>
+                        <p style="font-size: 20px; font-weight: bold;"><?=$config['cfgi_frase_formulario_inscripcion_2'];?></p>
 
-                </div>
+                    </div>
+                <?php }?>
 
             <div id="result"></div>
             <button type="submit" id="submitBtn" class="btn btn-success btn-lg btn-block">Guardar y enviar formulario</button>
@@ -1159,6 +1161,8 @@ document.getElementById('formularioDatosAdmision').addEventListener('submit', fu
       setTimeout(() => {
         location.reload();
       }, 2000);
+    } else {
+        submitBtn.disabled = false;
     }
   })
   .catch(error => {

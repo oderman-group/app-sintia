@@ -3,6 +3,7 @@ require_once("servicios/Servicios.php");
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+require_once(ROOT_PATH."/main-app/class/documentManager.php");
 
 
 class Inscripciones extends BindSQL{
@@ -143,244 +144,104 @@ class Inscripciones extends BindSQL{
         array $config, 
         array $FILES, 
         array $POST, 
-        string $year= ""
-    ) {
+        string $year = ""
+    ): ?PDOStatement {
+        
+        // Inicialización de variables para la consulta SQL
+        $pazysalvo = $POST['pazysalvoA'] ?? null;
+        $observador = $POST['observadorA'] ?? null;
+        $eps = $POST['epsA'] ?? null;
+        $recomendacion = $POST['recomendacionA'] ?? null;
+        $vacunas = $POST['vacunasA'] ?? null;
+        $boletines = $POST['boletinesA'] ?? null;
+        $documentoIde = $POST['documentoIdeA'] ?? null;
+        $certificado = $POST['certificadoA'] ?? null;
+        $cartaLaboral = $POST['cartaLaboralA'] ?? null;
+
+        // Directorio base de destino para todos los archivos
+        $destino_base = ROOT_PATH . '/main-app/admisiones/files/otros';
 
         try {
 
-            //Documentos
+            // ===============================================
+            // PROCESAMIENTO DE ARCHIVOS
+            // ===============================================
+
+            // PAZ Y SALVO
             if (!empty($FILES['pazysalvo']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['pazysalvo']['name']);
-                $extension = end($explode);
-                $pazysalvo = uniqid('pyz_') . "." . $extension;
-                @unlink($destino . "/" . $pazysalvo);
-
-                if ($FILES['pazysalvo']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El tamaño del paz y salvo excede el límite permitido. " . $FILES['pazysalvo']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $pazysalvo_nuevo = DocumentManager::processUploadedFile($FILES['pazysalvo'], $destino_base, 'pyz', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($pazysalvo_nuevo !== null) {
+                    $pazysalvo = $pazysalvo_nuevo;
                 }
-        
-                if (move_uploaded_file($FILES['pazysalvo']['tmp_name'], $destino . "/" . $pazysalvo)) {
-                    echo "El paz y salvo se movió correctamente a: " . $destino . "<br>";
-                } else {
-                    echo "Hubo un error al mover el paz y salvo.<br>";
-                }
-
-            } else {
-                $pazysalvo = $POST['pazysalvoA'];
             }
 
+            // OBSERVADOR
             if (!empty($FILES['observador']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['observador']['name']);
-                $extension = end($explode);
-                $observador = uniqid('obs_') . "." . $extension;
-                @unlink($destino . "/" . $observador);
-
-                if ($FILES['pazysalvo']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El tamaño del observador excede el límite permitido. " . $FILES['observador']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $observador_nuevo = DocumentManager::processUploadedFile($FILES['observador'], $destino_base, 'obs', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($observador_nuevo !== null) {
+                    $observador = $observador_nuevo;
                 }
-        
-                if (move_uploaded_file($FILES['observador']['tmp_name'], $destino . "/" . $observador)) {
-                    echo "El observador se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover el paz y salvo.<br>";
-                }
-
-            } else {
-                $observador = $POST['observadorA'];
             }
 
+            // EPS
             if (!empty($FILES['eps']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['eps']['name']);
-                $extension = end($explode);
-                $eps = uniqid('eps_') . "." . $extension;
-                @unlink($destino . "/" . $eps);
-
-                if ($FILES['eps']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El tamaño de la eps excede el límite permitido. " . $FILES['eps']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $eps_nuevo = DocumentManager::processUploadedFile($FILES['eps'], $destino_base, 'eps', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($eps_nuevo !== null) {
+                    $eps = $eps_nuevo;
                 }
-        
-                if (move_uploaded_file($FILES['eps']['tmp_name'], $destino . "/" . $eps)) {
-                    echo "La eps se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover la eps.<br>";
-                }
-
-            } else {
-                $eps = $POST['epsA'];
             }
 
+            // RECOMENDACIÓN
             if (!empty($FILES['recomendacion']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['recomendacion']['name']);
-                $extension = end($explode);
-                $recomendacion = uniqid('rec_') . "." . $extension;
-                @unlink($destino . "/" . $recomendacion);
-
-                if ($FILES['recomendacion']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "La recomendacion del eps excede el límite permitido. " . $FILES['recomendacion']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $recomendacion_nuevo = DocumentManager::processUploadedFile($FILES['recomendacion'], $destino_base, 'rec', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($recomendacion_nuevo !== null) {
+                    $recomendacion = $recomendacion_nuevo;
                 }
-        
-                if (move_uploaded_file($FILES['recomendacion']['tmp_name'], $destino . "/" . $recomendacion)) {
-                    echo "La recomendacion se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover la recomendacion.<br>";
-                }
-
-            } else {
-                $recomendacion = $POST['recomendacionA'];
             }
 
+            // TARJETA DE VACUNAS
             if (!empty($FILES['vacunas']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['vacunas']['name']);
-                $extension = end($explode);
-                $vacunas = uniqid('vac_') . "." . $extension;
-                @unlink($destino . "/" . $vacunas);
-
-                if ($FILES['vacunas']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "La vacunas excede el límite permitido. " . $FILES['vacunas']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $vacunas_nuevo = DocumentManager::processUploadedFile($FILES['vacunas'], $destino_base, 'vac', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($vacunas_nuevo !== null) {
+                    $vacunas = $vacunas_nuevo;
                 }
-
-                if (move_uploaded_file($FILES['vacunas']['tmp_name'], $destino . "/" . $vacunas)) {
-                    echo "La vacuna se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover la vacunas.<br>";
-                }
-
-            } else {
-                $vacunas = $POST['vacunasA'];
             }
 
+            // BOLETINES
             if (!empty($FILES['boletines']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['boletines']['name']);
-                $extension = end($explode);
-                $boletines = uniqid('bol_') . "." . $extension;
-                @unlink($destino . "/" . $boletines);
-
-                if ($FILES['boletines']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El boletin excede el límite permitido. " . $FILES['boletines']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $boletines_nuevo = DocumentManager::processUploadedFile($FILES['boletines'], $destino_base, 'bol', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($boletines_nuevo !== null) {
+                    $boletines = $boletines_nuevo;
                 }
-
-                if (move_uploaded_file($FILES['boletines']['tmp_name'], $destino . "/" . $boletines)) {
-                    echo "El boletin se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover el boletin.<br>";
-                }
-
-            } else {
-                $boletines = $POST['boletinesA'];
             }
 
+            // DOCUMENTO DE IDENTIDAD
             if (!empty($FILES['documentoIde']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['documentoIde']['name']);
-                $extension = end($explode);
-                $documentoIde = uniqid('doc_') . "." . $extension;
-                @unlink($destino . "/" . $documentoIde);
-
-                if ($FILES['documentoIde']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El DNI excede el límite permitido. " . $FILES['documentoIde']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $documentoIde_nuevo = DocumentManager::processUploadedFile($FILES['documentoIde'], $destino_base, 'doc', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($documentoIde_nuevo !== null) {
+                    $documentoIde = $documentoIde_nuevo;
                 }
-
-                if (move_uploaded_file($FILES['documentoIde']['tmp_name'], $destino . "/" . $documentoIde)) {
-                    echo "El DNI se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover el DNI.<br>";
-                }
-            } else {
-                $documentoIde = $POST['documentoIdeA'];
             }
 
+            // CERTIFICADO DE ESTUDIOS
             if (!empty($FILES['certificado']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['certificado']['name']);
-                $extension = end($explode);
-                $certificado = uniqid('cert_') . "." . $extension;
-                @unlink($destino . "/" . $certificado);
-
-                if ($FILES['certificado']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "El certificado excede el límite permitido. " . $FILES['certificado']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $certificado_nuevo = DocumentManager::processUploadedFile($FILES['certificado'], $destino_base, 'cert', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($certificado_nuevo !== null) {
+                    $certificado = $certificado_nuevo;
                 }
-
-                if (move_uploaded_file($FILES['certificado']['tmp_name'], $destino . "/" . $certificado)) {
-                    echo "El certificado se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover El certificado.<br>";
-                }
-
-            } else {
-                $certificado = $POST['certificadoA'];
             }
-
+            
+            // CARTA LABORAL
             if (!empty($FILES['cartaLaboral']['name'])) {
-	            $destino = ROOT_PATH.'/main-app/admisiones/files/otros';
-                $explode = explode(".", $FILES['cartaLaboral']['name']);
-                $extension = end($explode);
-                $cartaLaboral = uniqid('cert_') . "." . $extension;
-                @unlink($destino . "/" . $cartaLaboral);
-
-                if ($FILES['cartaLaboral']['size'] > self::MAXIMO_PESO_ARCHIVO_MB) {
-                    echo "La carta laboral excede el límite permitido. " . $FILES['cartaLaboral']['size'];
-                    exit();
-                } 
-        
-                if (!file_exists($destino)) {
-                    mkdir($destino, 0777, true);
+                $cartaLaboral_nuevo = DocumentManager::processUploadedFile($FILES['cartaLaboral'], $destino_base, 'lab', DocumentManager::MAXIMO_PESO_ARCHIVO_BYTES);
+                if ($cartaLaboral_nuevo !== null) {
+                    $cartaLaboral = $cartaLaboral_nuevo;
                 }
-
-                if (move_uploaded_file($FILES['cartaLaboral']['tmp_name'], $destino . "/" . $cartaLaboral)) {
-                    echo "La carta laboral se movió correctamente a: " . $destino. "<br>";
-                } else {
-                    echo "Hubo un error al mover La carta laboral.<br>";
-                }
-
-            } else {
-                $cartaLaboral = !empty($POST['cartaLaboral']) ? $POST['cartaLaboral'] : null;
             }
+
+            // ===============================================
+            // EJECUCIÓN DE LA CONSULTA SQL
+            // ===============================================
 
             $documentosQuery = "UPDATE ".BD_ACADEMICA.".academico_matriculas_documentos SET
             matd_pazysalvo = :pazysalvo, 
@@ -412,11 +273,13 @@ class Inscripciones extends BindSQL{
                 $documentos->execute();
                 return $documentos;
             } else {
+                // Esto solo ocurriría si PDO::prepare falla, lo cual ya se maneja por el catch.
                 throw new Exception("Error al preparar la consulta.");
             }
 
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            return null;
         }
     }
 
