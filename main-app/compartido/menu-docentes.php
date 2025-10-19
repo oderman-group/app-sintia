@@ -22,7 +22,7 @@
 									!empty($_GET["carga"]) && 
 									!empty($_GET["periodo"])
 								) && 
-								Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ACADEMICO)
+								Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACADEMICO)
 							) {
 								$arrayItemsAcademico = [
 									"DC0034","DC0080", "DC0035", "DC0011", "DC0079", "DC0039", "DC0022", "DC0043", "DC0046", "DC0012", "DC0037", "DC0018", "DC0015", "DC0021", "DC0020", "DC0007", "DC0029", "DC0025", "DC0070", "DC0072", "DC0071", "DC0019", "DC0028", "DC0077"
@@ -35,30 +35,36 @@
 	                            <ul class="sub-menu" <?php agregarClass(SUB_MENU, $arrayItemsAcademico)?>>
 									
 									<?php if(isset($datosCargaActual) && ($datosCargaActual['car_indicador_automatico']==0 or $datosCargaActual['car_indicador_automatico']==null)){?>
-	                                	<li <?php agregarClass(MENU,["DC0034", "DC0019", "DC0028", "DC0077"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "indicadores.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+										<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INDICADORES)){ ?>
+                                            <li <?php agregarClass(MENU,["DC0034", "DC0019", "DC0028", "DC0077"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "indicadores.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[63][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+										<?php }?>
 									<?php }?>
 									
-									<li <?php agregarClass(MENU,["DC0035", "DC0021", "DC0020", "DC0029", "DC0039", "DC0007"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "calificaciones.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CALIFICACIONES)){ ?>
+										<li <?php agregarClass(MENU,["DC0035", "DC0021", "DC0020", "DC0029", "DC0039", "DC0007"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "calificaciones.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+									<?php }?>
 
-									<li <?php agregarClass(MENU,["DC0046", "DC0025", "DC0070", "DC0072", "DC0071"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_CLASES, "clases.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[7][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CLASES)){ ?>
+										<li <?php agregarClass(MENU,["DC0046", "DC0025", "DC0070", "DC0072", "DC0071"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_CLASES, "clases.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[7][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+									<?php }?>
 
-									<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_CRONOGRAMA)){ ?>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)){ ?>
 										<li <?php agregarClass(MENU,["DC0012", "DC0015"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_CRONOGRAMA, "cronograma-calendario.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[111][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 									
-									<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_IMPORTAR_INFO)){ ?>
-										<li <?php agregarClass(MENU,["DC0022"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_IMPORTAR_INFO, "importar-info.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[167][$datosUsuarioActual['uss_idioma']];?></span></a> </li>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_IMPORTAR_INFORMACION_ACADEMICA)){ ?>
+										<li <?php agregarClass(MENU,["DC0022"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_IMPORTAR_INFORMACION_ACADEMICA, "importar-info.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[167][$datosUsuarioActual['uss_idioma']];?></span></a> </li>
 									<?php }?>
 
-									<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ACTIVIDAES)){ ?>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACTIVIDAES)){ ?>
 										<li <?php agregarClass(MENU,["DC0018"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_ACTIVIDAES, "actividades.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[112][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 									
-									<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_EVALUACIONES)){ ?>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_EVALUACIONES)){ ?>
 										<li <?php agregarClass(MENU,["DC0043"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_EVALUACIONES, "evaluaciones.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[114][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 
-									<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_FOROS)){ ?>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_FOROS)){ ?>
 										<li <?php agregarClass(MENU,["DC0037"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_FOROS, "foros.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[113][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 
@@ -66,7 +72,7 @@
 	                        </li>
 							<?php }?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_DISCIPLINARIO)){ ?>
+							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO)){ ?>
 							<li class="nav-item">
 								<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-gavel"></i>
 									<span class="title"><?=$frases[90][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
@@ -81,7 +87,7 @@
 							<?php if(
 										isset($datosCargaActual) && 
 										$datosCargaActual['car_director_grupo'] == 1 && 
-										Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_DISCIPLINARIO)
+										Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO)
 									){?>
 								<li class="nav-item">
 									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "comportamiento.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-pencil-square-o"></i>
@@ -98,7 +104,7 @@
 							<?php if(
 										isset($datosCargaActual) && 
 										!empty($datosCargaActual['car_id']) && 
-										Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_ACADEMICO)
+										Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACADEMICO)
 									){?>
 								<li class="nav-item">
 									<a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "estudiantes.php", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-group"></i>
@@ -107,7 +113,7 @@
 								</li>
 	                        <?php }?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_GENERAL)){ ?>
+							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_GENERAL)){ ?>
 								<li class="nav-item">
 									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "estudiantes-todos.php", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-group"></i>
 										<span class="title">Todos los estudiantes</span> 
@@ -115,7 +121,7 @@
 								</li>
 							<?php }?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_CARPETAS)){ ?>
+							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)){ ?>
 								<li class="nav-item">
 									<a <?php validarModuloMenu(Modulos::MODULO_CARPETAS, "cargas-carpetas.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-folder"></i>
 										<span class="title"><?=$frases[216][$datosUsuarioActual['uss_idioma']];?></span> 
@@ -123,7 +129,7 @@
 								</li>
 							<?php }?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_MARKETPLACE)){ ?>
+							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)){ ?>
 								<li class="nav-item active">
 									<a <?php validarModuloMenu(Modulos::MODULO_MARKETPLACE, "marketplace.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>
 										<span class="title">Marketplace</span> 

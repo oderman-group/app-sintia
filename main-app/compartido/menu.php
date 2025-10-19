@@ -56,12 +56,14 @@
 							
 							<?php include_once("menu-estudiantes.php");?>
 
-							<li class="nav-item">
-	                            <a href="noticias.php" class="nav-link nav-toggle">
-	                                <i class="fa fa-bullhorn"></i>
-	                                <span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
-	                            </a>
-	                        </li>
+							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_PUBLICACIONES)) {?>
+								<li class="nav-item">
+									<a href="noticias.php" class="nav-link nav-toggle">
+										<i class="fa fa-bullhorn"></i>
+										<span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
+									</a>
+								</li>
+							<?php }?>
 
 							<li class="nav-item">
 								<a href="javascript:void(0);" class="nav-link nav-toggle"> 
@@ -92,11 +94,6 @@
 									<li class="nav-item start">
 										<a href="https://forms.gle/1NpXSwyqoomKdch76" target="_blank" class="nav-link">
 											<span class="title"><?=$frases[16][$datosUsuarioActual['uss_idioma']];?>/<?=$frases[257][$datosUsuarioActual['uss_idioma']];?></span>
-										</a>
-									</li>
-									<li class="nav-item start">
-										<a href="https://docs.google.com/document/d/1ytMzsH-w3qPUVPF7ScPG3tzEXYcSKbAcaIgLN-VtuyM/edit?usp=sharing" target="_blank" class="nav-link">
-											<span class="title">Histórico de cambios</span>
 										</a>
 									</li>
 								</ul>
