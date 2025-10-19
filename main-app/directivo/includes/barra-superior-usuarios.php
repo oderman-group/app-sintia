@@ -24,7 +24,6 @@ if (isset($_GET['busqueda'])) {
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4;">
-  <button type="button" class="btn btn-link mr-3" data-toggle="modal" data-target="#appsModal" style="color: #FFF;"><i class="fa fa-th"></i></button>
 
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -106,59 +105,5 @@ if (isset($_GET['busqueda'])) {
     </form>
 
   </div>
-
-<!-- Modal for apps -->
-<div class="modal fade" id="appsModal" tabindex="-1" role="dialog" aria-labelledby="appsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="appsModalLabel">Aplicaciones de Sintia</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-cogs fa-3x mb-2"></i><br>
-              <span>Directivo</span>
-            </a>
-          </div>
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-chalkboard-teacher fa-3x mb-2"></i><br>
-              <span>Docente</span>
-            </a>
-          </div>
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-graduation-cap fa-3x mb-2"></i><br>
-              <span>Estudiante</span>
-            </a>
-          </div>
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-users fa-3x mb-2"></i><br>
-              <span>Acudiente</span>
-            </a>
-          </div>
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-clipboard-list fa-3x mb-2"></i><br>
-              <span>Admisiones</span>
-            </a>
-          </div>
-          <div class="col-3 text-center mb-3">
-            <a href="#" class="app-link d-block">
-              <i class="fa fa-plus fa-3x mb-2"></i><br>
-              <span>Más</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 </nav>

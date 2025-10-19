@@ -108,14 +108,16 @@ if($config['conf_doble_buscador'] == 1) {
 								include("includes/barra-superior-matriculas-componente.php");	?>
 
 									<?php
-									if($config['conf_id_institucion'] == ICOLVEN){
-										if(isset($_GET['msgsion'])){
-											$aler='alert-danger';
-											$mensajeSion='Por favor, verifique todos los datos del estudiante y llene los campos vacios.';
+									if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
+										if (isset($_GET['msgsion'])) {
+											$aler = 'alert-danger';
+											$mensajeSion = 'Por favor, verifique todos los datos del estudiante y llene los campos vacios.';
+
 											if($_GET['msgsion']!=''){
-												$aler='alert-success';
-												$mensajeSion=base64_decode($_GET['msgsion']);
-												if(base64_decode($_GET['stadsion'])!=true){
+												$aler = 'alert-success';
+												$mensajeSion = base64_decode($_GET['msgsion']);
+
+												if (base64_decode($_GET['stadsion']) != true) {
 													$aler='alert-danger';
 												}
 											}
@@ -128,10 +130,11 @@ if($config['conf_doble_buscador'] == 1) {
 									<?php 
 										}
 									}
-									if(isset($_GET['msgsintia'])){
+									if (isset($_GET['msgsintia'])) {
 										$aler='alert-success';
-										if($_GET['stadsintia']!=true){
-										$aler='alert-danger';
+
+										if ($_GET['stadsintia']!=true) {
+											$aler='alert-danger';
 										}
 									?>
 									<div class="alert alert-block <?=$aler;?>">
