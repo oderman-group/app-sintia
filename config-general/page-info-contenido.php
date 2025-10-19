@@ -315,9 +315,64 @@ switch($_GET["idmsg"]){
 	case 302:
 		$color = 'red';
 		$titulo = 'MÓDULO NO ASIGNADO';
-		$texto = 'La institución no tiene asignado el módulo, al cual pertenence la pagina que intentaste acceder ['.$_GET["idPagina"].'].';
+		$texto = 'La institución no tiene asignado el módulo al cual pertenence la pagina que intentaste acceder:<br>
+		<b>MODULO:</b> '.$_GET["modulo"].'<br>
+		<b>PAGINA:</b> '.$_GET["idPagina"].' - '.$_GET["pagina"].'.<br>
+		';
+
+		if ($_GET["cantAnterior"] > 0) {
+			$texto .= '<b>INGRESOS ANTERIORMENTE:</b> '.$_GET["cantAnterior"].'.
+			<p>Si crees que esto es un error porque anteriormente has podido acceder a esta misma pagina sin problemas, entonces te sugerimos contactar al equipo de soporte técnico de SINITA para reportar este inconveniente y ayudarte lo antes posible.</p>
+			';
+
+			$url2 = 'https://wa.me/573006075800';
+			$boton2 = 'CONTACTAR AL EQUIPO DE SOPORTE';
+		}
+
 		$url1 = 'index.php';
 		$boton1 = 'IR AL INICIO';
+
+		$currentURL = $_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING'];
+
+		if (!empty($_SESSION["urlOrigin"]) && !str_contains($currentURL, $_SESSION["urlOrigin"])) {
+
+			require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
+
+			$contenidoMsg = '
+			<p>Problemas para acceder a la pagina: '.$_GET["idPagina"].' - '.$_GET["pagina"].'</p>
+			<p>
+				<b>Enviroment:</b> '.ENVIROMENT.'<br>
+				<b>Institution:</b> '.$config['conf_id_institucion'].' '.$_SESSION["datosUnicosInstitucion"]["ins_nombre"].'<br>
+				<b>Year:</b> '.$_SESSION["bd"].'<br>
+				<b>User:</b> '.$_SESSION["id"].' - '.$datosUsuarioActual['uss_nombre'].'<br>
+				<b>User contact data:</b> '.$datosUsuarioActual['uss_email'].' - '.$datosUsuarioActual['uss_celular'].' - '.$datosUsuarioActual['uss_telefono'].'<br>
+				<b>Date:</b> '.date("d/m/Y h:i:s").'<br>
+				<b>Current URL:</b> '.$currentURL.'<br>
+				<b>URL Origen:</b> '.$_SESSION["urlOrigin"].'<br><br>
+
+				<b>MÓDULO:</b> '.$_GET["modulo"].'<br>
+				<b>PÁGINA:</b> '.$_GET["idPagina"].' - '.$_GET["pagina"].'<br>
+				<b>INGRESOS ANTERIORMENTE:</b> '.$_GET["cantAnterior"].'
+			</p>
+			';
+
+			$data = [
+				'usuario_email'    => 'info@oderman-group.com',
+				'usuario_nombre'   => 'Jhon Oderman',
+				'institucion_id'   => $config['conf_id_institucion'],
+				'institucion_agno' => $_SESSION["bd"],
+				'usuario_id'       => $_SESSION["id"],
+				'contenido_msj'    => $contenidoMsg
+			];
+
+			$asunto = 'Problemas para acceder a la pagina: '.$_GET["idPagina"].' - '.$_GET["pagina"];
+			$bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
+
+			EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+
+			$_SESSION["urlOrigin"] = 'page-info.php?idmsg=302';
+		}
+
 	break;
 		
 	case 303:

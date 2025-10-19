@@ -242,7 +242,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 								</div>
 								<?php }?>
 
-								<?php if(Modulos::verificarModulosDeInstitucion($_SESSION["idInstitucion"], Modulos::MODULO_ADMISIONES) && Modulos::validarSubRol(['DT0347'])){?>
+								<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INSCRIPCIONES) && Modulos::validarSubRol(['DT0347'])){?>
 									<div class="col-md-4">
 										<div class="panel">
 											<header class="panel-heading panel-heading-red">INFORMES DE INSCRIPCIÓN</header>

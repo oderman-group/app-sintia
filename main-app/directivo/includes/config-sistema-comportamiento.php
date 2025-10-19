@@ -130,7 +130,7 @@
                         </div>
                     </div>
 
-                    <?php if (array_key_exists(Modulos::MODULO_CUALITATIVO, $arregloModulos) && Modulos::verificarModulosDeInstitucion($informacion_inst["info_institucion"], Modulos::MODULO_CUALITATIVO)) { ?>
+                    <?php if (array_key_exists(Modulos::MODULO_CUALITATIVO, $arregloModulos) && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CUALITATIVO)) { ?>
                     <div class="form-group row">
                         <label class="col-sm-3 control-label">Forma para mostrar las notas <span style="color: red;">(*)</span>
                             <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta opción mostrará a los usuarios las notas en formato numérico o con frases de desempeño que corresponden a las notas numéricas, dependiendo la opción que seleccione."><i class="fa fa-info"></i></button> </label>

@@ -56,7 +56,7 @@ try{
 if($numModulos>0){
 	$contModulos = 0;
 	while ($contModulos < $numModulos) {
-		if($_POST["modulos"][$contModulos] == Modulos::MODULO_ADMISIONES) {
+		if($_POST["modulos"][$contModulos] == Modulos::MODULO_INSCRIPCIONES) {
 
 			try{
 				$colorBG = $Plataforma->colorUno;
