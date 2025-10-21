@@ -124,14 +124,23 @@ if($config['conf_doble_buscador'] == 1) {
             </thead>
 													<tbody id="cargas_result">
 													<?php
-													$filtroLimite = '';
-													$selectSql = ["car_id","car_periodo","car_curso","car_ih","car_permiso2",
-																	"car_indicador_automatico","car_maximos_indicadores",
-																	"car_docente","gra_tipo","am.mat_id",
-																	"car_maximas_calificaciones","car_director_grupo","uss_nombre",
-																	"uss_id","uss_nombre2","uss_apellido1","uss_apellido2","gra_id","gra_nombre",
-																	"gru_nombre","mat_nombre","mat_valor","car_grupo","car_director_grupo", "car_activa"];
-													$busqueda = CargaAcademica::listarCargas($conexion, $config, "", $filtro, "car_id", $filtroLimite,"",array(),$selectSql);
+													require_once(ROOT_PATH."/main-app/class/CargaAcademicaOptimizada.php");
+													
+													// Usar paginación por defecto para mejorar rendimiento
+													// NOTA: Para mejorar aún más el rendimiento, ejecuta los índices en:
+													// documents/database/indices-optimizacion-cargas.sql
+													$filtroLimite = 'LIMIT 0, 200';  // Cargar máximo 200 registros inicialmente
+													
+													$selectSql = ["car.car_id","car.car_periodo","car.car_curso","car.car_ih","car.car_permiso2",
+																	"car.car_indicador_automatico","car.car_maximos_indicadores",
+																	"car.car_docente","gra.gra_tipo","am.mat_id",
+																	"car.car_maximas_calificaciones","car.car_director_grupo","uss.uss_nombre",
+																	"uss.uss_id","uss.uss_nombre2","uss.uss_apellido1","uss.uss_apellido2","gra.gra_id","gra.gra_nombre",
+																	"gru.gru_nombre","am.mat_nombre","am.mat_valor","car.car_grupo","car.car_director_grupo", "car.car_activa",
+																	"car.id_nuevo AS id_nuevo_carga"];
+													
+													// Usar método optimizado sin subqueries pesadas
+													$busqueda = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", $filtro, "car.car_id", $filtroLimite,"",array(),$selectSql);
     												$contReg = 1;
 													$index = 0;
 													$arraysDatos = array();																									
@@ -618,6 +627,81 @@ if($config['conf_doble_buscador'] == 1) {
 			</div>
 		</div>
 	</div>
+
+<script>
+$(document).ready(function() {
+	// Lazy loading de notas declaradas y registradas
+	$(document).on('click', '.btn-cargar-notas', function() {
+		var btn = $(this);
+		var cargaId = btn.data('carga-id');
+		var periodo = btn.data('periodo');
+		var tdActividades = $('.td-actividades-' + cargaId);
+		
+		// Mostrar indicador de carga
+		btn.html('<i class="fa fa-spinner fa-spin"></i> Cargando...').prop('disabled', true);
+		
+		// Hacer petición AJAX
+		$.ajax({
+			url: 'ajax-obtener-datos-adicionales-carga.php',
+			type: 'POST',
+			data: {
+				carga_id: cargaId,
+				periodo: periodo
+			},
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var datos = response.datos;
+					var actividadesTotales = datos.actividades_totales || 0;
+					var actividadesRegistradas = datos.actividades_registradas || 0;
+					
+					// Actualizar la celda con los datos reales
+					var nuevoContenido = actividadesTotales + '%&nbsp;&nbsp;-&nbsp;&nbsp;' + actividadesRegistradas + '%';
+					
+					<?php if ($permisoReportesNotas) { ?>
+					// Si tiene permiso, convertir a enlace
+					nuevoContenido = '<a href="../compartido/reporte-notas.php?carga=' + btoa(cargaId) + '&per=' + btoa(periodo) + '" target="_blank" style="text-decoration:underline; color:#00F;" title="Calificaciones">' + nuevoContenido + '</a>';
+					<?php } ?>
+					
+					tdActividades.html(nuevoContenido);
+					
+					// Mostrar notificación de éxito
+					$.toast({
+						heading: 'Éxito',
+						text: 'Datos cargados correctamente',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 2000
+					});
+				} else {
+					btn.html('<i class="fa fa-exclamation-triangle"></i> Error').removeClass('btn-info').addClass('btn-danger');
+					$.toast({
+						heading: 'Error',
+						text: response.message || 'Error al cargar datos',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 3000
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX:', error);
+				btn.html('<i class="fa fa-exclamation-triangle"></i> Error').removeClass('btn-info').addClass('btn-danger');
+				$.toast({
+					heading: 'Error',
+					text: 'Error de conexión al servidor',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error',
+					hideAfter: 3000
+				});
+			}
+		});
+	});
+});
+</script>
 
 </body>
 

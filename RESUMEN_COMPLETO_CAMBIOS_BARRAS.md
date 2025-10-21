@@ -101,3 +101,4 @@ Para verificar que todos los cambios se aplicaron correctamente:
 
 Los cambios están listos y aplicados en todo el sistema Sintia.
 
+

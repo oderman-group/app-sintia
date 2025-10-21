@@ -24,16 +24,6 @@
 
 .expand-btn {
 	transition: all 0.3s ease;
-	border-radius: 50%;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.expand-btn:hover {
-	transform: scale(1.1);
 }
 
 .expandable-row h6 {
@@ -172,7 +162,7 @@ foreach ($data["data"] as $resultado) {
 
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
-		<td><button class="btn btn-sm btn-outline-primary expand-btn" data-id="<?= $resultado['mat_id']; ?>"><i class="fa fa-plus"></i></button></td>
+		<td><button class="btn btn-sm btn-info expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-plus"></i></button></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -194,16 +184,30 @@ foreach ($data["data"] as $resultado) {
 		<td>
 			<?php
 			$cambiarEstado = '';
+			$cursorStyle = '';
 			if ($permisoCambiarEstado) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
+				$cursorStyle = "cursor: pointer;";
 			}
+			
+			// Mapear estados a clases de badge
+			$badgeClasses = [
+				1 => 'badge badge-success',     // Matriculado
+				2 => 'badge badge-warning',     // Asistente
+				3 => 'badge badge-danger',      // Cancelado
+				4 => 'badge badge-secondary',   // No Matriculado
+				5 => 'badge badge-info'         // En inscripción
+			];
+			
 			if(!empty($resultado['mat_estado_matricula'])){
+				$badgeClass = $badgeClasses[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary';
 			?>
-			<a style="cursor: pointer;" id="estadoMatricula<?= $resultado['mat_id']; ?>" <?= $cambiarEstado; ?>>
-				<span class="<?= $estadosEtiquetasMatriculas[$resultado['mat_estado_matricula']]; ?>">
-					<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
-				</span>
-			</a>
+			<span class="<?= $badgeClass; ?>" 
+				  id="estadoMatricula<?= $resultado['mat_id']; ?>" 
+				  style="<?= $cursorStyle; ?>" 
+				  <?= $cambiarEstado; ?>>
+				<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
+			</span>
 			<?php } ?>
 		</td>
 		<td><?= $resultado['mat_documento']; ?></td>
@@ -776,14 +780,14 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 			if (row.is(':visible')) {
 				// Collapse with animation
 				row.slideUp(300, function() {
-				icon.removeClass('fa-minus').addClass('fa-plus');
-					button.removeClass('btn-outline-danger').addClass('btn-outline-primary');
+					icon.removeClass('fa-minus').addClass('fa-plus');
+					button.removeClass('btn-warning').addClass('btn-info');
 				});
 			} else {
 				// Expand with animation
 				row.slideDown(300, function() {
-				icon.removeClass('fa-plus').addClass('fa-minus');
-					button.removeClass('btn-outline-primary').addClass('btn-outline-danger');
+					icon.removeClass('fa-plus').addClass('fa-minus');
+					button.removeClass('btn-info').addClass('btn-warning');
 				});
 			}
 		});

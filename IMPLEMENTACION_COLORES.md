@@ -144,3 +144,4 @@ Si necesitas cambiar algún color, modifica solo las variables en `sintia-color-
 
 Si tienes preguntas sobre la implementación o necesitas ajustes adicionales, revisa la documentación en `SINTIA_COLOR_SCHEME.md`.
 
+

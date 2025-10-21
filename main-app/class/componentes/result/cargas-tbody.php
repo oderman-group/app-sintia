@@ -25,10 +25,10 @@ foreach ($data["data"] as $resultado) {
 	$periodoSP = $resultado['car_periodo'];
 	$marcaMediaTecnica = '';
 	if ($resultado['gra_tipo'] == GRADO_INDIVIDUAL) {
-		$cantidadEstudiantes = $resultado['cantidad_estudiantes_mt'];
+		$cantidadEstudiantes = $resultado['cantidad_estudiantes_mt'] ?? 0;
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i>';
 	} else {
-		$cantidadEstudiantes = $resultado['cantidad_estudiantes'];
+		$cantidadEstudiantes = $resultado['cantidad_estudiantes'] ?? 0;
 	}
 
 	$marcaDG = '';
@@ -74,12 +74,27 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $resultado['car_ih']; ?></td>
 		<td><?= $resultado['car_periodo']; ?></td>
 		<?php
-		$porcentajeCargas =  $resultado['actividades'] . "%&nbsp;&nbsp;-&nbsp;&nbsp;" . $resultado['actividades_registradas'] . "%";
-		if ($permisoReportesNotas) {
-			$porcentajeCargas = '<a href="../compartido/reporte-notas.php?carga=' . base64_encode($resultado['car_id']) . '&per=' . base64_encode($resultado['car_periodo']) . '&grado=' . base64_encode($resultado["car_curso"]) . '&grupo=' . base64_encode($resultado["car_grupo"]) . '" target="_blank" style="text-decoration:underline; color:#00F;" title="Calificaciones">' . $resultado['actividades'] . '%&nbsp;&nbsp;-&nbsp;&nbsp;' .$resultado['actividades_registradas'] . '%</a>';
+		// Usar valores por defecto si no están disponibles (lazy loading)
+		$actividadesTotales = $resultado['actividades'] ?? null;
+		$actividadesRegistradas = $resultado['actividades_registradas'] ?? null;
+		
+		if ($actividadesTotales === null || $actividadesRegistradas === null) {
+			// Mostrar botón para cargar datos bajo demanda
+			$porcentajeCargas = '<button class="btn btn-xs btn-info btn-cargar-notas" 
+									data-carga-id="' . $resultado['car_id'] . '" 
+									data-periodo="' . $resultado['car_periodo'] . '"
+									title="Clic para ver notas declaradas y registradas">
+									<i class="fa fa-eye"></i> Ver notas
+								</button>';
+		} else {
+			$porcentajeCargas = $actividadesTotales . "%&nbsp;&nbsp;-&nbsp;&nbsp;" . $actividadesRegistradas . "%";
+			
+			if ($permisoReportesNotas) {
+				$porcentajeCargas = '<a href="../compartido/reporte-notas.php?carga=' . base64_encode($resultado['car_id']) . '&per=' . base64_encode($resultado['car_periodo']) . '&grado=' . base64_encode($resultado["car_curso"]) . '&grupo=' . base64_encode($resultado["car_grupo"]) . '" target="_blank" style="text-decoration:underline; color:#00F;" title="Calificaciones">' . $actividadesTotales . '%&nbsp;&nbsp;-&nbsp;&nbsp;' . $actividadesRegistradas . '%</a>';
+			}
 		}
 		?>
-		<td><?= $porcentajeCargas ?></td>
+		<td class="td-actividades-<?= $resultado['car_id']; ?>" style="text-align:center;"><?= $porcentajeCargas ?></td>
 		<td>
 			<div class="btn-group">
 				<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
@@ -120,10 +135,10 @@ foreach ($data["data"] as $resultado) {
 						<?php 	if ($permisoGenerarInforme) {
 							$generarInforme = false;
 							$msnajetooltip = "";
-							$actividadesDeclaradas = $resultado['actividades'];
-							$actividadesRegistradas = $resultado['actividades_registradas'];
+							$actividadesDeclaradas = $resultado['actividades'] ?? 0;
+							$actividadesRegistradas = $resultado['actividades_registradas'] ?? 0;
 							$configGenerarJobs = $config['conf_porcentaje_completo_generar_informe'];
-							$numSinNotas=0;
+							$numSinNotas = 0;
 							if ($actividadesDeclaradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
 								$generarInforme = false;
 								$msnajetooltip = "Las califaciones declaradas no completan el 100% ";
@@ -136,7 +151,7 @@ foreach ($data["data"] as $resultado) {
 							if ($generarInforme) {
 								switch (intval($configGenerarJobs)) {
 									case 1:
-										$numSinNotas            = $resultado["cantidad_estudiantes_sin_nota"];
+										$numSinNotas = $resultado["cantidad_estudiantes_sin_nota"] ?? 0;
 										if ($numSinNotas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
 											$generarInforme = false;
 											$msnajetooltip = "La institución no permite generar informe hasta que todos los estudiantes estén calificados un 100%";

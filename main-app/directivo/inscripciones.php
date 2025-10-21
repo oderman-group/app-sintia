@@ -49,18 +49,49 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                 <div class="card-body">
 
                                            
-                                <div class="alert alert-block alert-warning">
-                                        <h4 class="alert-heading">Libera espacio para no llenar el disco!</h4>
-                                        <p>Recomendamos descargar la documentación y comprobante de pago de cada aspirante y luego borrar esa documentación del sistema para evitar que el disco se llene más rápido. <br>
-                                            <b>En cada aspirante en estado Aprobado: Ve al botón Acciones y luego Borrar documentación.</b></p>
+                                <!-- Mensajes informativos colapsables -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header bg-warning text-white" style="cursor: pointer; padding: 10px 15px;" data-toggle="collapse" data-target="#alertaDisco">
+                                                <i class="fa fa-database"></i> 
+                                                <strong>Libera espacio en el disco</strong>
+                                                <i class="fa fa-chevron-down pull-right"></i>
+                                            </div>
+                                            <div id="alertaDisco" class="collapse">
+                                                <div class="card-body">
+                                                    <p class="mb-2">Recomendamos descargar la documentación y comprobante de pago de cada aspirante y luego borrar esa documentación del sistema para evitar que el disco se llene más rápido.</p>
+                                                    <p class="mb-0"><strong>Instrucción:</strong> En cada aspirante en estado <span class="badge badge-success">Aprobado</span>, ve al botón <strong>Acciones</strong> → <strong>Borrar documentación</strong>.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div class="alert alert-block alert-success">
-                                        <h4 class="alert-heading">Enlace para inscripción:</h4>
-                                        <p>Para ir al formulario de inscripción <a href="<?=$urlInscripcion?>" target="_blank"><b>CLICK AQUÍ</b></a> o copie el siguiente enlace para enviar al usuario</p>
-                                        <input type="text" name="enlace" class="form-control col-md-6" value="<?=$urlInscripcion?>" disabled>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white" style="cursor: pointer; padding: 10px 15px;" data-toggle="collapse" data-target="#alertaEnlace">
+                                                <i class="fa fa-link"></i> 
+                                                <strong>Enlace de inscripción</strong>
+                                                <i class="fa fa-chevron-down pull-right"></i>
+                                            </div>
+                                            <div id="alertaEnlace" class="collapse">
+                                                <div class="card-body">
+                                                    <p class="mb-2">Para ir al formulario de inscripción <a href="<?=$urlInscripcion?>" target="_blank" class="btn btn-sm btn-primary"><i class="fa fa-external-link"></i> Abrir formulario</a></p>
+                                                    <label class="mb-1"><strong>Copiar enlace para enviar:</strong></label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="enlaceInscripcion" class="form-control" value="<?=$urlInscripcion?>" readonly>
+                                                        <div class="input-group-append">
+                                                            <button class="btn btn-outline-secondary" type="button" onclick="copiarEnlace()" title="Copiar enlace">
+                                                                <i class="fa fa-copy"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    </div> 
+                                </div>
+                                </div> 
                                     
 
                                 <?php
@@ -107,6 +138,7 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 									        </div>
 												<thead>
 													<tr>
+                                                        <th></th>
                                                         <th>No.</th>
                                                         <th>ID Matrícula</th>
                                                         <th>#Solicitud</th>
@@ -126,7 +158,8 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                                     $selectSql = ["mat_id","mat_documento","gra_nombre",
 																  "asp_observacion","asp_nombre_acudiente","asp_celular_acudiente",
 																  "asp_documento_acudiente","asp_id","asp_fecha","asp_comprobante","mat_nombres",
-																  "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2", "mat_primer_apellido", "mat_segundo_apellido",];
+																  "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2", "mat_primer_apellido", "mat_segundo_apellido",
+																  "mat.*", "asp.*"];
 
                                                     $filtroLimite = '';
                                                     
@@ -189,7 +222,61 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 		});
 
 		$('.popover-dismiss').popover({trigger: 'focus'});
+		
+		// Función para copiar el enlace de inscripción
+		function copiarEnlace() {
+			var enlaceInput = document.getElementById('enlaceInscripcion');
+			enlaceInput.select();
+			enlaceInput.setSelectionRange(0, 99999); // Para móviles
+			
+			try {
+				document.execCommand('copy');
+				$.toast({
+					heading: 'Copiado',
+					text: 'Enlace copiado al portapapeles',
+					position: 'top-right',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 2000
+				});
+			} catch (err) {
+				alert('Error al copiar: ' + err);
+			}
+		}
+		
+		// Cambiar icono del chevron al expandir/colapsar
+		$('[data-toggle="collapse"]').on('click', function() {
+			var icon = $(this).find('.fa-chevron-down, .fa-chevron-up');
+			setTimeout(function() {
+				if (icon.hasClass('fa-chevron-down')) {
+					icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+				} else {
+					icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+				}
+			}, 10);
+		});
 	</script>
+	
+	<style>
+	/* Estilos para las alertas colapsables */
+	.card-header[data-toggle="collapse"] {
+		transition: background-color 0.3s ease;
+	}
+	
+	.card-header[data-toggle="collapse"]:hover {
+		opacity: 0.9;
+	}
+	
+	.card-header .fa-chevron-down,
+	.card-header .fa-chevron-up {
+		transition: transform 0.3s ease;
+	}
+	
+	#alertaDisco .card-body,
+	#alertaEnlace .card-body {
+		border-top: 2px solid rgba(0,0,0,0.1);
+	}
+	</style>
 </body>
 
 </html>

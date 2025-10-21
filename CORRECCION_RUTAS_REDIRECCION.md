@@ -82,3 +82,4 @@ Resultado: Permanece en main-app/ y va a main-app/directivo/usuarios.php
 
 **¡Ahora las redirecciones funcionan correctamente dentro de la estructura del proyecto!** 🎉
 
+

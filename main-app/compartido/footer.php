@@ -186,6 +186,24 @@ if(typeof formulario !== 'undefined' && formulario !== null) {
 </div>
 <!-- end footer -->
 
+<?php 
+// Agregar padding al body si la barra de desarrollador está activa
+if( 
+    $datosUsuarioActual['uss_tipo'] == TIPO_DEV 
+    || isset($_SESSION['admin']) 
+    || isset($_SESSION['docente']) 
+    || isset($_SESSION['acudiente']) 
+) {
+?>
+<style>
+    body {
+        padding-bottom: 45px !important; /* Espacio para la barra de desarrollador */
+    }
+</style>
+<?php } ?>
+
+<?php include_once(ROOT_PATH."/main-app/compartido/barra-developer.php");?>
+
 <?php Conexion::getConexion()->closeConnection(); ?>
 
 

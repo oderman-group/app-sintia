@@ -136,3 +136,4 @@
 7. **Compatibilidad:** Mantiene el sistema original funcionando
 
 
+
