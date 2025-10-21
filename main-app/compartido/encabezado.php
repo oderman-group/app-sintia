@@ -210,82 +210,127 @@ $institucionNombre = $institucion['ins_siglas'];
                             <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
                                 <i class="fa fa-th" data-toggle="tooltip" data-placement="top" title="Aplicaciones de Sintia"></i>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-default apps-grid" style="width: 320px; padding: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: #fff;">
-                                <div class="row" id="apps-visible">
-                                    <div class="col-4 text-center mb-4">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-cogs fa-3x text-primary mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Directivo">Directivo</span>
-                                        </a>
+                            <div class="dropdown-menu dropdown-menu-default apps-grid" style="width: 400px; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); background: #fff; border: 1px solid #e0e0e0;">
+                                <!-- Header del selector -->
+                                <div class="apps-header mb-3">
+                                    <h6 class="mb-0 text-center" style="color: #333; font-weight: 500;">Aplicaciones de Sintia</h6>
+                                </div>
+                                
+                                <!-- Apps visibles (3x3) -->
+                                <div class="apps-grid-container" id="apps-visible">
+                                    <!-- Fila 1 -->
+                                    <div class="app-item" onclick="navigateToApp('directivo')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="fa fa-cogs"></i>
+                                        </div>
+                                        <span class="app-name">Directivo</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-chalkboard-teacher fa-3x text-success mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Docente">Docente</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('docente')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                            <i class="fa fa-chalkboard-teacher"></i>
+                                        </div>
+                                        <span class="app-name">Docente</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-graduation-cap fa-3x text-info mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Estudiante">Estudiante</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('estudiante')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                            <i class="fa fa-graduation-cap"></i>
+                                        </div>
+                                        <span class="app-name">Estudiante</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-users fa-3x text-warning mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Acudiente">Acudiente</span>
-                                        </a>
+                                    
+                                    <!-- Fila 2 -->
+                                    <div class="app-item" onclick="navigateToApp('acudiente')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                            <i class="fa fa-users"></i>
+                                        </div>
+                                        <span class="app-name">Acudiente</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-clipboard-list fa-3x text-danger mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Admisiones">Admisiones</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('admisiones')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                                            <i class="fa fa-clipboard-list"></i>
+                                        </div>
+                                        <span class="app-name">Admisiones</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4" id="more-apps-btn">
-                                        <a href="javascript:void(0);" onclick="toggleMoreApps(event)" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-plus fa-3x text-secondary mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Más">Más</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('reportes')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);">
+                                            <i class="fa fa-chart-bar"></i>
+                                        </div>
+                                        <span class="app-name">Reportes</span>
+                                    </div>
+                                    
+                                    <!-- Fila 3 -->
+                                    <div class="app-item" onclick="navigateToApp('calendario')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                                            <i class="fa fa-calendar-alt"></i>
+                                        </div>
+                                        <span class="app-name">Calendario</span>
+                                    </div>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('biblioteca')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+                                            <i class="fa fa-book"></i>
+                                        </div>
+                                        <span class="app-name">Biblioteca</span>
+                                    </div>
+                                    
+                                    <div class="app-item" onclick="toggleMoreApps(event)" id="more-apps-btn">
+                                        <div class="app-icon" style="background: #f5f5f5; border: 2px dashed #ccc;">
+                                            <i class="fa fa-plus" style="color: #666;"></i>
+                                        </div>
+                                        <span class="app-name">Más</span>
                                     </div>
                                 </div>
-                                <div class="row" id="apps-hidden" style="display: none; flex-wrap: nowrap;">
-                                    <div class="col-4 text-center mb-4" style="flex: 0 0 33.333%; max-width: 33.333%;">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-chart-bar fa-3x text-primary mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Reportes">Reportes</span>
-                                        </a>
+                                
+                                <!-- Apps ocultas -->
+                                <div class="apps-grid-container" id="apps-hidden" style="display: none;">
+                                    <!-- Fila 4 -->
+                                    <div class="app-item" onclick="navigateToApp('financiero')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);">
+                                            <i class="fa fa-dollar-sign"></i>
+                                        </div>
+                                        <span class="app-name">Financiero</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4" style="flex: 0 0 33.333%; max-width: 33.333%;">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-calendar fa-3x text-success mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Calendario">Calendario</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('inventario')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);">
+                                            <i class="fa fa-boxes"></i>
+                                        </div>
+                                        <span class="app-name">Inventario</span>
                                     </div>
-                                    <div class="col-4 text-center mb-4" style="flex: 0 0 33.333%; max-width: 33.333%;">
-                                        <a href="#" class="app-link d-block p-3 rounded" style="transition: all 0.3s ease; background: #f8f9fa; border: 1px solid #e9ecef;" onmouseover="this.style.background='#e9ecef'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';">
-                                            <i class="fa fa-book fa-3x text-info mb-2"></i><br>
-                                            <span class="app-name font-weight-bold text-dark" style="font-size: 10px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" title="Biblioteca">Biblioteca</span>
-                                        </a>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('comunicaciones')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%);">
+                                            <i class="fa fa-comments"></i>
+                                        </div>
+                                        <span class="app-name">Comunicaciones</span>
                                     </div>
-                                    <div class="col-12 text-center mt-2">
-                                        <a href="javascript:void(0);" onclick="toggleMoreApps(event)" class="btn btn-sm btn-outline-secondary">Mostrar menos</a>
+                                    
+                                    <!-- Fila 5 -->
+                                    <div class="app-item" onclick="navigateToApp('recursos')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                            <i class="fa fa-folder-open"></i>
+                                        </div>
+                                        <span class="app-name">Recursos</span>
+                                    </div>
+                                    
+                                    <div class="app-item" onclick="navigateToApp('configuracion')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                            <i class="fa fa-cog"></i>
+                                        </div>
+                                        <span class="app-name">Configuración</span>
+                                    </div>
+                                    
+                                    <div class="app-item" onclick="toggleMoreApps(event)" id="less-apps-btn">
+                                        <div class="app-icon" style="background: #f5f5f5; border: 2px dashed #ccc;">
+                                            <i class="fa fa-minus" style="color: #666;"></i>
+                                        </div>
+                                        <span class="app-name">Menos</span>
                                     </div>
                                 </div>
-                                <script>
-                                    function toggleMoreApps(event) {
-                                        event.stopPropagation();
-                                        var hiddenApps = document.getElementById('apps-hidden');
-                                        var moreBtn = document.getElementById('more-apps-btn');
-                                        if (hiddenApps.style.display === 'none') {
-                                            hiddenApps.style.display = 'block';
-                                            moreBtn.style.display = 'none';
-                                        } else {
-                                            hiddenApps.style.display = 'none';
-                                            moreBtn.style.display = 'block';
-                                        }
-                                    }
-                                </script>
                             </div>
                         </li>
                         <!-- end apps dropdown -->
@@ -409,3 +454,141 @@ $institucionNombre = $institucion['ins_siglas'];
             </div>
         </div>
         <!-- end header -->
+        
+        <!-- CSS para el selector de aplicaciones estilo Google -->
+        <style>
+        .apps-grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .app-item:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .app-item:hover .app-icon {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        
+        .app-icon i {
+            font-size: 20px;
+            color: white;
+        }
+        
+        .app-name {
+            font-size: 11px;
+            font-weight: 500;
+            color: #333;
+            text-align: center;
+            line-height: 1.2;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .apps-header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 12px;
+        }
+        
+        /* Animación suave para mostrar/ocultar */
+        .apps-grid-container {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        </style>
+        
+        <!-- JavaScript para el selector de aplicaciones -->
+        <script>
+        function toggleMoreApps(event) {
+            // Prevenir que se cierre el dropdown
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            const hiddenApps = document.getElementById('apps-hidden');
+            const moreBtn = document.getElementById('more-apps-btn');
+            const lessBtn = document.getElementById('less-apps-btn');
+            
+            if (hiddenApps.style.display === 'none' || hiddenApps.style.display === '') {
+                hiddenApps.style.display = 'grid';
+                moreBtn.style.display = 'none';
+                lessBtn.style.display = 'flex';
+            } else {
+                hiddenApps.style.display = 'none';
+                moreBtn.style.display = 'flex';
+                lessBtn.style.display = 'none';
+            }
+            
+            return false;
+        }
+        
+        function navigateToApp(appName) {
+            // Mapeo de aplicaciones a URLs
+            const appUrls = {
+                'directivo': '<?=BASE_URL;?>/main-app/directivo/',
+                'docente': '<?=BASE_URL;?>/main-app/docente/',
+                'estudiante': '<?=BASE_URL;?>/main-app/estudiante/',
+                'acudiente': '<?=BASE_URL;?>/main-app/acudiente/',
+                'admisiones': '<?=BASE_URL;?>/main-app/admisiones/',
+                'reportes': '<?=BASE_URL;?>/main-app/reportes/',
+                'calendario': '<?=BASE_URL;?>/main-app/calendario/',
+                'biblioteca': '<?=BASE_URL;?>/main-app/biblioteca/',
+                'financiero': '<?=BASE_URL;?>/main-app/financiero/',
+                'inventario': '<?=BASE_URL;?>/main-app/inventario/',
+                'comunicaciones': '<?=BASE_URL;?>/main-app/comunicaciones/',
+                'recursos': '<?=BASE_URL;?>/main-app/recursos/',
+                'configuracion': '<?=BASE_URL;?>/main-app/configuracion/'
+            };
+            
+            const url = appUrls[appName];
+            if (url) {
+                window.location.href = url;
+            } else {
+                console.log('Aplicación no encontrada:', appName);
+            }
+        }
+        
+        // Inicializar el estado del botón "Menos"
+        document.addEventListener('DOMContentLoaded', function() {
+            const lessBtn = document.getElementById('less-apps-btn');
+            if (lessBtn) {
+                lessBtn.style.display = 'none';
+            }
+        });
+        </script>

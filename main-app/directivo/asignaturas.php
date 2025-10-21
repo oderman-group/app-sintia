@@ -135,6 +135,162 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
+
+<!-- Modal para edición rápida de asignatura -->
+<div class="modal fade" id="modalEditarAsignatura" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fa fa-edit"></i> Edición Rápida de Asignatura</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formEditarAsignatura" action="asignaturas-actualizar.php" method="post">
+				<div class="modal-body">
+					<div id="asignaturaLoader" class="text-center" style="display:none;">
+						<i class="fa fa-spinner fa-spin fa-3x"></i>
+						<p>Cargando datos...</p>
+					</div>
+					
+					<div id="asignaturaFormulario" style="display:none;">
+						<input type="hidden" id="edit_idM" name="idM">
+						
+						<div class="form-group">
+							<label>Código</label>
+							<input type="text" class="form-control" id="edit_codigoM" name="codigoM">
+						</div>
+						
+						<div class="form-group">
+							<label>Nombre de la Asignatura <span class="text-danger">*</span></label>
+							<input type="text" class="form-control" id="edit_nombreM" name="nombreM" required>
+						</div>
+						
+						<div class="form-group">
+							<label>Siglas</label>
+							<input type="text" class="form-control" id="edit_siglasM" name="siglasM">
+						</div>
+						
+						<div class="form-group">
+							<label>Área Académica <span class="text-danger">*</span></label>
+							<select class="form-control" id="edit_areaM" name="areaM" required>
+								<option value="">Seleccione...</option>
+							</select>
+						</div>
+						
+						<div class="form-group">
+							<label>Sumar en promedio general? <span class="text-danger">*</span></label>
+							<select class="form-control" id="edit_sumarPromedio" name="sumarPromedio" required>
+								<option value="">Seleccione...</option>
+								<option value="SI">SI</option>
+								<option value="NO">NO</option>
+							</select>
+						</div>
+						
+						<?php if($config['conf_agregar_porcentaje_asignaturas']=='SI'){ ?>
+						<div class="form-group">
+							<label>Porcentaje (%)</label>
+							<input type="number" class="form-control" id="edit_porcenAsigna" name="porcenAsigna" min="0" max="100">
+						</div>
+						<?php } ?>
+					</div>
+					
+					<div id="asignaturaError" class="alert alert-danger" style="display:none;">
+						<i class="fa fa-exclamation-triangle"></i> <span id="errorMensajeAsignatura"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="fa fa-save"></i> Guardar Cambios
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	$(document).on('click', '.btn-editar-asignatura-modal', function() {
+		var asignaturaId = $(this).data('asignatura-id');
+		
+		$('#asignaturaLoader').show();
+		$('#asignaturaFormulario').hide();
+		$('#asignaturaError').hide();
+		$('#modalEditarAsignatura').modal('show');
+		
+		$.ajax({
+			url: 'ajax-obtener-datos-asignatura.php',
+			type: 'POST',
+			data: { asignatura_id: asignaturaId },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var asignatura = response.asignatura;
+					
+					$('#edit_idM').val(asignatura.mat_id);
+					$('#edit_codigoM').val(asignatura.mat_codigo || '');
+					$('#edit_nombreM').val(asignatura.mat_nombre);
+					$('#edit_siglasM').val(asignatura.mat_siglas || '');
+					$('#edit_sumarPromedio').val(asignatura.mat_sumar_promedio || 'SI');
+					$('#edit_porcenAsigna').val(asignatura.mat_valor || '');
+					
+					// Llenar select de áreas
+					$('#edit_areaM').empty().append('<option value="">Seleccione...</option>');
+					response.areas.forEach(function(area) {
+						var selected = (area.id == asignatura.mat_area) ? 'selected' : '';
+						$('#edit_areaM').append('<option value="' + area.id + '" ' + selected + '>' + area.nombre + '</option>');
+					});
+					
+					$('#asignaturaLoader').hide();
+					$('#asignaturaFormulario').show();
+				} else {
+					$('#asignaturaLoader').hide();
+					$('#errorMensajeAsignatura').text(response.message);
+					$('#asignaturaError').show();
+				}
+			},
+			error: function() {
+				$('#asignaturaLoader').hide();
+				$('#errorMensajeAsignatura').text('Error de conexión');
+				$('#asignaturaError').show();
+			}
+		});
+	});
+	
+	$('#formEditarAsignatura').on('submit', function(e) {
+		e.preventDefault();
+		$.ajax({
+			url: $(this).attr('action'),
+			type: 'POST',
+			data: $(this).serialize(),
+			success: function() {
+				$.toast({
+					heading: 'Éxito',
+					text: 'Asignatura actualizada correctamente',
+					position: 'top-right',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 2000
+				});
+				$('#modalEditarAsignatura').modal('hide');
+				setTimeout(function() { location.reload(); }, 1000);
+			},
+			error: function() {
+				$.toast({
+					heading: 'Error',
+					text: 'Error al actualizar',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error'
+				});
+			}
+		});
+	});
+});
+</script>
+
 </body>
 
 </html>

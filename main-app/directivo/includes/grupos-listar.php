@@ -59,7 +59,8 @@
                                             <i class="fa fa-angle-down"></i>
                                         </button>
                                         <ul class="dropdown-menu" role="menu">
-                                            <li><a href="grupos-editar.php?id=<?= base64_encode($resultado["gru_id"]); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?></a></li>
+                                            <li><a href="javascript:void(0);" class="btn-editar-grupo-modal" data-grupo-id="<?=$resultado['gru_id'];?>"><i class="fa fa-edit"></i> Edición rápida</a></li>
+                                            <li><a href="grupos-editar.php?id=<?= base64_encode($resultado["gru_id"]); ?>"><i class="fa fa-pencil"></i> <?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?> completa</a></li>
                                         </ul>
                                     </div>
                                 </td>
