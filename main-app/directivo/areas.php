@@ -112,7 +112,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0018'])){?>
-                                                                            <li><a href="areas-editar.php?id=<?=base64_encode($resultado['ar_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                            <li><a href="javascript:void(0);" class="btn-editar-area-modal" data-area-id="<?=$resultado['ar_id'];?>"><i class="fa fa-edit"></i> Edición rápida</a></li>
+                                                                            <li><a href="areas-editar.php?id=<?=base64_encode($resultado['ar_id']);?>"><i class="fa fa-pencil"></i> <?=$frases[165][$datosUsuarioActual['uss_idioma']];?> completa</a></li>
                                                                         <?php } if($numMaterias[0]==0 && Modulos::validarSubRol(['DT0150'])){?><li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar esta area?','question','areas-eliminar.php?id=<?=base64_encode($resultado['ar_id']);?>')">Eliminar</a></li><?php }?>
                                                                     </ul>
                                                                 </div>
@@ -170,6 +171,124 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
+
+<!-- Modal para edición rápida de área -->
+<div class="modal fade" id="modalEditarArea" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fa fa-edit"></i> Edición Rápida de Área</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formEditarArea" action="areas-actualizar.php" method="post">
+				<div class="modal-body">
+					<div id="areaLoader" class="text-center" style="display:none;">
+						<i class="fa fa-spinner fa-spin fa-3x"></i>
+						<p>Cargando datos...</p>
+					</div>
+					
+					<div id="areaFormulario" style="display:none;">
+						<input type="hidden" id="edit_idA" name="idA">
+						
+						<div class="form-group">
+							<label>Nombre del Área <span class="text-danger">*</span></label>
+							<input type="text" class="form-control" id="edit_nombreA" name="nombreA" required>
+						</div>
+						
+						<div class="form-group">
+							<label>Posición</label>
+							<input type="number" class="form-control" id="edit_posicion" name="posicionA" min="1">
+						</div>
+					</div>
+					
+					<div id="areaError" class="alert alert-danger" style="display:none;">
+						<i class="fa fa-exclamation-triangle"></i> <span id="errorMensajeArea"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="fa fa-save"></i> Guardar Cambios
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	// Edición rápida de área
+	$(document).on('click', '.btn-editar-area-modal', function() {
+		var areaId = $(this).data('area-id');
+		
+		$('#areaLoader').show();
+		$('#areaFormulario').hide();
+		$('#areaError').hide();
+		$('#modalEditarArea').modal('show');
+		
+		$.ajax({
+			url: 'ajax-obtener-datos-area.php',
+			type: 'POST',
+			data: { area_id: areaId },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var area = response.area;
+					$('#edit_idA').val(area.ar_id);
+					$('#edit_nombreA').val(area.ar_nombre);
+					$('#edit_posicion').val(area.ar_posicion || '');
+					
+					$('#areaLoader').hide();
+					$('#areaFormulario').show();
+				} else {
+					$('#areaLoader').hide();
+					$('#errorMensajeArea').text(response.message);
+					$('#areaError').show();
+				}
+			},
+			error: function() {
+				$('#areaLoader').hide();
+				$('#errorMensajeArea').text('Error de conexión');
+				$('#areaError').show();
+			}
+		});
+	});
+	
+	$('#formEditarArea').on('submit', function(e) {
+		e.preventDefault();
+		$.ajax({
+			url: $(this).attr('action'),
+			type: 'POST',
+			data: $(this).serialize(),
+			success: function() {
+				$.toast({
+					heading: 'Éxito',
+					text: 'Área actualizada correctamente',
+					position: 'top-right',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 2000
+				});
+				$('#modalEditarArea').modal('hide');
+				setTimeout(function() { location.reload(); }, 1000);
+			},
+			error: function() {
+				$.toast({
+					heading: 'Error',
+					text: 'Error al actualizar',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error'
+				});
+			}
+		});
+	});
+});
+</script>
+
 </body>
 
 </html>

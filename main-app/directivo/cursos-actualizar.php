@@ -21,7 +21,7 @@ if (trim($_POST["nombreC"]) == "" or trim($_POST["formatoB"]) == "" or trim($_PO
 	exit();
 }
 
-if (empty($_POST["estado"])) {
+if (!isset($_POST["estado"]) || $_POST["estado"] === "") {
 	$_POST["estado"] = 1;
 }
 $esMediaTecnica = !empty($_POST["tipoG"]) ? !is_null($_POST["tipoG"]) : 0;
@@ -32,7 +32,7 @@ if (!$esMediaTecnica) {
 if (empty($_POST["tipoG"])) {
 	$_POST["tipoG"] = GRADO_GRUPAL;
 }
-if (empty($_POST["estado"])) {
+if (!isset($_POST["estado"]) || $_POST["estado"] === "") {
 	$_POST["estado"] = 1;
 }
 if (empty($_POST["imagen"])) {

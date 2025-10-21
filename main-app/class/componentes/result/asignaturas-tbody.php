@@ -55,7 +55,8 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 				</button>
 				<ul class="dropdown-menu" role="menu">
 					<?php if(Modulos::validarSubRol(['DT0021'])){?>
-						<li><a href="asignaturas-editar.php?id=<?=base64_encode($resultado['mat_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
+						<li><a href="javascript:void(0);" class="btn-editar-asignatura-modal" data-asignatura-id="<?=$resultado['mat_id'];?>"><i class="fa fa-edit"></i> Edición rápida</a></li>
+						<li><a href="asignaturas-editar.php?id=<?=base64_encode($resultado['mat_id']);?>"><i class="fa fa-pencil"></i> <?=$frases[165][$datosUsuarioActual['uss_idioma']];?> completa</a></li>
 					<?php } if($numeros[0]==0 && Modulos::validarSubRol(['DT0151'])){?>
 						<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','asignaturas-eliminar.php?id=<?=base64_encode($resultado['mat_id']);?>')">Eliminar</a></li>
 					<?php } ?>
