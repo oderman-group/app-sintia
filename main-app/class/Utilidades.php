@@ -71,7 +71,7 @@ class Utilidades {
 
             foreach ($get as $key => $value) {
                 // validammos que los parametros no sean null y sea base64  excluyendo cuando la llave sea success , error,summary  y validamos que el resultado es codificado es  alfanumerico   
-                if ($key != 'success' && $key != 'error' &&  $key != 'summary' &&  $key != 'busqueda' && !empty($value) && (!self::esBase64($value) || !self::esAlfanumerico(base64_decode($value)))) {
+                if ($key != 'success' && $key != 'error' &&  $key != 'summary' &&  $key != 'busqueda' && $key != 'page' && !empty($value) && (!self::esBase64($value) || !self::esAlfanumerico(base64_decode($value)))) {
                     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=307";</script>';
                     exit();
                 }
