@@ -151,7 +151,6 @@ if (!Modulos::validarPermisoEdicion()) {
 														<th>Usuario (REP)</th>
 														<th>Nombre</th>
 														<th><?= $frases[53][$datosUsuarioActual['uss_idioma']]; ?></th>
-														<th>Último ingreso</th>
 														<th><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
 													</tr>
 												</thead>
@@ -222,20 +221,6 @@ if (!Modulos::validarPermisoEdicion()) {
 
 														$fotoUsuario = $usuariosClase->verificarFoto($usuario['uss_foto']);
 														$estadoUsuario = !empty($usuario['uss_estado']) ? $opcionEstado[$usuario['uss_estado']] : '';
-
-														$infoTooltip = "
-														<p>
-															<img src='{$fotoUsuario}' class='img-thumbnail' width='120px;' height='120px;'>
-														</p>
-														<b>Sesión:</b><br>
-														{$estadoUsuario}<br>
-														<b>Último ingreso:</b><br>
-														{$usuario['uss_ultimo_ingreso']}<br><br>
-														<b>Email:</b><br>
-														{$usuario['uss_email']}<br>
-														<b>Fecha de nacimiento:</b><br>
-														{$usuario['uss_fecha_nacimiento']}
-														";
 														?>
 														<tr id="reg<?= $usuario['uss_id']; ?>"
 															style="background-color:<?= $bgColor; ?>;">
@@ -286,19 +271,10 @@ if (!Modulos::validarPermisoEdicion()) {
 															</td>
 															<td><?= $usuario['uss_id']; ?></td>
 															<td><?= $usuario['uss_usuario']; ?></td>
-															<td><?= $managerPrimary; ?>
-																<a tabindex="0" role="button" data-toggle="popover"
-																	data-trigger="focus"
-																	title="<?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>"
-																	data-content="<?= $infoTooltip; ?>" data-html="true"
-																	data-placement="top"
-																	style="border-bottom: 1px dotted #000;"><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?></a>
+															<td><?= $managerPrimary; ?><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>
 															</td>
 															<td <?= $backGroundMatricula ??=null; ?>>
 																<?= $usuario['pes_nombre'] . "" . $mostrarNumCargas . "" . $mostrarNumAcudidos; ?>
-															</td>
-															<td><span
-																	style="font-size: 11px;"><?= $usuario['uss_ultimo_ingreso']; ?></span>
 															</td>
 															<td>
 																<div class="btn-group">

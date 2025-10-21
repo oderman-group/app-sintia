@@ -134,7 +134,7 @@ class ComponenteFiltro
         global $frases, $datosUsuarioActual, $Plataforma;
         // Generar HTML del componente
         $html = "
-        <nav class='navbar navbar-expand-lg navbar-dark' style='background-color: #41c4c4;'>
+        <nav class='navbar navbar-expand-lg navbar-dark' style='background-color: #ffffff;'>
             <ul class='navbar-nav mr-auto'>";
         if (!empty($this->opciones)) {
             foreach ($this->opciones as $opcion) {
@@ -175,13 +175,13 @@ class ComponenteFiltro
             }
         }
         if (!empty($this->filtros) &&  !empty($this->opciones)) {
-            $html .= " <li class='nav-item'> <a class='nav-link' href='javascript:void(0);' style='color:#FFF;'>|</a></li>";
+            $html .= " <li class='nav-item'> <a class='nav-link' href='javascript:void(0);' style='color:#000;'>|</a></li>";
         }
         if (!empty($this->filtros)) {
 
             foreach ($this->filtros as $filtro) {
                 $html .= " <li class='nav-item dropdown'>
-                <a class='nav-link dropdown-toggle' href='javascript:void(0);' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false' style='color:#FFF;'>
+                <a class='nav-link dropdown-toggle' href='javascript:void(0);' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false' style='color:#000;'>
                 {$filtro[self::COMPB_FILTRO_TEXTO]}  ";
                 // if(!empty($filtro[self::COMPB_FILTRO_SELECT])){
                 //     $html .= ": {$filtro[self::COMPB_FILTRO_LISTA][$filtro[self::COMPB_FILTRO_SELECT]][self::COMPB_FILTRO_LISTA_TEXTO]} ";

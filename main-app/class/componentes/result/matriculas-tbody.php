@@ -10,6 +10,95 @@
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+.expandable-row {
+	background-color: #f8f9fa !important;
+	border-left: 4px solid #007bff;
+}
+
+.student-photo-container img {
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.expand-btn {
+	transition: all 0.3s ease;
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.expand-btn:hover {
+	transform: scale(1.1);
+}
+
+.expandable-row h6 {
+	font-weight: 600;
+	margin-bottom: 15px;
+}
+
+.expandable-row .text-primary {
+	color: #007bff !important;
+}
+
+.expandable-row .text-success {
+	color: #28a745 !important;
+}
+
+.expandable-row .text-warning {
+	color: #ffc107 !important;
+}
+
+.expandable-row .text-info {
+	color: #17a2b8 !important;
+}
+
+.expandable-row .badge {
+	font-size: 0.75em;
+}
+
+@media (max-width: 768px) {
+	.expandable-row .col-md-2,
+	.expandable-row .col-md-3,
+	.expandable-row .col-md-4 {
+		margin-bottom: 20px;
+	}
+}
+
+/* Estilos para edición inline del nombre */
+.student-name-display:hover {
+	background-color: #f8f9fa;
+	border-radius: 4px;
+	padding: 2px 4px;
+	transition: background-color 0.2s ease;
+}
+
+.student-name-display:hover .fa-edit {
+	color: #007bff !important;
+}
+
+.student-name-edit .form-control-sm {
+	font-size: 0.875rem;
+	padding: 0.25rem 0.5rem;
+}
+
+.student-name-edit .btn-sm {
+	font-size: 0.75rem;
+	padding: 0.25rem 0.5rem;
+}
+
+.editable-name {
+	transition: color 0.2s ease;
+}
+
+.student-name-display:hover .editable-name {
+	color: #007bff;
+}
+</style>
 <?php
 if (!empty($data["dataTotal"])) {
 	require_once(ROOT_PATH . "/main-app/class/UsuariosPadre.php");
@@ -120,20 +209,16 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $resultado['mat_documento']; ?></td>
 		<?php $nombre = Estudiantes::NombreCompletoDelEstudiante($resultado); ?>
 
-		<td <?= $color; ?>><?= $marcaMediaTecnica; ?><?= $nombre; ?></td>
+		<td <?= $color; ?>>
+			<div class="student-name-container" style="cursor: pointer;" 
+				 onclick="abrirModalEdicionRapida('<?= htmlspecialchars($resultado['mat_id'], ENT_QUOTES); ?>')"
+				 title="Hacer clic para editar datos del estudiante">
+				<?= $marcaMediaTecnica; ?><span class="editable-name"><?= $nombre; ?></span>
+				<i class="fa fa-edit text-muted ml-1" style="font-size: 0.8em;"></i>
+			</div>
+		</td>
 		<td><?= strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= $resultado['uss_usuario']; ?></td>
-		<?php
-		$editarAcudiente = $nombreAcudiente;
-		if ($permisoEditarUsuario && !empty($idAcudiente)) {
-			$editarAcudiente = '<a href="usuarios-editar.php?id=' . base64_encode($idAcudiente) . '" style="text-decoration: underline;">' . $nombreAcudiente . '</a>';
-		}
-		?>
-		<td><?= $editarAcudiente; ?>
-			<?php if (!empty($idAcudiente) && !empty($nombreAcudiente)) { ?>
-				<br><a href="mensajes-redactar.php?para=<?= base64_encode($idAcudiente); ?>" style="text-decoration:underline; color:blue;">Enviar mensaje</a>
-			<?php } ?>
-		</td>
 		<td>
 			<div class="btn-group">
 				<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
@@ -224,21 +309,126 @@ foreach ($data["data"] as $resultado) {
 		</td>
 	</tr>
 	<tr class="expandable-row" id="expand-<?= $resultado['mat_id']; ?>" style="display: none;">
-		<td colspan="10" style="background-color: #f8f9fa; padding: 15px;">
+		<td colspan="9" style="background-color: #f8f9fa; padding: 20px;">
 			<div class="row">
-				<div class="col-md-6">
-					<h6>Información Adicional del Estudiante</h6>
-					<p><strong>Dirección:</strong> <?= $resultado['mat_direccion'] ?? 'No disponible'; ?></p>
-					<p><strong>Teléfono:</strong> <?= $resultado['mat_telefono'] ?? 'No disponible'; ?></p>
-					<p><strong>Email:</strong> <?= $resultado['mat_email'] ?? 'No disponible'; ?></p>
-					<p><strong>Fecha de Nacimiento:</strong> <?= $resultado['mat_fecha_nacimiento'] ?? 'No disponible'; ?></p>
+				<!-- Foto del Estudiante -->
+				<div class="col-md-2 text-center">
+					<div class="student-photo-container">
+						<?php if (!empty($fotoEstudiante)) { ?>
+							<img src="<?= $fotoEstudiante; ?>" alt="Foto del estudiante" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+						<?php } else { ?>
+							<div class="img-thumbnail d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background-color: #f8f9fa;">
+								<i class="fa fa-user fa-3x text-muted"></i>
+							</div>
+						<?php } ?>
+						<p class="mt-2 mb-0"><small class="text-muted">Foto del Estudiante</small></p>
+					</div>
 				</div>
-				<div class="col-md-6">
-					<h6>Información Académica</h6>
-					<p><strong>Grado:</strong> <?= $resultado['gra_nombre'] ?? 'No disponible'; ?></p>
-					<p><strong>Grupo:</strong> <?= $resultado['gru_nombre'] ?? 'No disponible'; ?></p>
-					<p><strong>Estado Matrícula:</strong> <?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']] ?? 'No disponible'; ?></p>
-					<p><strong>Fecha de Matrícula:</strong> <?= $resultado['mat_fecha'] ?? 'No disponible'; ?></p>
+				
+				<!-- Información Personal del Estudiante -->
+				<div class="col-md-4">
+					<h6 class="text-primary mb-3"><i class="fa fa-user"></i> Información Personal</h6>
+					<div class="row">
+						<div class="col-6">
+							<p class="mb-2"><strong>Documento:</strong><br><span class="text-muted"><?= $resultado['mat_documento'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Tipo Doc:</strong><br><span class="text-muted"><?= $resultado['mat_tipo_documento'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Fecha Nacimiento:</strong><br><span class="text-muted"><?= $resultado['mat_fecha_nacimiento'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Género:</strong><br><span class="text-muted"><?= $resultado['mat_genero'] ?? 'No disponible'; ?></span></p>
+						</div>
+						<div class="col-6">
+							<p class="mb-2"><strong>Dirección:</strong><br><span class="text-muted"><?= $resultado['mat_direccion'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Barrio:</strong><br><span class="text-muted"><?= $resultado['mat_barrio'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Celular:</strong><br><span class="text-muted"><?= $resultado['mat_celular'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Email:</strong><br><span class="text-muted"><?= $resultado['mat_email'] ?? 'No disponible'; ?></span></p>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col-6">
+							<p class="mb-2"><strong>Estrato:</strong><br><span class="text-muted"><?= $resultado['mat_estrato'] ?? 'No disponible'; ?></span></p>
+						</div>
+						<div class="col-6">
+							<p class="mb-2"><strong>EPS:</strong><br><span class="text-muted"><?= $resultado['mat_eps'] ?? 'No disponible'; ?></span></p>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Información Académica -->
+				<div class="col-md-3">
+					<h6 class="text-success mb-3"><i class="fa fa-graduation-cap"></i> Información Académica</h6>
+					<p class="mb-2"><strong>Grado:</strong><br><span class="text-muted"><?= $resultado['gra_nombre'] ?? 'No disponible'; ?></span></p>
+					<p class="mb-2"><strong>Grupo:</strong><br><span class="text-muted"><?= $resultado['gru_nombre'] ?? 'No disponible'; ?></span></p>
+					<p class="mb-2"><strong>Estado Matrícula:</strong><br>
+						<span class="<?= $estadosEtiquetasMatriculas[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary'; ?>">
+							<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']] ?? 'No disponible'; ?>
+						</span>
+					</p>
+					<p class="mb-2"><strong>Fecha Matrícula:</strong><br><span class="text-muted"><?= $resultado['mat_fecha'] ?? 'No disponible'; ?></span></p>
+					<p class="mb-2"><strong>Usuario:</strong><br><span class="text-muted"><?= $resultado['uss_usuario'] ?? 'No disponible'; ?></span></p>
+					<?php if ($resultado['mat_inclusion'] == 1) { ?>
+						<p class="mb-2"><span class="badge badge-info">Estudiante con Inclusión</span></p>
+					<?php } ?>
+				</div>
+				
+				<!-- Información del Acudiente -->
+				<div class="col-md-3">
+					<h6 class="text-warning mb-3"><i class="fa fa-users"></i> Información del Acudiente</h6>
+					<?php if (!empty($idAcudiente) && !empty($nombreAcudiente)) { ?>
+						<p class="mb-2"><strong>Nombre:</strong><br>
+							<?php if ($permisoEditarUsuario) { ?>
+								<a href="usuarios-editar.php?id=<?= base64_encode($idAcudiente); ?>" class="text-primary">
+									<?= $nombreAcudiente; ?>
+								</a>
+							<?php } else { ?>
+								<span class="text-muted"><?= $nombreAcudiente; ?></span>
+							<?php } ?>
+						</p>
+						<p class="mb-2"><strong>ID Acudiente:</strong><br><span class="text-muted"><?= $idAcudiente; ?></span></p>
+						<div class="mt-3">
+							<a href="mensajes-redactar.php?para=<?= base64_encode($idAcudiente); ?>" class="btn btn-sm btn-outline-primary">
+								<i class="fa fa-envelope"></i> Enviar Mensaje
+							</a>
+						</div>
+					<?php } else { ?>
+						<p class="text-muted"><em>No hay acudiente registrado</em></p>
+					<?php } ?>
+				</div>
+			</div>
+			
+			<!-- Información Adicional -->
+			<div class="row mt-3">
+				<div class="col-12">
+					<hr>
+					<h6 class="text-info mb-3"><i class="fa fa-info-circle"></i> Información Adicional</h6>
+					<div class="row">
+						<div class="col-md-3">
+							<p class="mb-1"><strong>Grupo Sanguíneo:</strong><br><span class="text-muted"><?= $resultado['mat_tipo_sangre'] ?? 'No disponible'; ?></span></p>
+						</div>
+						<div class="col-md-3">
+							<p class="mb-1"><strong>Teléfono:</strong><br><span class="text-muted"><?= $resultado['mat_telefono'] ?? 'No disponible'; ?></span></p>
+						</div>
+						<div class="col-md-3">
+							<p class="mb-1"><strong>Celular 2:</strong><br><span class="text-muted"><?= $resultado['mat_celular2'] ?? 'No disponible'; ?></span></p>
+						</div>
+						<div class="col-md-3">
+							<p class="mb-1"><strong>Ciudad Residencia:</strong><br><span class="text-muted"><?= $resultado['mat_ciudad_residencia'] ?? 'No disponible'; ?></span></p>
+						</div>
+					</div>
+					<?php if (!empty($resultado['mat_matricula'])) { ?>
+						<div class="row mt-2">
+							<div class="col-md-3">
+								<p class="mb-1"><strong>Número Matrícula:</strong><br><span class="text-muted"><?= $resultado['mat_matricula']; ?></span></p>
+							</div>
+							<div class="col-md-3">
+								<p class="mb-1"><strong>Código Tesorería:</strong><br><span class="text-muted"><?= $resultado['mat_codigo_tesoreria'] ?? 'No disponible'; ?></span></p>
+							</div>
+							<div class="col-md-3">
+								<p class="mb-1"><strong>Folio:</strong><br><span class="text-muted"><?= $resultado['mat_folio'] ?? 'No disponible'; ?></span></p>
+							</div>
+							<div class="col-md-3">
+								<p class="mb-1"><strong>Valor Matrícula:</strong><br><span class="text-muted">$<?= number_format($resultado['mat_valor_matricula'] ?? 0, 0, ',', '.'); ?></span></p>
+							</div>
+						</div>
+					<?php } ?>
 				</div>
 			</div>
 		</td>
@@ -247,6 +437,160 @@ foreach ($data["data"] as $resultado) {
 	$contReg++;
 }
 ?>
+
+<!-- Modal de Edición Rápida -->
+<div class="modal fade" id="modalEdicionRapida" tabindex="-1" role="dialog" aria-labelledby="modalEdicionRapidaLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary text-white">
+				<h5 class="modal-title" id="modalEdicionRapidaLabel">
+					<i class="fa fa-user-edit"></i> Edición Rápida del Estudiante
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form id="formEdicionRapida">
+					<input type="hidden" id="mat_id_modal" name="mat_id">
+					
+					<!-- Información Personal -->
+					<div class="row">
+						<div class="col-md-6">
+							<h6 class="text-primary mb-3"><i class="fa fa-user"></i> Información Personal</h6>
+							
+							<div class="form-group">
+								<label for="primer_nombre_modal">Primer Nombre *</label>
+								<input type="text" class="form-control" id="primer_nombre_modal" name="primer_nombre" required maxlength="50">
+							</div>
+							
+							<div class="form-group">
+								<label for="segundo_nombre_modal">Segundo Nombre</label>
+								<input type="text" class="form-control" id="segundo_nombre_modal" name="segundo_nombre" maxlength="50">
+							</div>
+							
+							<div class="form-group">
+								<label for="primer_apellido_modal">Primer Apellido *</label>
+								<input type="text" class="form-control" id="primer_apellido_modal" name="primer_apellido" required maxlength="50">
+							</div>
+							
+							<div class="form-group">
+								<label for="segundo_apellido_modal">Segundo Apellido</label>
+								<input type="text" class="form-control" id="segundo_apellido_modal" name="segundo_apellido" maxlength="50">
+							</div>
+							
+							<div class="form-group">
+								<label for="fecha_nacimiento_modal">Fecha de Nacimiento</label>
+								<input type="date" class="form-control" id="fecha_nacimiento_modal" name="fecha_nacimiento">
+							</div>
+							
+							<div class="form-group">
+								<label for="genero_modal">Género</label>
+								<select class="form-control" id="genero_modal" name="genero">
+									<option value="">Seleccionar...</option>
+									<option value="M">Masculino</option>
+									<option value="F">Femenino</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<h6 class="text-success mb-3"><i class="fa fa-home"></i> Información de Contacto</h6>
+							
+							<div class="form-group">
+								<label for="direccion_modal">Dirección</label>
+								<textarea class="form-control" id="direccion_modal" name="direccion" rows="2" maxlength="200"></textarea>
+							</div>
+							
+							<div class="form-group">
+								<label for="barrio_modal">Barrio</label>
+								<input type="text" class="form-control" id="barrio_modal" name="barrio" maxlength="100">
+							</div>
+							
+							<div class="form-group">
+								<label for="celular_modal">Celular</label>
+								<input type="tel" class="form-control" id="celular_modal" name="celular" maxlength="15">
+							</div>
+							
+							<div class="form-group">
+								<label for="telefono_modal">Teléfono</label>
+								<input type="tel" class="form-control" id="telefono_modal" name="telefono" maxlength="15">
+							</div>
+							
+							<div class="form-group">
+								<label for="email_modal">Email</label>
+								<input type="email" class="form-control" id="email_modal" name="email" maxlength="100">
+							</div>
+							
+							<div class="form-group">
+								<label for="estrato_modal">Estrato</label>
+								<select class="form-control" id="estrato_modal" name="estrato">
+									<option value="">Seleccionar...</option>
+									<option value="1">1</option>
+									<option value="2">2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+									<option value="6">6</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Información Académica -->
+					<div class="row mt-3">
+						<div class="col-md-6">
+							<h6 class="text-info mb-3"><i class="fa fa-graduation-cap"></i> Información Académica</h6>
+							
+							<div class="form-group">
+								<label for="grado_modal">Grado</label>
+								<input type="text" class="form-control" id="grado_modal" name="grado" readonly>
+							</div>
+							
+							<div class="form-group">
+								<label for="grupo_modal">Grupo</label>
+								<input type="text" class="form-control" id="grupo_modal" name="grupo" readonly>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<h6 class="text-warning mb-3"><i class="fa fa-heart"></i> Información Médica</h6>
+							
+							<div class="form-group">
+								<label for="tipo_sangre_modal">Grupo Sanguíneo</label>
+								<select class="form-control" id="tipo_sangre_modal" name="tipo_sangre">
+									<option value="">Seleccionar...</option>
+									<option value="A+">A+</option>
+									<option value="A-">A-</option>
+									<option value="B+">B+</option>
+									<option value="B-">B-</option>
+									<option value="AB+">AB+</option>
+									<option value="AB-">AB-</option>
+									<option value="O+">O+</option>
+									<option value="O-">O-</option>
+								</select>
+							</div>
+							
+							<div class="form-group">
+								<label for="eps_modal">EPS</label>
+								<input type="text" class="form-control" id="eps_modal" name="eps" maxlength="100">
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">
+					<i class="fa fa-times"></i> Cancelar
+				</button>
+				<button type="button" class="btn btn-primary" id="btnGuardarRapido">
+					<i class="fa fa-save"></i> Guardar Cambios
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script type="application/javascript">
 	async function cambiarGrupo(mat_id) {
 		var data = {
@@ -262,19 +606,200 @@ foreach ($data["data"] as $resultado) {
 		abrirModal("Retirar Estudiante", "estudiantes-retirar-modal.php", data);
 	}
 
+	// Función para abrir modal de edición rápida
+	function abrirModalEdicionRapida(matId) {
+		console.log('Abriendo modal para estudiante ID:', matId);
+		console.log('Modal existe:', $('#modalEdicionRapida').length > 0);
+		
+		// Mostrar indicador de carga
+		$('#btnGuardarRapido').html('<i class="fa fa-spinner fa-spin"></i> Cargando...').prop('disabled', true);
+		
+		// Limpiar formulario
+		$('#formEdicionRapida')[0].reset();
+		
+		// Obtener datos del estudiante
+		console.log('Enviando petición AJAX para obtener datos...');
+		$.ajax({
+			url: 'ajax-obtener-datos-estudiante.php',
+			method: 'POST',
+			data: { mat_id: matId },
+			dataType: 'json',
+			success: function(response) {
+				console.log('Respuesta recibida:', response);
+				if (response.success) {
+					var estudiante = response.data;
+					
+					// Llenar formulario
+					$('#mat_id_modal').val(matId);
+					$('#primer_nombre_modal').val(estudiante.mat_nombres || '');
+					$('#segundo_nombre_modal').val(estudiante.mat_nombre2 || '');
+					$('#primer_apellido_modal').val(estudiante.mat_primer_apellido || '');
+					$('#segundo_apellido_modal').val(estudiante.mat_segundo_apellido || '');
+					$('#fecha_nacimiento_modal').val(estudiante.mat_fecha_nacimiento || '');
+					$('#genero_modal').val(estudiante.mat_genero || '');
+					$('#direccion_modal').val(estudiante.mat_direccion || '');
+					$('#barrio_modal').val(estudiante.mat_barrio || '');
+					$('#celular_modal').val(estudiante.mat_celular || '');
+					$('#telefono_modal').val(estudiante.mat_telefono || '');
+					$('#email_modal').val(estudiante.mat_email || '');
+					$('#estrato_modal').val(estudiante.mat_estrato || '');
+					$('#grado_modal').val(estudiante.gra_nombre || '');
+					$('#grupo_modal').val(estudiante.gru_nombre || '');
+					$('#tipo_sangre_modal').val(estudiante.mat_tipo_sangre || '');
+					$('#eps_modal').val(estudiante.mat_eps || '');
+					
+					// Mostrar modal
+					$('#modalEdicionRapida').modal('show');
+					
+					// Restaurar botón
+					$('#btnGuardarRapido').html('<i class="fa fa-save"></i> Guardar Cambios').prop('disabled', false);
+					
+					// Enfocar primer campo
+					$('#primer_nombre_modal').focus();
+				} else {
+					alert('❌ Error al cargar datos del estudiante: ' + (response.message || 'Error desconocido'));
+					$('#btnGuardarRapido').html('<i class="fa fa-save"></i> Guardar Cambios').prop('disabled', false);
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error al cargar datos del estudiante:', error);
+				alert('❌ Error de conexión. Intente nuevamente.');
+				$('#btnGuardarRapido').html('<i class="fa fa-save"></i> Guardar Cambios').prop('disabled', false);
+			}
+		});
+	}
+
+	// Función para guardar cambios del estudiante
+	function guardarCambiosRapidos() {
+		
+		// Validar formulario
+		if (!$('#formEdicionRapida')[0].checkValidity()) {
+			$('#formEdicionRapida')[0].reportValidity();
+			return;
+		}
+		
+		// Validar campos obligatorios
+		var primerNombre = $('#primer_nombre_modal').val().trim();
+		var primerApellido = $('#primer_apellido_modal').val().trim();
+		
+		
+		if (!primerNombre || !primerApellido) {
+			alert('El primer nombre y primer apellido son obligatorios.');
+			return;
+		}
+		
+		// Mostrar indicador de carga
+		var saveBtn = $('#btnGuardarRapido');
+		var originalText = saveBtn.html();
+		saveBtn.html('<i class="fa fa-spinner fa-spin"></i> Guardando...').prop('disabled', true);
+		
+		// Preparar datos del formulario
+		var formData = {
+			mat_id: $('#mat_id_modal').val(),
+			primer_nombre: primerNombre,
+			segundo_nombre: $('#segundo_nombre_modal').val().trim(),
+			primer_apellido: primerApellido,
+			segundo_apellido: $('#segundo_apellido_modal').val().trim(),
+			fecha_nacimiento: $('#fecha_nacimiento_modal').val(),
+			genero: $('#genero_modal').val(),
+			direccion: $('#direccion_modal').val().trim(),
+			barrio: $('#barrio_modal').val().trim(),
+			celular: $('#celular_modal').val().trim(),
+			telefono: $('#telefono_modal').val().trim(),
+			email: $('#email_modal').val().trim(),
+			estrato: $('#estrato_modal').val(),
+			tipo_sangre: $('#tipo_sangre_modal').val(),
+			eps: $('#eps_modal').val().trim()
+		};
+		
+		
+		// Enviar datos por AJAX
+		$.ajax({
+			url: 'ajax-actualizar-estudiante-rapido.php',
+			method: 'POST',
+			data: formData,
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					// Cerrar modal
+					$('#modalEdicionRapida').modal('hide');
+					
+					// Mostrar mensaje de éxito
+					alert('✅ ' + (response.message || 'Datos del estudiante actualizados correctamente'));
+					
+					// Actualizar la tabla sin recargar la página
+					actualizarTablaEstudiantes();
+				} else {
+					// Mostrar mensaje de error
+					alert('❌ Error: ' + (response.message || 'Error desconocido'));
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error en la petición:', error);
+				alert('❌ Error de conexión. Intente nuevamente.');
+			},
+			complete: function() {
+				saveBtn.html(originalText).prop('disabled', false);
+			}
+		});
+	}
+
+	// Función para actualizar la tabla de estudiantes sin recargar la página
+	function actualizarTablaEstudiantes() {
+		// Por ahora, simplemente recargar la página para evitar problemas
+		// TODO: Implementar actualización AJAX más robusta
+		setTimeout(function() {
+			location.reload();
+		}, 1000);
+	}
+
 	$(document).ready(function() {
+		// Event listener para el botón de guardar en el modal
+		$('#btnGuardarRapido').on('click', function() {
+			guardarCambiosRapidos();
+		});
+		
 		// Use event delegation for dynamically loaded content
 		$(document).on('click', '.expand-btn', function() {
 			var id = $(this).data('id');
 			var row = $('#expand-' + id);
 			var icon = $(this).find('i');
+			var button = $(this);
 
 			if (row.is(':visible')) {
-				row.hide();
-				icon.removeClass('fa-minus').addClass('fa-plus');
+				// Collapse with animation
+				row.slideUp(300, function() {
+					icon.removeClass('fa-minus').addClass('fa-plus');
+					button.removeClass('btn-outline-danger').addClass('btn-outline-primary');
+				});
 			} else {
-				row.show();
-				icon.removeClass('fa-plus').addClass('fa-minus');
+				// Expand with animation
+				row.slideDown(300, function() {
+					icon.removeClass('fa-plus').addClass('fa-minus');
+					button.removeClass('btn-outline-primary').addClass('btn-outline-danger');
+				});
+			}
+		});
+		
+		// Event listener para editar nombre
+		$(document).on('click', '.student-name-display', function() {
+			var matId = $(this).closest('.student-name-container').data('id');
+			editarNombre(matId);
+		});
+		
+		// Permitir cancelar con Escape
+		$(document).on('keydown', '.student-name-edit input', function(e) {
+			if (e.key === 'Escape') {
+				var matId = $(this).attr('id').split('_')[1];
+				cancelarEdicionNombre(matId);
+			}
+		});
+		
+		// Permitir guardar con Enter
+		$(document).on('keydown', '.student-name-edit input', function(e) {
+			if (e.key === 'Enter') {
+				var matId = $(this).attr('id').split('_')[1];
+				guardarNombre(matId);
 			}
 		});
 	});

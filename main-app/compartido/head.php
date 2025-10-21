@@ -61,7 +61,7 @@ if (!empty($datosPaginaActual)) {
 	<link rel="stylesheet" type="text/css" href="<?=BASE_URL;?>/librerias/modal-img-styles/estilos_redimencionar_fotos.css">
     <!-- google font -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
-	<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+	<link href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,301,701,300,501,401,901,400&display=swap" rel="stylesheet">
 	<!-- icons -->
     <link href="<?=BASE_URL;?>/config-general/fonts/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
     <link href="<?=BASE_URL;?>/config-general/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>

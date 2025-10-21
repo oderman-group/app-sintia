@@ -24,7 +24,7 @@
         <!-- start page content -->
         <div class="page-content-wrapper">
 
-            <div class="page-content" style="background-color: #41c4c4;">
+            <div class="page-content" style="background-color: #ffffff;">
                 <!-- <p style="font-size: 4rem;">&#x1F642; &#x1F3F9; &#x1F958; &#x1F96A; &#x1F99C; &#x1F9CA; &#x1FAA2; &#x1F6DD; &#x1FABC;</p> -->
                 <div class="row">
                     <div class="card2 chat-app">

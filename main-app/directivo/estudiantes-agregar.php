@@ -142,11 +142,12 @@ if(!Modulos::validarPermisoEdicion()){
                                     
 
                                  <div class="card-body">
-                                 	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-guardar.php" method="post">
+                                    <form name="example_advanced_form" id="example-advanced-form" action="estudiantes-guardar.php" method="post" novalidate>
 									  
 										<h3>Información personal</h3>
 									    <fieldset>
-											
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Identificación <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+									
 
 											
 											<div class="form-group row">
@@ -178,7 +179,8 @@ if(!Modulos::validarPermisoEdicion()){
 
 											</div>	
 												
-											<div class="form-group row">
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Datos personales <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="form-group row">
 												<label class="col-sm-2 control-label">Lugar de expedición</label>
 												<div class="col-sm-4">
 													<select class="form-control  select2" name="lugarD" <?=$disabledPermiso;?>>
@@ -241,13 +243,14 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 											
-											<div class="form-group row">
+							<div class="form-group row" id="fNacGroup">
 												<label class="col-sm-2 control-label">Fecha de nacimiento</label>
 												<div class="col-sm-4">
-													<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input1" data-link-format="yyyy-mm-dd">
-													<input class="form-control" size="16" type="text" value="<?=$datosMatricula['nacimiento'];?>" <?=$disabledPermiso;?>>
+									<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input1" data-link-format="yyyy-mm-dd" data-date-enddate="<?=date('Y-m-d', strtotime('-1 year'));?>">
+									<input class="form-control" size="16" type="text" value="<?=$datosMatricula['nacimiento'];?>" <?=$disabledPermiso;?> readonly aria-describedby="fNacError" aria-invalid="false">
 													<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
 													</div>
+									<small id="fNacError" class="text-danger" style="display:none;">La fecha de nacimiento no puede ser futura ni menor de 1 año.</small>
 												</div>
 												<input type="hidden" id="dtp_input1" name="fNac">
 											</div>
@@ -401,7 +404,8 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 											
-											<div class="form-group row">
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Residencia y contacto <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="form-group row">
 												<label class="col-sm-2 control-label">Direcci&oacute;n</label>
 												<div class="col-sm-4">
 													<input type="text" name="direccion" class="form-control" autocomplete="off" value="<?=$datosMatricula['direcion'];?>" <?=$disabledPermiso;?>>
@@ -467,12 +471,14 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>								   
 									       
-										</fieldset>
+							</fieldset>
 										
 									    <h3>Información académica</h3>
 									    <fieldset>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Curso y grupo <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
 
-											<div class="form-group row">
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Tipo y estado <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="form-group row">
 												<label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
 												<div class="col-sm-4">
 													<select class="form-control" name="grado" required <?=$disabledPermiso;?>>
@@ -489,7 +495,8 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 												
-											<div class="form-group row">
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Pagos y opciones <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="form-group row">
 												<label class="col-sm-2 control-label">Grupo</label>
 												<div class="col-sm-2">
 													<select class="form-control" name="grupo" <?=$disabledPermiso;?>>
@@ -607,12 +614,13 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											<?php } ?>
 											
-									    </fieldset>
+							</fieldset>
 										   
 										<h3>Información del Acudiente</h3>
 										<fieldset>
-                      
-											<div class="form-group row">
+							<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Identificación del acudiente <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+							<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Datos del acudiente <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+							<div class="form-group row">
 												<label class="col-sm-2 control-label">Tipo de documento</label>
 												<div class="col-sm-3">
 													<?php
@@ -701,13 +709,14 @@ if(!Modulos::validarPermisoEdicion()){
 												?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Fecha de nacimiento</label>
-												<div class="col-sm-3">
-													<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input2" data-link-format="yyyy-mm-dd">
-													<input class="form-control" size="16" type="text" <?=$disabledPermiso;?>>
-													<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
-													</div>
-												</div>
-												<input type="hidden" id="dtp_input1" name="fechaNA">
+								<div class="col-sm-3" id="fNacAGroup">
+									<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input2" data-link-format="yyyy-mm-dd" data-date-enddate="<?=date('Y-m-d', strtotime('-14 year'));?>">
+									<input class="form-control" size="16" type="text" <?=$disabledPermiso;?> readonly aria-describedby="fNacAError" aria-invalid="false">
+									<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
+									</div>
+									<small id="fNacAError" class="text-danger" style="display:none;">El acudiente debe tener al menos 14 años.</small>
+								</div>
+								<input type="hidden" id="dtp_input2" name="fechaNA">
 
 												<label class="col-sm-2 control-label">Genero</label>
 												<div class="col-sm-3">
@@ -809,6 +818,348 @@ if(!Modulos::validarPermisoEdicion()){
 
 	<script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"  charset="UTF-8"></script>
     <script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker-init.js"  charset="UTF-8"></script>
+    <script src="../../config-general/assets/plugins/jquery-validation/js/additional-methods.min.js"></script>
+    <div id="submitOverlay" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.7); z-index: 2000;">
+    	<div style="position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); width:320px;">
+    		<div class="progress">
+    			<div id="submitProgress" class="progress-bar progress-bar-striped active" role="progressbar" style="width: 30%">Procesando…</div>
+    		</div>
+    		<div style="text-align:center; margin-top:8px; color:#333;">Guardando matrícula, por favor espere…</div>
+    	</div>
+    </div>
+    <div id="successModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    	<div class="modal-dialog" role="document">
+    		<div class="modal-content">
+    			<div class="modal-header">
+    				<h5 class="modal-title">Estudiante creado</h5>
+    				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    			</div>
+    			<div class="modal-body">
+    				<p>El estudiante se creó correctamente. ¿Qué deseas hacer?</p>
+    			</div>
+    			<div class="modal-footer">
+    				<button type="button" class="btn btn-secondary" data-dismiss="modal" id="btnAddAnother">Agregar otro</button>
+    				<a href="#" class="btn btn-primary" id="btnGoEdit">Ir a editar</a>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+    <script type="text/javascript">
+    (function(){
+    	var today = new Date();
+    	var maxDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    	// Aplica sólo al datepicker enlazado al campo oculto dtp_input1 (fecha de nacimiento del estudiante)
+    	var $picker = $(".form_date[data-link-field='dtp_input1']");
+    	if ($picker.length && typeof $picker.datetimepicker === 'function') {
+    		$picker.datetimepicker('setEndDate', maxDate);
+		// Validación inmediata al cambiar la fecha (incluye edición programática)
+		var $hidden = $("#dtp_input1");
+		var $input = $picker.find('input.form-control');
+		var $error = $("#fNacError");
+		var $group = $("#fNacGroup");
+		var showError = function(msg){
+			if(msg){ $error.text(msg); }
+			$error.show();
+			$input.attr('aria-invalid','true');
+			$group.addClass('has-error');
+		};
+		var clearError = function(){
+			$error.hide();
+			$input.attr('aria-invalid','false');
+			$group.removeClass('has-error');
+		};
+		var validateDate = function(){
+			var val = $hidden.val();
+			if(!val){ clearError(); return; }
+			var parts = val.split('-');
+			if(parts.length !== 3){
+				$hidden.val('');
+				$input.val('');
+				showError('Fecha de nacimiento inválida.');
+				return;
+			}
+			var selected = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+			var todayLocal = new Date();
+			var max = new Date(todayLocal.getFullYear() - 1, todayLocal.getMonth(), todayLocal.getDate());
+			if(selected > max){
+				$hidden.val('');
+				$input.val('');
+				showError('La fecha de nacimiento no puede ser futura ni menor de 1 año.');
+				return;
+			}
+			clearError();
+		};
+		$hidden.on('change', validateDate);
+		$picker.on('changeDate', validateDate);
+    	}
+
+	// Validación para fecha de nacimiento del acudiente (mínimo 14 años)
+	var $pickerA = $(".form_date[data-link-field='dtp_input2']");
+	if ($pickerA.length && typeof $pickerA.datetimepicker === 'function') {
+		var todayA = new Date();
+		var maxDateA = new Date(todayA.getFullYear() - 14, todayA.getMonth(), todayA.getDate());
+		$pickerA.datetimepicker('setEndDate', maxDateA);
+		var $hiddenA = $("#dtp_input2");
+		var $inputA = $pickerA.find('input.form-control');
+		var $errorA = $("#fNacAError");
+		var $groupA = $("#fNacAGroup");
+		var showErrorA = function(msg){ if(msg){ $errorA.text(msg); } $errorA.show(); $inputA.attr('aria-invalid','true'); $groupA.addClass('has-error'); };
+		var clearErrorA = function(){ $errorA.hide(); $inputA.attr('aria-invalid','false'); $groupA.removeClass('has-error'); };
+		var validateDateA = function(){
+			var val = $hiddenA.val();
+			if(!val){ clearErrorA(); return; }
+			var parts = val.split('-');
+			if(parts.length !== 3){ $hiddenA.val(''); $inputA.val(''); showErrorA('Fecha inválida.'); return; }
+			var selected = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+			var todayLocal = new Date();
+			var max = new Date(todayLocal.getFullYear() - 14, todayLocal.getMonth(), todayLocal.getDate());
+			if(selected > max){ $hiddenA.val(''); $inputA.val(''); showErrorA('El acudiente debe tener al menos 14 años.'); return; }
+			clearErrorA();
+		};
+		$hiddenA.on('change', validateDateA);
+		$pickerA.on('changeDate', validateDateA);
+	}
+    })();
+    </script>
+    <script type="text/javascript">
+    (function(){
+    	var $form = $("#example-advanced-form");
+    	// Asegurar navegación por TAB natural con tabindex secuencial
+    	$form.find('input, select, textarea, button').each(function(index){
+    		if(!this.hasAttribute('tabindex')){ this.setAttribute('tabindex', (index+1)); }
+    	});
+
+    	// Configurar jQuery Validate visual
+    	if ($.fn.validate) {
+    		$form.validate({
+    			errorClass: 'text-danger',
+    			errorElement: 'small',
+    			highlight: function(element){
+    				$(element).attr('aria-invalid','true').closest('.form-group').addClass('has-error');
+    			},
+    			unhighlight: function(element){
+    				$(element).attr('aria-invalid','false').closest('.form-group').removeClass('has-error');
+    			},
+    			errorPlacement: function(error, element){
+    				var $container = element.closest('.col-sm-4, .col-sm-3, .col-sm-2, .col-sm-6');
+    				if($container.length){ error.appendTo($container); } else { error.insertAfter(element); }
+    			},
+    			ignore: ':hidden:not(#dtp_input1)',
+    			rules: {
+    				nDoc: { required: true },
+    				apellido1: { required: true },
+    				nombres: { required: true },
+    				grado: { required: true },
+							documentoA: { required: true },
+							email: { email: true }
+    			},
+    			messages: {
+    				nDoc: 'Número de documento es obligatorio.',
+    				apellido1: 'Primer apellido es obligatorio.',
+    				nombres: 'Primer nombre es obligatorio.',
+							grado: 'Curso es obligatorio.',
+							documentoA: 'Documento del acudiente es obligatorio.',
+							email: 'Ingresa un correo electrónico válido.'
+    			}
+    		});
+    	}
+
+    	// Interceptar submit y enviar vía fetch con progreso
+    	$form.on('submit', function(ev){
+    		ev.preventDefault();
+    		if ($.fn.validate && !$form.valid()) { return; }
+    		var $overlay = $('#submitOverlay');
+    		var $bar = $('#submitProgress');
+    		$overlay.show();
+    		var grow = 35;
+    		var timer = setInterval(function(){
+    			grow = Math.min(95, grow + Math.random()*7);
+    			$bar.css('width', grow+'%');
+    		}, 300);
+    		var formData = new FormData($form[0]);
+        fetch($form.attr('action'), {
+    			method: 'POST',
+    			body: formData,
+    			headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+    			credentials: 'same-origin'
+        }).then(function(r){
+            var ct = r.headers.get('content-type') || '';
+            if (ct.indexOf('application/json') !== -1) { return r.json(); }
+            return r.text().then(function(t){ return { ok:false, message:'Respuesta inesperada del servidor', raw:t }; });
+    		}).then(function(json){
+    			if (json && json.ok) {
+    				$bar.css('width','100%');
+    				setTimeout(function(){
+    					clearInterval(timer); $overlay.hide();
+    					$('#btnGoEdit').attr('href', json.editUrl);
+    					$('#successModal').modal('show');
+    					$('#btnAddAnother').off('click').on('click', function(){ window.location.href = 'estudiantes-agregar.php'; });
+    				}, 300);
+            } else {
+    				clearInterval(timer); $overlay.hide();
+                var message = (json && json.message) ? json.message : 'No se pudo guardar. Verifique los datos.';
+                // Mostrar error inline en el paso actual
+                try {
+                    var $currentBody = $form.find('.body:visible').first();
+                    var $existing = $currentBody.find('.server-error');
+                    var html = '<div class="server-error alert alert-danger" role="alert" style="margin-bottom:15px;">'+ message +'</div>';
+                    if ($existing.length) { $existing.replaceWith(html); } else { $currentBody.prepend(html); }
+                } catch(e) { alert(message); }
+    				if (json && json.field) {
+    					var $el = $('[name="'+json.field+'"]');
+    					if ($el.length) { $el.focus(); }
+    				}
+    			}
+        }).catch(function(err){
+            clearInterval(timer); $overlay.hide();
+            try {
+                var $currentBody = $form.find('.body:visible').first();
+                var $existing = $currentBody.find('.server-error');
+                var html = '<div class="server-error alert alert-danger" role="alert" style="margin-bottom:15px;">Ocurrió un error de red. Intente nuevamente.</div>';
+                if ($existing.length) { $existing.replaceWith(html); } else { $currentBody.prepend(html); }
+            } catch(e) { alert('Ocurrió un error de red. Intente nuevamente.'); }
+        });
+        });
+
+        // Tooltips de ayuda en campos
+        try {
+            var helpTexts = {
+                tipoD: 'Selecciona el tipo de documento del estudiante.',
+                nDoc: 'Escribe el número de documento del estudiante (único).',
+                lugarD: 'Ciudad donde fue expedido el documento del estudiante.',
+                folio: 'Número de folio si aplica.',
+                codTesoreria: 'Código interno de tesorería si aplica.',
+                apellido1: 'Primer apellido del estudiante (obligatorio).',
+                apellido2: 'Segundo apellido del estudiante (opcional).',
+                nombres: 'Primer nombre del estudiante (obligatorio).',
+                nombre2: 'Segundo nombre del estudiante (opcional).',
+                email: 'Correo del estudiante para notificaciones.',
+                fNac: 'Fecha de nacimiento del estudiante (mínimo 1 año).',
+                lNacM: 'Lugar de nacimiento del estudiante.',
+                ciudadPro: 'Si es extranjero, escribe su ciudad de procedencia.',
+                genero: 'Selecciona el género del estudiante.',
+                tipoSangre: 'Grupo sanguíneo del estudiante.',
+                eps: 'Entidad de salud (EPS) del estudiante.',
+                inclusion: 'Indica si el estudiante es de inclusión.',
+                religion: 'Religión del estudiante.',
+                extran: 'Indica si el estudiante es extranjero.',
+                grupoEtnico: 'Grupo étnico del estudiante.',
+                discapacidad: 'Limitación o discapacidad del estudiante.',
+                tipoSituacion: 'Situación especial (si aplica).',
+                direccion: 'Dirección de residencia del estudiante.',
+                barrio: 'Barrio donde reside el estudiante.',
+                ciudadR: 'Ciudad de residencia del estudiante.',
+                estrato: 'Estrato socioeconómico.',
+                telefono: 'Teléfono fijo de contacto.',
+                celular: 'Celular principal de contacto.',
+                celular2: 'Celular alterno de contacto.',
+                grado: 'Curso al que ingresará el estudiante.',
+                grupo: 'Grupo asignado (si aplica).',
+                tipoEst: 'Tipo de estudiante (nuevo, antiguo, etc.).',
+                matestM: 'Estado de la matrícula.',
+                va_matricula: 'Valor de la matrícula.',
+                tipoMatricula: 'Permitir múltiples cursos si aplica.',
+                cursosAdicionales: 'Cursos individuales adicionales.',
+                grupoMT: 'Grupo para cursos adicionales.',
+                tipoDAcudiente: 'Tipo de documento del acudiente.',
+                documentoA: 'Número de documento del acudiente (obligatorio).',
+                lugarDa: 'Lugar de expedición del documento del acudiente.',
+                ocupacionA: 'Ocupación del acudiente.',
+                apellido1A: 'Primer apellido del acudiente.',
+                apellido2A: 'Segundo apellido del acudiente.',
+                nombresA: 'Nombres del acudiente (obligatorio).',
+                nombre2A: 'Segundo nombre del acudiente (opcional).',
+                fechaNA: 'Fecha de nacimiento del acudiente (mínimo 14 años).',
+                generoA: 'Género del acudiente.'
+            };
+            function addHelpIconFor(fieldName){
+                var txt = helpTexts[fieldName];
+                if (!txt) return;
+                var $field = $form.find('[name="'+fieldName+'"]');
+                if (!$field.length) return;
+                var $group = $field.closest('.form-group');
+                var $label = $group.find('> label').first();
+                if (!$label.length) return;
+                if ($label.find('.help-icon').length) return;
+                var $icon = $('<span class="help-icon fa fa-question-circle text-muted" tabindex="0" data-toggle="tooltip" data-placement="right" title="'+txt+'" style="margin-left:6px;"></span>');
+                $label.append($icon);
+            }
+            Object.keys(helpTexts).forEach(addHelpIconFor);
+				// Inicializar tooltips Bootstrap
+				$('[data-toggle="tooltip"]').tooltip({ container: 'body', trigger: 'hover focus' });
+				
+				// Validación inmediata de email al escribir
+				var $emailField = $form.find('[name="email"]');
+				if ($emailField.length) {
+					var $emailGroup = $emailField.closest('.form-group');
+					var $emailError = $('<small class="text-danger" style="display:none;">Ingresa un correo electrónico válido.</small>');
+					$emailField.after($emailError);
+					
+					var validateEmail = function() {
+						var val = $emailField.val().trim();
+						if (val === '') {
+							$emailError.hide();
+							$emailField.removeClass('is-invalid').attr('aria-invalid', 'false');
+							$emailGroup.removeClass('has-error');
+							return;
+						}
+						var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+						if (!emailRegex.test(val)) {
+							$emailError.show();
+							$emailField.addClass('is-invalid').attr('aria-invalid', 'true');
+							$emailGroup.addClass('has-error');
+						} else {
+							$emailError.hide();
+							$emailField.removeClass('is-invalid').attr('aria-invalid', 'false');
+							$emailGroup.removeClass('has-error');
+						}
+					};
+					
+					$emailField.on('input blur', validateEmail);
+				}
+			} catch(e){}
+
+    // Colapsado de secciones por subtítulo h4.section-toggle con persistencia en localStorage y default móvil
+    var $toggles = $("h4.section-toggle");
+    var storagePrefix = 'estudiantes-agregar:section:';
+    function getSectionKey($h){
+    	var text = $.trim($h.clone().children().remove().end().text());
+    	return storagePrefix + text.toLowerCase();
+    }
+    function getSectionElements($h){
+    	var $content = $h.parent().parent(); // .col-sm-12 -> .row
+    	var $siblings = $content.nextAll();
+    	var toToggle = [];
+    	$siblings.each(function(){
+    		var $el = $(this);
+    		if ($el.find('h4.section-toggle').length) { return false; }
+    		toToggle.push(this);
+    	});
+    	return $(toToggle);
+    }
+    var isMobile = window.matchMedia && window.matchMedia('(max-width: 575.98px)').matches;
+    $toggles.each(function(){
+    	var $h = $(this);
+    	var key = getSectionKey($h);
+    	var $ind = $h.find('.toggle-indicator');
+    	var $targets = getSectionElements($h);
+    	// Estado inicial: usa preferencia guardada; si no existe y es móvil, colapsar por defecto
+    	var stored = localStorage.getItem(key);
+    	var collapsed = stored === '1' || (stored === null && isMobile);
+    	if (collapsed) {
+    		$targets.hide();
+    		$ind.text('▲');
+    	}
+    	$h.on('click', function(){
+    		$targets = getSectionElements($h); // recalcular por si el DOM cambió
+    		var willCollapse = $targets.is(':visible');
+    		$targets.toggle();
+    		$ind.text(willCollapse ? '▲' : '▼');
+    		localStorage.setItem(key, willCollapse ? '1' : '0');
+    	});
+    });
+    })();
+    </script>
     <!-- end js include path -->
 </body>
 
