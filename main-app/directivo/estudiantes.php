@@ -194,7 +194,11 @@ if($config['conf_doble_buscador'] == 1) {
 													$selectSql = ["mat.*",
 																  "uss.uss_id","uss.uss_usuario","uss.uss_bloqueado",
 																  "gra_nombre","gru_nombre","gra_formato_boletin",
-																  "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2", "mat.id_nuevo AS mat_id_nuevo"];
+																  "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2", "mat.id_nuevo AS mat_id_nuevo",
+																  "og_tipo_doc.ogen_nombre as tipo_doc_nombre",
+																  "og_genero.ogen_nombre as genero_nombre",
+																  "og_estrato.ogen_nombre as estrato_nombre",
+																  "og_tipo_sangre.ogen_nombre as tipo_sangre_nombre"];
 
 													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual,null,$selectSql);
 													

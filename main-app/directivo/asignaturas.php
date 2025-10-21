@@ -72,6 +72,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                     		<table id="example1" class="display" style="width:100%;">
                                                 <thead>
                                                     <tr>
+                                                        <th></th>
                                                         <th>#</th>
 														<th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[73][$datosUsuarioActual['uss_idioma']];?></th>
@@ -86,55 +87,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-													<?php
-													$filtro = '';
-
-													if (isset($_GET["area"]) && is_numeric(base64_decode($_GET["area"]))) {
-														$filtro .= " AND am.mat_area='".base64_decode($_GET["area"])."'";
-													}
-
-													$consulta = Asignaturas::consultarTodasAsignaturas($conexion, $config, $filtro);
-													$contReg = 1;
-
-													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														$numeros = CargaAcademica::contarCargasMaterias($config, $resultado['mat_id']);
-													?>
-													<tr>
-                                                        <td><?=$contReg;?></td>
-														<td><?=$resultado['mat_id'];?></td>
-														<td><?=$resultado['mat_nombre'];?></td>
-														<?php if($config['conf_agregar_porcentaje_asignaturas']=='SI'){ ?>
-															<td><?=$resultado['mat_valor'];?></td>
-														<?php }?>	
-														<td><?=$resultado['ar_nombre'];?></td>
-														<?php 
-															$cargas = $numeros[0];
-															if (Modulos::validarSubRol(['DT0032'])) {
-																$cargas='<a href="cargas.php?asignatura='.base64_encode($resultado['mat_id']).'" class="text-dark">'.$numeros[0].'</a>';
-															}
-														?>
-														<td><span class="badge badge-warning"><?=$cargas?></span></td>
-														
-														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0021','DT0151'])){?>
-															<td>
-																<div class="btn-group">
-																	<button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
-																	<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-																		<i class="fa fa-angle-down"></i>
-																	</button>
-																	<ul class="dropdown-menu" role="menu">
-																		<?php if(Modulos::validarSubRol(['DT0021'])){?>
-																			<li><a href="asignaturas-editar.php?id=<?=base64_encode($resultado['mat_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
-																		<?php } if($numeros[0]==0 && Modulos::validarSubRol(['DT0151'])){?><li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','asignaturas-eliminar.php?id=<?=base64_encode($resultado['mat_id']);?>')">Eliminar</a></li><?php } ?>
-																	</ul>
-																</div>
-															</td>
-														<?php }?>
-                                                    </tr>
-													<?php 
-														 $contReg++;
-													  }
-													  ?>
+													<?php include(ROOT_PATH . "/main-app/class/componentes/result/asignaturas-tbody.php"); ?>
                                                 </tbody>
                                             </table>
                                             </div>

@@ -24,16 +24,6 @@
 
 .expand-btn {
 	transition: all 0.3s ease;
-	border-radius: 50%;
-	width: 32px;
-	height: 32px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.expand-btn:hover {
-	transform: scale(1.1);
 }
 
 .expandable-row h6 {
@@ -172,7 +162,7 @@ foreach ($data["data"] as $resultado) {
 
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
-		<td><button class="btn btn-sm btn-outline-primary expand-btn" data-id="<?= $resultado['mat_id']; ?>"><i class="fa fa-plus"></i></button></td>
+		<td><button class="btn btn-sm btn-info expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-plus"></i></button></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -194,16 +184,30 @@ foreach ($data["data"] as $resultado) {
 		<td>
 			<?php
 			$cambiarEstado = '';
+			$cursorStyle = '';
 			if ($permisoCambiarEstado) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
+				$cursorStyle = "cursor: pointer;";
 			}
+			
+			// Mapear estados a clases de badge
+			$badgeClasses = [
+				1 => 'badge badge-success',     // Matriculado
+				2 => 'badge badge-warning',     // Asistente
+				3 => 'badge badge-danger',      // Cancelado
+				4 => 'badge badge-secondary',   // No Matriculado
+				5 => 'badge badge-info'         // En inscripción
+			];
+			
 			if(!empty($resultado['mat_estado_matricula'])){
+				$badgeClass = $badgeClasses[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary';
 			?>
-			<a style="cursor: pointer;" id="estadoMatricula<?= $resultado['mat_id']; ?>" <?= $cambiarEstado; ?>>
-				<span class="<?= $estadosEtiquetasMatriculas[$resultado['mat_estado_matricula']]; ?>">
-					<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
-				</span>
-			</a>
+			<span class="<?= $badgeClass; ?>" 
+				  id="estadoMatricula<?= $resultado['mat_id']; ?>" 
+				  style="<?= $cursorStyle; ?>" 
+				  <?= $cambiarEstado; ?>>
+				<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
+			</span>
 			<?php } ?>
 		</td>
 		<td><?= $resultado['mat_documento']; ?></td>
@@ -331,9 +335,9 @@ foreach ($data["data"] as $resultado) {
 					<div class="row">
 						<div class="col-6">
 							<p class="mb-2"><strong>Documento:</strong><br><span class="text-muted"><?= $resultado['mat_documento'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Tipo Doc:</strong><br><span class="text-muted"><?= $resultado['mat_tipo_documento'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Tipo Doc:</strong><br><span class="text-muted"><?= $resultado['tipo_doc_nombre'] ?? 'No disponible'; ?></span></p>
 							<p class="mb-2"><strong>Fecha Nacimiento:</strong><br><span class="text-muted"><?= $resultado['mat_fecha_nacimiento'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Género:</strong><br><span class="text-muted"><?= $resultado['mat_genero'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Género:</strong><br><span class="text-muted"><?= $resultado['genero_nombre'] ?? 'No disponible'; ?></span></p>
 						</div>
 						<div class="col-6">
 							<p class="mb-2"><strong>Dirección:</strong><br><span class="text-muted"><?= $resultado['mat_direccion'] ?? 'No disponible'; ?></span></p>
@@ -344,7 +348,7 @@ foreach ($data["data"] as $resultado) {
 					</div>
 					<div class="row mt-2">
 						<div class="col-6">
-							<p class="mb-2"><strong>Estrato:</strong><br><span class="text-muted"><?= $resultado['mat_estrato'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-2"><strong>Estrato:</strong><br><span class="text-muted"><?= $resultado['estrato_nombre'] ?? 'No disponible'; ?></span></p>
 						</div>
 						<div class="col-6">
 							<p class="mb-2"><strong>EPS:</strong><br><span class="text-muted"><?= $resultado['mat_eps'] ?? 'No disponible'; ?></span></p>
@@ -399,9 +403,9 @@ foreach ($data["data"] as $resultado) {
 				<div class="col-12">
 					<hr>
 					<h6 class="text-info mb-3"><i class="fa fa-info-circle"></i> Información Adicional</h6>
-					<div class="row">
+			<div class="row">
 						<div class="col-md-3">
-							<p class="mb-1"><strong>Grupo Sanguíneo:</strong><br><span class="text-muted"><?= $resultado['mat_tipo_sangre'] ?? 'No disponible'; ?></span></p>
+							<p class="mb-1"><strong>Grupo Sanguíneo:</strong><br><span class="text-muted"><?= $resultado['tipo_sangre_nombre'] ?? 'No disponible'; ?></span></p>
 						</div>
 						<div class="col-md-3">
 							<p class="mb-1"><strong>Teléfono:</strong><br><span class="text-muted"><?= $resultado['mat_telefono'] ?? 'No disponible'; ?></span></p>
@@ -427,7 +431,7 @@ foreach ($data["data"] as $resultado) {
 							<div class="col-md-3">
 								<p class="mb-1"><strong>Valor Matrícula:</strong><br><span class="text-muted">$<?= number_format($resultado['mat_valor_matricula'] ?? 0, 0, ',', '.'); ?></span></p>
 							</div>
-						</div>
+				</div>
 					<?php } ?>
 				</div>
 			</div>
@@ -436,6 +440,11 @@ foreach ($data["data"] as $resultado) {
 <?php
 	$contReg++;
 }
+
+// Consultar opciones generales para los selects del modal
+$opcionesGenero = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=4 ORDER BY ogen_nombre");
+$opcionesEstrato = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=3 ORDER BY CAST(ogen_nombre AS UNSIGNED)");
+$opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=14 ORDER BY ogen_nombre");
 ?>
 
 <!-- Modal de Edición Rápida -->
@@ -488,8 +497,12 @@ foreach ($data["data"] as $resultado) {
 								<label for="genero_modal">Género</label>
 								<select class="form-control" id="genero_modal" name="genero">
 									<option value="">Seleccionar...</option>
-									<option value="M">Masculino</option>
-									<option value="F">Femenino</option>
+									<?php
+									mysqli_data_seek($opcionesGenero, 0); // Reiniciar el puntero
+									while($opcion = mysqli_fetch_array($opcionesGenero, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
 								</select>
 							</div>
 						</div>
@@ -526,12 +539,12 @@ foreach ($data["data"] as $resultado) {
 								<label for="estrato_modal">Estrato</label>
 								<select class="form-control" id="estrato_modal" name="estrato">
 									<option value="">Seleccionar...</option>
-									<option value="1">1</option>
-									<option value="2">2</option>
-									<option value="3">3</option>
-									<option value="4">4</option>
-									<option value="5">5</option>
-									<option value="6">6</option>
+									<?php
+									mysqli_data_seek($opcionesEstrato, 0); // Reiniciar el puntero
+									while($opcion = mysqli_fetch_array($opcionesEstrato, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
 								</select>
 							</div>
 						</div>
@@ -560,14 +573,12 @@ foreach ($data["data"] as $resultado) {
 								<label for="tipo_sangre_modal">Grupo Sanguíneo</label>
 								<select class="form-control" id="tipo_sangre_modal" name="tipo_sangre">
 									<option value="">Seleccionar...</option>
-									<option value="A+">A+</option>
-									<option value="A-">A-</option>
-									<option value="B+">B+</option>
-									<option value="B-">B-</option>
-									<option value="AB+">AB+</option>
-									<option value="AB-">AB-</option>
-									<option value="O+">O+</option>
-									<option value="O-">O-</option>
+									<?php
+									mysqli_data_seek($opcionesTipoSangre, 0); // Reiniciar el puntero
+									while($opcion = mysqli_fetch_array($opcionesTipoSangre, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
 								</select>
 							</div>
 							
@@ -770,13 +781,13 @@ foreach ($data["data"] as $resultado) {
 				// Collapse with animation
 				row.slideUp(300, function() {
 					icon.removeClass('fa-minus').addClass('fa-plus');
-					button.removeClass('btn-outline-danger').addClass('btn-outline-primary');
+					button.removeClass('btn-warning').addClass('btn-info');
 				});
 			} else {
 				// Expand with animation
 				row.slideDown(300, function() {
 					icon.removeClass('fa-plus').addClass('fa-minus');
-					button.removeClass('btn-outline-primary').addClass('btn-outline-danger');
+					button.removeClass('btn-info').addClass('btn-warning');
 				});
 			}
 		});

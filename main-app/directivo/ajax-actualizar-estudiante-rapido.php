@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'Error de configuración de año.']);
         }
         
-        // Obtener datos del POST
+        // Obtener datos del POST y convertir tipos apropiados
         $matId = $_POST['mat_id'] ?? null;
         $primerNombre = trim($_POST['primer_nombre'] ?? '');
         $segundoNombre = trim($_POST['segundo_nombre'] ?? '');
@@ -49,6 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $estrato = $_POST['estrato'] ?? '';
         $tipoSangre = $_POST['tipo_sangre'] ?? '';
         $eps = trim($_POST['eps'] ?? '');
+        
+        // Los valores ya vienen como IDs desde el frontend, solo necesitamos convertirlos a enteros
+        $generoInt = !empty($genero) ? (int)$genero : null;
+        $estratoInt = !empty($estrato) ? (int)$estrato : null;
+        $tipoSangreInt = !empty($tipoSangre) ? (int)$tipoSangre : null;
         
         // Validar campos obligatorios
         if (empty($matId) || empty($primerNombre) || empty($primerApellido)) {
@@ -97,14 +102,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':apellido1', $primerApellido, PDO::PARAM_STR);
         $stmt->bindParam(':apellido2', $segundoApellido, PDO::PARAM_STR);
         $stmt->bindParam(':fechaNacimiento', $fechaNacimiento, PDO::PARAM_STR);
-        $stmt->bindParam(':genero', $genero, PDO::PARAM_STR);
+        $stmt->bindParam(':genero', $generoInt, PDO::PARAM_INT);
         $stmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $stmt->bindParam(':barrio', $barrio, PDO::PARAM_STR);
         $stmt->bindParam(':celular', $celular, PDO::PARAM_STR);
         $stmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':estrato', $estrato, PDO::PARAM_STR);
-        $stmt->bindParam(':tipoSangre', $tipoSangre, PDO::PARAM_STR);
+        $stmt->bindParam(':estrato', $estratoInt, PDO::PARAM_INT);
+        $stmt->bindParam(':tipoSangre', $tipoSangreInt, PDO::PARAM_STR);
         $stmt->bindParam(':eps', $eps, PDO::PARAM_STR);
         $stmt->bindParam(':id', $matId, PDO::PARAM_STR);
         $stmt->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);

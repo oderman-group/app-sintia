@@ -114,3 +114,4 @@ La nueva paleta es compatible con:
 - Dispositivos móviles y desktop
 - Sistemas de accesibilidad
 
+

@@ -14,8 +14,6 @@ $institucionNombre = $institucion['ins_siglas'];
 
 <!-- start header -->
         <div class="page-header navbar navbar-fixed-top">
-
-            <?php include_once(ROOT_PATH."/main-app/compartido/barra-developer.php");?>
 			
             <div class="page-header-inner">
                 <!-- logo start -->

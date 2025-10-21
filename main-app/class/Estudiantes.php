@@ -102,8 +102,17 @@ class Estudiantes {
                         AND gru.institucion     = mat.institucion 
                         AND gru.year            = mat.year
 
-                        LEFT JOIN ".BD_ADMIN.".opciones_generales 
-                        ON ogen_id              = mat.mat_genero
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_tipo_doc
+                        ON og_tipo_doc.ogen_id  = mat.mat_tipo_documento
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_genero
+                        ON og_genero.ogen_id    = mat.mat_genero
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_estrato
+                        ON og_estrato.ogen_id   = mat.mat_estrato
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_tipo_sangre
+                        ON og_tipo_sangre.ogen_id = mat.mat_tipo_sangre
                         
                         LEFT JOIN ".BD_ADMIN.".localidad_ciudades 
                         ON ciu_id               = mat.mat_lugar_nacimiento

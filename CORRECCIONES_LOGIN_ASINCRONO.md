@@ -85,3 +85,4 @@ sendJsonResponse(false, "Error inesperado en el proceso de autenticación.", nul
 
 **¡El sistema ahora debería funcionar perfectamente sin errores!** 🎉
 
+
