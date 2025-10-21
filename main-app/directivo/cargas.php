@@ -23,6 +23,28 @@ if($config['conf_doble_buscador'] == 1) {
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 	<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css"/>
+	<style>
+		/* Ocultar paginación de DataTable en la página de cargas */
+		#example1_paginate,
+		#example1_length {
+			display: none !important;
+		}
+		
+		/* Ajustar el info de DataTable para que no ocupe espacio innecesario */
+		#example1_info {
+			display: none !important;
+		}
+		
+		/* Mantener visible el buscador de DataTable */
+		#example1_filter {
+			margin-bottom: 15px;
+		}
+		
+		/* Mejorar el espaciado de la tabla */
+		.dataTables_wrapper {
+			padding-top: 10px;
+		}
+	</style>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -269,6 +291,8 @@ if($config['conf_doble_buscador'] == 1) {
 		$(document).ready(function() {
 			if (!$.fn.DataTable.isDataTable('#example1')) {
 				var table = $('#example1').DataTable({
+					"paging": false,   // Desactivar paginación de DataTable
+					"pageLength": 500, // Mostrar todos los registros cargados
 					"columnDefs": [
 						{
 							"targets": 0,
@@ -285,7 +309,7 @@ if($config['conf_doble_buscador'] == 1) {
 					"language": {
 						"lengthMenu": "Mostrar _MENU_ registros por página",
 						"zeroRecords": "No se encontraron resultados",
-						"info": "Mostrando página _PAGE_ de _PAGES_",
+						"info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
 						"infoEmpty": "No hay registros disponibles",
 						"infoFiltered": "(filtrado de _MAX_ registros totales)",
 						"search": "Buscar:",
