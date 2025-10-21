@@ -65,6 +65,8 @@ if (!empty($datosPaginaActual)) {
 	<!-- icons -->
     <link href="<?=BASE_URL;?>/config-general/fonts/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
     <link href="<?=BASE_URL;?>/config-general/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+    <!-- Sintia Menu Icons CSS -->
+    <link href="<?=BASE_URL;?>/config-general/assets/css/sintia-menu-icons.css" rel="stylesheet" type="text/css"/>
 	<link href="<?=BASE_URL;?>/config-general/fonts/material-design-icons/material-icon.css" rel="stylesheet" type="text/css" />
 	<!--bootstrap -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">

@@ -9,7 +9,7 @@
 							?>
 							<li <?php agregarClass(MENU_PADRE,["DT0001","DT0062","DT0017","DT0020","DT0032","DT0121","DT0195","DT0196","DT0197"]) ?> data-step="2" data-intro="<b>Gestión Académica:</b> Aquí podrás gestionar las opciones académicas: Matriculas, cursos, áreas, asignaturas, cargas académicas, etc." data-position='left'>
 	                            <a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
-									<i class="fa fa-vcard"></i>
+									<div class="menu-icon filled">📚</div>
 	                                <span class="title"><?=$frases[88][$datosUsuarioActual['uss_idioma']];?></span> 
 									<span class="arrow"></span>
 	                            </a>
@@ -79,7 +79,8 @@
 								) {
 							?>
 								<li <?php agregarClass(MENU_PADRE,["DT0102", "DT0014"]) ?> data-step="3" data-intro="<b>Admisiones e inscripciones:</b> Módulo para gestionar las inscripciones de nuevos estudiantes a tus institución." data-position='bottom'>
-									<a <?php validarModuloMenu(Modulos::MODULO_INSCRIPCIONES, "#", MENU_PADRE);?> class="nav-link nav-toggle"> <i class="fa fa-address-book"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_INSCRIPCIONES, "#", MENU_PADRE);?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">📝</div>
 										<span class="title"><?=$frases[390][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0102", "DT0014"]) ?>>
@@ -106,7 +107,8 @@
 								) {
 							?>
 								<li <?php agregarClass(MENU_PADRE,["DT0104", "DT0106", "DT0128", "DT0105", "DT0258", "DT0259", "DT0261", "DT0264", "DT0265", "DT0267", "DT0273", "DT0275", "DT0276", "DT0278", "DT0294", "DT0295", "DT0297"]) ?> data-step="4" data-intro="<b>G. Financiera:</b> Maneja las finanzas de tu institución desde aqui. Facturas, cobros, abonos." data-position='bottom' data-scrollTo='tooltip'>
-									<a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-money"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">💰</div>
 										<span class="title"><?=$frases[89][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0104", "DT0106", "DT0128", "DT0105", "DT0258", "DT0259", "DT0261", "DT0264", "DT0265", "DT0267", "DT0273", "DT0275", "DT0276", "DT0278", "DT0294", "DT0295", "DT0297"]) ?>>
@@ -157,7 +159,8 @@
 								) {
 							?>
 								<li class="nav-item" data-step="5" data-intro="<b>Gestión de comportamiento:</b> Gestiona las categorias y tipifica las faltas de comportamiento. Crea reportes y obten informes disciplinarios." data-position='bottom' data-scrollTo='tooltip'>
-									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-gavel"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">⚖️</div>
 										<span class="title"><?=$frases[90][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu">
@@ -200,7 +203,8 @@
 								) {
 							?>
 							<li <?php agregarClass(MENU_PADRE,["DT0011","DT0122","DT0124","DT0126","DT0204","DT0205"]) ?> data-step="6" data-intro="<b>Gestión administrativa:</b> Gestiona tus tipos de usuarios, asigna roles y permisos. También puedes revisar las solicitudes desbloqueo." data-position='bottom' data-scrollTo='tooltip'>
-	                            <a <?php validarModuloMenu(Modulos::MODULO_ADMINISTRATIVO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-briefcase"></i>
+	                            <a <?php validarModuloMenu(Modulos::MODULO_ADMINISTRATIVO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
+	                                <div class="menu-icon filled">👥</div>
 	                                <span class="title"><?=$frases[87][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 	                            </a>
 	                            <ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0011","DT0122","DT0124","DT0126","DT0204","DT0205"])?>>
@@ -266,7 +270,8 @@
 								) {
 							?>
 								<li <?php agregarClass(MENU_PADRE,["DT0281","DT0283","DT0285","DT0288","DT0289","DT0291","DT0308","DT0309","DT0311"]) ?> data-step="7" data-intro="<b>Módulo de cuestionarios:</b> Crear cuestionarios para evaluar a los usuarios de todos los roles y obten reportes precisos de dichos cuestionarios." data-position='bottom' data-scrollTo='tooltip'>
-									<a <?php validarModuloMenu(Modulos::MODULO_CUESTIONARIOS, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-check-square-o"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_CUESTIONARIOS, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">✅</div>
 										<span class="title"><?=$frases[388][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0281","DT0283","DT0285","DT0288","DT0289","DT0291","DT0308","DT0309","DT0311"])?>>								
@@ -296,7 +301,8 @@
 								if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MERCADEO)){
 							?>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_MERCADEO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-phone"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_MERCADEO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">📞</div>
 										<span class="title"><?=$frases[210][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu">
@@ -310,7 +316,8 @@
 								if(Modulos::validarSubRol(["DT0057","DT0060"])){
 							?>
 							<li class="nav-item" data-step="8" data-intro="<b>Configuración:</b> Esta es una de las partes más importantes porque puedes definir los comportamientos que tendrá la plataforma en varios aspectos. ¡Exploralo!" data-position='bottom' data-scrollTo='tooltip'>
-	                            <a href="#" class="nav-link nav-toggle"> <i class="fa fa-cogs"></i></i>
+	                            <a href="#" class="nav-link nav-toggle"> 
+	                                <div class="menu-icon filled">⚙️</div>
 	                                <span class="title"><?=$frases[17][$datosUsuarioActual['uss_idioma']];?> </span> <span class="arrow"></span>
 	                            </a>
 	                            <ul class="sub-menu">
@@ -342,7 +349,8 @@
 								) {
 							?>
 								<li class="nav-item" data-step="9" data-intro="<b>Informes:</b> Obten todos los informes y reportes que tu institución necesita para la toma oportuna de decisiones." data-position='bottom' data-scrollTo='tooltip'>
-									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "informes-todos.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-file-text"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "informes-todos.php", MENU) ?> class="nav-link nav-toggle"> 
+										<div class="menu-icon filled">📊</div>
 										<span class="title"><?=$frases[385][$datosUsuarioActual['uss_idioma']];?></span> 
 									</a>
 								</li>
