@@ -113,3 +113,4 @@ La nueva paleta es compatible con:
 - Modo claro y oscuro (preparado para futuras implementaciones)
 - Dispositivos móviles y desktop
 - Sistemas de accesibilidad
+

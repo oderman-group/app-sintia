@@ -19,6 +19,21 @@ function jsonResponse($data) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Verificar que la conexión esté disponible
+        if (!isset($conexionPDO)) {
+            jsonResponse(['success' => false, 'message' => 'Error de conexión a la base de datos.']);
+        }
+        
+        // Verificar variables de sesión
+        if (!isset($config['conf_id_institucion'])) {
+            jsonResponse(['success' => false, 'message' => 'Error de configuración de institución.']);
+        }
+        
+        if (!isset($_SESSION["bd"])) {
+            jsonResponse(['success' => false, 'message' => 'Error de configuración de año.']);
+        }
+        
+        // Obtener datos del POST
         $matId = $_POST['mat_id'] ?? null;
         $primerNombre = trim($_POST['primer_nombre'] ?? '');
         $segundoNombre = trim($_POST['segundo_nombre'] ?? '');
@@ -35,11 +50,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tipoSangre = $_POST['tipo_sangre'] ?? '';
         $eps = trim($_POST['eps'] ?? '');
         
+        // Validar campos obligatorios
         if (empty($matId) || empty($primerNombre) || empty($primerApellido)) {
             jsonResponse(['success' => false, 'message' => 'ID de matrícula, primer nombre y primer apellido son obligatorios.']);
         }
         
-        // Crear consulta SQL directa para actualizar solo los campos necesarios
+        // Validar formato de fecha si se proporciona
+        if (!empty($fechaNacimiento)) {
+            $fechaTimestamp = strtotime($fechaNacimiento);
+            if ($fechaTimestamp === false) {
+                jsonResponse(['success' => false, 'message' => 'Formato de fecha inválido.']);
+            }
+        }
+        
+        // Validar email si se proporciona
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            jsonResponse(['success' => false, 'message' => 'Formato de email inválido.']);
+        }
+        
+        // Crear consulta SQL para actualizar
         $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
                     mat_nombres = :nombres,
                     mat_nombre2 = :nombre2,
@@ -61,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 AND year = :year";
         
         $stmt = $conexionPDO->prepare($sql);
+        
+        // Bind de parámetros
         $stmt->bindParam(':nombres', $primerNombre, PDO::PARAM_STR);
         $stmt->bindParam(':nombre2', $segundoNombre, PDO::PARAM_STR);
         $stmt->bindParam(':apellido1', $primerApellido, PDO::PARAM_STR);
@@ -79,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
         $stmt->bindParam(':year', $_SESSION["bd"], PDO::PARAM_INT);
         
+        // Ejecutar consulta
         $resultado = $stmt->execute();
         
         if ($resultado === false) {
@@ -95,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
     } catch (Exception $e) {
         error_log("Error al actualizar estudiante: " . $e->getMessage());
-        jsonResponse(['success' => false, 'message' => 'Error interno del servidor.']);
+        jsonResponse(['success' => false, 'message' => 'Error interno del servidor: ' . $e->getMessage()]);
     }
 } else {
     jsonResponse(['success' => false, 'message' => 'Método no permitido.']);

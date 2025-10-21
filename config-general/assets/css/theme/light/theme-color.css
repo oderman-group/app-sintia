@@ -157,7 +157,6 @@
 /* White sidebar color */
 .white-sidebar-color .sidemenu-container {
     background-color: #ffffff;
-    margin-top: 45px;
 }
 .white-sidebar-color .sidemenu-container .sidemenu>li.active.open>a,
 .white-sidebar-color .sidemenu-container .sidemenu>li.active>a,

@@ -88,3 +88,4 @@ $_SESSION["datosUsuario"]["sub_roles_paginas"] = $infoRolesUsuario['valores_pagi
 - **Todas las funcionalidades** del sistema preservadas
 
 **¡El login asíncrono ahora está completamente funcional y compatible con todo el sistema!** 🎉
+

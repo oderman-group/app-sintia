@@ -100,3 +100,4 @@ Para verificar que todos los cambios se aplicaron correctamente:
 - **10% Púrpura (#6017dc)** para elementos de acento (mantenido en otros componentes)
 
 Los cambios están listos y aplicados en todo el sistema Sintia.
+

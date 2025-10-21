@@ -72,3 +72,4 @@ Respuesta recibida: {success: true, message: 'Login exitoso', redirect: '../dire
 ✅ **Experiencia de usuario** mejorada
 
 **¡El sistema ahora maneja correctamente cualquier tipo de respuesta del servidor!** 🎉
+
