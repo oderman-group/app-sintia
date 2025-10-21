@@ -78,3 +78,4 @@ Para verificar que los cambios se aplicaron correctamente:
 - Los cambios son compatibles con todos los navegadores modernos
 
 Los cambios están listos y aplicados en todo el sistema. Las barras de navegación ahora tienen una apariencia más profesional y legible, siguiendo la regla 60-30-10 implementada anteriormente.
+

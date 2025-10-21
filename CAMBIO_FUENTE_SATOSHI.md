@@ -49,3 +49,4 @@
 
 ## 🎉 **Estado del Proyecto**
 **COMPLETADO:** El cambio de fuente de Nunito a Satoshi ha sido implementado exitosamente. Todos los elementos del sitio ahora utilizan la fuente Satoshi, proporcionando una apariencia más moderna y profesional.
+
