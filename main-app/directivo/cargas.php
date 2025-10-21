@@ -129,7 +129,16 @@ if($config['conf_doble_buscador'] == 1) {
 													// Usar paginación por defecto para mejorar rendimiento
 													// NOTA: Para mejorar aún más el rendimiento, ejecuta los índices en:
 													// documents/database/indices-optimizacion-cargas.sql
-													$filtroLimite = 'LIMIT 0, 200';  // Cargar máximo 200 registros inicialmente
+													
+													// Paginación
+													$limit = 200; // Registros por página
+													$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+													$offset = ($page - 1) * $limit;
+													$filtroLimite = "LIMIT $offset, $limit";
+													
+													// Contar total de registros
+													$totalCargas = CargaAcademicaOptimizada::contarTotalCargas($conexion, $config, $filtro);
+													$totalPaginas = ceil($totalCargas / $limit);
 													
 													$selectSql = ["car.car_id","car.car_periodo","car.car_curso","car.car_ih","car.car_permiso2",
 																	"car.car_indicador_automatico","car.car_maximos_indicadores",
@@ -154,6 +163,64 @@ if($config['conf_doble_buscador'] == 1) {
 													?>
                             </tbody>
                           </table>
+                          
+                          <!-- Información de paginación y navegación -->
+                          <div class="row mt-3">
+                              <div class="col-md-6">
+                                  <div class="alert alert-info">
+                                      <i class="fa fa-info-circle"></i> 
+                                      Mostrando <strong><?= count($arraysDatos) ?></strong> de <strong><?= $totalCargas ?></strong> cargas totales
+                                      (Página <?= $page ?> de <?= $totalPaginas ?>)
+                                  </div>
+                              </div>
+                              <div class="col-md-6 text-right">
+                                  <nav aria-label="Paginación de cargas">
+                                      <ul class="pagination justify-content-end">
+                                          <?php if ($page > 1) { ?>
+                                              <li class="page-item">
+                                                  <a class="page-link" href="?page=1<?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                      <i class="fa fa-angle-double-left"></i> Primera
+                                                  </a>
+                                              </li>
+                                              <li class="page-item">
+                                                  <a class="page-link" href="?page=<?= $page - 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                      <i class="fa fa-angle-left"></i> Anterior
+                                                  </a>
+                                              </li>
+                                          <?php } ?>
+                                          
+                                          <?php
+                                          // Mostrar páginas cercanas
+                                          $rango = 2;
+                                          $inicio = max(1, $page - $rango);
+                                          $fin = min($totalPaginas, $page + $rango);
+                                          
+                                          for ($i = $inicio; $i <= $fin; $i++) {
+                                              $active = ($i == $page) ? 'active' : '';
+                                          ?>
+                                              <li class="page-item <?= $active ?>">
+                                                  <a class="page-link" href="?page=<?= $i ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                      <?= $i ?>
+                                                  </a>
+                                              </li>
+                                          <?php } ?>
+                                          
+                                          <?php if ($page < $totalPaginas) { ?>
+                                              <li class="page-item">
+                                                  <a class="page-link" href="?page=<?= $page + 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                      Siguiente <i class="fa fa-angle-right"></i>
+                                                  </a>
+                                              </li>
+                                              <li class="page-item">
+                                                  <a class="page-link" href="?page=<?= $totalPaginas ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                      Última <i class="fa fa-angle-double-right"></i>
+                                                  </a>
+                                              </li>
+                                          <?php } ?>
+                                      </ul>
+                                  </nav>
+                              </div>
+                          </div>
                           </div>
                       </div>
                       </div>                    

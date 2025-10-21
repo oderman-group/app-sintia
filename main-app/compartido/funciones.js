@@ -551,19 +551,34 @@ const estudiantesPorEstados = {};
 
 function cambiarEstadoMatricula(data) {
     let idHref = 'estadoMatricula'+data.id_estudiante;
-    let href   = document.getElementById(idHref);
+    let badge  = document.getElementById(idHref);
     
     if (!estudiantesPorEstados.hasOwnProperty(data.id_estudiante)) {
         estudiantesPorEstados[data.id_estudiante] = data.estado_matricula;
     }
 
+    // Mapeo de estados a badges
+    const estadosInfo = {
+        1: { clase: 'badge badge-success', texto: 'Matriculado' },
+        2: { clase: 'badge badge-warning', texto: 'Asistente' },
+        3: { clase: 'badge badge-danger', texto: 'Cancelado' },
+        4: { clase: 'badge badge-secondary', texto: 'No Matriculado' },
+        5: { clase: 'badge badge-info', texto: 'En inscripción' }
+    };
+
+    // Alternar entre Matriculado (1) y No Matriculado (4)
     if(estudiantesPorEstados[data.id_estudiante] == 1) {
-        href.innerHTML = `<span class="text-warning">No Matriculado</span>`;
         estudiantesPorEstados[data.id_estudiante] = 4;
     } else {
-        href.innerHTML = `<span class="text-success">Matriculado</span>`;
         estudiantesPorEstados[data.id_estudiante] = 1;
     }
+
+    // Actualizar el badge con el nuevo estado
+    const nuevoEstado = estudiantesPorEstados[data.id_estudiante];
+    const estadoInfo = estadosInfo[nuevoEstado];
+    
+    badge.className = estadoInfo.clase;
+    badge.textContent = estadoInfo.texto;
 
     let datos = "nuevoEstado="+estudiantesPorEstados[data.id_estudiante]+
                 "&idEstudiante="+data.id_estudiante;
@@ -1024,4 +1039,4 @@ function mtdDesactivarLoadPagina() {
     document.getElementById("overlay").style.display = "none";
 }
 
-document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);
+//document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);
