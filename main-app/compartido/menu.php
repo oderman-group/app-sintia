@@ -25,19 +25,6 @@
 	                                <span></span>
 	                            </div>
 	                        </li>
-	                        <?php
-							$fotoPerfilUsr = $usuariosClase->verificarFoto($datosUsuarioActual['uss_foto']);
-							?>
-							<li class="sidebar-user-panel">
-	                            <div class="user-panel">
-	                                <div class="pull-left image">
-	                                    <img src="<?=$fotoPerfilUsr;?>" class="img-circle user-img-circle" alt="User Image" />
-	                                </div>
-	                                <div class="pull-left info">
-	                                    <p> <?=UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual);?></p>
-	                                </div>
-	                            </div>
-	                        </li>
 
 							<?php include_once("menu-metodos.php");?>
 							<li <?php agregarClass(MENU,["DT0004"]) ?>>

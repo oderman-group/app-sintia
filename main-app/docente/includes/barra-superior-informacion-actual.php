@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark mb-2" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark mb-2" style="background-color: #ffffff;">
 
 
   <div class="navbar-collapse" id="navbarSupportedContent">

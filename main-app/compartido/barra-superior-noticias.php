@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4; margin-bottom:10px;">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff; margin-bottom:10px;">
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -26,7 +26,7 @@
   </ul> 
 
   <?php if(!empty($_GET["busqueda"]) || !empty($_GET["usuario"])){?>
-      <a href="<?=$_SERVER['PHP_SELF'];?>" style="color:white; text-decoration:underline;">VER TODO</a>
+      <a href="<?=$_SERVER['PHP_SELF'];?>" style="color:#000; text-decoration:underline;">VER TODO</a>
       &nbsp;&nbsp;
     <?php }?>
 
