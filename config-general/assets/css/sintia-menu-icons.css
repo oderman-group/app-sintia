@@ -1,0 +1,107 @@
+/* Sintia Menu Icons - Iconos planos con gradientes sutiles estilo SI Gradient Flat Logo */
+
+/* Estilos base para iconos en el menú */
+.sidemenu .nav-link .menu-icon {
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: linear-gradient(135deg, var(--sintia-secondary) 0%, var(--sintia-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 6px;
+    font-weight: 500;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", "EmojiSymbols", sans-serif;
+    line-height: 1;
+}
+
+/* Estados hover para iconos */
+.sidemenu .nav-link:hover .menu-icon {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+    background: linear-gradient(135deg, var(--sintia-accent) 0%, var(--sintia-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Estados activos */
+.sidemenu .nav-item.active .nav-link .menu-icon,
+.sidemenu .nav-item.open .nav-link .menu-icon {
+    background: linear-gradient(135deg, var(--sintia-accent) 0%, var(--sintia-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transform: scale(1.05);
+}
+
+/* Iconos en submenús */
+.sidemenu .sub-menu .nav-link .menu-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+/* Iconos especiales para marketplace */
+.sidemenu .nav-link.bg-warning .menu-icon {
+    background: linear-gradient(135deg, #000 0%, #333 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Responsive para iconos */
+@media (max-width: 768px) {
+    .sidemenu .nav-link .menu-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        font-size: 15px;
+    }
+}
+
+/* Animación sutil para iconos */
+.sidemenu .nav-link .menu-icon {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estilo especial para iconos con relleno sólido */
+.sidemenu .nav-link .menu-icon.filled {
+    background: var(--sintia-secondary);
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: white;
+    background-clip: unset;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 2px 4px rgba(65, 196, 196, 0.2);
+    font-size: 14px;
+    min-width: 22px;
+    min-height: 22px;
+}
+
+.sidemenu .nav-link:hover .menu-icon.filled {
+    background: var(--sintia-accent);
+    box-shadow: 0 4px 8px rgba(96, 23, 220, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Fallback para navegadores que no soportan emojis */
+@supports not (font-family: "Apple Color Emoji") {
+    .sidemenu .nav-link .menu-icon {
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    }
+    
+    .sidemenu .nav-link .menu-icon.filled {
+        background: var(--sintia-secondary);
+        color: white;
+        font-size: 12px;
+    }
+}
