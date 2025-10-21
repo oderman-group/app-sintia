@@ -104,6 +104,56 @@ class CargaAcademicaOptimizada extends CargaAcademica {
     }
     
     /**
+     * Contar total de cargas para la paginación
+     */
+    public static function contarTotalCargas(
+        mysqli $conexion, 
+        array $config, 
+        string $filtro = ""
+    ){
+        try {
+            $sql = "SELECT COUNT(DISTINCT car.car_id) as total
+                    FROM ".BD_ACADEMICA.".academico_cargas car
+                    
+                    INNER JOIN ".BD_ACADEMICA.".academico_grados gra 
+                    ON  gra.gra_id = car.car_curso 
+                    AND gra.institucion = car.institucion 
+                    AND gra.year = car.year
+
+                    LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru 
+                    ON  gru.gru_id = car.car_grupo 
+                    AND gru.institucion = car.institucion 
+                    AND gru.year = car.year
+                    
+                    LEFT JOIN ".BD_ACADEMICA.".academico_materias am 
+                    ON  am.mat_id = car.car_materia 
+                    AND am.institucion = car.institucion 
+                    AND am.year = car.year
+
+                    LEFT JOIN ".BD_GENERAL.".usuarios uss 
+                    ON uss.uss_id = car.car_docente 
+                    AND uss.institucion = car.institucion 
+                    AND uss.year = car.year
+                    
+                    WHERE car.institucion = ? 
+                    AND car.year = ? 
+                    AND car.car_activa = 1
+                    {$filtro}";
+    
+            $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+            
+            $consulta = BindSQL::prepararSQL($sql, $parametros);
+            $resultado = mysqli_fetch_assoc($consulta);
+            
+            return intval($resultado['total'] ?? 0);
+            
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            return 0;
+        }
+    }
+    
+    /**
      * Obtener datos adicionales de una carga específica (lazy loading)
      * Se llama solo cuando se expande la fila o cuando el usuario hace clic en "Ver notas"
      */
