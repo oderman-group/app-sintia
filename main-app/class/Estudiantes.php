@@ -11,10 +11,11 @@ class Estudiantes {
 
     public const MAXIMOS_ESTUDIANTES_CURSO = 50;
     
-    public const CREAR_MATRICULA   = 'CREAR_MATRICULA';
-    public const IMPORTAR_EXCEL    = 'IMPORTAR_EXCEL';
-    public const AUTO_INSCRIPCION  = 'AUTO_INSCRIPCION';
-    public const MOVIDO            = 'MOVIDO';
+    public const CREAR_MATRICULA    = 'CREAR_MATRICULA';
+    public const IMPORTAR_EXCEL     = 'IMPORTAR_EXCEL';
+    public const IMPORTAR_EXCEL_JOB = 'IMPORTAR_EXCEL_JOB';
+    public const AUTO_INSCRIPCION   = 'AUTO_INSCRIPCION';
+    public const MOVIDO             = 'MOVIDO';
 
     // Estados de la matrícula de un estudiante
     public const ESTADO_MATRICULADO    = 1;
