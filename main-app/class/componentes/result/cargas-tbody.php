@@ -104,7 +104,8 @@ foreach ($data["data"] as $resultado) {
 				<ul class="dropdown-menu" role="menu" >
 					<?php if (Modulos::validarPermisoEdicion() && $permisoReportesNotas) { ?>
 						<?php if ($permisoEditar) { ?>
-							<li><a href="cargas-editar.php?idR=<?= base64_encode($resultado['car_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?></a></li>
+							<li><a href="javascript:void(0);" class="btn-editar-carga-modal" data-carga-id="<?= $resultado['car_id']; ?>" title="Edición rápida"><i class="fa fa-edit"></i> Edición rápida</a></li>
+							<li><a href="cargas-editar.php?idR=<?= base64_encode($resultado['car_id']); ?>"><i class="fa fa-pencil"></i> <?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?> completa</a></li>
 						<?php }
 						if ($config['conf_permiso_eliminar_cargas'] == 'SI' && $permisoEliminar) { ?>
 							<li>

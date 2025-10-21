@@ -719,6 +719,183 @@ if($config['conf_doble_buscador'] == 1) {
 		</div>
 	</div>
 
+<!-- Modal para edición rápida de carga -->
+<div class="modal fade" id="modalEditarCarga" tabindex="-1" role="dialog" aria-labelledby="modalEditarCargaLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title" id="modalEditarCargaLabel">
+					<i class="fa fa-edit"></i> Edición Rápida de Carga
+				</h4>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formEditarCarga" action="cargas-actualizar.php" method="post">
+				<div class="modal-body">
+					<div id="cargaLoader" class="text-center" style="display:none;">
+						<i class="fa fa-spinner fa-spin fa-3x"></i>
+						<p>Cargando datos...</p>
+					</div>
+					
+					<div id="cargaFormulario" style="display:none;">
+						<!-- Campos ocultos -->
+						<input type="hidden" id="edit_idR" name="idR">
+						<input type="hidden" id="edit_periodoActual" name="periodoActual">
+						<input type="hidden" id="edit_docenteActual" name="docenteActual">
+						<input type="hidden" id="edit_cursoActual" name="cursoActual">
+						<input type="hidden" id="edit_grupoActual" name="grupoActual">
+						<input type="hidden" id="edit_asignaturaActual" name="asignaturaActual">
+						<input type="hidden" id="edit_cargaEstado" name="cargaEstado">
+						
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>ID de Carga</label>
+									<input type="text" id="edit_idCarga" class="form-control" readonly>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Periodo <span class="text-danger">*</span></label>
+									<select class="form-control" id="edit_periodo" name="periodo" required>
+										<option value="">Seleccione...</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label>Docente <span class="text-danger">*</span></label>
+							<select class="form-control" id="edit_docente" name="docente" required>
+								<option value="">Seleccione un docente...</option>
+							</select>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Curso <span class="text-danger">*</span></label>
+									<select class="form-control" id="edit_curso" name="curso" required>
+										<option value="">Seleccione un curso...</option>
+									</select>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Grupo <span class="text-danger">*</span></label>
+									<select class="form-control" id="edit_grupo" name="grupo" required>
+										<option value="">Seleccione un grupo...</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label>Asignatura <span class="text-danger">*</span></label>
+							<select class="form-control" id="edit_asignatura" name="asignatura" required style="height: auto; max-height: 200px;">
+								<option value="">Seleccione una asignatura...</option>
+							</select>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>Intensidad H. <span class="text-danger">*</span></label>
+									<input type="number" class="form-control" id="edit_ih" name="ih" required min="1">
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>Director de Grupo <span class="text-danger">*</span></label>
+									<select class="form-control" id="edit_dg" name="dg" required>
+										<option value="">Seleccione...</option>
+										<option value="1">SI</option>
+										<option value="0">NO</option>
+									</select>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>Estado <span class="text-danger">*</span></label>
+									<select class="form-control" id="edit_estado" name="estado" required>
+										<option value="">Seleccione...</option>
+										<option value="1">Activa</option>
+										<option value="0">Inactiva</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						
+						<hr>
+						<h5 class="text-info"><i class="fa fa-cog"></i> Configuración Avanzada (Opcional)</h5>
+						
+						<div class="row">
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>Max. Indicadores</label>
+									<input type="number" class="form-control" id="edit_maxIndicadores" name="maxIndicadores" min="0">
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>Max. Actividades</label>
+									<input type="number" class="form-control" id="edit_maxActividades" name="maxActividades" min="0">
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="form-group">
+									<label>% Actividades</label>
+									<select class="form-control" id="edit_valorActividades" name="valorActividades">
+										<option value="">Seleccione...</option>
+										<option value="1">Manual</option>
+										<option value="0">Automático</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>% Indicadores</label>
+									<select class="form-control" id="edit_valorIndicadores" name="valorIndicadores">
+										<option value="">Seleccione...</option>
+										<option value="1">Manual</option>
+										<option value="0">Automático</option>
+									</select>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Indicador Automático</label>
+									<select class="form-control" id="edit_indicadorAutomatico" name="indicadorAutomatico">
+										<option value="">Seleccione...</option>
+										<option value="1">SI</option>
+										<option value="0">NO</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div id="cargaError" class="alert alert-danger" style="display:none;">
+						<i class="fa fa-exclamation-triangle"></i> <span id="errorMensaje"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary" id="btnGuardarCarga">
+						<i class="fa fa-save"></i> Guardar Cambios
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 $(document).ready(function() {
 	// Lazy loading de notas declaradas y registradas
@@ -783,6 +960,147 @@ $(document).ready(function() {
 				$.toast({
 					heading: 'Error',
 					text: 'Error de conexión al servidor',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error',
+					hideAfter: 3000
+				});
+			}
+		});
+	});
+	
+	// Edición rápida de carga mediante modal
+	$(document).on('click', '.btn-editar-carga-modal', function() {
+		var cargaId = $(this).data('carga-id');
+		
+		// Resetear el modal
+		$('#cargaLoader').show();
+		$('#cargaFormulario').hide();
+		$('#cargaError').hide();
+		$('#modalEditarCarga').modal('show');
+		
+		// Hacer petición AJAX para obtener datos
+		$.ajax({
+			url: 'ajax-obtener-datos-carga.php',
+			type: 'POST',
+			data: { carga_id: cargaId },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var carga = response.carga;
+					var listas = response.listas;
+					
+					// Llenar campos ocultos
+					$('#edit_idR').val(carga.car_id);
+					$('#edit_periodoActual').val(carga.car_periodo);
+					$('#edit_docenteActual').val(carga.car_docente);
+					$('#edit_cursoActual').val(carga.car_curso);
+					$('#edit_grupoActual').val(carga.car_grupo);
+					$('#edit_asignaturaActual').val(carga.car_materia);
+					$('#edit_cargaEstado').val(carga.car_estado);
+					
+					// Llenar campos visibles
+					$('#edit_idCarga').val(carga.car_id);
+					$('#edit_ih').val(carga.car_ih);
+					$('#edit_dg').val(carga.car_director_grupo);
+					$('#edit_estado').val(carga.car_activa);
+					$('#edit_maxIndicadores').val(carga.car_maximos_indicadores || '');
+					$('#edit_maxActividades').val(carga.car_maximas_calificaciones || '');
+					$('#edit_valorActividades').val(carga.car_configuracion || '');
+					$('#edit_valorIndicadores').val(carga.car_valor_indicador || '');
+					$('#edit_indicadorAutomatico').val(carga.car_indicador_automatico || '');
+					
+					// Llenar select de periodos
+					$('#edit_periodo').empty().append('<option value="">Seleccione...</option>');
+					for (var i = 1; i <= listas.periodos; i++) {
+						var selected = (i == carga.car_periodo) ? 'selected' : '';
+						$('#edit_periodo').append('<option value="' + i + '" ' + selected + '>Periodo ' + i + '</option>');
+					}
+					
+					// Llenar select de docentes
+					$('#edit_docente').empty().append('<option value="">Seleccione un docente...</option>');
+					listas.docentes.forEach(function(docente) {
+						var selected = (docente.id == carga.car_docente) ? 'selected' : '';
+						var disabled = (docente.bloqueado == 1) ? 'disabled' : '';
+						$('#edit_docente').append('<option value="' + docente.id + '" ' + selected + ' ' + disabled + '>' + docente.nombre + '</option>');
+					});
+					
+					// Llenar select de grados
+					$('#edit_curso').empty().append('<option value="">Seleccione un curso...</option>');
+					listas.grados.forEach(function(grado) {
+						var selected = (grado.id == carga.car_curso) ? 'selected' : '';
+						var disabled = (grado.estado == '0') ? 'disabled' : '';
+						$('#edit_curso').append('<option value="' + grado.id + '" ' + selected + ' ' + disabled + '>' + grado.nombre + '</option>');
+					});
+					
+					// Llenar select de grupos
+					$('#edit_grupo').empty().append('<option value="">Seleccione un grupo...</option>');
+					listas.grupos.forEach(function(grupo) {
+						var selected = (grupo.id == carga.car_grupo) ? 'selected' : '';
+						$('#edit_grupo').append('<option value="' + grupo.id + '" ' + selected + '>' + grupo.nombre + '</option>');
+					});
+					
+					// Llenar select de asignaturas
+					$('#edit_asignatura').empty().append('<option value="">Seleccione una asignatura...</option>');
+					listas.asignaturas.forEach(function(asignatura) {
+						var selected = (asignatura.id == carga.car_materia) ? 'selected' : '';
+						$('#edit_asignatura').append('<option value="' + asignatura.id + '" ' + selected + '>' + asignatura.nombre + '</option>');
+					});
+					
+					// Mostrar formulario
+					$('#cargaLoader').hide();
+					$('#cargaFormulario').show();
+					
+				} else {
+					$('#cargaLoader').hide();
+					$('#errorMensaje').text(response.message || 'Error al cargar datos');
+					$('#cargaError').show();
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX:', error);
+				$('#cargaLoader').hide();
+				$('#errorMensaje').text('Error de conexión al servidor');
+				$('#cargaError').show();
+			}
+		});
+	});
+	
+	// Manejar envío del formulario de edición
+	$('#formEditarCarga').on('submit', function(e) {
+		e.preventDefault();
+		
+		var btnGuardar = $('#btnGuardarCarga');
+		var textoOriginal = btnGuardar.html();
+		
+		btnGuardar.html('<i class="fa fa-spinner fa-spin"></i> Guardando...').prop('disabled', true);
+		
+		// Enviar formulario
+		$.ajax({
+			url: $(this).attr('action'),
+			type: 'POST',
+			data: $(this).serialize(),
+			success: function(response) {
+				$.toast({
+					heading: 'Éxito',
+					text: 'Carga actualizada correctamente',
+					position: 'top-right',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 2000
+				});
+				
+				// Cerrar modal y recargar página
+				$('#modalEditarCarga').modal('hide');
+				setTimeout(function() {
+					location.reload();
+				}, 1000);
+			},
+			error: function(xhr, status, error) {
+				btnGuardar.html(textoOriginal).prop('disabled', false);
+				$.toast({
+					heading: 'Error',
+					text: 'Error al actualizar la carga',
 					position: 'top-right',
 					loaderBg: '#bf441d',
 					icon: 'error',
