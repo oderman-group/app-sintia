@@ -9,33 +9,13 @@ require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 $usuariosClase = new UsuariosFunciones;
 $archivoSubido = new Archivos;
 
+// Validaciones básicas (solo campos críticos)
 if ($_POST["tipoUsuario"] != TIPO_ESTUDIANTE) {
     $mensaje = '';
-    if (empty($_POST["profesion"])) {
-        $mensaje .= '- La profesi&oacute;n<br>';
-    }
-    if (empty($_POST["eLaboral"])) {
-        $mensaje .= '- Estado laboral<br>';
-    }
-    if (empty($_POST["religion"])) {
-        $mensaje .= '- Religi&oacute;n<br>';
-    }
-    if (empty($_POST["lNacimiento"])) {
-        $mensaje .= '- Lugar de nacimiento?<br>';
-    }
-    if (empty($_POST["eCivil"])) {
-        $mensaje .= '- Estado civil?<br>';
-    }
-    if ($_POST["eLaboral"] == 165 and empty($_POST["tipoNegocio"])) {
-        $mensaje .= '- Tipo de negocio?<br>';
-    }
-    if (empty($_POST["estrato"])) {
-        $mensaje .= '- Estrato donde reside<br>';
-    }
-    if (empty($_POST["tipoVivienda"])) {
-        $mensaje .= '- Tipo de vivienda donde reside<br>';
-    }
-
+    
+    // Solo validar campos realmente críticos si están presentes
+    // Los demás campos son opcionales
+    
     if (!empty($mensaje)) {
         echo "Faltan los siguientes datos por diligenciar: <br>" . $mensaje . "<br>
         <a href='javascript:history.go(-1);'>[Regresar al formulario]</a>";
@@ -84,25 +64,25 @@ if ($_POST["tipoUsuario"] == TIPO_ESTUDIANTE) {
         "uss_apellido1"         => strtoupper($_POST["apellido1"]),
         "uss_apellido2"         => strtoupper($_POST["apellido2"]),
         "uss_email"             => strtolower($_POST["email"]),
-        "uss_genero"            => $_POST["genero"],
-        "uss_fecha_nacimiento"  => $_POST["fechaN"],
+        "uss_genero"            => !empty($_POST["genero"]) ? $_POST["genero"] : null,
+        "uss_fecha_nacimiento"  => !empty($_POST["fechaN"]) ? $_POST["fechaN"] : null,
         "uss_celular"           => $_POST["celular"],
-        "uss_numero_hijos"      => $_POST["numeroHijos"],
-        "uss_lugar_nacimiento"  => $_POST["lNacimiento"],
-        "uss_nivel_academico"   => $_POST["nAcademico"],
+        "uss_numero_hijos"      => !empty($_POST["numeroHijos"]) ? $_POST["numeroHijos"] : 0,
+        "uss_lugar_nacimiento"  => !empty($_POST["lNacimiento"]) ? $_POST["lNacimiento"] : null,
+        "uss_nivel_academico"   => !empty($_POST["nAcademico"]) ? $_POST["nAcademico"] : null,
         "uss_telefono"          => $_POST["telefono"],
         "uss_notificacion"      => $notificaciones,
         "uss_mostrar_edad"      => $mostrarEdad,
-        "uss_profesion"         => $_POST["profesion"],
-        "uss_estado_laboral"    => $_POST["eLaboral"],
-        "uss_religion"          => $_POST["religion"],
-        "uss_estado_civil"      => $_POST["eCivil"],
-        "uss_direccion"         => mysqli_real_escape_string($conexion, $_POST["direccion"]),
-        "uss_estrato"           => $_POST["estrato"],
-        "uss_tipo_vivienda"     => $_POST["tipoVivienda"],
-        "uss_medio_transporte"  => $_POST["medioTransporte"],
-        "uss_tipo_negocio"      => $_POST["tipoNegocio"],
-        "uss_sitio_web_negocio" => mysqli_real_escape_string($conexion, $_POST["web"]),
+        "uss_profesion"         => !empty($_POST["profesion"]) ? $_POST["profesion"] : null,
+        "uss_estado_laboral"    => !empty($_POST["eLaboral"]) ? $_POST["eLaboral"] : null,
+        "uss_religion"          => !empty($_POST["religion"]) ? $_POST["religion"] : null,
+        "uss_estado_civil"      => !empty($_POST["eCivil"]) ? $_POST["eCivil"] : null,
+        "uss_direccion"         => !empty($_POST["direccion"]) ? mysqli_real_escape_string($conexion, $_POST["direccion"]) : null,
+        "uss_estrato"           => !empty($_POST["estrato"]) ? $_POST["estrato"] : null,
+        "uss_tipo_vivienda"     => !empty($_POST["tipoVivienda"]) ? $_POST["tipoVivienda"] : null,
+        "uss_medio_transporte"  => !empty($_POST["medioTransporte"]) ? $_POST["medioTransporte"] : null,
+        "uss_tipo_negocio"      => !empty($_POST["tipoNegocio"]) ? $_POST["tipoNegocio"] : null,
+        "uss_sitio_web_negocio" => !empty($_POST["web"]) ? mysqli_real_escape_string($conexion, $_POST["web"]) : null,
         "uss_documento"         => $documento,
     ];
 
@@ -121,7 +101,39 @@ if (!empty($_FILES['firmaDigital']['name']) && ($datosUsuarioActual['uss_tipo'] 
     UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 }
 
-if (!empty($_FILES['fotoPerfil']['name']) && ($datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN)) { //TODO: Esto debe ser una configuración
+// Manejo de foto de perfil recortada (desde el sistema nuevo)
+if (!empty($_POST['fotoRecortada']) && ($datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN)) {
+    $imgBase64 = $_POST['fotoRecortada'];
+    
+    // Remover el prefijo data:image
+    $img = str_replace('data:image/jpeg;base64,', '', $imgBase64);
+    $img = str_replace(' ', '+', $img);
+    $imgData = base64_decode($img);
+    
+    if ($imgData !== false) {
+        $archivo = uniqid($_SESSION["inst"] . '_' . $_SESSION["id"] . '_img_') . ".jpg";
+        $destino = "../files/fotos";
+        
+        if (!is_dir($destino)) {
+            mkdir($destino, 0777, true);
+        }
+        
+        $rutaCompleta = $destino . "/" . $archivo;
+        
+        if (file_put_contents($rutaCompleta, $imgData)) {
+            $update = ['uss_foto' => $archivo];
+            UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
+
+            $updateEstudiantes = [
+                "mat_foto" => $archivo
+            ];
+            
+            Estudiantes::actualizarMatriculasPorIdUsuario($config, $_SESSION["id"], $updateEstudiantes);
+        }
+    }
+}
+// Manejo de foto de perfil sin recortar (sistema antiguo para compatibilidad)
+elseif (!empty($_FILES['fotoPerfil']['name']) && ($datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE || $config['conf_id_institucion'] != ICOLVEN)) { //TODO: Esto debe ser una configuración
     $archivoSubido->validarArchivo($_FILES['fotoPerfil']['size'], $_FILES['fotoPerfil']['name']);
     $explode=explode(".", $_FILES['fotoPerfil']['name']);
     $extension = end($explode);
