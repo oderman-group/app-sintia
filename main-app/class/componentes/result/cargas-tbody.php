@@ -44,7 +44,7 @@ foreach ($data["data"] as $resultado) {
 ?>
 	<tr <?=$claseInactiva;?>>
 	   <td>
-		   <button class="btn btn-sm btn-info expand-btn"
+		   <button class="btn btn-sm btn-link text-secondary expand-btn"
 			   data-id="<?=$resultado['car_id'];?>"
 			   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
 			   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
@@ -62,7 +62,7 @@ foreach ($data["data"] as $resultado) {
 			   data-cantidad-estudiantes="<?=$cantidadEstudiantes;?>"
 			   data-activa="<?=isset($resultado['car_activa']) ? $resultado['car_activa'] : 1;?>"
 			   title="Ver detalles">
-			   <i class="fa fa-plus"></i>
+			   <i class="fa fa-chevron-right"></i>
 		   </button>
 	   </td>
 	   <td><input type="checkbox" class="carga-checkbox" value="<?=$resultado['car_id'];?>"></td>

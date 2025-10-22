@@ -24,6 +24,18 @@
 
 .expand-btn {
 	transition: all 0.3s ease;
+	padding: 4px 8px;
+	font-size: 14px;
+}
+
+.expand-btn:hover {
+	text-decoration: none;
+	transform: scale(1.2);
+}
+
+.expand-btn:focus {
+	outline: none;
+	box-shadow: none;
 }
 
 .expandable-row h6 {
@@ -162,7 +174,7 @@ foreach ($data["data"] as $resultado) {
 
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
-		<td><button class="btn btn-sm btn-info expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-plus"></i></button></td>
+		<td><button class="btn btn-sm btn-link text-secondary expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-chevron-right"></i></button></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -780,14 +792,14 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 			if (row.is(':visible')) {
 				// Collapse with animation
 				row.slideUp(300, function() {
-					icon.removeClass('fa-minus').addClass('fa-plus');
-					button.removeClass('btn-warning').addClass('btn-info');
+					icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+					button.removeClass('text-primary').addClass('text-secondary');
 				});
 			} else {
 				// Expand with animation
 				row.slideDown(300, function() {
-					icon.removeClass('fa-plus').addClass('fa-minus');
-					button.removeClass('btn-info').addClass('btn-warning');
+					icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+					button.removeClass('text-secondary').addClass('text-primary');
 				});
 			}
 		});

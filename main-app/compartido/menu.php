@@ -29,7 +29,9 @@
 							<?php include_once("menu-metodos.php");?>
 							<li <?php agregarClass(MENU,["DT0004"]) ?>>
 							<a href="index.php" class="nav-link nav-toggle">
-	                                <div class="menu-icon filled">📊</div>
+	                                <div class="menu-icon icon-dashboard">
+	                                    <i class="fa fa-th-large"></i>
+	                                </div>
 	                                <span class="title"><?=$frases[100][$datosUsuarioActual['uss_idioma']];?></span>
                                 	<span class="selected"></span>
 	                            </a>
@@ -46,7 +48,9 @@
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_PUBLICACIONES)) {?>
 								<li class="nav-item">
 									<a href="noticias.php" class="nav-link nav-toggle">
-										<div class="menu-icon filled">N</div>
+										<div class="menu-icon icon-news">
+											<i class="fa fa-bullhorn"></i>
+										</div>
 										<span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
 									</a>
 								</li>
@@ -54,7 +58,9 @@
 
 							<li class="nav-item">
 								<a href="javascript:void(0);" class="nav-link nav-toggle"> 
-									<div class="menu-icon filled">?</div>
+									<div class="menu-icon icon-help">
+										<i class="fa fa-question-circle"></i>
+									</div>
 									<span class="title">Ayuda</span>
 								</a>
 								<ul class="sub-menu">

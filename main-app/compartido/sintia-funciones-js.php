@@ -288,17 +288,28 @@ function tipoFolder(dato){
 }	
 
 	/**
-     * Esta funcion genera una alerta validadno la nota ingresada
-     * 
-     * @param nota
-     * @return boolean 
-     */
-function alertValidarNota(nota) {	
-	if (nota > <?=$config[4];?> || isNaN(nota) || nota < <?=$config[3];?>) {
-		Swal.fire('Nota '+nota+' no es valida','Ingrese un valor numérico entre <?=$config[3];?> y <?=$config[4];?>');
+	    * Esta funcion genera una alerta validadno la nota ingresada
+	    *
+	    * @param nota
+	    * @return boolean
+	    */
+function alertValidarNota(nota) {
+	if (nota === '' || nota === null || nota === undefined) {
+		Swal.fire('Campo requerido','Por favor ingrese una nota válida.');
 		return true;
-	} 
-	
+	}
+
+	if (isNaN(nota)) {
+		Swal.fire('Valor no numérico','La nota debe ser un número válido.');
+		return true;
+	}
+
+	var notaNum = parseFloat(nota);
+	if (notaNum > <?=$config[4];?> || notaNum < <?=$config[3];?>) {
+		Swal.fire('Nota fuera de rango','Ingrese un valor numérico entre <?=$config[3];?> y <?=$config[4];?>');
+		return true;
+	}
+
 	return false;
 }
 
@@ -721,9 +732,21 @@ if($datosUsuarioActual['uss_tipo']==5 || $datosUsuarioActual['uss_tipo']==1){
 	
 		if(localStorage.getItem("licencia")!=1){
 	
-			function mostrarModalLicencia(){$("#modalLicencia").modal("show");}
+			function mostrarModalLicencia(){
+				try {
+					if(typeof $.fn.modal === 'function' && $("#modalLicencia").length) {
+						$("#modalLicencia").modal("show");
+					}
+				} catch(e) {
+					console.warn('Modal de licencia no disponible:', e);
+				}
+			}
+			
 			$(document).ready(function() {
-				mostrarModalLicencia();
+				// Esperar un momento para asegurar que Bootstrap esté cargado
+				setTimeout(function() {
+					mostrarModalLicencia();
+				}, 500);
 			});
 	
 		}
@@ -781,10 +804,20 @@ if($datosUsuarioActual['uss_tipo']==5){
 ?>	
 	if(localStorage.getItem("modalContratos")!=1){
 		function mostrarModalContrato(){
-			$("#modalContrato").modal("show");
+			try {
+				if(typeof $.fn.modal === 'function' && $("#modalContrato").length) {
+					$("#modalContrato").modal("show");
+				}
+			} catch(e) {
+				console.warn('Modal de contrato no disponible:', e);
+			}
 		}
+		
 		$(document).ready(function() {
-			mostrarModalContrato();
+			// Esperar un momento para asegurar que Bootstrap esté cargado
+			setTimeout(function() {
+				mostrarModalContrato();
+			}, 500);
 		});
 	}
 <?php }?>

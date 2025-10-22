@@ -60,6 +60,9 @@ if($config['conf_doble_buscador'] == 1) {
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 	<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css"/>
+	<!-- select2 -->
+	<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+	<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
 <?php
@@ -85,6 +88,18 @@ if($config['conf_doble_buscador'] == 1) {
                         </div>
                     </div>
                     
+                    <!-- Descripción de la página -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+                                <i class="fa fa-info-circle text-info"></i> 
+                                Aquí puedes gestionar toda la información de los estudiantes matriculados en la institución. 
+                                Utiliza los filtros avanzados para buscar por nombre, documento o usuario, y filtra por curso, grupo o estado de matrícula. 
+                                También puedes expandir cada registro para ver información detallada del estudiante.
+                            </p>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-12">
                             <div class="row">
@@ -105,7 +120,7 @@ if($config['conf_doble_buscador'] == 1) {
 								
 								<?php
 								 $filtro="";
-								include("includes/barra-superior-matriculas-componente.php");	?>
+								?>
 
 									<?php
 									if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
@@ -143,28 +158,174 @@ if($config['conf_doble_buscador'] == 1) {
 										<p><?=$_GET['msgsintia'];?></p>
 									</div>
 									<?php }?>
-                                    <div class="card card-topline-purple">
-                                        <div class="card-head">
-                                            <header><?=$frases[209][$datosUsuarioActual['uss_idioma']];?></header>
-                                            <div class="tools">
-                                                <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
-			                                    <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
-			                                    <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
-                                            </div>
-                                        </div>
-                                        <div class="card-body">
+
+									<!-- Barra de herramientas superior -->
+									<div class="row mb-3">
+										<div class="col-sm-12">
+											<div class="d-flex justify-content-between align-items-center">
+												<!-- Botones principales -->
+												<div class="btn-group">
+													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0084'])){?>
+														<a href="estudiantes-agregar.php" class="btn deepPink-bgcolor">
+															<i class="fa fa-plus"></i> Agregar Estudiante
+														</a>
+													<?php }?>
+													
+													<?php if(Modulos::validarSubRol(['DT0002'])){?>
+														<a href="estudiantes-promedios.php" class="btn btn-info">
+															<i class="fa fa-chart-line"></i> Promedios
+														</a>
+													<?php }?>
+													
+													<!-- Menú Matrículas -->
+													<?php if(Modulos::validarSubRol(['DT0077', 'DT0080', 'DT0075'])){?>
+														<div class="btn-group" role="group">
+															<button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+																<i class="fa fa-list"></i> Menú Matrículas <span class="caret"></span>
+															</button>
+															<ul class="dropdown-menu">
+																<?php if(Modulos::validarSubRol(['DT0077'])){?>
+																	<li><a href="estudiantes-importar-excel.php"><i class="fa fa-file-excel"></i> Importar desde Excel</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0080'])){?>
+																	<li><a href="estudiantes-consolidado-final.php"><i class="fa fa-file-alt"></i> Consolidado Final</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0075'])){?>
+																	<li><a href="estudiantes-nivelaciones.php"><i class="fa fa-balance-scale"></i> Nivelaciones</a></li>
+																<?php }?>
+															</ul>
+														</div>
+													<?php }?>
+													
+													<!-- Más Opciones -->
+													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0212', 'DT0213', 'DT0214', 'DT0215', 'DT0175', 'DT0216', 'DT0149'])){?>
+														<div class="btn-group" role="group">
+															<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+																<i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
+															</button>
+															<ul class="dropdown-menu">
+																<?php if(Modulos::validarSubRol(['DT0212'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matricular-todos.php')"><i class="fa fa-check-circle"></i> Matricular a Todos</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0213'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matriculas-cancelar.php')"><i class="fa fa-times-circle"></i> Cancelar a Todos</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0214'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-grupoa-todos.php')"><i class="fa fa-users"></i> Asignar a Todos al Grupo A</a></li>
+																	<li class="divider"></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0215'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Esta opción removerá a todos lo estudiantes que no estén en estado Matriculado, desea continuar?','question','estudiantes-inactivos-remover.php')"><i class="fa fa-trash"></i> Remover Estudiantes Inactivos</a></li>
+																	<li class="divider"></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0175'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-documento-usuario-actualizar.php')"><i class="fa fa-id-card"></i> Documento como Usuario</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0216'])){?>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-crear-usuarios.php')"><i class="fa fa-key"></i> Generar Credenciales</a></li>
+																<?php }?>
+																<?php if(Modulos::validarSubRol(['DT0149'])){?>
+																	<li><a href="filtro-general-folio.php"><i class="fa fa-file-pdf"></i> Generar Folios</a></li>
+																<?php }?>
+															</ul>
+														</div>
+													<?php }?>
+												</div>
+												
+												<!-- Botón de filtros -->
+												<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltros">
+													<i class="fa fa-filter"></i> Filtros y Búsqueda
+												</button>
+											</div>
+										</div>
+									</div>
 											
-											<div class="row" style="margin-bottom: 10px;">
-												<div class="col-sm-12">
-													<div class="btn-group">
-														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0084'])){?>
-															<a href="estudiantes-agregar.php" id="addRow" class="btn deepPink-bgcolor">
-																Agregar nuevo <i class="fa fa-plus"></i>
-															</a>
-														<?php }?>
+											<!-- Filtros Mejorados con Multiselect (Colapsable) -->
+											<div class="card card-topline-purple mb-3" id="cardFiltros" style="display: none;">
+												<div class="card-body">
+													<h5 class="mb-3"><i class="fa fa-filter"></i> Filtros y Búsqueda Avanzada</h5>
+													
+													<!-- Buscador General Potente -->
+													<div class="row mb-3">
+														<div class="col-md-12">
+															<div class="form-group">
+																<label><i class="fa fa-search"></i> Buscar Estudiante</label>
+																<div class="input-group">
+																	<input type="text" id="filtro_busqueda" class="form-control" placeholder="Buscar por nombre completo, apellidos, documento, email o usuario...">
+																	<div class="input-group-append">
+																		<button class="btn btn-primary" type="button" id="btnBuscar">
+																			<i class="fa fa-search"></i> Buscar
+																		</button>
+																	</div>
+																</div>
+																<small class="form-text text-muted">
+																	<i class="fa fa-info-circle"></i> <strong>Búsqueda potente:</strong> Escribe cualquier combinación de nombres y apellidos, documento, email o usuario. 
+																	Ejemplo: "Juan Pérez", "María", "12345678", etc. Presiona Enter o haz clic en "Buscar".
+																</small>
+															</div>
+														</div>
+													</div>
+													
+													<hr>
+													
+													<!-- Filtros Multiselect -->
+													<div class="row">
+														<div class="col-md-4">
+															<div class="form-group">
+																<label><i class="fa fa-graduation-cap"></i> Cursos</label>
+																<select id="filtro_cursos" class="form-control select2-multiple" multiple="multiple" style="width: 100%;">
+																	<?php
+																	$grados = Grados::listarGrados(1);
+																	while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
+																	?>
+																		<option value="<?=$grado['gra_id'];?>"><?=$grado['gra_nombre'];?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+														
+														<div class="col-md-4">
+															<div class="form-group">
+																<label><i class="fa fa-users"></i> Grupos</label>
+																<select id="filtro_grupos" class="form-control select2-multiple" multiple="multiple" style="width: 100%;">
+																	<?php
+																	$grupos = Grupos::listarGrupos();
+																	while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
+																	?>
+																		<option value="<?=$gru['gru_id'];?>"><?=$gru['gru_nombre'];?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+														
+														<div class="col-md-4">
+															<div class="form-group">
+																<label><i class="fa fa-info-circle"></i> Estados</label>
+																<select id="filtro_estados" class="form-control select2-multiple" multiple="multiple" style="width: 100%;">
+																	<?php
+																	foreach ($estadosMatriculasEstudiantes as $clave => $valor) {
+																	?>
+																		<option value="<?=$clave;?>"><?=$valor;?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+													</div>
+													
+													<div class="row">
+														<div class="col-md-12 text-right">
+															<button type="button" class="btn btn-secondary" id="btnLimpiarFiltros">
+																<i class="fa fa-eraser"></i> Limpiar Todo
+															</button>
+														</div>
 													</div>
 												</div>
 											</div>
+											
+                                    <div class="card card-topline-purple">
+                                        <div class="card-body">
+											
+											
 											
                                         <div>
 											
@@ -256,6 +417,8 @@ if($config['conf_doble_buscador'] == 1) {
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js" ></script>
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
+	<!-- select2 -->
+	<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
     <!-- end js include path -->
 	<script>
 		$(function () {
@@ -263,6 +426,171 @@ if($config['conf_doble_buscador'] == 1) {
 		});
 
 		$('.popover-dismiss').popover({trigger: 'focus'});
+		
+		// === Filtros Mejorados con Multiselect ===
+		
+		$(document).ready(function() {
+			// Toggle de los filtros
+			$('#btnToggleFiltros').on('click', function() {
+				const card = $('#cardFiltros');
+				const icon = $(this).find('i');
+				
+				if (card.is(':visible')) {
+					card.slideUp(300);
+					icon.removeClass('fa-chevron-up').addClass('fa-filter');
+					$(this).removeClass('btn-primary').addClass('btn-outline-secondary');
+				} else {
+					card.slideDown(300);
+					icon.removeClass('fa-filter').addClass('fa-chevron-up');
+					$(this).removeClass('btn-outline-secondary').addClass('btn-primary');
+				}
+			});
+			
+			// Inicializar Select2 en los filtros
+			$('.select2-multiple').select2({
+				placeholder: "Seleccione una o más opciones",
+				allowClear: true,
+				language: {
+					noResults: function() {
+						return "No se encontraron resultados";
+					},
+					searching: function() {
+						return "Buscando...";
+					}
+				}
+			});
+			
+			// Función para aplicar filtros
+			function aplicarFiltros() {
+				const cursos = $('#filtro_cursos').val() || [];
+				const grupos = $('#filtro_grupos').val() || [];
+				const estados = $('#filtro_estados').val() || [];
+				const busqueda = $('#filtro_busqueda').val() || '';
+				
+				console.log('Aplicando filtros:', { cursos, grupos, estados, busqueda });
+				
+				// Mostrar loader
+				$('#gifCarga').show();
+				$('#matriculas_result').html('<tr><td colspan="9" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
+				
+				// Enviar AJAX
+				$.ajax({
+					url: 'ajax-filtrar-estudiantes.php',
+					type: 'POST',
+					data: {
+						cursos: cursos,
+						grupos: grupos,
+						estados: estados,
+						busqueda: busqueda
+					},
+					dataType: 'json',
+					success: function(response) {
+						console.log('Respuesta del filtro:', response);
+						
+						$('#gifCarga').hide();
+						
+						if (response.success) {
+							// Insertar el HTML
+							$('#matriculas_result').html(response.html);
+							
+							// Forzar que TODAS las filas expandibles estén completamente ocultas
+							$('#matriculas_result tr.expandable-row').each(function() {
+								$(this).hide();
+								$(this).css('display', 'none');
+								$(this).attr('style', 'display: none !important;');
+							});
+							
+							// Resetear todos los botones al estado inicial
+							$('.expand-btn').removeClass('text-primary').addClass('text-secondary');
+							$('.expand-btn i').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+							
+							console.log('Filas expandibles después de filtrar:', $('#matriculas_result tr.expandable-row').length);
+							console.log('Filas visibles:', $('#matriculas_result tr.expandable-row:visible').length);
+							
+							// Mostrar mensaje de resultados
+							let mensajeResultado = 'Se encontraron ' + response.total + ' estudiante(s)';
+							if ($('#filtro_busqueda').val()) {
+								mensajeResultado += ' con "' + $('#filtro_busqueda').val() + '"';
+							}
+							
+							$.toast({
+								heading: 'Filtros Aplicados',
+								text: mensajeResultado,
+								position: 'top-right',
+								loaderBg: '#26c281',
+								icon: 'success',
+								hideAfter: 3000
+							});
+						} else {
+							$.toast({
+								heading: 'Error',
+								text: response.error || 'Error al aplicar filtros',
+								position: 'top-right',
+								loaderBg: '#bf441d',
+								icon: 'error',
+								hideAfter: 5000
+							});
+							
+							$('#matriculas_result').html('<tr><td colspan="9" class="text-center text-danger">Error al cargar los datos</td></tr>');
+						}
+					},
+					error: function(xhr, status, error) {
+						console.error('Error AJAX:', status, error);
+						console.error('Response:', xhr.responseText);
+						
+						$('#gifCarga').hide();
+						
+						$.toast({
+							heading: 'Error de Conexión',
+							text: 'No se pudo conectar con el servidor',
+							position: 'top-right',
+							loaderBg: '#bf441d',
+							icon: 'error',
+							hideAfter: 5000
+						});
+						
+						$('#matriculas_result').html('<tr><td colspan="9" class="text-center text-danger">Error de conexión</td></tr>');
+					}
+				});
+			}
+			
+			// Aplicar filtros al hacer clic en el botón
+			$('#btnAplicarFiltros').on('click', function() {
+				aplicarFiltros();
+			});
+			
+			// Limpiar filtros
+			$('#btnLimpiarFiltros').on('click', function() {
+				$('#filtro_cursos').val(null).trigger('change');
+				$('#filtro_grupos').val(null).trigger('change');
+				$('#filtro_estados').val(null).trigger('change');
+				
+				// Recargar la página para mostrar todos los estudiantes
+				location.reload();
+			});
+			
+			// Aplicar filtros automáticamente al cambiar las opciones
+			$('.select2-multiple').on('change', function() {
+				// Aplicar filtros después de un breve delay para evitar múltiples llamadas
+				clearTimeout(window.filtroTimeout);
+				window.filtroTimeout = setTimeout(function() {
+					aplicarFiltros();
+				}, 500);
+			});
+			
+			// Búsqueda al hacer clic en el botón
+			$('#btnBuscar').on('click', function() {
+				aplicarFiltros();
+			});
+			
+			// Búsqueda al presionar Enter
+			$('#filtro_busqueda').on('keypress', function(e) {
+				if (e.which === 13) { // Enter key
+					e.preventDefault();
+					aplicarFiltros();
+				}
+			});
+		});
 	</script>
 </body>
 

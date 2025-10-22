@@ -23,6 +23,9 @@ if($config['conf_doble_buscador'] == 1) {
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 	<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css"/>
+	<!-- select2 -->
+	<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+	<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 	<style>
 		/* Ocultar paginación de DataTable en la página de cargas */
 		#example1_paginate,
@@ -43,6 +46,23 @@ if($config['conf_doble_buscador'] == 1) {
 		/* Mejorar el espaciado de la tabla */
 		.dataTables_wrapper {
 			padding-top: 10px;
+		}
+		
+		/* Estilo sutil para el botón de expandir */
+		.expand-btn {
+			transition: all 0.3s ease;
+			padding: 4px 8px;
+			font-size: 14px;
+		}
+		
+		.expand-btn:hover {
+			text-decoration: none;
+			transform: scale(1.2);
+		}
+		
+		.expand-btn:focus {
+			outline: none;
+			box-shadow: none;
 		}
 	</style>
 </head>
@@ -71,11 +91,20 @@ if($config['conf_doble_buscador'] == 1) {
                         </div>
                     </div>
                     
+                    <!-- Descripción de la página -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+                                <i class="fa fa-info-circle text-info"></i> 
+                                Gestiona las cargas académicas de los docentes. Aquí puedes visualizar y administrar las asignaturas asignadas a cada docente por curso y grupo. 
+                                Utiliza los filtros avanzados para buscar por docente, curso, grupo o asignatura. Expande cada carga para ver información detallada sobre actividades y estudiantes.
+                            </p>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-12">
                             <div class="row">
-								
-								
 								
 								<?php 
 								$filtro = '';
@@ -84,14 +113,11 @@ if($config['conf_doble_buscador'] == 1) {
 								if(!empty($_GET["grupo"])){$filtro .= " AND car_grupo='".base64_decode($_GET["grupo"])."'";}
 								if(!empty($_GET["docente"])){$filtro .= " AND car_docente='".base64_decode($_GET["docente"])."'";}
 								if(!empty($_GET["asignatura"])){$filtro .= " AND car_materia='".base64_decode($_GET["asignatura"])."'";}
-
-								//include("includes/cargas-filtros.php");
 								?>
 								
 								<div class="col-md-12">
 								<?php
 									include("../../config-general/mensajes-informativos.php");
-									include("includes/barra-superior-cargas-componente.php");									
 								?>
 
                                     <div class="card card-topline-purple">
@@ -105,21 +131,129 @@ if($config['conf_doble_buscador'] == 1) {
                                         </div>
                                         <div class="card-body">
 											
-											<div class="row" style="margin-bottom: 10px;">
+											<!-- Barra de herramientas superior -->
+											<div class="row mb-3">
 												<div class="col-sm-12">
-													<div class="btn-group">
-														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0052'])) { ?>
-											                                              <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
-														   <?=$frases[231][$datosUsuarioActual['uss_idioma']];?> <i class="fa fa-plus"></i>
-											                                              </a>
-											                                              <?php
-											                                              $idModal = "nuevaCargModal";
-											                                              $contenido = "../directivo/cargas-agregar-modal.php";
-											                                              include("../compartido/contenido-modal.php");
-											                                              } ?>
-											                                              <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
-											                                              <button type="button" id="moverCargasBtn" class="btn deepPink-bgcolor" disabled>Mover Cargas Seleccionadas</button>
-											                                              <?php } ?>
+													<div class="d-flex justify-content-between align-items-center">
+														<!-- Botones principales -->
+														<div class="btn-group">
+															<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0052'])) { ?>
+																<a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
+																	<i class="fa fa-plus"></i> Nueva Carga
+																</a>
+																<?php
+																$idModal = "nuevaCargModal";
+																$contenido = "../directivo/cargas-agregar-modal.php";
+																include("../compartido/contenido-modal.php");
+																} ?>
+															
+															<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+																<button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
+																	<i class="fa fa-arrows-alt"></i> Mover Seleccionadas
+																</button>
+															<?php } ?>
+															
+															<!-- Más Opciones -->
+															<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0035'])){?>
+																<div class="btn-group" role="group">
+																	<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+																		<i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
+																	</button>
+																	<ul class="dropdown-menu">
+																		<li><a href="cargas-indicadores-obligatorios.php"><i class="fa fa-list-check"></i> Indicadores Obligatorios</a></li>
+																		<li><a href="cargas-comportamiento-filtros.php"><i class="fa fa-user-check"></i> Notas de Comportamiento</a></li>
+																		<li><a href="javascript:void(0);" data-toggle="modal" data-target="#modalTranferirCargas"><i class="fa fa-exchange-alt"></i> Transferir Cargas</a></li>
+																		<li><a href="cargas-estilo-notas.php"><i class="fa fa-palette"></i> Estilo de Notas</a></li>
+																	</ul>
+																</div>
+															<?php }?>
+														</div>
+														
+														<!-- Botón de filtros -->
+														<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosCargas">
+															<i class="fa fa-filter"></i> Filtros Avanzados
+														</button>
+													</div>
+												</div>
+											</div>
+											
+											<!-- Panel de Filtros Colapsable -->
+											<div class="card card-topline-purple mb-3" id="cardFiltrosCargas" style="display: none;">
+												<div class="card-body">
+													<h5 class="mb-3"><i class="fa fa-filter"></i> Filtros Avanzados</h5>
+													
+													<div class="row">
+														<div class="col-md-3">
+															<div class="form-group">
+																<label><i class="fa fa-graduation-cap"></i> Cursos</label>
+																<select id="filtro_cargas_cursos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+																	<?php
+																	$grados = Grados::listarGrados(1);
+																	while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
+																	?>
+																		<option value="<?=$grado['gra_id'];?>"><?=$grado['gra_nombre'];?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+														
+														<div class="col-md-3">
+															<div class="form-group">
+																<label><i class="fa fa-users"></i> Grupos</label>
+																<select id="filtro_cargas_grupos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+																	<?php
+																	$grupos = Grupos::listarGrupos();
+																	while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
+																	?>
+																		<option value="<?=$gru['gru_id'];?>"><?=$gru['gru_nombre'];?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+														
+														<div class="col-md-3">
+															<div class="form-group">
+																<label><i class="fa fa-chalkboard-teacher"></i> Docentes</label>
+																<select id="filtro_cargas_docentes" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+																	<?php
+																	try {
+																		$consultaDocentes = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 
+																			FROM ".BD_GENERAL.".usuarios 
+																			WHERE uss_tipo=".TIPO_DOCENTE." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION['bd']}
+																			ORDER BY uss_nombre ASC");
+																		
+																		while ($doc = mysqli_fetch_array($consultaDocentes, MYSQLI_BOTH)) {
+																			$nombreCompleto = UsuariosPadre::nombreCompletoDelUsuario($doc);
+																		?>
+																			<option value="<?=$doc['uss_id'];?>"><?=$nombreCompleto;?></option>
+																		<?php 
+																		}
+																	} catch(Exception $e) {
+																		echo "<!-- Error al cargar docentes: " . $e->getMessage() . " -->";
+																	}
+																	?>
+																</select>
+															</div>
+														</div>
+														
+														<div class="col-md-3">
+															<div class="form-group">
+																<label><i class="fa fa-calendar"></i> Periodos</label>
+																<select id="filtro_cargas_periodos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+																	<?php for($i=1; $i<=$config['conf_periodos_maximos']; $i++){?>
+																		<option value="<?=$i;?>">Periodo <?=$i;?></option>
+																	<?php }?>
+																</select>
+															</div>
+														</div>
+													</div>
+													
+													<div class="row">
+														<div class="col-md-12 text-right">
+															<button type="button" class="btn btn-secondary" id="btnLimpiarFiltrosCargas">
+																<i class="fa fa-eraser"></i> Limpiar Filtros
+															</button>
+														</div>
 													</div>
 												</div>
 											</div>
@@ -279,16 +413,43 @@ if($config['conf_doble_buscador'] == 1) {
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js" ></script>
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
+	<!-- select2 -->
+	<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
     <!-- end js include path -->
 	<script>
-		$(function () {
-			$('[data-toggle="popover"]').popover();
+		console.log('==========================================');
+		console.log('INICIO DE SCRIPTS DE CARGAS.PHP');
+		console.log('jQuery disponible:', typeof $ !== 'undefined');
+		console.log('Bootstrap modal disponible:', typeof $.fn.modal === 'function');
+		console.log('==========================================');
+		
+		// Manejar errores de scripts externos para que no bloqueen la página
+		window.addEventListener('error', function(e) {
+			console.error('Error global capturado:', e.message, e.filename, e.lineno);
+			// Silenciar errores de modal/tooltip que bloquean la ejecución
+			if (e.message && (e.message.includes('modal') || e.message.includes('tooltip'))) {
+				console.warn('Error silenciado para no bloquear la página');
+				e.preventDefault();
+				return true;
+			}
 		});
-
-		$('.popover-dismiss').popover({trigger: 'focus'});
+		
+		// Esperar a que TODO esté completamente cargado
+		$(window).on('load', function() {
+			// Inicializar popovers si están disponibles
+			try {
+				if (typeof $().popover === 'function') {
+					$('[data-toggle="popover"]').popover();
+					$('.popover-dismiss').popover({trigger: 'focus'});
+				}
+			} catch(e) {
+				console.warn('Popover no disponible:', e);
+			}
+		});
 
 		// DataTable initialization with child rows
 		$(document).ready(function() {
+			console.log('Inicializando DataTable y funcionalidades...');
 			if (!$.fn.DataTable.isDataTable('#example1')) {
 				var table = $('#example1').DataTable({
 					"paging": false,   // Desactivar paginación de DataTable
@@ -364,15 +525,15 @@ if($config['conf_doble_buscador'] == 1) {
 										tr.next('tr').remove();
 									}
 									expandedRows[cargaId] = false;
-									icon.removeClass('fa-minus').addClass('fa-plus');
-									button.removeClass('btn-warning').addClass('btn-info');
+									icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+									button.removeClass('text-primary').addClass('text-secondary');
 								} catch (error) {
 									console.error('Error hiding child row:', error);
 									// Fallback cleanup
 									tr.next('tr').remove();
 									expandedRows[cargaId] = false;
-									icon.removeClass('fa-minus').addClass('fa-plus');
-									button.removeClass('btn-warning').addClass('btn-info');
+									icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+									button.removeClass('text-primary').addClass('text-secondary');
 								}
 							} else {
 								// Open this row
@@ -384,15 +545,15 @@ if($config['conf_doble_buscador'] == 1) {
 										$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
 									}
 									expandedRows[cargaId] = true;
-									icon.removeClass('fa-plus').addClass('fa-minus');
-									button.removeClass('btn-info').addClass('btn-warning');
+									icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+									button.removeClass('text-secondary').addClass('text-primary');
 								} catch (error) {
 									console.error('Error showing child row:', error);
 									// Fallback insertion
 									$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
 									expandedRows[cargaId] = true;
-									icon.removeClass('fa-plus').addClass('fa-minus');
-									button.removeClass('btn-info').addClass('btn-warning');
+									icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+									button.removeClass('text-secondary').addClass('text-primary');
 								}
 							}
 						});
@@ -1109,8 +1270,192 @@ $(document).ready(function() {
 			}
 		});
 	});
+	
+	// === Filtros Avanzados para Cargas ===
+	
+	// Toggle del panel de filtros
+	$('#btnToggleFiltrosCargas').on('click', function() {
+		const card = $('#cardFiltrosCargas');
+		const icon = $(this).find('i');
+		
+		if (card.is(':visible')) {
+			card.slideUp(300);
+			icon.removeClass('fa-chevron-up').addClass('fa-filter');
+			$(this).removeClass('btn-primary').addClass('btn-outline-secondary');
+		} else {
+			card.slideDown(300);
+			icon.removeClass('fa-filter').addClass('fa-chevron-up');
+			$(this).removeClass('btn-outline-secondary').addClass('btn-primary');
+		}
+	});
+	
+	// Inicializar Select2 en los filtros
+	$('.select2-multiple-cargas').select2({
+		placeholder: "Seleccione una o más opciones",
+		allowClear: true,
+		language: {
+			noResults: function() {
+				return "No se encontraron resultados";
+			},
+			searching: function() {
+				return "Buscando...";
+			}
+		}
+	});
+	
+	// Función para aplicar filtros de cargas
+	function aplicarFiltrosCargas() {
+		const cursos = $('#filtro_cargas_cursos').val() || [];
+		const grupos = $('#filtro_cargas_grupos').val() || [];
+		const docentes = $('#filtro_cargas_docentes').val() || [];
+		const periodos = $('#filtro_cargas_periodos').val() || [];
+		
+		console.log('Aplicando filtros cargas:', { cursos, grupos, docentes, periodos });
+		
+		// Mostrar loader
+		$('#gifCarga').show();
+		$('#cargas_result').html('<tr><td colspan="11" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
+		
+		// Enviar AJAX
+		$.ajax({
+			url: 'ajax-filtrar-cargas.php',
+			type: 'POST',
+			data: {
+				cursos: cursos,
+				grupos: grupos,
+				docentes: docentes,
+				periodos: periodos
+			},
+			dataType: 'json',
+			success: function(response) {
+				console.log('Respuesta del filtro cargas:', response);
+				
+				$('#gifCarga').hide();
+				
+				if (response.success) {
+					// Insertar el HTML
+					$('#cargas_result').html(response.html);
+					
+					// Reinicializar event listeners para los botones de expandir
+					// Esto es necesario porque el HTML se insertó dinámicamente
+					$('.expand-btn').off('click').on('click', function() {
+						var button = $(this);
+						var cargaId = button.data('id');
+						var icon = button.find('i');
+						
+						// Verificar si la fila expandible ya existe
+						var expandRow = button.closest('tr').next('tr.expandable-row');
+						
+						if (expandRow.length && expandRow.is(':visible')) {
+							// Contraer
+							expandRow.slideUp(300, function() {
+								icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+								button.removeClass('text-primary').addClass('text-secondary');
+							});
+						} else {
+							// Expandir - obtener datos de los atributos del botón
+							var codigo = button.data('codigo');
+							var docente = button.data('docente');
+							var curso = button.data('curso');
+							var asignatura = button.data('asignatura');
+							var ih = button.data('ih');
+							var periodo = button.data('periodo');
+							var actividades = button.data('actividades');
+							var actividadesRegistradas = button.data('actividades-registradas');
+							var directorGrupo = button.data('director-grupo');
+							var permiso2 = button.data('permiso2');
+							var indicadorAutomatico = button.data('indicador-automatico');
+							var maxIndicadores = button.data('max-indicadores');
+							var maxCalificaciones = button.data('max-calificaciones');
+							var cantidadEstudiantes = button.data('cantidad-estudiantes');
+							var activa = button.data('activa');
+							
+							// Crear el HTML de detalles y insertarlo
+							var detailsHtml = formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId);
+							$(detailsHtml).insertAfter(button.closest('tr')).slideDown(300);
+							
+							icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+							button.removeClass('text-secondary').addClass('text-primary');
+						}
+					});
+					
+					// Mostrar mensaje de resultados
+					$.toast({
+						heading: 'Filtros Aplicados',
+						text: 'Se encontraron ' + response.total + ' carga(s)',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 3000
+					});
+				} else {
+					console.error('Error del servidor:', response.error);
+					if (response.trace) {
+						console.error('Trace:', response.trace);
+					}
+					if (response.file) {
+						console.error('File:', response.file, 'Line:', response.line);
+					}
+					
+					$.toast({
+						heading: 'Error',
+						text: response.error || 'Error al aplicar filtros',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 5000
+					});
+					
+					$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error al cargar los datos. Ver consola para detalles.</td></tr>');
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX cargas:', status, error);
+				console.error('Response:', xhr.responseText);
+				
+				$('#gifCarga').hide();
+				
+				$.toast({
+					heading: 'Error de Conexión',
+					text: 'No se pudo conectar con el servidor',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error',
+					hideAfter: 5000
+				});
+				
+				$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error de conexión</td></tr>');
+			}
+		});
+	}
+	
+	// Limpiar filtros de cargas
+	$('#btnLimpiarFiltrosCargas').on('click', function() {
+		$('#filtro_cargas_cursos').val(null).trigger('change');
+		$('#filtro_cargas_grupos').val(null).trigger('change');
+		$('#filtro_cargas_docentes').val(null).trigger('change');
+		$('#filtro_cargas_periodos').val(null).trigger('change');
+		
+		// Recargar la página para mostrar todas las cargas
+		location.reload();
+	});
+	
+	// Aplicar filtros automáticamente al cambiar las opciones
+	$('.select2-multiple-cargas').on('change', function() {
+		clearTimeout(window.filtroCargasTimeout);
+		window.filtroCargasTimeout = setTimeout(function() {
+			aplicarFiltrosCargas();
+		}, 500);
+	});
 });
 </script>
+
+<?php
+// Incluir modal de transferir cargas
+$idModal = "modalTranferirCargas";
+$contenido = "../directivo/cargas-transferir-modal.php";
+include("../compartido/contenido-modal.php");
+?>
 
 </body>
 

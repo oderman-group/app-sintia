@@ -1,5 +1,12 @@
 $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
+    // Inicializar tooltips de manera segura
+    try {
+        if (typeof $.fn.tooltip === 'function') {
+            $('[data-toggle="tooltip"]').tooltip();
+        }
+    } catch(e) {
+        console.warn('Tooltip no disponible:', e);
+    }
 })
 
 /**

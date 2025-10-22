@@ -190,15 +190,15 @@ $frases[85][$l] = 'Mi matr&iacute;cula';
 
 $frases[86][$l] = 'Donde estudiar mi carrera universitaria';
 
-$frases[87][$l] = 'G. Administrativa';
+$frases[87][$l] = 'Administrativo';
 
-$frases[88][$l] = 'G. Acad&eacute;mica';
+$frases[88][$l] = 'Acad&eacute;mico';
 
-$frases[89][$l] = 'G. Financiera';
+$frases[89][$l] = 'Financiero';
 
-$frases[90][$l] = 'G. Disciplinaria';
+$frases[90][$l] = 'Convivencia';
 
-$frases[91][$l] = 'G. Social';
+$frases[91][$l] = 'Social';
 
 $frases[92][$l] = 'Perfiles';
 

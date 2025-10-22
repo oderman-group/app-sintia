@@ -177,13 +177,13 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a{
 	background-color: #F4F6F9;
     border-top-color: transparent;
-    color: #41c4c4;
+    color: #6017dc;
 }
 .white-sidebar-color .user-panel,
 .white-sidebar-color .txtOnline,
 .white-sidebar-color .sidemenu-container .sidemenu>li>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li>a{
-	color: #444;
+	color: #000000;
 }
 .white-sidebar-color .sidemenu-container .sidemenu>li.open>a>.arrow.open:before, 
 .white-sidebar-color .sidemenu-container .sidemenu>li.open>a>.arrow:before, 
@@ -205,7 +205,7 @@
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li>a{
-	color : #444;
+	color : #000000;
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li.active>a, 
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li.open>a, 
@@ -213,7 +213,7 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li.active>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li.open>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li:hover>a{
-	color: #41c4c4;
+	color: #6017dc;
 }
 .white-sidebar-color .page-container{
 	background-color : #ffffff;
