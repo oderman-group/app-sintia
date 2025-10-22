@@ -18,7 +18,7 @@ foreach ($data["data"] as $resultado) {
 						  <span style='color:darkblue; font-size:11px; font-style:italic;'>{$observacion}</span>";
 ?>
 	<tr id="registro_<?= $resultado["asp_id"]; ?>" class="odd gradeX">
-		<td><button class="btn btn-sm btn-info expand-btn" data-id="<?= $resultado['asp_id']; ?>" title="Ver detalles"><i class="fa fa-plus"></i></button></td>
+		<td><button class="btn btn-sm btn-link text-secondary expand-btn" data-id="<?= $resultado['asp_id']; ?>" title="Ver detalles"><i class="fa fa-chevron-right"></i></button></td>
 		<td><?= $contReg; ?></td>
 		<td><?= $resultado["mat_id"]; ?></td>
 		<td><?= $resultado["asp_id"]; ?></td>
@@ -238,14 +238,14 @@ $(document).ready(function() {
 		if (row.is(':visible')) {
 			// Collapse with animation
 			row.slideUp(300, function() {
-				icon.removeClass('fa-minus').addClass('fa-plus');
-				button.removeClass('btn-warning').addClass('btn-info');
+				icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+				button.removeClass('text-primary').addClass('text-secondary');
 			});
 		} else {
 			// Expand with animation
 			row.slideDown(300, function() {
-				icon.removeClass('fa-plus').addClass('fa-minus');
-				button.removeClass('btn-info').addClass('btn-warning');
+				icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+				button.removeClass('text-secondary').addClass('text-primary');
 			});
 		}
 	});

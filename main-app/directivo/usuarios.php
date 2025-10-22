@@ -24,8 +24,27 @@ if (!Modulos::validarPermisoEdicion()) {
 <!-- data tables -->
 <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css"
 	rel="stylesheet" type="text/css" />
+<!-- select2 -->
+<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 
 <style>
+.expand-btn {
+	transition: all 0.3s ease;
+	padding: 4px 8px;
+	font-size: 14px;
+}
+
+.expand-btn:hover {
+	text-decoration: none;
+	transform: scale(1.2);
+}
+
+.expand-btn:focus {
+	outline: none;
+	box-shadow: none;
+}
+
 .expandable-content {
 	border-radius: 8px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -86,6 +105,17 @@ if (!Modulos::validarPermisoEdicion()) {
 						</div>
 					</div>
 				</div>
+				
+				<!-- Descripción de la página -->
+				<div class="row mb-3">
+					<div class="col-md-12">
+						<p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+							<i class="fa fa-info-circle text-info"></i> 
+							Administra los usuarios de la plataforma. Aquí puedes crear, editar y gestionar docentes, directivos, estudiantes y acudientes. 
+							Utiliza el buscador para encontrar usuarios por nombre o datos de acceso. Expande cada registro para ver información detallada del usuario.
+						</p>
+					</div>
+				</div>
 
 				<div class="row">
 					<div class="col-md-12">
@@ -102,8 +132,9 @@ if (!Modulos::validarPermisoEdicion()) {
 								
 								?>
 
-								<?php include("includes/barra-superior-usuarios.php");
-
+								<?php 
+								// Barra superior antigua - removida
+								// include("includes/barra-superior-usuarios.php");
 								?>
 
 								<div class="card card-topline-purple">
@@ -117,19 +148,95 @@ if (!Modulos::validarPermisoEdicion()) {
 									</div>
 									<div class="card-body">
 
-										<div class="row" style="margin-bottom: 10px;">
+										<!-- Barra de herramientas superior -->
+										<div class="row mb-3">
 											<div class="col-sm-12">
-												<div class="btn-group">
-													<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0123'])) { ?>
-														<a href="usuarios-agregar.php" id="addRow"
-															class="btn deepPink-bgcolor">
-															Agregar nuevo <i class="fa fa-plus"></i>
-														</a>
-													<?php } ?>
+												<div class="d-flex justify-content-between align-items-center">
+													<!-- Botones principales -->
+													<div class="btn-group">
+														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0123'])) { ?>
+															<button type="button" class="btn deepPink-bgcolor" data-toggle="modal" data-target="#modalAgregarUsuario">
+																<i class="fa fa-plus"></i> Agregar Usuario
+															</button>
+														<?php } ?>
+														
+														<!-- Más Acciones -->
+														<?php if(Modulos::validarPermisoEdicion()){?>
+															<div class="btn-group" role="group">
+																<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+																	<i class="fa fa-tools"></i> Más Acciones <span class="caret"></span>
+																</button>
+																<ul class="dropdown-menu">
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Desea Bloquear a todos los estudiantes?','question','usuarios-bloquear.php?tipo=<?=base64_encode(4)?>')"><i class="fa fa-lock"></i> Bloquear Estudiantes</a></li>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Desea Desbloquear a todos los estudiantes?','question','usuarios-desbloquear.php?tipo=<?=base64_encode(4)?>')"><i class="fa fa-unlock"></i> Desbloquear Estudiantes</a></li>
+																	<li class="divider"></li>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Desea Bloquear a todos los docentes?','question','usuarios-bloquear.php?tipo=<?=base64_encode(2)?>')"><i class="fa fa-lock"></i> Bloquear Docentes</a></li>
+																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Desea Desbloquear a todos los docentes?','question','usuarios-desbloquear.php?tipo=<?=base64_encode(2)?>')"><i class="fa fa-unlock"></i> Desbloquear Docentes</a></li>
+																	<?php if(Modulos::validarSubRol(['DT0125'])) {?>
+																		<li class="divider"></li>
+																		<li><a href="usuarios-importar-excel.php"><i class="fa fa-file-excel"></i> Importar Usuarios</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0144'])) {?>
+																		<li><a href="usuarios-generar-clave-filtros.php"><i class="fa fa-key"></i> Generar Contraseña Masiva</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0201'])) {?>
+																		<li class="divider"></li>
+																		<li><a href="usuarios-anios.php"><i class="fa fa-calendar-alt"></i> Consultar Todos los Años</a></li>
+																	<?php }?>
+																</ul>
+															</div>
+														<?php }?>
+													</div>
+													
+													<!-- Botón de filtros -->
+													<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosUsuarios">
+														<i class="fa fa-filter"></i> Filtros Avanzados
+													</button>
 												</div>
-
-
-
+											</div>
+										</div>
+										
+										<!-- Panel de Filtros Colapsable -->
+										<div class="card card-topline-purple mb-3" id="cardFiltrosUsuarios" style="display: none;">
+											<div class="card-body">
+												<h5 class="mb-3"><i class="fa fa-filter"></i> Filtros Avanzados</h5>
+												
+												<div class="row">
+													<div class="col-md-6">
+														<div class="form-group">
+															<label><i class="fa fa-user-tag"></i> Tipo de Usuario</label>
+															<select id="filtro_usuarios_tipo" class="form-control select2-multiple-usuarios" multiple="multiple" style="width: 100%;">
+																<?php
+																try{
+																	$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+																	while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+																?>
+																	<option value="<?=$opcionesDatos['pes_id'];?>"><?=$opcionesDatos['pes_nombre'];?></option>
+																<?php }
+																} catch (Exception $e) {}
+																?>
+															</select>
+														</div>
+													</div>
+													
+													<div class="col-md-6">
+														<div class="form-group">
+															<label><i class="fa fa-toggle-on"></i> Estado</label>
+															<select id="filtro_usuarios_estado" class="form-control select2-multiple-usuarios" multiple="multiple" style="width: 100%;">
+																<option value="1">Activo</option>
+																<option value="0">Inactivo</option>
+															</select>
+														</div>
+													</div>
+												</div>
+												
+												<div class="row">
+													<div class="col-md-12 text-right">
+														<button type="button" class="btn btn-secondary" id="btnLimpiarFiltrosUsuarios">
+															<i class="fa fa-eraser"></i> Limpiar Filtros
+														</button>
+													</div>
+												</div>
 											</div>
 										</div>
 
@@ -273,7 +380,7 @@ if (!Modulos::validarPermisoEdicion()) {
 														<tr id="reg<?= $usuario['uss_id']; ?>"
 															style="background-color:<?= $bgColor; ?>;">
 															<td>
-																<button class="btn btn-sm btn-info expand-btn"
+																<button class="btn btn-sm btn-link text-secondary expand-btn"
 																	data-id="<?= $usuario['uss_id']; ?>"
 																	data-foto="<?= $fotoUsuario; ?>"
 																	data-nombre="<?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>"
@@ -298,7 +405,7 @@ if (!Modulos::validarPermisoEdicion()) {
 																	data-lugar-expedicion="<?= $usuario['uss_lugar_expedicion'] ?: 'No especificado'; ?>"
 																	data-intentos-fallidos="<?= $usuario['uss_intentos_fallidos'] ?: '0'; ?>"
 																	title="Ver detalles">
-																	<i class="fa fa-plus"></i>
+																	<i class="fa fa-chevron-right"></i>
 																</button>
 															</td>
 															<td><?= $contReg; ?></td>
@@ -442,6 +549,8 @@ if (!Modulos::validarPermisoEdicion()) {
 <script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
 <!-- Material -->
 <script src="../../config-general/assets/plugins/material/material.min.js"></script>
+<!-- select2 -->
+<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
 <!-- end js include path -->
 <style>
     .sorting_1 {
@@ -511,13 +620,13 @@ if (!Modulos::validarPermisoEdicion()) {
 			if (row.child.isShown()) {
 				// This row is already open - close it
 				row.child.hide();
-				icon.removeClass('fa-minus').addClass('fa-plus');
-				button.removeClass('btn-warning').addClass('btn-info');
+				icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+				button.removeClass('text-primary').addClass('text-secondary');
 			} else {
 				// Open this row
 				row.child(formatDetails(foto, nombre, usuario, email, fechaNacimiento, tipo, estado, ultimoIngreso, bloqueado, numCarga, cantidadAcudidos, tieneMatricula, tipoUsuario, userId, telefono, direccion, ocupacion, genero, fechaRegistro, documento, tipoDocumento, lugarExpedicion, intentosFallidos)).show();
-				icon.removeClass('fa-plus').addClass('fa-minus');
-				button.removeClass('btn-info').addClass('btn-warning');
+				icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+				button.removeClass('text-secondary').addClass('text-primary');
 			}
 		});
 	});
@@ -800,6 +909,182 @@ if (!Modulos::validarPermisoEdicion()) {
 	</div>
 </div>
 
+<!-- Modal para Agregar Usuario Completo -->
+<div class="modal fade" id="modalAgregarUsuario" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+				<h4 class="modal-title"><i class="fa fa-user-plus"></i> Agregar Nuevo Usuario</h4>
+				<button type="button" class="close" data-dismiss="modal" style="color: white;">&times;</button>
+			</div>
+			<form id="formAgregarUsuario" action="usuarios-guardar.php" method="post">
+				<div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+					
+					<!-- Credenciales de acceso -->
+					<h5 class="mb-3"><i class="fa fa-key"></i> Credenciales de Acceso</h5>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Tipo de Usuario <span class="text-danger">*</span></label>
+								<?php
+								try{
+									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+								} catch (Exception $e) {
+									include("../compartido/error-catch-to-report.php");
+								}
+								?>
+								<select class="form-control" name="tipoUsuario" id="modal_tipoUsuario" required>
+									<option value="">Seleccione una opción</option>
+									<?php
+									while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+										if(($opcionesDatos['pes_id'] == TIPO_DEV || $opcionesDatos['pes_id'] == TIPO_ESTUDIANTE ) 
+										&& $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+											continue;
+										}
+									?>
+									<option value="<?=$opcionesDatos['pes_id'];?>"><?=$opcionesDatos['pes_nombre'];?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Usuario de Acceso <span class="text-danger">*</span></label>
+								<input type="text" class="form-control" name="usuario" id="modal_usuario" pattern="[A-Za-z0-9]+" required>
+								<small id="modal_validacion_usuario" class="form-text"></small>
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Contraseña <span class="text-danger">*</span></label>
+								<input type="text" class="form-control" name="clave" value="<?=CLAVE_SUGERIDA;?>" required>
+								<small class="form-text text-muted">Mínimo 8 caracteres, máximo 20</small>
+							</div>
+						</div>
+					</div>
+					
+					<hr>
+					
+					<!-- Datos personales -->
+					<h5 class="mb-3"><i class="fa fa-id-card"></i> Datos Personales</h5>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Tipo de Documento</label>
+								<?php
+								try{
+									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1");
+								} catch (Exception $e) {
+									include("../compartido/error-catch-to-report.php");
+								}
+								?>
+								<select class="form-control" name="tipoD">
+									<option value="">Seleccione una opción</option>
+									<?php while($o = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){?>
+									<option value="<?=$o['ogen_id'];?>"><?=$o['ogen_nombre'];?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Número de Documento</label>
+								<input type="text" class="form-control" name="documento" id="modal_documento">
+								<small id="modal_validacion_documento" class="form-text"></small>
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Primer Nombre <span class="text-danger">*</span></label>
+								<input type="text" class="form-control" name="nombre" pattern="^[A-Za-zñÑ]+$" required>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Segundo Nombre</label>
+								<input type="text" class="form-control" name="nombre2">
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Primer Apellido</label>
+								<input type="text" class="form-control" name="apellido1" pattern="^[A-Za-zñÑ]+$">
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Segundo Apellido</label>
+								<input type="text" class="form-control" name="apellido2">
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Email</label>
+								<input type="email" class="form-control" name="email">
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Celular</label>
+								<input type="text" class="form-control" name="celular">
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Género <span class="text-danger">*</span></label>
+								<?php
+								try{
+									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
+								} catch (Exception $e) {
+									include("../compartido/error-catch-to-report.php");
+								}
+								?>
+								<select class="form-control" name="genero" required>
+									<option value="">Seleccione una opción</option>
+									<?php while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){?>
+									<option value="<?=$opcionesDatos['ogen_id'];?>"><?=$opcionesDatos['ogen_nombre'];?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary" id="btnModalGuardarUsuario">
+						<i class="fa fa-save"></i> Guardar Usuario
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 $(document).ready(function() {
 	$(document).on('click', '.btn-editar-usuario-modal', function() {
@@ -876,6 +1161,285 @@ $(document).ready(function() {
 				});
 			}
 		});
+	});
+	
+	// === Funcionalidad Modal Agregar Usuario Completo ===
+	
+	let usuarioValidado = false;
+	let documentoValidado = true; // Por defecto true porque es opcional
+	
+	// Validar usuario en tiempo real
+	let timeoutValidacionUsuario;
+	$('#modal_usuario').on('keyup', function() {
+		clearTimeout(timeoutValidacionUsuario);
+		const usuario = $(this).val().trim();
+		usuarioValidado = false;
+		
+		if (usuario.length === 0) {
+			$('#modal_validacion_usuario').html('').removeClass('text-success text-danger');
+			return;
+		}
+		
+		if (usuario.length < 3) {
+			$('#modal_validacion_usuario').html('<small>Mínimo 3 caracteres</small>').removeClass('text-success').addClass('text-danger');
+			return;
+		}
+		
+		// Validar caracteres permitidos
+		if (!/^[A-Za-z0-9]+$/.test(usuario)) {
+			$('#modal_validacion_usuario').html('<small>Solo letras y números</small>').removeClass('text-success').addClass('text-danger');
+			return;
+		}
+		
+		$('#modal_validacion_usuario').html('<small><i class="fa fa-spinner fa-spin"></i> Validando...</small>').removeClass('text-success text-danger');
+		
+		timeoutValidacionUsuario = setTimeout(function() {
+			$.ajax({
+				url: 'ajax-validar-usuario.php',
+				type: 'POST',
+				data: { usuario: usuario },
+				dataType: 'json',
+				success: function(response) {
+					console.log('Respuesta validación usuario:', response);
+					if (response.error) {
+						console.error('Error de validación:', response.error);
+						if (response.debug) {
+							console.error('Debug:', response.debug);
+						}
+						$('#modal_validacion_usuario').html('<small><i class="fa fa-exclamation-triangle"></i> Error al validar</small>').removeClass('text-success text-danger').addClass('text-warning');
+						usuarioValidado = true; // Permitir continuar con advertencia
+					} else if (response.existe) {
+						$('#modal_validacion_usuario').html('<small><i class="fa fa-times"></i> ' + response.mensaje + '</small>').removeClass('text-success text-warning').addClass('text-danger');
+						usuarioValidado = false;
+					} else {
+						$('#modal_validacion_usuario').html('<small><i class="fa fa-check"></i> Usuario disponible</small>').removeClass('text-danger text-warning').addClass('text-success');
+						usuarioValidado = true;
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error AJAX en validación usuario:');
+					console.error('Status:', status);
+					console.error('Error:', error);
+					console.error('Response:', xhr.responseText);
+					$('#modal_validacion_usuario').html('<small><i class="fa fa-exclamation-triangle"></i> Error de conexión</small>').removeClass('text-danger text-success').addClass('text-warning');
+					usuarioValidado = true; // Permitir continuar si hay error de conexión
+				}
+			});
+		}, 500);
+	});
+	
+	// Validar documento en tiempo real
+	let timeoutValidacionDocumento;
+	$('#modal_documento').on('keyup', function() {
+		clearTimeout(timeoutValidacionDocumento);
+		const documento = $(this).val().trim();
+		documentoValidado = true; // Por defecto true porque es opcional
+		
+		if (documento.length === 0) {
+			$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+			return;
+		}
+		
+		if (documento.length < 5) {
+			$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+			return;
+		}
+		
+		$('#modal_validacion_documento').html('<small><i class="fa fa-spinner fa-spin"></i> Validando...</small>').removeClass('text-success text-danger');
+		
+		timeoutValidacionDocumento = setTimeout(function() {
+			$.ajax({
+				url: '../js/validaciones-usuario.php',
+				type: 'POST',
+				data: { documento: documento, idUsuario: 0 },
+				dataType: 'json',
+				success: function(response) {
+					console.log('Respuesta validación documento:', response);
+					if (response.existe) {
+						$('#modal_validacion_documento').html('<small><i class="fa fa-times"></i> Este documento ya existe</small>').removeClass('text-success').addClass('text-danger');
+						documentoValidado = false;
+					} else {
+						$('#modal_validacion_documento').html('<small><i class="fa fa-check"></i> Documento disponible</small>').removeClass('text-danger').addClass('text-success');
+						documentoValidado = true;
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error en validación documento:', status, error);
+					$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+					documentoValidado = true; // Permitir continuar si hay error de conexión
+				}
+			});
+		}, 500);
+	});
+	
+	// Limpiar formulario al cerrar modal
+	$('#modalAgregarUsuario').on('hidden.bs.modal', function() {
+		$('#formAgregarUsuario')[0].reset();
+		$('#modal_validacion_usuario').html('').removeClass('text-success text-danger text-warning');
+		$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+		usuarioValidado = false;
+		documentoValidado = true;
+	});
+	
+	// Guardar usuario
+	$('#formAgregarUsuario').on('submit', function(e) {
+		e.preventDefault();
+		
+		console.log('Intentando guardar usuario...');
+		console.log('Usuario validado:', usuarioValidado);
+		console.log('Documento validado:', documentoValidado);
+		
+		// Validar que el usuario esté disponible
+		if (!usuarioValidado) {
+			$.toast({
+				heading: 'Error',
+				text: 'Debe ingresar un usuario válido y disponible',
+				position: 'top-right',
+				loaderBg: '#bf441d',
+				icon: 'error',
+				hideAfter: 3000
+			});
+			return false;
+		}
+		
+		// Validar que el documento esté disponible (si se ingresó)
+		if (!documentoValidado) {
+			$.toast({
+				heading: 'Error',
+				text: 'El documento ingresado ya existe',
+				position: 'top-right',
+				loaderBg: '#bf441d',
+				icon: 'error',
+				hideAfter: 3000
+			});
+			return false;
+		}
+		
+		// Deshabilitar botón mientras se guarda
+		const $btnGuardar = $('#btnModalGuardarUsuario');
+		$btnGuardar.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+		
+		console.log('Enviando formulario...');
+		
+		// El formulario se enviará normalmente al action="usuarios-guardar.php"
+		this.submit();
+	});
+	
+	// === Filtros Avanzados para Usuarios ===
+	
+	// Toggle del panel de filtros
+	$('#btnToggleFiltrosUsuarios').on('click', function() {
+		const card = $('#cardFiltrosUsuarios');
+		const icon = $(this).find('i');
+		
+		if (card.is(':visible')) {
+			card.slideUp(300);
+			icon.removeClass('fa-chevron-up').addClass('fa-filter');
+			$(this).removeClass('btn-primary').addClass('btn-outline-secondary');
+		} else {
+			card.slideDown(300);
+			icon.removeClass('fa-filter').addClass('fa-chevron-up');
+			$(this).removeClass('btn-outline-secondary').addClass('btn-primary');
+		}
+	});
+	
+	// Inicializar Select2 en los filtros
+	$('.select2-multiple-usuarios').select2({
+		placeholder: "Seleccione una o más opciones",
+		allowClear: true,
+		language: {
+			noResults: function() {
+				return "No se encontraron resultados";
+			},
+			searching: function() {
+				return "Buscando...";
+			}
+		}
+	});
+	
+	// Función para aplicar filtros de usuarios
+	function aplicarFiltrosUsuarios() {
+		const tipos = $('#filtro_usuarios_tipo').val() || [];
+		const estados = $('#filtro_usuarios_estado').val() || [];
+		
+		console.log('Aplicando filtros usuarios:', { tipos, estados });
+		
+		// Mostrar loader en la tabla
+		$('tbody').html('<tr><td colspan="8" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
+		
+		// Enviar AJAX
+		$.ajax({
+			url: 'ajax-filtrar-usuarios.php',
+			type: 'POST',
+			data: {
+				tipos: tipos,
+				estados: estados
+			},
+			dataType: 'json',
+			success: function(response) {
+				console.log('Respuesta del filtro usuarios:', response);
+				
+				if (response.success) {
+					// Insertar el HTML
+					$('tbody').html(response.html);
+					
+					// Mostrar mensaje de resultados
+					$.toast({
+						heading: 'Filtros Aplicados',
+						text: 'Se encontraron ' + response.total + ' usuario(s)',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 3000
+					});
+				} else {
+					console.error('Error del servidor:', response.error);
+					
+					$.toast({
+						heading: 'Error',
+						text: response.error || 'Error al aplicar filtros',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 5000
+					});
+					
+					$('tbody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los datos</td></tr>');
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX usuarios:', status, error);
+				console.error('Response:', xhr.responseText);
+				
+				$.toast({
+					heading: 'Error de Conexión',
+					text: 'No se pudo conectar con el servidor',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error',
+					hideAfter: 5000
+				});
+				
+				$('tbody').html('<tr><td colspan="8" class="text-center text-danger">Error de conexión</td></tr>');
+			}
+		});
+	}
+	
+	// Limpiar filtros de usuarios
+	$('#btnLimpiarFiltrosUsuarios').on('click', function() {
+		$('#filtro_usuarios_tipo').val(null).trigger('change');
+		$('#filtro_usuarios_estado').val(null).trigger('change');
+		
+		// Recargar la página para mostrar todos los usuarios
+		location.reload();
+	});
+	
+	// Aplicar filtros automáticamente al cambiar las opciones
+	$('.select2-multiple-usuarios').on('change', function() {
+		clearTimeout(window.filtroUsuariosTimeout);
+		window.filtroUsuariosTimeout = setTimeout(function() {
+			aplicarFiltrosUsuarios();
+		}, 500);
 	});
 });
 </script>
