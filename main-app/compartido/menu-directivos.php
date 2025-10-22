@@ -377,7 +377,10 @@
 							<!-- Servicios complementarios de SINTIA -->
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SERVICIOS_SINTIA)){?>
 								<li <?php agregarClass(MENU_PADRE,["DT0335","DT0336"]) ?> class="nav-item">
-									<a href="#" class="nav-link nav-toggle"><i class="fa fa-shopping-cart"></i>
+									<a href="#" class="nav-link nav-toggle">
+										<div class="menu-icon icon-services">
+											<i class="fa fa-shopping-cart"></i>
+										</div>
 										<span class="title">Servicios SINTIA</span> <span class="arrow"></span>
 									</a>
 									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0335","DT0336"])?>>
@@ -395,7 +398,10 @@
 								) {
 							?>
 								<li  <?php agregarClass(MENU_PADRE,["DV0038","DV0039", "DV0074", "DV0075", "DV0002 "]) ?> >
-									<a href="#" class="nav-link nav-toggle"> <i class="fa fa-database"></i>
+									<a href="#" class="nav-link nav-toggle">
+										<div class="menu-icon icon-dev">
+											<i class="fa fa-database"></i>
+										</div>
 										<span class="title">DEV-ADMIN</span> <span class="arrow"></span>
 									</a>
 									<ul  class="sub-menu" <?php agregarClass(SUB_MENU,["DV0038","DV0039", "DV0074", "DV0075", "DV0002"])?>>
@@ -417,7 +423,10 @@
 								</li>
 								
 								<li class="nav-item">
-									<a href="#" class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>
+									<a href="#" class="nav-link nav-toggle">
+										<div class="menu-icon icon-marketplace">
+											<i class="fa fa-shopping-cart"></i>
+										</div>
 										<span class="title">ADMIN-MPS</span> <span class="arrow"></span>
 									</a>
 									<ul  class="sub-menu">
