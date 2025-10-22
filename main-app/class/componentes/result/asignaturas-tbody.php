@@ -12,7 +12,7 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	$numeros = CargaAcademica::contarCargasMaterias($config, $resultado['mat_id']);
 ?>
 <tr id="ASIG<?= $resultado['mat_id']; ?>">
-	<td><button class="btn btn-sm btn-info expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-plus"></i></button></td>
+	<td><button class="btn btn-sm btn-link text-secondary expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-chevron-right"></i></button></td>
 	<td><?=$contReg;?></td>
 	<td><?=$resultado['mat_id'];?></td>
 	<td>
@@ -110,6 +110,11 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 	transition: all 0.3s ease;
 }
 
+.expand-btn:hover {
+	transform: scale(1.2);
+	color: #007bff !important;
+}
+
 .expandable-row h6 {
 	font-weight: 600;
 	margin-bottom: 15px;
@@ -167,14 +172,14 @@ $(document).ready(function() {
 		if (row.is(':visible')) {
 			// Collapse with animation
 			row.slideUp(300, function() {
-				icon.removeClass('fa-minus').addClass('fa-plus');
-				button.removeClass('btn-warning').addClass('btn-info');
+				icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+				button.removeClass('text-primary').addClass('text-secondary');
 			});
 		} else {
 			// Expand with animation
 			row.slideDown(300, function() {
-				icon.removeClass('fa-plus').addClass('fa-minus');
-				button.removeClass('btn-info').addClass('btn-warning');
+				icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+				button.removeClass('text-secondary').addClass('text-primary');
 				
 				// Cargar cargas académicas si aún no se han cargado
 				var cargasContainer = $('#cargas-materia-' + id);

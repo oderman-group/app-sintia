@@ -182,3 +182,12 @@ ANALYZE TABLE academico_actividades;
 Esto asegura que cada institución y año tengan su propio espacio de datos optimizado.
 
 
+
+en la parte del encabezado hay un buscador general que busca usuarios, materias, cursos, etc... me gustaría que lo volvieramos más poderoso, que buscara en tiempo real y con mayor precisión lo que el usuario escriba.
+
+adicionalmente que la presentación de los resultados sea espectacular, muy linda, obeciendo a altos estandares de UI y UX.
+
+
+
+antes habia un botón de chat alli pero ya lo quité, lo puedes correr un poquito más a la derecha por favor.
+

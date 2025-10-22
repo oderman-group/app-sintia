@@ -108,7 +108,12 @@ LIMIT ".$empezar.",1
 </script>
 <?php } ?>
 <!-- boton de chat -->
-<?php if(($idPaginaInterna != 'DT0209' && $idPaginaInterna != 'DC0148') && ($datosUsuarioActual['uss_tipo'] == TIPO_DEV || (($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE || $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) && $_SESSION["datosUnicosInstitucion"]['ins_id_plan'] == Plataforma::PLAN_PREMIUM && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CHAT_ATENCION)))){ ?>
+<?php if(
+		($idPaginaInterna != 'DT0209' && $idPaginaInterna != 'DC0148') && 
+		($datosUsuarioActual['uss_tipo'] == TIPO_DEV || (($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE || $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) && 
+		$_SESSION["datosUnicosInstitucion"]['ins_id_plan'] == Plataforma::PLAN_PREMIUM && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CHAT_ATENCION))) && 
+		false
+	){ ?>
 <a id="boton_notificacion" style="text-shadow: none;color: #fefefe;font-family:arial; background:<?= $Plataforma->colorUno; ?>;" href="chat2.php" class="float"> <!-- "fa-beat-fade" se agregará una clase cuando hay una nueva notificacion  -->
 	<i class="fa fa-comments my-float"></i>
 	<?php
@@ -128,6 +133,9 @@ LIMIT ".$empezar.",1
 </a>
 <?php 	
 	} ?>
+
+<!-- Botón de Ayuda Flotante - Centro de Ayuda SINTIA -->
+<?php include_once(ROOT_PATH."/main-app/compartido/boton-ayuda-flotante.php"); ?>
 
 <script>
 const forms = document.querySelectorAll('form[name="formularioGuardar"]');

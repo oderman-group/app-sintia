@@ -2,8 +2,6 @@
 require_once("session.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/Grados.php");
-include_once(ROOT_PATH."/main-app/compartido/ComponenteModal.php");
-$modaInfo = new ComponenteModal('informacion', $frases[115][$datosUsuarioActual['uss_idioma']], '../compartido/page-info-modal.php',null, 5000, '600px',false);
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
     echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
     exit();
@@ -11,34 +9,52 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 require_once("../class/Estudiantes.php");
 ?>
 
-<!--select2-->
-<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
-<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
-<!--select2-->
-<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
-<script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
-<style>
-	.select2 {
-        width: 100% !important;
-    }
-    .modal {
-    z-index: 1050 !important;
-    outline: 0;
-    overflow-y: auto!important
-}
-</style>
-
 <!-- END HEAD -->
 <div class="col-sm-12">
     <?php include("../../config-general/mensajes-informativos.php"); ?>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Selecciona primero el año, luego los demás filtros se cargarán automáticamente según ese año.
+    </div>
+    
     <div class="panel">
-        <header class="panel-heading panel-heading-purple">POR CURSO </header>
+        <header class="panel-heading panel-heading-purple">
+            <i class="fas fa-users"></i> GENERAR POR CURSO
+        </header>
         <div class="panel-body">
             <form name="formularioGuardar" action="informes-formato-boletin.php" method="post" target="_blank">
+                
+                <!-- PASO 1: Año -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Escoja un Formato de Boletín</label>
-                    <div class="col-sm-2">
-                        <select id="tipoBoletin" class="form-control  select2" name="formatoB" onchange="cambiarTipo()">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-calendar"></i> Año <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-4">
+                        <select class="form-control  select2" name="year" id="yearCurso" required onchange="window.cargarCursosPorYear(this.value, 'cursoCurso', 'grupoCurso')">
+                            <option value="">Seleccione un año</option>
+                            <?php
+                            $yearStartC = $yearStart;
+                            $yearEndC = $yearEnd;
+                            while ($yearStartC <= $yearEndC) {
+                                $selected = ($_SESSION["bd"] == $yearStartC) ? 'selected' : '';
+                                echo "<option value='" . $yearStartC . "' $selected>" . $yearStartC . "</option>";
+                                $yearStartC++;
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-sm-5">
+                        <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Primero selecciona el año académico</small>
+                    </div>
+                </div>
+
+                <!-- PASO 2: Formato de Boletín -->
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-palette"></i> Formato de Boletín <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select id="tipoBoletin" class="form-control  select2" name="formatoB">
                             <option value="">Seleccione una opción</option>
                             <?php
                             try {
@@ -52,74 +68,43 @@ require_once("../class/Estudiantes.php");
                             <?php } ?>
                         </select>
                     </div>
-                    <button type="button" title="Ver formato del boletin" class="btn btn-sm" data-toggle="popover"><i class="fa fa-eye"></i></button>
-                    <script>
-                        $(document).ready(function() {
-                            $('[data-toggle="popover"]').popover({
-                                html: true, // Habilitar contenido HTML
-                                content: function() {
-                                    valor = document.getElementById("tipoBoletin");
-                                    vacio= valor.value === null ||  valor.value === undefined ||  valor.value.trim() === '';
-                                    if(!vacio){
-                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipo">Formato tipo ' + valor.value + '</label>' +
-                                        '<img id="img-boletin" src="../files/images/boletines/tipo' + valor.value + '.png" class="w-100" />' +
-                                        '</div>';
-                                    }else{
-                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipo">Seleccione un tipo de formato.</label>' +
-                                           
-                                            '</div>';
-                                    }
-                                    
-                                }
-                            });
-                        });
-
-                        function cambiarTipo() {
-                            var imagen_boletin = document.getElementById('img-boletin');
-                            if (imagen_boletin) {
-                                var valor = document.getElementById("tipoBoletin");
-                                var lbl_tipo = document.getElementById('lbl_tipo');
-                                imagen_boletin.src = "../files/images/boletines/tipo" + valor.value + ".png";
-                                lbl_tipo.textContent = 'Formato tipo ' + valor.value;
-                            }
-                        }
-                    </script>
                 </div>
 
+                <!-- PASO 3: Curso -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Curso</label>
-                    <div class="col-sm-8">
-                        <select class="form-control  select2"  name="curso" required>
-                            <option value="">Seleccione una opción</option>
-                            <?php
-                            $opcionesConsulta = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
-                            while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-                                $disabled = '';
-                                if ($opcionesDatos['gra_estado'] == '0') $disabled = 'disabled'; ?>
-                                <option value="<?= $opcionesDatos['gra_id']; ?>" <?= $disabled; ?>><?= $opcionesDatos['gra_id'] . ". " . strtoupper($opcionesDatos['gra_nombre']); ?></option>
-                            <?php } ?>
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-school"></i> Curso <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select class="form-control  select2" name="curso" id="cursoCurso" required disabled>
+                            <option value="">Primero seleccione un año</option>
                         </select>
+                        <div id="loadingCursos" style="display: none; margin-top: 5px;">
+                            <small><i class="fas fa-spinner fa-spin"></i> Cargando cursos...</small>
+                        </div>
                     </div>
                 </div>
 
+                <!-- PASO 4: Grupo -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Grupo</label>
-                    <div class="col-sm-4">
-                        <select class="form-control  select2" name="grupo">
-                            <option value="">Seleccione una opción</option>
-                            <?php
-                            $opcionesConsulta = Grupos::listarGrupos();
-                            while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-                            ?>
-                                <option value="<?= $opcionesDatos['gru_id']; ?>"><?= $opcionesDatos['gru_id'] . ". " . strtoupper($opcionesDatos['gru_nombre']); ?></option>
-                            <?php } ?>
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-user-friends"></i> Grupo
+                    </label>
+                    <div class="col-sm-9">
+                        <select class="form-control  select2" name="grupo" id="grupoCurso" disabled>
+                            <option value="">Primero seleccione un año</option>
                         </select>
+                        <div id="loadingGrupos" style="display: none; margin-top: 5px;">
+                            <small><i class="fas fa-spinner fa-spin"></i> Cargando grupos...</small>
+                        </div>
                     </div>
                 </div>
 
-
+                <!-- PASO 5: Periodo -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Periodo</label>
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-calendar-alt"></i> Periodo <span class="text-danger">*</span>
+                    </label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" id="periodo" name="periodo" required>
                             <option value="">Seleccione una opción</option>
@@ -139,38 +124,55 @@ require_once("../class/Estudiantes.php");
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label" >Año</label>
-                    <div class="col-sm-4">
-                        <select class="form-control  select2"  style="z-index:10051 !important" name="year" id="year" required>
-                            <option value="">Seleccione una opción</option>
-                            <?php
-                            $yearStartC = $yearStart;
-                            $yearEndC = $yearEnd;
-                            while ($yearStartC <= $yearEndC) {
-                                if ($_SESSION["bd"] == $yearStartC)
-                                    echo "<option value='" . $yearStartC . "' selected style='color:blue;'>" . $yearStartC . "</option>";
-                                else
-                                    echo "<option value='" . $yearStartC . "'>" . $yearStartC . "</option>";
-                                $yearStartC++;
-                            }
-                            ?>
-                        </select>
+                    <div class="col-sm-12 text-right">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-file-pdf"></i> Generar Boletín
+                        </button>
                     </div>
                 </div>
-
-                <input type="submit" class="btn btn-primary" value="Generar Boletin">&nbsp;
 
             </form>
         </div>
     </div>
+    
     <div class="panel">
-        <header class="panel-heading panel-heading-red">POR ESTUDIANTE </header>
+        <header class="panel-heading panel-heading-red">
+            <i class="fas fa-user"></i> GENERAR POR ESTUDIANTE
+        </header>
         <div class="panel-body">
             <form name="formularioGuardar" action="informes-formato-boletin.php" method="post" target="_blank">
+                
+                <!-- PASO 1: Año -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Escoja un Formato de Boletín</label>
-                    <div class="col-sm-2">
-                        <select id="tipoBoletinEst" class="form-control  select2" name="formatoB" onchange="cambiarTipoEst()">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-calendar"></i> Año <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-4">
+                        <select class="form-control  select2" name="year" id="yearEst" required onchange="window.habilitarFiltroGrado('yearEst', 'filtroGradoEst')">
+                            <option value="">Seleccione un año</option>
+                            <?php
+                            $yearStartE = $yearStart;
+                            $yearEndE = $yearEnd;
+                            while ($yearStartE <= $yearEndE) {
+                                $selected = ($_SESSION["bd"] == $yearStartE) ? 'selected' : '';
+                                echo "<option value='" . $yearStartE . "' $selected>" . $yearStartE . "</option>";
+                                $yearStartE++;
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-sm-5">
+                        <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Primero selecciona el año académico</small>
+                    </div>
+                </div>
+
+                <!-- PASO 2: Formato de Boletín -->
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-palette"></i> Formato de Boletín <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select id="tipoBoletinEst" class="form-control  select2" name="formatoB">
                             <option value="">Seleccione una opción</option>
                             <?php
                             try {
@@ -184,75 +186,49 @@ require_once("../class/Estudiantes.php");
                             <?php } ?>
                         </select>
                     </div>
-                    <button type="button" title="Ver formato del boletin" class="btn btn-sm" data-toggle="popover_2"><i class="fa fa-eye"></i></button>
-                    <script>
-                        $(document).ready(function() {
-                            $('[data-toggle="popover_2"]').popover({
-                                html: true, // Habilitar contenido HTML
-                                content: function() {
-                                    valor = document.getElementById("tipoBoletinEst");
-                                    vacio= valor.value === null ||  valor.value === undefined ||  valor.value.trim() === '';
-                                    if(!vacio){
-                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipoEst">Formato tipo ' + valor.value + '</label>' +
-                                            '<img id="img-boletinEst" src="../files/images/boletines/tipo' + valor.value + '.png" class="w-100" />' +
-                                            '</div>';
-                                    }else{
-                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipoEst">Seleccione un tipo de formato.</label>' +
-                                           
-                                            '</div>';
-                                    }
-                                }
-                            });
-                        });
-
-                        function cambiarTipoEst() {
-                            var imagen_boletin = document.getElementById('img-boletinEst');
-                            if (imagen_boletin) {
-                                var valor = document.getElementById("tipoBoletinEst");
-                                var lbl_tipoEst = document.getElementById('lbl_tipoEst');
-                                imagen_boletin.src = "../files/images/boletines/tipo" + valor.value + ".png";
-                                lbl_tipoEst.textContent = 'Formato tipo ' + valor.value;
-                            }
-                        }
-                    </script>
                 </div>
 
+                <!-- PASO 3: Filtrar por Grado -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Estudiante</label>
-                    <div class="col-sm-8">
-
-                        <select id="selectEstudiantes" class="form-control  select2" name="estudiante" multiple required>
-                            <option value="">Seleccione una opción</option>
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-school"></i> Filtrar por Grado <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select id="filtroGradoEst" class="form-control  select2" onchange="window.cargarEstudiantesPorYearGrado()" disabled>
+                            <option value="">Primero seleccione un año</option>
                             <?php
                             $grados = Grados::traerGradosInstitucion($config, GRADO_GRUPAL);
                             while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
                             ?>
-
-                                <optgroup label="<?= $grado['gra_nombre']; ?>">
-                                    <?php
-                                    $filtro = ' AND mat_grado="' . $grado['gra_id'].'"';
-                                    $opcionesConsulta = Estudiantes::listarEstudiantesEnGrados($filtro, '');
-                                    while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-                                    ?>
-
-                                        <option value="<?= $opcionesDatos['mat_id']; ?>">
-                                            <?= "[" . $opcionesDatos['mat_id'] . "] " . strtoupper($opcionesDatos['mat_primer_apellido'] . " " . $opcionesDatos['mat_segundo_apellido'] . " " . $opcionesDatos['mat_nombres'] . " " . $opcionesDatos['mat_nombre2']); ?>
-                                            - <?= strtoupper($opcionesDatos['gra_nombre'] . " " . $opcionesDatos['gru_nombre']); ?>
-                                        </option>
-
-                                    <?php } ?>
-
-                                </optgroup>
+                                <option value="<?= $grado['gra_id']; ?>"><?= $grado['gra_id'] . ". " . strtoupper($grado['gra_nombre']); ?></option>
                             <?php } ?>
-
                         </select>
-                        <span style="color: darkblue;">Seleccione solo una opción de este listado.</span>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Seleccione el grado para filtrar los estudiantes
+                        </small>
                     </div>
                 </div>
 
-
+                <!-- PASO 4: Estudiante -->
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Periodo</label>
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-user-graduate"></i> Estudiante <span class="text-danger">*</span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select id="selectEstudiantes" class="form-control  select2" name="estudiante" required disabled>
+                            <option value="">Primero seleccione año y grado</option>
+                        </select>
+                        <div id="loadingEstudiantes" style="display: none; margin-top: 10px;">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando estudiantes...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PASO 5: Periodo -->
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-calendar-alt"></i> Periodo <span class="text-danger">*</span>
+                    </label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="periodo" required>
                             <option value="">Seleccione una opción</option>
@@ -263,7 +239,6 @@ require_once("../class/Estudiantes.php");
                                 if($p == $config['conf_periodo']) {
                                     $selected ='selected';
                                 }
-
                                 echo '<option value="' . $p . '" '.$selected.'>Periodo ' . $p . '</option>';
                                 $p++;
                             }
@@ -273,123 +248,13 @@ require_once("../class/Estudiantes.php");
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Año</label>
-                    <div class="col-sm-4">
-                        <select class="form-control  select2" name="year" style="z-index:1051" id="year2" required>
-                            <option value="">Seleccione una opción</option>
-                            <?php
-                            $yearStartE = $yearStart;
-                            $yearEndE = $yearEnd;
-                            while ($yearStartE <= $yearEndE) {
-                                if ($_SESSION["bd"] == $yearStartE)
-                                    echo "<option value='" . $yearStartE . "' selected style='color:blue;'>" . $yearStartE . "</option>";
-                                else
-                                    echo "<option value='" . $yearStartE . "'>" . $yearStartE . "</option>";
-                                $yearStartE++;
-                            }
-                            ?>
-                        </select>
+                    <div class="col-sm-12 text-right">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-file-pdf"></i> Generar Boletín
+                        </button>
                     </div>
                 </div>
-
-                <input type="submit" class="btn btn-primary" value="Generar Boletin">&nbsp;
             </form>
         </div>
     </div>
 </div>
-<!-- notifications -->
-<script src="../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.js"></script>
-<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
-<script>
-// Agregar el evento onchange al select
-var miSelect = document.getElementById('selectEstudiantes');
-miSelect.onchange = function() {
-    limitarSeleccion(this);
-};
-</script>
-<script>
-    // Función que se ejecuta antes de enviar el formulario
-    function ejecutarAntesDeEnviar1() {
-        var curso   = document.getElementById("curso").value;
-        var grupo   = document.getElementById("grupo").value;
-        var periodo = document.getElementById("periodo").value;
-        var year    = document.getElementById("year").value;
-        $.toast({
-            heading            : 'Consultando Notas',
-            position           : 'bottom-right',
-            showHideTransition : 'slide',
-            icon               : 'success',
-            hideAfter          : 3500,
-            stack              : 6
-        });
-        var data = {
-            "curso": curso,
-            "grupo": grupo,
-            "periodo": periodo,
-            "idEstudiante": '',
-            "year": year
-        };
-        metodoFetch('../compartido/ajax_contar_notas_curso.php', data, 'json', false, 'enviarFormulario1');
-        return false;
-    }
-    function enviarFormulario1(response) {
-        if (response["ok"]) {
-            resultData = response["result"];
-            console.log(resultData);
-            if (resultData["notas_registradas"] > 0) {
-                document.getElementById('formularioGuardar1').submit();
-            } else {
-                var data = {
-                    "idmsg": 306,
-                    "msj": 'No se encontraron notas finales '
-                };
-                <?php $data=json_encode([ 
-                       'idmsg' => '306',
-                       'msj'   => 'No se encontraron notas finales '                      
-                    ]);
-                    echo $modaInfo->getMetodoAbrirModal($data) ?>
-            }
-        }
-    }
-    // Función que se ejecuta antes de enviar el formulario
-    function ejecutarAntesDeEnviar2() {
-        
-        var idEstudiante = document.getElementById("selectEstudiantes").value;
-        var periodo      = document.getElementById("periodo2").value;
-        var year         = document.getElementById("year2").value;
-        $.toast({
-            heading            : 'Consultando Notas',
-            position           : 'bottom-right',
-            showHideTransition : 'slide',
-            icon               : 'success',
-            hideAfter          : 3500,
-            stack              : 6
-        });
-        var data = {
-            "curso": '',
-            "grupo": '',
-            "periodo": periodo,
-            "idEstudiante": idEstudiante,
-            "year": year
-        };
-        metodoFetch('../compartido/ajax_contar_notas_curso.php', data, 'json', false, 'enviarFormulario2');
-        return false;
-    }
-    
-    function enviarFormulario2(response) {
-        if (response["ok"]) {
-            resultData = response["result"];
-            console.log(resultData);
-            if (resultData["notas_registradas"] > 0) {
-                document.getElementById('formularioGuardar2').submit();
-            } else {
-                <?php $data=json_encode([ 
-                       'idmsg' => '306',
-                       'msj'   => 'No se encontraron notas finales para este estudiante'                      
-                    ]);
-                echo $modaInfo->getMetodoAbrirModal($data) ?>
-            }
-        }
-    }
-
-</script>

@@ -7,7 +7,10 @@
 							?>
 							
 							<li class="nav-item" data-step="13" data-intro="<b>Cargas académicas:</b> Aquí encontrarás las cargas académicas que los directivos te han asignado para trabajar. Debes seleccionar una carga primero, antes de empezar a llenar cualquier información como calificaciones, actividades, foros, etc." data-position='right' data-scrollTo='tooltip'>
-	                            <a <?php validarModuloMenu(1, "cargas.php", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="material-icons">class</i>
+	                            <a <?php validarModuloMenu(1, "cargas.php", MENU_PADRE) ?> class="nav-link nav-toggle">
+	                                <div class="menu-icon icon-academic">
+	                                    <i class="fa fa-chalkboard-teacher"></i>
+	                                </div>
 	                                <span class="title"><?=$frases[12][$datosUsuarioActual['uss_idioma']];?></span> 
 	                            </a>
 	                        </li>
@@ -29,7 +32,10 @@
 								]
 							?>
 							<li <?php agregarClass(MENU_PADRE, $arrayItemsAcademico) ?>>
-	                            <a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="material-icons">assignment_ind</i>
+	                            <a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "#", MENU_PADRE) ?> class="nav-link nav-toggle">
+	                                <div class="menu-icon icon-academic">
+	                                    <i class="fa fa-book"></i>
+	                                </div>
 	                                <span class="title"><?=$frases[88][$datosUsuarioActual['uss_idioma']]?></span> <span class="arrow"></span>
 	                            </a>
 	                            <ul class="sub-menu" <?php agregarClass(SUB_MENU, $arrayItemsAcademico)?>>
@@ -74,7 +80,10 @@
 
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO)){ ?>
 							<li class="nav-item">
-								<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-gavel"></i>
+								<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "#", MENU_PADRE) ?> class="nav-link nav-toggle">
+									<div class="menu-icon icon-disciplinary">
+										<i class="fa fa-gavel"></i>
+									</div>
 									<span class="title"><?=$frases[90][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 								</a>
 								<ul class="sub-menu">
@@ -90,12 +99,18 @@
 										Modulos::verificarModulosDeInstitucion(Modulos::MODULO_DISCIPLINARIO)
 									){?>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "comportamiento.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-pencil-square-o"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "comportamiento.php", MENU) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-disciplinary">
+											<i class="fa fa-pencil-square-o"></i>
+										</div>
 										<span class="title"><?=$frases[234][$datosUsuarioActual['uss_idioma']];?></span> 
 									</a>
 								</li>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "aspectos.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-pencil-square-o"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_DISCIPLINARIO, "aspectos.php", MENU) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-disciplinary">
+											<i class="fa fa-pencil-square-o"></i>
+										</div>
 										<span class="title">Aspectos</span> 
 									</a>
 								</li>
@@ -107,7 +122,10 @@
 										Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACADEMICO)
 									){?>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "estudiantes.php", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-group"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_ACADEMICO, "estudiantes.php", MENU_PADRE) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-academic">
+											<i class="fa fa-group"></i>
+										</div>
 										<span class="title">Mis <?=$frases[55][$datosUsuarioActual['uss_idioma']];?></span> 
 									</a>
 								</li>
@@ -115,7 +133,10 @@
 
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_GENERAL)){ ?>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "estudiantes-todos.php", MENU_PADRE) ?> class="nav-link nav-toggle"> <i class="fa fa-group"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "estudiantes-todos.php", MENU_PADRE) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-academic">
+											<i class="fa fa-group"></i>
+										</div>
 										<span class="title">Todos los estudiantes</span> 
 									</a>
 								</li>
@@ -123,7 +144,10 @@
 
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)){ ?>
 								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_CARPETAS, "cargas-carpetas.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-folder"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_CARPETAS, "cargas-carpetas.php", MENU) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-administrative">
+											<i class="fa fa-folder"></i>
+										</div>
 										<span class="title"><?=$frases[216][$datosUsuarioActual['uss_idioma']];?></span> 
 									</a>
 								</li>
@@ -131,14 +155,20 @@
 
 							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)){ ?>
 								<li class="nav-item active">
-									<a <?php validarModuloMenu(Modulos::MODULO_MARKETPLACE, "marketplace.php", MENU) ?> class="nav-link nav-toggle"> <i class="fa fa-shopping-cart"></i>
+									<a <?php validarModuloMenu(Modulos::MODULO_MARKETPLACE, "marketplace.php", MENU) ?> class="nav-link nav-toggle">
+										<div class="menu-icon icon-marketplace">
+											<i class="fa fa-shopping-cart"></i>
+										</div>
 										<span class="title">Marketplace</span> 
 									</a>
 								</li>
 							<?php }?>
 
 							<li class="nav-item">
-	                            <a href="https://www.youtube.com/playlist?list=PL119_PkDEyLohcyXRnqHd36SqvLeKb5hF" target="_blank" class="nav-link nav-toggle"> <i class="fa fa-youtube"></i>
+	                            <a href="https://www.youtube.com/playlist?list=PL119_PkDEyLohcyXRnqHd36SqvLeKb5hF" target="_blank" class="nav-link nav-toggle">
+	                                <div class="menu-icon icon-help">
+	                                    <i class="fa fa-youtube"></i>
+	                                </div>
 	                                <span class="title">TUTORIALES DE AYUDA</span> 
 	                            </a>
 	                        </li>
