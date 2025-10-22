@@ -83,7 +83,7 @@
 								<li <?php agregarClass(MENU_PADRE,["DT0102", "DT0014"]) ?> data-step="3" data-intro="<b>Admisiones e inscripciones:</b> Módulo para gestionar las inscripciones de nuevos estudiantes a tus institución." data-position='bottom'>
 									<a <?php validarModuloMenu(Modulos::MODULO_INSCRIPCIONES, "#", MENU_PADRE);?> class="nav-link nav-toggle"> 
 										<div class="menu-icon icon-admissions">
-											<i class="fa fa-clipboard-list"></i>
+											<i class="fa fa-user-plus"></i>
 										</div>
 										<span class="title"><?=$frases[390][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
@@ -113,7 +113,7 @@
 								<li <?php agregarClass(MENU_PADRE,["DT0104", "DT0106", "DT0128", "DT0105", "DT0258", "DT0259", "DT0261", "DT0264", "DT0265", "DT0267", "DT0273", "DT0275", "DT0276", "DT0278", "DT0294", "DT0295", "DT0297"]) ?> data-step="4" data-intro="<b>G. Financiera:</b> Maneja las finanzas de tu institución desde aqui. Facturas, cobros, abonos." data-position='bottom' data-scrollTo='tooltip'>
 									<a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
 										<div class="menu-icon icon-financial">
-											<i class="fa fa-dollar-sign"></i>
+											<i class="fa fa-money-bill-wave"></i>
 										</div>
 										<span class="title"><?=$frases[89][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
@@ -213,7 +213,7 @@
 							<li <?php agregarClass(MENU_PADRE,["DT0011","DT0122","DT0124","DT0126","DT0204","DT0205"]) ?> data-step="6" data-intro="<b>Gestión administrativa:</b> Gestiona tus tipos de usuarios, asigna roles y permisos. También puedes revisar las solicitudes desbloqueo." data-position='bottom' data-scrollTo='tooltip'>
 	                            <a <?php validarModuloMenu(Modulos::MODULO_ADMINISTRATIVO, "#", MENU_PADRE) ?> class="nav-link nav-toggle"> 
 	                                <div class="menu-icon icon-administrative">
-	                                    <i class="fa fa-users-cog"></i>
+	                                    <i class="fa fa-users"></i>
 	                                </div>
 	                                <span class="title"><?=$frases[87][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 	                            </a>
@@ -367,7 +367,7 @@
 								<li class="nav-item" data-step="9" data-intro="<b>Informes:</b> Obten todos los informes y reportes que tu institución necesita para la toma oportuna de decisiones." data-position='bottom' data-scrollTo='tooltip'>
 									<a <?php validarModuloMenu(Modulos::MODULO_GENERAL, "informes-todos.php", MENU) ?> class="nav-link nav-toggle"> 
 										<div class="menu-icon icon-reports">
-											<i class="fa fa-chart-bar"></i>
+											<i class="fa fa-chart-line"></i>
 										</div>
 										<span class="title"><?=$frases[385][$datosUsuarioActual['uss_idioma']];?></span> 
 									</a>
@@ -393,8 +393,8 @@
 							<?php
 								if (
 									$datosUsuarioActual['uss_permiso1'] == CODE_DEV_MODULE_PERMISSION &&
-									$datosUsuarioActual['uss_tipo'] == TIPO_DEV &&
-									($_SESSION["idInstitucion"] == DEVELOPER_PROD || $_SESSION["idInstitucion"] == DEVELOPER) 
+									$datosUsuarioActual['uss_tipo'] == TIPO_DEV 
+									/*($_SESSION["idInstitucion"] == DEVELOPER_PROD || $_SESSION["idInstitucion"] == DEVELOPER)*/ 
 								) {
 							?>
 								<li  <?php agregarClass(MENU_PADRE,["DV0038","DV0039", "DV0074", "DV0075", "DV0002 "]) ?> >

@@ -54,16 +54,37 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 											
 											<div class="row" style="margin-bottom: 10px;">
 												<div class="col-sm-12">
-													<div class="btn-group">
-														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0022'])) { ?>
-                                                        <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaAsigModal" class="btn deepPink-bgcolor">
-														   <?=$frases[231][$datosUsuarioActual['uss_idioma']];?> <i class="fa fa-plus"></i>
-                                                        </a>
-                                                        <?php
-                                                        $idModal = "nuevaAsigModal";
-                                                        $contenido = "../directivo/asignaturas-agregar-modal.php";
-                                                        include("../compartido/contenido-modal.php");
-                                                        } ?>
+													<div class="d-flex justify-content-between align-items-center flex-wrap">
+														<!-- Botón de agregar -->
+														<div class="mb-2">
+															<div class="btn-group">
+																<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0022'])) { ?>
+																<a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaAsigModal" class="btn deepPink-bgcolor">
+																   <?=$frases[231][$datosUsuarioActual['uss_idioma']];?> <i class="fa fa-plus"></i>
+																</a>
+																<?php
+																$idModal = "nuevaAsigModal";
+																$contenido = "../directivo/asignaturas-agregar-modal.php";
+																include("../compartido/contenido-modal.php");
+																} ?>
+															</div>
+														</div>
+														
+														<!-- Buscador -->
+														<div class="mb-2" style="min-width: 300px;">
+															<div class="input-group">
+																<input type="text" id="buscar_asignatura" class="form-control" placeholder="Buscar asignatura...">
+																<div class="input-group-append">
+																	<button class="btn btn-primary" type="button" id="btnBuscarAsignatura">
+																		<i class="fa fa-search"></i>
+																	</button>
+																	<button class="btn btn-secondary" type="button" id="btnLimpiarBusqueda" title="Limpiar búsqueda">
+																		<i class="fa fa-eraser"></i>
+																	</button>
+																</div>
+															</div>
+															<small class="form-text text-muted">Busca por: ID, nombre, área, valor %</small>
+														</div>
 													</div>
 												</div>
 											</div>
@@ -286,6 +307,115 @@ $(document).ready(function() {
 					icon: 'error'
 				});
 			}
+		});
+	});
+	
+	// === Buscador de Asignaturas ===
+	
+	// Función para buscar asignaturas
+	function buscarAsignatura() {
+		var busqueda = $('#buscar_asignatura').val().toLowerCase().trim();
+		
+		if (busqueda === '') {
+			// Si está vacío, mostrar todas las filas
+			$('#example1 tbody tr').show();
+			return;
+		}
+		
+		var encontrados = 0;
+		
+		// Recorrer todas las filas de la tabla
+		$('#example1 tbody tr').each(function() {
+			var fila = $(this);
+			
+			// Saltar las filas expandibles (detalles)
+			if (fila.hasClass('expandable-row')) {
+				return;
+			}
+			
+			// Obtener el texto de todas las columnas visibles
+			var textoFila = '';
+			fila.find('td').each(function() {
+				// Excluir la columna de acciones y el botón de expandir
+				if (!$(this).find('.dropdown').length && !$(this).find('.expand-btn').length) {
+					textoFila += $(this).text().toLowerCase() + ' ';
+				}
+			});
+			
+			// Verificar si el texto de la fila contiene la búsqueda
+			if (textoFila.indexOf(busqueda) !== -1) {
+				fila.show();
+				encontrados++;
+			} else {
+				fila.hide();
+			}
+		});
+		
+		// Mostrar mensaje si no hay resultados
+		if (encontrados === 0) {
+			$.toast({
+				heading: 'Sin resultados',
+				text: 'No se encontraron asignaturas con: "' + $('#buscar_asignatura').val() + '"',
+				position: 'top-right',
+				loaderBg: '#f1c40f',
+				icon: 'warning',
+				hideAfter: 3000
+			});
+		} else {
+			$.toast({
+				heading: 'Búsqueda completada',
+				text: 'Se encontraron ' + encontrados + ' asignatura(s)',
+				position: 'top-right',
+				loaderBg: '#26c281',
+				icon: 'success',
+				hideAfter: 2000
+			});
+		}
+	}
+	
+	// Botón de buscar
+	$('#btnBuscarAsignatura').on('click', function() {
+		buscarAsignatura();
+	});
+	
+	// Enter en el campo de búsqueda
+	$('#buscar_asignatura').on('keypress', function(e) {
+		if (e.which === 13) { // Enter key
+			e.preventDefault();
+			buscarAsignatura();
+		}
+	});
+	
+	// Botón de limpiar búsqueda
+	$('#btnLimpiarBusqueda').on('click', function() {
+		$('#buscar_asignatura').val('');
+		
+		// Mostrar todas las filas principales
+		$('#example1 tbody tr').each(function() {
+			var fila = $(this);
+			
+			if (fila.hasClass('expandable-row')) {
+				// Ocultar filas expandibles
+				fila.hide();
+			} else {
+				// Mostrar filas principales
+				fila.show();
+				
+				// Resetear el botón de expandir
+				var btn = fila.find('.expand-btn');
+				var icon = btn.find('i');
+				icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+				btn.removeClass('text-primary').addClass('text-secondary');
+			}
+		});
+		
+		$.toast({
+			heading: 'Búsqueda limpiada',
+			text: 'Mostrando todas las asignaturas',
+			position: 'top-right',
+			loaderBg: '#3498db',
+			icon: 'info',
+			hideAfter: 2000
 		});
 	});
 });

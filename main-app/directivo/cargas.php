@@ -148,6 +148,10 @@ if($config['conf_doble_buscador'] == 1) {
 																} ?>
 															
 															<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+																<a href="cargas-visual.php" class="btn btn-success" title="Vista visual con drag & drop">
+																	<i class="fa fa-th-large"></i> Vista Visual
+																</a>
+																
 																<button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
 																	<i class="fa fa-arrows-alt"></i> Mover Seleccionadas
 																</button>
