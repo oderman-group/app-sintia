@@ -103,6 +103,9 @@ if (!empty($datosPaginaActual)) {
 	<!-- Sintia Menu Icons CSS - DEBE IR AL FINAL PARA SOBRESCRIBIR OTROS ESTILOS -->
     <link href="<?=BASE_URL;?>/config-general/assets/css/sintia-menu-icons.css?v=2.3" rel="stylesheet" type="text/css"/>
 	
+	<!-- Buscador General CSS -->
+    <link href="<?=BASE_URL;?>/main-app/css/buscador-general.css?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/css/buscador-general.css'); ?>" rel="stylesheet" type="text/css"/>
+	
 	<?php 
 	//SE INCLUYE PARA EL FORMULARIO QUE SOLICITA LOS DATOS
 	if($datosUsuarioActual['uss_solicitar_datos']==1){
@@ -160,6 +163,9 @@ function getFileVersion($filePath) {
 <script src="<?=BASE_URL;?>/main-app/js/Docentes.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Docentes.js'); ?>" ></script>
 <script src="<?=BASE_URL;?>/main-app/js/Calificaciones.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Calificaciones.js'); ?>" ></script>
 <script src="<?=BASE_URL;?>/main-app/js/Movimientos.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Movimientos.js'); ?>" ></script>
+
+<!-- Buscador General JS -->
+<script src="<?=BASE_URL;?>/main-app/js/buscador-general.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/buscador-general.js'); ?>" ></script>
 	
 	<?php 
 	require_once(ROOT_PATH."/main-app/compartido/sintia-funciones-js.php");

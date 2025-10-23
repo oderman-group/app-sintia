@@ -406,7 +406,7 @@
 									</a>
 									<ul  class="sub-menu" <?php agregarClass(SUB_MENU,["DV0038","DV0039", "DV0074", "DV0075", "DV0002"])?>>
 										<li <?php agregarClass(MENU,["DV0074", "DV0075", "DV0002"]) ?>><a href="dev-scripts.php" class="nav-link"> <span class="title">scripts SQL</span></a></li>
-										<li class="nav-item"><a href="dev-crear-nueva-bd.php" class="nav-link"> <span class="title"><?=$frases[397][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+										<li class="nav-item"><a href="dev-crear-nueva-bd-v2.php" class="nav-link"> <span class="title"><?=$frases[397][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<li class="nav-item"><a href="dev-errores-sistema.php" class="nav-link"> <span class="title"><?=$frases[398][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<li class="nav-item"><a href="dev-console.php" class="nav-link"> <span class="title">Console</span></a></li>
 										<li class="nav-item"><a href="dev-historial-acciones.php" class="nav-link"> <span class="title"><?=$frases[400][$datosUsuarioActual['uss_idioma']];?></span></a></li>

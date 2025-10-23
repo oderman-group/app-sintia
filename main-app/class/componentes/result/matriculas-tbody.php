@@ -71,34 +71,9 @@
 	}
 }
 
-/* Estilos para edición inline del nombre */
-.student-name-display:hover {
-	background-color: #f8f9fa;
-	border-radius: 4px;
-	padding: 2px 4px;
-	transition: background-color 0.2s ease;
-}
-
-.student-name-display:hover .fa-edit {
-	color: #007bff !important;
-}
-
-.student-name-edit .form-control-sm {
-	font-size: 0.875rem;
-	padding: 0.25rem 0.5rem;
-}
-
-.student-name-edit .btn-sm {
-	font-size: 0.75rem;
-	padding: 0.25rem 0.5rem;
-}
-
+/* Estilos para el nombre del estudiante */
 .editable-name {
 	transition: color 0.2s ease;
-}
-
-.student-name-display:hover .editable-name {
-	color: #007bff;
 }
 </style>
 <?php
@@ -175,6 +150,7 @@ foreach ($data["data"] as $resultado) {
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
 		<td><button class="btn btn-sm btn-link text-secondary expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-chevron-right"></i></button></td>
+		<td><input type="checkbox" class="estudiante-checkbox" value="<?=$resultado['mat_id'];?>"></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -226,12 +202,7 @@ foreach ($data["data"] as $resultado) {
 		<?php $nombre = Estudiantes::NombreCompletoDelEstudiante($resultado); ?>
 
 		<td <?= $color; ?>>
-			<div class="student-name-container" style="cursor: pointer;" 
-				 onclick="abrirModalEdicionRapida('<?= htmlspecialchars($resultado['mat_id'], ENT_QUOTES); ?>')"
-				 title="Hacer clic para editar datos del estudiante">
-				<?= $marcaMediaTecnica; ?><span class="editable-name"><?= $nombre; ?></span>
-				<i class="fa fa-edit text-muted ml-1" style="font-size: 0.8em;"></i>
-			</div>
+			<?= $marcaMediaTecnica; ?><span class="editable-name"><?= $nombre; ?></span>
 		</td>
 		<td><?= strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= $resultado['uss_usuario']; ?></td>
@@ -245,6 +216,10 @@ foreach ($data["data"] as $resultado) {
 					<?php if (Modulos::validarPermisoEdicion()) { ?>
 						<?php if ($permisoEditarEstudiante) { ?>
 							<li><a href="estudiantes-editar.php?id=<?= base64_encode($resultado['mat_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?> matrícula</a></li>
+						<?php } ?>
+						
+						<?php if ($permisoEditarEstudiante) { ?>
+							<li><a href="javascript:void(0);" onclick="abrirModalEdicionRapida('<?= htmlspecialchars($resultado['mat_id'], ENT_QUOTES); ?>')">Edición rápida</a></li>
 						<?php } ?>
 
 						<?php if ($config['conf_id_institucion'] == ICOLVEN && $permisoCrearSion) { ?>
@@ -325,7 +300,7 @@ foreach ($data["data"] as $resultado) {
 		</td>
 	</tr>
 	<tr class="expandable-row" id="expand-<?= $resultado['mat_id']; ?>" style="display: none;">
-		<td colspan="9" style="background-color: #f8f9fa; padding: 20px;">
+		<td colspan="10" style="background-color: #f8f9fa; padding: 20px;">
 			<div class="row">
 				<!-- Foto del Estudiante -->
 				<div class="col-md-2 text-center">

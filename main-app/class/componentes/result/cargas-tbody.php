@@ -232,10 +232,12 @@ foreach ($data["data"] as $resultado) {
 <script>
 
 	function noCerrarToggle(element){
-		 element.addEventListener('click', function(e) {
-			e.stopPropagation(); // Evita el cierre al hacer clic dentro del submenú
-		 });
-
+		// Validar que el elemento existe antes de agregar el event listener
+		if (element && typeof element.addEventListener === 'function') {
+			element.addEventListener('click', function(e) {
+				e.stopPropagation(); // Evita el cierre al hacer clic dentro del submenú
+			});
+		}
 	}
 	
 

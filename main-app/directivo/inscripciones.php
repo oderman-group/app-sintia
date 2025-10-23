@@ -87,13 +87,13 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                         <div class="card">
                                             <div class="card-header bg-warning text-white" style="cursor: pointer; padding: 10px 15px;" data-toggle="collapse" data-target="#alertaDisco">
                                                 <i class="fa fa-database"></i> 
-                                                <strong>Libera espacio en el disco</strong>
+                                                <strong><?=__('inscripciones.liberar_espacio_disco');?></strong>
                                                 <i class="fa fa-chevron-down pull-right"></i>
                                             </div>
                                             <div id="alertaDisco" class="collapse">
                                                 <div class="card-body">
-                                                    <p class="mb-2">Recomendamos descargar la documentación y comprobante de pago de cada aspirante y luego borrar esa documentación del sistema para evitar que el disco se llene más rápido.</p>
-                                                    <p class="mb-0"><strong>Instrucción:</strong> En cada aspirante en estado <span class="badge badge-success">Aprobado</span>, ve al botón <strong>Acciones</strong> → <strong>Borrar documentación</strong>.</p>
+                                                    <p class="mb-2"><?=__('inscripciones.recomendacion_descargar_docs');?></p>
+                                                    <p class="mb-0"><strong><?=__('general.instruccion');?>:</strong> <?=__('inscripciones.instruccion_borrar_docs');?></p>
                                                 </div>
                                             </div>
                                         </div>
