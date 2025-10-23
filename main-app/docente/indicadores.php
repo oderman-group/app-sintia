@@ -1163,10 +1163,23 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
         // VARIABLES GLOBALES
         // ============================================
         
-        const CARGA = '<?= base64_encode($cargaConsultaActual); ?>';
-        const PERIODO = '<?= base64_encode($periodoConsultaActual); ?>';
-        const PORCENTAJE_RESTANTE_GLOBAL = <?= $porcentajeRestante ?? 0; ?>;
-        const VALOR_INDICADOR_CONFIG = <?= $datosCargaActual['car_valor_indicador']; ?>;
+        const CARGA = '<?php echo isset($cargaConsultaActual) ? base64_encode($cargaConsultaActual) : ''; ?>';
+        const PERIODO = '<?php echo isset($periodoConsultaActual) ? base64_encode($periodoConsultaActual) : ''; ?>';
+        const PORCENTAJE_RESTANTE_GLOBAL = <?php echo isset($porcentajeRestante) ? (float)$porcentajeRestante : 0; ?>;
+        const VALOR_INDICADOR_CONFIG = <?php echo isset($datosCargaActual['car_valor_indicador']) ? (float)$datosCargaActual['car_valor_indicador'] : 0; ?>;
+        
+        // Debug: Verificar variables
+        console.log('CARGA:', CARGA);
+        console.log('PERIODO:', PERIODO);
+        console.log('PORCENTAJE_RESTANTE_GLOBAL:', PORCENTAJE_RESTANTE_GLOBAL);
+        console.log('VALOR_INDICADOR_CONFIG:', VALOR_INDICADOR_CONFIG);
+        
+        // Validar que las variables críticas no estén vacías
+        if (!CARGA || !PERIODO) {
+            console.error('❌ Error: Variables CARGA o PERIODO están vacías');
+            console.error('CARGA:', CARGA);
+            console.error('PERIODO:', PERIODO);
+        }
         
         // ============================================
         // FUNCIONES DE MODALES - DEFINIDAS GLOBALMENTE
@@ -1253,7 +1266,7 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
             
             // Enviar petición AJAX
             $.ajax({
-                url: `indicadores-guardar.php?carga=${CARGA}&periodo=${PERIODO}`,
+                url: `indicadores-guardar.php?carga=${encodeURIComponent(CARGA)}&periodo=${encodeURIComponent(PERIODO)}`,
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -1309,7 +1322,7 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
             
             // Enviar petición AJAX
             $.ajax({
-                url: `indicadores-actualizar.php?carga=${CARGA}&periodo=${PERIODO}`,
+                url: `indicadores-actualizar.php?carga=${encodeURIComponent(CARGA)}&periodo=${encodeURIComponent(PERIODO)}`,
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -1368,7 +1381,7 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                     }
 
                     // Hacer petición AJAX
-                    const url = `indicadores-eliminar.php?idR=${window.btoa(ipcId)}&idIndicador=${window.btoa(indicadorId)}&carga=${CARGA}&periodo=${PERIODO}`;
+                    const url = `indicadores-eliminar.php?idR=${window.btoa(ipcId)}&idIndicador=${window.btoa(indicadorId)}&carga=${encodeURIComponent(CARGA)}&periodo=${encodeURIComponent(PERIODO)}`;
                     
                     fetch(url, {
                         method: 'GET',
