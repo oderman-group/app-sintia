@@ -31,7 +31,7 @@ if (!Modulos::validarPermisoEdicion()) {
                 <h5> <?= $frases[119][$datosUsuarioActual['uss_idioma']]; ?> </h5>
             </a>
             <a style="display: none;" class="nav-item nav-link" id="nav-configuracion-tab" data-toggle="tab" href="#nav-configuracion" role="tab" aria-controls="nav-configuracion" aria-selected="false">
-                <h5> Configuracion del curso </h5>
+                <h5> <?=__('cursos.configuracion_curso');?> </h5>
             </a>
         </div>
     </nav>
@@ -42,7 +42,7 @@ if (!Modulos::validarPermisoEdicion()) {
                 <div class="panel">
                     <div class="panel-body">
                         <div class="form-group row">
-                            <label class="col-sm-2 control-label">Nombre Curso <span style="color: red;">(*)</span></label>
+                            <label class="col-sm-2 control-label"><?=__('cursos.nombre_curso');?> <span style="color: red;">(*)</span></label>
                             <div class="col-sm-10">
                                 <input type="text" id="nombreC" name="nombreC" class="form-control" required <?= $disabledPermiso; ?>>
                             </div>

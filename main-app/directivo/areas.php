@@ -57,7 +57,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													<div class="btn-group">
                                                         <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0019'])) { ?>
                                                         <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaAreaModal" class="btn deepPink-bgcolor">
-                                                            Agregar nuevo <i class="fa fa-plus"></i>
+                                                            <?=__('general.agregar_nuevo');?> <i class="fa fa-plus"></i>
                                                         </a>
                                                         <?php
                                                         $idModal = "nuevaAreaModal";
@@ -74,9 +74,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     <tr>
                                                         <th>#</th>
 														<th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
-														<th>Posición</th>
+														<th><?=__('general.posicion');?></th>
 														<th><?=$frases[93][$datosUsuarioActual['uss_idioma']];?></th>
-														<th>Materias</th>
+														<th><?=__('general.materias');?></th>
                                                         <?php if(Modulos::validarPermisoEdicion()){?>
 														    <th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
                                                         <?php }?>

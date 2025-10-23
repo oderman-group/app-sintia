@@ -29,6 +29,40 @@ if (!Modulos::validarPermisoEdicion()) {
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 
 <style>
+/* ========================================
+   ESTILOS PARA FILAS SELECCIONADAS
+   ======================================== */
+
+/* Fila seleccionada - Consistente con página de estudiantes */
+.usuario-row-selected {
+	background-color: #e3f2fd !important;
+	transition: background-color 0.3s ease;
+}
+
+.usuario-row-selected:hover {
+	background-color: #bbdefb !important;
+}
+
+/* Checkbox de selección */
+.usuario-checkbox {
+	cursor: pointer;
+	width: 18px;
+	height: 18px;
+	margin: 0;
+}
+
+/* Checkbox "Seleccionar todos" */
+#selectAllUsuarios {
+	cursor: pointer;
+	width: 18px;
+	height: 18px;
+	margin: 0;
+}
+
+/* ========================================
+   ESTILOS EXISTENTES
+   ======================================== */
+
 .expand-btn {
 	transition: all 0.3s ease;
 	padding: 4px 8px;
@@ -156,7 +190,7 @@ if (!Modulos::validarPermisoEdicion()) {
 													<div class="btn-group">
 														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0123'])) { ?>
 															<button type="button" class="btn deepPink-bgcolor" data-toggle="modal" data-target="#modalAgregarUsuario">
-																<i class="fa fa-plus"></i> Agregar Usuario
+																<i class="fa fa-plus"></i> <?=__('usuarios.agregar_nuevo');?>
 															</button>
 														<?php } ?>
 														
@@ -282,14 +316,7 @@ if (!Modulos::validarPermisoEdicion()) {
 																	</li>
 																</ul>
 															</div>
-															<div class="input-group spinner col-sm-10">
-																<label class="switchToggle"
-																		title="Seleccionar todos">
-																	<input  type="checkbox"
-																			onChange="seleccionarCheck('example1','selecionado','lblCantSeleccionados',this.checked)" value="1"  <?= $disabledPermiso; ?>>
-																	<span class="slider aqua round"></span>
-																</label>
-															</div>
+															<input type="checkbox" id="selectAllUsuarios" title="Seleccionar todos" <?= $disabledPermiso; ?>>
 														</th>
 														<th>Bloq.</th>
 														<th>ID</th>
@@ -410,15 +437,10 @@ if (!Modulos::validarPermisoEdicion()) {
 															</td>
 															<td><?= $contReg; ?></td>
 															<td>
-																<div class="input-group spinner col-sm-10">
-																	<label class="switchToggle">
-																		<input type="checkbox"
-																				onChange="getSelecionados('example1','selecionado','lblCantSeleccionados')"
-																				id="<?= $usuario['uss_id']; ?>_select"
-																				name="selecionado">
-																		<span class="slider aqua round"></span>
-																	</label>
-																</div>
+																<input type="checkbox" 
+																	   class="usuario-checkbox" 
+																	   value="<?= $usuario['uss_id']; ?>"
+																	   id="<?= $usuario['uss_id']; ?>_select">
 															</td>
 															<td>
 																<?php if (Modulos::validarPermisoEdicion() && ($usuario['uss_tipo'] != TIPO_DIRECTIVO || $usuario['uss_permiso1'] != CODE_PRIMARY_MANAGER)) { ?>
@@ -1325,7 +1347,64 @@ $(document).ready(function() {
 		this.submit();
 	});
 	
+	// ========================================
+	// MANEJO DE SELECCIÓN CON CHECKBOXES
+	// ========================================
+	
+	var selectedUsuarios = [];
+	
+	// Manejar selección de todos los usuarios
+	$('#selectAllUsuarios').on('change', function() {
+		var isChecked = $(this).is(':checked');
+		$('.usuario-checkbox').prop('checked', isChecked).trigger('change');
+	});
+	
+	// Manejar selección individual de usuarios
+	$(document).on('change', '.usuario-checkbox', function() {
+		var row = $(this).closest('tr');
+		var usuarioId = $(this).val();
+		
+		if ($(this).is(':checked')) {
+			row.addClass('usuario-row-selected');
+			if (selectedUsuarios.indexOf(usuarioId) === -1) {
+				selectedUsuarios.push(usuarioId);
+			}
+		} else {
+			row.removeClass('usuario-row-selected');
+			selectedUsuarios = selectedUsuarios.filter(id => id !== usuarioId);
+		}
+		
+		// Actualizar checkbox "Seleccionar todos"
+		$('#selectAllUsuarios').prop('checked', 
+			$('.usuario-checkbox:checked').length === $('.usuario-checkbox').length && 
+			$('.usuario-checkbox').length > 0
+		);
+		
+		// Actualizar contador
+		actualizarContadorSeleccionados();
+	});
+	
+	function actualizarContadorSeleccionados() {
+		var count = selectedUsuarios.length;
+		$('#lblCantSeleccionados').text(count > 0 ? '(' + count + ')' : '');
+	}
+	
+	// Función para obtener usuarios seleccionados (compatible con código existente)
+	function getSelecionados(tableId, checkboxName, labelId) {
+		selectedUsuarios = [];
+		$('.usuario-checkbox:checked').each(function() {
+			selectedUsuarios.push($(this).val());
+		});
+		actualizarContadorSeleccionados();
+		return selectedUsuarios;
+	}
+	
+	// Hacer la función global para compatibilidad
+	window.getSelecionados = getSelecionados;
+	
+	// ========================================
 	// === Filtros Avanzados para Usuarios ===
+	// ========================================
 	
 	// Toggle del panel de filtros
 	$('#btnToggleFiltrosUsuarios').on('click', function() {

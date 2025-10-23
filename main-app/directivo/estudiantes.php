@@ -63,6 +63,360 @@ if($config['conf_doble_buscador'] == 1) {
 	<!-- select2 -->
 	<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 	<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+	
+	<style>
+		/* ========================================
+		   ESTILOS RESPONSIVOS PARA TABLA DE ESTUDIANTES
+		   ======================================== */
+		
+		/* Contenedor responsivo con scroll horizontal */
+		.table-responsive-estudiantes {
+			width: 100%;
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+			margin-bottom: 15px;
+		}
+		
+		/* Tabla con encabezados fijos */
+		.table-estudiantes-wrapper {
+			position: relative;
+			max-height: calc(100vh - 350px);
+			overflow-y: auto;
+			overflow-x: auto;
+			border: 1px solid #dee2e6;
+			border-radius: 4px;
+		}
+		
+		.table-estudiantes-wrapper table {
+			margin-bottom: 0;
+		}
+		
+		/* Encabezados fijos */
+		.table-estudiantes-wrapper thead th {
+			position: sticky;
+			top: 0;
+			z-index: 10;
+			background-color: #f8f9fa;
+			border-bottom: 2px solid #dee2e6;
+			box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+		}
+		
+		/* Ajustes para DataTables con encabezados fijos */
+		.dataTables_wrapper .table-estudiantes-wrapper {
+			clear: both;
+		}
+		
+		/* Responsividad para botones de acciones */
+		.btn-group {
+			display: inline-flex;
+			flex-wrap: wrap;
+			gap: 5px;
+		}
+		
+		.btn-group .btn {
+			flex: 0 0 auto;
+			margin-bottom: 5px;
+		}
+		
+		/* Contenedor de barra de herramientas */
+		.d-flex.justify-content-between.align-items-center {
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		
+		.d-flex.justify-content-between.align-items-center > .btn-group {
+			flex: 0 1 auto;
+		}
+		
+		/* Estilos para filas seleccionadas - Edición Masiva de Estudiantes */
+		.estudiante-row-selected {
+			background-color: #e3f2fd !important;
+			transition: background-color 0.3s ease;
+		}
+		
+		.estudiante-row-selected:hover {
+			background-color: #bbdefb !important;
+		}
+		
+		/* ========================================
+		   RESPONSIVIDAD MÓVIL
+		   ======================================== */
+		
+		/* Pantallas grandes - mantener botones en línea */
+		@media (min-width: 992px) {
+			.d-flex.justify-content-between.align-items-center {
+				flex-wrap: nowrap;
+			}
+			
+			.btn-group {
+				flex-wrap: nowrap;
+			}
+		}
+		
+		/* Tablets y menores */
+		@media (max-width: 991px) {
+			.page-title-breadcrumb {
+				flex-direction: column;
+				align-items: flex-start !important;
+			}
+			
+			.btn-group {
+				margin-bottom: 10px;
+			}
+			
+			.table-estudiantes-wrapper {
+				max-height: calc(100vh - 400px);
+			}
+			
+			/* Hacer que el contenedor principal de botones sea más flexible */
+			.d-flex.justify-content-between.align-items-center {
+				flex-direction: column;
+				align-items: flex-start !important;
+			}
+			
+			.d-flex.justify-content-between.align-items-center > * {
+				width: 100%;
+				margin-bottom: 10px;
+			}
+			
+			.d-flex.justify-content-between.align-items-center > .btn-group {
+				justify-content: flex-start;
+			}
+		}
+		
+		/* Móviles */
+		@media (max-width: 767px) {
+			/* Hacer botones más pequeños en móvil */
+			.btn-group .btn {
+				padding: 8px 12px;
+				font-size: 13px;
+			}
+			
+			/* Permitir que los botones dentro de btn-group se envuelvan */
+			.btn-group {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 5px;
+			}
+			
+			/* Botones dropdown más compactos */
+			.btn-group .dropdown-toggle {
+				padding: 8px 10px;
+			}
+			
+			.btn-group .dropdown-toggle .caret {
+				margin-left: 5px;
+			}
+			
+			/* Ajustar encabezados de tabla */
+			.table-estudiantes-wrapper thead th {
+				padding: 8px 5px;
+				font-size: 12px;
+				white-space: nowrap;
+			}
+			
+			.table-estudiantes-wrapper tbody td {
+				padding: 8px 5px;
+				font-size: 13px;
+			}
+			
+			/* Ajustar altura máxima en móvil */
+			.table-estudiantes-wrapper {
+				max-height: calc(100vh - 450px);
+			}
+			
+			/* Hacer que los filtros sean apilables */
+			.card-filtros .form-group {
+				margin-bottom: 15px;
+			}
+		}
+		
+		/* Móviles pequeños */
+		@media (max-width: 575px) {
+			.table-estudiantes-wrapper thead th {
+				padding: 6px 3px;
+				font-size: 11px;
+			}
+			
+			.table-estudiantes-wrapper tbody td {
+				padding: 6px 3px;
+				font-size: 12px;
+			}
+			
+			/* Hacer checkboxes más pequeños en móvil */
+			.table-estudiantes-wrapper input[type="checkbox"] {
+				transform: scale(0.9);
+			}
+			
+			/* Botones del dropdown más compactos */
+			.dropdown-menu {
+				font-size: 13px;
+			}
+		}
+		
+		/* ========================================
+		   MEJORAS DE UX
+		   ======================================== */
+		
+		/* Indicador visual de scroll disponible */
+		.table-estudiantes-wrapper::after {
+			content: '';
+			position: sticky;
+			right: 0;
+			top: 0;
+			height: 100%;
+			width: 20px;
+			background: linear-gradient(to left, rgba(255,255,255,0.9), transparent);
+			pointer-events: none;
+			z-index: 5;
+		}
+		
+		/* Scroll suave */
+		.table-estudiantes-wrapper {
+			scroll-behavior: smooth;
+		}
+		
+		/* Hover mejorado para filas */
+		.table-estudiantes-wrapper tbody tr:hover {
+			background-color: #f5f5f5;
+			transition: background-color 0.2s ease;
+		}
+		
+		/* Mantener el color de selección sobre el hover */
+		.table-estudiantes-wrapper tbody tr.estudiante-row-selected:hover {
+			background-color: #bbdefb !important;
+		}
+		
+		/* ========================================
+		   ESTILOS PARA MODAL DE EDICIÓN MASIVA
+		   ======================================== */
+		
+		/* Estilos mejorados para el modal de edición masiva */
+		#editarMasivoEstudiantesModal .form-group {
+			margin-bottom: 20px;
+		}
+		
+		#editarMasivoEstudiantesModal .form-group label {
+			font-weight: 600;
+			font-size: 14px;
+			margin-bottom: 8px;
+			color: #495057;
+			display: block;
+		}
+		
+		#editarMasivoEstudiantesModal .form-control,
+		#editarMasivoEstudiantesModal .select2-container {
+			width: 100% !important;
+			min-height: 38px;
+		}
+		
+		#editarMasivoEstudiantesModal .select2-container .select2-selection--single {
+			height: 38px !important;
+			padding: 6px 12px;
+			border: 1px solid #ced4da;
+			border-radius: 4px;
+		}
+		
+		#editarMasivoEstudiantesModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+			line-height: 26px;
+			color: #495057;
+		}
+		
+		#editarMasivoEstudiantesModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+			height: 36px;
+		}
+		
+		#editarMasivoEstudiantesModal input[type="number"] {
+			height: 38px;
+			padding: 6px 12px;
+			font-size: 14px;
+		}
+		
+		#editarMasivoEstudiantesModal .row {
+			margin-bottom: 10px;
+		}
+		
+		#editarMasivoEstudiantesModal hr {
+			margin: 25px 0;
+			border-top: 2px solid #dee2e6;
+		}
+		
+		#editarMasivoEstudiantesModal h5 {
+			margin-bottom: 15px;
+			font-size: 16px;
+			font-weight: 600;
+		}
+		
+		/* ========================================
+		   RESPONSIVIDAD PARA MODALES
+		   ======================================== */
+		
+		/* Hacer modales responsivos */
+		@media (max-width: 767px) {
+			.modal-dialog {
+				margin: 10px;
+				max-width: calc(100% - 20px);
+			}
+			
+			.modal-lg {
+				max-width: calc(100% - 20px);
+			}
+			
+			#editarMasivoEstudiantesModal .form-group label {
+				font-size: 13px;
+			}
+			
+			#editarMasivoEstudiantesModal .form-control,
+			#editarMasivoEstudiantesModal .select2-container {
+				min-height: 36px;
+			}
+			
+			#editarMasivoEstudiantesModal .alert {
+				font-size: 13px;
+				padding: 10px;
+			}
+		}
+		
+		/* ========================================
+		   MEJORAS ADICIONALES DE RESPONSIVIDAD
+		   ======================================== */
+		
+		/* Card de filtros responsivo */
+		@media (max-width: 767px) {
+			.card-filtros .col-md-4,
+			.card-filtros .col-md-3 {
+				width: 100%;
+				padding: 0 15px;
+			}
+			
+			.card-filtros .row {
+				margin: 0;
+			}
+		}
+		
+		/* Barra de herramientas responsiva */
+		@media (max-width: 767px) {
+			.btn-toolbar {
+				flex-direction: column;
+			}
+			
+			.btn-toolbar .btn-group {
+				width: 100%;
+				margin-bottom: 10px;
+			}
+		}
+		
+		/* Ajuste de paginación en móvil */
+		@media (max-width: 575px) {
+			.pagination {
+				font-size: 12px;
+			}
+			
+			.pagination .page-link {
+				padding: 5px 10px;
+			}
+		}
+	</style>
 </head>
 <!-- END HEAD -->
 <?php
@@ -93,9 +447,7 @@ if($config['conf_doble_buscador'] == 1) {
                         <div class="col-md-12">
                             <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
                                 <i class="fa fa-info-circle text-info"></i> 
-                                Aquí puedes gestionar toda la información de los estudiantes matriculados en la institución. 
-                                Utiliza los filtros avanzados para buscar por nombre, documento o usuario, y filtra por curso, grupo o estado de matrícula. 
-                                También puedes expandir cada registro para ver información detallada del estudiante.
+                                <?=__('estudiantes.descripcion_pagina');?>
                             </p>
                         </div>
                     </div>
@@ -169,6 +521,13 @@ if($config['conf_doble_buscador'] == 1) {
 														<a href="estudiantes-agregar.php" class="btn deepPink-bgcolor">
 															<i class="fa fa-plus"></i> Agregar Estudiante
 														</a>
+													<?php }?>
+													
+													<!-- Botón de Edición Masiva -->
+													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0078'])){?>
+														<button type="button" id="editarMasivoEstudiantesBtn" class="btn btn-warning" disabled>
+															<i class="fa fa-edit"></i> Editar Seleccionados
+														</button>
 													<?php }?>
 													
 													<?php if(Modulos::validarSubRol(['DT0002'])){?>
@@ -328,14 +687,16 @@ if($config['conf_doble_buscador'] == 1) {
 											
 											
                                         <div>
-											
-                                    		<table <?=$jQueryTable;?> class="display" style="width:100%;">
+											<!-- Contenedor responsivo con encabezados fijos -->
+											<div class="table-estudiantes-wrapper">
 												<div id="gifCarga" class="gif-carga">
 													<img  alt="Cargando...">
 												</div>
+                                    			<table <?=$jQueryTable;?> class="display" style="width:100%;">
                                                 <thead>
                                                     <tr>
                                                         <th></th>
+                                                        <th><input type="checkbox" id="selectAllEstudiantes" title="Seleccionar todos"></th>
                                                         <th>ID</th>
               <th>Bloq.</th>
               <th><?=$frases[246][$datosUsuarioActual['uss_idioma']];?></th>
@@ -380,6 +741,7 @@ if($config['conf_doble_buscador'] == 1) {
 													  ?>
                                                 </tbody>
                                             </table>
+                                            </div><!-- Cierre table-estudiantes-wrapper -->
                                             </div>
                                         </div>
                                     </div>
@@ -419,8 +781,381 @@ if($config['conf_doble_buscador'] == 1) {
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
 	<!-- select2 -->
 	<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
+	<!-- SweetAlert2 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- end js include path -->
 	<script>
+		console.log('==========================================');
+		console.log('INICIO DE SCRIPTS DE ESTUDIANTES.PHP - EDICIÓN MASIVA');
+		console.log('jQuery disponible:', typeof $ !== 'undefined');
+		console.log('Bootstrap modal disponible:', typeof $.fn.modal === 'function');
+		console.log('==========================================');
+		
+		// Manejar errores de scripts externos para que no bloqueen la página
+		window.addEventListener('error', function(e) {
+			console.error('Error global capturado:', e.message, e.filename, e.lineno);
+			// Silenciar errores de modal/tooltip que bloquean la ejecución
+			if (e.message && (e.message.includes('modal') || e.message.includes('tooltip') || e.message.includes('addEventListener'))) {
+				console.warn('Error silenciado para no bloquear la página:', e.message);
+				e.preventDefault();
+				return true;
+			}
+		});
+		
+		// Variables globales para edición masiva
+		var selectedEstudiantes = [];
+		
+		try {
+			console.log('Inicializando funcionalidad de edición masiva de estudiantes...');
+			
+			// Manejar selección de todos los estudiantes
+			$('#selectAllEstudiantes').on('change', function() {
+				var isChecked = $(this).is(':checked');
+				$('.estudiante-checkbox').prop('checked', isChecked).trigger('change');
+			});
+			
+			// Manejar selección individual de estudiantes
+			$(document).on('change', '.estudiante-checkbox', function() {
+				var row = $(this).closest('tr');
+				var estudianteId = $(this).val();
+				
+				if ($(this).is(':checked')) {
+					row.addClass('estudiante-row-selected');
+					if (selectedEstudiantes.indexOf(estudianteId) === -1) {
+						selectedEstudiantes.push(estudianteId);
+					}
+				} else {
+					row.removeClass('estudiante-row-selected');
+					selectedEstudiantes = selectedEstudiantes.filter(id => id !== estudianteId);
+				}
+				
+				$('#selectAllEstudiantes').prop('checked', $('.estudiante-checkbox:checked').length === $('.estudiante-checkbox').length);
+				toggleActionButtons();
+			});
+			
+			function toggleActionButtons() {
+				var hasSelection = selectedEstudiantes.length > 0;
+				$('#editarMasivoEstudiantesBtn').prop('disabled', !hasSelection);
+			}
+			
+			// Manejar clic del botón de edición masiva
+			console.log('Enlazando evento click al botón con delegation...');
+			console.log('Botón existe:', $('#editarMasivoEstudiantesBtn').length > 0);
+			$(document).on('click', '#editarMasivoEstudiantesBtn', function(e) {
+				console.log('=== BOTÓN EDICIÓN MASIVA ESTUDIANTES CLICKEADO ===');
+				e.preventDefault();
+				e.stopPropagation();
+				
+				if (selectedEstudiantes.length === 0) {
+					$.toast({
+						heading: 'Advertencia',
+						text: 'Por favor selecciona al menos un estudiante.',
+						showHideTransition: 'slide',
+						icon: 'warning',
+						position: 'top-right'
+					});
+					return;
+				}
+				
+				// Actualizar contador de estudiantes seleccionados
+				$('#numeroEstudiantesSeleccionados').text(selectedEstudiantes.length);
+				
+				// Cargar opciones de grados y grupos
+				cargarOpcionesGradosGrupos();
+				
+				// Mostrar modal primero
+				$('#editarMasivoEstudiantesModal').modal('show');
+			});
+			
+			// Cargar opciones de grados y grupos
+			function cargarOpcionesGradosGrupos() {
+				// Cargar grados
+				$.ajax({
+					url: 'ajax-cargar-grados.php',
+					type: 'GET',
+					dataType: 'json',
+					success: function(response) {
+						if (response.success) {
+							var gradoSelect = $('#grado');
+							gradoSelect.empty().append('<option value="">-- No modificar --</option>');
+							response.data.forEach(function(grado) {
+								gradoSelect.append('<option value="' + grado.id + '">' + grado.nombre + '</option>');
+							});
+						}
+					}
+				});
+				
+				// Cargar grupos
+				$.ajax({
+					url: 'ajax-cargar-grupos.php',
+					type: 'GET',
+					dataType: 'json',
+					success: function(response) {
+						if (response.success) {
+							var grupoSelect = $('#grupo');
+							grupoSelect.empty().append('<option value="">-- No modificar --</option>');
+							response.data.forEach(function(grupo) {
+								grupoSelect.append('<option value="' + grupo.id + '">' + grupo.nombre + '</option>');
+							});
+						}
+					}
+				});
+			}
+			
+			// Inicializar Select2 DESPUÉS de que el modal esté completamente visible
+			$('#editarMasivoEstudiantesModal').on('shown.bs.modal', function () {
+				$('.select2-modal').select2({
+					width: '100%',
+					placeholder: 'Seleccionar...',
+					allowClear: true,
+					language: {
+						noResults: function() {
+							return "No se encontraron resultados";
+						},
+						searching: function() {
+							return "Buscando...";
+						}
+					}
+				});
+			});
+			
+			// Manejar clic del botón de aplicar cambios masivos
+			console.log('Enlazando evento click al botón de aplicar cambios...');
+			$(document).on('click', '#btnConfirmarEdicionMasivaEstudiantes', function(e) {
+				console.log('=== BOTÓN APLICAR CAMBIOS ESTUDIANTES CLICKEADO ===');
+				e.preventDefault();
+				e.stopPropagation();
+				
+				console.log('=== FORMULARIO DE EDICIÓN MASIVA ESTUDIANTES ENVIADO ===');
+				
+				var camposAActualizar = {};
+				var hayCambios = false;
+				
+				// Obtener valores directamente de los campos (para manejar Select2 correctamente)
+				var estadoMatricula = $('#estadoMatricula').val();
+				var estrato = $('#estrato').val();
+				var grado = $('#grado').val();
+				var grupo = $('#grupo').val();
+				var generarUsuario = $('#generarUsuario').is(':checked') ? '1' : '';
+				
+				console.log('Valores del formulario:');
+				console.log('- Estado Matrícula:', estadoMatricula);
+				console.log('- Estrato:', estrato);
+				console.log('- Grado:', grado);
+				console.log('- Grupo:', grupo);
+				console.log('- Generar Usuario:', generarUsuario);
+				
+				// Agregar campos no vacíos
+				if (estadoMatricula && estadoMatricula !== '') {
+					camposAActualizar.estadoMatricula = estadoMatricula;
+					console.log('✓ Estado Matrícula agregado:', estadoMatricula);
+					hayCambios = true;
+				}
+				
+				if (estrato && estrato !== '') {
+					camposAActualizar.estrato = estrato;
+					console.log('✓ Estrato agregado:', estrato);
+					hayCambios = true;
+				}
+				
+				if (grado && grado !== '') {
+					camposAActualizar.grado = grado;
+					console.log('✓ Grado agregado:', grado);
+					hayCambios = true;
+				}
+				
+				if (grupo && grupo !== '') {
+					camposAActualizar.grupo = grupo;
+					console.log('✓ Grupo agregado:', grupo);
+					hayCambios = true;
+				}
+				
+				if (generarUsuario === '1') {
+					camposAActualizar.generarUsuario = generarUsuario;
+					console.log('✓ Generar Usuario agregado:', generarUsuario);
+					hayCambios = true;
+				}
+				
+				console.log('Campos finales a actualizar:', camposAActualizar);
+				console.log('Hay cambios:', hayCambios);
+				
+				if (!hayCambios) {
+					$.toast({
+						heading: 'Advertencia',
+						text: 'Por favor selecciona al menos un campo para modificar.',
+						showHideTransition: 'slide',
+						icon: 'warning',
+						position: 'top-right'
+					});
+					return;
+				}
+				
+				// Aplicar cambios directamente sin confirmación adicional
+				aplicarEdicionMasivaEstudiantes(camposAActualizar);
+			});
+			
+			function aplicarEdicionMasivaEstudiantes(camposAActualizar) {
+				console.log('Iniciando edición masiva de estudiantes...');
+				console.log('Estudiantes seleccionados:', selectedEstudiantes);
+				console.log('Campos a actualizar:', camposAActualizar);
+				
+				// Mostrar loader en el botón
+				var btnOriginal = $('#btnConfirmarEdicionMasivaEstudiantes').html();
+				$('#btnConfirmarEdicionMasivaEstudiantes').html('<i class="fa fa-spinner fa-spin"></i> Procesando...').prop('disabled', true);
+				
+				// Toast de proceso
+				$.toast({
+					heading: 'Procesando',
+					text: 'Actualizando ' + selectedEstudiantes.length + ' estudiante(s)...',
+					showHideTransition: 'slide',
+					icon: 'info',
+					position: 'top-right',
+					hideAfter: false,
+					loader: true,
+					loaderBg: '#3498db'
+				});
+				
+				$.ajax({
+					url: 'estudiantes-editar-masivo.php',
+					type: 'POST',
+					data: {
+						estudiantes: selectedEstudiantes,
+						campos: camposAActualizar
+					},
+					dataType: 'json',
+					success: function(response) {
+						console.log('Respuesta del servidor:', response);
+						
+						$('#btnConfirmarEdicionMasivaEstudiantes').html(btnOriginal).prop('disabled', false);
+						
+						// Cerrar el toast de procesamiento
+						$('.jq-toast-wrap').remove();
+						
+					if (response.success) {
+						// Cerrar modal
+						$('#editarMasivoEstudiantesModal').modal('hide');
+						
+						// Construir mensaje de éxito
+						var mensaje = response.message || 'Operación completada exitosamente.';
+						
+						// Agregar detalles adicionales si están disponibles
+						if (response.usuarios_generados > 0) {
+							mensaje += ' Se generaron ' + response.usuarios_generados + ' usuarios.';
+						}
+						
+						// Mostrar mensaje de éxito
+						$.toast({
+							heading: '¡Éxito!',
+							text: mensaje,
+							showHideTransition: 'slide',
+							icon: 'success',
+							position: 'top-right',
+							hideAfter: 6000
+						});
+						
+						// Recargar solo la tabla de estudiantes sin recargar toda la página
+						setTimeout(function() {
+							recargarTablaEstudiantes();
+						}, 500);
+						
+					} else {
+							$.toast({
+								heading: 'Error',
+								text: response.message || 'No se pudo actualizar ningún estudiante.',
+								showHideTransition: 'slide',
+								icon: 'error',
+								position: 'top-right',
+								hideAfter: 5000
+							});
+						}
+					},
+					error: function(xhr, status, error) {
+						console.error('Error AJAX:', error);
+						console.error('Response:', xhr.responseText);
+						
+						$('#btnConfirmarEdicionMasivaEstudiantes').html(btnOriginal).prop('disabled', false);
+						
+						// Cerrar el toast de procesamiento
+						$('.jq-toast-wrap').remove();
+						
+						$.toast({
+							heading: 'Error',
+							text: 'Error de conexión al servidor.',
+							showHideTransition: 'slide',
+							icon: 'error',
+							position: 'top-right',
+							hideAfter: 5000
+						});
+					}
+				});
+			}
+			
+			// Función para recargar la tabla de estudiantes sin recargar toda la página
+			function recargarTablaEstudiantes() {
+				console.log('Recargando tabla de estudiantes...');
+				
+				// Mostrar loader
+				$('#gifCarga').show();
+				
+				// Obtener filtros actuales
+				var cursos = $('#filtro_cursos').val() || [];
+				var grupos = $('#filtro_grupos').val() || [];
+				var estados = $('#filtro_estados').val() || [];
+				var busqueda = $('#filtro_busqueda').val() || '';
+				
+				$.ajax({
+					url: 'ajax-filtrar-estudiantes.php',
+					type: 'POST',
+					data: {
+						cursos: cursos,
+						grupos: grupos,
+						estados: estados,
+						busqueda: busqueda
+					},
+					dataType: 'json',
+					success: function(response) {
+						$('#gifCarga').hide();
+						
+						if (response.success) {
+							// Actualizar el contenido de la tabla
+							$('#matriculas_result').html(response.html);
+							
+							// Limpiar las selecciones
+							selectedEstudiantes = [];
+							$('#selectAllEstudiantes').prop('checked', false);
+							toggleActionButtons();
+							
+							console.log('Tabla de estudiantes recargada exitosamente');
+						} else {
+							console.error('Error al recargar tabla:', response.error);
+							$.toast({
+								heading: 'Advertencia',
+								text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista.',
+								showHideTransition: 'slide',
+								icon: 'warning',
+								position: 'top-right',
+								hideAfter: 3000
+							});
+						}
+					},
+					error: function(xhr, status, error) {
+						$('#gifCarga').hide();
+						console.error('Error al recargar tabla:', error);
+						// No mostrar error ya que los cambios sí se aplicaron
+					}
+				});
+			}
+			
+			// Limpiar selección al cerrar el modal
+			$('#editarMasivoEstudiantesModal').on('hidden.bs.modal', function () {
+				$('.select2-modal').select2('destroy');
+			});
+			
+		} catch(error) {
+			console.error('Error en funcionalidad de edición masiva de estudiantes:', error);
+			console.log('Continuando con el resto de la página...');
+		}
+		
 		$(function () {
 			$('[data-toggle="popover"]').popover();
 		});
@@ -592,6 +1327,112 @@ if($config['conf_doble_buscador'] == 1) {
 			});
 		});
 	</script>
+	
+	<!-- Modal de Edición Masiva de Estudiantes -->
+	<div class="modal fade" id="editarMasivoEstudiantesModal" tabindex="-1" role="dialog" aria-labelledby="editarMasivoEstudiantesModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="editarMasivoEstudiantesModalLabel">
+						<i class="fa fa-users"></i> Edición Masiva de Estudiantes
+					</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<form id="editarMasivoEstudiantesForm" method="post" action="javascript:void(0);">
+					<div class="modal-body">
+						<div class="alert alert-info">
+							<i class="fa fa-info-circle"></i> 
+							<strong>Instrucciones:</strong> Los campos que dejes en blanco o sin seleccionar NO serán modificados. 
+							Solo se actualizarán los campos que completes.
+						</div>
+						
+						<div id="contadorEstudiantesSeleccionados" class="alert alert-warning">
+							<i class="fa fa-users"></i> 
+							<strong>Estudiantes seleccionados:</strong> <span id="numeroEstudiantesSeleccionados">0</span>
+						</div>
+						
+						<!-- Estado de Matrícula -->
+						<div class="form-group">
+							<label for="estadoMatricula">Estado de Matrícula</label>
+							<select class="form-control select2-modal" id="estadoMatricula" name="estadoMatricula">
+								<option value="">-- No modificar --</option>
+								<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { ?>
+									<option value="<?= $clave; ?>"><?= $valor; ?></option>
+								<?php } ?>
+							</select>
+						</div>
+						
+						<!-- Estrato -->
+						<div class="form-group">
+							<label for="estrato">Estrato</label>
+							<select class="form-control select2-modal" id="estrato" name="estrato">
+								<option value="">-- No modificar --</option>
+								<?php
+								$opcionesEstrato = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3");
+								while($o = mysqli_fetch_array($opcionesEstrato, MYSQLI_BOTH)){
+									echo '<option value="'.$o[0].'">'.$o[1].'</option>';
+								}
+								?>
+							</select>
+						</div>
+						
+						<hr>
+						
+						<h5><i class="fa fa-graduation-cap"></i> Cambios Académicos</h5>
+						<div class="alert alert-warning">
+							<i class="fa fa-exclamation-triangle"></i>
+							<strong>Importante:</strong> Los cambios de grado y grupo solo se aplicarán a estudiantes que NO tengan notas registradas.
+						</div>
+						
+						<!-- Grado -->
+						<div class="form-group">
+							<label for="grado">Grado</label>
+							<select class="form-control select2-modal" id="grado" name="grado">
+								<option value="">-- No modificar --</option>
+								<!-- Se cargarán dinámicamente -->
+							</select>
+						</div>
+						
+						<!-- Grupo -->
+						<div class="form-group">
+							<label for="grupo">Grupo</label>
+							<select class="form-control select2-modal" id="grupo" name="grupo">
+								<option value="">-- No modificar --</option>
+								<!-- Se cargarán dinámicamente -->
+							</select>
+						</div>
+						
+						<hr>
+						
+						<h5><i class="fa fa-user-plus"></i> Generación de Usuarios</h5>
+						
+						<!-- Generar Usuario -->
+						<div class="form-group">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" id="generarUsuario" name="generarUsuario" value="1">
+								<label class="form-check-label" for="generarUsuario">
+									<strong>Generar usuario para estudiantes sin usuario</strong>
+								</label>
+							</div>
+							<small class="form-text text-muted">
+								Se generará automáticamente un usuario basado en el documento de identidad.
+							</small>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">
+							<i class="fa fa-times"></i> Cancelar
+						</button>
+						<button type="button" class="btn btn-warning" id="btnConfirmarEdicionMasivaEstudiantes">
+							<i class="fa fa-save"></i> Aplicar Cambios Masivos
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 </body>
 
 </html>

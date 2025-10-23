@@ -1649,3 +1649,29 @@ $frases[431][$l] = 'Press Enter To Search';
 $frases[432][$l] = 'Notifications type';
 $frases[433][$l] = 'Subscribe users';
 $frases[434][$l] = 'Attach documents';
+
+// ====================================
+// NUEVO SISTEMA DE TRADUCCIÓN MODERNO
+// ====================================
+
+// Incluir la clase Traductor
+require_once __DIR__ . '/Traductor.php';
+
+// Inicializar sistema de traducción
+// Compatible con el sistema anterior: 1=ES, 2=EN
+$idiomaUsuario = isset($datosUsuarioActual['uss_idioma']) ? $datosUsuarioActual['uss_idioma'] : 1;
+$codigoIdioma = ($idiomaUsuario == 2) ? 'EN' : 'ES';
+
+Traductor::inicializar($codigoIdioma);
+
+// En modo desarrollo, registrar pendientes automáticamente
+// Esto detectará textos sin traducir y los guardará en pendientes.json
+if (!defined('MODO_DESARROLLO')) {
+    define('MODO_DESARROLLO', true); // Cambiar a false en producción
+}
+
+if (MODO_DESARROLLO === true) {
+    Traductor::setRegistroPendientes(true);
+} else {
+    Traductor::setRegistroPendientes(false);
+}

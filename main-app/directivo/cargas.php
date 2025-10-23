@@ -6,7 +6,7 @@
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 $Plataforma = new Plataforma;
 
-Utilidades::validarParametros($_GET);
+//Utilidades::validarParametros($_GET);
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -64,6 +64,72 @@ if($config['conf_doble_buscador'] == 1) {
 			outline: none;
 			box-shadow: none;
 		}
+		
+		/* Estilos para filas seleccionadas - Edición Masiva */
+		.carga-row-selected {
+			background-color: #e3f2fd !important;
+			transition: background-color 0.3s ease;
+		}
+		
+		.carga-row-selected:hover {
+			background-color: #bbdefb !important;
+		}
+		
+		/* Estilos mejorados para el modal de edición masiva */
+		#editarMasivoModal .form-group {
+			margin-bottom: 20px;
+		}
+		
+		#editarMasivoModal .form-group label {
+			font-weight: 600;
+			font-size: 14px;
+			margin-bottom: 8px;
+			color: #495057;
+			display: block;
+		}
+		
+		#editarMasivoModal .form-control,
+		#editarMasivoModal .select2-container {
+			width: 100% !important;
+			min-height: 38px;
+		}
+		
+		#editarMasivoModal .select2-container .select2-selection--single {
+			height: 38px !important;
+			padding: 6px 12px;
+			border: 1px solid #ced4da;
+			border-radius: 4px;
+		}
+		
+		#editarMasivoModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+			line-height: 26px;
+			color: #495057;
+		}
+		
+		#editarMasivoModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+			height: 36px;
+		}
+		
+		#editarMasivoModal input[type="number"] {
+			height: 38px;
+			padding: 6px 12px;
+			font-size: 14px;
+		}
+		
+		#editarMasivoModal .row {
+			margin-bottom: 10px;
+		}
+		
+		#editarMasivoModal hr {
+			margin: 25px 0;
+			border-top: 2px solid #dee2e6;
+		}
+		
+		#editarMasivoModal h5 {
+			margin-bottom: 15px;
+			font-size: 16px;
+			font-weight: 600;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
@@ -109,10 +175,55 @@ if($config['conf_doble_buscador'] == 1) {
 								<?php 
 								$filtro = '';
 								$curso = '';
-								if(!empty($_GET["curso"])){ $curso = base64_decode($_GET['curso']); $filtro .= " AND car_curso='".$curso."'";}
-								if(!empty($_GET["grupo"])){$filtro .= " AND car_grupo='".base64_decode($_GET["grupo"])."'";}
-								if(!empty($_GET["docente"])){$filtro .= " AND car_docente='".base64_decode($_GET["docente"])."'";}
-								if(!empty($_GET["asignatura"])){$filtro .= " AND car_materia='".base64_decode($_GET["asignatura"])."'";}
+								
+								// Validar y sanitizar parámetros GET antes de usarlos
+								if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
+									try {
+										$cursoDecoded = base64_decode($_GET['curso'], true);
+										if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
+											$curso = mysqli_real_escape_string($conexion, $cursoDecoded);
+											$filtro .= " AND car_curso='".$curso."'";
+										}
+									} catch(Exception $e) {
+										// Ignorar error de decodificación
+									}
+								}
+								
+								if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
+									try {
+										$grupoDecoded = base64_decode($_GET["grupo"], true);
+										if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
+											$grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
+											$filtro .= " AND car_grupo='".$grupo."'";
+										}
+									} catch(Exception $e) {
+										// Ignorar error de decodificación
+									}
+								}
+								
+								if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
+									try {
+										$docenteDecoded = base64_decode($_GET["docente"], true);
+										if ($docenteDecoded !== false && !empty($docenteDecoded)) {
+											$docente = mysqli_real_escape_string($conexion, $docenteDecoded);
+											$filtro .= " AND car_docente='".$docente."'";
+										}
+									} catch(Exception $e) {
+										// Ignorar error de decodificación
+									}
+								}
+								
+								if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
+									try {
+										$asignaturaDecoded = base64_decode($_GET["asignatura"], true);
+										if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
+											$asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
+											$filtro .= " AND car_materia='".$asignatura."'";
+										}
+									} catch(Exception $e) {
+										// Ignorar error de decodificación
+									}
+								}
 								?>
 								
 								<div class="col-md-12">
@@ -154,6 +265,10 @@ if($config['conf_doble_buscador'] == 1) {
 																
 																<button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
 																	<i class="fa fa-arrows-alt"></i> Mover Seleccionadas
+																</button>
+																
+																<button type="button" id="editarMasivoBtn" class="btn btn-warning" disabled>
+																	<i class="fa fa-edit"></i> Editar Seleccionadas
 																</button>
 															<?php } ?>
 															
@@ -419,10 +534,13 @@ if($config['conf_doble_buscador'] == 1) {
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
 	<!-- select2 -->
 	<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
+	<!-- SweetAlert2 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<!-- CACHE BUSTER: <?= time() ?> -->
     <!-- end js include path -->
 	<script>
 		console.log('==========================================');
-		console.log('INICIO DE SCRIPTS DE CARGAS.PHP');
+		console.log('INICIO DE SCRIPTS DE CARGAS.PHP - VERSION LIMPIA');
 		console.log('jQuery disponible:', typeof $ !== 'undefined');
 		console.log('Bootstrap modal disponible:', typeof $.fn.modal === 'function');
 		console.log('==========================================');
@@ -431,8 +549,8 @@ if($config['conf_doble_buscador'] == 1) {
 		window.addEventListener('error', function(e) {
 			console.error('Error global capturado:', e.message, e.filename, e.lineno);
 			// Silenciar errores de modal/tooltip que bloquean la ejecución
-			if (e.message && (e.message.includes('modal') || e.message.includes('tooltip'))) {
-				console.warn('Error silenciado para no bloquear la página');
+			if (e.message && (e.message.includes('modal') || e.message.includes('tooltip') || e.message.includes('addEventListener'))) {
+				console.warn('Error silenciado para no bloquear la página:', e.message);
 				e.preventDefault();
 				return true;
 			}
@@ -472,17 +590,17 @@ if($config['conf_doble_buscador'] == 1) {
 					],
 					"order": [[2, 'asc']],
 					"language": {
-						"lengthMenu": "Mostrar _MENU_ registros por página",
-						"zeroRecords": "No se encontraron resultados",
-						"info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
-						"infoEmpty": "No hay registros disponibles",
-						"infoFiltered": "(filtrado de _MAX_ registros totales)",
-						"search": "Buscar:",
+						"lengthMenu": "<?=__('datatables.length_menu');?>",
+						"zeroRecords": "<?=__('datatables.zero_records');?>",
+						"info": "<?=__('datatables.info');?>",
+						"infoEmpty": "<?=__('datatables.info_empty');?>",
+						"infoFiltered": "<?=__('datatables.info_filtered');?>",
+						"search": "<?=__('datatables.search');?>",
 						"paginate": {
-							"first": "Primero",
-							"last": "Último",
-							"next": "Siguiente",
-							"previous": "Anterior"
+							"first": "<?=__('datatables.first');?>",
+							"last": "<?=__('datatables.last');?>",
+							"next": "<?=__('datatables.next');?>",
+							"previous": "<?=__('datatables.previous');?>"
 						}
 					},
 					"initComplete": function(settings, json) {
@@ -668,25 +786,41 @@ if($config['conf_doble_buscador'] == 1) {
 			if (this.checked) {
 				$('.carga-checkbox').prop('checked', true);
 				selectedCargas = $('.carga-checkbox').map(function() { return this.value; }).get();
+				// Agregar clase de selección a todas las filas
+				$('.carga-checkbox').each(function() {
+					$(this).closest('tr').addClass('carga-row-selected');
+				});
 			} else {
 				$('.carga-checkbox').prop('checked', false);
 				selectedCargas = [];
+				// Remover clase de selección de todas las filas
+				$('.carga-checkbox').each(function() {
+					$(this).closest('tr').removeClass('carga-row-selected');
+				});
 			}
-			toggleMoverBtn();
+			toggleActionButtons();
 		});
 
 		$(document).on('change', '.carga-checkbox', function() {
+			var row = $(this).closest('tr');
+			
 			if (this.checked) {
 				selectedCargas.push(this.value);
+				// Agregar sombreado visual a la fila
+				row.addClass('carga-row-selected');
 			} else {
 				selectedCargas = selectedCargas.filter(id => id !== this.value);
+				// Remover sombreado visual de la fila
+				row.removeClass('carga-row-selected');
 			}
 			$('#selectAllCargas').prop('checked', $('.carga-checkbox:checked').length === $('.carga-checkbox').length);
-			toggleMoverBtn();
+			toggleActionButtons();
 		});
 
-		function toggleMoverBtn() {
-			$('#moverCargasBtn').prop('disabled', selectedCargas.length === 0);
+		function toggleActionButtons() {
+			var hasSelection = selectedCargas.length > 0;
+			$('#moverCargasBtn').prop('disabled', !hasSelection);
+			$('#editarMasivoBtn').prop('disabled', !hasSelection);
 		}
 
 		$('#moverCargasBtn').on('click', function() {
@@ -814,6 +948,290 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 			});
 		});
+
+		// ========================================
+		// FUNCIONALIDAD DE EDICIÓN MASIVA
+		// ========================================
+
+		try {
+			console.log('Inicializando funcionalidad de edición masiva...');
+			
+			// Abrir modal de edición masiva
+			$('#editarMasivoBtn').on('click', function() {
+			if (selectedCargas.length === 0) {
+				$.toast({
+					heading: 'Advertencia',
+					text: 'Por favor selecciona al menos una carga académica.',
+					showHideTransition: 'slide',
+					icon: 'warning',
+					position: 'top-right'
+				});
+				return;
+			}
+			
+			// Actualizar contador de cargas seleccionadas
+			$('#cantidadCargasSeleccionadas').text(selectedCargas.length);
+			
+			// Limpiar formulario
+			$('#editarMasivoForm')[0].reset();
+			
+			// Destruir Select2 si ya existe
+			if ($('.select2-modal').hasClass("select2-hidden-accessible")) {
+				$('.select2-modal').select2('destroy');
+			}
+			
+			// Limpiar valores de los selects
+			$('.select2-modal').val('');
+			
+			// Mostrar modal primero
+			$('#editarMasivoModal').modal('show');
+		});
+		
+		// Inicializar Select2 DESPUÉS de que el modal esté completamente visible
+		$('#editarMasivoModal').on('shown.bs.modal', function () {
+			// Inicializar Select2 en el modal cuando ya está visible
+			$('.select2-modal').select2({
+				dropdownParent: $('#editarMasivoModal'),
+				placeholder: "No modificar",
+				allowClear: true,
+				width: '100%',
+				language: {
+					noResults: function() {
+						return "No se encontraron resultados";
+					},
+					searching: function() {
+						return "Buscando...";
+					}
+				}
+			});
+		});
+
+		// Manejar clic del botón de aplicar cambios masivos usando event delegation
+		console.log('Enlazando evento click al botón con delegation...');
+		console.log('Botón existe:', $('#btnConfirmarEdicionMasiva').length > 0);
+		$(document).on('click', '#btnConfirmarEdicionMasiva', function(e) {
+			console.log('=== BOTÓN APLICAR CAMBIOS CLICKEADO ===');
+			e.preventDefault();
+			e.stopPropagation();
+			
+			console.log('=== FORMULARIO DE EDICIÓN MASIVA ENVIADO ===');
+			
+			var formData = $('#editarMasivoForm').serializeArray();
+			console.log('FormData serializado:', formData);
+			
+			var camposAActualizar = {};
+			var hayCambios = false;
+			
+			// Filtrar solo los campos que tienen valor (no vacíos)
+			formData.forEach(function(field) {
+				console.log('Procesando campo:', field.name, '=', field.value, '(tipo:', typeof field.value, ')');
+				
+				if (field.value !== '' && field.value !== null && field.value !== undefined) {
+					camposAActualizar[field.name] = field.value;
+					hayCambios = true;
+					console.log('✓ Campo agregado:', field.name, '=', field.value);
+				} else {
+					console.log('✗ Campo omitido (vacío):', field.name);
+				}
+			});
+			
+			console.log('Campos finales a actualizar:', camposAActualizar);
+			console.log('Hay cambios:', hayCambios);
+			
+			// Validar que haya al menos un campo para actualizar
+			if (!hayCambios) {
+				console.warn('No hay campos para actualizar');
+				$.toast({
+					heading: 'Advertencia',
+					text: 'Debes seleccionar al menos un campo para modificar.',
+					showHideTransition: 'slide',
+					icon: 'warning',
+					position: 'top-right',
+					hideAfter: 3000
+				});
+				return;
+			}
+			
+			// Aplicar cambios directamente sin confirmación adicional
+			aplicarEdicionMasiva(camposAActualizar);
+		});
+
+		function aplicarEdicionMasiva(camposAActualizar) {
+			console.log('Iniciando edición masiva...');
+			console.log('Cargas seleccionadas:', selectedCargas);
+			console.log('Campos a actualizar:', camposAActualizar);
+			
+			// Mostrar loader en el botón
+			var btnOriginal = $('#btnConfirmarEdicionMasiva').html();
+			$('#btnConfirmarEdicionMasiva').html('<i class="fa fa-spinner fa-spin"></i> Procesando...').prop('disabled', true);
+			
+			// Toast de proceso
+			$.toast({
+				heading: 'Procesando',
+				text: 'Actualizando ' + selectedCargas.length + ' carga(s) académica(s)...',
+				showHideTransition: 'slide',
+				icon: 'info',
+				position: 'top-right',
+				hideAfter: false,
+				loader: true,
+				loaderBg: '#3498db'
+			});
+			
+			$.ajax({
+				url: 'cargas-editar-masivo.php',
+				type: 'POST',
+				data: {
+					cargas: selectedCargas,
+					campos: camposAActualizar
+				},
+				dataType: 'json',
+				success: function(response) {
+					console.log('Respuesta del servidor:', response);
+					
+					$('#btnConfirmarEdicionMasiva').html(btnOriginal).prop('disabled', false);
+					
+					// Cerrar el toast de procesamiento
+					$('.jq-toast-wrap').remove();
+					
+					if (response.success) {
+						// Cerrar modal
+						$('#editarMasivoModal').modal('hide');
+						
+						// Toast de éxito
+						$.toast({
+							heading: '¡Éxito!',
+							text: 'Se actualizaron correctamente ' + response.actualizadas + ' de ' + selectedCargas.length + ' carga(s) académica(s).',
+							showHideTransition: 'slide',
+							icon: 'success',
+							position: 'top-right',
+							hideAfter: 4000,
+							loaderBg: '#27ae60'
+						});
+						
+						// Recargar solo la tabla de cargas sin recargar toda la página
+						setTimeout(function() {
+							recargarTablaCargas();
+						}, 500);
+						
+					} else {
+						// Toast de error
+						$.toast({
+							heading: 'Error',
+							text: response.message || 'Hubo un error al procesar la edición masiva.',
+							showHideTransition: 'slide',
+							icon: 'error',
+							position: 'top-right',
+							hideAfter: 5000,
+							loaderBg: '#e74c3c'
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('==== ERROR EN EDICIÓN MASIVA ====');
+					console.error('Status:', status);
+					console.error('Error:', error);
+					console.error('Response Status:', xhr.status);
+					console.error('Response Text:', xhr.responseText);
+					console.error('Response Headers:', xhr.getAllResponseHeaders());
+					
+					$('#btnConfirmarEdicionMasiva').html(btnOriginal).prop('disabled', false);
+					
+					// Cerrar el toast de procesamiento
+					$('.jq-toast-wrap').remove();
+					
+					// Intentar parsear el error para mostrarlo
+					var errorMessage = 'No se pudo conectar con el servidor. Por favor intenta de nuevo.';
+					try {
+						var errorResponse = JSON.parse(xhr.responseText);
+						if (errorResponse.message) {
+							errorMessage = errorResponse.message;
+						}
+					} catch(e) {
+						// Si no es JSON, usar el texto completo si es corto
+						if (xhr.responseText && xhr.responseText.length < 200) {
+							errorMessage = xhr.responseText;
+						}
+					}
+					
+					// Toast de error de conexión con el mensaje específico
+					$.toast({
+						heading: 'Error',
+						text: errorMessage,
+						showHideTransition: 'slide',
+						icon: 'error',
+						position: 'top-right',
+						hideAfter: 8000,
+						loaderBg: '#e74c3c'
+					});
+				}
+			});
+		}
+		
+		// Función para recargar la tabla de cargas sin recargar toda la página
+		function recargarTablaCargas() {
+			console.log('Recargando tabla de cargas...');
+			
+			// Mostrar loader
+			$('#gifCarga').show();
+			
+			// Obtener filtros actuales
+			var cursos = $('#filtro_cargas_cursos').val() || [];
+			var grupos = $('#filtro_cargas_grupos').val() || [];
+			var docentes = $('#filtro_cargas_docentes').val() || [];
+			var periodos = $('#filtro_cargas_periodos').val() || [];
+			
+			$.ajax({
+				url: 'ajax-filtrar-cargas.php',
+				type: 'POST',
+				data: {
+					cursos: cursos,
+					grupos: grupos,
+					docentes: docentes,
+					periodos: periodos
+				},
+				dataType: 'json',
+				success: function(response) {
+					$('#gifCarga').hide();
+					
+					if (response.success) {
+						// Actualizar el contenido de la tabla
+						$('#cargas_result').html(response.html);
+						
+						// Limpiar las selecciones
+						selectedCargas = [];
+						$('#selectAllCargas').prop('checked', false);
+						toggleActionButtons();
+						
+						console.log('Tabla recargada exitosamente');
+					} else {
+						console.error('Error al recargar tabla:', response.error);
+						$.toast({
+							heading: 'Advertencia',
+							text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista.',
+							showHideTransition: 'slide',
+							icon: 'warning',
+							position: 'top-right',
+							hideAfter: 3000
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					$('#gifCarga').hide();
+					console.error('Error al recargar tabla:', error);
+					// No mostrar error ya que los cambios sí se aplicaron
+				}
+			});
+		}
+
+		// Limpiar selección al cerrar el modal
+		$('#editarMasivoModal').on('hidden.bs.modal', function () {
+			$('.select2-modal').select2('destroy');
+		});
+		
+		} catch(error) {
+			console.error('Error en funcionalidad de edición masiva:', error);
+			console.log('Continuando con el resto de la página...');
+		}
 	</script>
 	<style>
 	    .sorting_1 {
@@ -883,6 +1301,200 @@ if($config['conf_doble_buscador'] == 1) {
 			</div>
 		</div>
 	</div>
+
+<!-- Modal para edición masiva de cargas -->
+<div class="modal fade" id="editarMasivoModal" tabindex="-1" role="dialog" aria-labelledby="editarMasivoModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-warning">
+				<h5 class="modal-title" id="editarMasivoModalLabel">
+					<i class="fa fa-edit"></i> Edición Masiva de Cargas Académicas
+				</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="editarMasivoForm" method="post" action="javascript:void(0);">
+				<div class="modal-body">
+					<div class="alert alert-info">
+						<i class="fa fa-info-circle"></i> 
+						<strong>Instrucciones:</strong> Los campos que dejes en blanco o sin seleccionar NO serán modificados. 
+						Solo se actualizarán los campos que completes.
+					</div>
+					
+					<div class="alert alert-warning">
+						<i class="fa fa-exclamation-triangle"></i> 
+						Has seleccionado <strong><span id="cantidadCargasSeleccionadas">0</span></strong> carga(s) académica(s) 
+						para editar de forma masiva.
+					</div>
+					
+					<hr>
+					<h5 class="text-primary"><i class="fa fa-cog"></i> Campos a Modificar</h5>
+					<small class="text-muted">Completa solo los campos que desees actualizar en las cargas seleccionadas</small>
+					
+					<div class="row mt-3">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Periodo</label>
+								<select class="form-control select2-modal" id="masivo_periodo" name="periodo">
+									<option value="">No modificar</option>
+									<?php for($i=1; $i<=$config['conf_periodos_maximos']; $i++){?>
+										<option value="<?=$i;?>">Periodo <?=$i;?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Docente</label>
+								<select class="form-control select2-modal" id="masivo_docente" name="docente">
+									<option value="">No modificar</option>
+									<?php
+									try {
+										$consultaDocentes = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2, uss_bloqueado 
+											FROM ".BD_GENERAL.".usuarios 
+											WHERE uss_tipo=".TIPO_DOCENTE." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION['bd']}
+											ORDER BY uss_nombre ASC");
+										
+										while ($doc = mysqli_fetch_array($consultaDocentes, MYSQLI_BOTH)) {
+											$nombreCompleto = UsuariosPadre::nombreCompletoDelUsuario($doc);
+											$disabled = $doc['uss_bloqueado'] == 1 ? 'disabled' : '';
+										?>
+											<option value="<?=$doc['uss_id'];?>" <?=$disabled;?>><?=$nombreCompleto;?></option>
+										<?php 
+										}
+									} catch(Exception $e) {
+										echo "<!-- Error al cargar docentes: " . $e->getMessage() . " -->";
+									}
+									?>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Curso</label>
+								<select class="form-control select2-modal" id="masivo_curso" name="curso">
+									<option value="">No modificar</option>
+									<?php
+									$grados = Grados::listarGrados(1);
+									while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
+										$disabled = $grado['gra_estado'] == '0' ? 'disabled' : '';
+									?>
+										<option value="<?=$grado['gra_id'];?>" <?=$disabled;?>><?=$grado['gra_nombre'];?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Grupo</label>
+								<select class="form-control select2-modal" id="masivo_grupo" name="grupo">
+									<option value="">No modificar</option>
+									<?php
+									$grupos = Grupos::listarGrupos();
+									while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
+									?>
+										<option value="<?=$gru['gru_id'];?>"><?=$gru['gru_nombre'];?></option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Intensidad Horaria</label>
+								<input type="number" class="form-control" id="masivo_ih" name="ih" placeholder="No modificar" min="1">
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Asignatura</label>
+								<select class="form-control select2-modal" id="masivo_asignatura" name="asignatura" style="width: 100%;">
+									<option value="">No modificar</option>
+									<?php
+									require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+									$asignaturas = Asignaturas::consultarTodasAsignaturas($conexion, $config);
+									while ($asig = mysqli_fetch_array($asignaturas, MYSQLI_BOTH)) {
+									?>
+										<option value="<?=$asig['mat_id'];?>"><?=$asig['mat_nombre'];?> (<?=$asig['ar_nombre'];?>)</option>
+									<?php }?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label>Director de Grupo</label>
+								<select class="form-control" id="masivo_dg" name="dg">
+									<option value="">No modificar</option>
+									<option value="1">SI</option>
+									<option value="0">NO</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label>Estado</label>
+								<select class="form-control" id="masivo_estado" name="estado">
+									<option value="">No modificar</option>
+									<option value="1">Activa</option>
+									<option value="0">Inactiva</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+					<hr>
+					<h5 class="text-info"><i class="fa fa-sliders-h"></i> Configuración Avanzada (Opcional)</h5>
+					
+					<div class="row">
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Max. Indicadores</label>
+								<input type="number" class="form-control" id="masivo_maxIndicadores" name="maxIndicadores" placeholder="No modificar" min="0">
+							</div>
+						</div>
+						
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Max. Actividades</label>
+								<input type="number" class="form-control" id="masivo_maxActividades" name="maxActividades" placeholder="No modificar" min="0">
+							</div>
+						</div>
+						
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Indicador Automático</label>
+								<select class="form-control" id="masivo_indicadorAutomatico" name="indicadorAutomatico">
+									<option value="">No modificar</option>
+									<option value="1">SI</option>
+									<option value="0">NO</option>
+								</select>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="button" class="btn btn-warning" id="btnConfirmarEdicionMasiva">
+						<i class="fa fa-save"></i> Aplicar Cambios Masivos
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
 
 <!-- Modal para edición rápida de carga -->
 <div class="modal fade" id="modalEditarCarga" tabindex="-1" role="dialog" aria-labelledby="modalEditarCargaLabel">
@@ -1339,6 +1951,17 @@ $(document).ready(function() {
 				if (response.success) {
 					// Insertar el HTML
 					$('#cargas_result').html(response.html);
+					
+					// Restaurar las selecciones previas y sombreado visual
+					if (selectedCargas.length > 0) {
+						$('.carga-checkbox').each(function() {
+							var cargaId = $(this).val();
+							if (selectedCargas.includes(cargaId)) {
+								$(this).prop('checked', true);
+								$(this).closest('tr').addClass('carga-row-selected');
+							}
+						});
+					}
 					
 					// Reinicializar event listeners para los botones de expandir
 					// Esto es necesario porque el HTML se insertó dinámicamente

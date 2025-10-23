@@ -9,7 +9,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
     .help-float-container {
         position: fixed;
         bottom: 40px;
-        right: 120px; /* Posicionado a la izquierda del botón de chat */
+        right: 40px; /* Posicionado en la esquina inferior derecha */
         z-index: 999;
         font-family: 'Satoshi', 'Poppins', sans-serif;
     }
@@ -334,7 +334,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
     @media (max-width: 768px) {
         .help-float-container {
             right: 20px;
-            bottom: 110px; /* Evitar superposición con el botón de chat en móvil */
+            bottom: 40px; /* Posición en móvil */
         }
 
         .help-float-btn {
@@ -454,7 +454,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         <div class="help-menu-footer">
             <p class="help-menu-footer-text">
                 ¿Necesitas ayuda inmediata? <br>
-                <a href="https://plataformasintia.com/soporte" target="_blank" class="help-menu-footer-link">
+                <a href="https://wa.me/573006075800" target="_blank" class="help-menu-footer-link">
                     Visita nuestro portal de soporte
                 </a>
             </p>
@@ -517,7 +517,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         }, 2000);
         <?php } else { ?>
         setTimeout(function() {
-            window.open('https://plataformasintia.com/contacto', '_blank');
+            window.open('https://wa.me/573006075800', '_blank');
         }, 2000);
         <?php } ?>
     }
@@ -527,7 +527,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         toggleHelpMenu();
         
         // Abrir el manual de ayuda en una nueva ventana
-        window.open('https://plataformasintia.com/manual-usuario', '_blank');
+        window.open('https://docs.google.com/document/d/1ZgtUFs0WJQD797Dp5fy8T-lsUs4BddArW-49mAi5JkQ/edit?usp=sharing', '_blank');
         
         $.toast({
             heading: 'Manual de Usuario',
@@ -544,7 +544,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         toggleHelpMenu();
         
         // Abrir FAQ en una nueva ventana
-        window.open('https://plataformasintia.com/faq', '_blank');
+        window.open('https://ayuda.plataformasintia.com/', '_blank');
         
         $.toast({
             heading: 'Preguntas Frecuentes',
@@ -576,7 +576,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         });
         
         setTimeout(function() {
-            window.open('https://plataformasintia.com/reportar-problema?page=' + encodeURIComponent(paginaActual), '_blank');
+            window.open('https://forms.gle/1NpXSwyqoomKdch76', '_blank');
         }, 2000);
     }
 
@@ -585,7 +585,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         toggleHelpMenu();
         
         // Abrir página de video tutoriales
-        window.open('https://plataformasintia.com/videotutoriales', '_blank');
+        window.open('https://ayuda.plataformasintia.com/', '_blank');
         
         $.toast({
             heading: 'Video Tutoriales',
@@ -602,7 +602,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         toggleHelpMenu();
         
         // Abrir centro de recursos
-        window.open('https://plataformasintia.com/recursos', '_blank');
+        window.open('como-empezar.php');
         
         $.toast({
             heading: 'Centro de Recursos',

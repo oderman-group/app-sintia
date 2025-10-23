@@ -14,22 +14,22 @@
 // ============================================================
 
 // URL base del portal de soporte
-define('HELP_URL_SOPORTE', 'https://plataformasintia.com/soporte');
+define('HELP_URL_SOPORTE', 'https://wa.me/573006075800');
 
 // URL del manual de usuario
-define('HELP_URL_MANUAL', 'https://plataformasintia.com/manual-usuario');
+define('HELP_URL_MANUAL', 'https://docs.google.com/document/d/1ZgtUFs0WJQD797Dp5fy8T-lsUs4BddArW-49mAi5JkQ/edit?usp=sharing');
 
 // URL de preguntas frecuentes
-define('HELP_URL_FAQ', 'https://plataformasintia.com/faq');
+define('HELP_URL_FAQ', 'https://ayuda.plataformasintia.com/');
 
 // URL para reportar problemas
-define('HELP_URL_REPORTE', 'https://plataformasintia.com/reportar-problema');
+define('HELP_URL_REPORTE', 'https://forms.gle/1NpXSwyqoomKdch76');
 
 // URL de video tutoriales
-define('HELP_URL_VIDEOS', 'https://plataformasintia.com/videotutoriales');
+define('HELP_URL_VIDEOS', 'https://ayuda.plataformasintia.com/');
 
 // URL del centro de recursos
-define('HELP_URL_RECURSOS', 'https://plataformasintia.com/recursos');
+define('HELP_URL_RECURSOS', 'como-empezar.php');
 
 // ============================================================
 // CONFIGURACIÓN DE OPCIONES DE MENÚ
@@ -90,7 +90,7 @@ $helpMenuOptions = [
     ],
     'centro_recursos' => [
         'enabled' => true,
-        'title' => 'Centro de Recursos',
+        'title' => 'Cómo empezar',
         'description' => 'Documentación completa',
         'icon' => 'fa fa-graduation-cap',
         'color_start' => '#30cfd0',

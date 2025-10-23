@@ -170,7 +170,7 @@ $Plataforma = new Plataforma;
                                                                         <i class="fa fa-angle-down"></i>
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
-                                                                        <li><a href="dev-instituciones-editar.php?id=<?= base64_encode($resultado['ins_id']); ?>">Editar</a></li>
+                                                                        <li><a href="dev-instituciones-editar-v2.php?id=<?= base64_encode($resultado['ins_id']); ?>">Editar</a></li>
                                                                         <li><a href="dev-instituciones-configuracion.php?id=<?= base64_encode($resultado['ins_id']); ?>"><?=$frases[17][$datosUsuarioActual['uss_idioma']];?></a></li>
                                                                         <li><a href="dev-instituciones-Informacion.php?id=<?= base64_encode($resultado['ins_id']); ?>">Información</a></li>
                                                                         <li><a href="auto-login-dev.php?user=<?=base64_encode(1);?>&idInstitucion=<?=base64_encode($resultado['ins_id']);?>&bd=<?=base64_encode($resultado['ins_bd']);?>&yearDefault=<?=base64_encode($resultado['ins_year_default']);?>">Autologin</a></li>

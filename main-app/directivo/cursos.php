@@ -61,7 +61,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													<div class="btn-group">
 														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0065'])){?>
 															<a href="javascript:void(0);"  data-toggle="modal" data-target="#nuevoCursoModal"  class="btn deepPink-bgcolor">
-																Agregar nuevo <i class="fa fa-plus"></i>
+																<?=__('general.agregar_nuevo');?> <i class="fa fa-plus"></i>
 															</a>
 														<?php 
 													$idModal="nuevoCursoModal";															
@@ -79,9 +79,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <th>#</th>
 														<th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[5][$datosUsuarioActual['uss_idioma']];?></th>
-														<th>Formato boletín</th>
-														<th>Matrícula</th>
-														<th>Pensión</th>														
+														<th><?=__('cursos.formato_boletin');?></th>
+														<th><?=__('cursos.matricula');?></th>
+														<th><?=__('cursos.pension');?></th>														
 														<th>#P</th>
 														<?php if(array_key_exists(10,$arregloModulos) ){?>
 															<th><?=$frases[53][$datosUsuarioActual['uss_idioma']];?></th>

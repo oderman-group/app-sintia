@@ -73,17 +73,17 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<!-- Buscador -->
 														<div class="mb-2" style="min-width: 300px;">
 															<div class="input-group">
-																<input type="text" id="buscar_asignatura" class="form-control" placeholder="Buscar asignatura...">
+																<input type="text" id="buscar_asignatura" class="form-control" placeholder="<?=__('asignaturas.buscar_placeholder');?>">
 																<div class="input-group-append">
 																	<button class="btn btn-primary" type="button" id="btnBuscarAsignatura">
 																		<i class="fa fa-search"></i>
 																	</button>
-																	<button class="btn btn-secondary" type="button" id="btnLimpiarBusqueda" title="Limpiar búsqueda">
+																	<button class="btn btn-secondary" type="button" id="btnLimpiarBusqueda" title="<?=__('general.limpiar_busqueda');?>">
 																		<i class="fa fa-eraser"></i>
 																	</button>
 																</div>
 															</div>
-															<small class="form-text text-muted">Busca por: ID, nombre, área, valor %</small>
+															<small class="form-text text-muted"><?=__('asignaturas.buscar_ayuda');?></small>
 														</div>
 													</div>
 												</div>

@@ -69,26 +69,6 @@
 											<span class="title">Tour SINTIA</span>
 										</a>
 									</li>
-									<?php if ($datosUsuarioActual['uss_tipo'] != TIPO_DOCENTE) {?>
-										<li class="nav-item start">
-											<a href="como-empezar.php" class="nav-link">
-												<span class="title"><?=$frases[255][$datosUsuarioActual['uss_idioma']];?></span>
-											</a>
-										</li>
-									<?php }
-									if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
-									?>
-									<li class="nav-item start">
-										<a href="https://docs.google.com/document/d/1ZgtUFs0WJQD797Dp5fy8T-lsUs4BddArW-49mAi5JkQ/edit?usp=sharing" target="_blank" class="nav-link">
-											<span class="title">Manual de usuario</span>
-										</a>
-									</li>
-									<?php }?>
-									<li class="nav-item start">
-										<a href="https://forms.gle/1NpXSwyqoomKdch76" target="_blank" class="nav-link">
-											<span class="title"><?=$frases[16][$datosUsuarioActual['uss_idioma']];?>/<?=$frases[257][$datosUsuarioActual['uss_idioma']];?></span>
-										</a>
-									</li>
 								</ul>
 							</li>
 

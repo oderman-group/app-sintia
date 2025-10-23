@@ -164,13 +164,4 @@
 								</li>
 							<?php }?>
 
-							<li class="nav-item">
-	                            <a href="https://www.youtube.com/playlist?list=PL119_PkDEyLohcyXRnqHd36SqvLeKb5hF" target="_blank" class="nav-link nav-toggle">
-	                                <div class="menu-icon icon-help">
-	                                    <i class="fa fa-youtube"></i>
-	                                </div>
-	                                <span class="title">TUTORIALES DE AYUDA</span> 
-	                            </a>
-	                        </li>
-
 							<?php }?>

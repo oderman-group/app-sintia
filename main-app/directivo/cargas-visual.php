@@ -1293,7 +1293,7 @@ body.dragging-active * {
                 <!-- Buscador para Vista por Docentes -->
                 <div class="view-search hidden" id="searchDocentes">
                     <i class="fa fa-search"></i>
-                    <input type="text" id="inputSearchDocentes" placeholder="Buscar por docente, asignatura, curso o grupo...">
+                    <input type="text" id="inputSearchDocentes" placeholder="<?=__('directivo.buscar_docente');?>">
                 </div>
 
                 <!-- Vista por Docentes -->
@@ -1302,7 +1302,7 @@ body.dragging-active * {
                 <!-- Buscador para Vista por Cursos -->
                 <div class="view-search hidden" id="searchCursos">
                     <i class="fa fa-search"></i>
-                    <input type="text" id="inputSearchCursos" placeholder="Buscar por curso, grupo, docente o asignatura...">
+                    <input type="text" id="inputSearchCursos" placeholder="<?=__('directivo.buscar_curso');?>">
                 </div>
 
                 <!-- Vista por Cursos -->
@@ -2184,7 +2184,7 @@ function renderizarVistaMatrizMejorada(datos) {
         <div class="matrix-controls">
             <div class="matrix-search">
                 <i class="fa fa-search"></i>
-                <input type="text" id="matrixSearchInput" placeholder="Buscar en la tabla..." value="${matrixSearchTerm}">
+                <input type="text" id="matrixSearchInput" placeholder="<?=__('directivo.buscar_tabla');?>" value="${matrixSearchTerm}">
             </div>
             <div class="matrix-pagination">
                 <select id="matrixPerPageSelect">

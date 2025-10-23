@@ -9,8 +9,8 @@ else
 {
 	require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 	require_once(ROOT_PATH."/config-general/config.php");
-	require_once(ROOT_PATH."/config-general/idiomas.php");
 	require_once(ROOT_PATH."/config-general/consulta-usuario-actual.php");
+	require_once(ROOT_PATH."/config-general/idiomas.php"); // Movido después de consulta-usuario-actual
 	require_once(ROOT_PATH."/config-general/verificar-usuario-bloqueado.php");
 	
 	if($datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE)

@@ -30,19 +30,25 @@ $institucionNombre = $institucion['ins_siglas'];
 				
 				<?php //include("mega-menu.php");?>
 				<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_AYUDA_AVANZADA)) {?>
-                    <form class="search-form-opened" action="paginas-buscador.php" method="GET" name="busqueda">
+                    <form class="search-form-opened" action="paginas-buscador.php" method="GET" name="busqueda" id="buscador-general-container">
                         <div class="input-group">
-                            <input type="text" class="form-control" placeholder="<?=$frases[260][$datosUsuarioActual['uss_idioma']];?>..." value="<?php if(isset($_GET["query"])){ echo $_GET["query"];}?>" name="query">
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="buscador-general-input"
+                                placeholder="<?=$frases[260][$datosUsuarioActual['uss_idioma']];?>..." 
+                                value="<?php if(isset($_GET["query"])){ echo $_GET["query"];}?>" 
+                                name="query"
+                                autocomplete="off"
+                            >
                             <span class="input-group-btn">
-                            <span class="input-group-btn">
-                            <a href="javascript:;" onclick="document.forms.busqueda.submit()" class="btn submit">
-                                <i class="icon-magnifier"></i>
-                            </a>
+                                <a href="javascript:;" onclick="document.forms.busqueda.submit()" class="btn submit">
+                                    <i class="icon-magnifier"></i>
+                                </a>
                             </span>
-                                                    
                         </div>
-                        
-                        
+                        <!-- Contenedor de resultados en tiempo real -->
+                        <div id="buscador-resultados"></div>
                     </form>
                 <?php }?>
 				
