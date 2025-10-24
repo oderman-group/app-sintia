@@ -31,8 +31,8 @@ try {
     $estado = ($datosUsuarioActual['uss_tipo'] == 4) ? 0 : 1;
     $destinatarios = "1,2,3,4,5";
 
-    $descripcionRepost = "📢 Publicación compartida:\n\n---\n\n" . $postOriginal['not_descripcion'];
-    $tituloRepost = "🔁 " . $postOriginal['not_titulo'];
+    $descripcionRepost = "[Publicacion compartida]\n\n---\n\n" . $postOriginal['not_descripcion'];
+    $tituloRepost = "[Compartido] " . $postOriginal['not_titulo'];
 
     mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(
         not_usuario, 
