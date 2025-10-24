@@ -45,36 +45,44 @@ foreach ($data["data"] as $resultado) {
 			</span>
 		</td>
 		<td><a href="../admisiones/files/comprobantes/<?= $resultado["asp_comprobante"]; ?>" target="_blank" style="text-decoration: underline;"><?= $resultado["asp_comprobante"]; ?></a></td>
-		<td><?= $resultado["gra_nombre"]; ?></td>
+		<td><?= !empty($resultado["gra_nombre"]) ? $resultado["gra_nombre"] : '<span class="text-muted">Sin grado</span>'; ?></td>
 		<td>
-			<div class="btn-group">
-				<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
-				<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-					<i class="fa fa-angle-down"></i>
+			<?php if (isset($mostrarOcultos) && $mostrarOcultos) { ?>
+				<!-- Tab de OCULTOS: Solo botón para desocultar -->
+				<button type="button" class="btn btn-success btn-sm" onclick="desocultarInscripcion('<?= $resultado["asp_id"]; ?>')">
+					<i class="fa fa-eye"></i> Desocultar
 				</button>
-				<ul class="dropdown-menu" role="menu">
-					<li><a href="inscripciones-formulario.php?token=<?= md5($resultado["asp_id"]); ?>&id=<?= base64_encode($resultado["asp_id"]); ?>&idInst=<?= base64_encode($config["conf_id_institucion"]) ?>" target="_blank">Ver información</a></li>
-					<li><a href="javascript:void(0);" onclick="abrirModalEdicionAspirante('<?= $resultado["asp_id"]; ?>', '<?= $resultado["mat_id"]; ?>')">Editar rápido</a></li>
-					<li><a href="inscripciones-formulario-editar.php?token=<?= md5($resultado["asp_id"]); ?>&id=<?= base64_encode($resultado["asp_id"]); ?>&idInst=<?= base64_encode($config["conf_id_institucion"]) ?>" target="_blank">Editar completo</a></li>
+			<?php } else { ?>
+				<!-- Tab de VISIBLES: Menú completo de acciones -->
+				<div class="btn-group">
+					<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
+					<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
+						<i class="fa fa-angle-down"></i>
+					</button>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="inscripciones-formulario.php?token=<?= md5($resultado["asp_id"]); ?>&id=<?= base64_encode($resultado["asp_id"]); ?>&idInst=<?= base64_encode($config["conf_id_institucion"]) ?>" target="_blank">Ver información</a></li>
+						<li><a href="javascript:void(0);" onclick="abrirModalEdicionAspirante('<?= $resultado["asp_id"]; ?>', '<?= $resultado["mat_id"]; ?>')">Editar rápido</a></li>
+						<li><a href="inscripciones-formulario-editar.php?token=<?= md5($resultado["asp_id"]); ?>&id=<?= base64_encode($resultado["asp_id"]); ?>&idInst=<?= base64_encode($config["conf_id_institucion"]) ?>" target="_blank">Editar completo</a></li>
 
-					<?php if ($resultado["asp_estado_solicitud"] == 6) { ?>
+						<?php if ($resultado["asp_estado_solicitud"] == 6) { ?>
 
-						<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a eliminar la documentación de este aspirante. Recuerde descargarla primero. Esta acción es irreversible. Desea continuar?','question','inscripciones-eliminar-documentacion.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Borrar documentación</a></li>
+							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a eliminar la documentación de este aspirante. Recuerde descargarla primero. Esta acción es irreversible. Desea continuar?','question','inscripciones-eliminar-documentacion.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Borrar documentación</a></li>
 
-						<?php if (!empty($configAdmisiones["cfgi_year_inscripcion"]) && $configAdmisiones["cfgi_year_inscripcion"] == $yearEnd && $configAdmisiones["cfgi_year_inscripcion"] != $agnoBD) { ?>
+							<?php if (!empty($configAdmisiones["cfgi_year_inscripcion"]) && $configAdmisiones["cfgi_year_inscripcion"] == $yearEnd && $configAdmisiones["cfgi_year_inscripcion"] != $agnoBD) { ?>
 
-							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a pasar este estudiante al <?= $configAdmisiones["cfgi_year_inscripcion"]; ?>. Desea continuar?','question','inscripciones-pasar-estudiante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Pasar a <?= $configAdmisiones["cfgi_year_inscripcion"]; ?></a></li>
+								<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a pasar este estudiante al <?= $configAdmisiones["cfgi_year_inscripcion"]; ?>. Desea continuar?','question','inscripciones-pasar-estudiante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Pasar a <?= $configAdmisiones["cfgi_year_inscripcion"]; ?></a></li>
 
-					<?php }
-					} ?>
+						<?php }
+						} ?>
 
-					<?php if ($resultado["asp_estado_solicitud"] == 1 or $resultado["asp_estado_solicitud"] == 2 or $resultado["asp_estado_solicitud"] == 7) { ?>
-						<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a eliminar este aspirante. Esta acción es irreversible. Desea continuar?','question','inscripciones-eliminar-aspirante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Eliminar aspirante</a></li>
-					<?php } ?>
-					
-					<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!', 'Va a ocultar a este aspirante del listado. Desea continuar?', 'question','inscripciones-ocultar-aspirante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>&aspirante=<?= base64_encode($resultado["asp_id"]); ?>', true, <?=$resultado["asp_id"];?>)">Ocultar aspirante</a></li>
-				</ul>
-			</div>
+						<?php if ($resultado["asp_estado_solicitud"] == 1 or $resultado["asp_estado_solicitud"] == 2 or $resultado["asp_estado_solicitud"] == 7) { ?>
+							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Va a eliminar este aspirante. Esta acción es irreversible. Desea continuar?','question','inscripciones-eliminar-aspirante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>')">Eliminar aspirante</a></li>
+						<?php } ?>
+						
+						<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!', 'Va a ocultar a este aspirante del listado. Desea continuar?', 'question','inscripciones-ocultar-aspirante.php?matricula=<?= base64_encode($resultado["mat_id"]); ?>&aspirante=<?= base64_encode($resultado["asp_id"]); ?>', true, <?=$resultado["asp_id"];?>)">Ocultar aspirante</a></li>
+					</ul>
+				</div>
+			<?php } ?>
 		</td>
 	</tr>
 	

@@ -1459,8 +1459,73 @@ $(document).ready(function() {
 				console.log('Respuesta del filtro usuarios:', response);
 				
 				if (response.success) {
+					// Destruir DataTable si existe
+					if ($.fn.DataTable.isDataTable('#example1')) {
+						$('#example1').DataTable().destroy();
+					}
+					
 					// Insertar el HTML
 					$('tbody').html(response.html);
+					
+					// Reinicializar DataTable
+					$('#example1').DataTable({
+						"columnDefs": [
+							{
+								"targets": 0,
+								"orderable": false,
+								"searchable": false
+							}
+						],
+						"order": [[1, 'asc']],
+						"language": {
+							"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+						}
+					});
+					
+					// Re-inicializar event listeners de expand usando DataTable child rows
+					$('#example1 tbody').off('click', '.expand-btn').on('click', '.expand-btn', function () {
+						var tr = $(this).closest('tr');
+						var row = $('#example1').DataTable().row(tr);
+						var button = $(this);
+						var icon = button.find('i');
+
+						// Get data from button attributes
+						var foto = button.data('foto');
+						var nombre = button.data('nombre');
+						var usuario = button.data('usuario');
+						var email = button.data('email');
+						var fechaNacimiento = button.data('fecha-nacimiento');
+						var tipo = button.data('tipo');
+						var estado = button.data('estado');
+						var ultimoIngreso = button.data('ultimo-ingreso');
+						var bloqueado = button.data('bloqueado');
+						var numCarga = button.data('num-carga');
+						var cantidadAcudidos = button.data('cantidad-acudidos');
+						var tieneMatricula = button.data('tiene-matricula');
+						var tipoUsuario = button.data('tipo-usuario');
+						var userId = button.data('id');
+						var telefono = button.data('telefono');
+						var direccion = button.data('direccion');
+						var ocupacion = button.data('ocupacion');
+						var genero = button.data('genero');
+						var fechaRegistro = button.data('fecha-registro');
+						var documento = button.data('documento');
+						var tipoDocumento = button.data('tipo-documento');
+						var lugarExpedicion = button.data('lugar-expedicion');
+						var intentosFallidos = button.data('intentos-fallidos');
+
+						if (row.child.isShown()) {
+							// This row is already open - close it
+							row.child.hide();
+							icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+							button.removeClass('text-primary').addClass('text-secondary');
+						} else {
+							// Open this row
+							row.child(formatDetails(foto, nombre, usuario, email, fechaNacimiento, tipo, estado, ultimoIngreso, bloqueado, numCarga, cantidadAcudidos, tieneMatricula, tipoUsuario, userId, telefono, direccion, ocupacion, genero, fechaRegistro, documento, tipoDocumento, lugarExpedicion, intentosFallidos)).show();
+							icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+							button.removeClass('text-secondary').addClass('text-primary');
+						}
+					});
 					
 					// Mostrar mensaje de resultados
 					$.toast({

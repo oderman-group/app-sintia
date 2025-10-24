@@ -44,13 +44,41 @@ if (!empty($_FILES['archivo']['name'])) {
     // move_uploaded_file($_FILES['archivo']['tmp_name'], $destino . "/" . $archivo);
 }
 
-$findme   = '?v=';
-$pos = strpos($_POST["video"], $findme) + 3;
-$video = substr($_POST["video"], $pos, 11);
-$notificar=!empty($_POST["notificar"]) ? 1 : 0;
+// Extraer ID de YouTube (funciona con URL completa o ID directo)
+$videoInput = isset($_POST["video"]) ? $_POST["video"] : '';
+$video = '';
+
+if (!empty($videoInput)) {
+    $videoInput = trim($videoInput);
+    
+    // Si ya es un ID directo (11 caracteres)
+    if (strlen($videoInput) == 11 && !strpos($videoInput, '/') && !strpos($videoInput, '?')) {
+        $video = $videoInput;
+    } else {
+        // Extraer de URL completa
+        $findme = '?v=';
+        $pos = strpos($videoInput, $findme);
+        if ($pos !== false) {
+            $video = substr($videoInput, $pos + 3, 11);
+        } else {
+            // Intentar con youtu.be
+            $findme2 = 'youtu.be/';
+            $pos2 = strpos($videoInput, $findme2);
+            if ($pos2 !== false) {
+                $video = substr($videoInput, $pos2 + 9, 11);
+            }
+        }
+    }
+}
+$notificar = !empty($_POST["notificar"]) ? 1 : 0;
+$keyw = isset($_POST["keyw"]) ? $_POST["keyw"] : '';
+$urlImagen = isset($_POST["urlImagen"]) ? $_POST["urlImagen"] : '';
+$contenidoPie = isset($_POST["contenidoPie"]) ? $_POST["contenidoPie"] : '';
+$videoUrl = !empty($video) ? $videoInput : ''; // Guardar la URL/ID original si hay video
+
 try{
     mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie,not_notificar)
-    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . $_POST["keyw"] . "', '" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$_POST["video"]) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "','".$notificar."')");
+    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . mysqli_real_escape_string($conexion,$keyw) . "', '" . mysqli_real_escape_string($conexion,$urlImagen) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$videoUrl) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$contenidoPie) . "','".$notificar."')");
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }

@@ -12,9 +12,14 @@ try {
     $estados = isset($_POST['estados']) ? $_POST['estados'] : [];
     $anios = isset($_POST['anios']) ? $_POST['anios'] : [];
     $busqueda = isset($_POST['busqueda']) ? trim($_POST['busqueda']) : '';
+    $tabActivo = isset($_POST['tab']) ? $_POST['tab'] : 'visibles';
     
-    // Construir filtro SQL
-    $filtro = "";
+    // Construir filtro SQL base según el tab activo
+    if ($tabActivo === 'ocultos') {
+        $filtro = " AND (asp.asp_oculto=1)";
+    } else {
+        $filtro = " AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)";
+    }
     
     // Filtro de grados (múltiple)
     if (!empty($grados) && is_array($grados)) {
@@ -73,6 +78,7 @@ try {
     // Preparar datos para el componente
     $data["data"] = $listaInscripciones;
     $contReg = 1;
+    $mostrarOcultos = ($tabActivo === 'ocultos'); // Contexto según el tab activo
     
     $configAdmisiones = Inscripciones::configuracionAdmisiones($conexion, $baseDatosAdmisiones, $config['conf_id_institucion'], $_SESSION["bd"]);
     

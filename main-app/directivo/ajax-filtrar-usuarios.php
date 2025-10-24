@@ -2,6 +2,7 @@
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 
 header('Content-Type: application/json');
@@ -21,7 +22,7 @@ try {
         'us.uss_tipo', 'us.uss_estado', 'us.uss_bloqueado', 'us.uss_ultimo_ingreso',
         'us.uss_fecha_nacimiento', 'us.uss_telefono', 'us.uss_direccion', 'us.uss_ocupacion',
         'us.uss_genero', 'us.uss_fecha_registro', 'us.uss_documento', 'us.uss_tipo_documento',
-        'us.uss_lugar_expedicion', 'us.uss_intentos_fallidos',
+        'us.uss_lugar_expedicion', 'us.uss_intentos_fallidos', 'us.uss_permiso1',
         'pes.pes_nombre', 
         'ogen_genero.ogen_nombre as genero_nombre'
     ];
@@ -71,84 +72,11 @@ try {
     $opcionEstado = ['Inactivo', 'Activo'];
     $contReg = 1;
     
-    // Generar el HTML de las filas
+    // Generar el HTML de las filas usando el componente reutilizable
     ob_start();
     
     foreach ($listaUsuarios as $usuario) {
-        $bgColor = '';
-        if ($usuario['uss_bloqueado'] == 1) {
-            $bgColor = '#ff572238';
-        }
-        
-        $fotoUsuario = $usuariosClase->verificarFoto($usuario['uss_foto']);
-        $estadoUsuario = !empty($usuario['uss_estado']) ? $opcionEstado[$usuario['uss_estado']] : '';
-        ?>
-        <tr id="reg<?= $usuario['uss_id']; ?>" style="background-color:<?= $bgColor; ?>;">
-            <td>
-                <button class="btn btn-sm btn-link text-secondary expand-btn"
-                    data-id="<?= $usuario['uss_id']; ?>"
-                    data-foto="<?= $fotoUsuario; ?>"
-                    data-nombre="<?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?>"
-                    data-usuario="<?= $usuario['uss_usuario']; ?>"
-                    data-email="<?= $usuario['uss_email'] ?: 'No registrado'; ?>"
-                    data-fecha-nacimiento="<?= $usuario['uss_fecha_nacimiento'] ?: 'No registrada'; ?>"
-                    data-tipo="<?= $usuario['pes_nombre']; ?>"
-                    data-estado="<?= $estadoUsuario; ?>"
-                    data-ultimo-ingreso="<?= $usuario['uss_ultimo_ingreso'] ?: 'Nunca'; ?>"
-                    data-bloqueado="<?= $usuario['uss_bloqueado'] == 1 ? 'Sí' : 'No'; ?>"
-                    data-num-carga="<?= $usuario['num_cargas'] ?? 0; ?>"
-                    data-cantidad-acudidos="<?= $usuario['cantidad_acudidos'] ?? 0; ?>"
-                    data-tiene-matricula="<?= !empty($usuario['cantidad_matriculas']) ? 'Sí' : 'No'; ?>"
-                    data-tipo-usuario="<?= $usuario['uss_tipo']; ?>"
-                    data-telefono="<?= $usuario['uss_telefono'] ?: 'No registrado'; ?>"
-                    data-direccion="<?= $usuario['uss_direccion'] ?: 'No registrada'; ?>"
-                    data-ocupacion="<?= $usuario['uss_ocupacion'] ?: 'No especificada'; ?>"
-                    data-genero="<?= $usuario['genero_nombre'] ?: 'No especificado'; ?>"
-                    data-fecha-registro="<?= $usuario['uss_fecha_registro'] ?: 'No registrada'; ?>"
-                    data-documento="<?= $usuario['uss_documento'] ?: 'No registrado'; ?>"
-                    data-tipo-documento="<?= $usuario['uss_tipo_documento'] ?: 'No especificado'; ?>"
-                    data-lugar-expedicion="<?= $usuario['uss_lugar_expedicion'] ?: 'No especificado'; ?>"
-                    data-intentos-fallidos="<?= $usuario['uss_intentos_fallidos'] ?: '0'; ?>"
-                    title="Ver detalles">
-                    <i class="fa fa-chevron-right"></i>
-                </button>
-            </td>
-            <td><?= $contReg; ?></td>
-            <td>
-                <div class="input-group spinner col-sm-10">
-                    <label class="switchToggle">
-                        <input type="checkbox" id="<?= $usuario['uss_id']; ?>" name="estado" value="1" <?php if ($usuario['uss_bloqueado'] == 1) { echo "checked";  } ?>>
-                        <span class="slider green round"></span>
-                    </label>
-                </div>
-            </td>
-            <td><?= $usuario['pes_nombre']; ?></td>
-            <td><?= UsuariosPadre::nombreCompletoDelUsuario($usuario); ?></td>
-            <td><?= $usuario['uss_usuario']; ?></td>
-            <td><?= $usuario['uss_email']; ?></td>
-            <td>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                        Acciones <i class="fa fa-angle-down"></i>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a href="usuarios-editar.php?id=<?= base64_encode($usuario['uss_id']); ?>"><i class="fa fa-edit"></i> Editar</a></li>
-                        <li><a href="javascript:void(0);" class="btn-editar-usuario-modal" data-usuario-id="<?= $usuario['uss_id']; ?>"><i class="fa fa-bolt"></i> Edición Rápida</a></li>
-                        <?php if (Modulos::validarPermisoEdicion()) { ?>
-                            <?php if ($permisoHistorial) { ?>
-                                <li><a href="historial-acciones.php?usuario=<?= base64_encode($usuario['uss_id']); ?>" target="_blank"><i class="fa fa-history"></i> Historial</a></li>
-                            <?php } ?>
-                            <?php if ($permisoPlantilla) { ?>
-                                <li><a href="../compartido/impresion-credencial.php?id=<?= base64_encode($usuario['uss_id']); ?>" target="_blank"><i class="fa fa-id-card"></i> Imprimir Carnet</a></li>
-                            <?php } ?>
-                            <li class="divider"></li>
-                            <li><a href="usuarios-eliminar.php?id=<?= base64_encode($usuario['uss_id']); ?>" onClick="return confirm('Desea eliminar el registro');"><i class="fa fa-trash"></i> Eliminar</a></li>
-                        <?php } ?>
-                    </ul>
-                </div>
-            </td>
-        </tr>
-        <?php
+        include(ROOT_PATH . "/main-app/directivo/includes/usuarios-tabla-filas.php");
         $contReg++;
     }
     
@@ -159,8 +87,8 @@ try {
         'html' => $html,
         'total' => count($listaUsuarios),
         'filtros' => [
-            'tipos' => $tipos,
-            'estados' => $estados
+            'tipos' => $tiposFiltro,
+            'estados' => $estadosFiltro
         ]
     ]);
     

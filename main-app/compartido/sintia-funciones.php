@@ -95,7 +95,7 @@ class UsuariosFunciones{
 
 		
 
-		if($foto!="" and file_exists(BASE_URL.'/main-app/files/fotos/'.$foto)){
+		if($foto!="" and file_exists(ROOT_PATH.'/main-app/files/fotos/'.$foto)){
 
 			$fotoUsr = BASE_URL.'/main-app/files/fotos/'.$foto;
 

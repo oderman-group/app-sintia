@@ -1,0 +1,482 @@
+/* Modern Calificaciones Styles */
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --light-bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-header: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+}
+
+/* Sticky Table Header Fix */
+.table-modern thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: linear-gradient(135deg, var(--primary-color), #1d4ed8) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.responsive-table {
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+/* Grade Color System */
+.grade-excellent { color: #059669 !important; }
+.grade-good { color: #0891b2 !important; }
+.grade-average { color: #d97706 !important; }
+.grade-poor { color: #dc2626 !important; }
+.grade-failing { color: #991b1b !important; }
+
+/* Fila de Promedios */
+.fila-promedios {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0) !important;
+    border-top: 3px solid var(--primary-color) !important;
+    font-weight: 600 !important;
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fila-promedios td {
+    padding: 1rem 0.75rem !important;
+    font-size: 0.9rem;
+    vertical-align: middle !important;
+}
+
+.fila-promedios:hover {
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
+    transform: none !important;
+}
+
+.fila-promedios td span {
+    display: inline-block;
+}
+
+.fila-promedios td small {
+    display: block;
+    margin-top: 0.25rem;
+    font-weight: 400;
+}
+
+/* Enhanced Input Styles */
+.input-grade {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-align: center;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: white;
+    min-height: 40px;
+}
+
+.input-grade:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    transform: scale(1.02);
+}
+
+.input-grade:disabled {
+    background: #f1f5f9;
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.input-grade.grade-excellent {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.input-grade.grade-good {
+    border-color: #0891b2;
+    background: rgba(8, 145, 178, 0.05);
+}
+
+.input-grade.grade-average {
+    border-color: var(--warning-color);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.input-grade.grade-poor {
+    border-color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.input-grade.grade-failing {
+    border-color: #991b1b;
+    background: rgba(153, 27, 27, 0.05);
+}
+
+/* Activity Card Styles */
+.activity-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.activity-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.activity-title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.activity-description {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    max-height: 2.6rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.activity-percentage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.activity-actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+/* Button Enhancements */
+.btn-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 32px;
+    height: 32px;
+}
+
+.btn-action:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-edit {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #059669;
+    color: white;
+}
+
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-recovery {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-recovery:hover {
+    background: #d97706;
+    color: white;
+}
+
+.btn-remove {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-remove:hover {
+    background: #dc2626;
+    color: white;
+}
+
+/* Student Row Enhancements */
+.student-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.student-row:hover {
+    background: #f8fafc;
+    transform: scale(1.001);
+    box-shadow: var(--shadow-sm);
+}
+
+.student-row.highlighted {
+    background: linear-gradient(90deg, #fef3c7, #fde68a);
+    border-left: 4px solid var(--warning-color);
+    box-shadow: var(--shadow-md);
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.student-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.student-row:hover .student-avatar {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.student-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.student-id {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.inclusion-badge {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Grade Cell Enhancements */
+.grade-cell {
+    text-align: center;
+    position: relative;
+    padding: 0.75rem 0.5rem;
+}
+
+.grade-value {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.grade-qualitative {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.grade-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Loading States */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(37, 99, 235, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive Enhancements */
+@media (max-width: 1200px) {
+    .activity-description {
+        font-size: 0.7rem;
+        -webkit-line-clamp: 1;
+    }
+    
+    .activity-title {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .student-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .student-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .student-name {
+        font-size: 0.8rem;
+    }
+    
+    .grade-cell {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .grade-value {
+        font-size: 0.9rem;
+    }
+    
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+        min-width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 576px) {
+    .activity-card {
+        padding: 0.5rem;
+    }
+    
+    .activity-title {
+        font-size: 0.75rem;
+    }
+    
+    .activity-description {
+        font-size: 0.65rem;
+    }
+    
+    .activity-percentage {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+/* Animation Enhancements */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Focus States */
+.input-grade:focus,
+.btn-action:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .btn-action,
+    .activity-actions,
+    .grade-actions {
+        display: none !important;
+    }
+    
+    .table-modern {
+        font-size: 0.75rem;
+    }
+    
+    .student-avatar {
+        display: none;
+    }
+}

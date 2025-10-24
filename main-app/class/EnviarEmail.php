@@ -129,7 +129,10 @@ class EnviarEmail {
 
         } catch (Exception $e) {
             self::enviarReporte($data['institucion_id'], $mail, EMAIL_SENDER, $destinatario, $asunto, $body, self::ESTADO_EMAIL_ERROR, $e->getMessage());
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+            // Registramos el error pero no detenemos la ejecución
+            error_log("Error al enviar correo: " . $e->getMessage());
+            // Re-lanzamos la excepción para que pueda ser capturada por el código que llama
+            throw $e;
         }
 
     }
@@ -143,6 +146,11 @@ class EnviarEmail {
      */
     public static function validarEmail($email) 
     {
+        // Validar que el email no sea nulo o vacío
+        if (empty($email) || !is_string($email)) {
+            return false;
+        }
+        
         $matches = null;
         // Expresion regular
         $regex = "/^[A-z0-9\\._-]+@[A-z0-9][A-z0-9-]*(\\.[A-z0-9_-]+)*\\.([A-z]{2,6})$/";

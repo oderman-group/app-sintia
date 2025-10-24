@@ -207,12 +207,14 @@ foreach ($data["data"] as $resultado) {
 		<td><?= strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= $resultado['uss_usuario']; ?></td>
 		<td>
-			<div class="btn-group">
-				<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
-				<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
-					<i class="fa fa-angle-down"></i>
-				</button>
-				<ul class="dropdown-menu" role="menu" id="Acciones_<?= $resultado['mat_id']; ?>" style="z-index: 10000;">
+			<!-- Botón de tres puntos verticales -->
+			<button type="button" class="btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $resultado['mat_id']; ?>')" title="<?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?>">
+				<i class="fa fa-ellipsis-v"></i>
+			</button>
+			
+			<!-- Dropdown oculto (solo para almacenar las opciones) -->
+			<div style="display: none;">
+				<ul class="dropdown-menu" role="menu" id="Acciones_<?= $resultado['mat_id']; ?>">
 					<?php if (Modulos::validarPermisoEdicion()) { ?>
 						<?php if ($permisoEditarEstudiante) { ?>
 							<li><a href="estudiantes-editar.php?id=<?= base64_encode($resultado['mat_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?> matrícula</a></li>
