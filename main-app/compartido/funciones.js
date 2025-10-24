@@ -344,6 +344,22 @@ function deseaEliminar(dato) {
                         if (varObjet.tipo === 2 || varObjet.tipo === 5) {
                             document.getElementById(id).style.display = "none";
                             input.value = "";
+                            
+                            // ✅ RECALCULAR DEFINITIVA Y PROMEDIOS DESPUÉS DE ELIMINAR NOTA
+                            if (typeof recalcularDefinitiva === 'function') {
+                                const codEst = input.getAttribute('data-cod-estudiante');
+                                if (codEst) {
+                                    setTimeout(() => {
+                                        recalcularDefinitiva(codEst);
+                                    }, 100);
+                                }
+                            }
+                            
+                            if (typeof recalcularPromedios === 'function') {
+                                setTimeout(() => {
+                                    recalcularPromedios();
+                                }, 200);
+                            }
                         }
 
                         if (varObjet.tipo === 3) {

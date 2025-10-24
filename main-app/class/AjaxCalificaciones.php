@@ -58,7 +58,7 @@ class AjaxCalificaciones {
         if ($data['nota'] < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
 
             $predicadoActividad = [
-                'act_id'      => "'".$data['codNota']."'",
+                'act_id'      => $data['codNota'],
                 'institucion' => $config['conf_id_institucion'],
                 'year'        => $_SESSION["bd"]
             ];
@@ -84,26 +84,37 @@ class AjaxCalificaciones {
             $datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
 
             //INICIO ENVÍO DE MENSAJE
-            $tituloMsj    = 'Nota baja para ' .$nombre;
-            $contenidoMsj = '
-                <p style="color:navy;">
-                    Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado una nota baja en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
-                    Por favor ingresa a la plataforma y verifica. 
-                </p>
-            ';
+            // Solo intentar enviar si el acudiente tiene un correo válido
+            if (!empty($datosAcudiente) && !empty($datosAcudiente['uss_email'])) {
+                try {
+                    $tituloMsj    = 'Nota baja para ' .$nombre;
+                    $contenidoMsj = '
+                        <p style="color:navy;">
+                            Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado una nota baja en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
+                            Por favor ingresa a la plataforma y verifica. 
+                        </p>
+                    ';
 
-            $data = [
-                'contenido_msj'  => $contenidoMsj,
-                'usuario_email'  => $datosAcudiente['uss_email'],
-                'usuario_nombre' => $datosAcudiente['uss_nombre'],
-                'institucion_id' => $config['conf_id_institucion'],
-                'usuario_id'     => $datosAcudiente['uss_id']
-            ];
+                    $dataCorreo = [
+                        'contenido_msj'  => $contenidoMsj,
+                        'usuario_email'  => $datosAcudiente['uss_email'],
+                        'usuario_nombre' => $datosAcudiente['uss_nombre'],
+                        'institucion_id' => $config['conf_id_institucion'],
+                        'usuario_id'     => $datosAcudiente['uss_id']
+                    ];
 
-            $asunto            = $tituloMsj;
-            $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
-            
-            EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                    $asunto            = $tituloMsj;
+                    $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
+                    
+                    EnviarEmail::enviar($dataCorreo, $asunto, $bodyTemplateRoute, null, null);
+                } catch (Exception $e) {
+                    // Si falla el envío de correo, solo registramos el error pero continuamos
+                    error_log("Error al enviar correo de notificación de nota baja: " . $e->getMessage());
+                }
+            } else {
+                // Registrar que no se pudo enviar por falta de datos del acudiente
+                error_log("No se pudo enviar notificación de nota baja para el estudiante {$data['codEst']}: acudiente sin correo electrónico");
+            }
         }
 
         $datosMensaje = [

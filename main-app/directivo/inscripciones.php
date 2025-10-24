@@ -41,6 +41,57 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 		.expandable-row {
 			background-color: #f8f9fa !important;
 		}
+		
+		/* ========================================
+		   TABS PARA VISIBLES/OCULTOS
+		   ======================================== */
+		
+		.tabs-inscripciones {
+			display: flex;
+			border-bottom: 2px solid #e0e0e0;
+			margin-bottom: 20px;
+			gap: 5px;
+		}
+		
+		.tab-inscripcion {
+			padding: 12px 24px;
+			cursor: pointer;
+			border: none;
+			background: transparent;
+			color: #666;
+			font-weight: 500;
+			font-size: 14px;
+			transition: all 0.2s ease;
+			border-bottom: 3px solid transparent;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		
+		.tab-inscripcion:hover {
+			color: #667eea;
+			background: #f8f9fa;
+		}
+		
+		.tab-inscripcion.active {
+			color: #667eea;
+			border-bottom-color: #667eea;
+			font-weight: 600;
+		}
+		
+		.tab-inscripcion .badge {
+			font-size: 11px;
+			padding: 3px 8px;
+			border-radius: 10px;
+		}
+		
+		.tab-content-inscripcion {
+			display: none;
+		}
+		
+		.tab-content-inscripcion.active {
+			display: block;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
@@ -267,6 +318,51 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                             </div>
                                         </div>
                                         
+                                        <?php
+                                        // Contar inscripciones visibles y ocultas usando el mismo método
+                                        $totalVisibles = 0;
+                                        $totalOcultos = 0;
+                                        
+                                        try {
+                                            $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
+                                                          "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
+                                                          "mat.*", "asp.*"];
+                                            
+                                            // Contar visibles (asp_oculto IS NULL OR asp_oculto=0)
+                                            $filtroVisibles = ' AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)';
+                                            $consultaVisibles = Estudiantes::listarMatriculasAspirantes($config, $filtroVisibles, "", "", $selectSql);
+                                            if ($consultaVisibles) {
+                                                $totalVisibles = mysqli_num_rows($consultaVisibles);
+                                            }
+                                            
+                                            // Contar ocultos (asp_oculto=1)
+                                            $filtroOcultos = ' AND (asp.asp_oculto=1)';
+                                            $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, "", "", $selectSql);
+                                            if ($consultaOcultos) {
+                                                $totalOcultos = mysqli_num_rows($consultaOcultos);
+                                            }
+                                        } catch (Exception $e) {
+                                            error_log('Error al contar inscripciones: ' . $e->getMessage());
+                                            // Los totales quedan en 0 en caso de error
+                                        }
+                                        ?>
+                                        
+                                        <!-- Tabs para visibles/ocultos -->
+                                        <div class="tabs-inscripciones">
+                                            <button class="tab-inscripcion active" onclick="cambiarTabInscripciones('visibles')" id="tab-visibles">
+                                                <i class="fa fa-eye"></i> 
+                                                <span>Visibles</span>
+                                                <span class="badge badge-primary" id="badge-visibles"><?= $totalVisibles; ?></span>
+                                            </button>
+                                            <button class="tab-inscripcion" onclick="cambiarTabInscripciones('ocultos')" id="tab-ocultos">
+                                                <i class="fa fa-eye-slash"></i> 
+                                                <span>Ocultos</span>
+                                                <span class="badge badge-secondary" id="badge-ocultos"><?= $totalOcultos; ?></span>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Contenido tab VISIBLES -->
+                                        <div id="content-visibles" class="tab-content-inscripcion active">
                                         <div class="table">
                                     		<table  id="example1" class="display" style="width:100%;">
                                             <div id="gifCarga" class="gif-carga">
@@ -290,6 +386,10 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 												</thead>
                                                 <tbody id="inscripciones_result">
                                                 <?php
+                                                try {
+                                                    // Filtro por defecto para mostrar solo visibles
+                                                    $filtro = ' AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)';
+                                                    
                                                     include("includes/consulta-paginacion-inscripciones.php");
                                                     $selectSql = ["mat_id","mat_documento","gra_nombre",
 																  "asp_observacion","asp_nombre_acudiente","asp_celular_acudiente",
@@ -309,12 +409,102 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                                         }
                                                     }
 													
-                                                    include("../class/componentes/result/inscripciones-tbody.php");
+													$mostrarOcultos = false; // Contexto de visibles
+													
+													// Verificar si hay datos para mostrar
+													if (empty($data["data"])) {
+													    echo '<tr><td colspan="12" class="text-center">
+													        <i class="fa fa-info-circle fa-2x text-info"></i><br>
+													        <strong>No hay inscripciones visibles en este momento.</strong>
+													    </td></tr>';
+													} else {
+													    include("../class/componentes/result/inscripciones-tbody.php");
+													}
+                                                } catch (Exception $e) {
+                                                    echo '<tr><td colspan="12" class="text-center text-warning">
+                                                        <i class="fa fa-exclamation-triangle fa-2x"></i><br>
+                                                        <strong>No se pudieron cargar las inscripciones en este momento.</strong><br>
+                                                        Por favor, intente nuevamente más tarde.
+                                                    </td></tr>';
+                                                    error_log('Error en inscripciones visibles: ' . $e->getMessage());
+                                                }
                                                  ?>
                                                 </tbody>
                                             </table>
                                             </div>
                                         </div>
+                                        </div><!-- Cierre content-visibles -->
+                                        
+                                        <!-- Contenido tab OCULTOS -->
+                                        <div id="content-ocultos" class="tab-content-inscripcion">
+                                        <div class="table">
+                                    		<table  id="example2" class="display" style="width:100%;">
+                                            <div id="gifCarga2" class="gif-carga">
+										        <img   alt="Cargando...">
+									        </div>
+												<thead>
+													<tr>
+                                                        <th></th>
+                                                        <th>No.</th>
+                                                        <th>ID Matrícula</th>
+                                                        <th>#Solicitud</th>
+                                                        <th>Fecha</th>
+                                                        <th>Documento</th>
+                                                        <th>Aspirante</th>
+                                                        <th>Año</th>
+                                                        <th>Estado</th>
+                                                        <th>Comprobante</th>
+                                                        <th>Grado</th>
+                                                        <th>Acciones</th>
+													</tr>
+												</thead>
+                                                <tbody id="inscripciones_ocultos_result">
+													<?php
+													try {
+                                                        // Consulta para estudiantes ocultos
+                                                        $filtroOcultos = ' AND (asp.asp_oculto=1)';
+                                                        
+                                                        $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
+                                                                      "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
+                                                                      "mat.*", "asp.*"];
+
+                                                        $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
+                                                        
+                                                        // Construir array de datos para ocultos
+                                                        $dataOcultos = ["data" => []];
+                                                        if (!empty($consultaOcultos)) {
+                                                            while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
+                                                                $dataOcultos["data"][] = $fila;
+                                                            }
+                                                        }
+                                                        
+                                                        $contReg = 1;
+                                                        $mostrarOcultos = true; // Contexto de ocultos
+                                                        $data = $dataOcultos; // Usar los datos de ocultos
+                                                        
+                                                        // Verificar si hay datos para mostrar
+                                                        if (empty($data["data"])) {
+                                                            echo '<tr><td colspan="12" class="text-center">
+                                                                <i class="fa fa-info-circle fa-2x text-info"></i><br>
+                                                                <strong>No hay inscripciones ocultas en este momento.</strong>
+                                                            </td></tr>';
+                                                        } else {
+                                                            include(ROOT_PATH."/main-app/class/componentes/result/inscripciones-tbody.php");
+                                                        }
+                                                    } catch (Exception $e) {
+                                                        echo '<tr><td colspan="12" class="text-center text-warning">
+                                                            <i class="fa fa-exclamation-triangle fa-2x"></i><br>
+                                                            <strong>No se pudieron cargar las inscripciones ocultas en este momento.</strong><br>
+                                                            Por favor, intente nuevamente más tarde.
+                                                        </td></tr>';
+                                                        error_log('Error en inscripciones ocultas: ' . $e->getMessage());
+                                                    }
+													?>
+                                                </tbody>
+                                            </table>
+                                            </div>
+                                        </div>
+                                        </div><!-- Cierre content-ocultos -->
                       				    <!-- <?php include("enlaces-paginacion.php");?> -->
                                     </div>
                                 </div>
@@ -439,10 +629,14 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 			const anios = $('#filtro_inscripciones_anio').val() || [];
 			const busqueda = $('#filtro_inscripciones_busqueda').val() || '';
 			
-			console.log('Aplicando filtros inscripciones:', { grados, estados, anios, busqueda });
+			// Detectar qué tab está activo
+			const tabActivo = $('.tab-inscripcion.active').attr('id') === 'tab-ocultos' ? 'ocultos' : 'visibles';
+			const targetId = tabActivo === 'ocultos' ? '#inscripciones_ocultos_result' : '#inscripciones_result';
+			
+			console.log('Aplicando filtros inscripciones:', { grados, estados, anios, busqueda, tab: tabActivo });
 			
 			// Mostrar loader
-			$('#inscripciones_result').html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
+			$(targetId).html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
 			
 			// Enviar AJAX
 			$.ajax({
@@ -452,15 +646,16 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 					grados: grados,
 					estados: estados,
 					anios: anios,
-					busqueda: busqueda
+					busqueda: busqueda,
+					tab: tabActivo
 				},
 				dataType: 'json',
 				success: function(response) {
 					console.log('Respuesta del filtro inscripciones:', response);
 					
 					if (response.success) {
-						// Insertar el HTML
-						$('#inscripciones_result').html(response.html);
+						// Insertar el HTML en el tab activo
+						$(targetId).html(response.html);
 						
 						// Mensaje dinámico
 						let mensaje = 'Se encontraron ' + response.total + ' inscripción/inscripciones';
@@ -489,7 +684,7 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 							hideAfter: 5000
 						});
 						
-						$('#inscripciones_result').html('<tr><td colspan="12" class="text-center text-danger">Error al cargar los datos</td></tr>');
+						$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error al cargar los datos</td></tr>');
 					}
 				},
 				error: function(xhr, status, error) {
@@ -505,7 +700,7 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 						hideAfter: 5000
 					});
 					
-					$('#inscripciones_result').html('<tr><td colspan="12" class="text-center text-danger">Error de conexión</td></tr>');
+					$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error de conexión</td></tr>');
 				}
 			});
 		}
@@ -541,6 +736,167 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
 				aplicarFiltrosInscripciones();
 			}, 500);
 		});
+		
+		// ========================================
+		// SISTEMA DE TABS PARA VISIBLES/OCULTOS
+		// ========================================
+		
+		// Inicializar DataTable para la tabla de ocultos
+		$(document).ready(function() {
+			// Verificar si ya existe la instancia de DataTable
+			if (!$.fn.DataTable.isDataTable('#example2')) {
+				$('#example2').DataTable({
+					"language": {
+						"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+					},
+					"order": [[1, 'desc']]
+				});
+			}
+		});
+		
+		// Función para cambiar entre tabs con carga asíncrona
+		window.cambiarTabInscripciones = function(tab) {
+			// Remover clase active de todos los tabs
+			$('.tab-inscripcion').removeClass('active');
+			$('.tab-content-inscripcion').removeClass('active');
+			
+			// Activar el tab seleccionado
+			$('#tab-' + tab).addClass('active');
+			$('#content-' + tab).addClass('active');
+			
+			// Determinar qué tbody actualizar
+			const targetId = tab === 'ocultos' ? '#inscripciones_ocultos_result' : '#inscripciones_result';
+			
+			// Mostrar loader
+			$(targetId).html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
+			
+			// Cargar datos del tab vía AJAX
+			$.ajax({
+				url: 'ajax-cargar-tab-inscripciones.php',
+				type: 'POST',
+				data: { tab: tab },
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						// Insertar el HTML
+						$(targetId).html(response.html);
+						
+						// Actualizar el contador del badge
+						if (tab === 'visibles') {
+							$('#badge-visibles').text(response.total);
+						} else {
+							$('#badge-ocultos').text(response.total);
+						}
+						
+						// Toast informativo
+						var mensaje = tab === 'visibles' 
+							? 'Mostrando ' + response.total + ' inscripción(es) visible(s)' 
+							: 'Mostrando ' + response.total + ' inscripción(es) oculta(s)';
+						
+						$.toast({
+							heading: 'Tab Cargado',
+							text: mensaje,
+							position: 'top-right',
+							loaderBg: '#667eea',
+							icon: 'info',
+							hideAfter: 2000
+						});
+					} else {
+						console.error('Error al cargar tab:', response.error);
+						$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error al cargar los datos</td></tr>');
+						
+						$.toast({
+							heading: 'Error',
+							text: 'No se pudieron cargar los datos',
+							position: 'top-right',
+							loaderBg: '#bf441d',
+							icon: 'error',
+							hideAfter: 3000
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error AJAX al cambiar tab:', status, error);
+					$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error de conexión</td></tr>');
+					
+					$.toast({
+						heading: 'Error de Conexión',
+						text: 'No se pudo conectar con el servidor',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 3000
+					});
+				}
+			});
+		};
+		
+		// Función para desocultar inscripción
+		window.desocultarInscripcion = function(idMatricula) {
+			if (!confirm('¿Está seguro de que desea hacer visible esta inscripción?')) {
+				return;
+			}
+			
+			$.ajax({
+				url: 'ajax-desocultar-inscripcion.php',
+				type: 'POST',
+				data: { id: idMatricula },
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						$.toast({
+							heading: 'Éxito',
+							text: response.message,
+							position: 'top-right',
+							loaderBg: '#26c281',
+							icon: 'success',
+							hideAfter: 2000
+						});
+						
+						// Recargar ambos tabs para reflejar los cambios
+						setTimeout(function() {
+							// Recargar el tab de ocultos (actual)
+							cambiarTabInscripciones('ocultos');
+							
+							// Recargar también el tab de visibles en segundo plano
+							$.ajax({
+								url: 'ajax-cargar-tab-inscripciones.php',
+								type: 'POST',
+								data: { tab: 'visibles' },
+								dataType: 'json',
+								success: function(resp) {
+									if (resp.success) {
+										$('#inscripciones_result').html(resp.html);
+										$('#badge-visibles').text(resp.total);
+									}
+								}
+							});
+						}, 500);
+					} else {
+						$.toast({
+							heading: 'Error',
+							text: response.message,
+							position: 'top-right',
+							loaderBg: '#bf441d',
+							icon: 'error',
+							hideAfter: 3000
+						});
+					}
+				},
+				error: function(xhr, status, error) {
+					console.error('Error AJAX:', error);
+					console.error('Response:', xhr.responseText);
+					$.toast({
+						heading: 'Error de Conexión',
+						text: 'No se pudo conectar con el servidor',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 3000
+					});
+				}
+			});
+		};
 	</script>
 	
 	<style>

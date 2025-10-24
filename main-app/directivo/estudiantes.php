@@ -69,6 +69,202 @@ if($config['conf_doble_buscador'] == 1) {
 		   ESTILOS RESPONSIVOS PARA TABLA DE ESTUDIANTES
 		   ======================================== */
 		
+		/* Z-index para dropdowns - solo aumentar el z-index sin cambiar el posicionamiento */
+		.dropdown-menu {
+			z-index: 10000 !important;
+			max-height: 400px;
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+		
+		/* Mejorar el scroll del dropdown */
+		.dropdown-menu::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		.dropdown-menu::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 10px;
+		}
+		
+		.dropdown-menu::-webkit-scrollbar-thumb {
+			background: #888;
+			border-radius: 10px;
+		}
+		
+		.dropdown-menu::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
+		
+		/* Permitir que el dropdown se muestre correctamente */
+		table.dataTable tbody td:last-child {
+			overflow: visible;
+		}
+		
+		/* ========================================
+		   BOTÓN DE ACCIONES CON TRES PUNTOS
+		   ======================================== */
+		
+		/* Botón de tres puntos verticales */
+		.btn-acciones-menu {
+			background: transparent;
+			border: none;
+			padding: 4px 8px;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: all 0.2s ease;
+			font-size: 18px;
+			color: #666;
+		}
+		
+		.btn-acciones-menu:hover {
+			background: #f5f5f5;
+			color: #333;
+		}
+		
+		.btn-acciones-menu:active {
+			background: #e0e0e0;
+		}
+		
+		/* Panel flotante de acciones (estilo minimalista vertical) */
+		.acciones-panel {
+			display: none;
+			position: fixed;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+			border: 1px solid #e0e0e0;
+			padding: 8px 0;
+			min-width: 240px;
+			max-width: 280px;
+			max-height: 400px;
+			overflow-y: auto;
+			z-index: 10000;
+			animation: slideIn 0.15s ease-out;
+		}
+		
+		@keyframes slideIn {
+			from {
+				opacity: 0;
+				transform: scale(0.95) translateY(-10px);
+			}
+			to {
+				opacity: 1;
+				transform: scale(1) translateY(0);
+			}
+		}
+		
+		.acciones-panel.show {
+			display: block;
+		}
+		
+		/* Lista vertical de opciones */
+		.acciones-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		/* Item de acción individual (estilo lista) */
+		.accion-item {
+			display: flex;
+			align-items: center;
+			padding: 12px 16px;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			text-decoration: none;
+			color: #333;
+			border-left: 3px solid transparent;
+		}
+		
+		.accion-item:hover {
+			background: #f8f9fa;
+			border-left-color: #667eea;
+			text-decoration: none;
+			color: #333;
+		}
+		
+		.accion-item:active {
+			background: #e9ecef;
+		}
+		
+		.accion-icon {
+			width: 32px;
+			height: 32px;
+			border-radius: 6px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-right: 12px;
+			font-size: 14px;
+			color: #fff;
+			flex-shrink: 0;
+		}
+		
+		.accion-name {
+			font-size: 14px;
+			color: #333;
+			font-weight: 400;
+			line-height: 1.4;
+			flex: 1;
+		}
+		
+		.accion-item:hover .accion-name {
+			font-weight: 500;
+		}
+		
+		/* Separador sutil entre grupos de acciones */
+		.accion-separator {
+			height: 1px;
+			background: #e9ecef;
+			margin: 4px 0;
+		}
+		
+		/* Primera y última opción con bordes redondeados */
+		.accion-item:first-child {
+			border-top-left-radius: 8px;
+			border-top-right-radius: 8px;
+		}
+		
+		.accion-item:last-child {
+			border-bottom-left-radius: 8px;
+			border-bottom-right-radius: 8px;
+		}
+		
+		/* Overlay para cerrar el panel */
+		.acciones-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 9999;
+		}
+		
+		.acciones-overlay.show {
+			display: block;
+		}
+		
+		/* Scrollbar personalizado para el panel */
+		.acciones-panel::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb {
+			background: #888;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
+		
 		/* Contenedor responsivo con scroll horizontal */
 		.table-responsive-estudiantes {
 			width: 100%;
@@ -709,6 +905,8 @@ if($config['conf_doble_buscador'] == 1) {
                                                 </thead>
                                                 <tbody id="matriculas_result">
 													<?php
+													// Inicializar variables necesarias
+													$cursoActual = '';
 													
 													include("includes/consulta-paginacion-estudiantes.php");
 													$filtroLimite = 'LIMIT '.$inicio.','.$registros;
@@ -1323,6 +1521,190 @@ if($config['conf_doble_buscador'] == 1) {
 				if (e.which === 13) { // Enter key
 					e.preventDefault();
 					aplicarFiltros();
+				}
+			});
+			
+			// Cerrar dropdowns al hacer scroll dentro del contenedor de la tabla
+			$('.table-estudiantes-wrapper').on('scroll', function() {
+				// Cerrar todos los dropdowns abiertos
+				$('.dropdown-menu.show').each(function() {
+					var $dropdown = $(this).closest('.dropdown, .btn-group');
+					$dropdown.find('[data-toggle="dropdown"]').dropdown('toggle');
+				});
+			});
+			
+			// ========================================
+			// SISTEMA DE PANEL DE ACCIONES FLOTANTE
+			// ========================================
+			
+			// Variable global para almacenar el panel actual
+			window.currentAccionesPanel = null;
+			
+			// Función para mostrar el panel de acciones
+			window.mostrarPanelAcciones = function(btn, estudianteId) {
+				// Cerrar cualquier panel abierto
+				cerrarPanelAcciones();
+				
+				// Crear el overlay
+				var overlay = $('<div class="acciones-overlay show"></div>');
+				$('body').append(overlay);
+				
+				// Obtener el contenido del dropdown correspondiente
+				var dropdownMenu = $('#Acciones_' + estudianteId);
+				if (!dropdownMenu.length) {
+					console.error('No se encontró el menú de acciones para el estudiante:', estudianteId);
+					return;
+				}
+				
+				// Crear el panel
+				var panel = $('<div class="acciones-panel show"></div>');
+				var lista = $('<div class="acciones-list"></div>');
+				
+				// Mapeo de iconos y colores por acción (más sutiles)
+				var accionesConfig = {
+					'Editar matrícula': { icon: 'fa-edit', color: '#667eea' },
+					'Edición rápida': { icon: 'fa-bolt', color: '#f5576c' },
+					'Transferir a SION': { icon: 'fa-exchange-alt', color: '#00f2fe' },
+					'Cambiar de grupo': { icon: 'fa-users', color: '#38f9d7' },
+					'Editar usuario': { icon: 'fa-user-edit', color: '#fa709a' },
+					'Retirar': { icon: 'fa-user-times', color: '#ee5a6f' },
+					'Restaurar': { icon: 'fa-undo', color: '#96fbc4' },
+					'Reservar cupo': { icon: 'fa-bookmark', color: '#fdbb2d' },
+					'Eliminar': { icon: 'fa-trash', color: '#eb3349' },
+					'Generar usuario': { icon: 'fa-user-plus', color: '#6a11cb' },
+					'Autologin': { icon: 'fa-sign-in-alt', color: '#37ecba' },
+					'Boletín': { icon: 'fa-file-alt', color: '#667eea' },
+					'Libro Final': { icon: 'fa-book', color: '#a18cd1' },
+					'Informe parcial': { icon: 'fa-chart-line', color: '#84fab0' },
+					'Hoja de matrícula': { icon: 'fa-file-contract', color: '#ffecd2' },
+					'SION - Estado de cuenta': { icon: 'fa-money-bill-wave', color: '#a1c4fd' },
+					'Ficha estudiantil': { icon: 'fa-id-card', color: '#fccb90' },
+					'Adjuntar documentos': { icon: 'fa-paperclip', color: '#e0c3fc' }
+				};
+				
+				// Convertir los items del dropdown en items de lista vertical
+				dropdownMenu.find('li').each(function() {
+					var link = $(this).find('a');
+					if (link.length) {
+						var texto = link.text().trim();
+						var href = link.attr('href');
+						var onclick = link.attr('onclick');
+						
+						// Buscar configuración de icono
+						var config = null;
+						for (var key in accionesConfig) {
+							if (texto.includes(key)) {
+								config = accionesConfig[key];
+								break;
+							}
+						}
+						
+						// Configuración por defecto si no se encuentra
+						if (!config) {
+							config = { icon: 'fa-cog', color: '#95a5a6' };
+						}
+						
+						// Crear el item
+						var item = $('<a class="accion-item"></a>');
+						if (href && href !== 'javascript:void(0);') {
+							item.attr('href', href);
+							if (link.attr('target')) {
+								item.attr('target', link.attr('target'));
+							}
+						} else if (onclick) {
+							item.attr('href', 'javascript:void(0);');
+							item.attr('onclick', onclick);
+						}
+						
+						// Icono con color sólido
+						var iconDiv = $('<div class="accion-icon"></div>').css('background', config.color);
+						iconDiv.html('<i class="fa ' + config.icon + '"></i>');
+						
+						var nameSpan = $('<span class="accion-name"></span>').text(texto);
+						
+						item.append(iconDiv).append(nameSpan);
+						
+						// Al hacer clic, cerrar el panel
+						item.on('click', function() {
+							cerrarPanelAcciones();
+						});
+						
+						lista.append(item);
+					}
+				});
+				
+				panel.append(lista);
+				
+				// Posicionar el panel cerca del botón
+				var btnOffset = $(btn).offset();
+				var btnHeight = $(btn).outerHeight();
+				var btnWidth = $(btn).outerWidth();
+				
+				// Agregar el panel al body temporalmente para obtener sus dimensiones
+				$('body').append(panel);
+				
+				var panelWidth = panel.outerWidth();
+				var panelHeight = panel.outerHeight();
+				var windowWidth = $(window).width();
+				var windowHeight = $(window).height();
+				
+				// Calcular posición óptima (alineado a la derecha del botón)
+				var topPos = btnOffset.top;
+				var leftPos = btnOffset.left - panelWidth - 5;
+				
+				// Si se sale por la izquierda, mostrar a la derecha del botón
+				if (leftPos < 20) {
+					leftPos = btnOffset.left + btnWidth + 5;
+				}
+				
+				// Si se sale por la derecha, alinearlo al borde derecho
+				if (leftPos + panelWidth > windowWidth - 20) {
+					leftPos = windowWidth - panelWidth - 20;
+				}
+				
+				// Ajustar verticalmente si se sale por abajo
+				if (topPos + panelHeight > windowHeight - 20) {
+					topPos = windowHeight - panelHeight - 20;
+				}
+				
+				// Ajustar verticalmente si se sale por arriba
+				if (topPos < 20) {
+					topPos = 20;
+				}
+				
+				// Aplicar posición
+				panel.css({
+					top: topPos + 'px',
+					left: leftPos + 'px'
+				});
+				
+				// Guardar referencia
+				window.currentAccionesPanel = panel;
+				
+				// Cerrar al hacer clic en el overlay
+				overlay.on('click', cerrarPanelAcciones);
+			};
+			
+			// Función para cerrar el panel
+			window.cerrarPanelAcciones = function() {
+				$('.acciones-overlay').remove();
+				if (window.currentAccionesPanel) {
+					window.currentAccionesPanel.remove();
+					window.currentAccionesPanel = null;
+				}
+			};
+			
+			// Cerrar al hacer scroll
+			$('.table-estudiantes-wrapper, window').on('scroll', function() {
+				if (window.currentAccionesPanel) {
+					cerrarPanelAcciones();
+				}
+			});
+			
+			// Cerrar al presionar ESC
+			$(document).on('keydown', function(e) {
+				if (e.key === 'Escape' && window.currentAccionesPanel) {
+					cerrarPanelAcciones();
 				}
 			});
 		});

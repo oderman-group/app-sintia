@@ -1504,17 +1504,18 @@ class Estudiantes {
                  FROM ".BD_ACADEMICA.".academico_matriculas mat
 
                  INNER JOIN ".BD_ADMISIONES.".aspirantes asp
-                 ON asp_id    = mat.mat_solicitud_inscripcion
-                 AND asp_oculto = '".BDT_Aspirante::ESTADO_OCULTO_FALSO."'
+                 ON asp_id = mat.mat_solicitud_inscripcion
+                 AND asp_institucion = ?
+                 AND asp_agno = ?
                  
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
-                 ON gra_id            = asp_grado 
-                 AND gra.institucion  = mat.institucion 
-                 AND gra.year         = mat.year
+                 ON gra_id = asp_grado 
+                 AND gra.institucion = mat.institucion 
+                 AND gra.year = mat.year
 
                  WHERE mat.mat_estado_matricula = ".EN_INSCRIPCION." 
-                 AND mat.institucion            = ? 
-                 AND mat.year                   = ? 
+                 AND mat.institucion = ? 
+                 AND mat.year = ? 
                 
                  {$filtro}
                  
@@ -1522,7 +1523,7 @@ class Estudiantes {
                  
                  {$limite}";
 
-        $parametros = [$config['conf_id_institucion'], $year];
+        $parametros = [$config['conf_id_institucion'], $year, $config['conf_id_institucion'], $year];
         
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 

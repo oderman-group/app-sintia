@@ -42,6 +42,155 @@ if(!Modulos::validarPermisoEdicion()){
 	<!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+	
+	<style>
+		/* ========================================
+		   ESTILOS PARA BOTÓN DE ACCIONES
+		   ======================================== */
+		
+		/* Botón de tres puntos verticales */
+		.btn-acciones-menu {
+			background: transparent;
+			border: 1px solid #dee2e6;
+			padding: 8px 12px;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: all 0.2s ease;
+			font-size: 18px;
+			color: #666;
+		}
+		
+		.btn-acciones-menu:hover {
+			background: #f5f5f5;
+			color: #333;
+			border-color: #667eea;
+		}
+		
+		.btn-acciones-menu:active {
+			background: #e0e0e0;
+		}
+		
+		/* Panel flotante de acciones (estilo minimalista vertical) */
+		.acciones-panel {
+			display: none;
+			position: fixed;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+			border: 1px solid #e0e0e0;
+			padding: 8px 0;
+			min-width: 240px;
+			max-width: 280px;
+			max-height: 400px;
+			overflow-y: auto;
+			z-index: 10000;
+			animation: slideIn 0.15s ease-out;
+		}
+		
+		@keyframes slideIn {
+			from {
+				opacity: 0;
+				transform: scale(0.95) translateY(-10px);
+			}
+			to {
+				opacity: 1;
+				transform: scale(1) translateY(0);
+			}
+		}
+		
+		.acciones-panel.show {
+			display: block;
+		}
+		
+		/* Lista vertical de opciones */
+		.acciones-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		/* Item de acción individual (estilo lista) */
+		.accion-item {
+			display: flex;
+			align-items: center;
+			padding: 12px 16px;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			text-decoration: none;
+			color: #333;
+			border-left: 3px solid transparent;
+		}
+		
+		.accion-item:hover {
+			background: #f8f9fa;
+			border-left-color: #667eea;
+			text-decoration: none;
+			color: #333;
+		}
+		
+		.accion-item:active {
+			background: #e9ecef;
+		}
+		
+		.accion-icon {
+			width: 32px;
+			height: 32px;
+			border-radius: 6px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-right: 12px;
+			font-size: 14px;
+			color: #fff;
+			flex-shrink: 0;
+		}
+		
+		.accion-name {
+			font-size: 14px;
+			color: #333;
+			font-weight: 400;
+			line-height: 1.4;
+			flex: 1;
+		}
+		
+		.accion-item:hover .accion-name {
+			font-weight: 500;
+		}
+		
+		/* Overlay para cerrar el panel */
+		.acciones-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 9999;
+		}
+		
+		.acciones-overlay.show {
+			display: block;
+		}
+		
+		/* Scrollbar personalizado para el panel */
+		.acciones-panel::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb {
+			background: #888;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
+	</style>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -95,6 +244,34 @@ if(!Modulos::validarPermisoEdicion()){
                         </div>
                     </div>
 
+					<?php
+					// Definir permisos para las acciones
+					$permisoEditarEstudiante = Modulos::validarSubRol(['DT0078']);
+					$permisoEditarUsuario = Modulos::validarSubRol(['DT0008']);
+					$permisoCrearSion = Modulos::validarSubRol(['DT0280']);
+					$permisoCambiarGrupo = Modulos::validarSubRol(['DT0083']);
+					$permisoRetirar = Modulos::validarSubRol(['DT0074']);
+					$permisoReservar = Modulos::validarSubRol(['DT0079']);
+					$permisoEliminar = Modulos::validarSubRol(['DT0015']);
+					$permisoCrearUsuario = Modulos::validarSubRol(['DT0017']);
+					$permisoAutoLogin = Modulos::validarSubRol(['DT0006']);
+					$permisoBoletines = Modulos::validarSubRol(['DT0101']);
+					$permisoLibroMatricula = Modulos::validarSubRol(['DT0100']);
+					$permisoInformeParcial = Modulos::validarSubRol(['DT0223']);
+					$permisoHojaMatricula = Modulos::validarSubRol(['DT0099']);
+					$permisoAspectos = Modulos::validarSubRol(['DT0122']);
+					$permisoAdjuntarDocumento = Modulos::validarSubRol(['DT0292']);
+					
+					// Verificar si tiene grado y grupo
+					$tieneGradoGrupo = !empty($datosEstudianteActual['mat_grado']) && !empty($datosEstudianteActual['mat_grupo']);
+					
+					// Determinar si es retirar o restaurar
+					$retirarRestaurar = 'Retirar';
+					if ($datosEstudianteActual['mat_estado_matricula'] == CANCELADO) {
+						$retirarRestaurar = 'Restaurar';
+					}
+					?>
+					
 					<div class="row mb-3">
                     	<div class="col-sm-12">
 							<div class="btn-group">
@@ -103,6 +280,85 @@ if(!Modulos::validarPermisoEdicion()){
 										Agregar nuevo <i class="fa fa-plus"></i>
 									</a>
 								<?php }?>
+								
+								<!-- Botón de acciones del estudiante -->
+								<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
+									<i class="fa fa-ellipsis-v"></i> Acciones
+								</button>
+								
+								<!-- Dropdown oculto con las opciones (para que el JS lo use) -->
+								<div style="display: none;">
+									<ul class="dropdown-menu" role="menu" id="Acciones_<?= $datosEstudianteActual['mat_id']; ?>">
+										<?php if (Modulos::validarPermisoEdicion()) { ?>
+											
+											<?php if ($config['conf_id_institucion'] == ICOLVEN && $permisoCrearSion) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea transferir este estudiante a SION?','question','estudiantes-crear-sion.php?id=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Transferir a SION</a></li>
+											<?php } ?>
+
+											<?php if (!empty($datosEstudianteActual['uss_id']) && $permisoEditarUsuario) { ?>
+												<li><a href="usuarios-editar.php?id=<?= base64_encode($datosEstudianteActual['uss_id']); ?>">Editar usuario</a></li>
+											<?php } ?>
+
+											<?php if ($tieneGradoGrupo && $permisoCambiarGrupo) { ?>
+												<li><a href="javascript:void(0);" data-toggle="modal" onclick="cambiarGrupo('<?= base64_encode($datosEstudianteActual['mat_id']) ?>')">Cambiar de grupo</a></li>
+											<?php } ?>
+											
+											<?php if ($permisoRetirar && !empty($datosEstudianteActual['mat_id'])) { ?>
+												<li><a href="javascript:void(0);" data-toggle="modal" onclick="retirar('<?= base64_encode($datosEstudianteActual['mat_id']) ?>')"><?= $retirarRestaurar ?></a></li>
+											<?php } ?>
+											
+											<?php if ($tieneGradoGrupo && $permisoReservar) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea reservar el cupo para este estudiante?','question','estudiantes-reservar-cupo.php?idEstudiante=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Reservar cupo</a></li>
+											<?php } ?>
+
+											<?php if ($permisoEliminar) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro de ejecutar esta acción?','question','estudiantes-eliminar.php?idE=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&idU=<?= base64_encode($datosEstudianteActual["uss_id"]); ?>')">Eliminar</a></li>
+											<?php } ?>
+
+											<?php if ($permisoCrearUsuario) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Está seguro de ejecutar esta acción?','question','estudiantes-crear-usuario-estudiante.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>')">Generar usuario</a></li>
+											<?php } ?>
+
+											<?php if (!empty($datosEstudianteActual['uss_usuario']) && $permisoAutoLogin) { ?>
+												<li><a href="auto-login.php?user=<?= base64_encode($datosEstudianteActual['uss_id']); ?>&tipe=<?= base64_encode(4) ?>">Autologin</a></li>
+											<?php } ?>
+
+										<?php } ?>
+
+										<?php if ($tieneGradoGrupo) { ?>
+											<?php if ($permisoBoletines && ($datosEstudianteActual['mat_estado_matricula'] != NO_MATRICULADO && $datosEstudianteActual['mat_estado_matricula'] != EN_INSCRIPCION)) { ?>
+												<?php 
+												$formatoBoletin = !empty($datosEstudianteActual['gra_formato_boletin']) ? $datosEstudianteActual['gra_formato_boletin'] : 1;
+												?>
+												<li><a href="../compartido/matricula-boletin-curso-<?= $formatoBoletin; ?>.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&periodo=<?= base64_encode($config[2]); ?>" target="_blank">Boletín</a></li>
+											<?php } ?>
+											<?php if ($permisoLibroMatricula) { ?>
+												<li><a href="../compartido/matricula-libro-curso-<?= $config['conf_libro_final'] ?>.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&periodo=<?= base64_encode($config[2]); ?>" target="_blank">Libro Final</a></li>
+											<?php } ?>
+											<?php if ($permisoInformeParcial) { ?>
+												<li><a href="../compartido/informe-parcial.php?estudiante=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>" target="_blank">Informe parcial</a></li>
+											<?php } ?>
+										<?php } ?>
+
+										<?php if (!empty($datosEstudianteActual['mat_matricula']) && $permisoHojaMatricula) { ?>
+											<li><a href="../compartido/matriculas-formato3.php?ref=<?= base64_encode($datosEstudianteActual["mat_matricula"]); ?>" target="_blank">Hoja de matrícula</a></li>
+										<?php } ?>
+
+										<?php if ($config['conf_id_institucion'] == ICOLVEN && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
+											<li><a href="http://sion.icolven.edu.co/Services/ServiceIcolven.svc/GenerarEstadoCuenta/<?= $datosEstudianteActual['mat_codigo_tesoreria']; ?>/<?= date('Y'); ?>" target="_blank">SION - Estado de cuenta</a></li>
+										<?php } ?>
+
+										<?php if (!empty($datosEstudianteActual['uss_usuario'])) { ?>
+											<?php if ($permisoAspectos) { ?>
+												<li><a href="aspectos-estudiantiles.php?idR=<?= base64_encode($datosEstudianteActual['uss_id']); ?>">Ficha estudiantil</a></li>
+											<?php } ?>
+										<?php } ?>
+										
+										<?php if ($permisoAdjuntarDocumento) { ?>
+											<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($datosEstudianteActual['uss_id']); ?>&idMatricula=<?= base64_encode($datosEstudianteActual['mat_id']); ?>">Adjuntar documentos</a></li>
+										<?php } ?>
+									</ul>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -347,9 +603,210 @@ if(!Modulos::validarPermisoEdicion()){
 			    });
 			}
 });
+
+	// ========================================
+	// SISTEMA DE PANEL DE ACCIONES FLOTANTE
+	// ========================================
+	
+	// Variable global para almacenar el panel actual
+	window.currentAccionesPanel = null;
+	
+	// Función para mostrar el panel de acciones
+	window.mostrarPanelAcciones = function(btn, estudianteId) {
+		// Cerrar cualquier panel abierto
+		cerrarPanelAcciones();
+		
+		// Crear el overlay
+		var overlay = $('<div class="acciones-overlay show"></div>');
+		$('body').append(overlay);
+		
+		// Obtener el contenido del dropdown correspondiente
+		var dropdownMenu = $('#Acciones_' + estudianteId);
+		if (!dropdownMenu.length) {
+			console.error('No se encontró el menú de acciones para el estudiante:', estudianteId);
+			return;
+		}
+		
+		// Crear el panel
+		var panel = $('<div class="acciones-panel show"></div>');
+		var lista = $('<div class="acciones-list"></div>');
+		
+		// Mapeo de iconos y colores por acción (más sutiles)
+		var accionesConfig = {
+			'Editar matrícula': { icon: 'fa-edit', color: '#667eea' },
+			'Edición rápida': { icon: 'fa-bolt', color: '#f5576c' },
+			'Transferir a SION': { icon: 'fa-exchange-alt', color: '#00f2fe' },
+			'Cambiar de grupo': { icon: 'fa-users', color: '#38f9d7' },
+			'Editar usuario': { icon: 'fa-user-edit', color: '#fa709a' },
+			'Retirar': { icon: 'fa-user-times', color: '#ee5a6f' },
+			'Restaurar': { icon: 'fa-undo', color: '#96fbc4' },
+			'Reservar cupo': { icon: 'fa-bookmark', color: '#fdbb2d' },
+			'Eliminar': { icon: 'fa-trash', color: '#eb3349' },
+			'Generar usuario': { icon: 'fa-user-plus', color: '#6a11cb' },
+			'Autologin': { icon: 'fa-sign-in-alt', color: '#37ecba' },
+			'Boletín': { icon: 'fa-file-alt', color: '#667eea' },
+			'Libro Final': { icon: 'fa-book', color: '#a18cd1' },
+			'Informe parcial': { icon: 'fa-chart-line', color: '#84fab0' },
+			'Hoja de matrícula': { icon: 'fa-file-contract', color: '#ffecd2' },
+			'SION - Estado de cuenta': { icon: 'fa-money-bill-wave', color: '#a1c4fd' },
+			'Ficha estudiantil': { icon: 'fa-id-card', color: '#fccb90' },
+			'Adjuntar documentos': { icon: 'fa-paperclip', color: '#e0c3fc' }
+		};
+		
+		// Convertir los items del dropdown en items de lista vertical
+		dropdownMenu.find('li').each(function() {
+			var link = $(this).find('a');
+			if (link.length) {
+				var texto = link.text().trim();
+				var href = link.attr('href');
+				var onclick = link.attr('onclick');
+				
+				// Buscar configuración de icono
+				var config = null;
+				for (var key in accionesConfig) {
+					if (texto.includes(key)) {
+						config = accionesConfig[key];
+						break;
+					}
+				}
+				
+				// Configuración por defecto si no se encuentra
+				if (!config) {
+					config = { icon: 'fa-cog', color: '#95a5a6' };
+				}
+				
+				// Crear el item
+				var item = $('<a class="accion-item"></a>');
+				if (href && href !== 'javascript:void(0);') {
+					item.attr('href', href);
+					if (link.attr('target')) {
+						item.attr('target', link.attr('target'));
+					}
+				} else if (onclick) {
+					item.attr('href', 'javascript:void(0);');
+					item.attr('onclick', onclick);
+				}
+				
+				// Icono con color sólido
+				var iconDiv = $('<div class="accion-icon"></div>').css('background', config.color);
+				iconDiv.html('<i class="fa ' + config.icon + '"></i>');
+				
+				var nameSpan = $('<span class="accion-name"></span>').text(texto);
+				
+				item.append(iconDiv).append(nameSpan);
+				
+				// Al hacer clic, cerrar el panel
+				item.on('click', function() {
+					cerrarPanelAcciones();
+				});
+				
+				lista.append(item);
+			}
+		});
+		
+		panel.append(lista);
+		
+		// Posicionar el panel cerca del botón
+		var btnOffset = $(btn).offset();
+		var btnHeight = $(btn).outerHeight();
+		var btnWidth = $(btn).outerWidth();
+		
+		// Agregar el panel al body temporalmente para obtener sus dimensiones
+		$('body').append(panel);
+		
+		var panelWidth = panel.outerWidth();
+		var panelHeight = panel.outerHeight();
+		var windowWidth = $(window).width();
+		var windowHeight = $(window).height();
+		
+		// Calcular posición óptima (debajo del botón)
+		var topPos = btnOffset.top + btnHeight + 5;
+		var leftPos = btnOffset.left;
+		
+		// Ajustar si se sale por la derecha
+		if (leftPos + panelWidth > windowWidth - 20) {
+			leftPos = windowWidth - panelWidth - 20;
+		}
+		
+		// Ajustar si se sale por la izquierda
+		if (leftPos < 20) {
+			leftPos = 20;
+		}
+		
+		// Ajustar verticalmente si se sale por abajo
+		if (topPos + panelHeight > windowHeight - 20) {
+			topPos = btnOffset.top - panelHeight - 5;
+		}
+		
+		// Ajustar verticalmente si se sale por arriba
+		if (topPos < 20) {
+			topPos = 20;
+		}
+		
+		// Aplicar posición
+		panel.css({
+			top: topPos + 'px',
+			left: leftPos + 'px'
+		});
+		
+		// Guardar referencia
+		window.currentAccionesPanel = panel;
+		
+		// Cerrar al hacer clic en el overlay
+		overlay.on('click', cerrarPanelAcciones);
+	};
+	
+	// Función para cerrar el panel
+	window.cerrarPanelAcciones = function() {
+		$('.acciones-overlay').remove();
+		if (window.currentAccionesPanel) {
+			window.currentAccionesPanel.remove();
+			window.currentAccionesPanel = null;
+		}
+	};
+	
+	// Cerrar al hacer scroll
+	$(window).on('scroll', function() {
+		if (window.currentAccionesPanel) {
+			cerrarPanelAcciones();
+		}
+	});
+	
+	// Cerrar al presionar ESC
+	$(document).on('keydown', function(e) {
+		if (e.key === 'Escape' && window.currentAccionesPanel) {
+			cerrarPanelAcciones();
+		}
+	});
+	
+	// ========================================
+	// FUNCIONES PARA ABRIR MODALES
+	// ========================================
+	
+	// Función para abrir el modal de cambiar grupo
+	function cambiarGrupo(idMatricula) {
+		var titulo = 'Cambiar de Grupo';
+		var url = 'estudiantes-cambiar-grupo-modal.php';
+		var data = { id: idMatricula };
+		abrirModal(titulo, url, data, null, '95%');
+	}
+	
+	// Función para abrir el modal de retirar/restaurar estudiante
+	function retirar(idMatricula) {
+		var titulo = 'Retirar / Restaurar Estudiante';
+		var url = 'estudiantes-retirar-modal.php';
+		var data = { id: idMatricula };
+		abrirModal(titulo, url, data, null, '800px');
+	}
 	</script>
 
 	   <!-- end js include path -->
+	   
+	   <!-- Funciones JS globales -->
+	   <script src="../compartido/funciones.js"></script>
+	   
+	   <!-- Modal Centralizado -->
+	   <?php include("../compartido/modal-centralizado.php"); ?>
 
 </body>
 

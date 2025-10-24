@@ -1,0 +1,388 @@
+/* ========================================
+   MODALES DE NOTICIAS - ESTILOS GLOBALES
+   ======================================== */
+
+/* Modal de Foto - Más ancho */
+#ComponeteModal-nuevoFoto .modal-dialog {
+    max-width: 650px !important;
+}
+
+#ComponeteModal-nuevoFoto .modal-body {
+    padding: 25px !important;
+}
+
+/* Modal de Video - Más ancho */
+#ComponeteModal-nuevoVideo .modal-dialog {
+    max-width: 650px !important;
+}
+
+#ComponeteModal-nuevoVideo .modal-body {
+    padding: 25px !important;
+}
+
+/* Modal de Archivo - Más ancho */
+#ComponeteModal-nuevoArchivo .modal-dialog {
+    max-width: 650px !important;
+}
+
+#ComponeteModal-nuevoArchivo .modal-body {
+    padding: 25px !important;
+}
+
+/* ========================================
+   MODAL DE FOTO
+   ======================================== */
+.upload-area {
+    border: 3px dashed #c5cae9;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.upload-area:hover {
+    border-color: #5e72e4;
+    background: linear-gradient(135deg, #e8ebf5 0%, #b8c6db 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(94, 114, 228, 0.2);
+}
+
+.upload-area.active {
+    border-color: #5e72e4;
+    background: linear-gradient(135deg, #dce3f5 0%, #adbdd9 100%);
+}
+
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.upload-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 8px;
+}
+
+.upload-subtitle {
+    font-size: 14px;
+    color: #8898aa;
+    margin-bottom: 15px;
+}
+
+.btn-choose {
+    background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+    color: white;
+    padding: 10px 28px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-choose:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 14px rgba(94, 114, 228, 0.4);
+}
+
+.upload-info {
+    font-size: 12px;
+    color: #8898aa;
+    margin-top: 12px;
+}
+
+.preview-container {
+    display: none;
+    position: relative;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.preview-container.visible {
+    display: block;
+}
+
+.preview-img {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    display: block;
+    background: #000;
+}
+
+.btn-remove-preview {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(244, 67, 54, 0.95);
+    color: white;
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-remove-preview:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+}
+
+.photo-text-container {
+    margin-bottom: 20px;
+}
+
+.photo-text-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 10px;
+}
+
+.photo-text-area {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s;
+}
+
+.photo-text-area:focus {
+    outline: none;
+    border-color: #5e72e4;
+    box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
+}
+
+.photo-text-counter {
+    font-size: 12px;
+    color: #8898aa;
+    text-align: right;
+    margin-top: 5px;
+}
+
+/* ========================================
+   MODAL DE VIDEO
+   ======================================== */
+.video-input-group {
+    margin-bottom: 20px;
+}
+
+.video-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #32325d;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.video-input-box {
+    position: relative;
+}
+
+.video-input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+.video-input {
+    width: 100%;
+    padding: 14px 15px 14px 50px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.video-input:focus {
+    outline: none;
+    border-color: #ff0000;
+    box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
+}
+
+.video-help {
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 12px;
+    border-left: 4px solid #ffc107;
+}
+
+.video-help-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 8px;
+}
+
+.video-help-example {
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    color: #6c5400;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+.video-preview-box {
+    display: none;
+    position: relative;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.video-preview-box.visible {
+    display: block;
+}
+
+.video-embed {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    background: #000;
+}
+
+.video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.btn-remove-video {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #ff0000;
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.btn-remove-video:hover {
+    background: #ff0000;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ========================================
+   BOTONES DE ACCIÓN (COMÚN)
+   ======================================== */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    padding: 11px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-cancel {
+    background: #f7fafc;
+    color: #525f7f;
+    border: 1px solid #e9ecef;
+}
+
+.btn-cancel:hover {
+    background: #e9ecef;
+}
+
+.btn-publish {
+    background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+    color: white;
+}
+
+.btn-publish:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 14px rgba(94, 114, 228, 0.4);
+}
+
+.btn-publish:disabled {
+    background: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ========================================
+   LOADING OVERLAY (COMÚN)
+   ======================================== */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f4f6;
+    border-top-color: #5e72e4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #32325d;
+}
