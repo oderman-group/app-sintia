@@ -64,6 +64,33 @@ if (!empty($datosInstitucion['ins_id'])) {
 $totalModulos = mysqli_num_rows($consultaModulos);
 $totalModulosAsignados = count($modulosInstitucion);
 
+// VERIFICAR SI EXISTEN REGISTROS EN general_informacion Y configuracion
+$tieneGeneralInfo = false;
+$tieneConfiguracion = false;
+$yearActual = $datosInstitucion['ins_year_default'] ?? date('Y');
+
+if (!empty($datosInstitucion['ins_id'])) {
+    // Verificar general_informacion
+    try {
+        $consultaGeneralInfo = mysqli_query($conexion, "SELECT COUNT(*) as total FROM " . BD_ADMIN . ".general_informacion 
+            WHERE info_institucion = " . $datosInstitucion['ins_id'] . " AND info_year = '" . $yearActual . "'");
+        $resultGeneralInfo = mysqli_fetch_array($consultaGeneralInfo, MYSQLI_BOTH);
+        $tieneGeneralInfo = ($resultGeneralInfo['total'] > 0);
+    } catch (Exception $e) {
+        error_log("Error verificando general_informacion: " . $e->getMessage());
+    }
+    
+    // Verificar configuracion
+    try {
+        $consultaConfig = mysqli_query($conexion, "SELECT COUNT(*) as total FROM " . BD_ADMIN . ".configuracion 
+            WHERE conf_id_institucion = " . $datosInstitucion['ins_id'] . " AND conf_agno = '" . $yearActual . "'");
+        $resultConfig = mysqli_fetch_array($consultaConfig, MYSQLI_BOTH);
+        $tieneConfiguracion = ($resultConfig['total'] > 0);
+    } catch (Exception $e) {
+        error_log("Error verificando configuracion: " . $e->getMessage());
+    }
+}
+
 include("../compartido/head.php");
 ?>
 
@@ -441,6 +468,126 @@ input:checked + .toggle-slider:before {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
+
+/* Alert de Configuración Faltante */
+.config-alert-card {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 5px solid #f59e0b;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(245, 158, 11, 0.2);
+    animation: slideInDown 0.5s ease;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.config-alert-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.config-alert-icon {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #f59e0b;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.config-alert-title {
+    flex: 1;
+}
+
+.config-alert-title h3 {
+    margin: 0 0 5px 0;
+    color: #92400e;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.config-alert-title p {
+    margin: 0;
+    color: #78350f;
+    font-size: 14px;
+}
+
+.config-alert-body {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.config-missing-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.config-missing-list li {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #fef3c7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #92400e;
+    font-weight: 600;
+}
+
+.config-missing-list li i {
+    color: #f59e0b;
+    font-size: 18px;
+}
+
+.btn-crear-registros {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: none;
+    color: white;
+    padding: 14px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-crear-registros:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+}
+
+.success-alert {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left: 5px solid #10b981;
+    color: #065f46;
+}
+
+.success-alert .config-alert-icon {
+    color: #10b981;
+}
 </style>
 
 </head>
@@ -511,10 +658,26 @@ input:checked + .toggle-slider:before {
                 <!-- Información de la Institución -->
                 <div class="row" style="margin-bottom: 20px;">
                     <div class="col-md-12">
-                        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.05);">
-                            <h4 style="margin-top: 0; color: #667eea;">
-                                <i class="fas fa-info-circle"></i> Información de la Institución
-                            </h4>
+                        <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 3px 10px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h4 style="margin: 0; color: #667eea;">
+                                    <i class="fas fa-info-circle"></i> Información de la Institución
+                                </h4>
+                                <div style="display: flex; gap: 10px;">
+                                    <a href="configuracion-sistema.php?year=<?=base64_encode($yearActual)?>&id=<?=base64_encode($datosInstitucion['ins_id'])?>" 
+                                       class="btn btn-sm" 
+                                       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                                       title="Editar configuración del sistema">
+                                        <i class="fas fa-cog"></i> Config. Sistema
+                                    </a>
+                                    <a href="configuracion-institucion.php" 
+                                       class="btn btn-sm" 
+                                       style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                                       title="Editar información institucional">
+                                        <i class="fas fa-building"></i> Config. Institución
+                                    </a>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-md-3">
                                     <strong>ID:</strong> <span id="infoId"><?= $datosInstitucion['ins_id']; ?></span>
@@ -532,9 +695,72 @@ input:checked + .toggle-slider:before {
                                     </span>
                                 </div>
                             </div>
+                            
+                            <?php if ($tieneGeneralInfo && $tieneConfiguracion): ?>
+                            <div style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 8px; border-left: 4px solid #10b981;">
+                                <span style="color: #065f46; font-weight: 600;">
+                                    <i class="fas fa-check-circle"></i>
+                                    Configuración completa para el año <?=$yearActual?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
+
+                <!-- Alert de Registros Faltantes -->
+                <?php if (!$tieneGeneralInfo || !$tieneConfiguracion): ?>
+                <div class="config-alert-card" id="configAlertCard">
+                    <div class="config-alert-header">
+                        <div class="config-alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="config-alert-title">
+                            <h3>⚠️ Configuración Incompleta Detectada</h3>
+                            <p>Esta institución necesita registros de configuración para el año <?=$yearActual?></p>
+                        </div>
+                    </div>
+                    
+                    <div class="config-alert-body">
+                        <p style="margin-bottom: 15px; color: #92400e; font-weight: 600;">
+                            Registros faltantes para operar correctamente:
+                        </p>
+                        <ul class="config-missing-list">
+                            <?php if (!$tieneGeneralInfo): ?>
+                            <li>
+                                <i class="fas fa-database"></i>
+                                <span><strong>general_informacion</strong> - Información general de la institución (logo, datos legales, equipo directivo)</span>
+                            </li>
+                            <?php endif; ?>
+                            
+                            <?php if (!$tieneConfiguracion): ?>
+                            <li>
+                                <i class="fas fa-cog"></i>
+                                <span><strong>configuracion</strong> - Configuración del sistema académico (notas, periodos, permisos)</span>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
+                        
+                        <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #78350f; font-size: 14px;">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>¿Por qué es necesario?</strong> Sin estos registros, las páginas de configuración 
+                                (Configuración del Sistema, Configuración de la Institución) no funcionarán correctamente y mostrarán errores.
+                            </p>
+                        </div>
+                        
+                        <button class="btn-crear-registros" onclick="crearRegistrosConfiguracion()">
+                            <i class="fas fa-magic"></i>
+                            Crear Registros Automáticamente
+                        </button>
+                        
+                        <small style="display: block; margin-top: 15px; color: #78350f;">
+                            <i class="fas fa-shield-alt"></i>
+                            Esta acción es segura y creará los registros con valores predeterminados óptimos.
+                        </small>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <!-- Buscador y Filtros -->
                 <div class="buscador-modulos">
@@ -641,6 +867,74 @@ input:checked + .toggle-slider:before {
 <script>
 // Configuración global
 const INSTITUCION_ACTUAL = <?= $datosInstitucion['ins_id']; ?>;
+const YEAR_ACTUAL = '<?= $yearActual; ?>';
+
+// Función para crear registros de configuración faltantes
+function crearRegistrosConfiguracion() {
+    if (!confirm('¿Estás seguro de crear los registros de configuración automáticamente?\n\nEsto creará:\n- general_informacion (si falta)\n- configuracion (si falta)\n\nCon valores predeterminados óptimos para el año <?=$yearActual?>.')) {
+        return;
+    }
+    
+    // Mostrar loading
+    document.getElementById('loadingOverlay').classList.add('active');
+    
+    fetch('dev-instituciones-crear-registros-config.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            institucionId: INSTITUCION_ACTUAL,
+            year: YEAR_ACTUAL
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            const alertCard = document.getElementById('configAlertCard');
+            alertCard.classList.remove('config-alert-card');
+            alertCard.classList.add('config-alert-card', 'success-alert');
+            alertCard.innerHTML = `
+                <div class="config-alert-header">
+                    <div class="config-alert-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="config-alert-title">
+                        <h3>✅ Registros Creados Exitosamente</h3>
+                        <p>La configuración se ha completado correctamente</p>
+                    </div>
+                </div>
+                <div class="config-alert-body">
+                    <p style="color: #065f46; margin-bottom: 15px;">
+                        <strong>Se crearon:</strong>
+                    </p>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        ${data.creados.general_informacion ? '<li style="color: #065f46; margin-bottom: 8px;"><i class="fas fa-check"></i> general_informacion</li>' : ''}
+                        ${data.creados.configuracion ? '<li style="color: #065f46; margin-bottom: 8px;"><i class="fas fa-check"></i> configuracion</li>' : ''}
+                    </ul>
+                    <p style="margin-top: 20px; color: #065f46;">
+                        <i class="fas fa-info-circle"></i>
+                        Ahora puedes acceder a las páginas de configuración sin problemas.
+                    </p>
+                    <button onclick="location.reload()" class="btn-crear-registros" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); margin-top: 15px;">
+                        <i class="fas fa-sync"></i>
+                        Recargar Página
+                    </button>
+                </div>
+            `;
+        } else {
+            alert('Error al crear registros: ' + data.message);
+        }
+    })
+    .catch(error => {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        alert('Error de conexión: ' + error);
+        console.error('Error:', error);
+    });
+}
 </script>
 
 <script src="../js/instituciones-modulos-v2.js"></script>

@@ -32,6 +32,12 @@ class AjaxCalificaciones {
 
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_calificaciones');
 
+        // Validar y convertir nota: si está vacía o no es numérica, usar NULL
+        $nota = null;
+        if (isset($data['nota']) && $data['nota'] !== '' && is_numeric($data['nota'])) {
+            $nota = floatval($data['nota']);
+        }
+
         $sql = "INSERT INTO ".BD_ACADEMICA.".academico_calificaciones(cal_id, cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year)VALUES(?, ?,?, ?, now(), ?, ?, ?)";
 
         $conexionPDO = Conexion::newConnection('PDO');
@@ -43,7 +49,7 @@ class AjaxCalificaciones {
 
         $asp->bindParam(1, $codigo, PDO::PARAM_STR);
         $asp->bindParam(2, $data['codEst'], PDO::PARAM_STR);
-        $asp->bindParam(3, $data['nota'], PDO::PARAM_STR);
+        $asp->bindParam(3, $nota, is_null($nota) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $asp->bindParam(4, $data['codNota'], PDO::PARAM_STR);
         $asp->bindParam(5, $cantidadModificaciones, PDO::PARAM_STR);
         $asp->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
@@ -55,7 +61,7 @@ class AjaxCalificaciones {
 
         Actividades::marcarActividadRegistrada($config, $data['codNota'], $_SESSION["bd"]);
 
-        if ($data['nota'] < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
+        if (!is_null($nota) && $nota < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
 
             $predicadoActividad = [
                 'act_id'      => $data['codNota'],
@@ -238,6 +244,12 @@ class AjaxCalificaciones {
 
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_recuperaciones_notas');
 
+        // Validar y convertir notaAnterior: si está vacía o no es numérica, usar NULL
+        $notaAnterior = null;
+        if (isset($data['notaAnterior']) && $data['notaAnterior'] !== '' && is_numeric($data['notaAnterior'])) {
+            $notaAnterior = floatval($data['notaAnterior']);
+        }
+
         $sql = "INSERT INTO ".BD_ACADEMICA.".academico_recuperaciones_notas(rec_id, rec_cod_estudiante, rec_nota, rec_id_nota, rec_fecha, rec_nota_anterior, institucion, year)VALUES(:codigo, :codEst, :nota, :codNota, now(), :notaAnterior, :institucion, :year)";
         
         $asp         = $conexionPDO->prepare($sql);
@@ -246,7 +258,7 @@ class AjaxCalificaciones {
         $asp->bindParam(':codEst',       $data['codEst'], PDO::PARAM_STR);
         $asp->bindParam(':nota',         $data['nota'], PDO::PARAM_STR);
         $asp->bindParam(':codNota',      $data['codNota'], PDO::PARAM_STR);
-        $asp->bindParam(':notaAnterior', $data['notaAnterior'], PDO::PARAM_STR);
+        $asp->bindParam(':notaAnterior', $notaAnterior, is_null($notaAnterior) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $asp->bindParam(':institucion',  $config['conf_id_institucion'], PDO::PARAM_INT);
         $asp->bindParam(':year',         $_SESSION["bd"], PDO::PARAM_INT);
 
@@ -526,6 +538,20 @@ class AjaxCalificaciones {
         }
 
         if($caso == 1){
+            // Validar y convertir nota: si está vacía o no es numérica, usar 0
+            if (!isset($nota) || $nota === '' || !is_numeric($nota)) {
+                $nota = 0;
+            } else {
+                $nota = floatval($nota);
+            }
+            
+            // Validar notaAnterior
+            if (!isset($notaAnterior) || $notaAnterior === '' || !is_numeric($notaAnterior)) {
+                $notaAnterior = 0;
+            } else {
+                $notaAnterior = floatval($notaAnterior);
+            }
+            
             try{
                 $consultaIndicador=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_carga WHERE ipc_indicador='".$codNota."' AND ipc_carga='".$carga."' AND ipc_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
             } catch (Exception $e) {
@@ -547,8 +573,6 @@ class AjaxCalificaciones {
                 $parametros = [$codigo, $codEstudiante, $carga, $nota, $codNota, $periodo, 1, $rindNotaActual, $indicador['ipc_valor'], $config['conf_id_institucion'], $_SESSION["bd"]];
                 $resultado = BindSQL::prepararSQL($sql, $parametros);
             }else{
-                if($notaAnterior==""){$notaAnterior = "0.0";}
-                
                 $sql = "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota=?, rind_nota_anterior=?, rind_actualizaciones=rind_actualizaciones+1, rind_ultima_actualizacion=now(), rind_nota_actual=?, rind_tipo_ultima_actualizacion=2, rind_valor_indicador_actualizacion=? WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
                 $parametros = [$nota, $notaAnterior, $rindNotaActual, $indicador['ipc_valor'], $carga, $codEstudiante, $periodo, $codNota, $config['conf_id_institucion'], $_SESSION["bd"]];
                 $resultado = BindSQL::prepararSQL($sql, $parametros);

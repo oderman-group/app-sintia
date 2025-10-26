@@ -133,90 +133,25 @@ foreach ($data["data"] as $resultado) {
 						if ($permisoPlanillaNotas) { ?>
 							<li><a href="../compartido/planilla-docentes-notas.php?carga=<?= base64_encode($resultado['car_id']); ?>" target="_blank">Ver Planilla con notas</a></li>
 						<?php } ?>
-						<?php 	if ($permisoGenerarInforme) {
-							$generarInforme = false;
-							$msnajetooltip = "";
-							$actividadesDeclaradas = $resultado['actividades'] ?? 0;
-							$actividadesRegistradas = $resultado['actividades_registradas'] ?? 0;
-							$configGenerarJobs = $config['conf_porcentaje_completo_generar_informe'];
-							$numSinNotas = 0;
-							if ($actividadesDeclaradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
-								$generarInforme = false;
-								$msnajetooltip = "Las califaciones declaradas no completan el 100% ";
-							} else if ($actividadesRegistradas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) { 
-								$generarInforme = false;
-								$msnajetooltip = "Las califaciones registradas no completan el 100% ";
-							} else {
-								$generarInforme = true;
-							}
-							if ($generarInforme) {
-								switch (intval($configGenerarJobs)) {
-									case 1:
-										$numSinNotas = $resultado["cantidad_estudiantes_sin_nota"] ?? 0;
-										if ($numSinNotas < Boletin::PORCENTAJE_MINIMO_GENERAR_INFORME) {
-											$generarInforme = false;
-											$msnajetooltip = "La institución no permite generar informe hasta que todos los estudiantes estén calificados un 100%";
-											break;
-										}
-										break;
-									case 2:
-										$generarInforme = true;
-										$msnajetooltip = "La institución omitirá los estudiantes que no tengan las calificaciones en un 100%";
-										break;
-									case 3:
-										$generarInforme = true;
-										$msnajetooltip = "La institución generará el informe con el porcentaje actual de cada estudiante";
-										break;
-								}
-							}				
-
-							$jobsEncontrado = empty($resultado["job_id"]) ? false : true;
-
-							if ($jobsEncontrado) {
-								$generarInforme=false;
-								switch ($resultado["job_estado"]) {
-									case JOBS_ESTADO_ERROR:
-										$msnajetooltip =$resultado["job_mensaje"];
-										$generarInforme=true;
-										break;
-
-									case JOBS_ESTADO_PENDIENTE:
-										$msnajetooltip = $resultado["job_mensaje"];
-										break;
-
-									case JOBS_ESTADO_PROCESO:
-										$msnajetooltip = "El informe está en proceso.";
-										break;
-									case JOBS_ESTADO_PROCESADO:
-										$msnajetooltip = "El informe ya fué procesado.";
-										break;
-
-									default:
-										$msnajetooltip = "El informe no se puede generar, coloque las notas a todos los estudiantes para generar el informe.";										
-										break;
-								}
-							}
-
-							$tooltip = '';
-							if (!empty($msnajetooltip)) {
-								$tooltip = ' title="' . $msnajetooltip . '"';
-							}
-							$onClick='onclick=mostrarGenerarInforme("'.$resultado['car_id'].'")';
+						<?php if ($permisoGenerarInforme) { 
+							// Preparar datos para el botón (siempre habilitado)
+							$datosGeneracion = [
+								'carga' => $resultado["car_id"],
+								'periodo' => $resultado["car_periodo"],
+								'grado' => $resultado["car_curso"],
+								'grupo' => $resultado["car_grupo"],
+								'tipoGrado' => $resultado["gra_tipo"]
+							];
+							$datosJson = htmlspecialchars(json_encode($datosGeneracion), ENT_QUOTES, 'UTF-8');
 							?>
-								<li id="informe-<?php $resultado['car_id']?>" class="dropdown-submenu-generar-informe" <?= !$generarInforme ? '' : 'onmouseover="noCerrarToggle(this)"' ?>  data-toggle="tooltip" <?= $tooltip ?>>
-								<a style="color:<?= !$generarInforme ? '#bcc6d0' : '#6f6f6f' ?>;" class="dropdown-item dropdown-toggle" href="javascript:void(0);" <?= !$generarInforme ? '' : $onClick ?>  >Generar Informe</a>
-								<?php if ($generarInforme) {
-									 $parametros='?carga='.base64_encode($resultado["car_id"]).
-									              '&periodo='.base64_encode($resultado["car_periodo"]).
-												  '&grado='.base64_encode($resultado["car_curso"]).
-												  '&grupo='.base64_encode($resultado["car_grupo"]).
-												  '&tipoGrado='.base64_encode($resultado["gra_tipo"]);
-									?>
-									<ul id="generarInforme-<?=$resultado["car_id"]?>" class="dropdown-menu">
-										<li><a rel="<?=$configGenerarJobs.'-'.$numSinNotas.'-1';?>" class="dropdown-item"  href="javascript:void(0);" onclick="mensajeGenerarInforme(this)" name="../compartido/generar-informe.php<?=$parametros?>">Manual</a></li>
-										<li><a rel="<?=$configGenerarJobs.'-'.$numSinNotas.'-2';?>" class="dropdown-item" href="javascript:void(0);"  onclick="mensajeGenerarInforme(this)" name="../compartido/job-generar-informe.php<?=$parametros?>">Automático</a></li>
-									</ul>
-								<?php } ?>
+							<li class="dropdown-item-generar-informe">
+								<a style="color: #2c3e50; cursor: pointer;" 
+								   class="dropdown-item btn-generar-informe-async" 
+								   href="javascript:void(0);" 
+								   data-carga='<?= $datosJson ?>'
+								   title="Generar informe de esta carga">
+									📊 Generar Informe
+								</a>
 							</li>
 						<?php } ?>
 						<?php if($permisoComportamiento){?>
@@ -229,35 +164,3 @@ foreach ($data["data"] as $resultado) {
 <?php
 	$contReg++;
 } ?>
-<script>
-
-	function noCerrarToggle(element){
-		// Validar que el elemento existe antes de agregar el event listener
-		if (element && typeof element.addEventListener === 'function') {
-			element.addEventListener('click', function(e) {
-				e.stopPropagation(); // Evita el cierre al hacer clic dentro del submenú
-			});
-		}
-	}
-	
-
-	function mostrarGenerarInforme(valor) {
-		submenu = document.getElementById('generarInforme-' + valor);
-		if (submenu.classList.contains('show')) {
-			submenu.classList.remove('show');
-		} else {
-			submenu.classList.add('show');
-		};
-
-	}
-</script>
-<style>
-	.dropdown-submenu-generar-informe .dropdown-menu {
-		top: 100%;
-		/* Mueve el submenú hacia abajo del elemento principal */
-		left: 0;
-		/* Alinea el submenú con el borde izquierdo del elemento padre */
-		margin-top: 0.5rem;
-		/* Agrega un pequeño margen superior */
-	}
-</style>

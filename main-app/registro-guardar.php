@@ -6,6 +6,76 @@ require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
 
 $notificacion = new Notificacion();
 
+/**
+ * VALIDACIÓN DE RECAPTCHA v3
+ */
+$recaptchaToken = isset($_POST['recaptchaToken']) ? $_POST['recaptchaToken'] : '';
+$recaptchaValid = false;
+
+if (!empty($recaptchaToken)) {
+    $secretKey = '6LfH9KkqAAAAAI3vc_wWTW0EfV0qGVs2cVXe8gGc'; // Clave secreta de reCAPTCHA
+    
+    $recaptchaUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    $recaptchaData = [
+        'secret' => $secretKey,
+        'response' => $recaptchaToken,
+        'remoteip' => $_SERVER['REMOTE_ADDR']
+    ];
+    
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($recaptchaData)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $verify = file_get_contents($recaptchaUrl, false, $context);
+    $captchaSuccess = json_decode($verify);
+    
+    // Verificar score de reCAPTCHA (debe ser > 0.5 para considerarse humano)
+    if ($captchaSuccess->success && $captchaSuccess->score >= 0.5) {
+        $recaptchaValid = true;
+    }
+}
+
+// Si la validación de reCAPTCHA falla, registrar advertencia pero continuar
+// (reCAPTCHA es opcional para no bloquear registros legítimos por problemas técnicos)
+if (!$recaptchaValid) {
+    error_log("Advertencia: reCAPTCHA no validado para registro - IP: " . $_SERVER['REMOTE_ADDR']);
+}
+
+/**
+ * VALIDACIÓN DE CÓDIGO DE VERIFICACIÓN
+ */
+$idRegistro = isset($_POST['idRegistro']) ? (int)$_POST['idRegistro'] : 0;
+
+if ($idRegistro > 0) {
+    $consultaCodigo = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios_codigo_verificacion 
+        WHERE codv_id='{$idRegistro}' AND codv_verificado=1 AND codv_usuario_asociado IS NULL LIMIT 1");
+    
+    if (mysqli_num_rows($consultaCodigo) == 0) {
+        $_SESSION['mensajeError'] = "Código de verificación no válido. Por favor verifica tu email.";
+        header("Location: registro.php?" . http_build_query($_POST));
+        exit();
+    }
+    
+    $datosCodigoVerificacion = mysqli_fetch_array($consultaCodigo, MYSQLI_BOTH);
+    
+    // Verificar que el código no haya expirado
+    $fechaExpiracion = strtotime($datosCodigoVerificacion['codv_fecha_expiracion']);
+    if (time() > $fechaExpiracion) {
+        $_SESSION['mensajeError'] = "El código de verificación ha expirado. Por favor solicita uno nuevo.";
+        header("Location: registro.php?" . http_build_query($_POST));
+        exit();
+    }
+} else {
+    $_SESSION['mensajeError'] = "Código de verificación requerido.";
+    header("Location: registro.php?" . http_build_query($_POST));
+    exit();
+}
+
 $fecha=date("Y-m-d");
 $fechaCompleta = date("Y-m-d H:i:s");
 $nombreInsti = $_POST['nombreIns'];
@@ -34,7 +104,7 @@ try {
 			'ins_years' => $year . "," . $year,
 			'ins_notificaciones_acudientes' => 0,
 			'ins_siglas' => $siglasInst,
-			'ins_id_plan' => $_POST['plan'],
+			'ins_id_plan' => 1, // Plan básico por defecto
 			'ins_year_default' => $year,
 			'ins_tipo' => SCHOOL
 		);
@@ -58,18 +128,18 @@ try {
 	}
 	$idInsti = mysqli_insert_id($conexion);
 
-	//BUSCAMOS MODULOS DEL PLAN ESCOGIDO
-	try{
-		$consultaModulos = mysqli_query($conexion, "SELECT plns_modulos FROM ".BD_ADMIN.".planes_sintia WHERE plns_id='".$_POST['plan']."'");
-	} catch (Exception $e) {
-		echo $e->getMessage();
-		exit();
+	//PROCESAMOS MODULOS SELECCIONADOS POR EL USUARIO
+	$modulosSeleccionados = isset($_POST['modulos']) ? $_POST['modulos'] : [];
+	
+	if (empty($modulosSeleccionados)) {
+		// Si no seleccionó módulos, asignar módulos básicos por defecto
+		$modulosSeleccionados = [1, 2, 3, 4, 5]; // IDs de módulos básicos
 	}
-	$datosModulos = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH);
-	$arrayModulos = explode(",", $datosModulos['plns_modulos']);
+	
 	$modulosInsertar = "";
-	foreach ($arrayModulos as $idModulo) {
-		$modulosInsertar .= '('.$idInsti.','.$idModulo.'),';
+	foreach ($modulosSeleccionados as $idModulo) {
+		$idModuloSafe = mysqli_real_escape_string($conexion, $idModulo);
+		$modulosInsertar .= '('.$idInsti.','.$idModuloSafe.'),';
 	}
 	$modulosInsertar = substr($modulosInsertar,0,-1);
 
@@ -210,7 +280,8 @@ try {
 
 	//DEMO
 	try{
-		mysqli_query($conexion, "INSERT INTO demo(demo_fecha_ingreso, demo_usuario, demo_ip, demo_cantidad, demo_correo_enviado, demo_fecha_ultimo_correo, demo_nocorreos, demo_plan, demo_institucion)VALUES(now(), '2', '" . $_SERVER["REMOTE_ADDR"] . "', 0, 1, now(), 0, '" . $_POST["plan"] . "', '".$idInsti."')");
+		$modulosSeleccionadosText = implode(',', $modulosSeleccionados);
+		mysqli_query($conexion, "INSERT INTO demo(demo_fecha_ingreso, demo_usuario, demo_ip, demo_cantidad, demo_correo_enviado, demo_fecha_ultimo_correo, demo_nocorreos, demo_plan, demo_institucion)VALUES(now(), '2', '" . $_SERVER["REMOTE_ADDR"] . "', 0, 1, now(), 0, '1', '".$idInsti."')");
 	} catch (Exception $e) {
 		echo $e->getMessage();
 		exit();

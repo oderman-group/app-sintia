@@ -156,6 +156,20 @@ function getFileVersion($filePath) {
 }
 ?>
 
+<!-- Configuración global de la institución para JavaScript -->
+<script>
+	// Variables de configuración de la institución disponibles para JavaScript
+	window.CONFIG_INSTITUCION = {
+		notaMinimaAprobar: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_minima_aprobar']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_minima_aprobar'] : 3.5; ?>,
+		notaMaxima: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_hasta']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_hasta'] : 5.0; ?>,
+		notaMinima: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_desde']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_desde'] : 1.0; ?>,
+		idInstitucion: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_id_institucion']) ? (int)$_SESSION['datosUnicosInstitucion']['config']['conf_id_institucion'] : 0; ?>
+	};
+	
+	// Debug: Mostrar configuración cargada
+	console.log('✅ Configuración de la institución cargada:', window.CONFIG_INSTITUCION);
+</script>
+
 <!-- Mis funciones JS -->
 <script src="<?=BASE_URL;?>/main-app/compartido/funciones.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/compartido/funciones.js'); ?>" ></script>
 <script src="<?=BASE_URL;?>/main-app/js/Utilidades.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Utilidades.js'); ?>" ></script>

@@ -195,7 +195,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
 
     /* Colores para cada ícono */
     .help-menu-item:nth-child(1) .help-menu-icon {
-        background: linear-gradient(135deg, <?= $colorPrimario ?> 0%, <?= $colorSecundario ?> 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
 
@@ -205,22 +205,32 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
     }
 
     .help-menu-item:nth-child(3) .help-menu-icon {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        background: linear-gradient(135deg, <?= $colorPrimario ?> 0%, <?= $colorSecundario ?> 100%);
         color: white;
     }
 
     .help-menu-item:nth-child(4) .help-menu-icon {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
     }
 
     .help-menu-item:nth-child(5) .help-menu-icon {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         color: white;
     }
 
     .help-menu-item:nth-child(6) .help-menu-icon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+
+    .help-menu-item:nth-child(7) .help-menu-icon {
         background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        color: white;
+    }
+
+    .help-menu-item:nth-child(8) .help-menu-icon {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         color: white;
     }
 
@@ -329,6 +339,8 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
     .help-menu.active .help-menu-item:nth-child(4) { animation-delay: 0.25s; }
     .help-menu.active .help-menu-item:nth-child(5) { animation-delay: 0.3s; }
     .help-menu.active .help-menu-item:nth-child(6) { animation-delay: 0.35s; }
+    .help-menu.active .help-menu-item:nth-child(7) { animation-delay: 0.4s; }
+    .help-menu.active .help-menu-item:nth-child(8) { animation-delay: 0.45s; }
 
     /* Responsive */
     @media (max-width: 768px) {
@@ -384,6 +396,53 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             </h4>
             <p class="help-menu-subtitle">¿En qué podemos ayudarte?</p>
         </div>
+
+        <a href="#" class="help-menu-item" onclick="iniciarTourSintia(event)">
+            <div class="help-menu-icon">
+                <i class="fa fa-route"></i>
+            </div>
+            <div class="help-menu-content">
+                <h5 class="help-menu-item-title">Tour SINTIA</h5>
+                <p class="help-menu-item-desc">Recorrido guiado por la plataforma</p>
+            </div>
+            <i class="fa fa-chevron-right help-menu-arrow"></i>
+        </a>
+
+        <?php 
+        // Mostrar opción de Guía de Inicio solo para directivos
+        $esDirectivo = false;
+        
+        // Verificar tipo de usuario desde $datosUsuarioActual si existe
+        if (isset($datosUsuarioActual) && isset($datosUsuarioActual['uss_tipo'])) {
+            $esDirectivo = ($datosUsuarioActual['uss_tipo'] == 5);
+        } 
+        // Si no existe $datosUsuarioActual, verificar desde SESSION
+        elseif (isset($_SESSION['tipo'])) {
+            $esDirectivo = ($_SESSION['tipo'] == 5);
+        }
+        // Último recurso: consultar directamente la BD
+        elseif (isset($_SESSION['id']) && isset($conexion)) {
+            $sqlTipoUsuario = "SELECT uss_tipo FROM " . BD_GENERAL . ".usuarios WHERE uss_id = '" . $_SESSION['id'] . "' LIMIT 1";
+            $consultaTipo = mysqli_query($conexion, $sqlTipoUsuario);
+            if ($consultaTipo && mysqli_num_rows($consultaTipo) > 0) {
+                $datosTipo = mysqli_fetch_assoc($consultaTipo);
+                $esDirectivo = ($datosTipo['uss_tipo'] == 5);
+            }
+        }
+        
+        if ($esDirectivo): 
+        ?>
+        <a href="#" class="help-menu-item" onclick="abrirModalBienvenida(event)">
+            <div class="help-menu-icon">
+                <i class="fa fa-hand-peace"></i>
+            </div>
+            <div class="help-menu-content">
+                <h5 class="help-menu-item-title">Guía de Inicio</h5>
+                <p class="help-menu-item-desc">Ver opciones de bienvenida</p>
+            </div>
+            <i class="fa fa-chevron-right help-menu-arrow"></i>
+        </a>
+        <?php endif; ?>
 
         <a href="#" class="help-menu-item" onclick="contactarSoporte(event)">
             <div class="help-menu-icon">
@@ -496,6 +555,62 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
     });
 
     // Funciones para cada opción del menú
+    function iniciarTourSintia(event) {
+        event.preventDefault();
+        toggleHelpMenu();
+        
+        $.toast({
+            heading: 'Tour SINTIA',
+            text: 'Iniciando recorrido guiado por la plataforma...',
+            position: 'bottom-right',
+            icon: 'info',
+            hideAfter: 2000,
+            loaderBg: '<?= $colorPrimario ?>'
+        });
+        
+        // Iniciar el tour moderno
+        setTimeout(function() {
+            if (typeof iniciarTourModerno === 'function') {
+                iniciarTourModerno();
+            } else {
+                // Fallback a intro.js si existe
+                if (typeof introJs !== 'undefined') {
+                    introJs().start();
+                }
+            }
+        }, 500);
+    }
+
+    function abrirModalBienvenida(event) {
+        event.preventDefault();
+        toggleHelpMenu();
+        
+        $.toast({
+            heading: 'Guía de Inicio',
+            text: 'Abriendo opciones de bienvenida...',
+            position: 'bottom-right',
+            icon: 'success',
+            hideAfter: 2000,
+            loaderBg: '<?= $colorPrimario ?>'
+        });
+        
+        // Abrir el modal de bienvenida si existe
+        setTimeout(function() {
+            if ($('#modalBienvenidaDirectivo').length) {
+                $('#modalBienvenidaDirectivo').modal('show');
+            } else {
+                $.toast({
+                    heading: 'Información',
+                    text: 'El modal de bienvenida solo está disponible en el dashboard principal',
+                    position: 'bottom-right',
+                    icon: 'info',
+                    hideAfter: 3000,
+                    loaderBg: '#ffc107'
+                });
+            }
+        }, 500);
+    }
+
     function contactarSoporte(event) {
         event.preventDefault();
         toggleHelpMenu();
