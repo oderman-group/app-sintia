@@ -19,7 +19,7 @@ $institucionNombre = $institucion['ins_siglas'];
                 <!-- logo start -->
                 <div class="page-logo">
                     <a href="index.php">
-                    <img src="../../sintia-gris.png" alt="SINTIA" class="logo-default" style="height: 40px; width: auto; max-width: 100%; object-fit: contain;"> </a>
+                    <img src="../../sintia-color.png" alt="SINTIA" class="logo-default" style="height: 40px; width: auto; max-width: 100%; object-fit: contain;"> </a>
                 </div>
                 <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_PREFERENCIAS)) {?>
                     <!-- logo end -->

@@ -1202,6 +1202,12 @@ if($config['conf_doble_buscador'] == 1) {
 						$('#selectAllCargas').prop('checked', false);
 						toggleActionButtons();
 						
+						// IMPORTANTE: Reinicializar event listeners de expandir/contraer
+						reinicializarEventListenersExpandir();
+						
+						// Reinicializar tooltips
+						$('[data-toggle="tooltip"]').tooltip();
+						
 						console.log('Tabla recargada exitosamente');
 					} else {
 						console.error('Error al recargar tabla:', response.error);
@@ -1221,6 +1227,54 @@ if($config['conf_doble_buscador'] == 1) {
 					// No mostrar error ya que los cambios sí se aplicaron
 				}
 			});
+		}
+		
+		// Función para reinicializar event listeners de expandir/contraer
+		function reinicializarEventListenersExpandir() {
+			console.log('Reinicializando event listeners de expandir/contraer...');
+			
+			$('.expand-btn').off('click').on('click', function() {
+				var button = $(this);
+				var cargaId = button.data('id');
+				var icon = button.find('i');
+				
+				// Verificar si la fila expandible ya existe
+				var expandRow = button.closest('tr').next('tr.expandable-row');
+				
+				if (expandRow.length && expandRow.is(':visible')) {
+					// Contraer
+					expandRow.slideUp(300, function() {
+						icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+						button.removeClass('text-primary').addClass('text-secondary');
+					});
+				} else {
+					// Expandir - obtener datos de los atributos del botón
+					var codigo = button.data('codigo');
+					var docente = button.data('docente');
+					var curso = button.data('curso');
+					var asignatura = button.data('asignatura');
+					var ih = button.data('ih');
+					var periodo = button.data('periodo');
+					var actividades = button.data('actividades');
+					var actividadesRegistradas = button.data('actividades-registradas');
+					var directorGrupo = button.data('director-grupo');
+					var permiso2 = button.data('permiso2');
+					var indicadorAutomatico = button.data('indicador-automatico');
+					var maxIndicadores = button.data('max-indicadores');
+					var maxCalificaciones = button.data('max-calificaciones');
+					var cantidadEstudiantes = button.data('cantidad-estudiantes');
+					var activa = button.data('activa');
+					
+					// Crear el HTML de detalles y insertarlo
+					var detailsHtml = formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId);
+					$(detailsHtml).insertAfter(button.closest('tr')).slideDown(300);
+					
+					icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+					button.removeClass('text-secondary').addClass('text-primary');
+				}
+			});
+			
+			console.log('Event listeners reinicializados correctamente');
 		}
 
 		// Limpiar selección al cerrar el modal
@@ -1713,7 +1767,7 @@ $(document).ready(function() {
 					// Mostrar notificación de éxito
 					$.toast({
 						heading: 'Éxito',
-						text: 'Datos cargados correctamente',
+						text: 'Datos cargados: ' + actividadesTotales + '% - ' + actividadesRegistradas + '%',
 						position: 'top-right',
 						loaderBg: '#26c281',
 						icon: 'success',
@@ -2074,8 +2128,282 @@ $(document).ready(function() {
 			aplicarFiltrosCargas();
 		}, 500);
 	});
+	
+	// ========================================
+	// GENERACIÓN ASÍNCRONA DE INFORMES
+	// ========================================
+	
+	// Event delegation para botones de generar informe
+	$(document).on('click', '.btn-generar-informe-async', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		
+		const datosBtn = $(this).data('carga');
+		
+		if (!datosBtn) {
+			console.error('No se encontraron datos de la carga');
+			return;
+		}
+		
+		// Cerrar el dropdown
+		$(this).closest('.dropdown-menu').removeClass('show');
+		$(this).closest('.btn-group').find('.dropdown-toggle').dropdown('toggle');
+		
+		// Confirmar con SweetAlert2 moderno
+		Swal.fire({
+			title: '📊 Generar Informe',
+			html: `
+				<div style="text-align: left; padding: 20px;">
+					<p style="font-size: 15px; margin-bottom: 20px; color: #6b7280;">
+						Se generará el informe del boletín para:
+					</p>
+					<div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+						<div style="display: grid; gap: 12px;">
+							<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 8px;">
+								<span style="color: #9ca3af; font-weight: 600;">📚 Carga:</span>
+								<span style="color: #1f2937; font-weight: 700;">${datosBtn.carga}</span>
+							</div>
+							<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 8px;">
+								<span style="color: #9ca3af; font-weight: 600;">📅 Periodo:</span>
+								<span style="color: #1f2937; font-weight: 700;">${datosBtn.periodo}</span>
+							</div>
+							<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 8px;">
+								<span style="color: #9ca3af; font-weight: 600;">🎓 Curso/Grupo:</span>
+								<span style="color: #1f2937; font-weight: 700;">${datosBtn.grado} - ${datosBtn.grupo}</span>
+							</div>
+						</div>
+					</div>
+					<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px;">
+						<p style="margin: 0; color: #92400e; font-size: 14px;">
+							<i class="fa fa-info-circle"></i>
+							<strong>Importante:</strong> Este proceso puede tomar unos segundos dependiendo de la cantidad de estudiantes.
+						</p>
+					</div>
+				</div>
+			`,
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-check"></i> Sí, Generar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6b7280',
+			customClass: {
+				popup: 'swal-modern',
+				confirmButton: 'btn-modern-confirm',
+				cancelButton: 'btn-modern-cancel'
+			},
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				return generarInformeAsincrono(datosBtn);
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		});
+	});
+	
+	// Función para generar el informe de forma asíncrona
+	function generarInformeAsincrono(datos) {
+		console.log('=== Iniciando generación de informe ===');
+		console.log('Datos a enviar:', datos);
+		
+		return fetch('ajax-generar-informe-manual.php', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(datos)
+		})
+		.then(response => {
+			console.log('Response status:', response.status);
+			console.log('Response ok:', response.ok);
+			
+			if (!response.ok) {
+				throw new Error('Error de red: ' + response.status);
+			}
+			
+			return response.text().then(text => {
+				console.log('Response text:', text);
+				try {
+					return JSON.parse(text);
+				} catch (e) {
+					console.error('Error parsing JSON:', e);
+					console.error('Response text:', text);
+					throw new Error('Respuesta inválida del servidor: ' + text.substring(0, 100));
+				}
+			});
+		})
+		.then(data => {
+			console.log('Data recibida:', data);
+			
+			if (!data.success) {
+				// Cerrar el loading de SweetAlert
+				Swal.close();
+				
+				// Convertir saltos de línea a HTML
+				const mensajeHTML = (data.message || 'Error desconocido')
+					.replace(/\n\n/g, '</p><p style="margin: 10px 0;">')
+					.replace(/\n/g, '<br>');
+				
+				// Mostrar error con formato mejorado
+				Swal.fire({
+					title: '⚠️ No se puede Generar',
+					html: `
+						<div style="text-align: left; padding: 20px;">
+							<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+								<p style="margin: 0; color: #991b1b; line-height: 1.6;">
+									${mensajeHTML}
+								</p>
+							</div>
+							<p style="text-align: center; color: #6b7280; font-size: 14px; margin: 0;">
+								<i class="fa fa-lightbulb-o"></i> Corrige el problema e intenta nuevamente
+							</p>
+						</div>
+					`,
+					icon: 'error',
+					confirmButtonText: '<i class="fa fa-check"></i> Entendido',
+					confirmButtonColor: '#ef4444',
+					customClass: {
+						popup: 'swal-modern'
+					}
+				});
+				
+				// Rechazar la promesa para detener el flujo
+				throw new Error(data.message);
+			}
+			
+			// Éxito - mostrar resultado
+			Swal.close();
+			
+			const mensajeConfig = data.mensaje_configuracion ? 
+				`<p style="margin: 0 0 10px 0; color: #d97706;"><i class="fa fa-info-circle"></i> ${data.mensaje_configuracion}</p>` : '';
+			
+			Swal.fire({
+				title: '✅ ¡Informe Generado!',
+				html: `
+					<div style="text-align: center; padding: 20px;">
+						<div style="font-size: 64px; margin-bottom: 20px;">🎉</div>
+						<h3 style="color: #10b981; margin-bottom: 20px;">Generación Exitosa</h3>
+						<div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; border-radius: 8px; text-align: left;">
+							<p style="margin: 0 0 10px 0; color: #065f46;"><strong>📊 Actividades:</strong> ${data.actividades_declaradas}% - ${data.actividades_registradas}%</p>
+							<p style="margin: 0 0 10px 0; color: #065f46;"><strong>👥 Estudiantes procesados:</strong> ${data.estudiantes_procesados}</p>
+							${data.estudiantes_omitidos > 0 ? `<p style="margin: 0 0 10px 0; color: #78350f;"><strong>⚠️ Estudiantes omitidos:</strong> ${data.estudiantes_omitidos}</p>` : ''}
+							${mensajeConfig}
+							<p style="margin: 0 0 10px 0; color: #065f46;"><strong>📅 Periodo procesado:</strong> ${data.periodo_procesado}</p>
+							<p style="margin: 0; color: #065f46;"><strong>➡️ Periodo siguiente:</strong> ${data.periodo_siguiente}</p>
+						</div>
+						<p style="margin-top: 20px; color: #6b7280; font-size: 14px;">
+							El informe ha sido generado y la carga ha avanzado al periodo ${data.periodo_siguiente}.
+						</p>
+					</div>
+				`,
+				icon: 'success',
+				confirmButtonText: '<i class="fa fa-check"></i> Entendido',
+				confirmButtonColor: '#10b981',
+				customClass: {
+					popup: 'swal-modern'
+				}
+			}).then(() => {
+				// Recargar solo la tabla de cargas sin recargar toda la página
+				recargarTablaCargas();
+			});
+			
+			return data;
+		})
+		.catch(error => {
+			console.error('=== Error capturado ===');
+			console.error('Error:', error);
+			console.error('Error message:', error.message);
+			console.error('Error stack:', error.stack);
+			
+			// Cerrar cualquier modal de SweetAlert que esté abierto
+			Swal.close();
+			
+			// Mostrar error al usuario
+			Swal.fire({
+				title: '❌ Error al Generar Informe',
+				html: `
+					<div style="text-align: left; padding: 20px;">
+						<div style="font-size: 48px; text-align: center; margin-bottom: 20px;">😔</div>
+						<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+							<p style="margin: 0; color: #991b1b; font-size: 15px; line-height: 1.6;">
+								<strong>Error:</strong><br>
+								${error.message || error || 'Error desconocido'}
+							</p>
+						</div>
+						<p style="text-align: center; color: #6b7280; font-size: 14px; margin: 0;">
+							<i class="fa fa-lightbulb-o"></i> Si el problema persiste, contacta al soporte técnico
+						</p>
+					</div>
+				`,
+				icon: 'error',
+				confirmButtonText: '<i class="fa fa-redo"></i> Entendido',
+				confirmButtonColor: '#ef4444',
+				customClass: {
+					popup: 'swal-modern'
+				}
+			});
+			
+			// NO hacer throw para evitar "Uncaught (in promise)"
+			// Retornar undefined para que SweetAlert maneje el flujo
+			return undefined;
+		});
+	}
 });
 </script>
+
+<!-- SweetAlert2 Custom Styles -->
+<style>
+.swal-modern {
+	border-radius: 16px !important;
+}
+
+.btn-modern-confirm {
+	border-radius: 8px !important;
+	padding: 12px 30px !important;
+	font-weight: 600 !important;
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+	transition: all 0.3s ease !important;
+}
+
+.btn-modern-confirm:hover {
+	transform: translateY(-2px) !important;
+	box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+.btn-modern-cancel {
+	border-radius: 8px !important;
+	padding: 12px 30px !important;
+	font-weight: 600 !important;
+}
+</style>
+
+<script>
+// Al confirmar la generación, mostrar resultado
+$(document).on('click', '.swal2-confirm', function() {
+	// Este evento se dispara después de preConfirm
+	setTimeout(function() {
+		if (Swal.getConfirmButton() && Swal.getConfirmButton().disabled) {
+			// Mostrar estado de carga personalizado
+			Swal.update({
+				title: '⏳ Generando Informe...',
+				html: `
+					<div style="text-align: center; padding: 30px;">
+						<div class="loading-spinner" style="width: 60px; height: 60px; border: 4px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+						<p style="color: #6b7280;">Por favor espera mientras procesamos el informe...</p>
+					</div>
+				`,
+				showConfirmButton: false,
+				allowOutsideClick: false
+			});
+		}
+	}, 100);
+});
+</script>
+
+<style>
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+</style>
 
 <?php
 // Incluir modal de transferir cargas

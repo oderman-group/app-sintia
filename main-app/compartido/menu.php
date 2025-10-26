@@ -56,22 +56,6 @@
 								</li>
 							<?php }?>
 
-							<li class="nav-item">
-								<a href="javascript:void(0);" class="nav-link nav-toggle"> 
-									<div class="menu-icon icon-help">
-										<i class="fa fa-question-circle"></i>
-									</div>
-									<span class="title">Ayuda</span>
-								</a>
-								<ul class="sub-menu">
-									<li class="nav-item start">
-										<a href="javascript:void(0);" onclick="javascript:introJs().start();" class="nav-link">
-											<span class="title">Tour SINTIA</span>
-										</a>
-									</li>
-								</ul>
-							</li>
-
 	                    </ul>
 	                </div>
                 </div>

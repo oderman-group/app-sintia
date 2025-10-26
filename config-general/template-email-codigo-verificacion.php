@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?=isset($data['asunto']) ? $data['asunto'] : 'Código de Recuperación - SINTIA'?></title>
+    <title><?=isset($data['asunto']) ? $data['asunto'] : 'Código de Verificación - SINTIA'?></title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
         .email-container {
             max-width: 600px;
             margin: 0 auto;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -69,8 +69,8 @@
         }
         
         .code-container {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
-            border: 2px dashed #ef4444;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px dashed #667eea;
             border-radius: 15px;
             padding: 30px;
             text-align: center;
@@ -89,7 +89,7 @@
         .verification-code {
             font-size: 48px;
             font-weight: 700;
-            color: #ef4444;
+            color: #667eea;
             letter-spacing: 10px;
             font-family: 'Courier New', monospace;
             margin: 15px 0;
@@ -100,31 +100,6 @@
             color: #ef4444;
             margin-top: 15px;
             font-weight: 600;
-        }
-        
-        .security-alert {
-            background: #fef2f2;
-            border-left: 4px solid #ef4444;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 8px;
-        }
-        
-        .security-alert h4 {
-            color: #991b1b;
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .security-alert p {
-            font-size: 14px;
-            color: #7f1d1d;
-            margin: 0;
-            line-height: 1.5;
         }
         
         .info-box {
@@ -172,7 +147,7 @@
         .contact-button {
             display: inline-block;
             padding: 10px 20px;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 8px;
@@ -195,7 +170,7 @@
         }
         
         .email-footer a {
-            color: #ef4444;
+            color: #667eea;
             text-decoration: none;
         }
         
@@ -243,8 +218,8 @@
         <!-- Header -->
         <div class="email-header">
             <img src="https://plataformasintia.com/images/logo-white.png" alt="SINTIA Logo">
-            <h1>🔐 Recuperación de Contraseña</h1>
-            <p>Solicitud de restablecimiento de acceso</p>
+            <h1>Verifica tu correo electrónico</h1>
+            <p>Estás a un paso de completar tu registro</p>
         </div>
         
         <!-- Body -->
@@ -254,14 +229,15 @@
             </div>
             
             <p class="message">
-                Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong>SINTIA</strong>. 
-                Para continuar con el proceso de recuperación, utiliza el siguiente código de verificación:
+                Gracias por registrarte en <strong>SINTIA</strong>, la plataforma educativa que transformará 
+                la gestión de tu institución. Para completar tu registro, necesitamos verificar tu correo electrónico.
             </p>
             
             <div class="code-container">
                 <div class="code-label">Tu Código de Verificación</div>
                 <div class="verification-code">
                     <?php 
+                    // La clase Notificacion agrega el código al array $data
                     echo isset($data['codigo']) ? $data['codigo'] : '000000'; 
                     ?>
                 </div>
@@ -270,29 +246,16 @@
                 </div>
             </div>
             
-            <div class="security-alert">
-                <h4>
-                    <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #ef4444;">
-                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    ¡Alerta de Seguridad!
-                </h4>
-                <p>
-                    <strong>Si NO solicitaste este código:</strong> Tu cuenta puede estar en riesgo. 
-                    Te recomendamos cambiar tu contraseña inmediatamente o contactar con nuestro equipo de soporte.
-                </p>
-            </div>
-            
             <div class="info-box">
                 <p>
-                    <strong>ℹ️ Información:</strong> Este código es único, de un solo uso y expirará en 10 minutos. 
-                    Solo puede ser utilizado para restablecer la contraseña de tu cuenta.
+                    <strong>⚠️ Importante:</strong> Este código es único y solo puede usarse una vez. 
+                    Si no solicitaste este código, puedes ignorar este correo de forma segura.
                 </p>
             </div>
             
             <p class="message">
-                Ingresa este código en la página de recuperación para continuar. Si el código ha expirado 
-                o necesitas uno nuevo, puedes solicitar otro desde la misma página de recuperación.
+                Ingresa este código en la página de registro para continuar. Si el código ha expirado, 
+                puedes solicitar uno nuevo desde la misma página.
             </p>
             
             <div class="divider"></div>
@@ -301,15 +264,15 @@
             <div class="help-section">
                 <h3>¿Necesitas ayuda?</h3>
                 <p>
-                    Si no reconoces esta actividad o tienes problemas para recuperar tu cuenta, 
-                    nuestro equipo de soporte está disponible para asistirte.
+                    Si tienes algún problema con el proceso de registro o no recibiste tu código, 
+                    nuestro equipo de soporte está aquí para ayudarte.
                 </p>
                 <div class="contact-info">
-                    <a href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, necesito ayuda para recuperar mi cuenta en SINTIA" 
+                    <a href="https://api.whatsapp.com/send?phone=573006075800&text=Hola, necesito ayuda con mi registro en SINTIA" 
                        class="contact-button" target="_blank">
                         📱 WhatsApp
                     </a>
-                    <a href="mailto:info@plataformasintia.com?subject=Ayuda - Recuperación de Cuenta" 
+                    <a href="mailto:info@plataformasintia.com" 
                        class="contact-button">
                         ✉️ Email
                     </a>
@@ -331,16 +294,17 @@
             <p style="margin-top: 20px; font-size: 12px;">
                 Este correo fue enviado a <strong><?php echo isset($data['usuario_email']) ? $data['usuario_email'] : ''; ?></strong>
                 <br>
-                Si no solicitaste este código, puedes ignorar este mensaje de forma segura.
+                Si no solicitaste este código, puedes ignorar este mensaje.
             </p>
             
             <p style="margin-top: 15px; font-size: 11px; color: #6b7280;">
                 © <?php echo date('Y'); ?> SINTIA. Todos los derechos reservados.
                 <br>
-                <a href="https://plataformasintia.com/privacidad" style="color: #ef4444;">Política de Privacidad</a> | 
-                <a href="https://plataformasintia.com/terminos" style="color: #ef4444;">Términos de Servicio</a>
+                <a href="https://plataformasintia.com/privacidad" style="color: #667eea;">Política de Privacidad</a> | 
+                <a href="https://plataformasintia.com/terminos" style="color: #667eea;">Términos de Servicio</a>
             </p>
         </div>
     </div>
 </body>
 </html>
+

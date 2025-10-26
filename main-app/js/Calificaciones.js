@@ -31,7 +31,11 @@ function def(enviada){
                 url: "ajax-periodos-registrar.php",
                 data: datos,
                 success: function(data){
-                $('#respRP').empty().hide().html(data).show(1);
+                    $('#respRP').empty().hide().html(data).show(1);
+                    
+                    // ✅ ACTUALIZAR LA NOTA ANTERIOR: Guardar la nota que acabamos de colocar
+                    // para que la próxima vez que se cambie sin recargar, tengamos el valor correcto
+                    enviada.alt = nota;
                 }
             });
 
@@ -79,32 +83,70 @@ function niv(enviada){
  * @param enviada //Datos enviados por imput
  */
 function notasGuardar(enviada, fila = null, tabla_notas = null) {
-    var nota         = enviada.value;
+    var nota         = enviada.value.trim();
     var notaAnterior = enviada.getAttribute("data-nota-anterior") ?? 0;
 
+    // Validate student ID
+    var codEst = enviada.getAttribute("data-cod-estudiante");
+    if (!codEst || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
+
+    // Validate activity ID
+    var codNota = enviada.getAttribute("data-cod-nota");
+    if (!codNota || codNota <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar la actividad. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
+
     var NoEsValidaNota = alertValidarNota(nota);
-    
+
     if (NoEsValidaNota) {
         enviada.value = notaAnterior;
         return;
 	}
-    
+
     // Puede ser null si es una actividad individual. En este caso se usa el id de la carga académica.
     var carga             = enviada.getAttribute("data-carga-actividad") ?? null;
-    
+
     var input             = enviada.id;
 	var codEst            = enviada.getAttribute("data-cod-estudiante");
     var colorNotaAnterior = enviada.getAttribute("data-color-nota-anterior") ?? '#000000';
-	var codNota           = enviada.getAttribute("data-cod-nota");	 
+	var codNota           = enviada.getAttribute("data-cod-nota");
 	var nombreEst         = enviada.getAttribute("data-nombre-estudiante");
     var valorNota         = enviada.getAttribute("data-valor-nota") ?? 0;
     var origen            = enviada.getAttribute("data-origen") ?? null;
-    
-    var tabla_notas       = document.getElementById(tabla_notas);
+
+    // Determine the correct table ID
+    var tableId = tabla_notas || 'tabla_notas_calificaciones';
+    var tabla_notas       = document.getElementById(tableId);
+    if (!tabla_notas) {
+        Swal.fire('Error de validación','No se pudo encontrar la tabla de notas. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
     var tbody             = tabla_notas.querySelector("tbody");
+    if (!tbody) {
+        Swal.fire('Error de validación','No se pudo encontrar el cuerpo de la tabla de notas. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
     var filaCompleta      = document.getElementById(fila);
+    if (!filaCompleta) {
+        Swal.fire('Error de validación','No se pudo encontrar la fila del estudiante. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
     var idColumna         = 'columna_'+input;
     var colunaNota        = filaCompleta.querySelector("td[id='"+idColumna+"']");
+    if (!colunaNota) {
+        Swal.fire('Error de validación','No se pudo encontrar la columna de la nota. Por favor recargue la página e intente nuevamente.');
+        enviada.value = notaAnterior;
+        return;
+    }
     var spinner           = document.createElement('span');
     var hrefDefinitiva    = filaCompleta.querySelector("a[id='definitiva_"+codEst+"']");
     var inputRecuperacion = filaCompleta.querySelector("input[data-id='recuperacion_"+codEst+""+carga+"']");
@@ -112,19 +154,21 @@ function notasGuardar(enviada, fila = null, tabla_notas = null) {
     if (origen == 2) {
         var sumaPorcentaje = 0;
         var calculo        = 0;
-        
+
         filaCompleta.querySelectorAll("input[data-origen='2']").forEach(input => {
             if (input.value !== '') {
                 calculo         += input.value * parseFloat(input.getAttribute('data-valor-nota') / 100);
                 sumaPorcentaje  += parseFloat(input.getAttribute('data-valor-nota'));
             }
         });
-        
+
         var definitiva      = calculo / (sumaPorcentaje / 100);
         var colorDefinitiva = aplicarColorNota(definitiva);
-        
-        hrefDefinitiva.innerText = definitiva.toFixed(2);
-        hrefDefinitiva.style.color = colorDefinitiva ?  colorDefinitiva : '#000000';
+
+        if (hrefDefinitiva) {
+            hrefDefinitiva.innerText = definitiva.toFixed(2);
+            hrefDefinitiva.style.color = colorDefinitiva ?  colorDefinitiva : '#000000';
+        }
     }
     
     tabla_notas.querySelectorAll("input").forEach(input => input.disabled = true);
@@ -182,10 +226,29 @@ function notasGuardar(enviada, fila = null, tabla_notas = null) {
             success: function(data) {
                 $('#respRCT').empty().hide().html(data).show(1);
 
-                if (nota < 3.5) {
-                    inputRecuperacion.style.visibility = 'visible';
-                } else {
-                    inputRecuperacion.style.visibility = 'hidden';
+                // ✅ ACTUALIZAR LA NOTA ANTERIOR: Guardar la nota que acabamos de colocar
+                // para que la próxima vez que se cambie sin recargar, tengamos el valor correcto
+                enviada.setAttribute("data-nota-anterior", nota);
+
+                // ✅ RECALCULAR PORCENTAJE Y DEFINITIVA DEL ESTUDIANTE
+                recalcularDefinitiva(codEst);
+
+                // ✅ RECALCULAR PROMEDIOS GENERALES
+                if (typeof recalcularPromedios === 'function') {
+                    recalcularPromedios();
+                }
+
+                if (inputRecuperacion) {
+                    // Usar la nota mínima para aprobar configurada por la institución
+                    var notaMinimaAprobar = (window.CONFIG_INSTITUCION && window.CONFIG_INSTITUCION.notaMinimaAprobar) 
+                        ? window.CONFIG_INSTITUCION.notaMinimaAprobar 
+                        : 3.5;
+                    
+                    if (nota < notaMinimaAprobar) {
+                        inputRecuperacion.style.visibility = 'visible';
+                    } else {
+                        inputRecuperacion.style.visibility = 'hidden';
+                    }
                 }
             },
             error: function(xhr, status, error) {
@@ -231,9 +294,15 @@ function notasGuardar(enviada, fila = null, tabla_notas = null) {
  * @param enviada //Datos enviados por imput
  */
 function notasMasiva(enviada){
-    var nota = enviada.value;
-	var codNota = enviada.name;	
+    var nota = enviada.value.trim();
+	var codNota = enviada.name;
     var recargarPanel = enviada.title;
+
+    // Validate activity ID
+    if (!codNota || codNota <= 0) {
+        Swal.fire('Error de validación','ID de actividad inválido para calificación masiva.');
+        return false;
+    }
 
     if (alertValidarNota(nota)) {
         return false;
@@ -260,11 +329,23 @@ function notasMasiva(enviada){
 function notaRecuperacion(enviada){
     var carga = enviada.step;
 
-    var codEst = enviada.id; 
-    var nota = enviada.value;
-    var notaAnterior = enviada.name;	
+    var codEst = enviada.id;
+    var nota = enviada.value.trim();
+    var notaAnterior = enviada.name;
     var nombreEst = enviada.alt;
     var codNota = enviada.title;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para la recuperación. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate activity ID
+    if (!codNota  || codNota <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar la actividad para la recuperación. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     if (alertValidarNota(nota)) {
         return false;
@@ -284,6 +365,16 @@ function notaRecuperacion(enviada){
                     data: datos,
                     success: function(data){
                         $('#respRCT').empty().hide().html(data).show(1);
+                        
+                        // ✅ RECALCULAR PORCENTAJE Y DEFINITIVA DEL ESTUDIANTE
+                        if (typeof recalcularDefinitiva === 'function') {
+                            recalcularDefinitiva(codEst);
+                        }
+
+                        // ✅ RECALCULAR PROMEDIOS GENERALES
+                        if (typeof recalcularPromedios === 'function') {
+                            recalcularPromedios();
+                        }
                     }  
                 });
 }
@@ -293,10 +384,22 @@ function notaRecuperacion(enviada){
  * @param enviada //Datos enviados por input
  */
 function guardarObservacion(enviada){
-    var codEst = enviada.id; 
-    var observacion = enviada.value;	
+    var codEst = enviada.id;
+    var observacion = enviada.value.trim();
     var nombreEst = enviada.alt;
     var codObservacion = enviada.title;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para las observaciones. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate activity ID
+    if (!codObservacion || codObservacion <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar la actividad para las observaciones. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     $('#respRCT').empty().hide().html("Guardando información, espere por favor...").show(1);
         datos = "observacion="+(observacion)+
@@ -318,9 +421,15 @@ function guardarObservacion(enviada){
  * @param enviada //Datos enviados por input
  */
 function notasMasivaDisciplina(enviada){
-    var nota = enviada.value;
-	var carga = enviada.name;	
+    var nota = enviada.value.trim();
+	var carga = enviada.name;
     var periodo = enviada.title;
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para la calificación masiva de disciplina. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     if (alertValidarNota(nota)) {
         return false;
@@ -345,11 +454,23 @@ function notasMasivaDisciplina(enviada){
  * @param enviada //Datos enviados por input
  */
 function notasDisciplina(enviada){
-    var nota = enviada.value;
-	var carga = enviada.name;	
+    var nota = enviada.value.trim();
+	var carga = enviada.name;
     var periodo = enviada.title;
 	var codEst = enviada.id;
 	var nombreEst = enviada.alt;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para la calificación de disciplina. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para la calificación de disciplina. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     if (alertValidarNota(nota)) {
         return false;
@@ -377,10 +498,22 @@ function notasDisciplina(enviada){
  */
 function observacionDisciplina(enviada){
     var periodo = enviada.title;
-    var observacion = enviada.value;
-	var carga = enviada.getAttribute('step');	
+    var observacion = enviada.value.trim();
+	var carga = enviada.getAttribute('step');
 	var codEst = enviada.id;
 	var multiple = enviada.getAttribute('alt');
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para las observaciones disciplinarias. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para las observaciones disciplinarias. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     if(multiple == 1){
         var nameId = enviada.name;
@@ -413,10 +546,22 @@ function observacionDisciplina(enviada){
  * @param enviada //Datos enviados por textarea
  */
 function aspectosAcademicos(enviada){
-    var aspecto = enviada.value;
-	var carga = enviada.name;	
+    var aspecto = enviada.value.trim();
+	var carga = enviada.name;
     var periodo = enviada.title;
 	var codEst = enviada.id;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para el aspecto académico. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para el aspecto académico. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     $('#respRCT').empty().hide().html("Guardando información, espere por favor...").show(1);
         datos = "aspecto="+(aspecto)+
@@ -438,10 +583,22 @@ function aspectosAcademicos(enviada){
  * @param enviada //Datos enviados por textarea
  */
 function aspectosConvivencial(enviada){
-    var aspecto = enviada.value;
-	var carga = enviada.name;	
+    var aspecto = enviada.value.trim();
+	var carga = enviada.name;
     var periodo = enviada.title;
 	var codEst = enviada.id;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para el aspecto convivencial. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para el aspecto convivencial. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     $('#respRCT').empty().hide().html("Guardando información, espere por favor...").show(1);
         datos = "aspecto="+(aspecto)+
@@ -463,11 +620,22 @@ function aspectosConvivencial(enviada){
  * @param enviada //Datos enviados por textarea
  */
 function observacionesBoletin(enviada){
-    var observacion = enviada.value;
-	var carga = enviada.name;	
+    var observacion = enviada.value.trim();
+	var carga = enviada.name;
     var periodo = enviada.title;
 	var codEst = enviada.id;
-    console.log(carga);
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para las observaciones del boletín. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para las observaciones del boletín. Por favor recargue la página e intente nuevamente.');
+        return false;
+    }
 
     $('#respOBS').empty().hide().html("Guardando información, espere por favor...").show(1);
         datos = "observacion="+(observacion)+
@@ -493,11 +661,35 @@ function recuperarIndicador(enviada){
     var carga = split[0];
     var periodo = split[1];
 
-    var nota = enviada.value;
-    var notaAnterior = enviada.name;	
+    var nota = enviada.value.trim();
+    var notaAnterior = enviada.name;
     var codEst = enviada.id;
     var codNota = enviada.alt;
     var valorDecimalIndicador = enviada.title;
+
+    // Validate student ID
+    if (!codEst  || codEst <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar al estudiante para la recuperación de indicador. Por favor recargue la página e intente nuevamente.');
+        enviada.value = "";
+        enviada.focus();
+        return false;
+    }
+
+    // Validate activity ID
+    if (!codNota  || codNota <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar la actividad para la recuperación de indicador. Por favor recargue la página e intente nuevamente.');
+        enviada.value = "";
+        enviada.focus();
+        return false;
+    }
+
+    // Validate period ID
+    if (!periodo || isNaN(periodo) || periodo <= 0) {
+        Swal.fire('Error de validación','No se pudo identificar el periodo para la recuperación de indicador. Por favor recargue la página e intente nuevamente.');
+        enviada.value = "";
+        enviada.focus();
+        return false;
+    }
         
     var casilla = document.getElementById(codEst);
 
@@ -547,9 +739,9 @@ function recuperarIndicador(enviada){
 
 /**
  * Esta función me muestra la nota cualitativa
- * @param {boolean} nota 
- * @param {string} idEstudiante 
- * @param {string} idCarga 
+ * @param {boolean} nota
+ * @param {string} idEstudiante
+ * @param {string} idCarga
  */
 function notaCualitativa(nota, idEstudiante, idCarga, color='black') {
     return new Promise((resolve, reject) => {
@@ -569,8 +761,8 @@ function notaCualitativa(nota, idEstudiante, idCarga, color='black') {
         .then(data => {
             href.innerHTML = '<span style="color:'+color+';">'+data+'</span>';
             response = {
-                success: true, 
-                data: data  
+                success: true,
+                data: data
             };
 
             resolve(response);

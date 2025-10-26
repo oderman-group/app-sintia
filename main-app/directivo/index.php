@@ -551,6 +551,213 @@
     <?php include("../compartido/footer.php");?>
 </div>
 
+<!-- ========================================
+     MODAL DE BIENVENIDA - PRIMER INGRESO
+     ======================================== -->
+<div class="modal fade" id="modalBienvenidaDirectivo" tabindex="-1" role="dialog" data-backdrop="true" data-keyboard="true">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 900px;">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
+            <!-- Header con gradiente -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 25px;">
+                <div style="width: 100%;">
+                    <h4 class="modal-title" style="font-weight: 700; margin-bottom: 8px;">
+                        <i class="fa fa-hand-peace"></i> ¡Bienvenido a SINTIA!
+                    </h4>
+                    <p style="margin: 0; opacity: 0.9; font-size: 14px;">
+                        <i class="fa fa-info-circle"></i> Para cerrar permanentemente este mensaje, desplácese hasta el final y dele clic en el botón de cerrar
+                    </p>
+                </div>
+            </div>
+            
+            <div class="modal-body" style="padding: 30px;">
+                <p style="font-size: 16px; color: #6c757d; margin-bottom: 25px; text-align: center;">
+                    Estamos encantados de tenerte aquí. Comienza explorando estas opciones:
+                </p>
+                
+                <!-- 4 Opciones - 2 por fila -->
+                <div class="row mb-4">
+                    <!-- Opción 1: Crear Matrícula -->
+                    <div class="col-md-6 mb-3">
+                        <a href="estudiantes-agregar.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fa fa-user-graduate fa-2x"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h5>Crear Matrícula</h5>
+                                <p>Registra nuevos estudiantes en el sistema</p>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Opción 2: Crear Usuarios -->
+                    <div class="col-md-6 mb-3">
+                        <a href="usuarios-agregar.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                                <i class="fa fa-users fa-2x"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h5>Crear Usuarios</h5>
+                                <p>Agrega docentes, acudientes y más</p>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Opción 3: Configurar Plataforma -->
+                    <div class="col-md-6 mb-3">
+                        <a href="configuracion-sistema.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                <i class="fa fa-cogs fa-2x"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h5>Configurar Plataforma</h5>
+                                <p>Ajusta los parámetros del sistema</p>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Opción 4: Información de la Institución -->
+                    <div class="col-md-6 mb-3">
+                        <a href="instituciones-editar.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                                <i class="fa fa-school fa-2x"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h5>Información Institución</h5>
+                                <p>Completa los datos de tu colegio</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Video Tutorial -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="fa fa-play-circle"></i> Tutorial de Inicio
+                        </h5>
+                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px;">
+                            <iframe 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                                src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
+                            <i class="fa fa-info-circle"></i> Puedes cambiar este video desde la configuración del sistema
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Documentación y Contacto -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
+                            <i class="fa fa-book fa-2x" style="color: #667eea; margin-bottom: 10px;"></i>
+                            <h6 style="margin-bottom: 10px;">Documentación</h6>
+                            <a href="https://sintia.org/documentacion" target="_blank" class="btn btn-sm" style="background: #667eea; color: white;">
+                                <i class="fa fa-external-link-alt"></i> Ver Guía Completa
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
+                            <i class="fa fa-headset fa-2x" style="color: #764ba2; margin-bottom: 10px;"></i>
+                            <h6 style="margin-bottom: 10px;">¿Necesitas Ayuda?</h6>
+                            <p style="margin: 5px 0; font-size: 14px;">
+                                <i class="fa fa-phone"></i> <strong>+57 300 123 4567</strong>
+                            </p>
+                            <p style="margin: 5px 0; font-size: 14px;">
+                                <i class="fa fa-envelope"></i> <strong>soporte@sintia.org</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="border-top: 1px solid #dee2e6; padding: 20px;">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="btnCerrarBienvenida">
+                    <i class="fa fa-times"></i> Cerrar y No Volver a Mostrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para el Modal de Bienvenida */
+.welcome-option-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.welcome-option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+    text-decoration: none;
+}
+
+.welcome-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.welcome-text h5 {
+    margin: 0 0 5px 0;
+    color: #343a40;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.welcome-text p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.welcome-option-card:hover .welcome-text h5 {
+    color: #667eea;
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.welcome-option-card {
+    animation: slideInUp 0.5s ease-out;
+}
+
+.welcome-option-card:nth-child(1) { animation-delay: 0.1s; }
+.welcome-option-card:nth-child(2) { animation-delay: 0.2s; }
+.welcome-option-card:nth-child(3) { animation-delay: 0.3s; }
+.welcome-option-card:nth-child(4) { animation-delay: 0.4s; }
+</style>
+
 <!-- start js include path -->
 <script src="../../config-general/assets/plugins/jquery/jquery.min.js"></script>
 <script src="../../config-general/assets/plugins/popper/popper.js"></script>
@@ -583,7 +790,71 @@ $(document).ready(function() {
     
     // Actualizar cada 5 minutos
     setInterval(cargarEstadisticas, 300000);
+    
+    // ========================================
+    // MODAL DE BIENVENIDA - PRIMER INGRESO
+    // ========================================
+    verificarPrimerIngreso();
 });
+
+// Verificar si debe mostrarse el modal de bienvenida
+function verificarPrimerIngreso() {
+    console.log('Verificando primer ingreso...');
+    
+    $.ajax({
+        url: 'ajax-verificar-primer-ingreso.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            console.log('Respuesta verificación primer ingreso:', response);
+            
+            if (response.esPrimerIngreso) {
+                console.log('Es primer ingreso - Mostrando modal de bienvenida');
+                
+                // Pequeño delay para asegurar que todo esté cargado
+                setTimeout(function() {
+                    $('#modalBienvenidaDirectivo').modal('show');
+                }, 500);
+            } else {
+                console.log('No es primer ingreso - Modal no se mostrará');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al verificar primer ingreso:', error);
+            console.error('Response:', xhr.responseText);
+        }
+    });
+}
+
+// Manejar cierre del modal de bienvenida
+$('#btnCerrarBienvenida').on('click', function() {
+    marcarModalVisto();
+});
+
+// También marcar como visto cuando se cierre el modal de cualquier forma
+$('#modalBienvenidaDirectivo').on('hidden.bs.modal', function() {
+    marcarModalVisto();
+});
+
+// Marcar el modal como visto para no mostrarlo de nuevo
+function marcarModalVisto() {
+    console.log('Marcando modal de bienvenida como visto...');
+    
+    $.ajax({
+        url: 'ajax-marcar-modal-visto.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            console.log('Modal marcado como visto:', response);
+            if (response.success) {
+                console.log('El modal no se volverá a mostrar');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al marcar modal como visto:', error);
+        }
+    });
+}
 
 // Cargar estadísticas del dashboard
 function cargarEstadisticas() {

@@ -137,6 +137,12 @@ LIMIT ".$empezar.",1
 <!-- Botón de Ayuda Flotante - Centro de Ayuda SINTIA -->
 <?php include_once(ROOT_PATH."/main-app/compartido/boton-ayuda-flotante.php"); ?>
 
+<!-- Tour Moderno de SINTIA - Driver.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
+<link rel="stylesheet" href="../css/tour-sintia-moderno.css?v=<?=time()?>">
+<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
+<script src="../js/tour-sintia-moderno.js?v=<?=time()?>"></script>
+
 <script>
 const forms = document.querySelectorAll('form[name="formularioGuardar"]');
 
