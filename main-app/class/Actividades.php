@@ -817,7 +817,7 @@ class Actividades {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
         $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_registrada=1, act_fecha_registro=now() 
-        WHERE act_id=? AND institucion=? AND year=? AND (act_registrada IS NULL OR act_registrada = '' OR act_registrada = 0)";
+        WHERE act_id=? AND institucion=? AND year=? AND (act_registrada IS NULL OR act_registrada = 0)";
 
         $parametros = [$idActividad, $config['conf_id_institucion'], $year];
         
