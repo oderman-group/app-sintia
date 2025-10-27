@@ -300,8 +300,7 @@ try {
             }
             
             if($obtenerNotaEquivalente) {
-                $cargaConsulta = CargaAcademica::traerCargasMateriasPorID($config, $carga);
-                $cargaDatos = mysqli_fetch_array($cargaConsulta, MYSQLI_BOTH);
+                $cargaDatos = CargaAcademica::traerCargaMateriaPorID($config, $carga);
                 $area = $cargaDatos['car_saberes_area'];
                 $valorAsignatura = !empty($cargaDatos['mat_valor']) ? $cargaDatos['mat_valor'] : 100;
                 $notaEquivalente = ($definitiva * $valorAsignatura) / 100;
