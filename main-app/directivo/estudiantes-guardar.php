@@ -1,8 +1,8 @@
 <?php
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
-require_once "../class/Modulos.php";
-require_once("../class/servicios/MediaTecnicaServicios.php");
+require_once ROOT_PATH."/main-app/class/Modulos.php";
+require_once(ROOT_PATH."/main-app/class/servicios/MediaTecnicaServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
@@ -95,7 +95,7 @@ if(empty($_POST["tipoMatricula"])) $_POST["tipoMatricula"] = GRADO_GRUPAL;
 $estado  ='';
 $mensaje ='';
 
-if ($config['conf_id_institucion'] == ICOLVEN) {
+if ($config['conf_id_institucion'] == Modulos::MODULO_API_SION_ACADEMICA) {
 	require_once("apis-sion-create-student.php");
 }
 
@@ -130,6 +130,8 @@ if ($acudienteNum > 0) {
 	if(empty($_POST["codTesoreria"]))   $_POST["codTesoreria"]  = '';
 	if(empty($_POST["tipoSangre"]))     $_POST["tipoSangre"]    = '';
 	if(empty($_POST["eps"]))       		$_POST["eps"]       	= 126;
+	if(empty($_POST["matestM"]))       	$_POST["matestM"]       = NO_MATRICULADO;
+	
 	
 	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto,uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
 }

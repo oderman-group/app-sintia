@@ -530,11 +530,74 @@ body {
 .fila-promedios td:first-child {
     background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), transparent);
 }
+
+/* Overlay de bloqueo mientras se guarda */
+#overlay-guardando-nota {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(30, 41, 59, 0.85);
+	z-index: 99999;
+	backdrop-filter: blur(6px);
+}
+
+.overlay-content-nota {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: white;
+	padding: 45px 50px;
+	border-radius: 20px;
+	text-align: center;
+	box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+	min-width: 320px;
+}
+
+.overlay-content-nota .spinner {
+	width: 70px;
+	height: 70px;
+	border: 5px solid #e2e8f0;
+	border-top-color: #667eea;
+	border-radius: 50%;
+	margin: 0 auto 25px;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+.overlay-content-nota h3 {
+	color: #2d3748;
+	margin: 0 0 10px 0;
+	font-size: 22px;
+	font-weight: 700;
+}
+
+.overlay-content-nota p {
+	color: #718096;
+	margin: 0;
+	font-size: 15px;
+}
 </style>
 
 </head>
 
 <body>
+
+<!-- Overlay de bloqueo mientras se guarda la nota -->
+<div id="overlay-guardando-nota">
+	<div class="overlay-content-nota">
+		<div class="spinner"></div>
+		<h3>💾 Guardando Nota...</h3>
+		<p>Por favor espera, no cierres esta ventana</p>
+	</div>
+</div>
+
     <div class="main-container">
         <div class="container-fluid">
             <!-- Header Section -->

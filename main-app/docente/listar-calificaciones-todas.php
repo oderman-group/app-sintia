@@ -45,9 +45,15 @@ $porcentajeRestante = 100 - $valores[0];
         ?>
         
                 <div class="btn-group">
-                    <a href="calificaciones-agregar.php?carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" id="addRow" class="btn deepPink-bgcolor">
-                        Agregar nuevo <i class="fa fa-plus"></i>
-                    </a>
+                    <button 
+                        type="button" 
+                        class="btn deepPink-bgcolor" 
+                        data-toggle="modal" 
+                        data-target="#modalAgregarActividad"
+                        style="transition: all 0.3s ease;"
+                    >
+                        <i class="fa fa-plus-circle"></i> Agregar Actividad
+                    </button>
                 </div>
                 
                 
