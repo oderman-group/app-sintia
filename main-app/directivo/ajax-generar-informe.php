@@ -85,8 +85,7 @@ try {
         }
         
         // Obtener datos de la carga
-        $cargaConsulta = CargaAcademica::traerCargasMateriasPorID($config, $cargaId);
-        $cargaDatos = mysqli_fetch_array($cargaConsulta, MYSQLI_BOTH);
+        $cargaDatos = CargaAcademica::traerCargaMateriaPorID($config, $cargaId);
         
         if (!$cargaDatos) {
             throw new Exception('No se encontró la carga académica');
@@ -102,7 +101,7 @@ try {
         
         while ($estudiante = mysqli_fetch_array($listaEstudiantes, MYSQLI_BOTH)) {
             // Generar nota del boletín para este estudiante
-            $notaPorPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $periodo, $estudiante['mat_id'], $cargaId, $estudiante);
+            $notaPorPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $periodo, $estudiante['mat_id'], $cargaId);
             
             // Calcular nota equivalente
             $notaEquivalente = ($notaPorPeriodo * $valorAsignatura) / 100;
