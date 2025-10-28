@@ -1464,6 +1464,86 @@ if (!empty($_SESSION["infoCargaActual"])) {
     
     console.log('✨ Sistema de cargas académicas cargado correctamente');
     console.log('📚 Total de cargas:', allCards.length);
+    
+    // ============================================
+    // GENERACIÓN ASÍNCRONA DE INFORMES
+    // ============================================
+    window.mensajeGenerarInforme = async function(elemento) {
+        const href = elemento.getAttribute('name');
+        const url = new URL(href, window.location.origin);
+        const params = new URLSearchParams(url.search);
+        
+        const carga = params.get('carga');
+        const periodo = params.get('periodo');
+        const grado = params.get('grado');
+        const grupo = params.get('grupo');
+        
+        console.log('🔵 Iniciando generación asíncrona de informe...');
+        
+        Swal.fire({
+            title: '⏳ Generando Informe',
+            html: '<div style="text-align: center;"><div style="font-size: 48px; margin: 20px 0;"><i class="fa fa-spinner fa-spin" style="color: #3498db;"></i></div><p style="font-size: 16px; color: #7f8c8d; margin-top: 20px;">Procesando estudiantes...<br><strong>Por favor espera</strong></p></div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        
+        try {
+            const response = await fetch('ajax-generar-informe-docente.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `carga=${carga}&periodo=${periodo}&grado=${grado}&grupo=${grupo}`
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const { insertados, actualizados, omitidos, errores } = data.data;
+                
+                let htmlResumen = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
+                
+                if (insertados.length > 0) {
+                    htmlResumen += `<div style="margin-bottom: 15px;"><strong style="color: #27ae60;">✅ Insertados (${insertados.length}):</strong><div style="margin-left: 20px; margin-top: 5px;">${insertados.map(est => `<div style="padding: 5px; border-bottom: 1px solid #ecf0f1;">• ${est.nombre} - Nota: <strong>${est.nota}</strong></div>`).join('')}</div></div>`;
+                }
+                
+                if (actualizados.length > 0) {
+                    htmlResumen += `<div style="margin-bottom: 15px;"><strong style="color: #3498db;">🔄 Actualizados (${actualizados.length}):</strong><div style="margin-left: 20px; margin-top: 5px;">${actualizados.map(est => `<div style="padding: 5px; border-bottom: 1px solid #ecf0f1;">• ${est.nombre} - Nota: <strong>${est.nota}</strong></div>`).join('')}</div></div>`;
+                }
+                
+                if (omitidos.length > 0) {
+                    htmlResumen += `<div style="margin-bottom: 15px;"><strong style="color: #f39c12;">⏭️ Omitidos (${omitidos.length}):</strong><div style="margin-left: 20px; margin-top: 5px;">${omitidos.map(est => `<div style="padding: 5px; border-bottom: 1px solid #ecf0f1;">• ${est.nombre}<br><small style="color: #7f8c8d;">Razón: ${est.razon}</small></div>`).join('')}</div></div>`;
+                }
+                
+                if (errores.length > 0) {
+                    htmlResumen += `<div style="margin-bottom: 15px;"><strong style="color: #e74c3c;">❌ Errores (${errores.length}):</strong><div style="margin-left: 20px; margin-top: 5px;">${errores.map(est => `<div style="padding: 5px; border-bottom: 1px solid #ecf0f1;">• ${est.nombre}<br><small style="color: #e74c3c;">${est.error}</small></div>`).join('')}</div></div>`;
+                }
+                
+                htmlResumen += '</div>';
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Informe Generado',
+                    html: `<div style="text-align: center; margin-bottom: 20px;"><p style="font-size: 16px; color: #27ae60; font-weight: 600;">Total procesados: ${data.data.total_procesados}</p></div>${htmlResumen}`,
+                    width: '600px',
+                    confirmButtonText: 'Cerrar',
+                    confirmButtonColor: '#3498db'
+                });
+            } else {
+                throw new Error(data.message || 'Error desconocido');
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: '❌ Error',
+                html: `<p style="color: #e74c3c;">${error.message || 'Ocurrió un error al generar el informe'}</p>`,
+                confirmButtonText: 'Cerrar',
+                confirmButtonColor: '#e74c3c'
+            });
+        }
+    };
+    
+    console.log('✅ Sistema de generación asíncrona activado');
 </script>
 </body>
 
