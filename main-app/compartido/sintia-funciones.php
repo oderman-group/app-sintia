@@ -156,12 +156,6 @@ class Cargas {
 
 ?>
 
-	<div class="alert alert-warning">
-
-		<i class="icon-exclamation-sign"></i><strong><?=$frases[119][$idioma];?>:</strong> <?=$frases[328][$idioma];?>
-
-	</div>
-
 <?php
 
 
