@@ -93,6 +93,8 @@ class Clases  extends Servicios{
         $parametros = [$codigo, $_SESSION["id"], $POST["idClase"], mysqli_real_escape_string($conexion,$POST["contenido"]), $POST["idPadre"], $config['conf_id_institucion'], $_SESSION["bd"]];
 
         $resultado = BindSQL::prepararSQL($sql, $parametros);
+        
+        return $codigo; // ✅ Retornar el código generado
     }
     
     /**
