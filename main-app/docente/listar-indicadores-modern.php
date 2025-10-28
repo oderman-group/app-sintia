@@ -1,8 +1,8 @@
 <?php
-include("session.php");
-$idPaginaInterna = 'DC0034';
-include("../compartido/historial-acciones-guardar.php");
-include("verificar-carga.php");
+if (empty($_SESSION["id"])) {
+    include("session.php");
+    include("verificar-carga.php");
+}
 require_once(ROOT_PATH . "/main-app/class/Indicadores.php");
 
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
@@ -12,31 +12,6 @@ $porcentajeActual = $sumaIndicadores[1];
 
 $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)");
 ?>
-
-<!-- Estadísticas de Porcentaje -->
-<div class="porcentaje-stats">
-    <div class="porcentaje-card">
-        <div class="porcentaje-label">Porcentaje Usado</div>
-        <div class="porcentaje-value"><?php echo number_format($porcentajeActual, 1); ?>%</div>
-        <div class="porcentaje-progress">
-            <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeActual; ?>%;"></div>
-        </div>
-    </div>
-    <div class="porcentaje-card">
-        <div class="porcentaje-label">Porcentaje Disponible</div>
-        <div class="porcentaje-value" style="color: #27ae60;"><?php echo number_format($porcentajeRestante, 1); ?>%</div>
-        <div class="porcentaje-progress">
-            <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeRestante; ?>%; background: #27ae60;"></div>
-        </div>
-    </div>
-    <div class="porcentaje-card">
-        <div class="porcentaje-label">Total Indicadores</div>
-        <div class="porcentaje-value" style="color: #3498db;"><?php echo $sumaIndicadores[2]; ?></div>
-        <div style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
-            Máx: <?php echo $datosCargaActual['car_maximos_indicadores']; ?>
-        </div>
-    </div>
-</div>
 
 <!-- Barra de Acciones -->
 <div class="actions-bar">
@@ -98,21 +73,20 @@ $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)"
             <?php }?>
         <?php } ?>
     </div>
-
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <a href="../compartido/indicadores-perdidos-curso.php?curso=<?php echo base64_encode($datosCargaActual['car_curso']); ?>&periodo=<?php echo base64_encode($periodoConsultaActual); ?>" 
-           class="btn-secondary-modern" target="_blank">
-            <i class="fa fa-file-text-o"></i>
-            Ver Perdidos
-        </a>
-    </div>
 </div>
 
-<!-- Alertas -->
+<!-- Alertas y Botón Ver Perdidos -->
 <?php if ($datosCargaActual['car_valor_indicador'] == 1 and $porcentajeRestante <= 0) { ?>
-    <div class="alert-modern alert-warning-modern">
-        <i class="fa fa-exclamation-triangle"></i>
-        <span>Has alcanzado el 100% de valor para los indicadores.</span>
+    <div class="alert-modern alert-warning-modern" style="background: #ffebee; color: #c62828; border-left-color: #e74c3c;">
+        <i class="fa fa-check-circle"></i>
+        <span style="font-weight: 600;">Has alcanzado el 100% de valor para los indicadores.</span>
+    </div>
+    <div style="margin-bottom: 20px;">
+        <a href="../compartido/indicadores-perdidos-curso.php?curso=<?php echo base64_encode($datosCargaActual['car_curso']); ?>&periodo=<?php echo base64_encode($periodoConsultaActual); ?>" 
+           class="btn-secondary-modern" target="_blank" style="background: #34495e; color: white; border-color: #34495e;">
+            <i class="fa fa-file-text-o"></i>
+            Ver indicadores perdidos
+        </a>
     </div>
 <?php } ?>
 
@@ -129,62 +103,109 @@ $numIndicadores = mysqli_num_rows($consulta);
 
 if ($numIndicadores > 0) {
     mysqli_data_seek($consulta, 0); // Reset pointer
+    $contReg = 1;
+    $sumaPorcentajes = 0;
 ?>
-    <!-- Grid de Indicadores -->
-    <div class="indicadores-grid" id="indicadores-grid">
-        <?php
-        $contReg = 1;
-        while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-        ?>
-            <div class="indicador-card" id="indicador-<?php echo $resultado['ipc_id']; ?>" data-id="<?php echo $resultado['ipc_id']; ?>">
-                <div class="indicador-header">
-                    <div class="indicador-numero"><?php echo $contReg; ?></div>
-                    <div class="indicador-actions">
-                        <?php if ($resultado['ipc_creado'] == 1 and ($periodoConsultaActual == $datosCargaActual['car_periodo'] or $datosCargaActual['car_permiso2'] == 1)) { ?>
-                            <button onclick="abrirModalEditar('<?php echo $resultado['ipc_id']; ?>')" 
-                                    class="btn-action btn-edit" title="Editar indicador">
-                                <i class="fa fa-edit"></i>
-                            </button>
-                            <button onclick="eliminarIndicador('<?php echo $resultado['ipc_id']; ?>', '<?php echo $resultado['ipc_indicador']; ?>')" 
-                                    class="btn-action btn-delete" title="Eliminar indicador">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        <?php } ?>
-                        
-                        <?php if ($periodoConsultaActual < $datosCargaActual['car_periodo']) { ?>
-                            <a href="indicadores-recuperar.php?idR=<?php echo base64_encode($resultado['ipc_indicador']); ?>" 
-                               class="btn-action" style="background: #fff3cd; color: #856404;" title="Recuperar indicador">
-                                <i class="fa fa-redo"></i>
-                            </a>
-                        <?php } ?>
-                    </div>
-                </div>
-                
-                <div class="indicador-nombre" title="<?php echo $resultado['ind_nombre']; ?>">
-                    <?php echo $resultado['ind_nombre']; ?>
-                </div>
-                
-                <div class="indicador-footer">
-                    <div class="indicador-valor">
-                        <i class="fa fa-percent"></i>
-                        <?php echo $resultado['ipc_valor']; ?>%
-                    </div>
-                    
-                    <?php if ($datosCargaActual['car_saberes_indicador'] == 1) { ?>
-                        <div class="indicador-tipo">
-                            <?php echo $saberes[$resultado['ipc_evaluacion']]; ?>
-                        </div>
-                    <?php } else { ?>
-                        <div class="indicador-tipo">
-                            ID: <?php echo $resultado['aipc_id_nuevo']; ?>
-                        </div>
-                    <?php } ?>
-                </div>
+    <!-- Tabla de Indicadores -->
+    <div class="indicadores-table-container" id="indicadores-table-container">
+        <div class="table-responsive">
+            <table class="indicadores-table-modern">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th style="width: 100px;">Cod</th>
+                        <th>Descripción</th>
+                        <th style="width: 120px;">Valor</th>
+                        <th style="width: 150px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+                        $sumaPorcentajes += $resultado['ipc_valor'];
+                    ?>
+                        <tr id="indicador-row-<?php echo $resultado['ipc_id']; ?>" data-id="<?php echo $resultado['ipc_id']; ?>">
+                            <td style="text-align: center; font-weight: 600;"><?php echo $contReg; ?></td>
+                            <td style="text-align: center;"><?php echo $resultado['aipc_id_nuevo']; ?></td>
+                            <td><?php echo htmlspecialchars($resultado['ind_nombre']); ?></td>
+                            <td style="text-align: center; font-weight: 600; color: var(--secondary-color);">
+                                <?php echo number_format($resultado['ipc_valor'], 2); ?>%
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                                        Acciones <i class="fa fa-angle-down"></i>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <?php if ($resultado['ipc_creado'] == 1 and ($periodoConsultaActual == $datosCargaActual['car_periodo'] or $datosCargaActual['car_permiso2'] == 1)) { ?>
+                                            <li>
+                                                <a href="javascript:void(0);" onclick="abrirModalEditar('<?php echo $resultado['ipc_id']; ?>')">
+                                                    <i class="fa fa-edit"></i> Editar
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="javascript:void(0);" onclick="eliminarIndicador('<?php echo $resultado['ipc_id']; ?>', '<?php echo $resultado['ipc_indicador']; ?>')">
+                                                    <i class="fa fa-trash"></i> Eliminar
+                                                </a>
+                                            </li>
+                                        <?php } ?>
+                                        
+                                        <?php if ($periodoConsultaActual < $datosCargaActual['car_periodo']) { ?>
+                                            <li>
+                                                <a href="indicadores-recuperar.php?idR=<?php echo base64_encode($resultado['ipc_indicador']); ?>">
+                                                    <i class="fa fa-redo"></i> Recuperar
+                                                </a>
+                                            </li>
+                                        <?php } ?>
+                                        
+                                        <li>
+                                            <a href="indicadores-estudiantes-inclusion.php?idIndicadorNuevo=<?php echo base64_encode($resultado['aipc_id_nuevo']); ?>&idIndicador=<?php echo base64_encode($resultado['ipc_id']); ?>">
+                                                <i class="fa fa-users"></i> E. Inclusión
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php
+                        $contReg++;
+                    }
+                    ?>
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: 700; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <td colspan="3" style="text-align: center;">TOTAL</td>
+                        <td style="text-align: center; color: var(--primary-color);"><?php echo number_format($sumaPorcentajes, 2); ?>%</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Estadísticas de Porcentaje (Cards) - Después de la tabla -->
+    <div class="porcentaje-stats" style="margin-top: 30px;">
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Porcentaje Usado</div>
+            <div class="porcentaje-value"><?php echo number_format($porcentajeActual, 1); ?>%</div>
+            <div class="porcentaje-progress">
+                <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeActual; ?>%;"></div>
             </div>
-        <?php
-            $contReg++;
-        }
-        ?>
+        </div>
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Porcentaje Disponible</div>
+            <div class="porcentaje-value" style="color: #27ae60;"><?php echo number_format($porcentajeRestante, 1); ?>%</div>
+            <div class="porcentaje-progress">
+                <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeRestante; ?>%; background: #27ae60;"></div>
+            </div>
+        </div>
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Total Indicadores</div>
+            <div class="porcentaje-value" style="color: #3498db;"><?php echo $sumaIndicadores[2]; ?></div>
+            <div style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                Máx: <?php echo $datosCargaActual['car_maximos_indicadores']; ?>
+            </div>
+        </div>
     </div>
 <?php
 } else {
@@ -213,6 +234,31 @@ if ($numIndicadores > 0) {
                 Agregar Primer Indicador
             </button>
         <?php } ?>
+    </div>
+    
+    <!-- Estadísticas de Porcentaje (Cards) - También cuando no hay indicadores -->
+    <div class="porcentaje-stats" style="margin-top: 30px;">
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Porcentaje Usado</div>
+            <div class="porcentaje-value"><?php echo number_format($porcentajeActual, 1); ?>%</div>
+            <div class="porcentaje-progress">
+                <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeActual; ?>%;"></div>
+            </div>
+        </div>
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Porcentaje Disponible</div>
+            <div class="porcentaje-value" style="color: #27ae60;"><?php echo number_format($porcentajeRestante, 1); ?>%</div>
+            <div class="porcentaje-progress">
+                <div class="porcentaje-progress-bar" style="width: <?php echo $porcentajeRestante; ?>%; background: #27ae60;"></div>
+            </div>
+        </div>
+        <div class="porcentaje-card">
+            <div class="porcentaje-label">Total Indicadores</div>
+            <div class="porcentaje-value" style="color: #3498db;"><?php echo $sumaIndicadores[2]; ?></div>
+            <div style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+                Máx: <?php echo $datosCargaActual['car_maximos_indicadores']; ?>
+            </div>
+        </div>
     </div>
 <?php
 }
