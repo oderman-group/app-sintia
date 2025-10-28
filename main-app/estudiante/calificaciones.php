@@ -22,30 +22,26 @@
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Botón flotante de filtros */
+    /* Botón de filtros en el header */
     .filter-fab {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, var(--secondary-color) 0%, #35a39d 100%);
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        box-shadow: 0 4px 12px rgba(65, 193, 186, 0.4);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        z-index: 1000;
         transition: var(--transition);
-        border: none;
-        color: white;
-        font-size: 24px;
+        font-size: 18px;
+        margin-left: auto;
     }
 
     .filter-fab:hover {
+        background: rgba(255, 255, 255, 0.3);
         transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(65, 193, 186, 0.6);
     }
 
     .filter-fab:active {
@@ -248,6 +244,9 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 20px 30px;
         color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .grades-card-header h3 {
@@ -321,6 +320,85 @@
         font-weight: 600;
     }
 
+    /* Estilos para períodos anidados */
+    .filter-carga-item {
+        margin-bottom: 15px;
+    }
+
+    .filter-carga-header {
+        padding: 10px 15px;
+        border-radius: 8px;
+        color: #7f8c8d;
+        text-decoration: none;
+        transition: var(--transition);
+        border-left: 3px solid transparent;
+        font-size: 14px;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .filter-carga-header:hover {
+        background: rgba(65, 193, 186, 0.1);
+        color: var(--primary-color);
+        border-left-color: var(--secondary-color);
+        transform: translateX(5px);
+    }
+
+    .filter-carga-header.active {
+        background: linear-gradient(90deg, rgba(65, 193, 186, 0.1), rgba(65, 193, 186, 0.05));
+        color: var(--secondary-color);
+        border-left-color: var(--secondary-color);
+    }
+
+    .filter-periodos-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 0 20px;
+    }
+
+    .filter-periodo-item {
+        margin-bottom: 8px;
+    }
+
+    .filter-periodo-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #7f8c8d;
+        text-decoration: none;
+        transition: var(--transition);
+        font-size: 13px;
+    }
+
+    .filter-periodo-link:hover {
+        background: rgba(65, 193, 186, 0.08);
+        color: var(--primary-color);
+    }
+
+    .filter-periodo-link.active {
+        background: rgba(65, 193, 186, 0.15);
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+
+    .periodo-definitiva {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: rgba(52, 152, 219, 0.1);
+        color: var(--info-color);
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    .periodo-definitiva.danger {
+        background: rgba(231, 76, 60, 0.1);
+        color: var(--danger-color);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
         .filter-sidebar {
@@ -329,11 +407,9 @@
         }
 
         .filter-fab {
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
         }
 
         .page-header-modern {
@@ -393,11 +469,6 @@ if($config['conf_servidor']==1){
     // Solo mostrar filtros para estudiantes
     if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){
     ?>
-    <!-- Botón flotante de filtros -->
-    <button class="filter-fab" id="filterFab" title="Filtros">
-        <i class="fa fa-filter"></i>
-    </button>
-    
     <!-- Overlay para cerrar sidebar -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     
@@ -415,6 +486,8 @@ if($config['conf_servidor']==1){
             require_once("../class/servicios/MediaTecnicaServicios.php");
             require_once("../class/servicios/GradoServicios.php");
             require_once("../class/CargaAcademica.php");
+            require_once(ROOT_PATH."/main-app/class/Boletin.php");
+            require_once(ROOT_PATH."/main-app/class/Grados.php");
             
             // Sección de Cargas Normales
             $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
@@ -429,17 +502,49 @@ if($config['conf_servidor']==1){
                     if(!$hasItems){
                         echo '<div class="filter-section">';
                         echo '<div class="filter-section-title"><i class="fa fa-book"></i> '.$frases[73][$datosUsuarioActual['uss_idioma']].'</div>';
-                        echo '<ul class="filter-list">';
                         $hasItems = true;
                     }
-                    $isActive = ($rCargas['car_id']==$cargaConsultaActual) ? 'active' : '';
-                    echo '<li class="filter-list-item">';
-                    echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($rCargas['car_id']).'&periodo='.base64_encode($periodoConsultaActual).'" class="filter-link '.$isActive.'">';
-                    echo strtoupper($rCargas['mat_nombre']);
-                    echo '</a></li>';
+                    
+                    $isCargaActive = ($rCargas['car_id']==$cargaConsultaActual) ? 'active' : '';
+                    echo '<div class="filter-carga-item">';
+                    echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($rCargas['car_id']).'&periodo='.base64_encode($periodoConsultaActual).'" class="filter-carga-header '.$isCargaActive.'">';
+                    echo '<i class="fa fa-book-open mr-2"></i>'.strtoupper($rCargas['mat_nombre']);
+                    echo '</a>';
+                    
+                    // Períodos de esta carga
+                    echo '<ul class="filter-periodos-list">';
+                    for($p=1; $p<=$datosEstudianteActual['gra_periodos']; $p++){
+                        $periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosEstudianteActual['mat_grado'], $p);
+                        $porcentajeGrado = 25;
+                        if(!empty($periodosCursos['gvp_valor'])){
+                            $porcentajeGrado = $periodosCursos['gvp_valor'];
+                        }
+                        
+                        $notaPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $datosEstudianteActual['mat_id'], $rCargas['car_id']);
+                        
+                        $isPeriodoActive = ($rCargas['car_id']==$cargaConsultaActual && $p==$periodoConsultaActual) ? 'active' : '';
+                        echo '<li class="filter-periodo-item">';
+                        echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($rCargas['car_id']).'&periodo='.base64_encode($p).'" class="filter-periodo-link '.$isPeriodoActive.'">';
+                        echo '<span>'.$frases[27][$datosUsuarioActual['uss_idioma']].' '.$p.' ('.$porcentajeGrado.'%)</span>';
+                        
+                        // Mostrar definitiva si existe
+                        if(!empty($notaPeriodo['bol_nota']) && 
+                           $config['conf_sin_nota_numerica']!=1 && 
+                           !$config['conf_ocultar_panel_lateral_notas_estudiantes']){
+                            $notaDefinitiva = $notaPeriodo['bol_nota'];
+                            if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+                                $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodo['bol_nota']);
+                                $notaDefinitiva = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                            }
+                            $colorClass = (!empty($notaPeriodo['bol_nota']) && $notaPeriodo['bol_nota'] < $config['conf_nota_minima_aprobar']) ? 'danger' : '';
+                            echo '<span class="periodo-definitiva '.$colorClass.'">'.$notaDefinitiva.'</span>';
+                        }
+                        echo '</a></li>';
+                    }
+                    echo '</ul></div>';
                 }
                 if($hasItems){
-                    echo '</ul></div>';
+                    echo '</div>';
                 }
             }
             
@@ -456,7 +561,6 @@ if($config['conf_servidor']==1){
                         $cursoMediaTecnica = GradoServicios::consultarCurso($dato["matcur_id_curso"]);
                         echo '<div class="filter-section">';
                         echo '<div class="filter-section-title"><i class="fa fa-bookmark"></i> '.$cursoMediaTecnica['gra_nombre'].'</div>';
-                        echo '<ul class="filter-list">';
                         
                         $parametros = [
                             'matcur_id_matricula' => $datosEstudianteActual["mat_id"],
@@ -467,17 +571,49 @@ if($config['conf_servidor']==1){
                         $listacargaMediaTecnica = MediaTecnicaServicios::listarMaterias($parametros);
                         if ($listacargaMediaTecnica != null) {
                             foreach ($listacargaMediaTecnica as $cargaMediaTecnica) {
-                                $isActive = ($cargaMediaTecnica['car_id']==$cargaConsultaActual) ? 'active' : '';
-                                echo '<li class="filter-list-item">';
-                                echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($cargaMediaTecnica['car_id']).'&periodo='.$periodoConsultaActual.'" class="filter-link '.$isActive.'">';
-                                echo strtoupper($cargaMediaTecnica['mat_nombre']);
-                                echo '</a></li>';
+                                $isCargaActive = ($cargaMediaTecnica['car_id']==$cargaConsultaActual) ? 'active' : '';
+                                echo '<div class="filter-carga-item">';
+                                echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($cargaMediaTecnica['car_id']).'&periodo='.base64_encode($periodoConsultaActual).'" class="filter-carga-header '.$isCargaActive.'">';
+                                echo '<i class="fa fa-book-open mr-2"></i>'.strtoupper($cargaMediaTecnica['mat_nombre']);
+                                echo '</a>';
+                                
+                                // Períodos de esta carga de media técnica
+                                echo '<ul class="filter-periodos-list">';
+                                for($p=1; $p<=$datosEstudianteActual['gra_periodos']; $p++){
+                                    $periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosEstudianteActual['mat_grado'], $p);
+                                    $porcentajeGrado = 25;
+                                    if(!empty($periodosCursos['gvp_valor'])){
+                                        $porcentajeGrado = $periodosCursos['gvp_valor'];
+                                    }
+                                    
+                                    $notaPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $datosEstudianteActual['mat_id'], $cargaMediaTecnica['car_id']);
+                                    
+                                    $isPeriodoActive = ($cargaMediaTecnica['car_id']==$cargaConsultaActual && $p==$periodoConsultaActual) ? 'active' : '';
+                                    echo '<li class="filter-periodo-item">';
+                                    echo '<a href="'.$_SERVER['PHP_SELF'].'?carga='.base64_encode($cargaMediaTecnica['car_id']).'&periodo='.base64_encode($p).'" class="filter-periodo-link '.$isPeriodoActive.'">';
+                                    echo '<span>'.$frases[27][$datosUsuarioActual['uss_idioma']].' '.$p.' ('.$porcentajeGrado.'%)</span>';
+                                    
+                                    // Mostrar definitiva si existe
+                                    if(!empty($notaPeriodo['bol_nota']) && 
+                                       $config['conf_sin_nota_numerica']!=1 && 
+                                       !$config['conf_ocultar_panel_lateral_notas_estudiantes']){
+                                        $notaDefinitiva = $notaPeriodo['bol_nota'];
+                                        if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+                                            $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodo['bol_nota']);
+                                            $notaDefinitiva = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                        }
+                                        $colorClass = (!empty($notaPeriodo['bol_nota']) && $notaPeriodo['bol_nota'] < $config['conf_nota_minima_aprobar']) ? 'danger' : '';
+                                        echo '<span class="periodo-definitiva '.$colorClass.'">'.$notaDefinitiva.'</span>';
+                                    }
+                                    echo '</a></li>';
+                                }
+                                echo '</ul></div>';
                             }
                         } else {
-                            echo '<li class="filter-list-item" style="padding: 10px 15px; color: #95a5a6; font-size: 12px;">No tiene cargas académicas.</li>';
+                            echo '<div style="padding: 10px 15px; color: #95a5a6; font-size: 12px;">No tiene cargas académicas.</div>';
                         }
                         
-                        echo '</ul></div>';
+                        echo '</div>';
                     }
                 }
             }
@@ -535,14 +671,8 @@ if($config['conf_servidor']==1){
         // Cerrar sidebar automáticamente al hacer click en un filtro
         document.addEventListener('DOMContentLoaded', () => {
             if (filterSidebar) {
-                const links = filterSidebar.querySelectorAll('.filter-link');
+                const links = filterSidebar.querySelectorAll('.filter-link, .filter-carga-header, .filter-periodo-link');
                 links.forEach(link => {
-                    // Marcar como activo
-                    const currentUrl = window.location.href;
-                    if (link.href === currentUrl || link.href.includes('<?=isset($cargaConsultaActual) ? base64_encode($cargaConsultaActual) : "";?>')) {
-                        link.classList.add('active');
-                    }
-                    
                     // Cerrar sidebar al hacer click
                     link.addEventListener('click', (e) => {
                         // Permitir que la navegación continúe

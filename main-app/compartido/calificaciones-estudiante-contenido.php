@@ -256,6 +256,12 @@
                                         <div class="grades-card-header">
 
                                             <h3><i class="fa fa-graduation-cap mr-2"></i><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></h3>
+                                            
+                                            <?php if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){ ?>
+                                            <button class="filter-fab" id="filterFab" title="Filtros">
+                                                <i class="fa fa-filter"></i>
+                                            </button>
+                                            <?php } ?>
 
                                         </div>
 
