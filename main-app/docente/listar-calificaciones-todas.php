@@ -9,6 +9,7 @@ require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Actividades.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 
 $valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
@@ -38,19 +39,56 @@ $porcentajeRestante = 100 - $valores[0];
         <div class="row" style="margin-bottom: 10px;">
             <div class="col-sm-12">
                 
-                
-                
         <?php
+        // ============================================
+        // VALIDACIÓN DE INDICADORES OBLIGATORIOS
+        // ============================================
+        $indicadoresObligatorios = ($datosCargaActual['car_indicador_automatico'] != 1);
+        $tieneIndicadores = false;
+        $mensajeIndicadores = '';
+        
+        if ($indicadoresObligatorios) {
+            $consultaIndicadores = Indicadores::traerIndicadoresCargaPeriodo($cargaConsultaActual, $periodoConsultaActual);
+            $numIndicadores = mysqli_num_rows($consultaIndicadores);
+            
+            if ($numIndicadores > 0) {
+                $tieneIndicadores = true;
+            } else {
+                $mensajeIndicadores = '
+                <div class="alert alert-warning" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #f39c12; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fa fa-exclamation-triangle" style="font-size: 24px; color: #f39c12;"></i>
+                        <div style="flex: 1;">
+                            <strong style="color: #856404; font-size: 16px;">⚠️ Indicadores Requeridos</strong>
+                            <p style="margin: 5px 0 0 0; color: #856404;">
+                                Debes registrar al menos un indicador antes de poder agregar actividades.
+                                <a href="indicadores.php?carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'" class="alert-link" style="font-weight: 600; text-decoration: underline;">
+                                    Ir a Indicadores <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>';
+            }
+        }
+        
+        // Mostrar mensaje si no tiene indicadores
+        if ($indicadoresObligatorios && !$tieneIndicadores) {
+            echo $mensajeIndicadores;
+        }
+        // ============================================
+        
         if( CargaAcademica::validarAccionAgregarCalificaciones($datosCargaActual, $valores, $periodoConsultaActual, $porcentajeRestante) ) {
         ?>
         
                 <div class="btn-group">
                     <button 
                         type="button" 
-                        class="btn deepPink-bgcolor" 
-                        data-toggle="modal" 
-                        data-target="#modalAgregarActividad"
-                        style="transition: all 0.3s ease;"
+                        class="btn deepPink-bgcolor <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'disabled' : ''; ?>" 
+                        data-toggle="<?= ($indicadoresObligatorios && !$tieneIndicadores) ? '' : 'modal'; ?>" 
+                        data-target="<?= ($indicadoresObligatorios && !$tieneIndicadores) ? '' : '#modalAgregarActividad'; ?>"
+                        style="transition: all 0.3s ease; <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'opacity: 0.6; cursor: not-allowed;' : ''; ?>"
+                        <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'disabled title="Debes registrar indicadores primero"' : ''; ?>
                     >
                         <i class="fa fa-plus-circle"></i> Agregar Actividad
                     </button>
@@ -190,5 +228,117 @@ $porcentajeRestante = 100 - $valores[0];
         </div>
     </div>
 </div>
+
+<style>
+/* ============================================
+   RESALTADO DE NOTAS FALTANTES
+   ============================================ */
+.celda-nota-faltante {
+    position: relative;
+    animation: pulsoSuave 2s ease-in-out infinite;
+}
+
+@keyframes pulsoSuave {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
+    }
+}
+
+.celda-nota-faltante input[type="text"] {
+    animation: none;
+    transition: all 0.3s ease;
+}
+
+.celda-nota-faltante input[type="text"]:focus {
+    background: #ffffff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+</style>
+
+<script>
+// ============================================
+// FUNCIÓN GLOBAL PARA ACTUALIZAR RESALTADO
+// ============================================
+window.actualizarResaltadoCelda = function(inputElement) {
+    const valor = inputElement.value.trim();
+    const celda = inputElement.closest('td');
+    
+    if (!celda) return;
+    
+    if (valor === '' || valor === null) {
+        // Restaurar resaltado si está vacío Y tiene actividad registrada
+        const actividadRegistrada = inputElement.closest('td').classList.contains('celda-nota-faltante') || 
+                                   inputElement.getAttribute('data-carga-actividad') !== null;
+        
+        if (actividadRegistrada) {
+            celda.classList.add('celda-nota-faltante');
+            celda.style.background = 'linear-gradient(135deg, #fff9e6 0%, #ffedd5 100%)';
+            celda.style.borderLeft = '3px solid #f59e0b';
+            inputElement.style.background = '#fff7ed';
+            inputElement.style.border = '2px solid #fb923c';
+            inputElement.style.fontWeight = '600';
+            inputElement.placeholder = '⚠️';
+        }
+    } else {
+        // Remover resaltado si tiene valor
+        celda.classList.remove('celda-nota-faltante');
+        celda.style.background = '';
+        celda.style.borderLeft = '';
+        inputElement.style.background = '';
+        inputElement.style.border = '';
+        inputElement.style.fontWeight = '';
+        inputElement.placeholder = '';
+    }
+};
+
+// Inicializar listeners para inputs existentes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[data-cod-estudiante]').forEach(input => {
+        input.addEventListener('input', function() {
+            window.actualizarResaltadoCelda(this);
+        });
+        
+        input.addEventListener('change', function() {
+            window.actualizarResaltadoCelda(this);
+        });
+    });
+    
+    // Observer para contenido dinámico
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    const nuevosInputs = node.querySelectorAll ? node.querySelectorAll('input[data-cod-estudiante]') : [];
+                    nuevosInputs.forEach(input => {
+                        input.addEventListener('input', function() {
+                            window.actualizarResaltadoCelda(this);
+                        });
+                        input.addEventListener('change', function() {
+                            window.actualizarResaltadoCelda(this);
+                        });
+                    });
+                }
+            });
+        });
+    });
+    
+    const tabContent = document.getElementById('nav-calificaciones-todas');
+    if (tabContent) {
+        observer.observe(tabContent, { childList: true, subtree: true });
+    }
+});
+
+// Tooltip para botones deshabilitados
+$(document).ready(function() {
+    $('button[disabled][title]').tooltip({
+        placement: 'top',
+        trigger: 'hover'
+    });
+});
+</script>
 
 <?php include("../compartido/guardar-historial-acciones.php");?>

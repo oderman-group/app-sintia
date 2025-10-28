@@ -7,6 +7,7 @@
 require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Actividades.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 
 $valores = Actividades::consultarValores($config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajeRestante = 100 - $valores[0];
@@ -31,16 +32,55 @@ $porcentajeRestante = 100 - $valores[0];
 			<div class="col-sm-12">
 				
 		<?php
+		// ============================================
+		// VALIDACIÓN DE INDICADORES OBLIGATORIOS
+		// ============================================
+		$indicadoresObligatorios = ($datosCargaActual['car_indicador_automatico'] != 1);
+		$tieneIndicadores = false;
+		$mensajeIndicadores = '';
+		
+		if ($indicadoresObligatorios) {
+			$consultaIndicadores = Indicadores::traerIndicadoresCargaPeriodo($cargaConsultaActual, $periodoConsultaActual);
+			$numIndicadores = mysqli_num_rows($consultaIndicadores);
+			
+			if ($numIndicadores > 0) {
+				$tieneIndicadores = true;
+			} else {
+				$mensajeIndicadores = '
+				<div class="alert alert-warning" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 4px solid #f39c12; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+					<div style="display: flex; align-items: center; gap: 10px;">
+						<i class="fa fa-exclamation-triangle" style="font-size: 24px; color: #f39c12;"></i>
+						<div style="flex: 1;">
+							<strong style="color: #856404; font-size: 16px;">⚠️ Indicadores Requeridos</strong>
+							<p style="margin: 5px 0 0 0; color: #856404;">
+								Debes registrar al menos un indicador antes de poder agregar actividades.
+								<a href="indicadores.php?carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'" class="alert-link" style="font-weight: 600; text-decoration: underline;">
+									Ir a Indicadores <i class="fa fa-arrow-right"></i>
+								</a>
+							</p>
+						</div>
+					</div>
+				</div>';
+			}
+		}
+		
+		// Mostrar mensaje si no tiene indicadores
+		if ($indicadoresObligatorios && !$tieneIndicadores) {
+			echo $mensajeIndicadores;
+		}
+		// ============================================
+		
 		if( CargaAcademica::validarAccionAgregarCalificaciones($datosCargaActual, $valores, $periodoConsultaActual, $porcentajeRestante) ) {
 		?>
 		
                 <div class="btn-group">
                     <button 
                         type="button" 
-                        class="btn deepPink-bgcolor" 
-                        data-toggle="modal" 
-                        data-target="#modalAgregarActividad"
-                        style="transition: all 0.3s ease;"
+                        class="btn deepPink-bgcolor <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'disabled' : ''; ?>" 
+                        data-toggle="<?= ($indicadoresObligatorios && !$tieneIndicadores) ? '' : 'modal'; ?>" 
+                        data-target="<?= ($indicadoresObligatorios && !$tieneIndicadores) ? '' : '#modalAgregarActividad'; ?>"
+                        style="transition: all 0.3s ease; <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'opacity: 0.6; cursor: not-allowed;' : ''; ?>"
+                        <?= ($indicadoresObligatorios && !$tieneIndicadores) ? 'disabled title="Debes registrar indicadores primero"' : ''; ?>
                     >
                         <i class="fa fa-plus-circle"></i> Agregar Actividad
                     </button>
