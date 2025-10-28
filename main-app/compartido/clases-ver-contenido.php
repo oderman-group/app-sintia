@@ -398,15 +398,15 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 				window.onload = consultarPreguntas();
 
 				async function guardar(idPadre) {
+					console.log('💬 Guardando comentario...', { idPadre: idPadre });
 
 					idClase = '<?= $idR; ?>';
 					indice = 0;
 					nivel = 0;
 					sesionUsuario = '<?= $_SESSION["id"]; ?>';
 
-
 					id = '';
-					if (idPadre === undefined) {
+					if (idPadre === undefined || idPadre === null) {
 						idPadre = null;
 						btn = document.getElementById("btnEnviar");
 						contenido = document.getElementById("contenido");
@@ -414,9 +414,14 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 						btn = document.getElementById("btnEnviar-" + idPadre);
 						contenido = document.getElementById("respuesta-" + idPadre);
 						idNivel = btoa(idPadre);
-						nivel = document.getElementById("nivel" + idNivel).value;
-
+						var nivelElement = document.getElementById("nivel" + idNivel);
+						if (nivelElement) {
+							nivel = nivelElement.value || 0;
+						} else {
+							nivel = 0;
+						}
 					}
+					
 					if (validar(contenido.value)) {
 						var data = {
 							"idClase": idClase,
@@ -426,11 +431,23 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 							"nivel": nivel
 						};
 
+						console.log('📤 Enviando datos:', data);
+
 						var url = "../compartido/clases-guardar-comentarios.php";
 						resultado = await metodoFetchAsync(url, data, 'json', false);
 						data = resultado["data"];
+						
+						console.log('📥 Respuesta recibida:', data);
+						
 						if (data["ok"]) {
-							mostrarPregunta(data);
+							// ✅ Mostrar pregunta inmediatamente después de guardar
+							await mostrarPregunta(data);
+							
+							// ✅ Actualizar cantidad actual
+							if (data["cantidad"] !== undefined) {
+								cantidadActual = parseInt(data["cantidad"]);
+							}
+							
 							$.toast({
 								heading: 'Acción realizada',
 								text: data["msg"],
@@ -443,9 +460,25 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 							});
 							btn.disabled = false;
 							contenido.value = "";
+							
+							console.log('✅ Comentario guardado y mostrado correctamente');
+						} else {
+							console.error('❌ Error al guardar:', data["msg"]);
+							btn.disabled = false;
+							$.toast({
+								heading: 'Error',
+								text: data["msg"] || 'Error al guardar el comentario',
+								position: 'bottom-right',
+								showHideTransition: 'slide',
+								loaderBg: '#f4516c',
+								icon: "error",
+								hideAfter: 5000,
+								stack: 6
+							});
 						}
 					} else {
 						btn.disabled = false;
+						console.warn('⚠️ Validación fallida: contenido vacío');
 					}
 
 				};
@@ -459,10 +492,13 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 				}
 
 				async function mostrarPregunta(dato) {
+					console.log('📝 Mostrando pregunta:', dato);
+					
 					idPregunta = dato["codigo"];
 					cantidad = dato["cantidad"];
 					idPadre = dato["padre"];
-					nivel = dato["nivel"];
+					nivel = dato["nivel"] || 0;
+					
 					var data = {
 						"claseId": '<?= $idR; ?>',
 						"idPregunta": idPregunta,
@@ -474,32 +510,50 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 					var url = "../compartido/clase-comentario.php";
 					resultado = await metodoFetchAsync(url, data, 'html', false);
 
-					if (idPadre == undefined) {
+					if (idPadre == undefined || idPadre == null) {
 						lista = document.getElementById("lista-preguntas");
 					} else {
 						lista = document.getElementById("lista-respuesta-" + idPadre);
 					}
 
+					if (!lista) {
+						console.error('❌ No se encontró la lista para insertar el comentario');
+						return;
+					}
 
+					// ✅ Insertar al inicio de la lista
 					var primerElemento = lista.firstChild;
 					var nuevoElemento = document.createElement("li");
 					nuevoElemento.innerHTML = resultado["data"];
-					lista.insertBefore(nuevoElemento, primerElemento);
-					// esto sucede cunado es una respuesta
-					if (idPadre != undefined) {
-						respuesta = document.getElementById("cantidad-respuestas-" + idPadre);
-						respuesta.innerText = cantidad + " Respuestas ";
-						var icon = document.createElement('i');
-						icon.classList.add('fa', 'fa-comments-o');
-						respuesta.appendChild(icon);
-						var miDiv = document.getElementById("div-respuesta-" + idPadre);
-						miDiv.classList.remove('show');
-						lista.classList.add('show');
-					}else{
-						cantidadActual = parseInt(dato["cantidad"]);
+					
+					if (primerElemento) {
+						lista.insertBefore(nuevoElemento, primerElemento);
+					} else {
+						lista.appendChild(nuevoElemento);
 					}
-
-
+					
+					console.log('✅ Comentario insertado en la lista');
+					
+					// esto sucede cuando es una respuesta
+					if (idPadre != undefined && idPadre != null) {
+						respuesta = document.getElementById("cantidad-respuestas-" + idPadre);
+						if (respuesta) {
+							respuesta.innerText = cantidad + " Respuestas ";
+							var icon = document.createElement('i');
+							icon.classList.add('fa', 'fa-comments-o');
+							respuesta.appendChild(icon);
+						}
+						var miDiv = document.getElementById("div-respuesta-" + idPadre);
+						if (miDiv) {
+							miDiv.classList.remove('show');
+						}
+						lista.classList.add('show');
+					} else {
+						if (cantidad !== undefined) {
+							cantidadActual = parseInt(cantidad);
+							console.log('📊 Cantidad actualizada a:', cantidadActual);
+						}
+					}
 				}
 
 				function eliminarAnimacion(id) {
@@ -509,6 +563,8 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 
 
 				async function consultarPreguntas() {
+					console.log('🔍 Consultando preguntas/comentarios...');
+					
 					var data = {
 						"claseId": '<?= $idR; ?>',
 						"usuarioActual": '<?= $datosUsuarioActual['uss_id']; ?>',
@@ -517,9 +573,17 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 
 					var url = "../compartido/ajax-comentarios-preguntas.php";
 					resultado = await metodoFetchAsync(url, data, 'html', false);
+					
 					contarPreguntas();
+					
 					var lista = document.getElementById("lista-preguntas");
-					lista.innerHTML = resultado["data"];
+					if (lista) {
+						// ✅ Reemplazar contenido con datos frescos del servidor
+						lista.innerHTML = resultado["data"];
+						console.log('✅ Comentarios cargados:', lista.children.length);
+					} else {
+						console.error('❌ No se encontró la lista de preguntas');
+					}
 				}
 			</script>
 
