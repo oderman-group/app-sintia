@@ -154,12 +154,20 @@ $porcentajeRestante = 100 - $valores[0];
 									
 									function obtenerTabACargar() {
 										// 1. Prioridad: parámetro URL
-										var params = new URLSearchParams(window.location.search);
-										var tabURL = params.get('tab');
-										if (tabURL !== null) {
-											console.log('📂 Tab desde URL:', tabURL);
-											localStorage.setItem('calificaciones_tab_activo', tabURL);
-											return parseInt(tabURL);
+										try {
+											var params = new URLSearchParams(window.location.search);
+											var tabURL = params.get('tab');
+											if (tabURL !== null && tabURL !== '') {
+												// Limpiar cualquier carácter extraño (como '?' o '&')
+												tabURL = tabURL.toString().replace(/[^\d]/g, '');
+												if (tabURL !== '') {
+													console.log('📂 Tab desde URL:', tabURL);
+													localStorage.setItem('calificaciones_tab_activo', tabURL);
+													return parseInt(tabURL);
+												}
+											}
+										} catch(e) {
+											console.warn('Error parseando URL:', e);
 										}
 										
 										// 2. Fallback: localStorage
@@ -517,20 +525,80 @@ $porcentajeRestante = 100 - $valores[0];
                     success: function(response) {
                         console.log('✅ Respuesta del servidor:', response);
 
-                        if (response.success) {
-                            // ✅ ÉXITO: Toast de confirmación
-                            $.toast({
-                                heading: '✅ Actividad Creada',
-                                text: response.message || 'La actividad se creó correctamente',
-                                position: 'top-right',
-                                loaderBg: '#28a745',
-                                icon: 'success',
-                                hideAfter: 4000,
-                                stack: 1
-                            });
+                        // Ocultar overlay inmediatamente
+                        const overlay = $('#overlay-guardando-nota');
+                        if (overlay.length) {
+                            overlay.hide();
+                        }
 
-                            // Cerrar modal
-                            $('#modalAgregarActividad').modal('hide');
+                        // Restaurar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
+
+                        if (response.success) {
+                            // ✅ ÉXITO: Cerrar modal de forma robusta
+                            const modalElement = document.getElementById('modalAgregarActividad');
+                            if (modalElement) {
+                                // Intentar cerrar con Bootstrap si está disponible
+                                try {
+                                    const bootstrapModal = bootstrap.Modal.getInstance(modalElement);
+                                    if (bootstrapModal) {
+                                        bootstrapModal.hide();
+                                    } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                                        $('#modalAgregarActividad').modal('hide');
+                                    } else {
+                                        // Cierre manual directo
+                                        modalElement.style.display = 'none';
+                                        modalElement.classList.remove('show');
+                                        modalElement.setAttribute('aria-hidden', 'true');
+                                        modalElement.removeAttribute('aria-modal');
+                                    }
+                                } catch(e) {
+                                    // Cierre manual directo como fallback
+                                    modalElement.style.display = 'none';
+                                    modalElement.classList.remove('show');
+                                    modalElement.setAttribute('aria-hidden', 'true');
+                                    modalElement.removeAttribute('aria-modal');
+                                }
+                            }
+                            
+                            // Limpiar backdrop y clases del body
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                backdrop.remove();
+                            }
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                            
+                            // Mostrar notificación después de un pequeño delay
+                            setTimeout(function() {
+                                try {
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: '✅ Actividad Creada',
+                                            text: response.message || 'La actividad se creó correctamente',
+                                            timer: 2000,
+                                            showConfirmButton: false,
+                                            toast: true,
+                                            position: 'top-end'
+                                        });
+                                    } else if (typeof $.toast !== 'undefined') {
+                                        $.toast({
+                                            heading: '✅ Actividad Creada',
+                                            text: response.message || 'La actividad se creó correctamente',
+                                            position: 'top-right',
+                                            loaderBg: '#28a745',
+                                            icon: 'success',
+                                            hideAfter: 4000,
+                                            stack: 1
+                                        });
+                                    }
+                                } catch(e) {
+                                    console.warn('No se pudo mostrar notificación:', e);
+                                }
+                            }, 100);
 
                             // Recargar la lista de calificaciones
                             setTimeout(function() {
@@ -549,15 +617,30 @@ $porcentajeRestante = 100 - $valores[0];
                             // ❌ ERROR del servidor
                             console.error('❌ Error del servidor:', response.message);
                             
-                            $.toast({
-                                heading: '❌ Error al Crear',
-                                text: response.message || 'No se pudo crear la actividad',
-                                position: 'top-right',
-                                loaderBg: '#dc3545',
-                                icon: 'error',
-                                hideAfter: 7000,
-                                stack: 1
-                            });
+                            try {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: '❌ Error al Crear',
+                                        text: response.message || 'No se pudo crear la actividad'
+                                    });
+                                } else if (typeof $.toast !== 'undefined') {
+                                    $.toast({
+                                        heading: '❌ Error al Crear',
+                                        text: response.message || 'No se pudo crear la actividad',
+                                        position: 'top-right',
+                                        loaderBg: '#dc3545',
+                                        icon: 'error',
+                                        hideAfter: 7000,
+                                        stack: 1
+                                    });
+                                } else {
+                                    alert('❌ Error: ' + (response.message || 'No se pudo crear la actividad'));
+                                }
+                            } catch(e) {
+                                console.error('Error mostrando notificación:', e);
+                                alert('❌ Error: ' + (response.message || 'No se pudo crear la actividad'));
+                            }
                         }
                     },
                     error: function(xhr, status, error) {
@@ -567,6 +650,16 @@ $porcentajeRestante = 100 - $valores[0];
                             statusCode: xhr.status,
                             response: xhr.responseText
                         });
+
+                        // Ocultar overlay inmediatamente
+                        const overlay = $('#overlay-guardando-nota');
+                        if (overlay.length) {
+                            overlay.hide();
+                        }
+
+                        // Restaurar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
 
                         let mensajeError = 'Error desconocido al crear la actividad';
                         
@@ -589,28 +682,43 @@ $porcentajeRestante = 100 - $valores[0];
                             }
                         }
 
-                        $.toast({
-                            heading: '❌ Error de Conexión',
-                            text: mensajeError,
-                            position: 'top-right',
-                            loaderBg: '#dc3545',
-                            icon: 'error',
-                            hideAfter: 8000,
-                            stack: 1
-                        });
+                        try {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '❌ Error de Conexión',
+                                    text: mensajeError
+                                });
+                            } else if (typeof $.toast !== 'undefined') {
+                                $.toast({
+                                    heading: '❌ Error de Conexión',
+                                    text: mensajeError,
+                                    position: 'top-right',
+                                    loaderBg: '#dc3545',
+                                    icon: 'error',
+                                    hideAfter: 8000,
+                                    stack: 1
+                                });
+                            } else {
+                                alert('❌ Error: ' + mensajeError);
+                            }
+                        } catch(e) {
+                            console.error('Error mostrando notificación de error:', e);
+                            alert('❌ Error: ' + mensajeError);
+                        }
                     },
                     complete: function() {
-                        // Restaurar botón
-                        $btn.prop('disabled', false);
-                        $btn.html(textOriginal);
-
-                        // Ocultar overlay
+                        // Asegurar que el overlay esté oculto y el botón restaurado
                         const overlay = $('#overlay-guardando-nota');
                         if (overlay.length) {
                             overlay.find('h3').text('💾 Guardando Nota...');
                             overlay.find('p').text('Por favor espera, no cierres esta ventana');
                             overlay.hide();
                         }
+                        
+                        // Restaurar botón por si acaso
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
                     }
                 });
             });
