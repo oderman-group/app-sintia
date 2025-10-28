@@ -110,15 +110,15 @@ $porcentajeRestante = 100 - $valores[0];
 									<nav>
 										<div class="nav nav-tabs" id="nav-tab" role="tablist">
 
-											<a class="nav-item nav-link" id="nav-calificaciones-tab" data-toggle="tab" href="#nav-calificaciones" role="tab" aria-controls="nav-calificaciones" aria-selected="true" onClick="listarInformacion('listar-calificaciones.php', 'nav-calificaciones')">Calificaciones</a>
+											<a class="nav-item nav-link" id="nav-calificaciones-tab" data-toggle="tab" href="#nav-calificaciones" role="tab" aria-controls="nav-calificaciones" aria-selected="true" onClick="guardarTabActivo(1); listarInformacion('listar-calificaciones.php', 'nav-calificaciones')">Calificaciones</a>
 
-											<a class="nav-item nav-link" id="nav-calificaciones-todas-tab" data-toggle="tab" href="#nav-calificaciones-todas" role="tab" aria-controls="nav-calificaciones-todas" aria-selected="true" onClick="listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas')">Resumen de notas</a>
+											<a class="nav-item nav-link" id="nav-calificaciones-todas-tab" data-toggle="tab" href="#nav-calificaciones-todas" role="tab" aria-controls="nav-calificaciones-todas" aria-selected="true" onClick="guardarTabActivo(2); listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas')">Resumen de notas</a>
 											
 											<?php if(isset($datosCargaActual) && $datosCargaActual['car_observaciones_boletin']==1){?>
-												<a class="nav-item nav-link" id="nav-observaciones-tab" data-toggle="tab" href="#nav-observaciones" role="tab" aria-controls="nav-observaciones" aria-selected="true" onClick="listarInformacion('listar-observaciones.php', 'nav-observaciones')">Observaciones</a>
+												<a class="nav-item nav-link" id="nav-observaciones-tab" data-toggle="tab" href="#nav-observaciones" role="tab" aria-controls="nav-observaciones" aria-selected="true" onClick="guardarTabActivo(3); listarInformacion('listar-observaciones.php', 'nav-observaciones')">Observaciones</a>
 											<?php }?>
 
-											<a class="nav-item nav-link" id="nav-periodos-resumen-tab" data-toggle="tab" href="#nav-periodos-resumen" role="tab" aria-controls="nav-periodos-resumen" aria-selected="true" onClick="listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen')">Resumen por periodos</a>
+											<a class="nav-item nav-link" id="nav-periodos-resumen-tab" data-toggle="tab" href="#nav-periodos-resumen" role="tab" aria-controls="nav-periodos-resumen" aria-selected="true" onClick="guardarTabActivo(4); listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen')">Resumen por periodos</a>
 
 										</div>
 									</nav>
@@ -138,40 +138,80 @@ $porcentajeRestante = 100 - $valores[0];
                                 </div>
 
 								<script>
+									// ============================================
+									// PERSISTENCIA DE TABS CON LOCALSTORAGE
+									// ============================================
+									function guardarTabActivo(tabNumero) {
+										localStorage.setItem('calificaciones_tab_activo', tabNumero);
+										
+										// Actualizar URL sin recargar
+										var url = new URL(window.location);
+										url.searchParams.set('tab', tabNumero);
+										window.history.pushState({}, '', url);
+										
+										console.log('✅ Tab guardado en localStorage:', tabNumero);
+									}
+									
+									function obtenerTabACargar() {
+										// 1. Prioridad: parámetro URL
+										try {
+											var params = new URLSearchParams(window.location.search);
+											var tabURL = params.get('tab');
+											if (tabURL !== null && tabURL !== '') {
+												// Limpiar cualquier carácter extraño (como '?' o '&')
+												tabURL = tabURL.toString().replace(/[^\d]/g, '');
+												if (tabURL !== '') {
+													console.log('📂 Tab desde URL:', tabURL);
+													localStorage.setItem('calificaciones_tab_activo', tabURL);
+													return parseInt(tabURL);
+												}
+											}
+										} catch(e) {
+											console.warn('Error parseando URL:', e);
+										}
+										
+										// 2. Fallback: localStorage
+										var tabLocalStorage = localStorage.getItem('calificaciones_tab_activo');
+										if (tabLocalStorage !== null) {
+											console.log('📂 Tab desde localStorage:', tabLocalStorage);
+											return parseInt(tabLocalStorage);
+										}
+										
+										// 3. Default: Tab 1
+										console.log('📂 Tab por defecto: 1');
+										return 1;
+									}
+									
 									document.addEventListener('DOMContentLoaded', function() {
 										console.log('🔵 Inicializando tabs de calificaciones');
 										
-										// Obtén la cadena de búsqueda de la URL
-										var queryString = window.location.search;
-										console.log('URL params:', queryString);
-
-										// Crea un objeto URLSearchParams a partir de la cadena de búsqueda
-										var params = new URLSearchParams(queryString);
-										var tab = params.get('tab');
+										var tabACargar = obtenerTabACargar();
 										
-										if ( tab == 2 ) {
-											console.log('📂 Cargando tab 2');
-											listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas');
-											document.getElementById('nav-calificaciones-todas-tab').classList.add('active');
-											document.getElementById('nav-calificaciones-todas').classList.add('show', 'active');
-										}
-										else if ( tab == 3 ) {
-											console.log('📂 Cargando tab 3');
-											listarInformacion('listar-observaciones.php', 'nav-observaciones');
-											document.getElementById('nav-observaciones-tab').classList.add('active');
-											document.getElementById('nav-observaciones').classList.add('show', 'active');
-										}
-										else if ( tab == 4 ) {
-											console.log('📂 Cargando tab 4');
-											listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen');
-											document.getElementById('nav-periodos-resumen-tab').classList.add('active');
-											document.getElementById('nav-periodos-resumen').classList.add('show', 'active');
-										}
-										else {
-											console.log('📂 Cargando tab 1');
-											listarInformacion('listar-calificaciones.php', 'nav-calificaciones');
-											document.getElementById('nav-calificaciones-tab').classList.add('active');
-											document.getElementById('nav-calificaciones').classList.add('show', 'active');
+										switch(tabACargar) {
+											case 2:
+												console.log('📂 Cargando tab 2');
+												listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas');
+												document.getElementById('nav-calificaciones-todas-tab').classList.add('active');
+												document.getElementById('nav-calificaciones-todas').classList.add('show', 'active');
+												break;
+											case 3:
+												console.log('📂 Cargando tab 3');
+												listarInformacion('listar-observaciones.php', 'nav-observaciones');
+												document.getElementById('nav-observaciones-tab').classList.add('active');
+												document.getElementById('nav-observaciones').classList.add('show', 'active');
+												break;
+											case 4:
+												console.log('📂 Cargando tab 4');
+												listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen');
+												document.getElementById('nav-periodos-resumen-tab').classList.add('active');
+												document.getElementById('nav-periodos-resumen').classList.add('show', 'active');
+												break;
+											default:
+												console.log('📂 Cargando tab 1');
+												listarInformacion('listar-calificaciones.php', 'nav-calificaciones');
+												document.getElementById('nav-calificaciones-tab').classList.add('active');
+												document.getElementById('nav-calificaciones').classList.add('show', 'active');
+												break;
 										}
 									});
 								</script>
@@ -485,20 +525,80 @@ $porcentajeRestante = 100 - $valores[0];
                     success: function(response) {
                         console.log('✅ Respuesta del servidor:', response);
 
-                        if (response.success) {
-                            // ✅ ÉXITO: Toast de confirmación
-                            $.toast({
-                                heading: '✅ Actividad Creada',
-                                text: response.message || 'La actividad se creó correctamente',
-                                position: 'top-right',
-                                loaderBg: '#28a745',
-                                icon: 'success',
-                                hideAfter: 4000,
-                                stack: 1
-                            });
+                        // Ocultar overlay inmediatamente
+                        const overlay = $('#overlay-guardando-nota');
+                        if (overlay.length) {
+                            overlay.hide();
+                        }
 
-                            // Cerrar modal
-                            $('#modalAgregarActividad').modal('hide');
+                        // Restaurar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
+
+                        if (response.success) {
+                            // ✅ ÉXITO: Cerrar modal de forma robusta
+                            const modalElement = document.getElementById('modalAgregarActividad');
+                            if (modalElement) {
+                                // Intentar cerrar con Bootstrap si está disponible
+                                try {
+                                    const bootstrapModal = bootstrap.Modal.getInstance(modalElement);
+                                    if (bootstrapModal) {
+                                        bootstrapModal.hide();
+                                    } else if (typeof $ !== 'undefined' && $.fn.modal) {
+                                        $('#modalAgregarActividad').modal('hide');
+                                    } else {
+                                        // Cierre manual directo
+                                        modalElement.style.display = 'none';
+                                        modalElement.classList.remove('show');
+                                        modalElement.setAttribute('aria-hidden', 'true');
+                                        modalElement.removeAttribute('aria-modal');
+                                    }
+                                } catch(e) {
+                                    // Cierre manual directo como fallback
+                                    modalElement.style.display = 'none';
+                                    modalElement.classList.remove('show');
+                                    modalElement.setAttribute('aria-hidden', 'true');
+                                    modalElement.removeAttribute('aria-modal');
+                                }
+                            }
+                            
+                            // Limpiar backdrop y clases del body
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                backdrop.remove();
+                            }
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                            
+                            // Mostrar notificación después de un pequeño delay
+                            setTimeout(function() {
+                                try {
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: '✅ Actividad Creada',
+                                            text: response.message || 'La actividad se creó correctamente',
+                                            timer: 2000,
+                                            showConfirmButton: false,
+                                            toast: true,
+                                            position: 'top-end'
+                                        });
+                                    } else if (typeof $.toast !== 'undefined') {
+                                        $.toast({
+                                            heading: '✅ Actividad Creada',
+                                            text: response.message || 'La actividad se creó correctamente',
+                                            position: 'top-right',
+                                            loaderBg: '#28a745',
+                                            icon: 'success',
+                                            hideAfter: 4000,
+                                            stack: 1
+                                        });
+                                    }
+                                } catch(e) {
+                                    console.warn('No se pudo mostrar notificación:', e);
+                                }
+                            }, 100);
 
                             // Recargar la lista de calificaciones
                             setTimeout(function() {
@@ -517,15 +617,30 @@ $porcentajeRestante = 100 - $valores[0];
                             // ❌ ERROR del servidor
                             console.error('❌ Error del servidor:', response.message);
                             
-                            $.toast({
-                                heading: '❌ Error al Crear',
-                                text: response.message || 'No se pudo crear la actividad',
-                                position: 'top-right',
-                                loaderBg: '#dc3545',
-                                icon: 'error',
-                                hideAfter: 7000,
-                                stack: 1
-                            });
+                            try {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: '❌ Error al Crear',
+                                        text: response.message || 'No se pudo crear la actividad'
+                                    });
+                                } else if (typeof $.toast !== 'undefined') {
+                                    $.toast({
+                                        heading: '❌ Error al Crear',
+                                        text: response.message || 'No se pudo crear la actividad',
+                                        position: 'top-right',
+                                        loaderBg: '#dc3545',
+                                        icon: 'error',
+                                        hideAfter: 7000,
+                                        stack: 1
+                                    });
+                                } else {
+                                    alert('❌ Error: ' + (response.message || 'No se pudo crear la actividad'));
+                                }
+                            } catch(e) {
+                                console.error('Error mostrando notificación:', e);
+                                alert('❌ Error: ' + (response.message || 'No se pudo crear la actividad'));
+                            }
                         }
                     },
                     error: function(xhr, status, error) {
@@ -535,6 +650,16 @@ $porcentajeRestante = 100 - $valores[0];
                             statusCode: xhr.status,
                             response: xhr.responseText
                         });
+
+                        // Ocultar overlay inmediatamente
+                        const overlay = $('#overlay-guardando-nota');
+                        if (overlay.length) {
+                            overlay.hide();
+                        }
+
+                        // Restaurar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
 
                         let mensajeError = 'Error desconocido al crear la actividad';
                         
@@ -557,28 +682,43 @@ $porcentajeRestante = 100 - $valores[0];
                             }
                         }
 
-                        $.toast({
-                            heading: '❌ Error de Conexión',
-                            text: mensajeError,
-                            position: 'top-right',
-                            loaderBg: '#dc3545',
-                            icon: 'error',
-                            hideAfter: 8000,
-                            stack: 1
-                        });
+                        try {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '❌ Error de Conexión',
+                                    text: mensajeError
+                                });
+                            } else if (typeof $.toast !== 'undefined') {
+                                $.toast({
+                                    heading: '❌ Error de Conexión',
+                                    text: mensajeError,
+                                    position: 'top-right',
+                                    loaderBg: '#dc3545',
+                                    icon: 'error',
+                                    hideAfter: 8000,
+                                    stack: 1
+                                });
+                            } else {
+                                alert('❌ Error: ' + mensajeError);
+                            }
+                        } catch(e) {
+                            console.error('Error mostrando notificación de error:', e);
+                            alert('❌ Error: ' + mensajeError);
+                        }
                     },
                     complete: function() {
-                        // Restaurar botón
-                        $btn.prop('disabled', false);
-                        $btn.html(textOriginal);
-
-                        // Ocultar overlay
+                        // Asegurar que el overlay esté oculto y el botón restaurado
                         const overlay = $('#overlay-guardando-nota');
                         if (overlay.length) {
                             overlay.find('h3').text('💾 Guardando Nota...');
                             overlay.find('p').text('Por favor espera, no cierres esta ventana');
                             overlay.hide();
                         }
+                        
+                        // Restaurar botón por si acaso
+                        $btn.prop('disabled', false);
+                        $btn.html(textOriginal);
                     }
                 });
             });

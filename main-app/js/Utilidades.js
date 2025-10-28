@@ -94,6 +94,40 @@ function listarInformacion(url, idResponseTag, method='POST', paramsJSON=null, i
     .then(response => response.text()) // Convertir la respuesta a texto
     .then(data => {
         document.getElementById(idResponseTag).innerHTML = data;
+        
+        // Ejecutar scripts que puedan estar dentro del contenido cargado
+        const scripts = document.getElementById(idResponseTag).querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            try {
+                const newScript = document.createElement('script');
+                
+                // Copiar atributos
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                
+                // Copiar contenido del script
+                const scriptContent = oldScript.textContent || oldScript.innerHTML || '';
+                
+                // Validar que el contenido no esté vacío antes de crear el script
+                if (scriptContent.trim().length > 0) {
+                    // Usar textContent en lugar de innerHTML para evitar problemas con jQuery.load
+                    newScript.textContent = scriptContent;
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                } else {
+                    // Si no hay contenido, solo remover el script antiguo
+                    oldScript.remove();
+                }
+            } catch(e) {
+                console.warn('Error ejecutando script cargado dinámicamente:', e);
+                // Si hay error, al menos remover el script problemático
+                try {
+                    oldScript.remove();
+                } catch(removeError) {
+                    // Ignorar error al remover
+                }
+            }
+        });
 
         if (idRol && $('#'+idResponseTag+' #panel-body').length) {  
             $('#'+idResponseTag+' #panel-body .select2').select2();

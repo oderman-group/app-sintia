@@ -11,6 +11,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Actividad.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Carga.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Materia.php");
+require_once ROOT_PATH."/main-app/class/Modulos.php";
 
 class AjaxCalificaciones {
 
@@ -61,7 +62,7 @@ class AjaxCalificaciones {
 
         Actividades::marcarActividadRegistrada($config, $data['codNota'], $_SESSION["bd"]);
 
-        if (!is_null($nota) && $nota < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
+        if (!is_null($nota) && $nota < $config['conf_nota_minima_aprobar'] && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_NOTIFICACIONES_NOTAS_BAJAS)) {
 
             $predicadoActividad = [
                 'act_id'      => $data['codNota'],
@@ -93,33 +94,51 @@ class AjaxCalificaciones {
             // Solo intentar enviar si el acudiente tiene un correo válido
             if (!empty($datosAcudiente) && !empty($datosAcudiente['uss_email'])) {
                 try {
-                    $tituloMsj    = 'Nota baja para ' .$nombre;
-                    $contenidoMsj = '
-                        <p style="color:navy;">
-                            Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado una nota baja en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
-                            Por favor ingresa a la plataforma y verifica. 
-                        </p>
-                    ';
-
+                    // Preparar datos para el template moderno
+                    $nombreCompleto = $datosAcudiente['uss_nombre'];
+                    if (!empty($datosAcudiente['uss_apellido1'])) {
+                        $nombreCompleto .= ' ' . $datosAcudiente['uss_apellido1'];
+                    }
+                    
+                    // Obtener nombre del docente
+                    $nombreDocente = 'No asignado';
+                    if (!empty($_SESSION["datosUsuario"]['uss_nombre'])) {
+                        $nombreDocente = trim($_SESSION["datosUsuario"]['uss_nombre'] . ' ' . 
+                                            ($_SESSION["datosUsuario"]['uss_apellido1'] ?? ''));
+                    }
+                    
+                    // Preparar datos para el template
                     $dataCorreo = [
-                        'contenido_msj'  => $contenidoMsj,
-                        'usuario_email'  => $datosAcudiente['uss_email'],
-                        'usuario_nombre' => $datosAcudiente['uss_nombre'],
-                        'institucion_id' => $config['conf_id_institucion'],
-                        'usuario_id'     => $datosAcudiente['uss_id']
+                        'nombre_acudiente'  => $nombreCompleto,
+                        'nombre_estudiante' => $nombre,
+                        'nombre_materia'    => $datosActividad[0]["mat_nombre"] ?? 'la materia',
+                        'nota_obtenida'     => number_format($nota, 1),
+                        'nota_minima'       => number_format($config['conf_nota_minima_aprobar'], 1),
+                        'nombre_actividad'  => $datosActividad[0]["act_descripcion"] ?? 'Actividad',
+                        'fecha_registro'    => date('d/m/Y'),
+                        'nombre_docente'    => $nombreDocente,
+                        'curso'             => $datosActividad[0]["gra_nombre"] ?? '',
+                        'grupo'             => $datosActividad[0]["gru_nombre"] ?? '',
+                        'usuario_email'     => $datosAcudiente['uss_email'],
+                        'usuario_nombre'    => $datosAcudiente['uss_nombre'],
+                        'institucion_id'    => $config['conf_id_institucion'],
+                        'usuario_id'        => $datosAcudiente['uss_id']
                     ];
 
-                    $asunto            = $tituloMsj;
-                    $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
+                    $asunto = '⚠️ Alerta de Desempeño Bajo - ' . $nombre;
+                    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-nota-baja.php';
                     
                     EnviarEmail::enviar($dataCorreo, $asunto, $bodyTemplateRoute, null, null);
+                    
+                    error_log("✅ Email de nota baja enviado a: " . $datosAcudiente['uss_email'] . " | Estudiante: " . $nombre . " | Nota: " . $nota);
+                    
                 } catch (Exception $e) {
                     // Si falla el envío de correo, solo registramos el error pero continuamos
-                    error_log("Error al enviar correo de notificación de nota baja: " . $e->getMessage());
+                    error_log("❌ Error al enviar correo de notificación de nota baja: " . $e->getMessage());
                 }
             } else {
                 // Registrar que no se pudo enviar por falta de datos del acudiente
-                error_log("No se pudo enviar notificación de nota baja para el estudiante {$data['codEst']}: acudiente sin correo electrónico");
+                error_log("⚠️ No se pudo enviar notificación de nota baja para el estudiante {$data['codEst']}: acudiente sin correo electrónico");
             }
         }
 

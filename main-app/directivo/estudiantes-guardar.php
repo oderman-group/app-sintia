@@ -95,7 +95,7 @@ if(empty($_POST["tipoMatricula"])) $_POST["tipoMatricula"] = GRADO_GRUPAL;
 $estado  ='';
 $mensaje ='';
 
-if ($config['conf_id_institucion'] == Modulos::MODULO_API_SION_ACADEMICA) {
+if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
 	require_once("apis-sion-create-student.php");
 }
 

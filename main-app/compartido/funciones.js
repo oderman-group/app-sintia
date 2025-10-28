@@ -563,7 +563,11 @@ function crearNoticia() {
     });
 }
 
-const estudiantesPorEstados = {};
+// Evitar redeclaración de la variable
+if (typeof window.estudiantesPorEstados === 'undefined') {
+    window.estudiantesPorEstados = {};
+}
+const estudiantesPorEstados = window.estudiantesPorEstados;
 
 function cambiarEstadoMatricula(data) {
     let idHref = 'estadoMatricula'+data.id_estudiante;

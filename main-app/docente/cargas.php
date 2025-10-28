@@ -1464,6 +1464,255 @@ if (!empty($_SESSION["infoCargaActual"])) {
     
     console.log('✨ Sistema de cargas académicas cargado correctamente');
     console.log('📚 Total de cargas:', allCards.length);
+    
+    // ============================================
+    // GENERACIÓN ASÍNCRONA DE INFORMES
+    // ============================================
+    window.mensajeGenerarInforme = async function(elemento) {
+        const href = elemento.getAttribute('name');
+        
+        // Extraer parámetros de la URL (puede ser relativa o absoluta)
+        let params;
+        try {
+            // Si la URL tiene parámetros, extraerlos directamente del string
+            if (href.includes('?')) {
+                const queryString = href.split('?')[1];
+                params = new URLSearchParams(queryString);
+            } else {
+                // Intentar parsear como URL completa
+                const url = new URL(href, window.location.origin);
+                params = new URLSearchParams(url.search);
+            }
+        } catch (e) {
+            // Si falla, intentar extraer manualmente
+            console.warn('Error parseando URL, intentando método alternativo:', e);
+            const match = href.match(/\?(.+)$/);
+            if (match) {
+                params = new URLSearchParams(match[1]);
+            } else {
+                params = new URLSearchParams();
+            }
+        }
+        
+        let carga = params.get('carga');
+        let periodo = params.get('periodo');
+        let grado = params.get('grado');
+        let grupo = params.get('grupo');
+        let tipoGrado = params.get('tipoGrado');
+        let area = params.get('area');
+        let valorAsignatura = params.get('valorAsignatura');
+        
+        // Validar que todos los parámetros críticos estén presentes
+        if (!carga || !periodo || !grado || !grupo || !tipoGrado) {
+            console.error('❌ Parámetros faltantes:', {
+                carga: carga ? 'OK' : 'FALTA',
+                periodo: periodo ? 'OK' : 'FALTA',
+                grado: grado ? 'OK' : 'FALTA',
+                grupo: grupo ? 'OK' : 'FALTA',
+                tipoGrado: tipoGrado ? 'OK' : 'FALTA',
+                href: href
+            });
+            
+            Swal.fire({
+                icon: 'error',
+                title: '❌ Error',
+                html: `<p style="color: #e74c3c;">Faltan parámetros necesarios para generar el informe.<br>Por favor, intente nuevamente.</p>`,
+                confirmButtonText: 'Cerrar',
+                confirmButtonColor: '#e74c3c'
+            });
+            return;
+        }
+        
+        console.log('🔵 Iniciando generación asíncrona de informe...');
+        console.log('📊 Parámetros:', {
+            carga: carga ? 'OK' : 'FALTA',
+            periodo: periodo ? 'OK' : 'FALTA',
+            grado: grado ? 'OK' : 'FALTA',
+            grupo: grupo ? 'OK' : 'FALTA',
+            tipoGrado: tipoGrado ? 'OK' : 'FALTA'
+        });
+        
+        Swal.fire({
+            title: '⏳ Generando Informe',
+            html: '<div style="text-align: center;"><div style="font-size: 48px; margin: 20px 0;"><i class="fa fa-spinner fa-spin" style="color: #3498db;"></i></div><p style="font-size: 16px; color: #7f8c8d; margin-top: 20px;">Procesando estudiantes...<br><strong>Por favor espera</strong></p></div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        
+        try {
+            // Construir body con todos los parámetros necesarios
+            const bodyParams = new URLSearchParams();
+            bodyParams.append('carga', carga);
+            bodyParams.append('periodo', periodo);
+            bodyParams.append('grado', grado);
+            bodyParams.append('grupo', grupo);
+            bodyParams.append('tipoGrado', tipoGrado);
+            if (area) bodyParams.append('area', area);
+            if (valorAsignatura) bodyParams.append('valorAsignatura', valorAsignatura);
+            
+            const response = await fetch('ajax-generar-informe-docente.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: bodyParams.toString()
+            });
+            
+            // Verificar si la respuesta es OK antes de parsear JSON
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error HTTP ${response.status}: ${errorText || 'Error desconocido del servidor'}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const { insertados, actualizados, omitidos, errores, sin_cambios, total_procesados, total_omitidos, total_errores, total_sin_cambios, carga_actualizada, nuevo_periodo, carga_id } = data.data;
+                
+                // Función auxiliar para crear accordions
+                function crearAccordion(titulo, items, color, icono) {
+                    if (!items || items.length === 0) return '';
+                    
+                    const id = 'accordion_' + titulo.replace(/\s+/g, '_').toLowerCase();
+                    const nombreEstudiantes = items.map(est => {
+                        let detalle = '';
+                        if (est.nota !== undefined) {
+                            detalle = `Nota: <strong style="color: ${color};">${est.nota}</strong>`;
+                            if (est.nota_anterior) {
+                                detalle += ` <span style="color: #7f8c8d;">(antes: ${est.nota_anterior})</span>`;
+                            }
+                            if (est.porcentaje !== undefined) {
+                                detalle += ` | Porcentaje: <strong>${est.porcentaje}%</strong>`;
+                            }
+                        } else if (est.porcentaje !== undefined) {
+                            detalle = `Porcentaje: <strong style="color: ${color};">${est.porcentaje}%</strong>`;
+                        }
+                        if (est.caso) {
+                            detalle += ` <small style="color: #7f8c8d;">(Caso ${est.caso})</small>`;
+                        }
+                        if (est.razon) {
+                            detalle += `<br><small style="color: #7f8c8d;">Razón: ${est.razon}</small>`;
+                        }
+                        if (est.error) {
+                            detalle += `<br><small style="color: #e74c3c;">${est.error}</small>`;
+                        }
+                        return `<div style="padding: 8px; border-bottom: 1px solid #ecf0f1; font-size: 13px;">• <strong>${est.nombre}</strong><br>${detalle}</div>`;
+                    }).join('');
+                    
+                    return `
+                        <div class="accordion-item-custom" style="margin-bottom: 10px; border: 1px solid #e0e6ed; border-radius: 8px; overflow: hidden;">
+                            <div class="accordion-header-custom" onclick="toggleAccordion('${id}')" style="background: ${color}15; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s;">
+                                <div>
+                                    <strong style="color: ${color}; font-size: 14px;">${icono} ${titulo} (${items.length})</strong>
+                                </div>
+                                <i class="fa fa-chevron-down" id="icon_${id}" style="color: ${color}; transition: transform 0.3s;"></i>
+                            </div>
+                            <div id="${id}" class="accordion-content-custom" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
+                                <div style="padding: 10px 15px; background: #ffffff; max-height: 250px; overflow-y: auto;">
+                                    ${nombreEstudiantes}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                let htmlResumen = '<div style="text-align: left; padding: 10px;">';
+                
+                // Resumen general
+                htmlResumen += '<div style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">';
+                htmlResumen += `<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">Total de estudiantes procesados:</div>`;
+                htmlResumen += `<div style="font-size: 32px; font-weight: 700; margin-bottom: 10px;">${total_procesados || 0}</div>`;
+                if (total_omitidos > 0 || total_errores > 0 || total_sin_cambios > 0) {
+                    htmlResumen += `<div style="margin-top: 10px; font-size: 12px; opacity: 0.85;">`;
+                    if (total_omitidos > 0) htmlResumen += `⏭️ Omitidos: ${total_omitidos} `;
+                    if (total_errores > 0) htmlResumen += `❌ Errores: ${total_errores} `;
+                    if (total_sin_cambios > 0) htmlResumen += `✓ Sin cambios: ${total_sin_cambios}`;
+                    htmlResumen += `</div>`;
+                }
+                if (carga_actualizada && nuevo_periodo) {
+                    htmlResumen += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.3);">`;
+                    htmlResumen += `<div style="font-size: 12px; opacity: 0.9;">✓ Carga actualizada al período ${nuevo_periodo}</div>`;
+                    htmlResumen += `</div>`;
+                }
+                htmlResumen += '</div>';
+                
+                // Detalles por categoría con accordions
+                htmlResumen += '<div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">';
+                htmlResumen += crearAccordion('Insertados', insertados, '#27ae60', '✅');
+                htmlResumen += crearAccordion('Actualizados', actualizados, '#3498db', '🔄');
+                htmlResumen += crearAccordion('Sin cambios', sin_cambios, '#95a5a6', '✓');
+                htmlResumen += crearAccordion('Omitidos', omitidos, '#f39c12', '⏭️');
+                htmlResumen += crearAccordion('Errores', errores, '#e74c3c', '❌');
+                htmlResumen += '</div>';
+                
+                htmlResumen += '</div>';
+                
+                // Registrar función para accordions antes de mostrar el modal
+                if (typeof window.toggleAccordion === 'undefined') {
+                    window.toggleAccordion = function(id) {
+                        const content = document.getElementById(id);
+                        const icon = document.getElementById('icon_' + id);
+                        if (content && icon) {
+                            if (content.style.maxHeight === '0px' || !content.style.maxHeight) {
+                                content.style.maxHeight = content.scrollHeight + 'px';
+                                icon.style.transform = 'rotate(180deg)';
+                            } else {
+                                content.style.maxHeight = '0px';
+                                icon.style.transform = 'rotate(0deg)';
+                            }
+                        }
+                    };
+                }
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Informe Generado Exitosamente',
+                    html: htmlResumen,
+                    width: '750px',
+                    confirmButtonText: 'Cerrar y actualizar',
+                    confirmButtonColor: '#3498db',
+                    customClass: {
+                        popup: 'swal2-popup-modern'
+                    },
+                    didClose: () => {
+                        // Recargar la página para reflejar los cambios en la carga
+                        if (carga_actualizada) {
+                            window.location.reload();
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && carga_actualizada) {
+                        // Ocultar el botón de generar informe para esta carga
+                        if (carga_id) {
+                            const cargaElement = document.getElementById('carga-' + carga_id);
+                            if (cargaElement) {
+                                const btnGroup = cargaElement.querySelector('.btn-group');
+                                if (btnGroup) {
+                                    btnGroup.style.display = 'none';
+                                }
+                            }
+                        }
+                        // Recargar página para ver cambios
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    }
+                });
+            } else {
+                throw new Error(data.message || 'Error desconocido');
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: '❌ Error',
+                html: `<p style="color: #e74c3c;">${error.message || 'Ocurrió un error al generar el informe'}</p>`,
+                confirmButtonText: 'Cerrar',
+                confirmButtonColor: '#e74c3c'
+            });
+        }
+    };
+    
+    console.log('✅ Sistema de generación asíncrona activado');
 </script>
 </body>
 

@@ -1899,7 +1899,11 @@ class Estudiantes {
         try {
             $sql = "
             SELECT 
-                mat.mat_id
+                mat.mat_id,
+                mat.mat_nombres,
+                mat.mat_nombre2,
+                mat.mat_primer_apellido,
+                mat.mat_segundo_apellido
             FROM ".BD_ACADEMICA.".academico_matriculas mat
             WHERE
                 mat_grado='".$datosCargaActual['car_curso']."'

@@ -238,7 +238,9 @@
 (function() {
     console.log('🔧 Inicializando buscador simple...');
     
-    let searchTimeout = null;
+    // Evitar redeclaración - usar window si ya existe
+    var searchTimeout = window.barraSuperiorSearchTimeout || null;
+    window.barraSuperiorSearchTimeout = searchTimeout;
     let isSearching = false;
     
     // Esperar a que el DOM esté listo
@@ -281,6 +283,7 @@
                 searchTimeout = setTimeout(function() {
                     window.location.href = 'noticias.php?busqueda=' + encodeURIComponent(value);
                 }, 800);
+                window.barraSuperiorSearchTimeout = searchTimeout;
             }
         });
         
