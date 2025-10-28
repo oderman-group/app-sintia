@@ -3,9 +3,16 @@
  * Sistema de búsqueda avanzado con resultados categorizados
  */
 
-let searchTimeout = null;
-let currentSearchQuery = '';
-let isSearching = false;
+// Evitar redeclaración de variables usando window para persistencia global
+// Si ya están definidas, reutilizarlas; si no, crear nuevas
+var searchTimeout = window.buscadorGeneralSearchTimeout || null;
+var currentSearchQuery = window.buscadorGeneralCurrentSearchQuery || '';
+var isSearching = window.buscadorGeneralIsSearching || false;
+
+// Guardar referencias en window para evitar redeclaraciones
+window.buscadorGeneralSearchTimeout = searchTimeout;
+window.buscadorGeneralCurrentSearchQuery = currentSearchQuery;
+window.buscadorGeneralIsSearching = isSearching;
 
 // Inicializar el buscador
 document.addEventListener('DOMContentLoaded', function() {
@@ -74,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Manejar la búsqueda con debouncing
 function handleSearch(query) {
     currentSearchQuery = query;
+    window.buscadorGeneralCurrentSearchQuery = query;
     
     // Limpiar el timeout anterior
     if (searchTimeout) {
@@ -96,6 +104,7 @@ function handleSearch(query) {
     searchTimeout = setTimeout(function() {
         performSearch(query);
     }, 300);
+    window.buscadorGeneralSearchTimeout = searchTimeout;
 }
 
 // Mostrar estado de carga
