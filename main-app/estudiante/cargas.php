@@ -62,52 +62,54 @@ if($config['conf_activar_encuesta']==1){
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Estilos del Header Mejorado */
+    /* Estilos del Header Mejorado - Más compacto y menos protagonista */
     .page-header-modern {
         background: linear-gradient(135deg, var(--primary-color) 0%, #1a252f 100%);
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: var(--card-shadow);
+        border-radius: 12px;
+        padding: 18px 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.08);
         color: white;
+        opacity: 0.95;
     }
 
     .stats-container {
         display: flex;
-        gap: 20px;
-        margin-top: 20px;
+        gap: 12px;
+        margin-top: 15px;
         flex-wrap: wrap;
     }
 
     .stat-card {
         flex: 1;
-        min-width: 200px;
-        background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 12px;
-        padding: 20px;
+        min-width: 120px;
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(5px);
+        border-radius: 8px;
+        padding: 12px 16px;
         text-align: center;
-        border: 1px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.15);
         transition: var(--transition);
     }
 
     .stat-card:hover {
-        background: rgba(255,255,255,0.15);
-        transform: translateY(-2px);
+        background: rgba(255,255,255,0.12);
+        transform: translateY(-1px);
     }
 
     .stat-number {
-        font-size: 36px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: var(--secondary-color);
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: rgba(255,255,255,0.95);
     }
 
     .stat-label {
-        font-size: 14px;
-        opacity: 0.9;
+        font-size: 11px;
+        opacity: 0.85;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        font-weight: 500;
     }
 
     /* Buscador y Filtros Modernos */
@@ -446,25 +448,44 @@ if($config['conf_activar_encuesta']==1){
     /* Responsive */
     @media (max-width: 1200px) {
         .stat-card {
-            min-width: 150px;
+            min-width: 140px;
+            padding: 10px 14px;
+        }
+
+        .stat-number {
+            font-size: 22px;
+        }
+
+        .stat-label {
+            font-size: 10px;
         }
     }
 
     @media (max-width: 768px) {
         .page-header-modern {
-            padding: 20px;
+            padding: 15px 18px;
+        }
+
+        .page-header-modern h2 {
+            font-size: 20px !important;
         }
 
         .stat-number {
-            font-size: 28px;
+            font-size: 20px;
+        }
+
+        .stat-label {
+            font-size: 10px;
         }
 
         .stats-container {
-            gap: 10px;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .stat-card {
-            min-width: calc(50% - 5px);
+            min-width: calc(50% - 4px);
+            padding: 10px 12px;
         }
 
         .search-filter-container {
@@ -521,14 +542,14 @@ if($config['conf_activar_encuesta']==1){
                     ?>
 
                     <!-- Header con estadísticas -->
-                    <div class="page-header-modern">
+                    <div class="page-header-modern" id="header-resumen">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
                             <div>
-                                <h2 class="mb-2" style="font-size: 28px; font-weight: 700;">
+                                <h2 class="mb-1" style="font-size: 22px; font-weight: 600;">
                                     <i class="fa fa-book mr-2"></i>
                                     <?=$frases[73][$datosUsuarioActual['uss_idioma']];?>
                                 </h2>
-                                <p class="mb-0" style="opacity: 0.9;">Consulta y accede a tus materias académicas</p>
+                                <p class="mb-0" style="opacity: 0.85; font-size: 13px;">Consulta y accede a tus materias académicas</p>
                             </div>
                             <?php include("../compartido/texto-manual-ayuda.php"); ?>
                         </div>
@@ -975,6 +996,33 @@ if($config['conf_activar_encuesta']==1){
         if (allCards) {
             console.log('📚 Total de cargas:', allCards.length);
         }
+        
+        // ============================================
+        // SCROLL AUTOMÁTICO A CARGAS ACADÉMICAS
+        // ============================================
+        $(document).ready(function() {
+            // Esperar un momento para que la página se cargue completamente
+            setTimeout(function() {
+                const cargasContainer = document.getElementById('cargas-container');
+                const searchFilterContainer = document.querySelector('.search-filter-container');
+                
+                // Si existe el contenedor de cargas o el buscador, hacer scroll hacia ahí
+                const targetElement = searchFilterContainer || cargasContainer;
+                
+                if (targetElement) {
+                    // Calcular posición considerando cualquier header fijo
+                    const headerOffset = 80; // Altura aproximada de headers fijos
+                    const elementPosition = targetElement.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    
+                    // Hacer scroll suave
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 300); // Pequeño delay para asegurar que todo esté renderizado
+        });
     </script>
   </body>
 
