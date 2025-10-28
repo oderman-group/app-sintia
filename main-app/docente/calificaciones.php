@@ -110,15 +110,15 @@ $porcentajeRestante = 100 - $valores[0];
 									<nav>
 										<div class="nav nav-tabs" id="nav-tab" role="tablist">
 
-											<a class="nav-item nav-link" id="nav-calificaciones-tab" data-toggle="tab" href="#nav-calificaciones" role="tab" aria-controls="nav-calificaciones" aria-selected="true" onClick="listarInformacion('listar-calificaciones.php', 'nav-calificaciones')">Calificaciones</a>
+											<a class="nav-item nav-link" id="nav-calificaciones-tab" data-toggle="tab" href="#nav-calificaciones" role="tab" aria-controls="nav-calificaciones" aria-selected="true" onClick="guardarTabActivo(1); listarInformacion('listar-calificaciones.php', 'nav-calificaciones')">Calificaciones</a>
 
-											<a class="nav-item nav-link" id="nav-calificaciones-todas-tab" data-toggle="tab" href="#nav-calificaciones-todas" role="tab" aria-controls="nav-calificaciones-todas" aria-selected="true" onClick="listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas')">Resumen de notas</a>
+											<a class="nav-item nav-link" id="nav-calificaciones-todas-tab" data-toggle="tab" href="#nav-calificaciones-todas" role="tab" aria-controls="nav-calificaciones-todas" aria-selected="true" onClick="guardarTabActivo(2); listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas')">Resumen de notas</a>
 											
 											<?php if(isset($datosCargaActual) && $datosCargaActual['car_observaciones_boletin']==1){?>
-												<a class="nav-item nav-link" id="nav-observaciones-tab" data-toggle="tab" href="#nav-observaciones" role="tab" aria-controls="nav-observaciones" aria-selected="true" onClick="listarInformacion('listar-observaciones.php', 'nav-observaciones')">Observaciones</a>
+												<a class="nav-item nav-link" id="nav-observaciones-tab" data-toggle="tab" href="#nav-observaciones" role="tab" aria-controls="nav-observaciones" aria-selected="true" onClick="guardarTabActivo(3); listarInformacion('listar-observaciones.php', 'nav-observaciones')">Observaciones</a>
 											<?php }?>
 
-											<a class="nav-item nav-link" id="nav-periodos-resumen-tab" data-toggle="tab" href="#nav-periodos-resumen" role="tab" aria-controls="nav-periodos-resumen" aria-selected="true" onClick="listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen')">Resumen por periodos</a>
+											<a class="nav-item nav-link" id="nav-periodos-resumen-tab" data-toggle="tab" href="#nav-periodos-resumen" role="tab" aria-controls="nav-periodos-resumen" aria-selected="true" onClick="guardarTabActivo(4); listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen')">Resumen por periodos</a>
 
 										</div>
 									</nav>
@@ -138,40 +138,72 @@ $porcentajeRestante = 100 - $valores[0];
                                 </div>
 
 								<script>
+									// ============================================
+									// PERSISTENCIA DE TABS CON LOCALSTORAGE
+									// ============================================
+									function guardarTabActivo(tabNumero) {
+										localStorage.setItem('calificaciones_tab_activo', tabNumero);
+										
+										// Actualizar URL sin recargar
+										var url = new URL(window.location);
+										url.searchParams.set('tab', tabNumero);
+										window.history.pushState({}, '', url);
+										
+										console.log('✅ Tab guardado en localStorage:', tabNumero);
+									}
+									
+									function obtenerTabACargar() {
+										// 1. Prioridad: parámetro URL
+										var params = new URLSearchParams(window.location.search);
+										var tabURL = params.get('tab');
+										if (tabURL !== null) {
+											console.log('📂 Tab desde URL:', tabURL);
+											localStorage.setItem('calificaciones_tab_activo', tabURL);
+											return parseInt(tabURL);
+										}
+										
+										// 2. Fallback: localStorage
+										var tabLocalStorage = localStorage.getItem('calificaciones_tab_activo');
+										if (tabLocalStorage !== null) {
+											console.log('📂 Tab desde localStorage:', tabLocalStorage);
+											return parseInt(tabLocalStorage);
+										}
+										
+										// 3. Default: Tab 1
+										console.log('📂 Tab por defecto: 1');
+										return 1;
+									}
+									
 									document.addEventListener('DOMContentLoaded', function() {
 										console.log('🔵 Inicializando tabs de calificaciones');
 										
-										// Obtén la cadena de búsqueda de la URL
-										var queryString = window.location.search;
-										console.log('URL params:', queryString);
-
-										// Crea un objeto URLSearchParams a partir de la cadena de búsqueda
-										var params = new URLSearchParams(queryString);
-										var tab = params.get('tab');
+										var tabACargar = obtenerTabACargar();
 										
-										if ( tab == 2 ) {
-											console.log('📂 Cargando tab 2');
-											listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas');
-											document.getElementById('nav-calificaciones-todas-tab').classList.add('active');
-											document.getElementById('nav-calificaciones-todas').classList.add('show', 'active');
-										}
-										else if ( tab == 3 ) {
-											console.log('📂 Cargando tab 3');
-											listarInformacion('listar-observaciones.php', 'nav-observaciones');
-											document.getElementById('nav-observaciones-tab').classList.add('active');
-											document.getElementById('nav-observaciones').classList.add('show', 'active');
-										}
-										else if ( tab == 4 ) {
-											console.log('📂 Cargando tab 4');
-											listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen');
-											document.getElementById('nav-periodos-resumen-tab').classList.add('active');
-											document.getElementById('nav-periodos-resumen').classList.add('show', 'active');
-										}
-										else {
-											console.log('📂 Cargando tab 1');
-											listarInformacion('listar-calificaciones.php', 'nav-calificaciones');
-											document.getElementById('nav-calificaciones-tab').classList.add('active');
-											document.getElementById('nav-calificaciones').classList.add('show', 'active');
+										switch(tabACargar) {
+											case 2:
+												console.log('📂 Cargando tab 2');
+												listarInformacion('listar-calificaciones-todas.php', 'nav-calificaciones-todas');
+												document.getElementById('nav-calificaciones-todas-tab').classList.add('active');
+												document.getElementById('nav-calificaciones-todas').classList.add('show', 'active');
+												break;
+											case 3:
+												console.log('📂 Cargando tab 3');
+												listarInformacion('listar-observaciones.php', 'nav-observaciones');
+												document.getElementById('nav-observaciones-tab').classList.add('active');
+												document.getElementById('nav-observaciones').classList.add('show', 'active');
+												break;
+											case 4:
+												console.log('📂 Cargando tab 4');
+												listarInformacion('listar-periodos-resumen.php', 'nav-periodos-resumen');
+												document.getElementById('nav-periodos-resumen-tab').classList.add('active');
+												document.getElementById('nav-periodos-resumen').classList.add('show', 'active');
+												break;
+											default:
+												console.log('📂 Cargando tab 1');
+												listarInformacion('listar-calificaciones.php', 'nav-calificaciones');
+												document.getElementById('nav-calificaciones-tab').classList.add('active');
+												document.getElementById('nav-calificaciones').classList.add('show', 'active');
+												break;
 										}
 									});
 								</script>
