@@ -10,9 +10,14 @@ $filtro = "";
 if (!empty($_POST["usuario"]) && $_POST["usuario"] != 0) {
 	$filtro = "AND cpp.cpp_usuario = '" . $_POST["usuario"] . "'";
 }
-$filtro .= " AND (TRIM(cpp.cpp_padre) = ''  OR LENGTH(cpp.cpp_padre) < 0)";
+// ✅ Filtro mejorado para incluir IS NULL
+$filtro .= " AND (TRIM(cpp.cpp_padre) = ''  OR LENGTH(cpp.cpp_padre) < 0 OR cpp.cpp_padre IS NULL)";
+
+error_log("🔍 Consultando comentarios - Clase: {$_POST['claseId']}, Usuario: " . (!empty($_POST["usuario"]) ? $_POST["usuario"] : "todos") . ", Filtro: $filtro");
 
 $preguntasConsulta = Clases::traerPreguntasClases($conexion, $config, $_POST["claseId"], $filtro);
+
+error_log("📊 Comentarios encontrados: " . (is_array($preguntasConsulta) ? count($preguntasConsulta) : 0));
 $usuarioActual = $_POST["usuarioActual"];
 
 if ($preguntasConsulta) {
