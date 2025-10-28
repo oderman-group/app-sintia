@@ -96,6 +96,11 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 $mensaje = 'Debe llenar todos los campos.';
             break;
 
+            case 'ER_DT_4_RES':
+                $tipo = 'success';
+                $mensaje = 'La actividad se restauró exitosamente. Los porcentajes han sido recalculados.';
+            break;
+
             case 'ER_DT_5':
                 $tipo = 'warning';
                 $mensaje = 'Este estudiante ya se ecuentra creado.';

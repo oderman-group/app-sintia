@@ -974,6 +974,25 @@ class Actividades {
     }
 
     /**
+     * Este metodo me restaura una actividad eliminada
+     */
+    public static function restaurarActividadCalificaciones(
+        array  $config,
+        string $idCarga,
+        int    $periodo,
+        string $idActividad,
+        string $yearBd = ""
+    ){
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_actividades SET act_estado=1, act_fecha_eliminacion=NULL, act_motivo_eliminacion=NULL WHERE act_id=? AND institucion=? AND year=?";
+
+        $parametros = [$idActividad, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
      * Este metodo me elimina una actividad al imortar informacion
      */
     public static function eliminarActividadImportarCalificaciones(
