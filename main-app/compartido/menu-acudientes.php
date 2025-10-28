@@ -24,15 +24,5 @@ if($datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE){?>
 		</li>
 	<?php }?>
 
-	<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)){ ?>
-		<li class="nav-item active">
-			<a <?php validarModuloMenu(20, "marketplace.php", MENU) ?> class="nav-link nav-toggle bg-warning text-dark">
-				<div class="menu-icon icon-marketplace">
-					<i class="fa fa-shopping-cart"></i>
-				</div>
-				<span class="title">Marketplace</span> 
-			</a>
-		</li>
-	<?php }?>
 
 <?php }?>
