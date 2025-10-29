@@ -417,7 +417,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
                     <?php 
                     try{
-                        $consultaDatosInf=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion='" . $config['conf_id_institucion'] . "' AND info_year='" . $_SESSION["bd"] . "';");
+                        $consultaDatosInf=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion 
+                        WHERE info_institucion='" . $config['conf_id_institucion'] . "' 
+                        AND info_year='" . $_SESSION["bd"] . "'");
                     } catch (Exception $e) {
                         include("../compartido/error-catch-to-report.php");
                     }

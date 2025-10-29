@@ -124,7 +124,7 @@ foreach ($listaDatos  as $registro) {
         $contarIndicadores      = 0;      
         $notaIndicadorAcumulado = 0; // lleva el conteo de las notas de los indicadores 
         $porcentaje             = $estudiantes[$registro["mat_id"]]["areas"][$registro['ar_id']]["cargas"][$registro['car_id']]["mat_valor"];
-        $porcentajePeriodo      = $registro['periodo_valor'];
+        $porcentajePeriodo      = !empty($registro['periodo_valor']) ? $registro['periodo_valor'] : (100 / $config['conf_periodos_maximos']);
         Utilidades::valordefecto($porcentaje,100);
         Utilidades::valordefecto($porcentajePeriodo,100 / $config['conf_periodos_maximos']);
         if ($porcentaje != 100) {
@@ -145,7 +145,7 @@ foreach ($listaDatos  as $registro) {
        
         $estudiantes[$registro["mat_id"]]["areas"][$registro['ar_id']]["cargas"][$registro['car_id']]["fallas"]               = $contarFallasCarga ;
         $estudiantes[$registro["mat_id"]]["areas"][$registro['ar_id']]["cargas"][$registro['car_id']]["cantidad_notas"]       = $contarNotasCarga++;
-        $estudiantes[$registro["mat_id"]]["areas"][$registro['ar_id']]["cargas"][$registro['car_id']]["carga_acumulada"]      = $registro['promedio_acumulado'];
+        $estudiantes[$registro["mat_id"]]["areas"][$registro['ar_id']]["cargas"][$registro['car_id']]["carga_acumulada"]      = !empty($registro['promedio_acumulado']) ? $registro['promedio_acumulado'] : 0;
 
         
         // valores generales 
@@ -169,7 +169,7 @@ foreach ($listaDatos  as $registro) {
             "bol_nota"                  => $registro['bol_nota'],
             "porcentaje_periodo"        => $porcentajePeriodo,
             "bol_tipo"                  => $registro['bol_tipo'], 
-            "bol_nota_anterior"         => $registro['bol_nota_anterior'],            
+            "bol_nota_anterior"         => !empty($registro['bol_nota_anterior']) ? $registro['bol_nota_anterior'] : null,            
             "bol_observaciones_boletin" => $registro['bol_observaciones_boletin'],
             "aus_ausencias"             => $registro['aus_ausencias'],
             "nota_indicadores"          => 0,
@@ -307,8 +307,10 @@ foreach ($estudiantes as $estudiante) {
 $individuales = [];
 if(!empty($estudiantesMediatecnica)){
         $datos = Boletin::datosBoletinMediaTecnica($periodosArray, $year, $estudiantesMediatecnica,$traerIndicadores);
-     while ($row = $datos->fetch_assoc()) {
-         $individuales[] = $row;
+     if($datos && is_object($datos)){
+         while ($row = $datos->fetch_assoc()) {
+             $individuales[] = $row;
+         }
      }
     
    

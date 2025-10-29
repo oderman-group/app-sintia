@@ -372,8 +372,11 @@ class Estudiantes {
         $resultado = [];
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $doctSinPuntos = strpos($estudiante, '.') == true ? str_replace('.', '', $estudiante) : $estudiante;
-        $doctConPuntos = strpos($estudiante, '.') !== true && is_numeric($estudiante) ? str_replace('.', '', $estudiante) : $estudiante;
+        // Validar que estudiante no sea null o vacío
+        $estudianteStr = !empty($estudiante) ? (string)$estudiante : '';
+        
+        $doctSinPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') !== false ? str_replace('.', '', $estudianteStr) : $estudianteStr;
+        $doctConPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') === false && is_numeric($estudianteStr) ? str_replace('.', '', $estudianteStr) : $estudianteStr;
 
         try {
             $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
@@ -407,9 +410,14 @@ class Estudiantes {
      */
     public static function NombreCompletoDelEstudiante(array $estudiante){
         global $config;
+        $nombre = '';
+        
         switch ($config['conf_orden_nombre_estudiantes']) {
             case '2':
-                $nombre = trim($estudiante['mat_nombres']);
+                // Orden: Apellidos + Nombres
+                if (!empty($estudiante['mat_nombres'])) {
+                    $nombre = trim($estudiante['mat_nombres']);
+                }
                 if (!empty($estudiante['mat_nombre2'])) {
                     $nombre .= " " . trim($estudiante['mat_nombre2']);
                 }
@@ -421,8 +429,11 @@ class Estudiantes {
                 }
                 break;
             case '1':
-                $nombre = trim($estudiante['mat_nombres']);
-                
+            default:
+                // Orden: Nombres + Apellidos
+                if (!empty($estudiante['mat_nombres'])) {
+                    $nombre = trim($estudiante['mat_nombres']);
+                }
                 if (!empty($estudiante['mat_nombre2'])) {
                     $nombre .= " " . trim($estudiante['mat_nombre2']);
                 }
@@ -432,12 +443,10 @@ class Estudiantes {
                 if (!empty($estudiante['mat_segundo_apellido'])) {
                     $nombre .= " " .trim($estudiante['mat_segundo_apellido']);
                 }
-                
-               
                 break;
         }
 
-        return strtoupper($nombre);
+        return !empty($nombre) ? strtoupper($nombre) : 'SIN NOMBRE';
     }
 
     /**
@@ -731,9 +740,10 @@ class Estudiantes {
             }
         }
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
+        $sql = "SELECT mat.*, gra.gra_nombre, gra.gra_id, gra.gra_periodos, gru.gru_nombre, gru.gru_id
+        FROM ".BD_ACADEMICA.".academico_matriculas mat
         INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON mat.mat_grupo=gru.gru_id AND gru.institucion=mat.institucion AND gru.year=mat.year
-        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year
+        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra.gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year
         WHERE mat.mat_eliminado=0 {$filtroCancelados} AND mat.institucion=? AND mat.year=? {$filtro}
         GROUP BY mat.mat_id
         ORDER BY mat.mat_grupo, mat.mat_primer_apellido

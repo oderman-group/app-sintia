@@ -44,6 +44,7 @@ class Vista_cursos_estudiante extends BDT_Tablas
 
         $conteoEstudiante = 0;
         $mat_id = "";
+        $estudiantes = [];
 
         foreach ($datos as $registro) {
             $curso = "";

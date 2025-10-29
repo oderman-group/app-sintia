@@ -23,7 +23,7 @@ class CargaAcademicaOptimizada extends CargaAcademica {
                         car.car_docente, car.car_maximas_calificaciones, car.car_director_grupo, 
                         car.car_activa, car.id_nuevo AS id_nuevo_carga,
                         am.mat_id, am.mat_nombre, am.mat_valor,
-                        gra.gra_id, gra.gra_nombre, gra.gra_tipo,
+                        gra.gra_id, gra.gra_nombre, gra.gra_tipo, gra.gra_periodos,
                         gru.gru_nombre,
                         uss.uss_id, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2";
         

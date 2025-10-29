@@ -129,18 +129,19 @@ if (!empty($curso) && !empty($periodoFinal) && !empty($year)) {
 			
 			// Inicializar estructura del estudiante
 			$estudiantes[$est['mat_id']] = [
-				'mat_id' => $est['mat_id'],
-				'mat_matricula' => $est['mat_matricula'],
-				'mat_numero_matricula' => $est['mat_numero_matricula'],
-				'mat_folio' => $est['mat_folio'],
-				'mat_primer_apellido' => $est['mat_primer_apellido'],
-				'mat_segundo_apellido' => $est['mat_segundo_apellido'],
-				'mat_nombres' => $est['mat_nombres'],
-				'mat_nombre2' => $est['mat_nombre2'],
+				'mat_id' => !empty($est['mat_id']) ? $est['mat_id'] : '',
+				'mat_matricula' => !empty($est['mat_matricula']) ? $est['mat_matricula'] : '',
+				'mat_numero_matricula' => !empty($est['mat_numero_matricula']) ? $est['mat_numero_matricula'] : '',
+				'mat_folio' => !empty($est['mat_folio']) ? $est['mat_folio'] : '',
+				'mat_primer_apellido' => !empty($est['mat_primer_apellido']) ? $est['mat_primer_apellido'] : '',
+				'mat_segundo_apellido' => !empty($est['mat_segundo_apellido']) ? $est['mat_segundo_apellido'] : '',
+				'mat_nombres' => !empty($est['mat_nombres']) ? $est['mat_nombres'] : '',
+				'mat_nombre2' => !empty($est['mat_nombre2']) ? $est['mat_nombre2'] : '',
 				'nombre' => $nombreCompleto,
-				'gra_id' => $est['mat_grado'],
-				'gra_nombre' => $est['gra_nombre'],
-				'gru_nombre' => isset($est['gru_nombre']) ? $est['gru_nombre'] : '',
+				'gra_id' => !empty($est['mat_grado']) ? $est['mat_grado'] : '',
+				'gra_nombre' => !empty($est['gra_nombre']) ? $est['gra_nombre'] : '',
+				'gru_nombre' => !empty($est['gru_nombre']) ? $est['gru_nombre'] : '',
+				'mat_estado_matricula' => !empty($est['mat_estado_matricula']) ? $est['mat_estado_matricula'] : MATRICULADO,
 				'periodos' => $periodoFinal,
 				'areas' => []
 			];
@@ -314,11 +315,12 @@ $debugInfo = [
 			$contadorEstudiantes = 0;
 			foreach ($estudiantes as $estudiante) {
 				$contadorEstudiantes++;
-				$nombre = Estudiantes::NombreCompletoDelEstudiante($estudiante);
+				// Usar el nombre que ya se calculó al construir el array
+				$nombre = !empty($estudiante['nombre']) ? $estudiante['nombre'] : 'SIN NOMBRE';
 				$materiasPerdidas = 0;
 				
 				// Debug: Verificar datos del estudiante
-				if (empty($nombre) || $nombre === '') {
+				if (empty($nombre) || $nombre === 'SIN NOMBRE') {
 					error_log("Libro Final: Estudiante sin nombre - ID: {$estudiante['mat_id']}, Datos: " . json_encode($estudiante));
 					$nombre = "ESTUDIANTE SIN NOMBRE (ID: {$estudiante['mat_id']})";
 				}

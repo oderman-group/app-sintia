@@ -99,20 +99,19 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
 
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            color: #333;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #000;
             background-color: #f5f5f5;
             padding: 20px;
         }
 
         .container-matricula {
-            max-width: 900px;
+            max-width: 850px;
             margin: 0 auto;
             background: white;
             padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
         }
 
         /* ============================
@@ -132,125 +131,139 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 600;
+            gap: 8px;
+            padding: 10px 20px;
+            border: 1px solid #999;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            min-width: 160px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-width: 140px;
             text-decoration: none;
-            color: white;
+            background: white;
+            color: #333;
         }
 
         .btn-print {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border-color: #2c3e50;
+            color: #2c3e50;
         }
 
         .btn-print:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            background: #2c3e50;
+            color: white;
         }
 
         .btn-close {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            border-color: #7f8c8d;
+            color: #7f8c8d;
         }
 
         .btn-close:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+            background: #7f8c8d;
+            color: white;
         }
 
         /* ============================
            ENCABEZADO
            ============================ */
-        .header-matricula {
+        .tabla-encabezado {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .tabla-encabezado td {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #3498db;
+            vertical-align: middle;
+            padding: 10px;
         }
 
         .logo-institucion {
-            max-width: 120px;
+            max-width: 100px;
             height: auto;
-            margin-bottom: 15px;
         }
 
         .nombre-institucion {
-            font-size: 20pt;
+            font-size: 16pt;
             font-weight: bold;
-            color: #2c3e50;
-            margin: 10px 0;
+            color: #000;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 5px 0;
         }
 
         .titulo-documento {
-            font-size: 14pt;
+            font-size: 11pt;
             font-weight: 600;
-            color: #7f8c8d;
-            margin-top: 10px;
+            color: #333;
+            text-transform: uppercase;
         }
 
         /* ============================
            DATOS BÁSICOS
            ============================ */
         .datos-basicos {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin-bottom: 20px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
         }
 
         .dato-item {
             display: flex;
             flex-direction: column;
+            border-right: 1px solid #dee2e6;
+            padding-right: 15px;
+        }
+
+        .dato-item:last-child {
+            border-right: none;
         }
 
         .dato-label {
-            font-size: 9pt;
-            opacity: 0.9;
-            margin-bottom: 5px;
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 4px;
             text-transform: uppercase;
             font-weight: 600;
         }
 
         .dato-valor {
-            font-size: 11pt;
+            font-size: 10pt;
             font-weight: bold;
+            color: #000;
         }
 
         /* ============================
            SECCIONES
            ============================ */
         .seccion-titulo {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: #2c3e50;
             color: white;
-            padding: 12px 20px;
-            margin: 25px 0 15px 0;
-            border-radius: 6px;
-            font-size: 13pt;
+            padding: 10px 15px;
+            margin: 20px 0 12px 0;
+            font-size: 11pt;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border-left: 4px solid #000;
         }
 
         .seccion-titulo-secundario {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            background: #6c757d;
             color: white;
-            padding: 8px 15px;
-            margin: 20px 0 10px 0;
-            border-radius: 4px;
-            font-size: 11pt;
+            padding: 8px 12px;
+            margin: 15px 0 10px 0;
+            font-size: 10pt;
             font-weight: 600;
             text-transform: uppercase;
+            border-left: 4px solid #495057;
         }
 
         /* ============================
@@ -259,51 +272,44 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
         .tabla-datos {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .tabla-datos td {
-            padding: 12px 15px;
-            border: 1px solid #dee2e6;
-            font-size: 10pt;
+            padding: 8px 12px;
+            border: 1px solid #000;
+            font-size: 9pt;
+            vertical-align: middle;
         }
 
-        .tabla-datos td:first-child {
+        .tabla-datos .td-label {
             background-color: #f8f9fa;
             font-weight: 600;
-            color: #495057;
-            width: 35%;
+            color: #000;
+            width: 20%;
         }
 
-        .tabla-datos td b,
-        .tabla-datos .valor-dato {
-            color: #2c3e50;
-            font-weight: bold;
-        }
-
-        .tabla-datos tr:hover {
-            background-color: #f1f3f5;
+        .tabla-datos .td-valor {
+            color: #000;
+            font-weight: 600;
+            width: 30%;
         }
 
         /* ============================
            COMPROMISOS Y FIRMAS
            ============================ */
         .seccion-compromisos {
-            margin-top: 30px;
-            padding: 20px;
-            background: #e8f4f8;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
+            margin-top: 25px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #000;
         }
 
         .compromisos-titulo {
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
-            color: #2c3e50;
+            color: #000;
             text-align: center;
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -311,10 +317,10 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
         }
 
         .compromisos-texto {
-            font-size: 10pt;
-            text-align: center;
-            color: #555;
-            line-height: 1.6;
+            font-size: 9pt;
+            text-align: justify;
+            color: #000;
+            line-height: 1.5;
         }
 
         .seccion-firmas {
@@ -322,33 +328,31 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
             padding-top: 30px;
         }
 
-        .contenedor-firmas {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            margin-bottom: 30px;
+        .tabla-firmas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
         }
 
-        .contenedor-firmas-oficiales {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 50px;
-            margin-top: 30px;
-        }
-
-        .firma-item {
+        .tabla-firmas td {
             text-align: center;
+            vertical-align: bottom;
+            padding: 15px 20px;
         }
 
         .firma-linea {
-            border-top: 2px solid #2c3e50;
-            margin-bottom: 8px;
+            border-top: 1px solid #000;
+            margin-bottom: 5px;
+            margin-top: 40px;
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .firma-cargo {
-            font-size: 9pt;
+            font-size: 8pt;
             font-weight: 600;
-            color: #555;
+            color: #000;
             text-transform: uppercase;
         }
 
@@ -356,16 +360,21 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
            ESTILOS DE IMPRESIÓN
            ============================ */
         @media print {
+            @page {
+                size: letter;
+                margin: 1cm;
+            }
+
             body {
                 background-color: white;
                 padding: 0;
+                color: #000;
             }
 
             .container-matricula {
                 max-width: 100%;
-                padding: 20px;
-                box-shadow: none;
-                border-radius: 0;
+                padding: 0;
+                border: none;
             }
 
             .botones-accion {
@@ -373,65 +382,116 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
             }
 
             .seccion-titulo {
-                background: #3498db !important;
+                background: #2c3e50 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .seccion-titulo-secundario {
+                background: #6c757d !important;
+                color: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
             .datos-basicos {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                background: #f8f9fa !important;
+                border: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
             .tabla-datos {
                 page-break-inside: avoid;
+                border: 1px solid #000 !important;
             }
 
-            .seccion-firmas {
+            .tabla-datos td {
+                border: 1px solid #000 !important;
+            }
+
+            .tabla-datos td:first-child {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .tabla-firmas {
                 page-break-inside: avoid;
-            }
-
-            /* Evitar que se corte el contenido */
-            .container-matricula {
-                page-break-after: auto;
             }
 
             .seccion-compromisos {
                 page-break-inside: avoid;
+                border: 1px solid #000 !important;
+            }
+
+            .tabla-encabezado {
+                page-break-after: avoid;
+            }
+
+            .tabla-firmas {
+                page-break-inside: avoid;
+            }
+
+            /* Evitar que se corte el contenido */
+            h4, .seccion-titulo, .seccion-titulo-secundario {
+                page-break-after: avoid;
             }
         }
 
         /* ============================
            RESPONSIVE
            ============================ */
+        @media (max-width: 1024px) {
+            .datos-basicos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
             .container-matricula {
                 padding: 20px;
             }
 
             .datos-basicos {
                 grid-template-columns: 1fr;
+                gap: 10px;
             }
 
-            .contenedor-firmas {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .dato-item {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                padding-bottom: 10px;
+                padding-right: 0;
             }
 
-            .contenedor-firmas-oficiales {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .dato-item:last-child {
+                border-bottom: none;
+            }
+
+            .tabla-firmas td {
+                padding: 10px 15px;
+            }
+
+            .firma-linea {
+                width: 70%;
+                margin-top: 30px;
             }
 
             .botones-accion {
-                bottom: 20px;
-                right: 20px;
+                bottom: 15px;
+                right: 15px;
             }
 
             .btn-flotante {
-                min-width: 140px;
-                padding: 10px 20px;
+                min-width: 120px;
+                padding: 8px 16px;
+                font-size: 12px;
             }
         }
     </style>
@@ -440,11 +500,11 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
     <!-- Botones de acción -->
     <div class="botones-accion">
         <button class="btn-flotante btn-print" onclick="window.print()">
-            <span>🖨️</span>
+            <span>■</span>
             <span>Imprimir</span>
         </button>
         <button class="btn-flotante btn-close" onclick="window.close()">
-            <span>✖️</span>
+            <span>×</span>
             <span>Cerrar</span>
         </button>
     </div>
@@ -452,15 +512,23 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
     <!-- Contenido principal -->
     <div class="container-matricula">
         <!-- Encabezado -->
-        <div class="header-matricula">
-            <?php if ($mostrarLogo) { ?>
-                <img class="logo-institucion" src="../files/images/logo/<?= $informacion_inst["info_logo"] ?>" alt="Logo">
-            <?php } else { ?>
-                <img class="logo-institucion" src="<?= $logoDefault ?>" alt="Logo por defecto">
-            <?php } ?>
-            <div class="nombre-institucion"><?= strtoupper($informacion_inst["info_nombre"]) ?></div>
-            <div class="titulo-documento">REGISTRO DE MATRÍCULA - AÑO <?= $year ?></div>
-        </div>
+        <table class="tabla-encabezado">
+            <tr>
+                <td style="width: 20%;"></td>
+                <td style="width: 20%;">
+                    <?php if ($mostrarLogo) { ?>
+                        <img class="logo-institucion" src="../files/images/logo/<?= $informacion_inst["info_logo"] ?>" alt="Logo">
+                    <?php } else { ?>
+                        <img class="logo-institucion" src="<?= $logoDefault ?>" alt="Logo por defecto">
+                    <?php } ?>
+                </td>
+                <td style="width: 40%;">
+                    <div class="nombre-institucion"><?= strtoupper($informacion_inst["info_nombre"]) ?></div>
+                    <div class="titulo-documento">REGISTRO DE MATRÍCULA - AÑO <?= $year ?></div>
+                </td>
+                <td style="width: 20%;"></td>
+            </tr>
+        </table>
 
         <!-- Datos básicos -->
         <div class="datos-basicos">
@@ -483,129 +551,111 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
         </div>
 
         <!-- DATOS PERSONALES -->
-        <div class="seccion-titulo">📋 Datos Personales</div>
+        <div class="seccion-titulo">DATOS PERSONALES</div>
         <table class="tabla-datos">
             <tr>
-                <td>Nombres</td>
-                <td class="valor-dato"><?= strtoupper(($resultado['mat_nombres'] ?? '') . " " . ($resultado['mat_nombre2'] ?? '')); ?></td>
+                <td class="td-label">Nombres</td>
+                <td class="td-valor"><?= strtoupper(($resultado['mat_nombres'] ?? '') . " " . ($resultado['mat_nombre2'] ?? '')); ?></td>
+                <td class="td-label">Apellidos</td>
+                <td class="td-valor"><?= strtoupper(($resultado['mat_primer_apellido'] ?? '') . " " . ($resultado['mat_segundo_apellido'] ?? '')); ?></td>
             </tr>
             <tr>
-                <td>Apellidos</td>
-                <td class="valor-dato"><?= strtoupper(($resultado['mat_primer_apellido'] ?? '') . " " . ($resultado['mat_segundo_apellido'] ?? '')); ?></td>
+                <td class="td-label">Sexo</td>
+                <td class="td-valor"><?= $tipo['ogen_nombre'] ?? 'No especificado'; ?></td>
+                <td class="td-label">Edad</td>
+                <td class="td-valor"><?= $edad ?: 'N/A'; ?></td>
             </tr>
             <tr>
-                <td>Sexo</td>
-                <td class="valor-dato"><?= $tipo['ogen_nombre'] ?? 'No especificado'; ?></td>
+                <td class="td-label">Fecha de Nacimiento</td>
+                <td class="td-valor"><?= !empty($resultado['mat_fecha_nacimiento']) ? date('d/m/Y', strtotime($resultado['mat_fecha_nacimiento'])) : 'N/A'; ?></td>
+                <td class="td-label">Lugar de Nacimiento</td>
+                <td class="td-valor"><?= strtoupper($resultado['mat_lugar_nacimiento'] ?? 'N/A'); ?></td>
             </tr>
             <tr>
-                <td>Fecha de Nacimiento</td>
-                <td class="valor-dato"><?= !empty($resultado['mat_fecha_nacimiento']) ? date('d/m/Y', strtotime($resultado['mat_fecha_nacimiento'])) : 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>Lugar de Nacimiento</td>
-                <td class="valor-dato"><?= strtoupper($resultado['mat_lugar_nacimiento'] ?? 'N/A'); ?></td>
-            </tr>
-            <tr>
-                <td>Edad</td>
-                <td class="valor-dato"><?= $edad ?: 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>NUIP / Documento</td>
-                <td class="valor-dato"><?= $resultado['mat_documento'] ?? 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>Lugar de Expedición</td>
-                <td class="valor-dato"><?= strtoupper($resultado['mat_lugar_expedicion'] ?? 'N/A'); ?></td>
+                <td class="td-label">NUIP / Documento</td>
+                <td class="td-valor"><?= $resultado['mat_documento'] ?? 'N/A'; ?></td>
+                <td class="td-label">Lugar de Expedición</td>
+                <td class="td-valor"><?= strtoupper($resultado['mat_lugar_expedicion'] ?? 'N/A'); ?></td>
             </tr>
         </table>
 
         <!-- DATOS FAMILIARES -->
-        <div class="seccion-titulo">👨‍👩‍👧‍👦 Datos Familiares</div>
+        <div class="seccion-titulo">DATOS FAMILIARES</div>
         <table class="tabla-datos">
             <tr>
-                <td>Nombre de la Madre</td>
-                <td class="valor-dato"><?= isset($acudiente2['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente2)) : 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>Nombre del Padre</td>
-                <td class="valor-dato"><?= isset($acudiente1['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente1)) : 'N/A'; ?></td>
+                <td class="td-label">Nombre de la Madre</td>
+                <td class="td-valor"><?= isset($acudiente2['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente2)) : 'N/A'; ?></td>
+                <td class="td-label">Nombre del Padre</td>
+                <td class="td-valor"><?= isset($acudiente1['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente1)) : 'N/A'; ?></td>
             </tr>
         </table>
 
         <!-- DATOS DEL ACUDIENTE PRINCIPAL -->
-        <div class="seccion-titulo">👤 Datos del Acudiente Principal</div>
+        <div class="seccion-titulo">DATOS DEL ACUDIENTE PRINCIPAL</div>
         <table class="tabla-datos">
             <tr>
-                <td>Nombres y Apellidos</td>
-                <td class="valor-dato"><?= isset($acudiente1['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente1)) : 'N/A'; ?></td>
+                <td class="td-label">Nombres y Apellidos</td>
+                <td class="td-valor" colspan="3"><?= isset($acudiente1['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente1)) : 'N/A'; ?></td>
             </tr>
             <tr>
-                <td>DNI / Documento</td>
-                <td class="valor-dato"><?= $acudiente1['uss_usuario'] ?? 'N/A'; ?></td>
+                <td class="td-label">DNI / Documento</td>
+                <td class="td-valor"><?= $acudiente1['uss_usuario'] ?? 'N/A'; ?></td>
+                <td class="td-label">Profesión / Ocupación</td>
+                <td class="td-valor"><?= strtoupper($acudiente1['uss_ocupacion'] ?? 'N/A'); ?></td>
             </tr>
             <tr>
-                <td>Profesión / Ocupación</td>
-                <td class="valor-dato"><?= strtoupper($acudiente1['uss_ocupacion'] ?? 'N/A'); ?></td>
+                <td class="td-label">Celular</td>
+                <td class="td-valor"><?= $acudiente1['uss_celular'] ?? 'N/A'; ?></td>
+                <td class="td-label">Teléfono</td>
+                <td class="td-valor"><?= $acudiente1['uss_telefono'] ?? 'N/A'; ?></td>
             </tr>
             <tr>
-                <td>Celular</td>
-                <td class="valor-dato"><?= $acudiente1['uss_celular'] ?? 'N/A'; ?></td>
+                <td class="td-label">Dirección</td>
+                <td class="td-valor" colspan="3"><?= strtoupper($acudiente1['uss_direccion'] ?? 'N/A'); ?></td>
             </tr>
             <tr>
-                <td>Teléfono</td>
-                <td class="valor-dato"><?= $acudiente1['uss_telefono'] ?? 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>Dirección</td>
-                <td class="valor-dato"><?= strtoupper($acudiente1['uss_direccion'] ?? 'N/A'); ?></td>
-            </tr>
-            <tr>
-                <td>Correo Electrónico</td>
-                <td class="valor-dato"><?= $acudiente1['uss_email'] ?? 'N/A'; ?></td>
+                <td class="td-label">Correo Electrónico</td>
+                <td class="td-valor" colspan="3"><?= $acudiente1['uss_email'] ?? 'N/A'; ?></td>
             </tr>
         </table>
 
         <!-- DATOS DEL ACUDIENTE SECUNDARIO -->
         <?php if (!empty($acudiente2) && isset($acudiente2['uss_nombre'])) { ?>
-        <div class="seccion-titulo-secundario">👤 Acudiente Secundario</div>
+        <div class="seccion-titulo-secundario">ACUDIENTE SECUNDARIO</div>
         <table class="tabla-datos">
             <tr>
-                <td>Nombres y Apellidos</td>
-                <td class="valor-dato"><?= strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente2)); ?></td>
+                <td class="td-label">Nombres y Apellidos</td>
+                <td class="td-valor" colspan="3"><?= strtoupper(UsuariosPadre::nombreCompletoDelUsuario($acudiente2)); ?></td>
             </tr>
             <tr>
-                <td>DNI / Documento</td>
-                <td class="valor-dato"><?= $acudiente2['uss_usuario'] ?? 'N/A'; ?></td>
+                <td class="td-label">DNI / Documento</td>
+                <td class="td-valor"><?= $acudiente2['uss_usuario'] ?? 'N/A'; ?></td>
+                <td class="td-label">Profesión / Ocupación</td>
+                <td class="td-valor"><?= strtoupper($acudiente2['uss_ocupacion'] ?? 'N/A'); ?></td>
             </tr>
             <tr>
-                <td>Profesión / Ocupación</td>
-                <td class="valor-dato"><?= strtoupper($acudiente2['uss_ocupacion'] ?? 'N/A'); ?></td>
+                <td class="td-label">Celular</td>
+                <td class="td-valor"><?= $acudiente2['uss_celular'] ?? 'N/A'; ?></td>
+                <td class="td-label">Teléfono</td>
+                <td class="td-valor"><?= $acudiente2['uss_telefono'] ?? 'N/A'; ?></td>
             </tr>
             <tr>
-                <td>Celular</td>
-                <td class="valor-dato"><?= $acudiente2['uss_celular'] ?? 'N/A'; ?></td>
+                <td class="td-label">Dirección</td>
+                <td class="td-valor" colspan="3"><?= strtoupper($acudiente2['uss_direccion'] ?? 'N/A'); ?></td>
             </tr>
             <tr>
-                <td>Teléfono</td>
-                <td class="valor-dato"><?= $acudiente2['uss_telefono'] ?? 'N/A'; ?></td>
-            </tr>
-            <tr>
-                <td>Dirección</td>
-                <td class="valor-dato"><?= strtoupper($acudiente2['uss_direccion'] ?? 'N/A'); ?></td>
-            </tr>
-            <tr>
-                <td>Correo Electrónico</td>
-                <td class="valor-dato"><?= $acudiente2['uss_email'] ?? 'N/A'; ?></td>
+                <td class="td-label">Correo Electrónico</td>
+                <td class="td-valor" colspan="3"><?= $acudiente2['uss_email'] ?? 'N/A'; ?></td>
             </tr>
         </table>
         <?php } ?>
 
         <!-- DATOS ESCOLARES -->
-        <div class="seccion-titulo">🎓 Datos Escolares</div>
+        <div class="seccion-titulo">DATOS ESCOLARES</div>
         <table class="tabla-datos">
             <tr>
-                <td>Institución de Procedencia</td>
-                <td class="valor-dato"><?= strtoupper($resultado['mat_institucion_procedencia'] ?? 'N/A'); ?></td>
+                <td class="td-label">Institución de Procedencia</td>
+                <td class="td-valor" colspan="3"><?= strtoupper($resultado['mat_institucion_procedencia'] ?? 'N/A'); ?></td>
             </tr>
         </table>
 
@@ -620,43 +670,48 @@ $logoDefault = 'data:image/svg+xml;base64,' . base64_encode('
         </div>
 
         <!-- FIRMAS -->
-        <div class="seccion-firmas">
-            <div class="contenedor-firmas">
-                <div class="firma-item">
+        <?php
+        $rector = !empty($informacion_inst["info_rector"]) ? UsuariosPadre::sesionUsuario($informacion_inst["info_rector"], "", $config['conf_id_institucion'], $year) : array();
+        $secretario = !empty($informacion_inst["info_secretaria_academica"]) ? UsuariosPadre::sesionUsuario($informacion_inst["info_secretaria_academica"], "", $config['conf_id_institucion'], $year) : array();
+        ?>
+        <table class="tabla-firmas">
+            <tr>
+                <td style="width: 100%;">
                     <div class="firma-linea"></div>
                     <div class="firma-cargo">Firma del Estudiante</div>
-                </div>
-                <div class="firma-item">
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 100%;">
                     <div class="firma-linea"></div>
                     <div class="firma-cargo">Firma del Acudiente Principal</div>
-                </div>
-                <div class="firma-item">
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 100%;">
                     <div class="firma-linea"></div>
                     <div class="firma-cargo">Firma del Acudiente Secundario</div>
-                </div>
-            </div>
-
-            <div class="contenedor-firmas-oficiales">
-                <?php
-                $rector = !empty($informacion_inst["info_rector"]) ? UsuariosPadre::sesionUsuario($informacion_inst["info_rector"], "", $config['conf_id_institucion'], $year) : array();
-                $secretario = !empty($informacion_inst["info_secretaria_academica"]) ? UsuariosPadre::sesionUsuario($informacion_inst["info_secretaria_academica"], "", $config['conf_id_institucion'], $year) : array();
-                ?>
-                <div class="firma-item">
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 100%;">
                     <div class="firma-linea"></div>
                     <div class="firma-cargo">
                         <?= isset($rector['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($rector)) : 'RECTOR(A)'; ?>
                         <br>Rector(a)
                     </div>
-                </div>
-                <div class="firma-item">
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 100%;">
                     <div class="firma-linea"></div>
                     <div class="firma-cargo">
                         <?= isset($secretario['uss_nombre']) ? strtoupper(UsuariosPadre::nombreCompletoDelUsuario($secretario)) : 'SECRETARIO(A)'; ?>
                         <br>Secretario(a) Académico
                     </div>
-                </div>
-            </div>
-        </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <script>
