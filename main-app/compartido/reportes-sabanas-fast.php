@@ -1,4 +1,9 @@
 <?php
+// Configuraciones para manejo de reportes grandes
+set_time_limit(300);
+ini_set('memory_limit', '256M');
+ini_set('max_execution_time', 300);
+
 include("session-compartida.php");
 $idPaginaInterna = 'DT0235';
 
@@ -84,90 +89,281 @@ while ($row = $materias1->fetch_assoc()) {
 ?>
 
 <head>
-	<title>Sabanas</title>
+	<title>Informe de Sábanas - SINTIA</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<link rel="shortcut icon" href="<?= $Plataforma->logo; ?>">
+	
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			font-size: 11px;
+			line-height: 1.5;
+			color: #000;
+			margin: 0;
+			padding: 20px;
+			background-color: #f5f5f5;
+		}
+		.container-sabanas {
+			max-width: 100%;
+			margin: 0 auto;
+			padding: 30px;
+			background-color: #fff;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+		}
+		
+		/* Tablas */
+		.tabla-sabanas {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 20px 0;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+		}
+		.tabla-sabanas thead tr {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: #fff;
+			font-weight: bold;
+			height: 40px;
+		}
+		.tabla-sabanas thead th {
+			padding: 12px 8px;
+			text-align: center;
+			border: 1px solid rgba(255,255,255,0.2);
+			font-size: 11px;
+		}
+		.tabla-sabanas tbody tr {
+			transition: background-color 0.2s ease;
+		}
+		.tabla-sabanas tbody tr:nth-child(even) {
+			background-color: #f9f9f9;
+		}
+		.tabla-sabanas tbody tr:hover {
+			background-color: #e8f4f8;
+		}
+		.tabla-sabanas tbody td {
+			padding: 10px 8px;
+			border: 1px solid #ddd;
+			font-size: 11px;
+		}
+		.tabla-sabanas tbody td.nota-cell {
+			font-weight: bold;
+			text-align: center;
+			font-size: 12px;
+		}
+		.tabla-sabanas tbody td.promedio-cell {
+			font-weight: bold;
+			text-align: center;
+			font-size: 13px;
+			background-color: #f0f0f0;
+		}
+		
+		/* Tabla de puestos */
+		.tabla-puestos {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 20px 0;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+		}
+		.tabla-puestos thead tr {
+			background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+			color: #fff;
+			font-weight: bold;
+			height: 40px;
+		}
+		.tabla-puestos thead th {
+			padding: 12px;
+			text-align: center;
+			border: 1px solid rgba(255,255,255,0.2);
+		}
+		.tabla-puestos tbody tr {
+			height: 50px;
+			font-size: 13px;
+		}
+		.tabla-puestos tbody td {
+			padding: 12px;
+			border: 1px solid #ddd;
+		}
+		.puesto-primero {
+			background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+			font-weight: bold;
+		}
+		.puesto-segundo {
+			background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+			font-weight: bold;
+		}
+		.puesto-tercero {
+			background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+			font-weight: bold;
+		}
+		
+		/* Botones flotantes */
+		.no-print {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			z-index: 1000;
+			display: flex;
+			gap: 10px;
+		}
+		.btn-print, .btn-close {
+			padding: 12px 24px;
+			border: none;
+			border-radius: 5px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+		}
+		.btn-print {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+		}
+		.btn-print:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+		}
+		.btn-close {
+			background: #f44336;
+			color: white;
+		}
+		.btn-close:hover {
+			background: #da190b;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 8px rgba(244, 67, 54, 0.4);
+		}
+		
+		/* Estilos de impresión */
+		@media print {
+			body {
+				margin: 0;
+				background-color: white;
+				padding: 0;
+			}
+			.container-sabanas {
+				max-width: 100%;
+				box-shadow: none;
+				padding: 10px;
+			}
+			.no-print {
+				display: none !important;
+			}
+			@page {
+				size: landscape;
+				margin: 1cm;
+			}
+			.tabla-sabanas, .tabla-puestos {
+				page-break-inside: auto;
+				box-shadow: none;
+			}
+			.tabla-sabanas thead, .tabla-puestos thead {
+				display: table-header-group;
+			}
+			.tabla-sabanas tr, .tabla-puestos tr {
+				page-break-inside: avoid;
+				page-break-after: auto;
+			}
+			.tabla-sabanas thead tr, .tabla-puestos thead tr {
+				background: #667eea !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+		}
+	</style>
 </head>
 
 <body style="font-family:Arial;">
+
+	<!-- Botones de Acción -->
+	<div class="no-print">
+		<button class="btn-print" onclick="window.print();">
+			<i class="fa fa-print"></i> Imprimir
+		</button>
+		<button class="btn-close" onclick="window.close();">
+			<i class="fa fa-times"></i> Cerrar
+		</button>
+	</div>
+
+	<div class="container-sabanas">
 	<?php
 	$nombreInforme = "INFORME DE SABANAS" . "<br>" . "PERIDODO " . $periodoActual . "<br>" . $grados["gra_nombre"] . " " . $grados["gru_nombre"] . " " . $year;
 	include("../compartido/head-informes.php") ?>
 
 
-	<table width="100%" cellspacing="5" cellpadding="5" rules="all"
-		style="border:solid; border-color:#6017dc; font-size:11px;">
-		<tr style="font-weight:bold; height:30px; background:#6017dc; color:#FFF;">
-			<td align="center">No</b></td>
-			<td align="center">ID</td>
-			<td align="center">Estudiante</td>
-			<?php foreach ($materias as $materia) { ?>
-				<td align="center"><?= $materia['mat_siglas']; ?></td>
-			<?php }	?>
-			<td align="center" style="font-weight:bold;">PROM</td>
-		</tr>
+	<table class="tabla-sabanas">
+		<thead>
+			<tr>
+				<th>No</th>
+				<th>ID</th>
+				<th>Estudiante</th>
+				<?php foreach ($materias as $materia) { ?>
+					<th title="<?= htmlspecialchars($materia['mat_nombre']); ?>"><?= htmlspecialchars($materia['mat_siglas']); ?></th>
+				<?php }	?>
+				<th>PROM</th>
+			</tr>
+		</thead>
+		<tbody>
 
 
 		<?php foreach ($estudiantes as $estudiante) { ?>
-			<tr style="border-color:#41c4c4;">
-				<td align="center"> <?= $estudiante["nro"]; ?></td>
-				<td align="center"> <?= $estudiante["mat_id"]; ?></td>
-				<td><?= $estudiante["nombre"]; ?></td>
-				<?php $sumaDefini=0; 
-					foreach ($estudiante["areas"] as $area) { ?>
-					<?php foreach ($area["cargas"] as $carga) {
-						$recupero =false;
-						Utilidades::valordefecto($carga["periodos"][$periodoActual]['bol_nota'],0);
-						$defini  = $carga["periodos"][$periodoActual]['bol_nota'];
-						$title   ='';
+			<tr>
+				<td align="center"><?= $estudiante["nro"]; ?></td>
+				<td align="center"><?= $estudiante["mat_id"]; ?></td>
+				<td><?= htmlspecialchars($estudiante["nombre"]); ?></td>
+				<?php 
+				$sumaDefini = 0; 
+				foreach ($estudiante["areas"] as $area) {
+					foreach ($area["cargas"] as $carga) {
+						$recupero = false;
+						Utilidades::valordefecto($carga["periodos"][$periodoActual]['bol_nota'], 0);
+						$defini = $carga["periodos"][$periodoActual]['bol_nota'];
+						$title = '';
 						if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-							$title = 'title="Nota Cuantitativa: ' . $defini  . '"';
+							$title = 'title="Nota Cuantitativa: ' . $defini . '"';
 						}
 						$sumaDefini += $defini;
-						if ($defini < $config[5]) $color = 'red';
-						else $color = '#417BC4';
+						$color = ($defini < $config[5]) ? '#dc3545' : '#28a745';
 						?>
-						<td align="center" style="color:<?= $color; ?>;" <?= $title; ?>
-							style="font-size: 12px; font-weight: bold;<?= $recupero ? 'color: #2b34f4;" title="Nota del periodo Recuperada ' . $carga['periodos'][$periodoActual]['bol_nota_anterior'] . '"' : '' ?>">
+						<td class="nota-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
 							<?= Boletin::formatoNota($carga["periodos"][$periodoActual]['bol_nota'], $tiposNotas); ?>
 						</td>
-					<?php } ?>
-				<?php } ?> 
-				<?php 
-				$promedio 				    = $sumaDefini/$numeroMaterias;
+					<?php 
+					} 
+				} 
+				
+				// Calcular promedio
+				$promedio = $numeroMaterias > 0 ? round($sumaDefini / $numeroMaterias, 2) : 0;
 				$notas1[$estudiante["nro"]] = $promedio;
 				$grupo1[$estudiante["nro"]] = $estudiante["nombre"];
-
-				if ($promedio < $config[5]) $color = 'red';
-						else $color = '#417BC4';
-
+				
+				$colorPromedio = ($promedio < $config[5]) ? '#dc3545' : '#28a745';
+				$titlePromedio = '';
 				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-					$title = 'title="Nota Cuantitativa: ' . $promedio  . '"';
+					$titlePromedio = 'title="Nota Cuantitativa: ' . $promedio . '"';
 				}
-				 ?>
-				<td align="center" style="font-weight:bold; color:<?= $color; ?>;" <?= $title; ?>><?=  Boletin::formatoNota($promedio, $tiposNotas); ?></td>
-
+				?>
+				<td class="promedio-cell" style="color:<?= $colorPromedio; ?>;" <?= $titlePromedio; ?>>
+					<?= Boletin::formatoNota($promedio, $tiposNotas); ?>
+				</td>
 			</tr>
 		<?php } ?>
+		</tbody>
 
 
 	</table>
 
-	<p>&nbsp;</p>
-	<table width="100%" cellspacing="5" cellpadding="5" rules="all" style="
-  border:solid; 
-  border-color:<?= $Plataforma->colorUno; ?>; 
-  font-size:11px;">
-		<tr style="font-weight:bold; height:30px; background:<?= $Plataforma->colorUno; ?>; color:#FFF;">
-			<td colspan="4" align="center" style="color:#FFFFFF;">PRIMEROS PUESTOS</td>
-		</tr>
-
-		<tr style="font-weight:bold; font-size:14px; height:40px;">
-			<td align="center">No</b></td>
-			<td align="center">Estudiante</td>
-			<td align="center">Promedio</td>
-			<td align="center">Puesto</td>
-		</tr>
+	<table class="tabla-puestos">
+		<thead>
+			<tr>
+				<th colspan="4">PRIMEROS PUESTOS</th>
+			</tr>
+			<tr>
+				<th>No</th>
+				<th>Estudiante</th>
+				<th>Promedio</th>
+				<th>Puesto</th>
+			</tr>
+		</thead>
+		<tbody>
 		<?php
 		$j = 1;
 		$cambios = 0;
@@ -179,19 +375,19 @@ while ($row = $materias1->fetch_assoc()) {
 					$valor = $val;
 					$cambios++;
 				}
+				
+				$classPuesto = '';
+				$puesto = '';
 				if ($cambios == 1) {
-					$color = '#CCFFCC';
-					$puesto = 'Primero';
-				}
-				if ($cambios == 2) {
-					$color = '#CCFFFF';
-					$puesto = 'Segundo';
-				}
-				if ($cambios == 3) {
-					$color = '#FFFFCC';
-					$puesto = 'Tercero';
-				}
-				if ($cambios == 4) {
+					$classPuesto = 'puesto-primero';
+					$puesto = '🥇 Primero';
+				} elseif ($cambios == 2) {
+					$classPuesto = 'puesto-segundo';
+					$puesto = '🥈 Segundo';
+				} elseif ($cambios == 3) {
+					$classPuesto = 'puesto-tercero';
+					$puesto = '🥉 Tercero';
+				} elseif ($cambios == 4) {
 					break;
 				}
 
@@ -199,15 +395,14 @@ while ($row = $materias1->fetch_assoc()) {
 				$title = '';
 				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 					$title = 'title="Nota Cuantitativa: ' . $val . '"';
-					// $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $val, $year);
 					$estiloNota = Boletin::determinarRango($val, $tiposNotas);
 					$valTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
 				}
 		?>
-				<tr style="border-color:#41c4c4; background-color:<?= $color; ?>">
+				<tr class="<?= $classPuesto; ?>">
 					<td align="center"><?= $j; ?></td>
-					<td><?= $grupo1[$key]; ?></td>
-					<td align="center" <?= $title; ?>><?=  Boletin::formatoNota($valTotal, $tiposNotas); ?></td>
+					<td><?= htmlspecialchars($grupo1[$key]); ?></td>
+					<td align="center" <?= $title; ?>><?= Boletin::formatoNota($valTotal, $tiposNotas); ?></td>
 					<td align="center"><?= $puesto; ?></td>
 				</tr>
 		<?php
@@ -215,13 +410,30 @@ while ($row = $materias1->fetch_assoc()) {
 			}
 		}
 		?>
+		</tbody>
 
 
 	</table>
 
 
-	<?php include("../compartido/footer-informes.php");
-	include(ROOT_PATH . "/main-app/compartido/guardar-historial-acciones.php"); ?>
+	</div> <!-- Cierre container-sabanas -->
+
+	<?php 
+	include("../compartido/footer-informes.php");
+	include(ROOT_PATH . "/main-app/compartido/guardar-historial-acciones.php"); 
+	?>
+	
+	<script type="text/javascript">
+		// Atajo de teclado para imprimir
+		document.addEventListener('DOMContentLoaded', function() {
+			document.addEventListener('keydown', function(e) {
+				if (e.ctrlKey && e.key === 'p') {
+					e.preventDefault();
+					window.print();
+				}
+			});
+		});
+	</script>
 </body>
 
 </html>
