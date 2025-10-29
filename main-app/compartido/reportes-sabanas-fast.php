@@ -65,6 +65,7 @@ while ($row = $cosnultaTiposNotas->fetch_assoc()) {
 }
 
 $listaDatos = [];
+$estudiantes = [];
 if (!empty($curso) && !empty($grupo) && !empty($year)) {
 	$periodos = [];
 	for ($i = 1; $i <= $periodoActual; $i++) {
@@ -80,10 +81,13 @@ if (!empty($curso) && !empty($grupo) && !empty($year)) {
 $grados = Grados::traerGradosGrupos($config, $curso, $grupo, $year);
 
 $numeroMaterias = 0;
+$materias = [];
 $materias1 = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $curso, $grupo, $year, "", "ar_posicion,car_id");
-while ($row = $materias1->fetch_assoc()) {
-	$materias[$row["car_id"]] = $row;
-	$numeroMaterias ++;
+if (!empty($materias1)) {
+	while ($row = $materias1->fetch_assoc()) {
+		$materias[$row["car_id"]] = $row;
+		$numeroMaterias ++;
+	}
 }
 
 ?>
@@ -130,6 +134,17 @@ while ($row = $materias1->fetch_assoc()) {
 			border: 1px solid rgba(255,255,255,0.2);
 			font-size: 11px;
 		}
+		.tabla-sabanas thead th.materia-vertical {
+			writing-mode: vertical-rl;
+			text-orientation: mixed;
+			padding: 50px 8px 12px 8px;
+			width: 45px;
+			min-width: 45px;
+			max-width: 45px;
+			height: 120px;
+			vertical-align: bottom;
+			text-align: center;
+		}
 		.tabla-sabanas tbody tr {
 			transition: background-color 0.2s ease;
 		}
@@ -148,6 +163,10 @@ while ($row = $materias1->fetch_assoc()) {
 			font-weight: bold;
 			text-align: center;
 			font-size: 12px;
+			width: 45px;
+			min-width: 45px;
+			max-width: 45px;
+			padding: 8px 4px;
 		}
 		.tabla-sabanas tbody td.promedio-cell {
 			font-weight: bold;
@@ -183,15 +202,18 @@ while ($row = $materias1->fetch_assoc()) {
 			border: 1px solid #ddd;
 		}
 		.puesto-primero {
-			background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+			background-color: #fff9e6;
+			border-left: 4px solid #d4af37;
 			font-weight: bold;
 		}
 		.puesto-segundo {
-			background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+			background-color: #f5f5f5;
+			border-left: 4px solid #a8a9ad;
 			font-weight: bold;
 		}
 		.puesto-tercero {
-			background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+			background-color: #fef5f1;
+			border-left: 4px solid #cd7f32;
 			font-weight: bold;
 		}
 		
@@ -267,6 +289,29 @@ while ($row = $materias1->fetch_assoc()) {
 				-webkit-print-color-adjust: exact;
 				print-color-adjust: exact;
 			}
+			.tabla-sabanas thead th.materia-vertical {
+				writing-mode: vertical-rl;
+				text-orientation: mixed;
+				height: 100px;
+			}
+			.puesto-primero {
+				background-color: #fff9e6 !important;
+				border-left: 4px solid #d4af37 !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+			.puesto-segundo {
+				background-color: #f5f5f5 !important;
+				border-left: 4px solid #a8a9ad !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+			.puesto-tercero {
+				background-color: #fef5f1 !important;
+				border-left: 4px solid #cd7f32 !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
 		}
 	</style>
 </head>
@@ -285,7 +330,9 @@ while ($row = $materias1->fetch_assoc()) {
 
 	<div class="container-sabanas">
 	<?php
-	$nombreInforme = "INFORME DE SABANAS" . "<br>" . "PERIDODO " . $periodoActual . "<br>" . $grados["gra_nombre"] . " " . $grados["gru_nombre"] . " " . $year;
+	$gradoNombre = !empty($grados["gra_nombre"]) ? $grados["gra_nombre"] : 'N/A';
+	$grupoNombre = !empty($grados["gru_nombre"]) ? $grados["gru_nombre"] : 'N/A';
+	$nombreInforme = "INFORME DE SABANAS" . "<br>" . "PERIODO " . $periodoActual . "<br>" . $gradoNombre . " " . $grupoNombre . " " . $year;
 	include("../compartido/head-informes.php") ?>
 
 
@@ -296,7 +343,7 @@ while ($row = $materias1->fetch_assoc()) {
 				<th>ID</th>
 				<th>Estudiante</th>
 				<?php foreach ($materias as $materia) { ?>
-					<th title="<?= htmlspecialchars($materia['mat_nombre']); ?>"><?= htmlspecialchars($materia['mat_siglas']); ?></th>
+					<th class="materia-vertical" title="<?= htmlspecialchars($materia['mat_nombre']); ?>"><?= htmlspecialchars($materia['mat_siglas']); ?></th>
 				<?php }	?>
 				<th>PROM</th>
 			</tr>
@@ -304,30 +351,38 @@ while ($row = $materias1->fetch_assoc()) {
 		<tbody>
 
 
-		<?php foreach ($estudiantes as $estudiante) { ?>
+		<?php 
+		if (!empty($estudiantes)) {
+			foreach ($estudiantes as $estudiante) { ?>
 			<tr>
-				<td align="center"><?= $estudiante["nro"]; ?></td>
-				<td align="center"><?= $estudiante["mat_id"]; ?></td>
-				<td><?= htmlspecialchars($estudiante["nombre"]); ?></td>
+				<td align="center"><?= !empty($estudiante["nro"]) ? $estudiante["nro"] : ''; ?></td>
+				<td align="center"><?= !empty($estudiante["mat_id"]) ? $estudiante["mat_id"] : ''; ?></td>
+				<td><?= !empty($estudiante["nombre"]) ? htmlspecialchars($estudiante["nombre"]) : ''; ?></td>
 				<?php 
 				$sumaDefini = 0; 
-				foreach ($estudiante["areas"] as $area) {
-					foreach ($area["cargas"] as $carga) {
-						$recupero = false;
-						Utilidades::valordefecto($carga["periodos"][$periodoActual]['bol_nota'], 0);
-						$defini = $carga["periodos"][$periodoActual]['bol_nota'];
-						$title = '';
-						if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-							$title = 'title="Nota Cuantitativa: ' . $defini . '"';
+				if (!empty($estudiante["areas"]) && is_array($estudiante["areas"])) {
+					foreach ($estudiante["areas"] as $area) {
+						if (!empty($area["cargas"]) && is_array($area["cargas"])) {
+							foreach ($area["cargas"] as $carga) {
+								$recupero = false;
+								$defini = 0;
+								if (!empty($carga["periodos"][$periodoActual]['bol_nota'])) {
+									$defini = $carga["periodos"][$periodoActual]['bol_nota'];
+								}
+								$title = '';
+								if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+									$title = 'title="Nota Cuantitativa: ' . $defini . '"';
+								}
+								$sumaDefini += $defini;
+								$color = ($defini < $config[5]) ? '#dc3545' : '#28a745';
+								?>
+								<td class="nota-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
+									<?= Boletin::formatoNota(!empty($carga["periodos"][$periodoActual]['bol_nota']) ? $carga["periodos"][$periodoActual]['bol_nota'] : 0, $tiposNotas); ?>
+								</td>
+							<?php 
+							}
 						}
-						$sumaDefini += $defini;
-						$color = ($defini < $config[5]) ? '#dc3545' : '#28a745';
-						?>
-						<td class="nota-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
-							<?= Boletin::formatoNota($carga["periodos"][$periodoActual]['bol_nota'], $tiposNotas); ?>
-						</td>
-					<?php 
-					} 
+					}
 				} 
 				
 				// Calcular promedio
@@ -345,7 +400,10 @@ while ($row = $materias1->fetch_assoc()) {
 					<?= Boletin::formatoNota($promedio, $tiposNotas); ?>
 				</td>
 			</tr>
-		<?php } ?>
+		<?php 
+			} // Cierre foreach estudiantes
+		} // Cierre if estudiantes
+		?>
 		</tbody>
 
 
