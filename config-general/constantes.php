@@ -253,11 +253,11 @@ if (php_sapi_name() === 'cli') {
 
 } else {
 
-    $displayErrorsLocal = 0;
+    $displayErrorsLocal = 1;
     $displayErrorsProd = 0;
 
     if(!empty($_SESSION) && isset($_SESSION['admin']) || !empty($_SESSION['datosUsuario']) && $_SESSION['datosUsuario']['uss_tipo'] == TIPO_DEV){
-        $displayErrorsLocal = 0;
+        $displayErrorsLocal = 1;
         $displayErrorsProd = 1;
     }
 
@@ -324,7 +324,7 @@ switch (ENVIROMENT) {
     include(ROOT_PATH."/conexion-datos-developer.php");
     define('BD_PREFIX', 'mobiliar_');
     define('EPAYCO_TEST', 'true');
-    define('EMAIL_METHOD', 'MAILPIT');
+    define('EMAIL_METHOD', 'NORMAL');
     break;
 
     case 'PROD':

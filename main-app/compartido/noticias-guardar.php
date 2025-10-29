@@ -77,30 +77,64 @@ $contenidoPie = isset($_POST["contenidoPie"]) ? $_POST["contenidoPie"] : '';
 $videoUrl = !empty($video) ? $videoInput : ''; // Guardar la URL/ID original si hay video
 
 try{
-    mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie,not_notificar)
-    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . mysqli_real_escape_string($conexion,$keyw) . "', '" . mysqli_real_escape_string($conexion,$urlImagen) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$videoUrl) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$contenidoPie) . "','".$notificar."')");
+    // Query segura con prepared statement
+    $sql = "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie, not_notificar)
+    VALUES(?, ?, ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    $stmt = mysqli_prepare($conexion, $sql);
+    mysqli_stmt_bind_param($stmt, "ssssssssssssiisss", 
+        $_POST["titulo"],
+        $_POST["contenido"],
+        $_SESSION["id"],
+        $estado,
+        $destinatarios,
+        $imagen,
+        $archivo,
+        $keyw,
+        $urlImagen,
+        $video,
+        $_POST["categoriaGeneral"],
+        $videoUrl,
+        $config['conf_id_institucion'],
+        $_SESSION["bd"],
+        $global,
+        $video2,
+        $contenidoPie,
+        $notificar
+    );
+    mysqli_stmt_execute($stmt);
+    $idRegistro = mysqli_insert_id($conexion);
+    mysqli_stmt_close($stmt);
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
 
-$idRegistro = mysqli_insert_id($conexion);
+$idRegistro = isset($idRegistro) ? $idRegistro : mysqli_insert_id($conexion);
+
 try{
-    mysqli_query($conexion, "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia='" . $idRegistro . "'");
+    // Query segura con prepared statement
+    $stmt = mysqli_prepare($conexion, "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia=?");
+    mysqli_stmt_bind_param($stmt, "i", $idRegistro);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
 
-if(!empty($_POST["cursos"])){
-    $cont = count($_POST["cursos"]);
-    $i = 0;
-    while ($i < $cont) {
+if(!empty($_POST["cursos"]) && is_array($_POST["cursos"])){
+    // Query segura con prepared statement
+    $stmt = mysqli_prepare($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(notpc_noticia, notpc_curso, notpc_institucion, notpc_year) VALUES(?, ?, ?, ?)");
+    
+    foreach($_POST["cursos"] as $curso){
         try{
-            mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(notpc_noticia, notpc_curso, notpc_institucion, notpc_year)VALUES('" . $idRegistro . "','" . $_POST["cursos"][$i] . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "')");
+            mysqli_stmt_bind_param($stmt, "isii", $idRegistro, $curso, $config['conf_id_institucion'], $_SESSION["bd"]);
+            mysqli_stmt_execute($stmt);
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }
-        $i++;
     }
+    
+    mysqli_stmt_close($stmt);
 }
 
 $url= $usuariosClase->verificarTipoUsuario($datosUsuarioActual['uss_tipo'],'noticias.php');
