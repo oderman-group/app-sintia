@@ -38,6 +38,16 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 		</td>
 	<?php }?>	
 	<td><?=$resultado['ar_nombre'];?></td>
+	<td>
+		<?php 
+		$sumaPromedio = !empty($resultado['mat_sumar_promedio']) ? $resultado['mat_sumar_promedio'] : 'SI';
+		if ($sumaPromedio == 'SI') {
+			echo '<span class="badge badge-success"><i class="fa fa-check-circle"></i> SÍ</span>';
+		} else {
+			echo '<span class="badge badge-secondary"><i class="fa fa-times-circle"></i> NO</span>';
+		}
+		?>
+	</td>
 	<?php 
 		$cargas = $numeros[0];
 		if (Modulos::validarSubRol(['DT0032'])) {
@@ -68,7 +78,17 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
 <!-- Fila expandible -->
 <tr id="expand-<?= $resultado['mat_id']; ?>" class="expandable-row" style="display: none;">
-	<td colspan="<?= ($config['conf_agregar_porcentaje_asignaturas']=='SI' ? 8 : 7); ?>">
+	<?php 
+	// Calcular colspan: base (7) + porcentaje (1) + acciones (1)
+	$colspan = 7; // expandir, #, ID, Nombre, Área, Influye en Promedio, Cargas
+	if($config['conf_agregar_porcentaje_asignaturas']=='SI') {
+		$colspan += 1;
+	}
+	if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0021','DT0151'])) {
+		$colspan += 1;
+	}
+	?>
+	<td colspan="<?= $colspan; ?>">
 		<div class="p-4">
 			<div class="row">
 				<!-- Información de la Asignatura -->
@@ -80,6 +100,16 @@ while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 						<p class="mb-2"><strong>Valor (%):</strong><br><span class="text-muted"><?= $resultado['mat_valor']; ?>%</span></p>
 					<?php } ?>
 					<p class="mb-2"><strong>Área:</strong><br><span class="text-muted"><?= $resultado['ar_nombre'] ?? 'Sin área'; ?></span></p>
+					<p class="mb-2"><strong>Influye en Promedio:</strong><br>
+						<?php 
+						$sumaPromedio = !empty($resultado['mat_sumar_promedio']) ? $resultado['mat_sumar_promedio'] : 'SI';
+						if ($sumaPromedio == 'SI') {
+							echo '<span class="badge badge-success"><i class="fa fa-check-circle"></i> SÍ</span>';
+						} else {
+							echo '<span class="badge badge-secondary"><i class="fa fa-times-circle"></i> NO</span>';
+						}
+						?>
+					</p>
 					<p class="mb-2"><strong>Total Cargas:</strong><br><span class="badge badge-info"><?= $numeros[0]; ?></span></p>
 				</div>
 				

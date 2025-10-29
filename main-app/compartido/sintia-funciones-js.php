@@ -385,38 +385,71 @@ window.onload = notificaciones();
 
 
 
+// Bandera global para prevenir ejecuciones múltiples
+if (typeof mensajesEjecutando === 'undefined') {
+	var mensajesEjecutando = false;
+}
+
 function mensajes(){
+	// Prevenir ejecuciones simultáneas
+	if (mensajesEjecutando) {
+		console.warn('⚠️ mensajes() ya está en ejecución, ignorando llamada duplicada');
+		return;
+	}
+	
+	// Solo ejecutar si el elemento existe
+	if ($('#mensajes').length === 0) {
+		console.warn('⚠️ Elemento #mensajes no existe');
+		return;
+	}
+
+	mensajesEjecutando = true;
 
 	var usuario = '<?=$_SESSION["id"];?>';
 
 	var consulta = 2;
 
-	  $('#mensajes').empty().hide().html("...").show(1);
+	$('#mensajes').empty().hide().html("...").show(1);
 
-		datos = "usuario="+(usuario)+
+	datos = "usuario="+(usuario)+
 
-				"&consulta="+(consulta);
+			"&consulta="+(consulta);
 
-		$.ajax({
+	$.ajax({
 
-		   type: "POST",
+	   type: "POST",
 
-		   url: "../compartido/ajax-mensajes.php",
+	   url: "../compartido/ajax-mensajes.php",
 
-		   data: datos,
+	   data: datos,
 
-		   success: function(data){
-			   $('#mensajes').empty().hide().html(data).show(1);
-
-		   }
-
-		});
-
-
-
+	   success: function(data){
+		   // Limpiar scripts del HTML antes de insertarlo para evitar bucles
+		   var contenidoHtml = data;
+		   // Remover scripts que puedan estar causando problemas
+		   contenidoHtml = contenidoHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		   $('#mensajes').empty().hide().html(contenidoHtml).show(1);
+		   mensajesEjecutando = false;
+	   },
+	   error: function() {
+		   mensajesEjecutando = false;
+		   console.error('❌ Error al cargar mensajes');
+	   }
+	});
 }
 
-window.onload = mensajes();			
+// Deshabilitado temporalmente para evitar bucles infinitos
+// window.onload = mensajes();
+// Llamar mensajes() solo si el elemento existe y no se ha ejecutado ya
+if (typeof mensajesEjecutado === 'undefined') {
+	var mensajesEjecutado = false;
+	window.addEventListener('load', function() {
+		if (!mensajesEjecutado && $('#mensajes').length > 0) {
+			mensajesEjecutado = true;
+			mensajes();
+		}
+	});
+}			
 
 	
 

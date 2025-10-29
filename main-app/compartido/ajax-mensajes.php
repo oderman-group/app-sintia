@@ -35,6 +35,15 @@ $mensajesNumero = mysqli_num_rows($mensajesConsulta);
                                 </li>
                             </ul>
 
+							<script type="text/javascript">
+								// Actualizar badge en Aplicaciones de Sintia siempre (mostrar número o ocultar)
+								<?php if($mensajesNumero>0){?>
+									$('#mensajes_numero_app').empty().html(<?=$mensajesNumero;?>).show();
+								<?php } else {?>
+									$('#mensajes_numero_app').empty().hide();
+								<?php }?>
+							</script>
+							
 							<?php if($mensajesNumero>0){?>
 							<script type="text/javascript">
 								var numero=<?=$mensajesNumero;?>;
@@ -43,7 +52,7 @@ $mensajesNumero = mysqli_num_rows($mensajesConsulta);
 								function avisoMsjs(){									
 								  $.toast({
 										heading: 'Notificación',  
-										text: 'Tienes <?=$mensajesNumero;?> mensajes nuevos. Revisalos en el icono del sobre, que está en la parte superior.',
+										text: 'Tienes <?=$mensajesNumero;?> mensajes nuevos. Revisalos en Aplicaciones de Sintia.',
 										position: 'bottom-right',
                 						showHideTransition: 'slide',
 										loaderBg:'#ff6849',

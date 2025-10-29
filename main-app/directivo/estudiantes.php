@@ -787,10 +787,18 @@ if($config['conf_doble_buscador'] == 1) {
 													<?php }?>
 												</div>
 												
-												<!-- Botón de filtros -->
-												<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltros">
-													<i class="fa fa-filter"></i> Filtros y Búsqueda
-												</button>
+												<!-- Botones del lado derecho -->
+												<div class="d-flex align-items-center" style="gap: 8px;">
+													<!-- Botón de exportar a Excel -->
+													<button type="button" class="btn btn-success" id="btnExportarExcel">
+														<i class="fa fa-file-excel"></i> Exportar a Excel
+													</button>
+													
+													<!-- Botón de filtros -->
+													<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltros">
+														<i class="fa fa-filter"></i> Filtros y Búsqueda
+													</button>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -1707,6 +1715,99 @@ if($config['conf_doble_buscador'] == 1) {
 					cerrarPanelAcciones();
 				}
 			});
+			
+			// ========================================
+			// SISTEMA DE EXPORTACIÓN A EXCEL
+			// ========================================
+			
+			// Manejar clic en botón de exportar
+			$('#btnExportarExcel').on('click', function() {
+				$('#modalExportarExcel').modal('show');
+			});
+			
+			// Seleccionar todos los campos
+			$('#btnSeleccionarTodos').on('click', function() {
+				$('.campo-exportar').prop('checked', true);
+			});
+			
+			// Deseleccionar todos los campos
+			$('#btnDeseleccionarTodos').on('click', function() {
+				$('.campo-exportar').prop('checked', false);
+			});
+			
+			// Confirmar exportación
+			$('#btnConfirmarExportar').on('click', function() {
+				// Obtener campos seleccionados
+				var camposSeleccionados = [];
+				$('.campo-exportar:checked').each(function() {
+					camposSeleccionados.push($(this).val());
+				});
+				
+				if (camposSeleccionados.length === 0) {
+					$.toast({
+						heading: 'Advertencia',
+						text: 'Por favor selecciona al menos un campo para exportar.',
+						showHideTransition: 'slide',
+						icon: 'warning',
+						position: 'top-right'
+					});
+					return;
+				}
+				
+				// Obtener filtros actuales
+				var cursos = $('#filtro_cursos').val() || [];
+				var grupos = $('#filtro_grupos').val() || [];
+				var estados = $('#filtro_estados').val() || [];
+				var busqueda = $('#filtro_busqueda').val() || '';
+				
+				// Cerrar modal
+				$('#modalExportarExcel').modal('hide');
+				
+				// Mostrar mensaje de procesamiento
+				$.toast({
+					heading: 'Generando Excel',
+					text: 'Por favor espera mientras se genera el archivo...',
+					showHideTransition: 'slide',
+					icon: 'info',
+					position: 'top-right',
+					hideAfter: false,
+					loader: true,
+					loaderBg: '#26c281'
+				});
+				
+				// Construir URL con parámetros
+				var url = 'estudiantes-exportar-excel.php?';
+				url += 'campos=' + encodeURIComponent(JSON.stringify(camposSeleccionados));
+				
+				if (cursos.length > 0) {
+					url += '&cursos=' + encodeURIComponent(JSON.stringify(cursos));
+				}
+				if (grupos.length > 0) {
+					url += '&grupos=' + encodeURIComponent(JSON.stringify(grupos));
+				}
+				if (estados.length > 0) {
+					url += '&estados=' + encodeURIComponent(JSON.stringify(estados));
+				}
+				if (busqueda) {
+					url += '&busqueda=' + encodeURIComponent(busqueda);
+				}
+				
+				// Abrir en nueva ventana para descargar
+				window.open(url, '_blank');
+				
+				// Cerrar toast después de un breve delay
+				setTimeout(function() {
+					$('.jq-toast-wrap').remove();
+					$.toast({
+						heading: 'Éxito',
+						text: 'El archivo Excel se está generando. Si no se descarga automáticamente, revisa tu configuración de descargas.',
+						showHideTransition: 'slide',
+						icon: 'success',
+						position: 'top-right',
+						hideAfter: 5000
+					});
+				}, 1000);
+			});
 		});
 	</script>
 	
@@ -1812,6 +1913,156 @@ if($config['conf_doble_buscador'] == 1) {
 						</button>
 					</div>
 				</form>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Modal de Exportar a Excel -->
+	<div class="modal fade" id="modalExportarExcel" tabindex="-1" role="dialog" aria-labelledby="modalExportarExcelLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalExportarExcelLabel">
+						<i class="fa fa-file-excel"></i> Exportar Estudiantes a Excel
+					</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="alert alert-info">
+						<i class="fa fa-info-circle"></i> 
+						<strong>Información:</strong> Se exportarán los estudiantes que se muestran actualmente en la tabla, respetando los filtros aplicados. 
+						Selecciona los campos que deseas incluir en el archivo Excel.
+					</div>
+					
+					<div class="row">
+						<div class="col-md-6">
+							<h6><i class="fa fa-user"></i> Información Básica</h6>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_id" value="id" checked>
+								<label class="form-check-label" for="campo_id">ID</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_nombre_completo" value="nombre_completo" checked>
+								<label class="form-check-label" for="campo_nombre_completo">Nombre Completo</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_documento" value="documento" checked>
+								<label class="form-check-label" for="campo_documento">Documento</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_tipo_documento" value="tipo_documento">
+								<label class="form-check-label" for="campo_tipo_documento">Tipo de Documento</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_usuario" value="usuario">
+								<label class="form-check-label" for="campo_usuario">Usuario</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_email" value="email">
+								<label class="form-check-label" for="campo_email">Email</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_telefono" value="telefono">
+								<label class="form-check-label" for="campo_telefono">Teléfono</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_genero" value="genero">
+								<label class="form-check-label" for="campo_genero">Género</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_fecha_nacimiento" value="fecha_nacimiento">
+								<label class="form-check-label" for="campo_fecha_nacimiento">Fecha de Nacimiento</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_lugar_nacimiento" value="lugar_nacimiento">
+								<label class="form-check-label" for="campo_lugar_nacimiento">Lugar de Nacimiento</label>
+							</div>
+						</div>
+						
+						<div class="col-md-6">
+							<h6><i class="fa fa-graduation-cap"></i> Información Académica</h6>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_grado" value="grado" checked>
+								<label class="form-check-label" for="campo_grado">Grado</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_grupo" value="grupo" checked>
+								<label class="form-check-label" for="campo_grupo">Grupo</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_estado_matricula" value="estado_matricula" checked>
+								<label class="form-check-label" for="campo_estado_matricula">Estado de Matrícula</label>
+							</div>
+							
+							<h6 class="mt-3"><i class="fa fa-home"></i> Información de Residencia</h6>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_direccion" value="direccion">
+								<label class="form-check-label" for="campo_direccion">Dirección</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_barrio" value="barrio">
+								<label class="form-check-label" for="campo_barrio">Barrio</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_estrato" value="estrato">
+								<label class="form-check-label" for="campo_estrato">Estrato</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_lugar_expedicion" value="lugar_expedicion">
+								<label class="form-check-label" for="campo_lugar_expedicion">Lugar de Expedición</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_tipo_sangre" value="tipo_sangre">
+								<label class="form-check-label" for="campo_tipo_sangre">Tipo de Sangre</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_folio" value="folio">
+								<label class="form-check-label" for="campo_folio">Folio</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_codigo_tesoreria" value="codigo_tesoreria">
+								<label class="form-check-label" for="campo_codigo_tesoreria">Código de Tesorería</label>
+							</div>
+							
+							<h6 class="mt-3"><i class="fa fa-user-friends"></i> Información de Acudiente</h6>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_acudiente_nombre" value="acudiente_nombre">
+								<label class="form-check-label" for="campo_acudiente_nombre">Nombre del Acudiente</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_acudiente_documento" value="acudiente_documento">
+								<label class="form-check-label" for="campo_acudiente_documento">Documento del Acudiente</label>
+							</div>
+							<div class="form-check">
+								<input class="form-check-input campo-exportar" type="checkbox" id="campo_acudiente_email" value="acudiente_email">
+								<label class="form-check-label" for="campo_acudiente_email">Email del Acudiente</label>
+							</div>
+						</div>
+					</div>
+					
+					<hr>
+					
+					<div class="row">
+						<div class="col-md-12">
+							<button type="button" class="btn btn-sm btn-outline-secondary" id="btnSeleccionarTodos">
+								<i class="fa fa-check-square"></i> Seleccionar Todos
+							</button>
+							<button type="button" class="btn btn-sm btn-outline-secondary" id="btnDeseleccionarTodos">
+								<i class="fa fa-square"></i> Deseleccionar Todos
+							</button>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="button" class="btn btn-success" id="btnConfirmarExportar">
+						<i class="fa fa-file-excel"></i> Exportar
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>

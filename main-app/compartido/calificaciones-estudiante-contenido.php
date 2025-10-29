@@ -69,12 +69,11 @@
 
                     <div class="row">
 
-                        <div class="col-md-12">
+                                <div class="col-md-12">
 
                             <div class="row">
-
                                 
-
+                                <?php if($datosUsuarioActual['uss_tipo']!=TIPO_ESTUDIANTE){ ?>
 								<div class="col-md-4 col-lg-3">
 
 									
@@ -235,13 +234,7 @@
 
 									<?php 
 
-									//ESTUDIANTES
-
-									if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){
-
-										include("filtro-cargas.php");
-
-									}
+									//ESTUDIANTES - Los filtros ahora están en el sidebar flotante
 
 									?>
 
@@ -252,34 +245,31 @@
 									
 
 								</div>
+								<?php } ?>
 
 									
 
-								<div class="col-md-8 col-lg-9">
+								<div class="col-md-<?= $datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE ? '12' : '8 col-lg-9'; ?>">
 
-                                    <div class="card card-topline-purple">
+                                    <div class="grades-card-modern">
 
-                                        <div class="card-head">
+                                        <div class="grades-card-header">
 
-                                            <header><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></header>
-
-                                            <div class="tools">
-
-                                                <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
-
-			                                    <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
-
-			                                    <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
-
-                                            </div>
+                                            <h3><i class="fa fa-graduation-cap mr-2"></i><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></h3>
+                                            
+                                            <?php if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){ ?>
+                                            <button class="filter-fab" id="filterFab" title="Filtros">
+                                                <i class="fa fa-filter"></i>
+                                            </button>
+                                            <?php } ?>
 
                                         </div>
 
-                                        <div class="card-body ">
+                                        <div class="grades-card-body">
 
                                         <div class="table-responsive">
 
-                                            <table class="table table-striped custom-table table-hover">
+                                            <table class="table-modern">
 
                                                 <thead>
 
@@ -364,7 +354,7 @@
 
 														<td>
 															<?=$resultado['act_descripcion'];?><br>
-															<span style="font-size: 10px; color: blue;"><b>INDICADOR:</b> <?=$indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";?></span>
+															<span class="badge-indicador"><i class="fa fa-tag"></i> <?=$indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";?></span>
 														</td>
 
 														<td><?=$resultado['act_fecha'];?></td>

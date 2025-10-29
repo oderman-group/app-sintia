@@ -597,13 +597,13 @@ $debugInfo = [
 	<!-- Controles de Exportación -->
 	<?php if ($hayContenido) { ?>
 	<div id="controles-exportacion" style="display: flex;">
-		<button type="button" class="btn-flotante btn-pdf" onclick="generarPDF()">
-			<i class="fas fa-file-pdf"></i>
-			Descargar PDF
-		</button>
 		<button type="button" class="btn-flotante btn-excel" onclick="window.open('<?= $urlExcel ?>', '_blank')">
 			<i class="fas fa-file-excel"></i>
 			Exportar a Excel
+		</button>
+		<button type="button" class="btn-flotante btn-print" onclick="window.print()">
+			<i class="fas fa-print"></i>
+			Imprimir
 		</button>
 	</div>
 	<?php } ?>
@@ -626,60 +626,102 @@ $debugInfo = [
 		
 		// Función para generar PDF
 		function generarPDF() {
+			// Verificar que html2pdf esté disponible
+			if (typeof html2pdf === 'undefined') {
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'La biblioteca html2pdf no está cargada. Por favor recarga la página.'
+				});
+				return;
+			}
+			
 			const loader = document.getElementById('loader');
 			const controles = document.getElementById('controles-exportacion');
 			
 			// Mostrar loader y ocultar controles
-			loader.classList.add('active');
-			controles.style.display = 'none';
+			if (loader) loader.classList.add('active');
+			if (controles) controles.style.display = 'none';
 			
 			Swal.fire({
 				title: 'Generando PDF...',
-				html: 'Por favor espera mientras se genera el documento.',
+				html: 'Por favor espera mientras se genera el documento. Esto puede tardar unos momentos.',
 				allowOutsideClick: false,
+				allowEscapeKey: false,
 				didOpen: () => {
 					Swal.showLoading();
 				}
 			});
 			
 			const element = document.getElementById('contenido');
-			const opt = {
-				margin: [10, 10, 10, 10],
-				filename: 'Libro_Final_<?= $curso ?>_<?= $grupo ?>_<?= date('Y-m-d') ?>.pdf',
-				image: { type: 'jpeg', quality: 0.98 },
-				html2canvas: { 
-					scale: 2,
-					useCORS: true,
-					logging: false
-				},
-				jsPDF: { 
-					unit: 'mm', 
-					format: 'letter', 
-					orientation: 'portrait' 
-				},
-				pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-			};
-			
-			html2pdf().set(opt).from(element).save().then(() => {
-				loader.classList.remove('active');
-				controles.style.display = 'flex';
-				Swal.fire({
-					icon: 'success',
-					title: '¡PDF Generado!',
-					text: 'El archivo se ha descargado correctamente.',
-					timer: 2000,
-					showConfirmButton: false
-				});
-			}).catch(err => {
-				console.error('Error al generar PDF:', err);
-				loader.classList.remove('active');
-				controles.style.display = 'flex';
+			if (!element) {
 				Swal.fire({
 					icon: 'error',
 					title: 'Error',
-					text: 'Hubo un problema al generar el PDF. Por favor intenta de nuevo.'
+					text: 'No se encontró el contenido para generar el PDF.'
 				});
-			});
+				if (loader) loader.classList.remove('active');
+				if (controles) controles.style.display = 'flex';
+				return;
+			}
+			
+			const opt = {
+				margin: [10, 10, 10, 10],
+				filename: 'Libro_Final_<?= htmlspecialchars($curso, ENT_QUOTES, 'UTF-8') ?>_<?= htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8') ?>_<?= date('Y-m-d') ?>.pdf',
+				image: { 
+					type: 'jpeg', 
+					quality: 0.95 
+				},
+				html2canvas: { 
+					scale: 1.5,
+					useCORS: true,
+					allowTaint: false,
+					logging: false,
+					letterRendering: true,
+					windowWidth: element.scrollWidth,
+					windowHeight: element.scrollHeight
+				},
+				jsPDF: { 
+					unit: 'mm', 
+					format: 'a4', 
+					orientation: 'portrait',
+					compress: true
+				},
+				pagebreak: { 
+					mode: ['avoid-all', 'css', 'legacy'],
+					before: '.pagina-estudiante',
+					after: '.pagina-estudiante',
+					avoid: ['img', '.info-estudiante', '.tabla-calificaciones']
+				}
+			};
+			
+			// Usar Promise para manejar mejor el flujo asíncrono
+			html2pdf()
+				.set(opt)
+				.from(element)
+				.save()
+				.then(() => {
+					if (loader) loader.classList.remove('active');
+					if (controles) controles.style.display = 'flex';
+					Swal.fire({
+						icon: 'success',
+						title: '¡PDF Generado!',
+						text: 'El archivo se ha descargado correctamente.',
+						timer: 2500,
+						showConfirmButton: false
+					});
+				})
+				.catch(err => {
+					console.error('Error al generar PDF:', err);
+					if (loader) loader.classList.remove('active');
+					if (controles) controles.style.display = 'flex';
+					Swal.fire({
+						icon: 'error',
+						title: 'Error al generar PDF',
+						html: 'Hubo un problema al generar el PDF.<br><small>Error: ' + (err.message || 'Error desconocido') + '</small><br><br>Intenta usar el botón "Imprimir" como alternativa.',
+						confirmButtonText: 'Aceptar'
+					});
+				});
 		}
 
 		// Animación de entrada

@@ -120,13 +120,18 @@ if (!empty($curso) && !empty($periodoFinal) && !empty($year)) {
 		
 		$estudiantes[$est['mat_id']] = [
 			'mat_id' => $est['mat_id'],
-			'mat_matricula' => $est['mat_matricula'],
-			'mat_numero_matricula' => $est['mat_numero_matricula'],
-			'mat_folio' => $est['mat_folio'],
+			'mat_matricula' => isset($est['mat_matricula']) ? $est['mat_matricula'] : '',
+			'mat_numero_matricula' => isset($est['mat_numero_matricula']) ? $est['mat_numero_matricula'] : '',
+			'mat_folio' => isset($est['mat_folio']) ? $est['mat_folio'] : '',
+			'mat_primer_apellido' => isset($est['mat_primer_apellido']) ? $est['mat_primer_apellido'] : '',
+			'mat_segundo_apellido' => isset($est['mat_segundo_apellido']) ? $est['mat_segundo_apellido'] : '',
+			'mat_nombres' => isset($est['mat_nombres']) ? $est['mat_nombres'] : '',
+			'mat_nombre2' => isset($est['mat_nombre2']) ? $est['mat_nombre2'] : '',
 			'nombre' => $nombreCompleto,
-			'gra_id' => $est['mat_grado'],
-			'gra_nombre' => $est['gra_nombre'],
+			'gra_id' => isset($est['mat_grado']) ? $est['mat_grado'] : '',
+			'gra_nombre' => isset($est['gra_nombre']) ? $est['gra_nombre'] : '',
 			'gru_nombre' => isset($est['gru_nombre']) ? $est['gru_nombre'] : '',
+			'mat_estado_matricula' => isset($est['mat_estado_matricula']) ? $est['mat_estado_matricula'] : '',
 			'periodos' => $periodoFinal,
 			'areas' => []
 		];
@@ -173,25 +178,32 @@ $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENT
 $fila = 4;
 
 foreach ($estudiantes as $estudiante) {
-	$nombre = Estudiantes::NombreCompletoDelEstudiante($estudiante);
+	// Usar el nombre que ya está guardado en el array, o construir desde los campos disponibles
+	$nombre = !empty($estudiante["nombre"]) ? $estudiante["nombre"] : 
+		(!empty($estudiante["mat_primer_apellido"]) || !empty($estudiante["mat_nombres"]) ? 
+			trim(($estudiante["mat_nombres"] ?? '') . ' ' . ($estudiante["mat_nombre2"] ?? '') . ' ' . ($estudiante["mat_primer_apellido"] ?? '') . ' ' . ($estudiante["mat_segundo_apellido"] ?? '')) : 
+			'Estudiante sin nombre');
+	
 	$materiasPerdidas = 0;
 	
-	// Información del estudiante
+	// Información del estudiante - Primera fila
 	$sheet->setCellValue('A' . $fila, 'Código:');
-	$sheet->setCellValue('B' . $fila, $estudiante["mat_matricula"]);
+	$sheet->setCellValue('B' . $fila, !empty($estudiante["mat_matricula"]) ? $estudiante["mat_matricula"] : '');
 	$sheet->setCellValue('C' . $fila, 'Nombre:');
-	$sheet->setCellValue('D' . $fila, $nombre);
+	$sheet->setCellValue('D' . $fila, strtoupper($nombre));
 	$sheet->setCellValue('F' . $fila, 'Matrícula:');
-	$sheet->setCellValue('G' . $fila, $estudiante["mat_numero_matricula"]);
+	$sheet->setCellValue('G' . $fila, !empty($estudiante["mat_numero_matricula"]) ? $estudiante["mat_numero_matricula"] : '');
 	$sheet->getStyle('A'.$fila.':G'.$fila)->getFont()->setBold(true);
 	$fila++;
 	
+	// Información del estudiante - Segunda fila
 	$sheet->setCellValue('A' . $fila, 'Grado:');
-	$sheet->setCellValue('B' . $fila, $estudiante["gra_nombre"] . " " . $estudiante["gru_nombre"]);
+	$gradoGrupo = trim((!empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '') . ' ' . (!empty($estudiante["gru_nombre"]) ? $estudiante["gru_nombre"] : ''));
+	$sheet->setCellValue('B' . $fila, $gradoGrupo);
 	$sheet->setCellValue('C' . $fila, 'Periodo:');
 	$sheet->setCellValue('D' . $fila, strtoupper($periodoActuales));
 	$sheet->setCellValue('F' . $fila, 'Folio:');
-	$sheet->setCellValue('G' . $fila, $estudiante["mat_folio"]);
+	$sheet->setCellValue('G' . $fila, !empty($estudiante["mat_folio"]) ? $estudiante["mat_folio"] : '');
 	$sheet->getStyle('A'.$fila.':G'.$fila)->getFont()->setBold(true);
 	$fila++;
 	$fila++;
@@ -264,11 +276,22 @@ foreach ($estudiantes as $estudiante) {
 				}
 			}
 			
-			$sheet->setCellValue('A' . $fila, '  ' . $carga["mat_nombre"]);
-			$sheet->setCellValue('B' . $fila, $carga["car_ih"]);
-			$sheet->setCellValue('C' . $fila, Boletin::formatoNota(3));
-			$sheet->setCellValue('D' . $fila, $notaCargaDeseno["notip_nombre"]);
-			$sheet->setCellValue('E' . $fila, $carga["fallas"]);
+			$notaCargaFinal = $carga["nota_carga_acumulada"];
+			
+			// Formatear la nota según configuración
+			if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+				// Para grados superiores con sistema D/I/A/S/E
+				$notaCargaFormateada = $notaCarga;
+			} else {
+				// Para otros grados, usar formato numérico
+				$notaCargaFormateada = Boletin::formatoNota($notaCargaFinal);
+			}
+			
+			$sheet->setCellValue('A' . $fila, '  ' . (!empty($carga["mat_nombre"]) ? $carga["mat_nombre"] : ''));
+			$sheet->setCellValue('B' . $fila, !empty($carga["car_ih"]) ? $carga["car_ih"] : '');
+			$sheet->setCellValue('C' . $fila, $notaCargaFormateada);
+			$sheet->setCellValue('D' . $fila, !empty($notaCargaDeseno["notip_nombre"]) ? $notaCargaDeseno["notip_nombre"] : '');
+			$sheet->setCellValue('E' . $fila, !empty($carga["fallas"]) ? $carga["fallas"] : '0');
 			
 			$sheet->getStyle('B'.$fila.':E'.$fila)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 			$fila++;

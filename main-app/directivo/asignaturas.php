@@ -101,6 +101,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															<th>Valor(%)</th>
 														<?php }?>	
 														<th><?=$frases[93][$datosUsuarioActual['uss_idioma']];?></th>
+														<th>Influye en Promedio</th>
 														<th>Cargas</th>
 														<?php if(Modulos::validarPermisoEdicion()){?>
 															<th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>

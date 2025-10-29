@@ -45,17 +45,6 @@
 							
 							<?php include_once("menu-estudiantes.php");?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_PUBLICACIONES)) {?>
-								<li class="nav-item">
-									<a href="noticias.php" class="nav-link nav-toggle">
-										<div class="menu-icon icon-news">
-											<i class="fa fa-bullhorn"></i>
-										</div>
-										<span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
-									</a>
-								</li>
-							<?php }?>
-
 	                    </ul>
 	                </div>
                 </div>

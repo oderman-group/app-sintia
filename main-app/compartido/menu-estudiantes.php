@@ -89,18 +89,6 @@
 							<?php }?>
 							<?php } ?>
 							
-							<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) { ?>
-								<li class="nav-item">
-									<a href="cargas-carpetas.php" class="nav-link nav-toggle">
-										<div class="menu-icon icon-administrative">
-											<i class="fa fa-folder"></i>
-										</div>
-										<span class="title"><?=$frases[216][$datosUsuarioActual['uss_idioma']];?></span> 
-									</a>
-								</li>
-							<?php } ?>
-
-							
 							<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MATRICULAS)) { ?>
 								<li class="nav-item">
 									<a href="matricula.php" class="nav-link nav-toggle">
@@ -156,14 +144,4 @@
 								</li>
 							<?php } ?>
 
-							<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)) { ?>
-								<li class="nav-item active" data-step="11" data-intro="<b><?=$frases[175][$datosUsuarioActual['uss_idioma']];?>:</b> Encuentra los mejores productos y servicios complementarios." data-position='left'>
-									<a href="marketplace.php" class="nav-link nav-toggle bg-warning text-dark">
-										<div class="menu-icon icon-marketplace">
-											<i class="fa fa-shopping-cart"></i>
-										</div>
-										<span class="title">Marketplace</span> 
-									</a>
-								</li>
-							<?php }
-						}?>
+						<?php }?>

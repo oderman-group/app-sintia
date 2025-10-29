@@ -142,26 +142,5 @@
 								</li>
 							<?php }?>
 
-							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)){ ?>
-								<li class="nav-item">
-									<a <?php validarModuloMenu(Modulos::MODULO_CARPETAS, "cargas-carpetas.php", MENU) ?> class="nav-link nav-toggle">
-										<div class="menu-icon icon-administrative">
-											<i class="fa fa-folder"></i>
-										</div>
-										<span class="title"><?=$frases[216][$datosUsuarioActual['uss_idioma']];?></span> 
-									</a>
-								</li>
-							<?php }?>
-
-							<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)){ ?>
-								<li class="nav-item active">
-									<a <?php validarModuloMenu(Modulos::MODULO_MARKETPLACE, "marketplace.php", MENU) ?> class="nav-link nav-toggle">
-										<div class="menu-icon icon-marketplace">
-											<i class="fa fa-shopping-cart"></i>
-										</div>
-										<span class="title">Marketplace</span> 
-									</a>
-								</li>
-							<?php }?>
 
 							<?php }?>

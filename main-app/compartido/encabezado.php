@@ -224,6 +224,47 @@ $institucionNombre = $institucion['ins_siglas'];
                                 
                                 <!-- Apps visibles (3x3) -->
                                 <div class="apps-grid-container" id="apps-visible">
+                                    <!-- Publicaciones - Primera opción -->
+                                    <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_PUBLICACIONES)) {?>
+                                    <div class="app-item" onclick="navigateToApp('publicaciones')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">
+                                            <i class="fa fa-bullhorn"></i>
+                                        </div>
+                                        <span class="app-name"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
+                                    </div>
+                                    <?php }?>
+                                    
+                                    <!-- Mensajes - Segunda opción -->
+                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CORREO_INTERNO)) {?>
+                                    <div class="app-item app-item-mensajes" onclick="navigateToApp('mensajes')" style="position: relative;">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="fa fa-envelope-o"></i>
+                                        </div>
+                                        <span class="app-name">Mensajes</span>
+                                        <span id="mensajes_numero_app" class="app-badge"></span>
+                                    </div>
+                                    <?php }?>
+                                    
+                                    <!-- Carpetas - Tercera opción -->
+                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) {?>
+                                    <div class="app-item" onclick="navigateToApp('carpetas')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                            <i class="fa fa-folder"></i>
+                                        </div>
+                                        <span class="app-name"><?=$frases[216][$datosUsuarioActual['uss_idioma']];?></span>
+                                    </div>
+                                    <?php }?>
+                                    
+                                    <!-- Marketplace - Cuarta opción -->
+                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MARKETPLACE)) {?>
+                                    <div class="app-item" onclick="navigateToApp('marketplace')">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                                            <i class="fa fa-shopping-cart"></i>
+                                        </div>
+                                        <span class="app-name">Marketplace</span>
+                                    </div>
+                                    <?php }?>
+                                    
                                     <!-- Fila 1 -->
                                     <div class="app-item" onclick="navigateToApp('directivo')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -369,42 +410,38 @@ $institucionNombre = $institucion['ins_siglas'];
                         <?php } ?>
 
                         <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CORREO_INTERNO)) {?>
-                            <li class="dropdown dropdown-extended dropdown-inbox" id="header_inbox_bar">
-                                <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                    <i class="fa fa-envelope-o" data-toggle="tooltip" data-placement="top" title="Correo interno: Recibe y envía mensajes."></i>
-                                    <span id="mensajes_numero"></span>
-                                </a>
-                                <span id="mensajes"></span>
-                                <script>
-                                    socket.on("recibio_correo_<?=$_SESSION['id']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
-                                        mensajes();
-                                        $.toast({
-                                            heading: data['asunto'],  
-                                            text: 'Tienes un mensaje nuevo del usuario '+data['nombreEmisor']+', Revisalo en el icono del sobre que está en la parte superior.',
-                                            position: 'bottom-right',
-                                            showHideTransition: 'slide',
-                                            loaderBg:'#ff6849',
-                                            icon: 'info',
-                                            hideAfter: 10000, 
-                                            stack: 6
-                                        })
-                                    });
+                            <!-- Mensajes ahora está en Aplicaciones de Sintia -->
+                            <span id="mensajes_numero" style="display: none;"></span>
+                            <span id="mensajes" style="display: none;"></span>
+                            <script>
+                                socket.on("recibio_correo_<?=$_SESSION['id']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
+                                    mensajes();
+                                    $.toast({
+                                        heading: data['asunto'],  
+                                        text: 'Tienes un mensaje nuevo del usuario '+data['nombreEmisor']+', Revisalo en Aplicaciones de Sintia.',
+                                        position: 'bottom-right',
+                                        showHideTransition: 'slide',
+                                        loaderBg:'#ff6849',
+                                        icon: 'info',
+                                        hideAfter: 10000, 
+                                        stack: 6
+                                    })
+                                });
 
-                                    socket.on("recibio_correo_modulos_dev_<?=$datosUsuarioActual['uss_tipo']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
-                                        mensajes();
-                                        $.toast({
-                                            heading: data['asunto'],  
-                                            text: 'Tienes un mensaje nuevo, Revisalo en el icono del sobre que está en la parte superior.',
-                                            position: 'bottom-right',
-                                            showHideTransition: 'slide',
-                                            loaderBg:'#ff6849',
-                                            icon: 'info',
-                                            hideAfter: 10000, 
-                                            stack: 6
-                                        })
-                                    });
-                                </script>
-                            </li>
+                                socket.on("recibio_correo_modulos_dev_<?=$datosUsuarioActual['uss_tipo']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
+                                    mensajes();
+                                    $.toast({
+                                        heading: data['asunto'],  
+                                        text: 'Tienes un mensaje nuevo, Revisalo en Aplicaciones de Sintia.',
+                                        position: 'bottom-right',
+                                        showHideTransition: 'slide',
+                                        loaderBg:'#ff6849',
+                                        icon: 'info',
+                                        hideAfter: 10000, 
+                                        stack: 6
+                                    })
+                                });
+                            </script>
                         <?php }?>
                         <!-- end message dropdown -->
  						<!-- start manage user dropdown -->
@@ -480,6 +517,33 @@ $institucionNombre = $institucion['ins_siglas'];
             transition: all 0.2s ease;
             text-decoration: none;
             color: inherit;
+        }
+        
+        .app-item {
+            position: relative;
+        }
+        
+        .app-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 0 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .app-badge:empty {
+            display: none;
         }
         
         .app-item:hover {
@@ -566,7 +630,71 @@ $institucionNombre = $institucion['ins_siglas'];
         
         function navigateToApp(appName) {
             // Mapeo de aplicaciones a URLs
+            <?php
+            // Determinar la ruta de publicaciones según el tipo de usuario
+            $urlPublicaciones = '';
+            if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+                $urlPublicaciones = BASE_URL.'/main-app/directivo/noticias.php';
+            } elseif($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE) {
+                $urlPublicaciones = BASE_URL.'/main-app/docente/noticias.php';
+            } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ESTUDIANTE) {
+                $urlPublicaciones = BASE_URL.'/main-app/estudiante/noticias.php';
+            } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE) {
+                $urlPublicaciones = BASE_URL.'/main-app/acudiente/noticias.php';
+            } else {
+                $urlPublicaciones = BASE_URL.'/main-app/directivo/noticias.php'; // Por defecto
+            }
+            ?>
             const appUrls = {
+                'publicaciones': '<?=$urlPublicaciones;?>',
+                'mensajes': '<?php
+                    // Determinar la ruta de mensajes según el tipo de usuario
+                    $urlMensajes = '';
+                    if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+                        $urlMensajes = BASE_URL.'/main-app/directivo/mensajes.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE) {
+                        $urlMensajes = BASE_URL.'/main-app/docente/mensajes.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ESTUDIANTE) {
+                        $urlMensajes = BASE_URL.'/main-app/estudiante/mensajes.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE) {
+                        $urlMensajes = BASE_URL.'/main-app/acudiente/mensajes.php';
+                    } else {
+                        $urlMensajes = BASE_URL.'/main-app/directivo/mensajes.php'; // Por defecto
+                    }
+                    echo $urlMensajes;
+                ?>',
+                'carpetas': '<?php
+                    // Determinar la ruta de carpetas según el tipo de usuario
+                    $urlCarpetas = '';
+                    if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+                        $urlCarpetas = BASE_URL.'/main-app/directivo/cargas-carpetas.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE) {
+                        $urlCarpetas = BASE_URL.'/main-app/docente/cargas-carpetas.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ESTUDIANTE) {
+                        $urlCarpetas = BASE_URL.'/main-app/estudiante/cargas-carpetas.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE) {
+                        $urlCarpetas = BASE_URL.'/main-app/acudiente/cargas-carpetas.php';
+                    } else {
+                        $urlCarpetas = BASE_URL.'/main-app/directivo/cargas-carpetas.php'; // Por defecto
+                    }
+                    echo $urlCarpetas;
+                ?>',
+                'marketplace': '<?php
+                    // Determinar la ruta de marketplace según el tipo de usuario
+                    $urlMarketplace = '';
+                    if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+                        $urlMarketplace = BASE_URL.'/main-app/directivo/marketplace.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE) {
+                        $urlMarketplace = BASE_URL.'/main-app/docente/marketplace.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ESTUDIANTE) {
+                        $urlMarketplace = BASE_URL.'/main-app/estudiante/marketplace.php';
+                    } elseif($datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE) {
+                        $urlMarketplace = BASE_URL.'/main-app/acudiente/marketplace.php';
+                    } else {
+                        $urlMarketplace = BASE_URL.'/main-app/directivo/marketplace.php'; // Por defecto
+                    }
+                    echo $urlMarketplace;
+                ?>',
                 'directivo': '<?=BASE_URL;?>/main-app/directivo/',
                 'docente': '<?=BASE_URL;?>/main-app/docente/',
                 'estudiante': '<?=BASE_URL;?>/main-app/estudiante/',

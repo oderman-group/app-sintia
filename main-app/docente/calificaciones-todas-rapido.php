@@ -120,6 +120,27 @@ body {
     color: white;
 }
 
+/* ============================================
+   CONTROL DE VISIBILIDAD: DESKTOP vs MOBILE
+   ============================================ */
+.table-desktop {
+    display: block; /* Mostrar en desktop por defecto */
+}
+
+.table-mobile {
+    display: none; /* Ocultar en desktop por defecto */
+}
+
+@media (max-width: 768px) {
+    .table-desktop {
+        display: none !important; /* Ocultar en móvil */
+    }
+    
+    .table-mobile {
+        display: block !important; /* Mostrar en móvil */
+    }
+}
+
 .table-container {
     background: var(--card-bg);
     border-radius: 16px;
@@ -414,43 +435,414 @@ body {
     position: relative;
 }
 
+/* ============================================
+   ESTILOS PARA VERSIÓN MÓVIL (CARDS)
+   ============================================ */
+.mobile-student-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.mobile-student-card.highlighted {
+    background: #fef3c7;
+    border-left: 4px solid var(--warning-color);
+}
+
+.mobile-student-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.mobile-student-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.mobile-student-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mobile-student-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    word-wrap: break-word;
+}
+
+.mobile-student-id {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.mobile-student-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 0.25rem;
+}
+
+.mobile-activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mobile-activity-item {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.mobile-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.mobile-activity-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.mobile-activity-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    word-wrap: break-word;
+}
+
+.mobile-activity-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.4;
+}
+
+.mobile-activity-percentage {
+    font-size: 0.7rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.mobile-activity-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.mobile-grade-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.mobile-grade-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobile-grade-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 80px;
+}
+
+.mobile-grade-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background: white;
+    min-height: 44px;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+.mobile-grade-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    font-size: 16px; /* Prevenir zoom en iOS */
+}
+
+.mobile-grade-qualitative {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 0.25rem;
+}
+
+.mobile-grade-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    justify-content: flex-end;
+}
+
+.mobile-recovery-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.mobile-recovery-input {
+    flex: 1;
+    padding: 0.6rem;
+    border: 2px solid tomato;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    background: white;
+    min-height: 40px;
+}
+
+.mobile-recovery-input:focus {
+    outline: none;
+    border-color: #dc2626;
+    font-size: 16px; /* Prevenir zoom en iOS */
+}
+
+.mobile-student-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.mobile-summary-item {
+    text-align: center;
+    flex: 1;
+}
+
+.mobile-summary-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.mobile-summary-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.mobile-summary-value.percentage {
+    color: var(--primary-color);
+}
+
+.mobile-summary-value.definitive {
+    color: var(--success-color);
+}
+
+.mobile-mass-grade-section {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.mobile-mass-grade-header {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.mobile-mass-grade-inputs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+.mobile-mass-grade-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobile-mass-grade-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    min-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobile-mass-grade-input {
+    flex: 1;
+    padding: 0.6rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    background: white;
+    min-height: 40px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - HEADER Y BOTONES
+   ============================================ */
 @media (max-width: 768px) {
     .main-container {
-        padding: 1rem 0;
+        padding: 0.5rem 0;
     }
     
     .header-section {
-        padding: 1.5rem;
+        padding: 1rem;
         margin-bottom: 1rem;
+        border-radius: 12px;
     }
     
     .page-title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
     }
     
     .action-buttons {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.75rem;
+        width: 100%;
     }
     
-    .table-modern thead th {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.7rem;
+    .btn-modern {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+        border-radius: 12px;
+        min-height: 48px;
     }
     
-    .table-modern tbody td {
-        padding: 0.5rem;
+    .summary-section {
+        padding: 1rem;
+        margin-top: 1rem;
+        border-radius: 12px;
     }
     
-    .student-info {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
+    .summary-title {
+        font-size: 1.125rem;
+        margin-bottom: 0.75rem;
     }
     
-    .student-avatar {
-        width: 32px;
-        height: 32px;
+    .summary-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+        border-radius: 10px;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .notification-area {
+        top: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
+    
+    .toast-modern {
+        padding: 0.75rem;
+        border-radius: 10px;
+    }
+    
+    .overlay-content-nota {
+        padding: 30px 25px;
+        min-width: 280px;
+        max-width: 90vw;
+        border-radius: 16px;
+    }
+    
+    .overlay-content-nota h3 {
+        font-size: 18px;
+    }
+    
+    .overlay-content-nota p {
+        font-size: 14px;
+    }
+    
+    .overlay-content-nota .spinner {
+        width: 50px;
+        height: 50px;
+        border-width: 4px;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-container {
+        padding: 0.25rem 0;
+    }
+    
+    .header-section {
+        padding: 0.75rem;
+    }
+    
+    .page-title {
+        font-size: 1.125rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .summary-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
     }
 }
 
@@ -638,10 +1030,11 @@ body {
             }
             ?>
 
-            <!-- Table Container -->
-            <div class="table-container">
-                <div class="responsive-table">
-                    <table class="table-modern" id="tabla_notas">
+            <!-- Table Container - DESKTOP VERSION -->
+            <div class="table-desktop">
+                <div class="table-container">
+                    <div class="responsive-table">
+                        <table class="table-modern" id="tabla_notas">
                         <thead>
                             <tr>
                                 <th style="width: 60px;">
@@ -802,7 +1195,265 @@ body {
                                 <td class="text-center" style="padding: 0.75rem;">-</td>
                             </tr>
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Version - CARDS -->
+            <div class="table-mobile">
+                <div class="table-container">
+                    <?php
+                    // Cargar actividades para la sección de notas masivas móvil
+                    $cA_mobile = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+                    $tieneActividades = mysqli_num_rows($cA_mobile) > 0;
+                    
+                    // Mostrar sección de notas masivas si hay actividades
+                    if ($tieneActividades) {
+                    ?>
+                    <div class="mobile-mass-grade-section">
+                        <div class="mobile-mass-grade-header">
+                            <i class="fas fa-bolt"></i> Notas Masivas
+                        </div>
+                        <div class="mobile-mass-grade-inputs">
+                            <?php
+                            mysqli_data_seek($cA_mobile, 0); // Resetear el puntero
+                            while($rA_mass = mysqli_fetch_array($cA_mobile, MYSQLI_BOTH)){
+                            ?>
+                            <div class="mobile-mass-grade-item">
+                                <label class="mobile-mass-grade-label" title="<?=htmlspecialchars($rA_mass['act_descripcion']);?>">
+                                    <?=$rA_mass['act_id'];?> (<?=$rA_mass['act_valor'];?>%)
+                                </label>
+                                <input 
+                                    type="text"
+                                    class="mobile-mass-grade-input"
+                                    placeholder="Nota masiva"
+                                    title="0"
+                                    name="<?=$rA_mass['act_id'];?>"
+                                    onChange="notasMasiva(this)"
+                                    <?=$habilitado;?>
+                                >
+                            </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <?php } ?>
+
+                    <div id="tabla_notas_mobile">
+                        <?php
+                        // Resetear contador y consulta
+                        $contRegMobile = 1;
+                        mysqli_data_seek($cA_mobile, 0); // Resetear actividades
+                        $consultaMobile = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+                        
+                        while($resultadoMobile = mysqli_fetch_array($consultaMobile, MYSQLI_BOTH)){
+                            $nombreCompletoMobile = Estudiantes::NombreCompletoDelEstudiante($resultadoMobile);
+                            
+                            // DEFINITIVAS
+                            $carga = $cargaConsultaActual;
+                            $periodo = $periodoConsultaActual;
+                            $estudiante = $resultadoMobile['mat_id'];
+                            include("../definitivas.php");
+                            
+                            $colorEstudianteMobile = '#000';
+                            if($resultadoMobile['mat_inclusion']==1){$colorEstudianteMobile = 'blue';}
+                            
+                            $highlightClassMobile = '';
+                            if(!empty($_GET["idEst"]) && $resultadoMobile['mat_id']==$_GET["idEst"]){
+                                $highlightClassMobile = 'highlighted';
+                            }
+                        ?>
+                        <div class="mobile-student-card <?=$highlightClassMobile;?>" id="fila_mobile_<?=$resultadoMobile['mat_id'];?>">
+                            <div class="mobile-student-header">
+                                <img src="<?=$usuariosClase->verificarFoto($resultadoMobile['uss_foto']);?>" 
+                                     class="mobile-student-avatar" 
+                                     alt="Foto del estudiante">
+                                <div class="mobile-student-info">
+                                    <p class="mobile-student-name" style="color: <?=$colorEstudianteMobile;?>">
+                                        #<?=$contRegMobile;?> - <?=$nombreCompletoMobile?>
+                                    </p>
+                                    <p class="mobile-student-id">
+                                        ID: <?=$resultadoMobile['mat_id'];?>
+                                    </p>
+                                    <?php if($resultadoMobile['mat_inclusion']==1): ?>
+                                        <span class="mobile-student-badge">Inclusión</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="mobile-activities-list">
+                                <?php
+                                mysqli_data_seek($cA_mobile, 0); // Resetear actividades
+                                while($rA_mobile = mysqli_fetch_array($cA_mobile, MYSQLI_BOTH)){
+                                    // LAS CALIFICACIONES
+                                    $notasResultadoMobile = Calificaciones::traerCalificacionActividadEstudiante($config, $rA_mobile['act_id'], $resultadoMobile['mat_id']);
+                                    
+                                    $arrayEnviarMobile = [
+                                        "tipo"=>5, 
+                                        "descripcionTipo"=>"Para ocultar la X y limpiar valor, cuando son diferentes actividades.", 
+                                        "idInput"=>$resultadoMobile['mat_id']."-".$rA_mobile['act_id']
+                                    ];
+                                    $arrayDatosMobile = json_encode($arrayEnviarMobile);
+                                    $objetoEnviarMobile = htmlentities($arrayDatosMobile);
+
+                                    if(!empty($notasResultadoMobile) && $notasResultadoMobile['cal_nota']<$config[5]) $colorNotaMobile = $config[6]; 
+                                    elseif(!empty($notasResultadoMobile) && $notasResultadoMobile['cal_nota']>=$config[5]) $colorNotaMobile = $config[7]; 
+                                    else $colorNotaMobile = "black";
+                            
+                                    $estiloNotaFinalMobile = "";
+                                    if(!empty($notasResultadoMobile) && $config['conf_forma_mostrar_notas'] == CUALITATIVA){		
+                                        $estiloNotaMobile = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasResultadoMobile['cal_nota']);
+                                        $estiloNotaFinalMobile = !empty($estiloNotaMobile['notip_nombre']) ? $estiloNotaMobile['notip_nombre'] : "";
+                                    }
+                                    
+                                    // LÓGICA DE RESALTADO PARA NOTAS FALTANTES
+                                    $actividadRegistradaMobile = !empty($rA_mobile['act_registrada']) && $rA_mobile['act_registrada'] == 1;
+                                    $notaVaciaMobile = empty($notasResultadoMobile['cal_nota']) || $notasResultadoMobile['cal_nota'] === '' || $notasResultadoMobile['cal_nota'] === null;
+                                    $itemHighlight = $notaVaciaMobile && $actividadRegistradaMobile ? 'style="border-left: 3px solid #f59e0b; background: #fff9e6;"' : '';
+                                ?>
+                                <div class="mobile-activity-item" <?=$itemHighlight;?>>
+                                    <div class="mobile-activity-header">
+                                        <div class="mobile-activity-title">
+                                            <p class="mobile-activity-name">
+                                                <a href="calificaciones-editar.php?idR=<?=base64_encode($rA_mobile['act_id']);?>" 
+                                                   style="color: inherit; text-decoration: none;">
+                                                    <?=$rA_mobile['act_id'];?>
+                                                </a>
+                                            </p>
+                                            <p class="mobile-activity-description"><?=$rA_mobile['act_descripcion'];?></p>
+                                            <span class="mobile-activity-percentage"><?=$rA_mobile['act_valor'];?>%</span>
+                                        </div>
+                                        <div class="mobile-activity-actions">
+                                            <a href="#" 
+                                               name="calificaciones-eliminar.php?idR=<?=base64_encode($rA_mobile['act_id']);?>&idIndicador=<?=base64_encode($rA_mobile['act_id_tipo']);?>&carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" 
+                                               onClick="deseaEliminar(this)" 
+                                               <?=$deleteOculto;?> 
+                                               class="btn-action btn-delete" 
+                                               title="Eliminar actividad">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mobile-grade-input-container">
+                                        <div class="mobile-grade-input-wrapper">
+                                            <label class="mobile-grade-label">Nota:</label>
+                                            <input 
+                                                size="5"
+                                                id="<?=$resultadoMobile['mat_id']."-".$rA_mobile['act_id'];?>"
+                                                data-cod-estudiante="<?=$resultadoMobile['mat_id'];?>"
+                                                data-carga-actividad="<?=$rA_mobile['act_id'];?>"
+                                                data-nota-anterior="<?php if(!empty($notasResultadoMobile['cal_nota'])) echo $notasResultadoMobile['cal_nota'];?>"
+                                                data-color-nota-anterior="<?=$colorNotaMobile;?>"
+                                                data-cod-nota="<?=$rA_mobile['act_id']?>"
+                                                data-valor-nota="<?=$rA_mobile['act_valor'];?>"
+                                                data-nombre-estudiante="<?=$resultadoMobile['mat_nombres']." ".$resultadoMobile['mat_primer_apellido'];?>"
+                                                data-origen="2"
+                                                value="<?php if(!empty($notasResultadoMobile['cal_nota'])) echo $notasResultadoMobile['cal_nota'];?>"
+                                                onChange="notasGuardar(this, 'fila_mobile_<?=$resultadoMobile['mat_id'];?>', 'tabla_notas_mobile')" 
+                                                tabindex="<?=10+$contRegMobile;?>"
+                                                style="color:<?=$colorNotaMobile;?>; <?php if($notaVaciaMobile && $actividadRegistradaMobile) echo 'background: #fff7ed; border-color: #fb923c; font-weight: 600;'; ?>"
+                                                class="mobile-grade-input"
+                                                placeholder="<?php if($notaVaciaMobile && $actividadRegistradaMobile) echo '⚠️'; ?>"
+                                                title="<?php 
+                                                    if(!empty($notasResultadoMobile['cal_nota'])) { 
+                                                        echo 'Valor en decimal: '.$notasResultadoMobile['cal_nota_equivalente_cien']; 
+                                                    } else if($notaVaciaMobile && $actividadRegistradaMobile) {
+                                                        echo 'Nota faltante - Esta actividad requiere calificación';
+                                                    }
+                                                ?>"
+                                                <?=$habilitado;?>
+                                            >
+                                        </div>
+                                        
+                                        <?php if(!empty($estiloNotaFinalMobile)): ?>
+                                            <p class="mobile-grade-qualitative" style="color:<?=$colorNotaMobile;?>;">
+                                                <?=$estiloNotaFinalMobile;?>
+                                            </p>
+                                        <?php endif; ?>
+                                        
+                                        <?php
+                                        if (isset($notasResultadoMobile) && $notasResultadoMobile['cal_nota']!="") {
+                                        ?>
+                                        <div class="mobile-grade-actions">
+                                            <a href="#" 
+                                               title="<?=$objetoEnviarMobile;?>" 
+                                               id="<?=$notasResultadoMobile['cal_id'];?>" 
+                                               name="calificaciones-nota-eliminar.php?id=<?=base64_encode($notasResultadoMobile['cal_id']);?>" 
+                                               onClick="deseaEliminar(this)" 
+                                               <?=$deleteOculto;?>
+                                               class="btn-grade-action btn-remove">
+                                                <i class="fa fa-times"></i> Eliminar
+                                            </a>
+                                        </div>
+                                        <?php } ?>
+                                        
+                                        <?php
+                                        $recuperacionVisibilidadMobile = 'hidden';
+                                        if (!empty($notasResultadoMobile['cal_nota']) && $notasResultadoMobile['cal_nota'] < $config[5]) {
+                                            $recuperacionVisibilidadMobile = 'visible';
+                                        }
+                                        ?>
+                                        
+                                        <?php if($recuperacionVisibilidadMobile == 'visible'): ?>
+                                        <div class="mobile-recovery-input-wrapper">
+                                            <label class="mobile-grade-label">Recuperación:</label>
+                                            <input
+                                                data-id="recuperacion_<?=$resultadoMobile['mat_id'].$rA_mobile['act_id'];?>"
+                                                size="5"
+                                                title="<?=$rA_mobile['act_id'];?>" 
+                                                id="<?=$resultadoMobile['mat_id'];?>" 
+                                                alt="<?=$resultadoMobile['mat_nombres'];?>" 
+                                                name="<?php if (!empty($notasResultadoMobile['cal_nota'])) echo $notasResultadoMobile['cal_nota'];?>" 
+                                                onChange="notaRecuperacion(this)" 
+                                                tabindex="<?=20+$contRegMobile;?>" 
+                                                style="visibility:<?=$recuperacionVisibilidadMobile;?>;"
+                                                class="mobile-recovery-input"
+                                                placeholder="Recup" 
+                                                <?=$habilitado;?>
+                                            >
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php
+                                }
+                                ?>
+                            </div>
+
+                            <div class="mobile-student-summary">
+                                <div class="mobile-summary-item">
+                                    <div class="mobile-summary-label">Porcentaje</div>
+                                    <div class="mobile-summary-value percentage"><?=$porcentajeActual;?>%</div>
+                                </div>
+                                <div class="mobile-summary-item">
+                                    <div class="mobile-summary-label">Definitiva</div>
+                                    <div class="mobile-summary-value definitive" style="color:<?php 
+                                        if($definitiva < $config[5] && $definitiva!="") echo $config[6]; 
+                                        elseif ($definitiva >= $config[5]) echo $config[7]; 
+                                        else echo "black";?>;">
+                                        <a 
+                                            id="definitiva_mobile_<?=$resultadoMobile['mat_id'];?>" 
+                                            href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultadoMobile['mat_id_usuario']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>&carga=<?=base64_encode($cargaConsultaActual);?>" 
+                                            style="color: inherit; text-decoration: underline;">
+                                            <?php 
+                                            if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                                                $estiloNotaDefMobile = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitiva);
+                                                echo !empty($estiloNotaDefMobile['notip_nombre']) ? $estiloNotaDefMobile['notip_nombre'] : Utilidades::setFinalZero($definitiva);
+                                            } else {
+                                                echo Utilidades::setFinalZero($definitiva);
+                                            }
+                                            ?>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                            $contRegMobile++;
+                        }
+                        ?>
+                    </div>
                 </div>
             </div>
 
@@ -843,11 +1494,84 @@ body {
 
     <script>
         $(document).ready(function() {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
+            // Detect si es móvil
+            const isMobile = window.innerWidth <= 768;
+            const isSmallMobile = window.innerWidth <= 480;
+            
+            // Initialize tooltips (solo en desktop para evitar conflictos en móvil)
+            if (!isMobile) {
+                $('[data-bs-toggle="tooltip"]').tooltip();
+            }
             
             // Smooth scrolling for table - NO modificar el transform del thead
             // El sticky position ya maneja esto automáticamente
+            
+            // Mejorar scroll horizontal en móviles
+            if (isMobile) {
+                const $tableContainer = $('.responsive-table');
+                
+                // Verificar si hay contenido que requiere scroll
+                const hasHorizontalScroll = $tableContainer[0].scrollWidth > $tableContainer.outerWidth();
+                
+                if (hasHorizontalScroll) {
+                    // Agregar clase para mostrar indicador
+                    $tableContainer.addClass('has-scroll');
+                    
+                    // Agregar indicador de scroll al inicio
+                    if ($tableContainer.scrollLeft() === 0) {
+                        $tableContainer.css('box-shadow', 'inset -10px 0 10px -10px rgba(0,0,0,0.1)');
+                    }
+                    
+                    // Actualizar sombra al hacer scroll
+                    $tableContainer.on('scroll', function() {
+                        const scrollLeft = $(this).scrollLeft();
+                        const maxScroll = $(this)[0].scrollWidth - $(this).outerWidth();
+                        
+                        if (scrollLeft === 0) {
+                            $(this).css('box-shadow', 'inset -10px 0 10px -10px rgba(0,0,0,0.1)');
+                        } else if (scrollLeft >= maxScroll - 5) {
+                            $(this).css('box-shadow', 'inset 10px 0 10px -10px rgba(0,0,0,0.1)');
+                        } else {
+                            $(this).css('box-shadow', 'inset -10px 0 10px -10px rgba(0,0,0,0.1), inset 10px 0 10px -10px rgba(0,0,0,0.1)');
+                        }
+                    });
+                }
+                
+                // Mejorar el enfoque de los inputs en móvil (solo para desktop table)
+                $('.table-desktop input[type="text"]').on('focus', function() {
+                    const $input = $(this);
+                    const container = $input.closest('.responsive-table');
+                    if (container.length) {
+                        const containerLeft = container.offset().left;
+                        const containerWidth = container.outerWidth();
+                        const inputLeft = $input.offset().left;
+                        const inputWidth = $input.outerWidth();
+                        
+                        if (inputLeft < containerLeft || inputLeft + inputWidth > containerLeft + containerWidth) {
+                            container.animate({
+                                scrollLeft: container.scrollLeft() + (inputLeft - containerLeft) - (containerWidth / 2) + (inputWidth / 2)
+                            }, 300);
+                        }
+                    }
+                });
+            }
+            
+            // Auto-scroll para inputs en la versión móvil (cards)
+            if (isMobile) {
+                $('.mobile-grade-input, .mobile-recovery-input').on('focus', function() {
+                    const $input = $(this);
+                    const inputOffset = $input.offset().top;
+                    const windowHeight = $(window).height();
+                    const scrollTop = $(window).scrollTop();
+                    const inputHeight = $input.outerHeight();
+                    
+                    if (inputOffset < scrollTop || inputOffset + inputHeight > scrollTop + windowHeight) {
+                        $('html, body').animate({
+                            scrollTop: inputOffset - 100 // 100px de margen superior
+                        }, 300);
+                    }
+                });
+            }
             
             // Add loading states to buttons
             $('.btn-modern').on('click', function() {

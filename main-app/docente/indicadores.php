@@ -304,142 +304,178 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
     }
 
     /* ============================================
-       INDICADORES - ESTILO DE TARJETAS
+       INDICADORES - ESTILO DE TABLA MODERNA
        ============================================ */
-    .indicadores-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-
-    .indicador-card {
+    .indicadores-table-container {
         background: white;
         border-radius: 15px;
         padding: 25px;
         box-shadow: var(--card-shadow);
-        transition: var(--transition);
-        border: 2px solid transparent;
+        margin-top: 20px;
         position: relative;
-        overflow: hidden;
     }
 
-    .indicador-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+    .indicadores-table-container .table-responsive {
+        position: relative;
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+    
+    @media (min-width: 769px) {
+        .indicadores-table-container .table-responsive {
+            overflow-y: visible !important;
+        }
     }
 
-    .indicador-card:hover {
-        box-shadow: var(--card-shadow-hover);
-        transform: translateY(-3px);
-        border-color: var(--secondary-color);
+    .indicadores-table-modern {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
     }
 
-    .indicador-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 15px;
+    .indicadores-table-modern thead {
+        background: linear-gradient(135deg, var(--primary-color), #1a252f);
     }
 
-    .indicador-numero {
-        background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    .indicadores-table-modern thead th {
         color: white;
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        padding: 15px;
+        text-align: left;
         font-weight: 700;
-        font-size: 16px;
-        flex-shrink: 0;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid rgba(255,255,255,0.2);
     }
 
-    .indicador-actions {
-        display: flex;
-        gap: 8px;
+    .indicadores-table-modern thead th:first-child {
+        border-top-left-radius: 10px;
     }
 
-    .btn-action {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
+    .indicadores-table-modern thead th:last-child {
+        border-top-right-radius: 10px;
+    }
+
+    .indicadores-table-modern tbody tr {
         transition: var(--transition);
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .indicadores-table-modern tbody tr:hover {
+        background: #f8f9fa;
+        z-index: 2;
+    }
+
+    .indicadores-table-modern tbody tr:has(.btn-group.open) {
+        z-index: 1000;
+    }
+
+    .indicadores-table-modern tbody td {
+        padding: 15px;
         font-size: 14px;
+        color: #555;
+        vertical-align: middle;
+        position: relative;
     }
 
-    .btn-edit {
-        background: #e3f2fd;
-        color: #2196f3;
+    .indicadores-table-modern tbody td:nth-child(5) {
+        position: relative;
+        z-index: 100;
     }
 
-    .btn-edit:hover {
-        background: #2196f3;
-        color: white;
-        transform: scale(1.1);
-    }
-
-    .btn-delete {
-        background: #ffebee;
-        color: #f44336;
-    }
-
-    .btn-delete:hover {
-        background: #f44336;
-        color: white;
-        transform: scale(1.1);
-    }
-
-    .indicador-nombre {
-        font-size: 16px;
-        font-weight: 600;
+    .indicadores-table-modern tbody td:nth-child(3) {
         color: var(--primary-color);
-        margin: 15px 0 10px 0;
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
-    .indicador-descripcion {
-        font-size: 14px;
-        color: #7f8c8d;
-        line-height: 1.6;
-        margin-bottom: 15px;
+    .indicadores-table-modern tfoot {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     }
 
-    .indicador-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 15px;
-        border-top: 1px solid #f0f0f0;
+    .indicadores-table-modern tfoot td {
+        padding: 15px;
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--primary-color);
+        border-top: 2px solid #e0e6ed;
     }
 
-    .indicador-valor {
+    .indicadores-table-modern tfoot td:first-child {
+        border-bottom-left-radius: 10px;
+    }
+
+    .indicadores-table-modern tfoot td:last-child {
+        border-bottom-right-radius: 10px;
+    }
+
+    .indicadores-table-modern .btn-group {
+        position: static;
+    }
+
+    .indicadores-table-modern tbody tr {
+        position: relative;
+        z-index: 1;
+    }
+
+    .indicadores-table-modern tbody tr:hover {
+        z-index: 2;
+    }
+
+    .indicadores-table-modern tbody tr:has(.btn-group.open),
+    .indicadores-table-modern tbody tr .btn-group.open {
+        z-index: 1000;
+    }
+    
+    .indicadores-table-modern tbody tr[style*="z-index: 1000"] {
+        z-index: 1000 !important;
+    }
+    
+    .indicadores-table-modern tbody tr[style*="z-index: 1000"] td:nth-child(5) {
+        z-index: 1001;
+    }
+
+    .indicadores-table-modern .btn-group .btn {
+        border-radius: 8px;
+        padding: 8px 15px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .indicadores-table-modern .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .indicadores-table-modern .dropdown-menu {
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border: none;
+        padding: 5px 0;
+        position: absolute !important;
+        z-index: 1001 !important;
+        margin-top: 5px;
+    }
+
+    .indicadores-table-modern .dropdown-menu li a {
+        padding: 8px 15px;
+        transition: var(--transition);
         display: flex;
         align-items: center;
         gap: 8px;
-        font-weight: 700;
-        color: var(--secondary-color);
-        font-size: 18px;
     }
 
-    .indicador-tipo {
+    .indicadores-table-modern .dropdown-menu li a:hover {
         background: #f8f9fa;
-        padding: 6px 12px;
-        border-radius: 15px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #7f8c8d;
+        padding-left: 20px;
+    }
+
+    .indicadores-table-modern .dropdown-menu li a i {
+        width: 18px;
+        text-align: center;
     }
 
     /* Botones de Acción */
@@ -655,8 +691,18 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
 
     /* Responsive */
     @media (max-width: 768px) {
-        .indicadores-grid {
-            grid-template-columns: 1fr;
+        .indicadores-table-container {
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .indicadores-table-modern {
+            font-size: 12px;
+        }
+
+        .indicadores-table-modern thead th,
+        .indicadores-table-modern tbody td {
+            padding: 10px 8px;
         }
 
         .modern-tabs {
@@ -1374,10 +1420,10 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Mostrar loader
-                    const card = document.getElementById('indicador-' + ipcId);
-                    if (card) {
-                        card.style.opacity = '0.5';
-                        card.style.pointerEvents = 'none';
+                    const row = document.getElementById('indicador-row-' + ipcId);
+                    if (row) {
+                        row.style.opacity = '0.5';
+                        row.style.pointerEvents = 'none';
                     }
 
                     // Hacer petición AJAX
@@ -1389,22 +1435,20 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                     .then(response => response.text())
                     .then(data => {
                         // Eliminar el elemento con animación
-                        if (card) {
-                            card.style.transform = 'scale(0.9)';
-                            card.style.opacity = '0';
+                        if (row) {
+                            row.style.transform = 'translateX(-20px)';
+                            row.style.opacity = '0';
                             
                             setTimeout(() => {
-                                card.remove();
+                                row.remove();
                                 
                                 // Verificar si hay más indicadores
-                                const remainingCards = document.querySelectorAll('.indicador-card').length;
-                                if (remainingCards === 0) {
+                                const remainingRows = document.querySelectorAll('.indicadores-table-modern tbody tr').length;
+                                if (remainingRows === 0) {
                                     // Recargar para mostrar empty state
                                     window.recargarInclude();
                                 } else {
-                                    // Reordenar números
-                                    window.reordenarNumeros();
-                                    // Recargar para actualizar estadísticas
+                                    // Recargar para actualizar estadísticas y totales
                                     window.recargarInclude();
                                 }
                             }, 300);
@@ -1421,9 +1465,9 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        if (card) {
-                            card.style.opacity = '1';
-                            card.style.pointerEvents = 'auto';
+                        if (row) {
+                            row.style.opacity = '1';
+                            row.style.pointerEvents = 'auto';
                         }
                         
                         $.toast({
@@ -1435,16 +1479,6 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                             hideAfter: 3000
                         });
                     });
-                }
-            });
-        };
-        
-        window.reordenarNumeros = function() {
-            const cards = document.querySelectorAll('.indicador-card');
-            cards.forEach((card, index) => {
-                const numero = card.querySelector('.indicador-numero');
-                if (numero) {
-                    numero.textContent = index + 1;
                 }
             });
         };
@@ -1579,7 +1613,48 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
         // ============================================
         
         function inicializarIndicadores() {
-            // Aquí se inicializarán eventos de edición/eliminación en tiempo real
+            // Manejar z-index de dropdowns en la tabla
+            const table = document.querySelector('.indicadores-table-modern');
+            if (!table) return;
+            
+            // Usar delegación de eventos para manejar todos los dropdowns
+            $(table).on('show.bs.dropdown', '.btn-group', function(e) {
+                const btnGroup = $(this);
+                const row = btnGroup.closest('tr');
+                
+                // Cerrar todos los otros dropdowns abiertos
+                table.find('.btn-group.open').each(function() {
+                    if (this !== btnGroup[0]) {
+                        $(this).removeClass('open').find('.dropdown-toggle').attr('aria-expanded', 'false');
+                        $(this).find('.dropdown-menu').removeClass('show');
+                    }
+                });
+                
+                // Asegurar que esta fila tenga el z-index más alto
+                table.find('tbody tr').css('z-index', '1');
+                row.css('z-index', '1000');
+                btnGroup.addClass('open');
+            });
+            
+            $(table).on('hide.bs.dropdown', '.btn-group', function(e) {
+                const btnGroup = $(this);
+                const row = btnGroup.closest('tr');
+                
+                row.css('z-index', '');
+                btnGroup.removeClass('open');
+            });
+            
+            // También manejar clicks fuera del dropdown para cerrar
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.btn-group').length) {
+                    table.find('.btn-group.open').each(function() {
+                        const row = $(this).closest('tr');
+                        $(this).removeClass('open');
+                        row.css('z-index', '');
+                    });
+                }
+            });
+            
             console.log('Indicadores inicializados correctamente');
         }
 
