@@ -3,9 +3,15 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
 session_start();
 $idPaginaInterna = 'GN0001';
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
@@ -22,6 +28,11 @@ function sendJsonResponse($success, $message, $redirect = null, $data = []) {
         'data' => $data
     ]);
     exit();
+}
+
+// VALIDAR TOKEN CSRF
+if(!empty($_POST)) {
+    verificarTokenCSRF(true); // true = respuesta AJAX
 }
 
 $auth = Autenticate::getInstance();

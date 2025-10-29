@@ -1,10 +1,19 @@
 <?php
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
 session_start();
 require_once("../conexion.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
 
 $notificacion = new Notificacion();
+
+// VALIDAR TOKEN CSRF
+verificarTokenCSRF(false); // false = no es AJAX, redirige si falla
 
 /**
  * VALIDACIÓN DE RECAPTCHA v3

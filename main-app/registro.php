@@ -1,7 +1,14 @@
 <?php
 // Configuración directa sin redirecciones
+
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
 session_start();
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 
 // Conexión a base de datos
 try {
@@ -505,8 +512,11 @@ $versionCache = time();
                 <!-- Form Content -->
                 <div class="form-content">
                     <form id="registrationForm" method="post" action="registro-guardar.php" novalidate>
-                                <input type="hidden" name="urlDefault" value="<?= !empty($_REQUEST["urlDefault"]) ? $_REQUEST["urlDefault"] : ""; ?>" />
-                                <input type="hidden" id="idRegistro" name="idRegistro" value="<?= !empty($_REQUEST["idRegistro"]) ? $_REQUEST["idRegistro"] : ""; ?>" />
+                        <!-- Token CSRF para protección contra ataques -->
+                        <?php echo campoTokenCSRF(); ?>
+                        
+                        <input type="hidden" name="urlDefault" value="<?= !empty($_REQUEST["urlDefault"]) ? htmlspecialchars($_REQUEST["urlDefault"], ENT_QUOTES, 'UTF-8') : ""; ?>" />
+                        <input type="hidden" id="idRegistro" name="idRegistro" value="<?= !empty($_REQUEST["idRegistro"]) ? htmlspecialchars($_REQUEST["idRegistro"], ENT_QUOTES, 'UTF-8') : ""; ?>" />
                         <input type="hidden" id="recaptchaToken" name="recaptchaToken" value="" />
                         
                         <!-- Step 1: Personal Data -->
