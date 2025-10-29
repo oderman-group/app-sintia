@@ -44,26 +44,26 @@ foreach ($data["data"] as $resultado) {
 ?>
 	<tr <?=$claseInactiva;?>>
 	   <td>
-		   <button class="btn btn-sm btn-link text-secondary expand-btn"
-			   data-id="<?=$resultado['car_id'];?>"
-			   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
-			   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
-			   data-curso="<?="[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
-			   data-asignatura="[<?=$resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)";?>"
-			   data-ih="<?=$resultado['car_ih'];?>"
-			   data-periodo="<?=$resultado['car_periodo'];?>"
-			   data-actividades="<?=$resultado['actividades'];?>"
-			   data-actividades-registradas="<?=$resultado['actividades_registradas'];?>"
-			   data-director-grupo="<?=$opcionSINO[$resultado['car_director_grupo']];?>"
-			   data-permiso2="<?=$opcionSINO[$resultado['car_permiso2']];?>"
-			   data-indicador-automatico="<?=$opcionSINO[$resultado['car_indicador_automatico']];?>"
-			   data-max-indicadores="<?=$resultado['car_maximos_indicadores'];?>"
-			   data-max-calificaciones="<?=$resultado['car_maximas_calificaciones'];?>"
-			   data-cantidad-estudiantes="<?=$cantidadEstudiantes;?>"
-			   data-activa="<?=isset($resultado['car_activa']) ? $resultado['car_activa'] : 1;?>"
-			   title="Ver detalles">
-			   <i class="fa fa-chevron-right"></i>
-		   </button>
+	   <button class="btn btn-sm btn-link text-secondary expand-btn"
+		   data-id="<?=$resultado['car_id'];?>"
+		   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
+		   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
+		   data-curso="<?="[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
+		   data-asignatura="[<?=$resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)";?>"
+		   data-ih="<?=$resultado['car_ih'];?>"
+		   data-periodo="<?=$resultado['car_periodo'];?>"
+		   data-actividades="<?=!empty($resultado['actividades']) ? $resultado['actividades'] : 0;?>"
+		   data-actividades-registradas="<?=!empty($resultado['actividades_registradas']) ? $resultado['actividades_registradas'] : 0;?>"
+		   data-director-grupo="<?=$opcionSINO[$resultado['car_director_grupo']];?>"
+		   data-permiso2="<?=$opcionSINO[$resultado['car_permiso2']];?>"
+		   data-indicador-automatico="<?=$opcionSINO[$resultado['car_indicador_automatico']];?>"
+		   data-max-indicadores="<?=$resultado['car_maximos_indicadores'];?>"
+		   data-max-calificaciones="<?=$resultado['car_maximas_calificaciones'];?>"
+		   data-cantidad-estudiantes="<?=$cantidadEstudiantes;?>"
+		   data-activa="<?=isset($resultado['car_activa']) ? $resultado['car_activa'] : 1;?>"
+		   title="Ver detalles">
+		   <i class="fa fa-chevron-right"></i>
+	   </button>
 	   </td>
 	   <td><input type="checkbox" class="carga-checkbox" value="<?=$resultado['car_id'];?>"></td>
 	   <td><?= $contReg; ?></td>
@@ -72,7 +72,11 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $marcaMediaTecnica . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)"; ?></td>
 		<td><?= $resultado['car_ih']; ?></td>
-		<td><?= $resultado['car_periodo']; ?></td>
+		<td><?php 
+			$periodoGrado = !empty($resultado['gra_periodos']) ? $resultado['gra_periodos'] : 4;
+			$periodoActual = $resultado['car_periodo'];
+			echo ($periodoActual > $periodoGrado) ? '<span class="badge badge-success">Finalizado</span>' : $periodoActual;
+		?></td>
 		<?php
 		// Usar valores por defecto si no están disponibles (lazy loading)
 		$actividadesTotales = $resultado['actividades'] ?? null;

@@ -435,7 +435,7 @@ if($config['conf_doble_buscador'] == 1) {
 																	"car.car_indicador_automatico","car.car_maximos_indicadores",
 																	"car.car_docente","gra.gra_tipo","am.mat_id",
 																	"car.car_maximas_calificaciones","car.car_director_grupo","uss.uss_nombre",
-																	"uss.uss_id","uss.uss_nombre2","uss.uss_apellido1","uss.uss_apellido2","gra.gra_id","gra.gra_nombre",
+																	"uss.uss_id","uss.uss_nombre2","uss.uss_apellido1","uss.uss_apellido2","gra.gra_id","gra.gra_nombre","gra.gra_periodos",
 																	"gru.gru_nombre","am.mat_nombre","am.mat_valor","car.car_grupo","car.car_director_grupo", "car.car_activa",
 																	"car.id_nuevo AS id_nuevo_carga"];
 													
