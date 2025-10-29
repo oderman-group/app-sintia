@@ -372,8 +372,11 @@ class Estudiantes {
         $resultado = [];
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $doctSinPuntos = strpos($estudiante, '.') == true ? str_replace('.', '', $estudiante) : $estudiante;
-        $doctConPuntos = strpos($estudiante, '.') !== true && is_numeric($estudiante) ? str_replace('.', '', $estudiante) : $estudiante;
+        // Validar que estudiante no sea null o vacío
+        $estudianteStr = !empty($estudiante) ? (string)$estudiante : '';
+        
+        $doctSinPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') !== false ? str_replace('.', '', $estudianteStr) : $estudianteStr;
+        $doctConPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') === false && is_numeric($estudianteStr) ? str_replace('.', '', $estudianteStr) : $estudianteStr;
 
         try {
             $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
