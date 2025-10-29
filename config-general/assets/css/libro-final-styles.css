@@ -77,6 +77,16 @@ body {
     box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
 }
 
+.btn-print {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
+.btn-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
 .btn-flotante i {
     font-size: 18px;
 }
@@ -239,7 +249,6 @@ body {
 .col-observaciones {
     text-align: left;
     font-size: 8pt;
-    color: #6c757d;
 }
 
 /* ============================
@@ -426,8 +435,102 @@ body {
         justify-content: flex-start;
     }
 
+    /* Estilos para el encabezado del informe */
     .encabezado-informe {
         border-bottom: 2px solid #000;
+    }
+
+    /* Asegurar layout horizontal para head-informes.php (Bootstrap Grid) */
+    .pagina-estudiante .container,
+    .pagina-estudiante > .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+    }
+
+    /* Filas principales - layout horizontal */
+    .pagina-estudiante .container > .row,
+    .pagina-estudiante > .container > .row {
+        display: table !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Columnas principales - lado a lado */
+    .pagina-estudiante .container > .row > .col-sm-2,
+    .pagina-estudiante .container > .row > .col-sm-3,
+    .pagina-estudiante .container > .row > .col-sm-4,
+    .pagina-estudiante > .container > .row > .col-sm-2,
+    .pagina-estudiante > .container > .row > .col-sm-3,
+    .pagina-estudiante > .container > .row > .col-sm-4 {
+        display: table-cell !important;
+        float: none !important;
+        vertical-align: top !important;
+        width: auto !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Primera columna (vacía) - 5% */
+    .pagina-estudiante .container > .row > .col-sm-2:first-child,
+    .pagina-estudiante > .container > .row > .col-sm-2:first-child {
+        width: 5% !important;
+    }
+
+    /* Segunda columna (logo) - 16.67% (2/12) */
+    .pagina-estudiante .container > .row > .col-sm-2:nth-child(2),
+    .pagina-estudiante > .container > .row > .col-sm-2:nth-child(2) {
+        width: 16.67% !important;
+    }
+
+    /* Tercera columna (info institución) - 25% (3/12) */
+    .pagina-estudiante .container > .row > .col-sm-3,
+    .pagina-estudiante > .container > .row > .col-sm-3 {
+        width: 25% !important;
+    }
+
+    /* Cuarta columna (título informe) - 33.33% (4/12) */
+    .pagina-estudiante .container > .row > .col-sm-4,
+    .pagina-estudiante > .container > .row > .col-sm-4 {
+        width: 33.33% !important;
+    }
+
+    /* Última columna (vacía) - 16.67% (2/12) */
+    .pagina-estudiante .container > .row > .col-sm-2:last-child,
+    .pagina-estudiante > .container > .row > .col-sm-2:last-child {
+        width: 16.67% !important;
+    }
+
+    /* Columnas anidadas dentro de col-sm-3 y col-sm-4 - comportamiento normal */
+    .pagina-estudiante .container > .row > .col-sm-3 > .col-sm-12,
+    .pagina-estudiante .container > .row > .col-sm-4 > .col-sm-12,
+    .pagina-estudiante > .container > .row > .col-sm-3 > .col-sm-12,
+    .pagina-estudiante > .container > .row > .col-sm-4 > .col-sm-12 {
+        display: block !important;
+        width: 100% !important;
+        float: none !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* Asegurar layout horizontal para encabezado simple */
+    .encabezado-informe {
+        display: block !important;
+    }
+
+    .encabezado-informe .logo-institucion {
+        display: inline-block !important;
+        vertical-align: middle !important;
+    }
+
+    .encabezado-informe .titulo-informe,
+    .encabezado-informe > div {
+        display: block !important;
     }
 
     .info-estudiante {
@@ -469,6 +572,19 @@ body {
 
     .seccion-firmas {
         page-break-inside: avoid;
+    }
+
+    /* Asegurar layout horizontal para las firmas al imprimir */
+    .contenedor-firmas {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 40px !important;
+        flex-direction: row !important;
+    }
+
+    .firma-item {
+        display: block !important;
+        width: auto !important;
     }
 
     /* Asegurar salto de página */
