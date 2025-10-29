@@ -168,215 +168,231 @@ if($config['conf_doble_buscador'] == 1) {
                         </div>
                     </div>
                     
+                    <?php
+                        include("../../config-general/mensajes-informativos.php");
+                    ?>
+                    
+                    <!-- Barra de herramientas superior - FUERA DEL CARD -->
+                    <div class="row mb-3">
+                        <div class="col-sm-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- Botones principales -->
+                                <div class="btn-group">
+                                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0052'])) { ?>
+                                        <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
+                                            <i class="fa fa-plus"></i> Nueva Carga
+                                        </a>
+                                        <?php
+                                        $idModal = "nuevaCargModal";
+                                        $contenido = "../directivo/cargas-agregar-modal.php";
+                                        include("../compartido/contenido-modal.php");
+                                        } ?>
+                                    
+                                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+                                        <button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
+                                            <i class="fa fa-arrows-alt"></i> Mover Seleccionadas
+                                        </button>
+                                        
+                                        <button type="button" id="editarMasivoBtn" class="btn btn-warning" disabled>
+                                            <i class="fa fa-edit"></i> Editar Seleccionadas
+                                        </button>
+                                    <?php } ?>
+                                    
+                                    <!-- Más Opciones -->
+                                    <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0035'])){?>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+                                                    <li><a href="cargas-visual.php"><i class="fa fa-th-large"></i> Vista Visual</a></li>
+                                                    <li role="separator" class="divider"></li>
+                                                <?php } ?>
+                                                <li><a href="cargas-informe-progreso.php" target="_blank"><i class="fa fa-file-alt"></i> Informe de Progreso</a></li>
+                                                <li role="separator" class="divider"></li>
+                                                <li><a href="cargas-indicadores-obligatorios.php"><i class="fa fa-list-check"></i> Indicadores Obligatorios</a></li>
+                                                <li><a href="cargas-comportamiento-filtros.php"><i class="fa fa-user-check"></i> Notas de Comportamiento</a></li>
+                                                <li><a href="javascript:void(0);" data-toggle="modal" data-target="#modalTranferirCargas"><i class="fa fa-exchange-alt"></i> Transferir Cargas</a></li>
+                                                <li><a href="cargas-estilo-notas.php"><i class="fa fa-palette"></i> Estilo de Notas</a></li>
+                                            </ul>
+                                        </div>
+                                    <?php }else{ ?>
+                                        <!-- Si no tiene permiso para DT0035, mostrar solo las opciones básicas -->
+                                        <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+                                                    <i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a href="cargas-visual.php"><i class="fa fa-th-large"></i> Vista Visual</a></li>
+                                                    <li role="separator" class="divider"></li>
+                                                    <li><a href="cargas-informe-progreso.php" target="_blank"><i class="fa fa-file-alt"></i> Informe de Progreso</a></li>
+                                                </ul>
+                                            </div>
+                                        <?php }else{ ?>
+                                            <a href="cargas-informe-progreso.php" target="_blank" class="btn btn-info" title="Ver informe de progreso de notas">
+                                                <i class="fa fa-file-alt"></i> Informe de Progreso
+                                            </a>
+                                        <?php } ?>
+                                    <?php }?>
+                                </div>
+                                
+                                <!-- Botón de filtros -->
+                                <button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosCargas">
+                                    <i class="fa fa-filter"></i> Filtros Avanzados
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de Filtros Colapsable -->
+                    <div class="card card-topline-purple mb-3" id="cardFiltrosCargas" style="display: none;">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="fa fa-filter"></i> Filtros Avanzados</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-graduation-cap"></i> Cursos</label>
+                                        <select id="filtro_cargas_cursos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+                                            <?php
+                                            $grados = Grados::listarGrados(1);
+                                            while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
+                                            ?>
+                                                <option value="<?=$grado['gra_id'];?>"><?=$grado['gra_nombre'];?></option>
+                                            <?php }?>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-users"></i> Grupos</label>
+                                        <select id="filtro_cargas_grupos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+                                            <?php
+                                            $grupos = Grupos::listarGrupos();
+                                            while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
+                                            ?>
+                                                <option value="<?=$gru['gru_id'];?>"><?=$gru['gru_nombre'];?></option>
+                                            <?php }?>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-chalkboard-teacher"></i> Docentes</label>
+                                        <select id="filtro_cargas_docentes" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+                                            <?php
+                                            try {
+                                                $consultaDocentes = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 
+                                                    FROM ".BD_GENERAL.".usuarios 
+                                                    WHERE uss_tipo=".TIPO_DOCENTE." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION['bd']}
+                                                    ORDER BY uss_nombre ASC");
+                                                
+                                                while ($doc = mysqli_fetch_array($consultaDocentes, MYSQLI_BOTH)) {
+                                                    $nombreCompleto = UsuariosPadre::nombreCompletoDelUsuario($doc);
+                                                ?>
+                                                    <option value="<?=$doc['uss_id'];?>"><?=$nombreCompleto;?></option>
+                                                <?php 
+                                                }
+                                            } catch(Exception $e) {
+                                                echo "<!-- Error al cargar docentes: " . $e->getMessage() . " -->";
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-calendar"></i> Periodos</label>
+                                        <select id="filtro_cargas_periodos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
+                                            <?php for($i=1; $i<=$config['conf_periodos_maximos']; $i++){?>
+                                                <option value="<?=$i;?>">Periodo <?=$i;?></option>
+                                            <?php }?>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12 text-right">
+                                    <button type="button" class="btn btn-secondary" id="btnLimpiarFiltrosCargas">
+                                        <i class="fa fa-eraser"></i> Limpiar Filtros
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="row">
-								
-								<?php 
-								$filtro = '';
-								$curso = '';
-								
-								// Validar y sanitizar parámetros GET antes de usarlos
-								if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
-									try {
-										$cursoDecoded = base64_decode($_GET['curso'], true);
-										if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
-											$curso = mysqli_real_escape_string($conexion, $cursoDecoded);
-											$filtro .= " AND car_curso='".$curso."'";
-										}
-									} catch(Exception $e) {
-										// Ignorar error de decodificación
-									}
-								}
-								
-								if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
-									try {
-										$grupoDecoded = base64_decode($_GET["grupo"], true);
-										if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
-											$grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
-											$filtro .= " AND car_grupo='".$grupo."'";
-										}
-									} catch(Exception $e) {
-										// Ignorar error de decodificación
-									}
-								}
-								
-								if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
-									try {
-										$docenteDecoded = base64_decode($_GET["docente"], true);
-										if ($docenteDecoded !== false && !empty($docenteDecoded)) {
-											$docente = mysqli_real_escape_string($conexion, $docenteDecoded);
-											$filtro .= " AND car_docente='".$docente."'";
-										}
-									} catch(Exception $e) {
-										// Ignorar error de decodificación
-									}
-								}
-								
-								if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
-									try {
-										$asignaturaDecoded = base64_decode($_GET["asignatura"], true);
-										if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
-											$asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
-											$filtro .= " AND car_materia='".$asignatura."'";
-										}
-									} catch(Exception $e) {
-										// Ignorar error de decodificación
-									}
-								}
-								?>
-								
-								<div class="col-md-12">
-								<?php
-									include("../../config-general/mensajes-informativos.php");
-								?>
-
-                                    <div class="card card-topline-purple">
-                                        <div class="card-head">
-                                            <header><?=$frases[12][$datosUsuarioActual['uss_idioma']];?></header>
-                                            <div class="tools">
-                                                <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
-			                                    <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
-			                                    <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
-                                            </div>
-                                        </div>
-                                        <div class="card-body">
-											
-											<!-- Barra de herramientas superior -->
-											<div class="row mb-3">
-												<div class="col-sm-12">
-													<div class="d-flex justify-content-between align-items-center">
-														<!-- Botones principales -->
-														<div class="btn-group">
-															<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0052'])) { ?>
-																<a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
-																	<i class="fa fa-plus"></i> Nueva Carga
-																</a>
-																<?php
-																$idModal = "nuevaCargModal";
-																$contenido = "../directivo/cargas-agregar-modal.php";
-																include("../compartido/contenido-modal.php");
-																} ?>
-															
-															<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
-																<a href="cargas-visual.php" class="btn btn-success" title="Vista visual con drag & drop">
-																	<i class="fa fa-th-large"></i> Vista Visual
-																</a>
-																
-																<button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
-																	<i class="fa fa-arrows-alt"></i> Mover Seleccionadas
-																</button>
-																
-																<button type="button" id="editarMasivoBtn" class="btn btn-warning" disabled>
-																	<i class="fa fa-edit"></i> Editar Seleccionadas
-																</button>
-															<?php } ?>
-															
-															<!-- Más Opciones -->
-															<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0035'])){?>
-																<div class="btn-group" role="group">
-																	<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-																		<i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
-																	</button>
-																	<ul class="dropdown-menu">
-																		<li><a href="cargas-indicadores-obligatorios.php"><i class="fa fa-list-check"></i> Indicadores Obligatorios</a></li>
-																		<li><a href="cargas-comportamiento-filtros.php"><i class="fa fa-user-check"></i> Notas de Comportamiento</a></li>
-																		<li><a href="javascript:void(0);" data-toggle="modal" data-target="#modalTranferirCargas"><i class="fa fa-exchange-alt"></i> Transferir Cargas</a></li>
-																		<li><a href="cargas-estilo-notas.php"><i class="fa fa-palette"></i> Estilo de Notas</a></li>
-																	</ul>
-																</div>
-															<?php }?>
-														</div>
-														
-														<!-- Botón de filtros -->
-														<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosCargas">
-															<i class="fa fa-filter"></i> Filtros Avanzados
-														</button>
-													</div>
-												</div>
-											</div>
-											
-											<!-- Panel de Filtros Colapsable -->
-											<div class="card card-topline-purple mb-3" id="cardFiltrosCargas" style="display: none;">
-												<div class="card-body">
-													<h5 class="mb-3"><i class="fa fa-filter"></i> Filtros Avanzados</h5>
-													
-													<div class="row">
-														<div class="col-md-3">
-															<div class="form-group">
-																<label><i class="fa fa-graduation-cap"></i> Cursos</label>
-																<select id="filtro_cargas_cursos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
-																	<?php
-																	$grados = Grados::listarGrados(1);
-																	while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
-																	?>
-																		<option value="<?=$grado['gra_id'];?>"><?=$grado['gra_nombre'];?></option>
-																	<?php }?>
-																</select>
-															</div>
-														</div>
-														
-														<div class="col-md-3">
-															<div class="form-group">
-																<label><i class="fa fa-users"></i> Grupos</label>
-																<select id="filtro_cargas_grupos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
-																	<?php
-																	$grupos = Grupos::listarGrupos();
-																	while ($gru = mysqli_fetch_array($grupos, MYSQLI_BOTH)) {
-																	?>
-																		<option value="<?=$gru['gru_id'];?>"><?=$gru['gru_nombre'];?></option>
-																	<?php }?>
-																</select>
-															</div>
-														</div>
-														
-														<div class="col-md-3">
-															<div class="form-group">
-																<label><i class="fa fa-chalkboard-teacher"></i> Docentes</label>
-																<select id="filtro_cargas_docentes" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
-																	<?php
-																	try {
-																		$consultaDocentes = mysqli_query($conexion, "SELECT uss_id, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2 
-																			FROM ".BD_GENERAL.".usuarios 
-																			WHERE uss_tipo=".TIPO_DOCENTE." AND institucion={$config['conf_id_institucion']} AND year={$_SESSION['bd']}
-																			ORDER BY uss_nombre ASC");
-																		
-																		while ($doc = mysqli_fetch_array($consultaDocentes, MYSQLI_BOTH)) {
-																			$nombreCompleto = UsuariosPadre::nombreCompletoDelUsuario($doc);
-																		?>
-																			<option value="<?=$doc['uss_id'];?>"><?=$nombreCompleto;?></option>
-																		<?php 
-																		}
-																	} catch(Exception $e) {
-																		echo "<!-- Error al cargar docentes: " . $e->getMessage() . " -->";
-																	}
-																	?>
-																</select>
-															</div>
-														</div>
-														
-														<div class="col-md-3">
-															<div class="form-group">
-																<label><i class="fa fa-calendar"></i> Periodos</label>
-																<select id="filtro_cargas_periodos" class="form-control select2-multiple-cargas" multiple="multiple" style="width: 100%;">
-																	<?php for($i=1; $i<=$config['conf_periodos_maximos']; $i++){?>
-																		<option value="<?=$i;?>">Periodo <?=$i;?></option>
-																	<?php }?>
-																</select>
-															</div>
-														</div>
-													</div>
-													
-													<div class="row">
-														<div class="col-md-12 text-right">
-															<button type="button" class="btn btn-secondary" id="btnLimpiarFiltrosCargas">
-																<i class="fa fa-eraser"></i> Limpiar Filtros
-															</button>
-														</div>
-													</div>
-												</div>
-											</div>
-											
+                            <?php 
+                            $filtro = '';
+                            $curso = '';
+                            
+                            // Validar y sanitizar parámetros GET antes de usarlos
+                            if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
+                                try {
+                                    $cursoDecoded = base64_decode($_GET['curso'], true);
+                                    if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
+                                        $curso = mysqli_real_escape_string($conexion, $cursoDecoded);
+                                        $filtro .= " AND car_curso='".$curso."'";
+                                    }
+                                } catch(Exception $e) {
+                                    // Ignorar error de decodificación
+                                }
+                            }
+                            
+                            if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
+                                try {
+                                    $grupoDecoded = base64_decode($_GET["grupo"], true);
+                                    if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
+                                        $grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
+                                        $filtro .= " AND car_grupo='".$grupo."'";
+                                    }
+                                } catch(Exception $e) {
+                                    // Ignorar error de decodificación
+                                }
+                            }
+                            
+                            if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
+                                try {
+                                    $docenteDecoded = base64_decode($_GET["docente"], true);
+                                    if ($docenteDecoded !== false && !empty($docenteDecoded)) {
+                                        $docente = mysqli_real_escape_string($conexion, $docenteDecoded);
+                                        $filtro .= " AND car_docente='".$docente."'";
+                                    }
+                                } catch(Exception $e) {
+                                    // Ignorar error de decodificación
+                                }
+                            }
+                            
+                            if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
+                                try {
+                                    $asignaturaDecoded = base64_decode($_GET["asignatura"], true);
+                                    if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
+                                        $asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
+                                        $filtro .= " AND car_materia='".$asignatura."'";
+                                    }
+                                } catch(Exception $e) {
+                                    // Ignorar error de decodificación
+                                }
+                            }
+                            ?>
+                            
+                            <div class="card card-topline-purple">
+                                <div class="card-head">
+                                    <header><?=$frases[12][$datosUsuarioActual['uss_idioma']];?></header>
+                                    <div class="tools">
+                                        <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
+                                        <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
+                                        <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
                                         <div>
                                     		<table id="example1" class="display"  style="width:100%;">
 												<div id="gifCarga" class="gif-carga">
