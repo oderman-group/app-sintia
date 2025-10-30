@@ -324,7 +324,7 @@ switch (ENVIROMENT) {
     include(ROOT_PATH."/conexion-datos-developer.php");
     define('BD_PREFIX', 'mobiliar_');
     define('EPAYCO_TEST', 'true');
-    define('EMAIL_METHOD', 'NORMAL');
+    define('EMAIL_METHOD', 'MAILPIT');
     break;
 
     case 'PROD':
