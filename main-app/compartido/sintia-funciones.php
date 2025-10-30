@@ -4,44 +4,66 @@ class Archivos {
 
 	
 
-	function validarArchivo($archivoSize, $archivoName){
+	function validarArchivo($archivoSize, $archivoName, $archivoTmpName = null){
 
 		include(ROOT_PATH."/config-general/config.php");
 
 		$maxPeso = $config['conf_max_peso_archivos'];
 
 		$explode=explode(".", $archivoName);
-		$extension = end($explode);
+		$extension = strtolower(end($explode));
 
-		if($extension == 'exe' or $extension == 'php' or $extension == 'js' or $extension == 'html' or $extension == 'htm'){
+		// Lista ampliada de extensiones prohibidas (seguridad mejorada)
+		$extensionesProhibidas = [
+			'exe', 'php', 'php3', 'php4', 'php5', 'phtml', 'phar',
+			'js', 'html', 'htm', 'bat', 'cmd', 'com', 'sh',
+			'vbs', 'jar', 'scr', 'msi', 'app', 'deb', 'rpm',
+			'asp', 'aspx', 'jsp', 'cgi', 'pl', 'py', 'rb',
+			'sql', 'db', 'dbf', 'mdb'
+		];
 
-			echo "Este archivo con extensión <b>.".$extension."</b> no está permitido.";
-
+		if(in_array($extension, $extensionesProhibidas)){
+			echo "Este archivo con extensión <b>.".$extension."</b> no está permitido por razones de seguridad.";
 			exit();
+		}
 
+		// Validación adicional de MIME type si se proporciona archivo temporal
+		if($archivoTmpName !== null && file_exists($archivoTmpName)){
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$mimeType = finfo_file($finfo, $archivoTmpName);
+			finfo_close($finfo);
+			
+			// MIME types peligrosos
+			$mimesPeligrosos = [
+				'application/x-msdownload', 
+				'application/x-msdos-program',
+				'application/x-executable',
+				'application/x-httpd-php',
+				'text/html',
+				'text/javascript',
+				'application/javascript',
+				'application/x-sh',
+				'application/x-sql'
+			];
+			
+			if(in_array($mimeType, $mimesPeligrosos)){
+				echo "El tipo de archivo no está permitido por razones de seguridad.";
+				exit();
+			}
 		}
 
 		$pesoMB = round($archivoSize/1048576,2);
-		$urlReferencia = parse_url($_SERVER['HTTP_REFERER']);
+		$urlReferencia = parse_url($_SERVER['HTTP_REFERER'] ?? '');
     
-		$URLREGRESO = $_SERVER['HTTP_REFERER']."?error=ER_DT_17&pesoMB={$pesoMB}";
+		$URLREGRESO = ($_SERVER['HTTP_REFERER'] ?? 'javascript:history.back()')."?error=ER_DT_17&pesoMB={$pesoMB}";
 		if (isset($urlReferencia['query']) && !empty($urlReferencia['query'])) {
-			
 			$URLREGRESO = $_SERVER['HTTP_REFERER']."&error=ER_DT_17&pesoMB={$pesoMB}";
 		}
-		
 
 		if($pesoMB>$maxPeso){
-
 			echo '<script type="text/javascript">window.location.href="'.$URLREGRESO.'";</script>';
 			exit();
-
 		}
-
-
-
-
-
 	}
 
 	

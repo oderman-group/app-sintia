@@ -5,11 +5,40 @@ $logoWidth = 250;
 if(!isset($_GET['nodb'])) {
     require_once("index-logica.php");
     require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Informativos.php");
+    
+    // Iniciar sesión temporal para CSRF (no requiere autenticación)
+    if (session_status() === PHP_SESSION_NONE) {
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.use_only_cookies', 1);
+        ini_set('session.cookie_samesite', 'Lax');
+        session_start();
+    }
+    require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 
     if (!empty($_GET['inst']) && !empty($_GET['year'])) {
         try {
-            $informacionInstConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion='" . base64_decode($_GET['inst']) . "' AND info_year=".base64_decode($_GET['year']));
-            $informacion_inst = mysqli_fetch_array($informacionInstConsulta, MYSQLI_BOTH);
+            // Validar y sanitizar parámetros
+            $institucion = base64_decode($_GET['inst']);
+            $year = base64_decode($_GET['year']);
+            
+            // Validar que sean valores válidos
+            if (!is_numeric($year) || $year < 2000 || $year > 2100) {
+                throw new Exception("Año inválido");
+            }
+            
+            // Incluir clase Conexion para PDO
+            require_once(ROOT_PATH."/main-app/class/Conexion.php");
+            
+            // Query segura con PDO prepared statement (patrón del proyecto)
+            $conexionPDO = Conexion::newConnection('PDO');
+            $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            $sql = "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion=? AND info_year=?";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $institucion, PDO::PARAM_STR);
+            $stmt->bindParam(2, $year, PDO::PARAM_INT);
+            $stmt->execute();
+            $informacion_inst = $stmt->fetch(PDO::FETCH_BOTH);
             if (!empty($informacion_inst["info_logo"]) && file_exists("files/images/logo/".$informacion_inst["info_logo"])) {
                 $logoIndex = "files/images/logo/".$informacion_inst["info_logo"];
                 $logoWidth = 300;
@@ -468,8 +497,12 @@ if(!isset($_GET['nodb'])) {
                             
                             <!-- Contenedor para mensajes dinámicos -->
                             <div id="dynamicMessages" class="mt-3"></div>
-		                        <input type="hidden" name="urlDefault" value="<?php if(isset($_GET["urlDefault"])) echo $_GET["urlDefault"];?>" />
-                                <input type="hidden" name="directory"  value="<?php if(isset($_GET["directory"]))  echo $_GET["directory"]; ?>" />
+                            
+                            <!-- Token CSRF para protección contra ataques -->
+                            <?php echo campoTokenCSRF(); ?>
+                            
+		                        <input type="hidden" name="urlDefault" value="<?php if(isset($_GET["urlDefault"])) echo htmlspecialchars($_GET["urlDefault"], ENT_QUOTES, 'UTF-8');?>" />
+                                <input type="hidden" name="directory"  value="<?php if(isset($_GET["directory"]))  echo htmlspecialchars($_GET["directory"], ENT_QUOTES, 'UTF-8'); ?>" />
                             <header class="login-header">
                                 <img class="mb-4 login-logo" src="<?=$logoIndex;?>" width="<?=$logoWidth;?>" alt="Logo SINTIA" loading="eager">
                                 <h1 class="login-title">Bienvenido</h1>

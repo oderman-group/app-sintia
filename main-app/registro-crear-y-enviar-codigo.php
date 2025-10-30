@@ -5,6 +5,9 @@
  * y envía un código de verificación
  */
 
+// Configurar zona horaria de Colombia
+date_default_timezone_set('America/Bogota');
+
 header('Content-Type: application/json; charset=UTF-8');
 require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Notificacion.php");
@@ -52,7 +55,34 @@ $nombreIns = isset($_POST['nombreIns']) ? mysqli_real_escape_string($conexion, t
 $siglasInst = isset($_POST['siglasInst']) ? mysqli_real_escape_string($conexion, trim($_POST['siglasInst'])) : strtoupper(substr($nombreIns, 0, 4));
 $ciudad = isset($_POST['ciudad']) ? mysqli_real_escape_string($conexion, trim($_POST['ciudad'])) : '';
 $cargo = isset($_POST['cargo']) ? mysqli_real_escape_string($conexion, trim($_POST['cargo'])) : '';
-$modulosSeleccionados = isset($_POST['modulos']) ? $_POST['modulos'] : [];
+
+// CAPTURAR MÚLTIPLES USOS DE SINTIA (para enviar por correo)
+$usosSintia = isset($_POST['usosSintia']) && is_array($_POST['usosSintia']) ? $_POST['usosSintia'] : [];
+error_log("🔵 Usos SINTIA recibidos: " . json_encode($usosSintia));
+
+$mapeoUsos = [
+	'academico' => 'Gestión Académica',
+	'administrativo' => 'Gestión Administrativa',
+	'comunicacion' => 'Comunicación',
+	'integral' => 'Gestión Integral'
+];
+
+$usosSintiaTextos = [];
+foreach($usosSintia as $uso) {
+	if(isset($mapeoUsos[$uso])) {
+		$usosSintiaTextos[] = $mapeoUsos[$uso];
+	}
+}
+
+$usoSintiaTexto = !empty($usosSintiaTextos) ? implode(', ', $usosSintiaTextos) : 'No especificado';
+error_log("🔵 Usos SINTIA texto: " . $usoSintiaTexto);
+
+// Guardar en sesión para usarlo en el email de bienvenida después
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$_SESSION['usosSintiaTemp'] = $usoSintiaTexto;
+error_log("🔵 Usos SINTIA guardados en sesión");
 
 // Validar datos mínimos
 if (empty($nombre) || empty($email) || empty($nombreIns)) {
@@ -255,7 +285,7 @@ try {
     $queryUsuario = "INSERT INTO " . BD_GENERAL . ".usuarios(
         uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_apellido1, uss_estado, 
         uss_foto, uss_portada, uss_idioma, uss_tema, uss_email, uss_celular, 
-        uss_genero, uss_bloqueado, institucion, year
+        uss_genero, uss_bloqueado, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year
     ) VALUES (
         '{$ussID}',
         '{$usuarioLogin}',
@@ -272,6 +302,9 @@ try {
         '{$celular}',
         126,
         0,
+        'white-sidebar-color',
+        'header-white',
+        'logo-white',
         '{$idInsti}',
         '{$year}'
     )";
@@ -290,15 +323,39 @@ try {
     
     error_log("Usuario creado con uss_id: " . $ussID);
     
-    // GUARDAR MÓDULOS SELECCIONADOS
-    if (!empty($modulosSeleccionados)) {
-        $modulosInsertar = "";
-        foreach ($modulosSeleccionados as $idModulo) {
-            $idModuloSafe = mysqli_real_escape_string($conexion, $idModulo);
-            $modulosInsertar .= "({$idInsti},{$idModuloSafe}),";
+    // RELACIONAR TODOS LOS MÓDULOS ACTIVOS AUTOMÁTICAMENTE
+    error_log("🔵 Iniciando relación de módulos para institución: " . $idInsti);
+    
+    $consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM " . BD_ADMIN . ".modulos WHERE mod_estado = 1");
+    
+    if (!$consultaModulos) {
+        error_log("🔴 Error en query de módulos: " . mysqli_error($conexion));
+        throw new Exception('Error al consultar módulos activos');
+    }
+    
+    $numModulos = mysqli_num_rows($consultaModulos);
+    error_log("🔵 Módulos activos encontrados: " . $numModulos);
+    
+    if ($numModulos > 0) {
+        $valoresModulos = [];
+        while ($modulo = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {
+            $valoresModulos[] = "($idInsti, ".$modulo['mod_id'].")";
         }
-        $modulosInsertar = substr($modulosInsertar, 0, -1);
-        mysqli_query($conexion, "INSERT INTO " . BD_ADMIN . ".instituciones_modulos (ipmod_institucion,ipmod_modulo) VALUES {$modulosInsertar}");
+        
+        if (!empty($valoresModulos)) {
+            $sqlModulos = "INSERT INTO " . BD_ADMIN . ".instituciones_modulos (ipmod_institucion, ipmod_modulo) VALUES " . implode(',', $valoresModulos);
+            $resultadoModulos = mysqli_query($conexion, $sqlModulos);
+            
+            if (!$resultadoModulos) {
+                error_log("🔴 Error al insertar módulos: " . mysqli_error($conexion));
+                throw new Exception('Error al insertar módulos');
+            }
+            
+            $filasAfectadas = mysqli_affected_rows($conexion);
+            error_log("🔵 Módulos insertados exitosamente: " . $filasAfectadas);
+        }
+    } else {
+        error_log("🟡 ADVERTENCIA: No se encontraron módulos activos en la BD");
     }
     
     mysqli_query($conexion, "COMMIT");

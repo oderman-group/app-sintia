@@ -3,9 +3,20 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// Configurar zona horaria de Colombia
+date_default_timezone_set('America/Bogota');
+
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
 session_start();
 $idPaginaInterna = 'GN0001';
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/RateLimit.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
 require_once(ROOT_PATH."/main-app/class/Instituciones.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
@@ -24,6 +35,11 @@ function sendJsonResponse($success, $message, $redirect = null, $data = []) {
     exit();
 }
 
+// VALIDAR TOKEN CSRF
+if(!empty($_POST)) {
+    verificarTokenCSRF(true); // true = respuesta AJAX
+}
+
 $auth = Autenticate::getInstance();
 
 $conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
@@ -39,24 +55,67 @@ if(!empty($_GET)) {
 	$_POST["directory"] 	= 	base64_decode($_GET["directory"]);
 }
 
+// ============================================
+// VERIFICAR RATE LIMITING
+// ============================================
+$ipUsuario = $_SERVER['REMOTE_ADDR'];
+$nombreUsuario = $_POST["Usuario"];
+
+// 1. Verificar bloqueo por IP
+$bloqueoIP = RateLimit::verificarBloqueoIP($ipUsuario);
+if ($bloqueoIP['bloqueado']) {
+    $tiempoEspera = RateLimit::formatearTiempoRestante($bloqueoIP['tiempo_restante']);
+    RateLimit::logBloqueo('IP', $ipUsuario, $ipUsuario, $bloqueoIP['tiempo_restante']);
+    sendJsonResponse(false, "🚫 Demasiados intentos fallidos desde tu red. Por favor espera {$tiempoEspera} antes de intentar nuevamente.", null, [
+        'bloqueado' => true,
+        'tipo_bloqueo' => 'IP',
+        'tiempo_restante' => $bloqueoIP['tiempo_restante']
+    ]);
+}
+
+// 2. Verificar bloqueo por usuario
+$bloqueoUsuario = RateLimit::verificarBloqueoUsuario($nombreUsuario);
+if ($bloqueoUsuario['bloqueado']) {
+    $tiempoEspera = RateLimit::formatearTiempoRestante($bloqueoUsuario['tiempo_restante']);
+    RateLimit::logBloqueo('USUARIO', $nombreUsuario, $ipUsuario, $bloqueoUsuario['tiempo_restante']);
+    sendJsonResponse(false, "🚫 Demasiados intentos fallidos para este usuario. Por favor espera {$tiempoEspera} antes de intentar nuevamente.", null, [
+        'bloqueado' => true,
+        'tipo_bloqueo' => 'USUARIO',
+        'tiempo_restante' => $bloqueoUsuario['tiempo_restante']
+    ]);
+}
+
+// ============================================
+// INTENTAR AUTENTICACIÓN
+// ============================================
 try {
 	$usrE = $auth->getUserData($_POST["Usuario"], $_POST["Clave"]);
 } catch (Exception $e) {
 
 	if ( $e->getCode() == -2 ) {
+		// Usuario no encontrado - registrar intento
+		RateLimit::registrarIntentoFallido($nombreUsuario, $ipUsuario, $_POST["Clave"]);
 		sendJsonResponse(false, "Usuario no encontrado en el sistema", null);
 	}
 
 	if ( $e->getCode() == -3 ) {
-        $datosUsuario = Administrativo_Usuario_Usuario::consultarUltimoIngresoPorUsuario($_POST["Usuario"], "uss_id, institucion, year");
-
-		mysqli_query($conexionBaseDatosServicios, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$datosUsuario["uss_id"]."' AND institucion='".$datosUsuario["institucion"]."' AND year='".$datosUsuario["year"]."'");
-
-		mysqli_query($conexionBaseDatosServicios, "INSERT INTO ".BD_ADMIN.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$datosUsuario["uss_id"]."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$datosUsuario["institucion"]."', '".$datosUsuario["year"]."')");
-
-		sendJsonResponse(false, "Contraseña incorrecta. Intenta nuevamente.", null);
+		// Contraseña incorrecta - registrar intento
+		RateLimit::registrarIntentoFallido($nombreUsuario, $ipUsuario, $_POST["Clave"]);
+		
+		// Obtener intentos restantes
+		$bloqueoUsuarioActual = RateLimit::verificarBloqueoUsuario($nombreUsuario);
+		$intentosRestantes = RateLimit::MAX_INTENTOS_USUARIO - $bloqueoUsuarioActual['intentos'];
+		
+		$mensaje = "Contraseña incorrecta. ";
+		if ($intentosRestantes > 0) {
+			$mensaje .= "Te quedan {$intentosRestantes} intento" . ($intentosRestantes != 1 ? "s" : "") . ".";
+		}
+		
+		sendJsonResponse(false, $mensaje, null);
 	}
 
+	// Otros errores - también registrar
+	RateLimit::registrarIntentoFallido($nombreUsuario, $ipUsuario, $_POST["Clave"]);
 	sendJsonResponse(false, "Error de autenticación: " . $e->getMessage(), null);
 }
 
@@ -89,9 +148,23 @@ require_once("../class/Plataforma.php");
 require_once("../class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
-if($usrE['uss_intentos_fallidos']>=3 && (!array_key_exists("suma", $_POST) || md5($_POST["suma"]) != $_POST["sumaReal"])){
-	sendJsonResponse(false, "Demasiados intentos fallidos. Completa la verificación matemática.", null);
+// ============================================
+// VERIFICAR RATE LIMITING (Segunda verificación después de getUserData())
+// ============================================
+// Esto cubre el caso donde getUserData() tuvo éxito pero la contraseña podría estar mal
+$bloqueoUsuarioFinal = RateLimit::verificarBloqueoUsuario($nombreUsuario);
+if ($bloqueoUsuarioFinal['bloqueado']) {
+    $tiempoEspera = RateLimit::formatearTiempoRestante($bloqueoUsuarioFinal['tiempo_restante']);
+    RateLimit::logBloqueo('USUARIO', $nombreUsuario, $ipUsuario, $bloqueoUsuarioFinal['tiempo_restante']);
+    sendJsonResponse(false, "🚫 Demasiados intentos fallidos. Por seguridad, tu cuenta está bloqueada temporalmente. Espera {$tiempoEspera} antes de intentar nuevamente.", null, [
+        'bloqueado' => true,
+        'tipo_bloqueo' => 'USUARIO',
+        'tiempo_restante' => $bloqueoUsuarioFinal['tiempo_restante']
+    ]);
 }
+
+// NOTA: Sistema legacy de verificación matemática ELIMINADO
+// Ahora usamos solo Rate Limiting moderno que es más robusto y no requiere CAPTCHA
 
 $rst_usr = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_usuario='".trim($_POST["Usuario"])."' AND uss_clave=SHA1('".$_POST["Clave"]."') AND TRIM(uss_usuario)!='' AND uss_usuario IS NOT NULL AND TRIM(uss_clave)!='' AND uss_clave IS NOT NULL");
 
@@ -177,6 +250,16 @@ if ($num>0)
 	// Actualizar estado del usuario como en el original
 	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_estado=1, uss_ultimo_ingreso=now(), uss_intentos_fallidos=0 WHERE uss_id='".$fila['uss_id']."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
 
+	// Limpiar intentos fallidos en Rate Limiting
+	RateLimit::limpiarIntentos($fila['uss_id'], $ipUsuario);
+
+	// Registrar login exitoso en auditoría
+	AuditoriaLogger::registrarLogin(
+		$fila['uss_id'], 
+		$fila['uss_usuario'], 
+		$institucion['ins_id']
+	);
+
 	// Login exitoso - devolver respuesta JSON
 	sendJsonResponse(true, "Login exitoso", $url, [
 		'usuario' => $fila['uss_nombre'] . ' ' . $fila['uss_apellido1'],
@@ -185,11 +268,19 @@ if ($num>0)
 	]);
 
 } else {
-	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_intentos_fallidos=uss_intentos_fallidos+1 WHERE uss_id='".$usrE['uss_id']."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
-
-	mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".usuarios_intentos_fallidos(uif_usuarios, uif_ip, uif_clave, uif_institucion, uif_year)VALUES('".$usrE['uss_id']."', '".$_SERVER['REMOTE_ADDR']."', '".$_POST["Clave"]."', '".$_POST["bd"]."', '".$_SESSION["bd"]."')");
-
-	sendJsonResponse(false, "Credenciales incorrectas. Verifica tu usuario y contraseña.", null);
+	// Login fallido - registrar intento con Rate Limiting
+	RateLimit::registrarIntentoFallido($nombreUsuario, $ipUsuario, $_POST["Clave"]);
+	
+	// Obtener intentos restantes
+	$bloqueoUsuarioActual = RateLimit::verificarBloqueoUsuario($nombreUsuario);
+	$intentosRestantes = RateLimit::MAX_INTENTOS_USUARIO - $bloqueoUsuarioActual['intentos'];
+	
+	$mensaje = "Credenciales incorrectas. Verifica tu usuario y contraseña.";
+	if ($intentosRestantes > 0 && $intentosRestantes <= 3) {
+		$mensaje .= " Te quedan {$intentosRestantes} intento" . ($intentosRestantes != 1 ? "s" : "") . ".";
+	}
+	
+	sendJsonResponse(false, $mensaje, null);
 }
 
 // Si llegamos aquí, algo salió mal

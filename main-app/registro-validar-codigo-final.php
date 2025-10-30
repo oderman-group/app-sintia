@@ -4,6 +4,9 @@
  * Valida el código de verificación y activa la cuenta
  */
 
+// Configurar zona horaria de Colombia
+date_default_timezone_set('America/Bogota');
+
 header('Content-Type: application/json; charset=UTF-8');
 require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
@@ -220,6 +223,18 @@ try {
     
     // 6. Preparar datos para email y bienvenida
     // IMPORTANTE: Usar los datos del usuario recién activado, NO de otra consulta
+    
+    // Recuperar usos de SINTIA desde la sesión si existe
+    $usoSintiaTexto = 'No especificado';
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (isset($_SESSION['usosSintiaTemp'])) {
+        $usoSintiaTexto = $_SESSION['usosSintiaTemp'];
+        unset($_SESSION['usosSintiaTemp']); // Limpiar después de usar
+        error_log("🔵 Usos SINTIA recuperados de sesión: " . $usoSintiaTexto);
+    }
+    
     $dataEmail = [
         'institucion_id' => $datosUsuario['institucion'],
         'institucion_agno' => $datosUsuario['year'],
@@ -228,11 +243,12 @@ try {
         'usuario_email' => $datosUsuario['uss_email'],
         'usuario_nombre' => $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1'],
         'usuario_usuario' => $datosUsuario['uss_usuario'],
-        'usuario_clave' => '12345678'
+        'usuario_clave' => '12345678',
+        'uso_sintia' => $usoSintiaTexto
     ];
     
     // Guardar en sesión para la página de bienvenida
-    session_start();
+    // (La sesión ya está iniciada arriba)
     $_SESSION['datosRegistroCompletado'] = $dataEmail;
     
     // Log de datos que se envían
@@ -251,6 +267,7 @@ try {
     error_log("- usuario_email: " . $dataEmail['usuario_email']);
     error_log("- usuario_usuario: " . $dataEmail['usuario_usuario']);
     error_log("- institucion_nombre: " . $dataEmail['institucion_nombre']);
+    error_log("- uso_sintia: " . $dataEmail['uso_sintia']);
     error_log("========================================");
     
     $asunto = $datosUsuario['uss_nombre'] . ', Bienvenido a la Plataforma SINTIA';
@@ -272,6 +289,7 @@ try {
     error_log("- usuario_usuario: " . $dataEmail['usuario_usuario']);
     error_log("- institucion_nombre: " . $dataEmail['institucion_nombre']);
     error_log("- usuario_clave: " . $dataEmail['usuario_clave']);
+    error_log("- uso_sintia: " . $dataEmail['uso_sintia']);
     error_log("========================================");
     
     echo json_encode([

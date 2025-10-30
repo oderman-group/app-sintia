@@ -1,6 +1,7 @@
 <?php 
 include("../modelo/conexion.php");
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 $idPaginaInterna = 'GN0002';
 
@@ -17,6 +18,10 @@ try {
 
 	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_estado=0, uss_ultima_salida=now() 
 	WHERE uss_id='".$_SESSION["id"]."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
+
+	// Registrar logout en auditoría
+	$usuarioNombre = isset($_SESSION['datosUsuario']['uss_usuario']) ? $_SESSION['datosUsuario']['uss_usuario'] : $_SESSION["id"];
+	AuditoriaLogger::registrarLogout($_SESSION["id"], $usuarioNombre);
 
 	$urlRedirect = REDIRECT_ROUTE."?inst=".base64_encode($_SESSION["idInstitucion"])."&year=".base64_encode($_SESSION["bd"]);
 	$auth->cerrarSesion($urlRedirect);

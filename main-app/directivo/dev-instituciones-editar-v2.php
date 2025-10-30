@@ -663,7 +663,20 @@ input:checked + .toggle-slider:before {
                                 <h4 style="margin: 0; color: #667eea;">
                                     <i class="fas fa-info-circle"></i> Información de la Institución
                                 </h4>
-                                <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <a href="auto-login-dev.php?user=<?=base64_encode(1);?>&idInstitucion=<?=base64_encode($datosInstitucion['ins_id']);?>&bd=<?=base64_encode($datosInstitucion['ins_bd']);?>&yearDefault=<?=base64_encode($yearActual);?>" 
+                                       class="btn btn-sm" 
+                                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
+                                       title="Iniciar sesión automáticamente en esta institución">
+                                        <i class="fas fa-sign-in-alt"></i> Autologin
+                                    </a>
+                                    <button 
+                                       onclick="enviarCorreoBienvenida()" 
+                                       class="btn btn-sm" 
+                                       style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"
+                                       title="Enviar correo de bienvenida al contacto principal">
+                                        <i class="fas fa-envelope"></i> Enviar Bienvenida
+                                    </button>
                                     <a href="configuracion-sistema.php?year=<?=base64_encode($yearActual)?>&id=<?=base64_encode($datosInstitucion['ins_id'])?>" 
                                        class="btn btn-sm" 
                                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
@@ -932,6 +945,47 @@ function crearRegistrosConfiguracion() {
     .catch(error => {
         document.getElementById('loadingOverlay').classList.remove('active');
         alert('Error de conexión: ' + error);
+        console.error('Error:', error);
+    });
+}
+
+// Función para enviar correo de bienvenida
+function enviarCorreoBienvenida() {
+    if (!confirm('¿Deseas enviar el correo de bienvenida al contacto principal de esta institución?\n\n' + 
+                 'Institución ID: <?= $datosInstitucion['ins_id']; ?>\n' +
+                 'Año: <?= $yearActual; ?>')) {
+        return;
+    }
+    
+    const institucionId = <?= $datosInstitucion['ins_id']; ?>;
+    const year = '<?= $yearActual; ?>';
+    
+    // Mostrar loading usando la función existente
+    mostrarLoading(true);
+    
+    fetch('ajax-enviar-correo-bienvenida.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            institucionId: institucionId,
+            year: year
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        mostrarLoading(false);
+        
+        if (data.success) {
+            mostrarNotificacion(data.message, 'success');
+        } else {
+            mostrarNotificacion(data.message || 'Error al enviar el correo', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarLoading(false);
+        mostrarNotificacion('Error de conexión: ' + error, 'error');
         console.error('Error:', error);
     });
 }

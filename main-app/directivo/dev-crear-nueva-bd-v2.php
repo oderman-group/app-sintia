@@ -711,6 +711,25 @@ try{
                                             <small class="text-muted" id="yearInfo"></small>
                                         </div>
                                     </div>
+                                    
+                                    <div class="form-group-modern" style="margin-top: 30px;">
+                                        <div style="background: #f0f8ff; border-left: 4px solid #2196F3; padding: 20px; border-radius: 8px;">
+                                            <label style="display: flex; align-items: center; gap: 12px; margin: 0; cursor: pointer;">
+                                                <input type="checkbox" 
+                                                       id="enviarCorreoRenovacion" 
+                                                       name="enviarCorreoRenovacion" 
+                                                       value="1"
+                                                       style="width: 20px; height: 20px; cursor: pointer;">
+                                                <span style="font-weight: 600; color: #344767;">
+                                                    <i class="fa fa-envelope" style="margin-right: 8px; color: #2196F3;"></i>
+                                                    Enviar correo de confirmación de año renovado
+                                                </span>
+                                            </label>
+                                            <small class="text-muted" style="display: block; margin-top: 10px; margin-left: 32px;">
+                                                Se enviará un correo al contacto principal confirmando que el año académico ha sido renovado exitosamente
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -841,6 +860,45 @@ try{
                                                placeholder="Ej: 3001234567"
                                                autocomplete="off">
                                         <div class="validation-message"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group-modern">
+                                    <label>
+                                        Usuario de Acceso
+                                        <span class="required-asterisk">*</span>
+                                        <span class="tooltip-info" title="Usuario que usará para ingresar al sistema. Solo letras, números y guiones.">?</span>
+                                    </label>
+                                    <div class="input-icon-wrapper">
+                                        <input type="text" 
+                                               class="form-control-modern" 
+                                               id="usuarioAcceso" 
+                                               name="usuarioAcceso" 
+                                               placeholder="Ej: admin.institucion"
+                                               autocomplete="off"
+                                               pattern="[a-zA-Z0-9._-]+">
+                                        <span class="input-icon"></span>
+                                    </div>
+                                    <div class="validation-message"></div>
+                                    <small class="text-muted">Este usuario se usará para iniciar sesión en el sistema</small>
+                                </div>
+                                
+                                <div class="form-group-modern">
+                                    <div style="background: #f0f8ff; border-left: 4px solid #2196F3; padding: 20px; border-radius: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 12px; margin: 0; cursor: pointer;">
+                                            <input type="checkbox" 
+                                                   id="enviarCorreoBienvenida" 
+                                                   name="enviarCorreoBienvenida" 
+                                                   value="1"
+                                                   style="width: 20px; height: 20px; cursor: pointer;">
+                                            <span style="font-weight: 600; color: #344767;">
+                                                <i class="fa fa-envelope" style="margin-right: 8px; color: #2196F3;"></i>
+                                                Enviar correo de bienvenida con credenciales de acceso
+                                            </span>
+                                        </label>
+                                        <small class="text-muted" style="display: block; margin-top: 10px; margin-left: 32px;">
+                                            El usuario recibirá un correo con sus credenciales y un enlace para acceder al sistema
+                                        </small>
                                     </div>
                                 </div>
                             </div>

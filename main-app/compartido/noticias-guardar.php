@@ -5,6 +5,7 @@ $idPaginaInterna = 'CM0043';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
 require_once(ROOT_PATH."/main-app/compartido/socket.php");
 $usuariosClase = new UsuariosFunciones;
 $archivoSubido = new Archivos;
@@ -77,29 +78,66 @@ $contenidoPie = isset($_POST["contenidoPie"]) ? $_POST["contenidoPie"] : '';
 $videoUrl = !empty($video) ? $videoInput : ''; // Guardar la URL/ID original si hay video
 
 try{
-    mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie,not_notificar)
-    VALUES('" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "', '" . $_SESSION["id"] . "',now(), '" . $estado . "', '" . $destinatarios . "', '" . $imagen . "', '" . $archivo . "', '" . mysqli_real_escape_string($conexion,$keyw) . "', '" . mysqli_real_escape_string($conexion,$urlImagen) . "', '" . $video . "', '" . $_POST["categoriaGeneral"] . "', '" . mysqli_real_escape_string($conexion,$videoUrl) . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "','" . $global . "', '" . $video2 . "', '" . mysqli_real_escape_string($conexion,$contenidoPie) . "','".$notificar."')");
+    // Query segura con PDO prepared statement (patrón del proyecto)
+    $sql = "INSERT INTO ".$baseDatosServicios.".social_noticias(not_titulo, not_descripcion, not_usuario, not_fecha, not_estado, not_para, not_imagen, not_archivo, not_keywords, not_url_imagen, not_video, not_id_categoria_general, not_video_url, not_institucion, not_year, not_global, not_enlace_video2, not_descripcion_pie, not_notificar)
+    VALUES(?, ?, ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    $conexionPDO = Conexion::newConnection('PDO');
+    $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["titulo"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["contenido"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_SESSION["id"], PDO::PARAM_STR);
+    $stmt->bindParam(4, $estado, PDO::PARAM_INT);
+    $stmt->bindParam(5, $destinatarios, PDO::PARAM_STR);
+    $stmt->bindParam(6, $imagen, PDO::PARAM_STR);
+    $stmt->bindParam(7, $archivo, PDO::PARAM_STR);
+    $stmt->bindParam(8, $keyw, PDO::PARAM_STR);
+    $stmt->bindParam(9, $urlImagen, PDO::PARAM_STR);
+    $stmt->bindParam(10, $video, PDO::PARAM_STR);
+    $stmt->bindParam(11, $_POST["categoriaGeneral"], PDO::PARAM_STR);
+    $stmt->bindParam(12, $videoUrl, PDO::PARAM_STR);
+    $stmt->bindParam(13, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->bindParam(14, $_SESSION["bd"], PDO::PARAM_INT);
+    $stmt->bindParam(15, $global, PDO::PARAM_STR);
+    $stmt->bindParam(16, $video2, PDO::PARAM_STR);
+    $stmt->bindParam(17, $contenidoPie, PDO::PARAM_STR);
+    $stmt->bindParam(18, $notificar, PDO::PARAM_INT);
+    
+    $stmt->execute();
+    $idRegistro = $conexionPDO->lastInsertId();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
 
-$idRegistro = mysqli_insert_id($conexion);
+$idRegistro = isset($idRegistro) ? $idRegistro : $conexionPDO->lastInsertId();
+
 try{
-    mysqli_query($conexion, "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia='" . $idRegistro . "'");
+    // Query segura con PDO prepared statement
+    $sql = "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idRegistro, PDO::PARAM_INT);
+    $stmt->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
 
-if(!empty($_POST["cursos"])){
-    $cont = count($_POST["cursos"]);
-    $i = 0;
-    while ($i < $cont) {
-        try{
-            mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(notpc_noticia, notpc_curso, notpc_institucion, notpc_year)VALUES('" . $idRegistro . "','" . $_POST["cursos"][$i] . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "')");
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+if(!empty($_POST["cursos"]) && is_array($_POST["cursos"])){
+    try{
+        // Query segura con PDO prepared statement
+        $sql = "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(notpc_noticia, notpc_curso, notpc_institucion, notpc_year) VALUES(?, ?, ?, ?)";
+        $stmt = $conexionPDO->prepare($sql);
+        
+        foreach($_POST["cursos"] as $curso){
+            $stmt->bindParam(1, $idRegistro, PDO::PARAM_INT);
+            $stmt->bindParam(2, $curso, PDO::PARAM_STR);
+            $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
         }
-        $i++;
+    } catch (Exception $e) {
+        include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
 }
 
