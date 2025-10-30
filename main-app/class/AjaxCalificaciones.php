@@ -12,6 +12,7 @@ require_once(ROOT_PATH."/main-app/class/App/Academico/Actividad.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Carga.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Materia.php");
 require_once ROOT_PATH."/main-app/class/Modulos.php";
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 class AjaxCalificaciones {
 
@@ -140,6 +141,22 @@ class AjaxCalificaciones {
                 // Registrar que no se pudo enviar por falta de datos del acudiente
                 error_log("⚠️ No se pudo enviar notificación de nota baja para el estudiante {$data['codEst']}: acudiente sin correo electrónico");
             }
+        }
+
+        // Registrar auditoría de modificación de calificación
+        if (isset($_SESSION["id"])) {
+            AuditoriaLogger::registrarEdicion(
+                'CALIFICACIONES',
+                $codigo,
+                'Modificó calificación del estudiante: ' . strtoupper($data['nombreEst']) . ' - Nota: ' . ($nota ?? 'NULL'),
+                [
+                    'estudiante' => $data['nombreEst'],
+                    'id_estudiante' => $data['codEst'],
+                    'id_actividad' => $data['codNota'],
+                    'nota' => $nota,
+                    'docente' => $_SESSION["usuario"] ?? 'Sistema'
+                ]
+            );
         }
 
         $datosMensaje = [
@@ -287,6 +304,24 @@ class AjaxCalificaciones {
 
         $data['target'] = Calificaciones::TIPO_ACTUALIZAR_NOTA;
         Calificaciones::direccionarCalificacion($data);
+
+        // Registrar auditoría de recuperación de nota
+        if (isset($_SESSION["id"])) {
+            AuditoriaLogger::registrarEdicion(
+                'CALIFICACIONES',
+                $codigo,
+                'Registró recuperación para estudiante: ' . strtoupper($data['nombreEst']) . ' - Nota anterior: ' . ($notaAnterior ?? 'NULL') . ' - Nota nueva: ' . $data['nota'],
+                [
+                    'tipo' => 'recuperacion',
+                    'estudiante' => $data['nombreEst'],
+                    'id_estudiante' => $data['codEst'],
+                    'id_nota' => $data['codNota'],
+                    'nota_anterior' => $notaAnterior,
+                    'nota_nueva' => $data['nota'],
+                    'docente' => $_SESSION["usuario"] ?? 'Sistema'
+                ]
+            );
+        }
 
         $datosMensaje = [
             'success'    => true,

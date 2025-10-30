@@ -5,6 +5,7 @@ require_once ROOT_PATH."/main-app/class/Modulos.php";
 require_once(ROOT_PATH."/main-app/class/servicios/MediaTecnicaServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0192';
@@ -179,6 +180,22 @@ $idEstudiante = Estudiantes::insertarEstudiantes(
 	Estudiantes::CREAR_MATRICULA, 
 	$config['conf_id_institucion'], 
 	$_SESSION["bd"]
+);
+
+// Registrar auditoría de creación de estudiante
+AuditoriaLogger::registrarCreacion(
+	'ESTUDIANTES',
+	$idEstudiante,
+	'Creado estudiante: ' . $_POST["nombres"] . ' ' . $_POST["apellido1"] . ' (Doc: ' . $_POST["nDoc"] . ')',
+	[
+		'nombre_completo' => $_POST["nombres"] . ' ' . $_POST["apellido1"] . ' ' . $_POST["apellido2"],
+		'documento' => $_POST["nDoc"],
+		'tipo_documento' => $_POST["tipoD"],
+		'email' => $_POST["email"],
+		'grado' => $_POST["grado"],
+		'grupo' => $_POST["grupo"],
+		'numero_matricula' => $result_numMat
+	]
 );
 
 //Insertamos las matrículas Adicionales

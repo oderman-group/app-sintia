@@ -8,6 +8,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Ausencias.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0162';
@@ -22,6 +23,9 @@ $idE="";
 if(!empty($_GET["idE"])){ $idE=base64_decode($_GET["idE"]);}
 $idU="";
 if(!empty($_GET["idU"])){ $idU=base64_decode($_GET["idU"]);}
+
+// Obtener datos del estudiante ANTES de eliminar
+$datosEstudiante = Estudiantes::obtenerDatosEstudiante($idE);
 
 Evaluaciones::eliminarResultadosEstudiante($conexion, $config, $idE);
 
@@ -91,6 +95,25 @@ try{
     mysqli_query($conexion, "DELETE FROM ".$baseDatosServicios.".social_emails WHERE ema_de='" . $idU . "' OR ema_para='" . $idU . "'");
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
+}
+
+// Registrar auditoría de eliminación de estudiante
+if (!empty($datosEstudiante)) {
+	$nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($datosEstudiante);
+	AuditoriaLogger::registrarEliminacion(
+		'ESTUDIANTES',
+		$idE,
+		'Eliminado estudiante: ' . $nombreCompleto . ' (Doc: ' . $datosEstudiante['mat_documento'] . ')',
+		[
+			'nombre_completo' => $nombreCompleto,
+			'documento' => $datosEstudiante['mat_documento'],
+			'matricula' => $datosEstudiante['mat_matricula'],
+			'grado' => $datosEstudiante['gra_nombre'],
+			'grupo' => $datosEstudiante['gru_nombre'],
+			'email' => $datosEstudiante['uss_email'],
+			'id_usuario' => $idU
+		]
+	);
 }
 
 include("../compartido/guardar-historial-acciones.php");
