@@ -173,7 +173,9 @@ $fila = mysqli_fetch_array($rst_usr, MYSQLI_BOTH);
 if ($num>0)
 {	
 	if($fila['uss_bloqueado'] == 1){
-		sendJsonResponse(false, "Tu cuenta ha sido bloqueada. Contacta al administrador.", null);
+		// Redirigir al formulario de solicitud de desbloqueo
+		$urlDesbloqueo = REDIRECT_ROUTE . "/solicitud-desbloqueo.php?inst=" . base64_encode($_POST["bd"]) . "&idU=" . base64_encode($fila['uss_id']);
+		sendJsonResponse(false, "Tu cuenta ha sido bloqueada. Serás redirigido al formulario de solicitud de desbloqueo.", $urlDesbloqueo);
 	}
 
 	$URLdefault = null;

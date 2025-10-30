@@ -36,11 +36,15 @@ $mensajesNumero = mysqli_num_rows($mensajesConsulta);
                             </ul>
 
 							<script type="text/javascript">
-								// Actualizar badge en Aplicaciones de Sintia siempre (mostrar número o ocultar)
+								// Actualizar badge INTERNO en Aplicaciones de Sintia (con número)
 								<?php if($mensajesNumero>0){?>
 									$('#mensajes_numero_app').empty().html(<?=$mensajesNumero;?>).show();
+									// Actualizar badge EXTERNO en el ícono principal (solo dot, sin número)
+									$('#badge_apps_mensajes').css('display', 'block');
 								<?php } else {?>
 									$('#mensajes_numero_app').empty().hide();
+									// Ocultar badge externo si no hay mensajes
+									$('#badge_apps_mensajes').hide();
 								<?php }?>
 							</script>
 							

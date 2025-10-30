@@ -10,7 +10,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         position: fixed;
         bottom: 40px;
         right: 40px; /* Posicionado en la esquina inferior derecha */
-        z-index: 999;
+        z-index: 1050;
         font-family: 'Satoshi', 'Poppins', sans-serif;
     }
 
@@ -307,7 +307,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
-        z-index: 998;
+        z-index: 1049;
         backdrop-filter: blur(2px);
     }
 

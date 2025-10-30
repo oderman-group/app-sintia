@@ -4,8 +4,13 @@ require_once("../../config-general/config.php");
 require_once("../../config-general/consulta-usuario-actual.php");
 require_once("../compartido/sintia-funciones.php");
 require_once("../class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 
 Modulos::validarAccesoDirectoPaginas();
+
+// Verificar token CSRF
+Csrf::verificar();
 $idPaginaInterna = 'CM0001';
 include("../compartido/historial-acciones-guardar.php");
 
@@ -27,9 +32,16 @@ if(!validarClave($_POST["claveNueva"])){
 }
 
 UsuariosPadre::cambiarClave($config, $_POST["claveNueva"]);
-$_SESSION["datosUsuario"] = UsuariosPadre::sesionUsuario($_SESSION['id']);
 
 include("../compartido/guardar-historial-acciones.php");
+
+// Registrar auditoría de cambio de contraseña
+AuditoriaLogger::registrarEdicion(
+	'SEGURIDAD',
+	$_SESSION["id"],
+	'Usuario cambió su propia contraseña',
+	['accion' => 'cambio_clave_propia', 'usuario' => $_SESSION["usuario"]]
+);
 
 echo '<script type="text/javascript">window.location.href="' .$destinos. 'cambiar-clave.php?success=SC_DT_11";</script>';
 exit();

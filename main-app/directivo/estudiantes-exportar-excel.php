@@ -12,6 +12,7 @@ require_once("../class/servicios/GradoServicios.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/librerias/ExcelPhp/vendor/autoload.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -280,6 +281,23 @@ if ($ultimaFila > 1) {
 
 // Guardar y enviar al navegador
 $nombreArchivo = 'Estudiantes_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+// Registrar auditoría de exportación de datos
+$cantidadEstudiantes = $ultimaFila - 1; // Restamos la fila del encabezado
+AuditoriaLogger::registrarExportacion(
+    'ESTUDIANTES',
+    $cantidadEstudiantes,
+    [
+        'archivo' => $nombreArchivo,
+        'campos_exportados' => array_keys($camposAEscribir),
+        'filtros' => [
+            'busqueda' => $_GET['busqueda'] ?? null,
+            'cursos' => $_GET['cursos'] ?? null,
+            'grupos' => $_GET['grupos'] ?? null,
+            'estados' => $_GET['estados'] ?? null
+        ]
+    ]
+);
 
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition: attachment;filename="' . $nombreArchivo . '"');

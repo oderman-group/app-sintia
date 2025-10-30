@@ -123,9 +123,22 @@ function deseaRegresar(dato){
                         }
                          document.getElementById("overlay").style.display = "none"
                     }else{
-                        fetch(varHeref, {
-                            method: method
-                        })
+                        // Agregar token CSRF según el método
+                        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                        let urlFinal = varHeref;
+                        let fetchOptions = { method: method };
+                        
+                        if (method === 'GET') {
+                            const separator = urlFinal.includes('?') ? '&' : '?';
+                            urlFinal = urlFinal + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                        } else {
+                            // Para POST, agregar en el body
+                            const formData = new FormData();
+                            formData.append('csrf_token', csrfToken);
+                            fetchOptions.body = formData;
+                        }
+                        
+                        fetch(urlFinal, fetchOptions)
                         .then(response => response.text()) // Convertir la respuesta a texto
                         .then(data => {
                             if (idRegistroTabla != null) {
@@ -152,7 +165,11 @@ function deseaRegresar(dato){
                     }
                     
                 } else {
-                    window.location.href=varHeref;
+                    // Agregar token CSRF a la URL para protección
+                    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                    const separator = varHeref.includes('?') ? '&' : '?';
+                    const urlWithToken = varHeref + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                    window.location.href=urlWithToken;
                 }
             }
 
@@ -303,7 +320,12 @@ function deseaEliminar(dato) {
                     }
                 }
 
-                axios.get(url).then(function(response) {
+                // Agregar token CSRF a la URL para protección
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                const separator = url.includes('?') ? '&' : '?';
+                const urlWithToken = url + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                
+                axios.get(urlWithToken).then(function(response) {
                     if (typeof varObjet !== "undefined") {
                         // handle success
                         if (varObjet.tipo === 1) {

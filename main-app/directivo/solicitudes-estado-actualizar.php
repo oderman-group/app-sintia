@@ -53,7 +53,7 @@ if($_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA || $_
         'motivo'           => $_GET["motivo"]
     ];
     $asunto = 'Solicitud de desbloqueo ' . $estados[$_GET["estado"]];
-    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-solicitud-desbloqueo.php';
+    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-respuesta-solicitud-desbloqueo.php';
 
     EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute,null,null);
 }

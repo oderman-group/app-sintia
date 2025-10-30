@@ -21,6 +21,7 @@
         </div>
         <div class="card-body " id="bar-parent6">
             <form action="../compartido/clave-actualizar.php" method="post" enctype="multipart/form-data">
+                <?php echo Csrf::campoHTML(); ?>
 
                 <div class="form-group row">
                     <label class="col-sm-2 control-label">Contraseña actual</label>

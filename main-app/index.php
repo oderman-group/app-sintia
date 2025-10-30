@@ -110,6 +110,20 @@ if(!isset($_GET['nodb'])) {
         /* Fondo blanco limpio para el lado izquierdo */
         .login-container {
             background: var(--sintia-primary-bg);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        
+        .vertical-center {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: 3rem;
         }
         
         /* Mejorar el formulario de login */
@@ -256,6 +270,7 @@ if(!isset($_GET['nodb'])) {
             padding: 2.5rem;
             border: 1px solid rgba(65, 196, 196, 0.1);
             backdrop-filter: blur(10px);
+            margin: 2rem auto;
         }
         
         .login-header {
@@ -792,6 +807,14 @@ if(!isset($_GET['nodb'])) {
                             // Error en el login
                             setButtonState('error', 'Error de acceso');
                             showMessage(data.message || 'Credenciales incorrectas', 'error');
+                            
+                            // Si hay URL de redirección (ej: formulario desbloqueo), redirigir
+                            if (data.redirect) {
+                                setTimeout(() => {
+                                    window.location.href = data.redirect;
+                                }, 2000);
+                                return;
+                            }
                             
                             // Restaurar botón después de 3 segundos
                             setTimeout(() => {

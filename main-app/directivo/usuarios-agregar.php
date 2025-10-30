@@ -157,6 +157,7 @@ $(document).ready(function() {
 
 
                                 <form name="formularioGuardar" id="myForm" action="usuarios-guardar.php" method="post">
+                                <?php echo Csrf::campoHTML(); ?>
                                 
                                 <h4>Credenciales de acceso a la plataforma</h4>
                                 <div class="form-group row">

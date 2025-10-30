@@ -9,6 +9,15 @@ WHERE ins_id='".$_SESSION["idInstitucion"]."' AND ins_enviroment='".ENVIROMENT."
 
 $institucion = mysqli_fetch_array($institucionConsulta, MYSQLI_BOTH);
 $institucionNombre = $institucion['ins_siglas'];
+
+// Contar mensajes sin leer para badge
+$mensajesNoLeidosConsulta = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".$baseDatosServicios.".social_emails 
+WHERE ema_para='".$_SESSION["id"]."' AND ema_visto=0 AND ema_institucion={$_SESSION["idInstitucion"]} AND ema_year={$_SESSION["bd"]}");
+$mensajesNoLeidos = 0;
+if ($mensajesNoLeidosConsulta) {
+    $resultado = mysqli_fetch_array($mensajesNoLeidosConsulta, MYSQLI_BOTH);
+    $mensajesNoLeidos = (int)$resultado['total'];
+}
 ?>
 
 
@@ -212,9 +221,10 @@ $institucionNombre = $institucion['ins_siglas'];
                         <!-- end language menu -->
 
                         <!-- start apps dropdown -->
-                        <li class="dropdown dropdown-extended dropdown-apps">
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                        <li class="dropdown dropdown-extended dropdown-apps" style="position: relative;">
+                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true" style="position: relative;">
                                 <i class="fa fa-th" data-toggle="tooltip" data-placement="top" title="Aplicaciones de Sintia"></i>
+                                <span id="badge_apps_mensajes" class="notification-dot" style="position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; display: <?php echo ($mensajesNoLeidos > 0) ? 'block' : 'none'; ?>; box-shadow: 0 0 0 0 rgba(231, 76, 60, 1);"></span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-default apps-grid" style="width: 400px; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); background: #fff; border: 1px solid #e0e0e0;">
                                 <!-- Header del selector -->
@@ -241,7 +251,9 @@ $institucionNombre = $institucion['ins_siglas'];
                                             <i class="fa fa-envelope-o"></i>
                                         </div>
                                         <span class="app-name">Mensajes</span>
-                                        <span id="mensajes_numero_app" class="app-badge"></span>
+                                        <span id="mensajes_numero_app" class="app-badge" <?php echo ($mensajesNoLeidos > 0) ? 'style="display: flex;"' : 'style="display: none;"'; ?>>
+                                            <?php echo ($mensajesNoLeidos > 0) ? $mensajesNoLeidos : ''; ?>
+                                        </span>
                                     </div>
                                     <?php }?>
                                     
@@ -500,6 +512,23 @@ $institucionNombre = $institucion['ins_siglas'];
         
         <!-- CSS para el selector de aplicaciones estilo Google -->
         <style>
+        /* Animación de latido para el notification dot */
+        @keyframes pulse-dot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
+        }
+        
+        .notification-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        
         .apps-grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
