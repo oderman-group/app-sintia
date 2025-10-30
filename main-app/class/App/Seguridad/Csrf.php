@@ -76,12 +76,15 @@ class Csrf {
                     'code' => 'CSRF_INVALID'
                 ]);
             } else {
-                session_destroy();
+                // Solo destruir sesión si existe una activa
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
                 echo '<html><head><meta charset="UTF-8"></head><body>
                     <div style="text-align: center; padding: 50px; font-family: Arial;">
                         <h2>⚠️ Token de Seguridad Inválido</h2>
                         <p>Por razones de seguridad, esta acción no pudo ser completada.</p>
-                        <p>Por favor, <a href="'.($_SERVER['HTTP_HOST'] ?? '').'/index.php">inicia sesión nuevamente</a>.</p>
+                        <p>Por favor, <a href="'.REDIRECT_ROUTE.'/index.php">regresa al inicio</a>.</p>
                     </div>
                     </body></html>';
             }
@@ -132,4 +135,5 @@ if (!function_exists('obtenerTokenCSRF')) {
         return Csrf::obtenerToken();
     }
 }
+
 
