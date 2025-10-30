@@ -11,6 +11,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
+// Verificar token CSRF (soporta GET)
+Csrf::verificar();
+
 $idUsuario = base64_decode($_GET["id"]);
 
 // Obtener datos del usuario ANTES de eliminar

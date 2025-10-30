@@ -5,6 +5,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.
 require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
 require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH . "/main-app/class/App/Seguridad/AuditoriaLogger.php");
+require_once(ROOT_PATH . "/main-app/class/App/Seguridad/Csrf.php");
+
+// Verificar token CSRF
+Csrf::verificar();
 
 $conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
 

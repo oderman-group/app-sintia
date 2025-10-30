@@ -5,8 +5,12 @@ require_once("../../config-general/consulta-usuario-actual.php");
 require_once("../compartido/sintia-funciones.php");
 require_once("../class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 
 Modulos::validarAccesoDirectoPaginas();
+
+// Verificar token CSRF
+Csrf::verificar();
 $idPaginaInterna = 'CM0001';
 include("../compartido/historial-acciones-guardar.php");
 

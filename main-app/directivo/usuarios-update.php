@@ -16,6 +16,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
+// Verificar token CSRF
+Csrf::verificar();
+
 if (!empty($_FILES['fotoUss']['name'])) {
 	$archivoSubido->validarArchivo($_FILES['fotoUss']['size'], $_FILES['fotoUss']['name']);
 	$explode = explode(".", $_FILES['fotoUss']['name']);
