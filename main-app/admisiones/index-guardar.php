@@ -81,7 +81,7 @@ if ($newId > 0) {
     //Guardar información en SINTIA COLEGIOS
 
     //Estudiante
-    $estuQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_permiso1, uss_foto, uss_portada, uss_idioma, uss_tema, uss_tipo_documento, uss_apellido1, institucion, year, uss_documento, uss_nombre2, uss_apellido2)VALUES(:codigo, :ussDocumento, SHA1('12345678'), 4, :ussNombres, 0, 0, 'default.png', 'default.png', 1, 'green', :ussTipoDocumento, :ussApellido1, :idInstitucion, :year, :ussDNI, :nombre2, :apellido2)";
+    $estuQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_permiso1, uss_foto, uss_portada, uss_idioma, uss_tema, uss_tipo_documento, uss_apellido1, institucion, year, uss_documento, uss_nombre2, uss_apellido2, uss_tema_sidebar, uss_tema_header, uss_tema_logo)VALUES(:codigo, :ussDocumento, SHA1('12345678'), 4, :ussNombres, 0, 0, 'default.png', 'default.png', 1, 'green', :ussTipoDocumento, :ussApellido1, :idInstitucion, :year, :ussDNI, :nombre2, :apellido2, 'white-sidebar-color', 'header-white', 'logo-white')";
 
     $estuId = Utilidades::generateCode("USS");
     $estu   = $pdoI->prepare($estuQuery);
@@ -99,7 +99,7 @@ if ($newId > 0) {
     $estu->execute();
 
     //Acudiente
-    $acudienteQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_email, uss_celular, institucion, year, uss_documento, uss_nombre2, uss_apellido1, uss_apellido2, uss_tipo_documento)VALUES(:codigo, :usuario, SHA1('12345678'), 3, :nombre, :email, :celular, :idInstitucion, :year, :ussDNI, :nombre2, :apellido1, :apellido2, :ussTipoDocumento)";
+    $acudienteQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_email, uss_celular, institucion, year, uss_documento, uss_nombre2, uss_apellido1, uss_apellido2, uss_tipo_documento, uss_idioma, uss_tema_sidebar, uss_tema_header, uss_tema_logo)VALUES(:codigo, :usuario, SHA1('12345678'), 3, :nombre, :email, :celular, :idInstitucion, :year, :ussDNI, :nombre2, :apellido1, :apellido2, :ussTipoDocumento, 1, 'white-sidebar-color', 'header-white', 'logo-white')";
 
     $acuId     = Utilidades::generateCode("USS");
     $acudiente = $pdoI->prepare($acudienteQuery);
