@@ -39,10 +39,32 @@ if(empty($rB['bol_id'])){
 
 
 	if($_POST["nota"]>$config[5]){
-		$consultaUsuarioResponsable=mysqli_query($conexion, "SELECT * FROM ".BD_GENERAL.".usuarios_por_estudiantes WHERE upe_id_estudiante='".$_POST["codEst"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		$usuarioResponsable = mysqli_fetch_array($consultaUsuarioResponsable, MYSQLI_BOTH);
-		if($usuarioResponsable['upe_id_usuario']=="") $usuarioResponsable['upe_id_usuario']=0;
-		mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".general_alertas(alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_vista, alr_categoria, alr_importancia, alr_institucion, alr_year)VALUES('Recuperación de periodo','El estudiante ".$_POST["codEst"]." ha obtenido una nota de recuperacion de ".$_POST["nota"]."',1,'".$usuarioResponsable['upe_id_usuario']."',now(),0,1,2,'" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "')");
+		// Migrado a PDO - Consulta preparada
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		
+		$sql = "SELECT * FROM ".BD_GENERAL.".usuarios_por_estudiantes WHERE upe_id_estudiante=? AND institucion=? AND year=?";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $_POST["codEst"], PDO::PARAM_STR);
+		$stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmt->execute();
+		$usuarioResponsable = $stmt->fetch(PDO::FETCH_ASSOC);
+		
+		if(empty($usuarioResponsable['upe_id_usuario'])) $usuarioResponsable['upe_id_usuario']=0;
+		
+		// Inserción preparada de alerta
+		$sqlInsert = "INSERT INTO ".$baseDatosServicios.".general_alertas(alr_nombre, alr_descripcion, alr_tipo, alr_usuario, alr_fecha_envio, alr_vista, alr_categoria, alr_importancia, alr_institucion, alr_year)
+		              VALUES(?, ?, 1, ?, now(), 0, 1, 2, ?, ?)";
+		$stmtInsert = $conexionPDO->prepare($sqlInsert);
+		$nombreAlerta = 'Recuperación de periodo';
+		$descripcion = 'El estudiante '.$_POST["codEst"].' ha obtenido una nota de recuperacion de '.$_POST["nota"];
+		$stmtInsert->bindParam(1, $nombreAlerta, PDO::PARAM_STR);
+		$stmtInsert->bindParam(2, $descripcion, PDO::PARAM_STR);
+		$stmtInsert->bindParam(3, $usuarioResponsable['upe_id_usuario'], PDO::PARAM_STR);
+		$stmtInsert->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmtInsert->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmtInsert->execute();
 		
 		$estudiante = Estudiantes::obtenerDatosEstudiante($_POST["codEst"]);
 		$nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($estudiante);

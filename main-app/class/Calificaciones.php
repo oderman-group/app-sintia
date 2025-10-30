@@ -993,6 +993,8 @@ class Calificaciones {
 
         if ($data['target'] == self::TIPO_GUARDAR_RECUPERACION_PERIODO) {
             if (
+                !empty($data['datosCargaActual']) &&
+                isset($data['datosCargaActual']['car_periodo']) &&
                 $data['periodo'] >= $data['datosCargaActual']['car_periodo'] && 
                 $_SESSION["datosUsuario"]['uss_tipo'] != TIPO_DIRECTIVO && 
                 $_SESSION["datosUsuario"]['uss_tipo'] != TIPO_DEV
@@ -1008,7 +1010,12 @@ class Calificaciones {
         }
 
         if ($data['target'] == self::TIPO_GUARDAR_NIVELACION_CARGA) {
-            if ($data['datosCargaActual']['car_periodo'] <= $data['datosCargaActual']['gra_periodos']) {
+            if (
+                !empty($data['datosCargaActual']) &&
+                isset($data['datosCargaActual']['car_periodo']) &&
+                isset($data['datosCargaActual']['gra_periodos']) &&
+                $data['datosCargaActual']['car_periodo'] <= $data['datosCargaActual']['gra_periodos']
+            ) {
                 return [
                     'success'   => false,
                     "heading"   => "El periodo escolar aún no termina",

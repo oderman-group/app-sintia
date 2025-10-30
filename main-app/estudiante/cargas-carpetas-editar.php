@@ -5,9 +5,17 @@
 <?php include("verificar-carga.php");?>
 <?php include("../compartido/head.php");?>
 <?php
+// Migrado a PDO - Consulta preparada
 $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
-$datosConsulta = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_folders WHERE fold_id='".$idR."' AND fold_categoria=2"), MYSQLI_BOTH);
+
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+$sql = "SELECT * FROM ".$baseDatosServicios.".general_folders WHERE fold_id=? AND fold_categoria=2";
+$stmt = $conexionPDO->prepare($sql);
+$stmt->bindParam(1, $idR, PDO::PARAM_STR);
+$stmt->execute();
+$datosConsulta = $stmt->fetch(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -49,8 +57,12 @@ $datosConsulta = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$ba
 									$var = 1;
 									$i=0;
 									$vectorDatos = array();
+									// Migrado a PDO - Consulta preparada en bucle
+									$sqlFolder = $conexionPDO->prepare("SELECT fold_id, fold_padre FROM ".$baseDatosServicios.".general_folders WHERE fold_id=? AND fold_estado=1");
 									while($var==1){
-										$carpetaActual = mysqli_fetch_array(mysqli_query($conexion, "SELECT fold_id, fold_padre FROM ".$baseDatosServicios.".general_folders WHERE fold_id='".$idFolderActual."' AND fold_estado=1"), MYSQLI_BOTH);
+										$sqlFolder->bindParam(1, $idFolderActual, PDO::PARAM_STR);
+										$sqlFolder->execute();
+										$carpetaActual = $sqlFolder->fetch(PDO::FETCH_ASSOC);
 										$vectorDatos[$i] = $carpetaActual['fold_id'];
 										if(!empty($carpetaActual['fold_padre']) and $carpetaActual['fold_padre']!='0'){
 											$idFolderActual = $carpetaActual['fold_padre'];

@@ -17,8 +17,22 @@ if (!empty($_GET["idIns"])) {
 }
 
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "INSERT INTO " . $baseDatosServicios . ".publicidad_estadisticas(pest_publicidad, pest_institucion, pest_usuario, pest_pagina, pest_ubicacion, pest_fecha, pest_ip, pest_accion) VALUES('" . $_GET["idPub"] . "', '" . $idInst . "', '" . $usuarioActivo . "', '" . $_GET["idPag"] . "', '" . $_GET["idUb"] . "', now(), '" . $_SERVER["REMOTE_ADDR"] . "', 2)");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $sql = "INSERT INTO " . $baseDatosServicios . ".publicidad_estadisticas(
+        pest_publicidad, pest_institucion, pest_usuario, pest_pagina, pest_ubicacion, 
+        pest_fecha, pest_ip, pest_accion
+    ) VALUES (?, ?, ?, ?, ?, now(), ?, 2)";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_GET["idPub"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $idInst, PDO::PARAM_INT);
+    $stmt->bindParam(3, $usuarioActivo, PDO::PARAM_STR);
+    $stmt->bindParam(4, $_GET["idPag"], PDO::PARAM_STR);
+    $stmt->bindParam(5, $_GET["idUb"], PDO::PARAM_STR);
+    $stmt->bindParam(6, $_SERVER["REMOTE_ADDR"], PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
 	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
