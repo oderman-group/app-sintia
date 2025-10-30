@@ -230,58 +230,64 @@ $versionCache = time();
             display: block;
         }
 
-        .modulo-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 1.25rem;
+        .uso-card {
+            border: 3px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 2rem;
             cursor: pointer;
             transition: all 0.3s ease;
             background: white;
             height: 100%;
             display: flex;
             flex-direction: column;
-        }
-        
-        .modulo-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            border-color: #667eea;
-        }
-        
-        .modulo-card.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .modulo-header-registro {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            text-align: center;
         }
         
-        .modulo-icon-registro {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+        .uso-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+        
+        .uso-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .uso-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
         }
         
-        .modulo-info-registro h5 {
-            font-size: 1rem;
-            font-weight: 600;
+        .uso-card.selected .uso-icon {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .uso-title {
+            font-size: 1.25rem;
+            font-weight: 700;
             color: #1f2937;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
         
-        .modulo-descripcion-registro {
-            font-size: 0.875rem;
+        .uso-description {
+            font-size: 0.95rem;
             color: #6b7280;
             line-height: 1.4;
             margin-top: auto;
@@ -622,53 +628,86 @@ $versionCache = time();
                             <div class="divider my-4"></div>
                             
                             <h4 class="mt-4 mb-3 text-center">
-                                <i class="bi bi-puzzle me-2"></i>
-                                ¿Qué módulos te interesan?
+                                <i class="bi bi-star me-2"></i>
+                                ¿Para qué usarías SINTIA?
                             </h4>
                             <p class="text-center text-muted mb-4">
-                                Selecciona los módulos que más te interesen (puedes seleccionar varios)
+                                Selecciona todas las opciones que apliquen (puedes elegir varias)
                             </p>
                             
-                            <div id="modulosSeleccionadosInfo" class="alert alert-info mb-4" style="display: none;">
+                            <div id="usosSeleccionadosInfo" class="alert alert-info mb-4" style="display: none;">
                                 <i class="bi bi-check-circle me-2"></i>
-                                Has seleccionado <strong><span id="modulosCounter">0</span></strong> módulo(s)
+                                Has seleccionado <strong><span id="usosCounter">0</span></strong> opción(es)
                             </div>
                             
-                            <div class="row g-3" id="modulosGrid">
-                                <?php
-                                    try {
-                                        $consultaModulos = mysqli_query($conexion, "SELECT * FROM ".BD_ADMIN.".modulos WHERE mod_estado=1 ORDER BY mod_nombre ASC");
-                                        while ($modulo = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {
-                                ?>
-                                    <div class="col-md-4 col-sm-6">
-                                        <div class="modulo-card" data-modulo-id="<?= $modulo['mod_id']; ?>">
-                                            <div class="modulo-header-registro">
-                                                <div class="modulo-icon-registro">
-                                                    <i class="bi bi-puzzle-fill"></i>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" 
-                                                           type="checkbox" 
-                                                           name="modulos[]" 
-                                                           value="<?= $modulo['mod_id']; ?>" 
-                                                           id="modulo<?= $modulo['mod_id']; ?>">
-                                                </div>
-                                            </div>
-                                            <div class="modulo-info-registro">
-                                                <h5><?= $modulo['mod_nombre']; ?></h5>
-                                                <span class="badge bg-secondary">ID: <?= $modulo['mod_id']; ?></span>
-                                            </div>
-                                            <div class="modulo-descripcion-registro">
-                                                <?= !empty($modulo['mod_descripcion']) ? $modulo['mod_descripcion'] : 'Módulo del sistema SINTIA'; ?>
-                                            </div>
+                            <div class="row g-3" id="usosGrid">
+                                <div class="col-md-6">
+                                    <div class="uso-card" data-uso="academico" onclick="toggleUso('academico')">
+                                        <div class="uso-icon">
+                                            <i class="bi bi-book-fill"></i>
                                         </div>
+                                        <h5 class="uso-title">Gestión Académica</h5>
+                                        <p class="uso-description">
+                                            Calificaciones, boletines, reportes académicos y seguimiento de estudiantes
+                                        </p>
+                                        <input type="checkbox" 
+                                               name="usosSintia[]" 
+                                               value="academico" 
+                                               id="uso_academico"
+                                               style="display: none;">
                                     </div>
-                                <?php 
-                                        }
-                                    } catch (Exception $e) {
-                                        echo '<div class="col-12"><div class="alert alert-warning">No se pudieron cargar los módulos</div></div>';
-                                    }
-                                ?>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="uso-card" data-uso="administrativo" onclick="toggleUso('administrativo')">
+                                        <div class="uso-icon">
+                                            <i class="bi bi-building-fill"></i>
+                                        </div>
+                                        <h5 class="uso-title">Gestión Administrativa</h5>
+                                        <p class="uso-description">
+                                            Matrículas, finanzas, documentos y procesos administrativos
+                                        </p>
+                                        <input type="checkbox" 
+                                               name="usosSintia[]" 
+                                               value="administrativo" 
+                                               id="uso_administrativo"
+                                               style="display: none;">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="uso-card" data-uso="comunicacion" onclick="toggleUso('comunicacion')">
+                                        <div class="uso-icon">
+                                            <i class="bi bi-chat-dots-fill"></i>
+                                        </div>
+                                        <h5 class="uso-title">Comunicación</h5>
+                                        <p class="uso-description">
+                                            Comunicados, mensajería, notificaciones y conexión con la comunidad
+                                        </p>
+                                        <input type="checkbox" 
+                                               name="usosSintia[]" 
+                                               value="comunicacion" 
+                                               id="uso_comunicacion"
+                                               style="display: none;">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="uso-card" data-uso="integral" onclick="toggleUso('integral')">
+                                        <div class="uso-icon">
+                                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                                        </div>
+                                        <h5 class="uso-title">Gestión Integral</h5>
+                                        <p class="uso-description">
+                                            Todas las áreas: académico, administrativo, financiero y comunicación
+                                        </p>
+                                        <input type="checkbox" 
+                                               name="usosSintia[]" 
+                                               value="integral" 
+                                               id="uso_integral"
+                                               style="display: none;">
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="d-flex gap-2 mt-4">
@@ -854,15 +893,32 @@ $versionCache = time();
             reenviarCodigoFinal();
         });
         
-        // SELECCIÓN DE MÓDULOS
-        $('.modulo-card').click(function(e) {
-            if (e.target.type !== 'checkbox') {
-                const checkbox = $(this).find('input[type="checkbox"]');
-                checkbox.prop('checked', !checkbox.prop('checked'));
+        // FUNCIÓN PARA TOGGLE MÚLTIPLE DE USOS DE SINTIA
+        window.toggleUso = function(uso) {
+            const $card = $(`.uso-card[data-uso="${uso}"]`);
+            const $checkbox = $card.find('input[type="checkbox"]');
+            
+            // Toggle checkbox
+            $checkbox.prop('checked', !$checkbox.prop('checked'));
+            
+            // Toggle visual de la card
+            $card.toggleClass('selected', $checkbox.prop('checked'));
+            
+            // Actualizar contador
+            actualizarContadorUsos();
+        };
+        
+        // FUNCIÓN PARA ACTUALIZAR CONTADOR DE USOS
+        function actualizarContadorUsos() {
+            const total = $('input[name="usosSintia[]"]:checked').length;
+            $('#usosCounter').text(total);
+            
+            if (total > 0) {
+                $('#usosSeleccionadosInfo').show();
+            } else {
+                $('#usosSeleccionadosInfo').hide();
             }
-            $(this).toggleClass('selected', $(this).find('input[type="checkbox"]').is(':checked'));
-            actualizarContadorModulos();
-        });
+        }
         
         // INPUTS DE CÓDIGO
         $('.code-input').on('input', function() {
@@ -966,9 +1022,9 @@ $versionCache = time();
         formData.append('ciudad', $('#ciudad').val().trim());
         formData.append('cargo', $('#cargo').val().trim());
         
-        // Agregar módulos seleccionados
-        $('input[name="modulos[]"]:checked').each(function() {
-            formData.append('modulos[]', $(this).val());
+        // Agregar TODOS los usos de SINTIA seleccionados (múltiples)
+        $('input[name="usosSintia[]"]:checked').each(function() {
+            formData.append('usosSintia[]', $(this).val());
         });
         
         // Mostrar mensaje de carga
@@ -1248,29 +1304,18 @@ $versionCache = time();
             $('#cargo').removeClass('is-invalid').addClass('is-valid');
         }
         
-        // Validar módulos seleccionados
-        const modulosSeleccionados = $('input[name="modulos[]"]:checked').length;
-        if (modulosSeleccionados === 0) {
-            alert('Por favor selecciona al menos un módulo de tu interés.');
+        // Validar usos seleccionados
+        const usosSeleccionados = $('input[name="usosSintia[]"]:checked').length;
+        if (usosSeleccionados === 0) {
+            alert('Por favor selecciona al menos una opción de cómo usarías SINTIA.');
             valido = false;
         }
         
-        if (!valido && modulosSeleccionados > 0) {
+        if (!valido && usosSeleccionados > 0) {
             alert('Por favor completa correctamente todos los campos.');
         }
         
         return valido;
-    }
-    
-    function actualizarContadorModulos() {
-        const total = $('input[name="modulos[]"]:checked').length;
-        $('#modulosCounter').text(total);
-        
-        if (total > 0) {
-            $('#modulosSeleccionadosInfo').show();
-        } else {
-            $('#modulosSeleccionadosInfo').hide();
-        }
     }
     </script>
 </body>

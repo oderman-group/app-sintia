@@ -44,7 +44,7 @@
 
 **Login:**
 - `main-app/index.php`
-  - Reemplazado query directo por **prepared statement**
+  - Reemplazado query directo por **PDO prepared statement**
   - Validación de año (rango 2000-2100)
   - Parámetros sanitizados antes de uso
 
@@ -52,18 +52,30 @@
 // ANTES (vulnerable):
 mysqli_query($conexion, "SELECT * FROM tabla WHERE id='" . $_GET['id'] . "'");
 
-// DESPUÉS (seguro):
-$stmt = mysqli_prepare($conexion, "SELECT * FROM tabla WHERE id=?");
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
+// DESPUÉS (seguro con PDO - patrón del proyecto):
+$conexionPDO = Conexion::newConnection('PDO');
+$conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$sql = "SELECT * FROM tabla WHERE id=?";
+$stmt = $conexionPDO->prepare($sql);
+$stmt->bindParam(1, $id, PDO::PARAM_INT);
+$stmt->execute();
+$resultado = $stmt->fetch(PDO::FETCH_BOTH);
 ```
+
+**IMPORTANTE:** Se migró de **mysqli** a **PDO** para seguir el patrón establecido en el proyecto.
+- ✅ Mejor tipado de datos (PDO::PARAM_*)
+- ✅ Sintaxis más clara y consistente
+- ✅ Manejo robusto de excepciones
+- ✅ Compatible con código existente
 
 **Publicaciones:**
 - `main-app/compartido/noticias-guardar.php`
-  - INSERT de noticia convertido a prepared statement
-  - DELETE de cursos convertido a prepared statement
-  - INSERT de cursos usa prepared statement con loop
-  - Todos los parámetros sanitizados
+  - INSERT de noticia convertido a PDO prepared statement
+  - DELETE de cursos convertido a PDO prepared statement
+  - INSERT de cursos usa PDO prepared statement con loop
+  - Todos los parámetros con tipado explícito (PDO::PARAM_*)
+  - Incluida clase `Conexion` para acceso a PDO
 
 ---
 
@@ -194,10 +206,12 @@ ini_set('session.cookie_lifetime', 0);     // Al cerrar navegador
 
 ### A implementar en siguientes sesiones:
 
-1. **Migrar más SQL Injection:**
+1. **Migrar más SQL Injection a PDO:**
    - Buscar todos los `mysqli_query` con concatenación
-   - Convertir a prepared statements
-   - Priorizar: usuarios, calificaciones, finanzas
+   - Convertir a **PDO prepared statements** (patrón del proyecto)
+   - Usar `Conexion::newConnection('PDO')`
+   - Tipado explícito con `PDO::PARAM_*`
+   - Priorizar: usuarios, calificaciones, finanzas, estudiantes
 
 2. **Aplicar Sanitización:**
    - Reemplazar `echo` directos por `Sanitizacion::html()`

@@ -16,6 +16,7 @@ const formData = {
     // Renovación
     idInsti: '',
     yearA: new Date().getFullYear(),
+    enviarCorreoRenovacion: '0',
     // Contacto (solo nueva)
     tipoDoc: '',
     documento: '',
@@ -24,7 +25,9 @@ const formData = {
     apellido1: '',
     apellido2: '',
     email: '',
-    celular: ''
+    celular: '',
+    usuarioAcceso: '',
+    enviarCorreoBienvenida: '0'
 };
 
 // Timers para validaciones
@@ -281,7 +284,7 @@ function validateContacto() {
         return true;
     }
     
-    const required = ['tipoDoc', 'documento', 'nombre1', 'apellido1', 'email'];
+    const required = ['tipoDoc', 'documento', 'nombre1', 'apellido1', 'email', 'usuarioAcceso'];
     let isValid = true;
     
     required.forEach(field => {
@@ -298,6 +301,13 @@ function validateContacto() {
     const email = $('#email').val().trim();
     if (email && !validateEmail(email)) {
         markFieldError($('#email'), 'Formato de correo inválido');
+        isValid = false;
+    }
+    
+    // Validar formato de usuario
+    const usuario = $('#usuarioAcceso').val().trim();
+    if (usuario && !/^[a-zA-Z0-9._-]+$/.test(usuario)) {
+        markFieldError($('#usuarioAcceso'), 'Solo letras, números y guiones permitidos');
         isValid = false;
     }
     
@@ -321,6 +331,7 @@ function saveCurrentStepData() {
             } else {
                 formData.idInsti = $('#idInsti').val();
                 formData.yearA = $('#yearA').val();
+                formData.enviarCorreoRenovacion = $('#enviarCorreoRenovacion').is(':checked') ? '1' : '0';
             }
             break;
         case 3:
@@ -332,6 +343,8 @@ function saveCurrentStepData() {
             formData.apellido2 = $('#apellido2').val().trim();
             formData.email = $('#email').val().trim();
             formData.celular = $('#celular').val().trim();
+            formData.usuarioAcceso = $('#usuarioAcceso').val().trim();
+            formData.enviarCorreoBienvenida = $('#enviarCorreoBienvenida').is(':checked') ? '1' : '0';
             break;
     }
 }
@@ -393,6 +406,18 @@ function buildConfirmation() {
                     <strong>Celular:</strong><br>
                     <span style="font-size: 16px;">${formData.celular || 'No especificado'}</span>
                 </div>
+                <div>
+                    <strong>Usuario de Acceso:</strong><br>
+                    <span style="font-size: 16px; color: #667eea; font-weight: 600;">${formData.usuarioAcceso}</span>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <strong>Correo de Bienvenida:</strong><br>
+                    <span style="font-size: 16px;">
+                        ${formData.enviarCorreoBienvenida === '1' ? 
+                            '<span style="color: #28a745;"><i class="fa fa-check-circle"></i> Se enviará correo con credenciales</span>' : 
+                            '<span style="color: #6c757d;"><i class="fa fa-times-circle"></i> No se enviará correo</span>'}
+                    </span>
+                </div>
             </div>
         `;
     } else {
@@ -432,6 +457,15 @@ function buildConfirmation() {
                     <li>Configuraciones institucionales</li>
                     <li>Información general de la institución</li>
                 </ul>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: ${formData.enviarCorreoRenovacion === '1' ? '#d4edda' : '#f8f9fa'}; border-radius: 8px;">
+                <strong>Correo de Confirmación:</strong><br>
+                <span style="font-size: 16px;">
+                    ${formData.enviarCorreoRenovacion === '1' ? 
+                        '<span style="color: #28a745;"><i class="fa fa-check-circle"></i> Se enviará correo de confirmación al contacto principal</span>' : 
+                        '<span style="color: #6c757d;"><i class="fa fa-times-circle"></i> No se enviará correo de confirmación</span>'}
+                </span>
             </div>
         `;
     }
@@ -621,6 +655,7 @@ function addProgressLog(type, message) {
  * Mostrar resultado exitoso
  */
 function showSuccessResult(data) {
+    const esNueva = formData.tipoInsti === '1';
     const html = `
         <div style="text-align: center; padding: 40px;">
             <div style="font-size: 72px; color: #28a745; margin-bottom: 20px;">
@@ -630,7 +665,7 @@ function showSuccessResult(data) {
                 ¡Proceso Completado Exitosamente!
             </h2>
             <p style="font-size: 16px; color: #6c757d; margin-bottom: 30px;">
-                ${formData.tipoInsti === '1' ? 'La institución ha sido creada' : 'El año académico ha sido renovado'} correctamente.
+                ${esNueva ? 'La institución ha sido creada' : 'El año académico ha sido renovado'} correctamente.
             </p>
             
             ${data.nota ? `
@@ -649,6 +684,12 @@ function showSuccessResult(data) {
                     ${data.clave ? `<li>Contraseña: <strong style="color: #667eea;">${data.clave}</strong></li>` : ''}
                     ${data.email ? `<li>Email: <strong>${data.email}</strong></li>` : ''}
                 </ul>
+            </div>
+            ` : ''}
+            
+            ${data.mensajeCorreo ? `
+            <div style="background: ${data.correoEnviado ? '#d4edda' : '#fff3cd'}; border-left: 4px solid ${data.correoEnviado ? '#28a745' : '#ffc107'}; padding: 16px; border-radius: 8px; margin: 20px 0; text-align: left;">
+                ${data.mensajeCorreo}
             </div>
             ` : ''}
             
@@ -750,6 +791,29 @@ function setupRealTimeValidation() {
         if (doc && formData.tipoInsti === '1') {
             validateDocumento(doc);
         }
+    });
+    
+    // Validación de usuario de acceso
+    $('#usuarioAcceso').on('input', function() {
+        const $input = $(this);
+        let value = $input.val();
+        
+        // Formatear automáticamente: solo permitir letras, números, puntos, guiones y guión bajo
+        value = value.replace(/[^a-zA-Z0-9._-]/g, '');
+        $input.val(value);
+        
+        if (value.trim()) {
+            if (/^[a-zA-Z0-9._-]{3,}$/.test(value)) {
+                markFieldSuccess($input, 'Usuario válido');
+            } else if (value.length > 0 && value.length < 3) {
+                markFieldError($input, 'Mínimo 3 caracteres');
+            }
+        }
+    });
+    
+    // Validación al cambiar checkbox de correo
+    $('#enviarCorreoBienvenida').on('change', function() {
+        checkStepCompletion();
     });
     
     // Validación al cambiar campos
@@ -881,7 +945,8 @@ function checkStepCompletion() {
                         $('#documento').val().trim() && 
                         $('#nombre1').val().trim() && 
                         $('#apellido1').val().trim() && 
-                        $('#email').val().trim();
+                        $('#email').val().trim() && 
+                        $('#usuarioAcceso').val().trim();
             break;
     }
     
