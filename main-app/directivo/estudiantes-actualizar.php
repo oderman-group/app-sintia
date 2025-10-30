@@ -169,8 +169,20 @@ if ($_POST["documentoA"]!="") {
 
 	$idInsercion  =Utilidades::generateCode("UPE");
 
+	// Migrado a PDO - Consulta preparada
 	try {
-		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(upe_id, upe_id_usuario, upe_id_estudiante, institucion, year)VALUES('" .$idInsercion . "', '".$idAcudiente."', '".$_POST["id"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(
+		    upe_id, upe_id_usuario, upe_id_estudiante, institucion, year
+		) VALUES (?, ?, ?, ?, ?)";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $idInsercion, PDO::PARAM_STR);
+		$stmt->bindParam(2, $idAcudiente, PDO::PARAM_STR);
+		$stmt->bindParam(3, $_POST["id"], PDO::PARAM_STR);
+		$stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}	

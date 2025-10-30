@@ -10,9 +10,19 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "UPDATE ".BD_DISCIPLINA.".disciplina_faltas SET dfal_codigo='" . $_POST["codigo"] . "', dfal_nombre='" . $_POST["nombre"] . "', dfal_id_categoria='" . $_POST["categoria"] . "' 
-    WHERE dfal_id_nuevo='" . $_POST["idRNuevo"] . "'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $sql = "UPDATE ".BD_DISCIPLINA.".disciplina_faltas 
+            SET dfal_codigo=?, dfal_nombre=?, dfal_id_categoria=? 
+            WHERE dfal_id_nuevo=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["codigo"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["nombre"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_POST["categoria"], PDO::PARAM_STR);
+    $stmt->bindParam(4, $_POST["idRNuevo"], PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }

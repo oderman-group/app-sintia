@@ -7,8 +7,15 @@ Modulos::verificarPermisoDev();
 $idPaginaInterna = 'DV0041';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-	mysqli_query($conexion, "DELETE FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_id='" . base64_decode($_GET["idogen"]) . "'");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$idOpcion = base64_decode($_GET["idogen"]);
+	$sql = "DELETE FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_id=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $idOpcion, PDO::PARAM_STR);
+	$stmt->execute();
 } catch (Exception $e) {
 	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }

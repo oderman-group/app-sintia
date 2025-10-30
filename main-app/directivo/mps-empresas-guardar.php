@@ -14,25 +14,37 @@
 
     $responsable=''; if(!empty($_POST["responsable"])){ $responsable=$_POST["responsable"]; }
 
+    // Migrado a PDO - Consultas preparadas
     try{
-        mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".empresas(emp_nombre,emp_email,emp_telefono,emp_web,emp_usuario,emp_institucion) VALUES ('".$_POST["nombre"]."','".$_POST["email"]."','".$_POST["telefono"]."','".$_POST["web"]."','".$responsable."','".$_POST["institucion"]."')");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        
+        $sql = "INSERT INTO " . $baseDatosMarketPlace . ".empresas(
+            emp_nombre, emp_email, emp_telefono, emp_web, emp_usuario, emp_institucion
+        ) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["email"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["telefono"], PDO::PARAM_STR);
+        $stmt->bindParam(4, $_POST["web"], PDO::PARAM_STR);
+        $stmt->bindParam(5, $responsable, PDO::PARAM_STR);
+        $stmt->bindParam(6, $_POST["institucion"], PDO::PARAM_STR);
+        $stmt->execute();
+        $idRegistro = $conexionPDO->lastInsertId();
+
+        if(!empty($_POST["sector"])){
+            $sqlCat = "INSERT INTO " . $baseDatosMarketPlace . ".empresas_categorias(excat_empresa, excat_categoria) VALUES (?, ?)";
+            $stmtCat = $conexionPDO->prepare($sqlCat);
+            
+            foreach ($_POST["sector"] as $sector) {
+                $stmtCat->bindParam(1, $idRegistro, PDO::PARAM_INT);
+                $stmtCat->bindParam(2, $sector, PDO::PARAM_STR);
+                $stmtCat->execute();
+            }
+        }
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}
-    $idRegistro = mysqli_insert_id($conexion);
-
-    if(!empty($_POST["sector"])){
-        $cont = count($_POST["sector"]);
-        $i = 0;
-        while ($i < $cont) {
-            try{
-                mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".empresas_categorias(excat_empresa, excat_categoria)VALUES('" . $idRegistro . "', '" . $_POST["sector"][$i] . "')");
-            } catch (Exception $e) {
-                include("../compartido/error-catch-to-report.php");
-            }
-            $i++;
-        }
-    }
     
     include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="mps-empresas.php?success=SC_DT_1&id='.base64_encode($idRegistro).'";</script>';

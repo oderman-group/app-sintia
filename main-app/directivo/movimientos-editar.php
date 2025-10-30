@@ -15,12 +15,21 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
+// Migrado a PDO - Consulta preparada
 try{
-    $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_id='".base64_decode($_GET['id'])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idMovimiento = base64_decode($_GET['id']);
+    $sql = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_id=? AND institucion=? AND year=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idMovimiento, PDO::PARAM_STR);
+    $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+    $stmt->execute();
+    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-$resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
 $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
 

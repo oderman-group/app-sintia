@@ -5,13 +5,19 @@ include("../compartido/historial-acciones-guardar.php");
 Modulos::verificarPermisoDev();
 include("../compartido/head.php");
 
+// Migrado a PDO - Consulta preparada
 try {
-    $consulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosMarketPlace . ".empresas WHERE emp_id='" . base64_decode($_GET["idR"]) . "'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idEmpresa = base64_decode($_GET["idR"]);
+    $sql = "SELECT * FROM " . $baseDatosMarketPlace . ".empresas WHERE emp_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idEmpresa, PDO::PARAM_STR);
+    $stmt->execute();
+    $infoDatos = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-
-$infoDatos = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 $foto = 'https://via.placeholder.com/510?text=Sin+Imagen';
 if (!empty($infoDatos['emp_logo']) && file_exists('../files/marketplace/logos/'.$infoDatos['emp_logo'])) {
     $foto = '../files/marketplace/logos/'.$infoDatos['emp_logo'];
@@ -122,10 +128,13 @@ if (!empty($infoDatos['emp_logo']) && file_exists('../files/marketplace/logos/'.
                                             <select id="multiple" class="form-control select2-multiple" multiple name="sector[]" required aucomplete="off">
                                             <?php
                                             $infoConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosMarketPlace.".servicios_categorias");
+                                            $sqlCat = $conexionPDO->prepare("SELECT excat_id FROM ".$baseDatosMarketPlace.".empresas_categorias WHERE excat_empresa=? AND excat_categoria=?");
                                             while($inforDatos = mysqli_fetch_array($infoConsulta, MYSQLI_BOTH)){
-                                                $consultaCat = mysqli_query($conexion, "SELECT excat_id FROM ".$baseDatosMarketPlace.".empresas_categorias WHERE excat_empresa='".base64_decode($_GET["idR"])."' AND excat_categoria='".$inforDatos['svcat_id']."'");
+                                                $sqlCat->bindParam(1, $idEmpresa, PDO::PARAM_STR);
+                                                $sqlCat->bindParam(2, $inforDatos['svcat_id'], PDO::PARAM_STR);
+                                                $sqlCat->execute();
                                                 $selected='';
-                                                if(mysqli_num_rows($consultaCat)>0){
+                                                if($sqlCat->rowCount()>0){
                                                     $selected='selected';
                                                 }
                                             ?>	
