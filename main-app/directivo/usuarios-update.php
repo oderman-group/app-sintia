@@ -83,7 +83,7 @@ if (!empty($datosAntesActualizar) && $datosAntesActualizar['uss_email'] !== strt
 			'email_anterior' => $datosAntesActualizar['uss_email'],
 			'email_nuevo' => strtolower($_POST["email"]),
 			'nombre_completo' => $_POST["nombre"] . ' ' . $_POST["apellido1"],
-			'admin' => $_SESSION["usuario"]
+			'admin' => $_SESSION["id"]
 		]
 	);
 }
@@ -113,7 +113,7 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 			'accion' => 'cambio_clave_admin',
 			'usuario_afectado' => $_POST["usuario"],
 			'email' => $_POST["email"],
-			'admin' => $_SESSION["usuario"]
+			'admin' => $_SESSION["id"]
 		]
 	);
 
@@ -122,7 +122,7 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 		'institucion_agno' => $_SESSION["bd"],
 		'usuario_id'       => $_POST["idR"],
 		'usuario_email'    => $_POST["email"],
-		'usuario_nombre'   => $datosUsuario['uss_nombre'],
+		'usuario_nombre'   => $_POST["nombre"] . ' ' . $_POST["apellido1"],
 		'usuario_usuario'  => $_POST["usuario"],
 		'nueva_clave'      => $_POST["clave"],
 	];
@@ -137,12 +137,13 @@ if ($_POST["tipoUsuario"] == 4) {
 	$update = ['mat_email' => strtolower($_POST["email"])];
 	Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
 }
-try{
-if(!empty($_POST["subroles"])){	
-	$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
-}else{
-	$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
-}
+
+try {
+	if (!empty($_POST["subroles"])) {	
+		$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
+	} else {
+		$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
+	}
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }
