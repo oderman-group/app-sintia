@@ -6,7 +6,10 @@ if($datosUsuarioActual['uss_bloqueado']==1 && !strpos($_SERVER['PHP_SELF'], 'pag
 {
 	require_once(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 	$destinos = validarUsuarioActual($datosUsuarioActual);
-	header("Location:".$destinos."page-info.php?idmsg=221");
+	// Agregar parámetros necesarios para el formulario de desbloqueo
+	$inst = base64_encode($datosUsuarioActual['institucion']);
+	$idU = base64_encode($datosUsuarioActual['uss_id']);
+	header("Location:".$destinos."page-info.php?idmsg=221&inst=".$inst."&idU=".$idU);
 	exit();		
 }
 
