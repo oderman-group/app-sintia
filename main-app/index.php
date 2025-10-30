@@ -26,12 +26,19 @@ if(!isset($_GET['nodb'])) {
                 throw new Exception("Año inválido");
             }
             
-            // Query segura con prepared statement
-            $stmt = mysqli_prepare($conexionBaseDatosServicios, "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion=? AND info_year=?");
-            mysqli_stmt_bind_param($stmt, "si", $institucion, $year);
-            mysqli_stmt_execute($stmt);
-            $informacionInstConsulta = mysqli_stmt_get_result($stmt);
-            $informacion_inst = mysqli_fetch_array($informacionInstConsulta, MYSQLI_BOTH);
+            // Incluir clase Conexion para PDO
+            require_once(ROOT_PATH."/main-app/class/Conexion.php");
+            
+            // Query segura con PDO prepared statement (patrón del proyecto)
+            $conexionPDO = Conexion::newConnection('PDO');
+            $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            $sql = "SELECT * FROM ".$baseDatosServicios.".general_informacion WHERE info_institucion=? AND info_year=?";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $institucion, PDO::PARAM_STR);
+            $stmt->bindParam(2, $year, PDO::PARAM_INT);
+            $stmt->execute();
+            $informacion_inst = $stmt->fetch(PDO::FETCH_BOTH);
             if (!empty($informacion_inst["info_logo"]) && file_exists("files/images/logo/".$informacion_inst["info_logo"])) {
                 $logoIndex = "files/images/logo/".$informacion_inst["info_logo"];
                 $logoWidth = 300;

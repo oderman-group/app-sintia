@@ -4,6 +4,9 @@
  * Similar a recuperación de clave pero con proceso ACTIVAR_CUENTA
  */
 
+// Configurar zona horaria de Colombia
+date_default_timezone_set('America/Bogota');
+
 header('Content-Type: application/json; charset=UTF-8');
 require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH . "/main-app/class/Notificacion.php");

@@ -119,12 +119,22 @@ try {
             throw new Exception('No se pudo obtener el ID de la institución');
         }
         
-        // PASO 2: ASIGNAR MÓDULOS
-        $sqlModulos = "INSERT INTO ".BD_ADMIN.".instituciones_modulos (ipmod_institucion,ipmod_modulo) 
-                       VALUES ($idInsti,4),($idInsti,5),($idInsti,7),($idInsti,17),($idInsti,22)";
-        
-        if (!mysqli_query($conexion, $sqlModulos)) {
-            throw new Exception('Error al asignar módulos: ' . mysqli_error($conexion));
+        // PASO 2: ASIGNAR TODOS LOS MÓDULOS ACTIVOS
+        $consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos WHERE mod_estado = 1");
+        if ($consultaModulos && mysqli_num_rows($consultaModulos) > 0) {
+            $valoresModulos = [];
+            while ($modulo = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {
+                $valoresModulos[] = "($idInsti, ".$modulo['mod_id'].")";
+            }
+            
+            if (!empty($valoresModulos)) {
+                $sqlModulos = "INSERT INTO ".BD_ADMIN.".instituciones_modulos (ipmod_institucion, ipmod_modulo) 
+                               VALUES " . implode(',', $valoresModulos);
+                
+                if (!mysqli_query($conexion, $sqlModulos)) {
+                    throw new Exception('Error al asignar módulos: ' . mysqli_error($conexion));
+                }
+            }
         }
         
         // PASO 3: CREAR CONFIGURACIÓN
@@ -267,30 +277,32 @@ try {
         $celular = mysqli_real_escape_string($conexion, $_POST['celular'] ?? '');
         $tipoDoc = mysqli_real_escape_string($conexion, $_POST['tipoDoc'] ?? '');
         $documento = mysqli_real_escape_string($conexion, $_POST['documento'] ?? '');
+        $usuarioAcceso = mysqli_real_escape_string($conexion, $_POST['usuarioAcceso'] ?? $documento."-".$idInsti);
+        $enviarCorreoBienvenida = ($_POST['enviarCorreoBienvenida'] ?? '0') === '1';
         
         $sqlUsuarios = "INSERT INTO ".BD_GENERAL.".usuarios(
             uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_nombre2, uss_apellido1, 
             uss_apellido2, uss_estado, uss_foto, uss_idioma, uss_tema, uss_ocupacion, uss_email, 
             uss_permiso1, uss_celular, uss_genero, uss_bloqueado, uss_tipo_documento, uss_documento, 
-            institucion, year, uss_portada
+            institucion, year, uss_portada, uss_tema_sidebar, uss_tema_header, uss_tema_logo
         ) VALUES 
         ('1','sintia-".$idInsti."',SHA1('sintia2014$'),1,'ADMINISTRACIÓN',NULL,'SINTIA',NULL,
         0,'default.png',1,'orange','Administrador','soporte@plataformasintia.com',1298,
-        '(313) 591-2073',126,0,NULL,NULL,'".$idInsti."','".$year."','default.png'),
+        '(313) 591-2073',126,0,NULL,NULL,'".$idInsti."','".$year."','default.png', 'white-sidebar-color', 'header-white', 'logo-white'),
         
-        ('2','".$documento."-".$idInsti."',SHA1('".$clave."'),5,'".$nombre1."',
+        ('2','".$usuarioAcceso."',SHA1('".$clave."'),5,'".$nombre1."',
         '".$nombre2."','".$apellido1."','".$apellido2."',
         0,'default.png',1,'orange','DIRECTIVO','".$email."',1298,'".$celular."',
-        126,0,'".$tipoDoc."','".$documento."','".$idInsti."','".$year."','default.png'),
+        126,0,'".$tipoDoc."','".$documento."','".$idInsti."','".$year."','default.png', 'white-sidebar-color', 'header-white', 'logo-white'),
         
         ('3','pruebaDC-".$idInsti."',SHA1('".$clave."'),2,'USUARIO',NULL,'DOCENTE',NULL,
-        0,'default.png',1,'orange','DOCENTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png'),
+        0,'default.png',1,'orange','DOCENTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png', 'white-sidebar-color', 'header-white', 'logo-white'),
         
         ('4','pruebaAC-".$idInsti."',SHA1('".$clave."'),3,'USUARIO',NULL,'ACUDIENTE',NULL,
-        0,'default.png',1,'orange','ACUDIENTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png'),
+        0,'default.png',1,'orange','ACUDIENTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png', 'white-sidebar-color', 'header-white', 'logo-white'),
         
         ('5','pruebaES-".$idInsti."',SHA1('".$clave."'),4,'USUARIO',NULL,'ESTUDIANTE',NULL,
-        0,'default.png',1,'orange','ESTUDIANTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png')";
+        0,'default.png',1,'orange','ESTUDIANTE',NULL,0,NULL,126,0,NULL,NULL,'".$idInsti."','".$year."','default.png', 'white-sidebar-color', 'header-white', 'logo-white')";
         
         if (!mysqli_query($conexion, $sqlUsuarios)) {
             throw new Exception('Error al crear usuarios: ' . mysqli_error($conexion));
@@ -338,37 +350,51 @@ try {
             throw new Exception('Error al crear cargas: ' . mysqli_error($conexion));
         }
         
-        // PASO 15: Enviar correo (DESHABILITADO TEMPORALMENTE para evitar errores SMTP en desarrollo)
-        // TODO: Habilitar cuando la configuración SMTP esté correcta
-        /*
-        try {
-            // Solo intentar en producción
-            if (ENVIROMENT === 'PROD' || ENVIROMENT === 'TEST') {
+        // PASO 15: Enviar correo de bienvenida (si está marcado)
+        $mensajeCorreo = '';
+        $correoExitoso = false;
+        
+        if ($enviarCorreoBienvenida) {
+            try {
                 $data = [
                     'institucion_id'   => $idInsti,
                     'institucion_agno' => $year,
+                    'institucion_nombre' => $nombreInsti,
                     'usuario_id'       => '2',
-                    'usuario_email'    => $_POST['email'],
-                    'usuario_nombre'   => $_POST["nombre1"]." ".$_POST["apellido1"],
-                    'usuario_usuario'  => $documento."-".$idInsti,
-                    'usuario_clave'    => $clave
+                    'usuario_email'    => $email,
+                    'usuario_nombre'   => trim($nombre1." ".$nombre2." ".$apellido1." ".$apellido2),
+                    'usuario_usuario'  => $usuarioAcceso,
+                    'usuario_clave'    => $clave,
+                    'url_acceso'       => REDIRECT_ROUTE.'/index.php?inst='.base64_encode($idInsti).'&year='.base64_encode($year)
                 ];
-                $asunto = 'Bienvenido a la Plataforma SINTIA';
+                $asunto = 'Bienvenido a la Plataforma SINTIA - Credenciales de Acceso';
                 $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-bienvenida.php';
                 
-                @EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                // EnviarEmail::enviar() retorna void, lanza excepción si falla
+                EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                
+                // Si llegamos aquí, el correo se envió exitosamente (no hubo excepción)
+                $mensajeCorreo = '✉️ Correo de bienvenida enviado exitosamente a '.$email;
+                $correoExitoso = true;
+                
+            } catch(Exception $emailError) {
+                // Email opcional - no detener el proceso si falla
+                $mensajeCorreo = '⚠️ No se pudo enviar el correo de bienvenida. Comunica las credenciales manualmente.';
+                $correoExitoso = false;
+                
+                // Log del error para debugging
+                error_log("Error al enviar correo de bienvenida - Institución: ".$idInsti." - Email: ".$email." - Error: ".$emailError->getMessage());
             }
-        } catch(Exception $emailError) {
-            // Email opcional - no detener el proceso
         }
-        */
         
         $finalResponse['institucionId'] = $idInsti;
-        $finalResponse['usuario'] = $documento."-".$idInsti;
+        $finalResponse['usuario'] = $usuarioAcceso;
         $finalResponse['clave'] = $clave;
-        $finalResponse['email'] = $_POST['email'];
+        $finalResponse['email'] = $email;
         $finalResponse['message'] = 'Institución creada exitosamente';
-        $finalResponse['nota'] = 'IMPORTANTE: Guarda estas credenciales. El correo de bienvenida está deshabilitado en LOCAL.';
+        $finalResponse['correoEnviado'] = $correoExitoso; // true solo si se envió sin errores
+        $finalResponse['mensajeCorreo'] = $mensajeCorreo;
+        $finalResponse['nota'] = 'IMPORTANTE: Guarda estas credenciales en un lugar seguro.';
     }
     
     // Confirmar transacción

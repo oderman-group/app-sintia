@@ -374,7 +374,7 @@ try {
         WHERE conf_agno='".$yearAnterior."' AND conf_id_institucion='".$idInsti."'");
         
         // CONSULTAR Y ACTUALIZAR AÑOS DE LA INSTITUCIÓN
-        $consultaInsti = mysqli_query($conexion, "SELECT ins_years FROM ".BD_ADMIN.".instituciones WHERE ins_id='".$idInsti."'");
+        $consultaInsti = mysqli_query($conexion, "SELECT ins_years, ins_email_contacto, ins_contacto_principal, ins_nombre FROM ".BD_ADMIN.".instituciones WHERE ins_id='".$idInsti."'");
         $datosInsti = mysqli_fetch_array($consultaInsti, MYSQLI_BOTH);
         $yearArray  = explode(",", $datosInsti['ins_years']);
         $yearStart  = $yearArray[0];
@@ -426,8 +426,53 @@ try {
             WHERE cfgi_id_institucion='".$idInsti."' AND cfgi_year='".$yearAnterior."'");
         }
         
+        // ENVIAR CORREO DE CONFIRMACIÓN DE RENOVACIÓN (si está marcado)
+        $mensajeCorreo = '';
+        $correoExitoso = false;
+        $enviarCorreoRenovacion = ($_POST['enviarCorreoRenovacion'] ?? '0') === '1';
+        
+        if ($enviarCorreoRenovacion) {
+            try {
+                // Obtener datos del contacto principal de la institución
+                $emailContacto = !empty($datosInsti['ins_email_contacto']) ? $datosInsti['ins_email_contacto'] : null;
+                $nombreContacto = !empty($datosInsti['ins_contacto_principal']) ? $datosInsti['ins_contacto_principal'] : 'Contacto Principal';
+                $nombreInstitucion = !empty($datosInsti['ins_nombre']) ? $datosInsti['ins_nombre'] : 'Institución';
+                
+                if ($emailContacto) {
+                    $data = [
+                        'institucion_id'   => $idInsti,
+                        'institucion_agno' => $year,
+                        'institucion_nombre' => $nombreInstitucion,
+                        'usuario_email'    => $emailContacto,
+                        'usuario_nombre'   => $nombreContacto,
+                        'year_anterior'    => $yearAnterior,
+                        'year_nuevo'       => $year,
+                        'url_acceso'       => REDIRECT_ROUTE.'/index.php?inst='.base64_encode($idInsti).'&year='.base64_encode($year)
+                    ];
+                    $asunto = 'Año Académico '.$year.' Renovado Exitosamente - '.$nombreInstitucion;
+                    $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-renovacion-ano.php';
+                    
+                    // EnviarEmail::enviar() retorna void, lanza excepción si falla
+                    EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                    
+                    // Si llegamos aquí, el correo se envió exitosamente
+                    $mensajeCorreo = '✉️ Correo de confirmación enviado exitosamente a '.$emailContacto;
+                    $correoExitoso = true;
+                } else {
+                    $mensajeCorreo = '⚠️ No se encontró email del contacto principal en la institución.';
+                }
+                
+            } catch(Exception $emailError) {
+                $mensajeCorreo = '⚠️ No se pudo enviar el correo de confirmación.';
+                $correoExitoso = false;
+                error_log("Error al enviar correo de renovación - Institución: ".$idInsti." - Error: ".$emailError->getMessage());
+            }
+        }
+        
         $response['institucionId'] = $idInsti;
         $response['message'] = 'Año '.$year.' renovado exitosamente para la institución';
+        $response['correoEnviado'] = $correoExitoso;
+        $response['mensajeCorreo'] = $mensajeCorreo;
         
     } else {
         // ============================================
