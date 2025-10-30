@@ -118,8 +118,8 @@ if ($newId > 0) {
     $acudiente->bindParam(':ussTipoDocumento', $_POST['tipoDocumentoAcudiente'], PDO::PARAM_INT);
     $acudiente->execute();
 
-    //Padre
-    $padreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year)VALUES(:codigo, 3, :idInstitucion, :year)";
+    //Padre (Se hace la relación en la tabla para luego actualizar)
+    $padreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year, uss_nombre, uss_estado)VALUES(:codigo, 3, :idInstitucion, :year, 'PADRE_TMP', 0)";
     $padreId    = Utilidades::generateCode("USS");
     $padre      = $pdoI->prepare($padreQuery);
 
@@ -128,8 +128,8 @@ if ($newId > 0) {
     $padre->bindParam(':year', $config['conf_agno'], PDO::PARAM_STR);
     $padre->execute();
 
-    //Madre
-    $madreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year)VALUES(:codigo, 3, :idInstitucion, :year)";
+    //Madre (Se hace la relación en la tabla para luego actualizar)
+    $madreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year, uss_nombre, uss_estado)VALUES(:codigo, 3, :idInstitucion, :year, 'MADRE_TMP', 0)";
     $madreId    = Utilidades::generateCode("USS");
     $madre      = $pdoI->prepare($madreQuery);
 
@@ -168,7 +168,7 @@ if ($newId > 0) {
         $config['conf_agno']
     );
 
-    //Documentos
+    //Documentos (Se hace la relación en la tabla para luego actualizar)
     Inscripciones::guardarDocumentos($pdoI, $config, $idEstudiante);
     Inscripciones::finalizarTransacion();
 
@@ -192,7 +192,9 @@ if ($newId > 0) {
 
 	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
 
-    echo '<script type="text/javascript">window.location.href="consultar-estado.php?solicitud='.base64_encode($newId).'&documento='.base64_encode($_POST['documento']).'&idInst='.$_REQUEST['idInst'].'";</script>';
+    // Mostrar página de confirmación moderna
+    $urlConsulta = "consultar-estado.php?solicitud=".base64_encode($newId)."&documento=".base64_encode($_POST['documento'])."&idInst=".$_REQUEST['idInst'];
+    include("confirmation-template.php");
     exit();
 } else {
     redireccionMal('index.php', 3);
