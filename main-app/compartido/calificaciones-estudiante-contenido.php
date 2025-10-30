@@ -438,3 +438,153 @@
                     </div>
 
                 </div>
+
+<style>
+/* Estilos modernos para la tabla de calificaciones */
+.grades-card-modern {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.grades-card-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grades-card-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.grades-card-header h3 i {
+    margin-right: 10px;
+}
+
+.grades-card-body {
+    padding: 0;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table-modern {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.table-modern thead {
+    background: #f8f9fa;
+}
+
+.table-modern thead th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.table-modern tbody tr {
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.table-modern tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table-modern tbody td {
+    padding: 16px 20px;
+    color: #495057;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.table-modern tbody td:first-child {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.table-modern tfoot tr {
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
+
+.table-modern tfoot td {
+    padding: 18px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #212529;
+}
+
+.badge-indicador {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #5a6c7d;
+    background: #e3f2fd;
+    border-radius: 12px;
+    border: 1px solid #bbdefb;
+}
+
+.badge-indicador i {
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Botón flotante de filtros para estudiantes */
+.filter-fab {
+    background: white;
+    color: #667eea;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.filter-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-modern thead th,
+    .table-modern tbody td,
+    .table-modern tfoot td {
+        padding: 12px 15px;
+        font-size: 13px;
+    }
+    
+    .grades-card-header {
+        padding: 15px 20px;
+    }
+    
+    .grades-card-header h3 {
+        font-size: 18px;
+    }
+}
+</style>
