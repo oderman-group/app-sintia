@@ -8,8 +8,15 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 $usuariosClase = new UsuariosFunciones;
 $archivoSubido = new Archivos;
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_imagen='' WHERE not_id='" . base64_decode($_GET["idR"]) . "'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idNoticia = base64_decode($_GET["idR"]);
+    $sql = "UPDATE ".$baseDatosServicios.".social_noticias SET not_imagen='' WHERE not_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idNoticia, PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }

@@ -154,7 +154,7 @@ class AjaxCalificaciones {
                     'id_estudiante' => $data['codEst'],
                     'id_actividad' => $data['codNota'],
                     'nota' => $nota,
-                    'docente' => $_SESSION["usuario"] ?? 'Sistema'
+                    'docente' => $_SESSION["id"] ?? 'Sistema'
                 ]
             );
         }
@@ -318,7 +318,7 @@ class AjaxCalificaciones {
                     'id_nota' => $data['codNota'],
                     'nota_anterior' => $notaAnterior,
                     'nota_nueva' => $data['nota'],
-                    'docente' => $_SESSION["usuario"] ?? 'Sistema'
+                    'docente' => $_SESSION["id"] ?? 'Sistema'
                 ]
             );
         }

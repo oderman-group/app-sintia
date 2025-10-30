@@ -40,7 +40,7 @@ AuditoriaLogger::registrarEdicion(
 	'SEGURIDAD',
 	$_SESSION["id"],
 	'Usuario cambió su propia contraseña',
-	['accion' => 'cambio_clave_propia', 'usuario' => $_SESSION["usuario"]]
+	['accion' => 'cambio_clave_propia', 'usuario' => $_SESSION["id"]]
 );
 
 echo '<script type="text/javascript">window.location.href="' .$destinos. 'cambiar-clave.php?success=SC_DT_11";</script>';

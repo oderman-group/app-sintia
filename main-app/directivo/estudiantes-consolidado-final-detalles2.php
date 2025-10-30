@@ -1072,18 +1072,27 @@ if (!Modulos::validarPermisoEdicion()) {
 				$materias[$carga['car_id']] = $carga;
 			}
 			
-			// ==========================================
-			// 2. CARGAR ESTUDIANTES
-			// ==========================================
-			$filtro = " AND mat_grado='" . $cursoId . "' AND mat_grupo='" . $grupoId . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
-			$consultaEstudiantes = Estudiantes::listarEstudiantesEnGrados($filtro, "", $curso, $grupoId);
-			
-			$estudiantes = [];
-			$estudiantesIds = [];
+		// ==========================================
+		// 2. CARGAR ESTUDIANTES
+		// ==========================================
+		$filtro = " AND mat_grado='" . $cursoId . "' AND mat_grupo='" . $grupoId . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
+		$consultaEstudiantes = Estudiantes::listarEstudiantesEnGrados($filtro, "", $curso, $grupoId);
+		
+		$estudiantes = [];
+		$estudiantesIds = [];
+		
+		// Validar que la consulta sea exitosa antes de procesar
+		if ($consultaEstudiantes !== null && $consultaEstudiantes !== false) {
 			while ($estudiante = mysqli_fetch_array($consultaEstudiantes, MYSQLI_BOTH)) {
 				$estudiantes[$estudiante['mat_id']] = $estudiante;
 				$estudiantesIds[] = $estudiante['mat_id'];
 			}
+		} else {
+			echo '<div class="alert alert-danger">
+				<strong>Error:</strong> No se pudieron cargar los estudiantes. Por favor, verifica que el curso y grupo existan.
+			</div>';
+			exit();
+		}
 			
 			// ==========================================
 			// 3. CARGAR TODAS LAS NOTAS DE UNA VEZ

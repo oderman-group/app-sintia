@@ -6,8 +6,16 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 $usuariosClase = new UsuariosFunciones;
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_estado='" . base64_decode($_GET["e"]) . "' WHERE not_usuario='" . $_SESSION["id"] . "' AND not_estado!=2");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $estado = base64_decode($_GET["e"]);
+    $sql = "UPDATE ".$baseDatosServicios.".social_noticias SET not_estado=? WHERE not_usuario=? AND not_estado!=2";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $estado, PDO::PARAM_STR);
+    $stmt->bindParam(2, $_SESSION["id"], PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
