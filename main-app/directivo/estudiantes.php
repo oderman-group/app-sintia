@@ -629,6 +629,9 @@ if($config['conf_doble_buscador'] == 1) {
 			<!-- start page content -->
             <div class="page-content-wrapper">
                 <div class="page-content">
+                    <!-- Token CSRF para operaciones de eliminación -->
+                    <?php echo Csrf::campoHTML(); ?>
+                    
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
