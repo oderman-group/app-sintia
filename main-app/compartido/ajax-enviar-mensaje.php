@@ -79,7 +79,7 @@ try {
             $sql = "INSERT INTO ".$baseDatosServicios.".social_emails
                     (ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto, 
                      ema_eliminado_de, ema_eliminado_para, ema_institucion, ema_year)
-                    VALUES (?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?, ?)";
+                    VALUES (?, ?, ?, ?, NOW(), 0, 0, 0, ?, ?)";
             
             $stmt = $conexionPDO->prepare($sql);
             $stmt->execute([
