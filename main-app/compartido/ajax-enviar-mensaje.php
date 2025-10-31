@@ -69,28 +69,20 @@ try {
     $institucion = $_SESSION["idInstitucion"];
     $year = $_SESSION["bd"];
     
-    // Obtener datos del remitente para el correo
-    $sqlRemitente = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id=? AND institucion=? AND year=?";
-    $stmtRemitente = $conexionPDO->prepare($sqlRemitente);
-    $stmtRemitente->execute([$de, $config['conf_id_institucion'], $year]);
-    $datosRemitente = $stmtRemitente->fetch(PDO::FETCH_ASSOC);
-    
     // Insertar mensaje para cada destinatario
     $enviados = 0;
     $errores = [];
     
     foreach ($destinatarios as $destinatarioId) {
         try {
-            $codigo = Utilidades::generateCode("EMA");
-            
+
             $sql = "INSERT INTO ".$baseDatosServicios.".social_emails
-                    (ema_id, ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto, 
+                    (ema_de, ema_para, ema_asunto, ema_contenido, ema_fecha, ema_visto, 
                      ema_eliminado_de, ema_eliminado_para, ema_institucion, ema_year)
                     VALUES (?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?, ?)";
             
             $stmt = $conexionPDO->prepare($sql);
             $stmt->execute([
-                $codigo,
                 $de,
                 $destinatarioId,
                 $asunto,
@@ -113,7 +105,7 @@ try {
                     $contenidoCorreo = '
                         <p style="color:navy;">
                         Hola ' . strtoupper($datosDestinatario['uss_nombre']) . ', has recibido un mensaje a través de la plataforma SINTIA.<br>
-                        <b>Remitente:</b> ' . strtoupper($datosRemitente['uss_nombre']) . '.
+                        <b>Remitente:</b> ' . strtoupper($_SESSION["datosUsuario"]['uss_nombre']) . '.
                         </p>
                         <p>' . $contenido . '</p>
                     ';
@@ -121,7 +113,7 @@ try {
                     $data = [
                         'contenido_msj'  => $contenidoCorreo,
                         'usuario_email'  => $datosDestinatario['uss_email'],
-                        'usuario_nombre' => $datosDestinatario['uss_nombre'],
+                        'usuario_nombre' => $_SESSION["datosUsuario"]['uss_nombre'],
                         'institucion_id' => $config['conf_id_institucion'],
                         'usuario_id'     => $destinatarioId
                     ];
