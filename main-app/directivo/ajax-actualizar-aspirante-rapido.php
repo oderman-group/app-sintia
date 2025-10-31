@@ -29,8 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $aspId = $_POST['asp_id'] ?? null;
         $matId = $_POST['mat_id'] ?? null;
         $estadoSolicitud = $_POST['estado_solicitud'] ?? null;
-        $observacion = trim($_POST['observacion'] ?? '');
+        $observacionRaw = trim($_POST['observacion'] ?? '');
         $enviarCorreo = $_POST['enviar_correo'] ?? '2';
+        
+        // Convertir texto plano a HTML básico (desde modal el usuario escribe texto plano)
+        // Si ya tiene HTML (desde CKEditor), lo mantiene
+        if ($observacionRaw != strip_tags($observacionRaw)) {
+            // Ya tiene HTML, mantenerlo
+            $observacion = $observacionRaw;
+        } else {
+            // Es texto plano, convertir a HTML básico
+            $observacion = !empty($observacionRaw) ? '<p>' . nl2br(htmlspecialchars($observacionRaw)) . '</p>' : '';
+        }
         
         // Validar campos obligatorios
         if (empty($aspId) || empty($matId) || empty($estadoSolicitud)) {
@@ -59,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Obtener datos para el correo
             $sqlCorreo = "SELECT 
                             mat.mat_nombres, mat.mat_primer_apellido, mat.mat_segundo_apellido,
+                            mat.mat_documento,
                             asp.asp_nombre_acudiente, asp.asp_email_acudiente,
                             asp.asp_estado_solicitud, asp.asp_observacion
                           FROM ".BD_ACADEMICA.".academico_matriculas mat
@@ -76,9 +87,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtCorreo->execute();
             $datosCorreo = $stmtCorreo->fetch(PDO::FETCH_ASSOC);
             
-            // TODO: Implementar envío de correo
-            // Por ahora solo registramos que se solicitó
-            error_log("Se solicitó enviar correo al acudiente: " . $datosCorreo['asp_email_acudiente']);
+            if ($datosCorreo && !empty($datosCorreo['asp_email_acudiente'])) {
+                require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
+                
+                // Obtener datos de usuario secretaria/o para el correo
+                $ussQuery = "SELECT * FROM ".BD_GENERAL.".usuarios 
+                             WHERE uss_id = :idSecretaria 
+                             AND institucion = :idInstitucion 
+                             AND year = :year";
+                $ussStmt = $conexionPDO->prepare($ussQuery);
+                $ussStmt->bindParam(':idSecretaria', $datosInfo['info_secretaria_academica'], PDO::PARAM_STR);
+                $ussStmt->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+                $ussStmt->bindParam(':year', $_SESSION["bd"], PDO::PARAM_STR);
+                $ussStmt->execute();
+                $datosUss = $ussStmt->fetch(PDO::FETCH_ASSOC);
+                
+                $nombreUss = strtoupper(($datosUss['uss_nombre'] ?? '') . " " . ($datosUss['uss_apellido1'] ?? ''));
+                
+                // Preparar datos para el template de correo
+                $data = [
+                    'usuario_email'   => $datosCorreo['asp_email_acudiente'],
+                    'usuario_nombre'  => $datosCorreo['asp_nombre_acudiente'],
+                    'usuario2_email'  => $datosUss['uss_email'] ?? '',
+                    'usuario2_nombre' => $nombreUss,
+                    'solicitud_id'    => $aspId,
+                    'observaciones'   => $observacion,
+                    'institucion_id'  => $config['conf_id_institucion'],
+                    'id_aspirante'    => $datosCorreo['mat_documento']
+                ];
+                
+                $asunto = 'Actualización de solicitud de admisión ' . $aspId;
+                $bodyTemplateRoute = ROOT_PATH . '/config-general/template-email-formulario-inscripcion.php';
+                
+                // Enviar correo
+                try {
+                    EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                } catch (Exception $e) {
+                    error_log("Error al enviar correo: " . $e->getMessage());
+                }
+            }
         }
         
         jsonResponse(['success' => true, 'message' => 'Aspirante actualizado correctamente.']);

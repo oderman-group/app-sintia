@@ -166,7 +166,7 @@ class EnviarEmail {
      */
     private static function mensajeError($email) 
     {
-        $msj              = ' el Correo '.$email.' no cumple con la estructura de un correo valido';
+        $msj              = 'Correo electrónico inválido. El correo <strong>"'.htmlspecialchars($email).'"</strong> no cumple con la estructura de un correo válido. Por favor, verifique que el formato sea correcto (ejemplo: usuario@dominio.com)';
         $url              = $_SERVER["HTTP_REFERER"];
         $pos              = strpos($url, "?");
         $simbolConcatenar = $pos === false ? "?" : "&";

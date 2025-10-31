@@ -156,7 +156,11 @@ $Plataforma = new Plataforma;
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px;">
                                 <tr>
                                     <td align="center">
-                                        <a href="<?= REDIRECT_ROUTE; ?>/admisiones/consultar-estado.php?idInst=<?= $_REQUEST['idInst']; ?>&solicitud=<?= base64_encode($data['solicitud_id']); ?>&documento=<?= base64_encode($data['solicitud_documento']); ?>" 
+                                        <?php 
+                                        $idInstParam = !empty($_REQUEST['idInst']) ? $_REQUEST['idInst'] : base64_encode($data['institucion_id'] ?? '');
+                                        $urlConsultaSolicitud = REDIRECT_ROUTE . '/admisiones/consultar-estado.php?idInst=' . $idInstParam . '&solicitud=' . base64_encode($data['solicitud_id']) . '&documento=' . base64_encode($data['solicitud_documento']);
+                                        ?>
+                                        <a href="<?= $urlConsultaSolicitud; ?>" 
                                            style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
                                             🔍 Consultar Estado de Solicitud
                                         </a>

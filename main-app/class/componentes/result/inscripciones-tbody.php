@@ -327,6 +327,18 @@ $(document).ready(function() {
 </div>
 
 <script>
+// Función auxiliar para limpiar HTML y obtener solo el texto
+function stripHtmlTags(html) {
+	if (!html) return '';
+	
+	// Crear un elemento temporal para parsear el HTML
+	var tmp = document.createElement('div');
+	tmp.innerHTML = html;
+	
+	// Obtener solo el texto sin etiquetas
+	return tmp.textContent || tmp.innerText || '';
+}
+
 // Función para abrir modal de edición de aspirante
 function abrirModalEdicionAspirante(aspId, matId) {
 	// Limpiar formulario
@@ -347,9 +359,12 @@ function abrirModalEdicionAspirante(aspId, matId) {
 			if (response.success) {
 				var aspirante = response.data;
 				
+				// Limpiar HTML de la observación para mostrar solo texto en el textarea
+				var observacionTexto = stripHtmlTags(aspirante.asp_observacion || '');
+				
 				// Llenar formulario
 				$('#estado_solicitud_modal').val(aspirante.asp_estado_solicitud || '');
-				$('#observacion_modal').val(aspirante.asp_observacion || '');
+				$('#observacion_modal').val(observacionTexto);
 				
 				// Restaurar botón
 				$('#btnGuardarAspirante').html('<i class="fa fa-save"></i> Guardar Cambios').prop('disabled', false);
