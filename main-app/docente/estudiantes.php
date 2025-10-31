@@ -66,6 +66,9 @@ include("../compartido/head.php");
 														$fotoEstudiante = $usuariosClase->verificarFoto($resultado['uss_foto']);
 														$consultaGenero=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_id='".$resultado['mat_genero']."'");
 														 $genero = mysqli_fetch_array($consultaGenero, MYSQLI_BOTH);
+														 if (!$genero) {
+															$genero = array('', 'N/A'); // Valor por defecto si no se encuentra
+														 }
 														//DEFINITIVAS
 														$carga = $cargaConsultaActual;
 														$periodo = $periodoConsultaActual;

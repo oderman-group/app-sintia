@@ -13,24 +13,49 @@
     }
 
     //COMPROBAMOS QUE NO EXISTA LA RUTA
+    // Migrado a PDO - Consultas preparadas
     try{
-        $verificar=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id!='".$_POST["codigoPagina"]."' AND pagp_ruta='".$_POST["rutaPagina"]."' AND pagp_tipo_usuario='".$_POST["tipoUsuario"]."'");
-    } catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
-    $numIdPaginas=mysqli_num_rows($verificar);
-    
-    if($numIdPaginas>0){
-        $datosPaginas=mysqli_fetch_array($verificar, MYSQLI_BOTH);
-        include("../compartido/guardar-historial-acciones.php");
-        echo '<script type="text/javascript">window.location.href="dev-paginas-editar.php?error=ER_DT_14&idP='.base64_encode($_POST["codigoPagina"]).'&id='.base64_encode($datosPaginas['pagp_id']).'&nombrePagina='.$datosPaginas['pagp_pagina'].'";</script>';
-        exit();
-    }
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        
+        $sql = "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad 
+                WHERE pagp_id!=? AND pagp_ruta=? AND pagp_tipo_usuario=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["codigoPagina"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["rutaPagina"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["tipoUsuario"], PDO::PARAM_STR);
+        $stmt->execute();
+        $numIdPaginas = $stmt->rowCount();
+        
+        if($numIdPaginas>0){
+            $datosPaginas = $stmt->fetch(PDO::FETCH_ASSOC);
+            include("../compartido/guardar-historial-acciones.php");
+            echo '<script type="text/javascript">window.location.href="dev-paginas-editar.php?error=ER_DT_14&idP='.base64_encode($_POST["codigoPagina"]).'&id='.base64_encode($datosPaginas['pagp_id']).'&nombrePagina='.$datosPaginas['pagp_pagina'].'";</script>';
+            exit();
+        }
 
-    $paginaDependencia=!empty($_POST["paginaDependencia"])?implode(',',$_POST["paginaDependencia"]):NULL;
+        $paginaDependencia=!empty($_POST["paginaDependencia"])?implode(',',$_POST["paginaDependencia"]):NULL;
 
-    try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".paginas_publicidad SET pagp_pagina='".$_POST["nombrePagina"]."', pagp_tipo_usuario='".$_POST["tipoUsuario"]."', pagp_modulo='".$_POST["modulo"]."', pagp_ruta='".$_POST["rutaPagina"]."', pagp_palabras_claves='".$_POST["palabrasClaves"]."', pagp_navegable='".$_POST["navegable"]."', pagp_asignable_subroles='".$_POST["subroles"]."', pagp_crud='".$_POST["crud"]."', pagp_pagina_padre='".$_POST["paginaPadre"]."', pagp_url_youtube='".$_POST["urlYoutube"]."', pagp_descripcion='".$_POST["descripcion"]."', pagp_paginas_dependencia='".$paginaDependencia."' WHERE pagp_id='".$_POST["codigoPagina"]."'");
+        $sqlUpdate = "UPDATE ".$baseDatosServicios.".paginas_publicidad SET 
+                      pagp_pagina=?, pagp_tipo_usuario=?, pagp_modulo=?, pagp_ruta=?, pagp_palabras_claves=?, 
+                      pagp_navegable=?, pagp_asignable_subroles=?, pagp_crud=?, pagp_pagina_padre=?, 
+                      pagp_url_youtube=?, pagp_descripcion=?, pagp_paginas_dependencia=? 
+                      WHERE pagp_id=?";
+        $stmtUpdate = $conexionPDO->prepare($sqlUpdate);
+        $stmtUpdate->bindParam(1, $_POST["nombrePagina"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(2, $_POST["tipoUsuario"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(3, $_POST["modulo"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(4, $_POST["rutaPagina"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(5, $_POST["palabrasClaves"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(6, $_POST["navegable"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(7, $_POST["subroles"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(8, $_POST["crud"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(9, $_POST["paginaPadre"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(10, $_POST["urlYoutube"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(11, $_POST["descripcion"], PDO::PARAM_STR);
+        $stmtUpdate->bindParam(12, $paginaDependencia, PDO::PARAM_STR);
+        $stmtUpdate->bindParam(13, $_POST["codigoPagina"], PDO::PARAM_STR);
+        $stmtUpdate->execute();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

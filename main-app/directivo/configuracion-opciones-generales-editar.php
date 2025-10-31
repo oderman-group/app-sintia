@@ -53,12 +53,19 @@ include("../compartido/head.php");
                                 	<div class="panel-body">
 
                                     <?php
+                                        // Migrado a PDO - Consulta preparada
                                         try{
-                                            $consulta = mysqli_query($conexion, "SELECT * FROM $baseDatosServicios.opciones_generales WHERE ogen_id='".base64_decode($_GET["idogen"])."'");
+                                            require_once(ROOT_PATH."/main-app/class/Conexion.php");
+                                            $conexionPDO = Conexion::newConnection('PDO');
+                                            $idOpcion = base64_decode($_GET["idogen"]);
+                                            $sql = "SELECT * FROM $baseDatosServicios.opciones_generales WHERE ogen_id=?";
+                                            $stmt = $conexionPDO->prepare($sql);
+                                            $stmt->bindParam(1, $idOpcion, PDO::PARAM_STR);
+                                            $stmt->execute();
+                                            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
                                         } catch (Exception $e) {
                                             include("../compartido/error-catch-to-report.php");
                                         }
-                                        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);	
                                     ?>
                                     <form action="configuracion-opciones-generales-actualizar.php" method="post" class="form-horizontal" enctype="multipart/form-data">
                                     <input type="hidden" name="idogen" value="<?=base64_decode($_GET["idogen"])?>">

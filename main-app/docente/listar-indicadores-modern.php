@@ -6,9 +6,10 @@ if (empty($_SESSION["id"])) {
 require_once(ROOT_PATH . "/main-app/class/Indicadores.php");
 
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
-$porcentajePermitido = 100 - $sumaIndicadores[0];
-$porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
-$porcentajeActual = $sumaIndicadores[1];
+$porcentajePermitido = 100 - ($sumaIndicadores[0] ?? 0);
+$porcentajeRestante = ($porcentajePermitido - ($sumaIndicadores[1] ?? 0));
+$porcentajeActual = $sumaIndicadores[1] ?? 0;
+$totalIndicadores = $totalIndicadores ?? 0;
 
 $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)");
 ?>
@@ -20,11 +21,11 @@ $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)"
         if (
             (
                 ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
-                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
                 )
                 ||
                 ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
-                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
                     && $porcentajeRestante > 0)
             )
             && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
@@ -90,7 +91,7 @@ $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)"
     </div>
 <?php } ?>
 
-<?php if ($datosCargaActual['car_maximos_indicadores'] <= $sumaIndicadores[2]) { ?>
+<?php if ($datosCargaActual['car_maximos_indicadores'] <= $totalIndicadores) { ?>
     <div class="alert-modern alert-warning-modern">
         <i class="fa fa-exclamation-triangle"></i>
         <span>Has alcanzado el número máximo de indicadores permitidos.</span>
@@ -201,7 +202,7 @@ if ($numIndicadores > 0) {
         </div>
         <div class="porcentaje-card">
             <div class="porcentaje-label">Total Indicadores</div>
-            <div class="porcentaje-value" style="color: #3498db;"><?php echo $sumaIndicadores[2]; ?></div>
+            <div class="porcentaje-value" style="color: #3498db;"><?php echo $totalIndicadores; ?></div>
             <div style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
                 Máx: <?php echo $datosCargaActual['car_maximos_indicadores']; ?>
             </div>
@@ -219,11 +220,11 @@ if ($numIndicadores > 0) {
         if (
             (
                 ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
-                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
                 )
                 ||
                 ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
-                    && $sumaIndicadores[2] < $datosCargaActual['car_maximos_indicadores']
+                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
                     && $porcentajeRestante > 0)
             )
             && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
@@ -254,7 +255,7 @@ if ($numIndicadores > 0) {
         </div>
         <div class="porcentaje-card">
             <div class="porcentaje-label">Total Indicadores</div>
-            <div class="porcentaje-value" style="color: #3498db;"><?php echo $sumaIndicadores[2]; ?></div>
+            <div class="porcentaje-value" style="color: #3498db;"><?php echo $totalIndicadores; ?></div>
             <div style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
                 Máx: <?php echo $datosCargaActual['car_maximos_indicadores']; ?>
             </div>

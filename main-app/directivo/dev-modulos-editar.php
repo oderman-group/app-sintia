@@ -9,12 +9,19 @@ Modulos::verificarPermisoDev();
 
 include("../compartido/head.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    $consulta=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".modulos WHERE mod_id=".base64_decode($_GET["id"]).";");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idModulo = base64_decode($_GET["id"]);
+    $sql = "SELECT * FROM ".$baseDatosServicios.".modulos WHERE mod_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idModulo, PDO::PARAM_INT);
+    $stmt->execute();
+    $datosModulo = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-$datosModulo=mysqli_fetch_array($consulta, MYSQLI_BOTH);
 $clientes = explode(",", $datosModulo['mod_types_customer']);
 ?>
 

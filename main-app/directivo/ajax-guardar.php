@@ -17,9 +17,17 @@ if($_POST["operacion"]==1){
 }
 
 if($_POST["operacion"]==3){
+	// Migrado a PDO - Consulta preparada
 	try{
-		mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".instituciones SET ins_bloqueada='".$_POST["valor"]."' 
-		WHERE ins_id='".$_POST["idR"]."' AND ins_enviroment='".ENVIROMENT."'");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "UPDATE ".$baseDatosServicios.".instituciones SET ins_bloqueada=? 
+		        WHERE ins_id=? AND ins_enviroment=?";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $_POST["valor"], PDO::PARAM_STR);
+		$stmt->bindParam(2, $_POST["idR"], PDO::PARAM_STR);
+		$stmt->bindParam(3, ENVIROMENT, PDO::PARAM_STR);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

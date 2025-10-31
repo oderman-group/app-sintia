@@ -81,7 +81,7 @@ if ($newId > 0) {
     //Guardar información en SINTIA COLEGIOS
 
     //Estudiante
-    $estuQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_permiso1, uss_foto, uss_portada, uss_idioma, uss_tema, uss_tipo_documento, uss_apellido1, institucion, year, uss_documento, uss_nombre2, uss_apellido2)VALUES(:codigo, :ussDocumento, SHA1('12345678'), 4, :ussNombres, 0, 0, 'default.png', 'default.png', 1, 'green', :ussTipoDocumento, :ussApellido1, :idInstitucion, :year, :ussDNI, :nombre2, :apellido2)";
+    $estuQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_permiso1, uss_foto, uss_portada, uss_idioma, uss_tema, uss_tipo_documento, uss_apellido1, institucion, year, uss_documento, uss_nombre2, uss_apellido2, uss_tema_sidebar, uss_tema_header, uss_tema_logo)VALUES(:codigo, :ussDocumento, SHA1('12345678'), 4, :ussNombres, 0, 0, 'default.png', 'default.png', 1, 'green', :ussTipoDocumento, :ussApellido1, :idInstitucion, :year, :ussDNI, :nombre2, :apellido2, 'white-sidebar-color', 'header-white', 'logo-white')";
 
     $estuId = Utilidades::generateCode("USS");
     $estu   = $pdoI->prepare($estuQuery);
@@ -99,7 +99,7 @@ if ($newId > 0) {
     $estu->execute();
 
     //Acudiente
-    $acudienteQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_email, uss_celular, institucion, year, uss_documento, uss_nombre2, uss_apellido1, uss_apellido2, uss_tipo_documento)VALUES(:codigo, :usuario, SHA1('12345678'), 3, :nombre, :email, :celular, :idInstitucion, :year, :ussDNI, :nombre2, :apellido1, :apellido2, :ussTipoDocumento)";
+    $acudienteQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_email, uss_celular, institucion, year, uss_documento, uss_nombre2, uss_apellido1, uss_apellido2, uss_tipo_documento, uss_idioma, uss_tema_sidebar, uss_tema_header, uss_tema_logo)VALUES(:codigo, :usuario, SHA1('12345678'), 3, :nombre, :email, :celular, :idInstitucion, :year, :ussDNI, :nombre2, :apellido1, :apellido2, :ussTipoDocumento, 1, 'white-sidebar-color', 'header-white', 'logo-white')";
 
     $acuId     = Utilidades::generateCode("USS");
     $acudiente = $pdoI->prepare($acudienteQuery);
@@ -118,8 +118,8 @@ if ($newId > 0) {
     $acudiente->bindParam(':ussTipoDocumento', $_POST['tipoDocumentoAcudiente'], PDO::PARAM_INT);
     $acudiente->execute();
 
-    //Padre
-    $padreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year)VALUES(:codigo, 3, :idInstitucion, :year)";
+    //Padre (Se hace la relación en la tabla para luego actualizar)
+    $padreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year, uss_nombre, uss_estado)VALUES(:codigo, 3, :idInstitucion, :year, 'PADRE_TMP', 0)";
     $padreId    = Utilidades::generateCode("USS");
     $padre      = $pdoI->prepare($padreQuery);
 
@@ -128,8 +128,8 @@ if ($newId > 0) {
     $padre->bindParam(':year', $config['conf_agno'], PDO::PARAM_STR);
     $padre->execute();
 
-    //Madre
-    $madreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year)VALUES(:codigo, 3, :idInstitucion, :year)";
+    //Madre (Se hace la relación en la tabla para luego actualizar)
+    $madreQuery = "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_tipo, institucion, year, uss_nombre, uss_estado)VALUES(:codigo, 3, :idInstitucion, :year, 'MADRE_TMP', 0)";
     $madreId    = Utilidades::generateCode("USS");
     $madre      = $pdoI->prepare($madreQuery);
 
@@ -168,7 +168,7 @@ if ($newId > 0) {
         $config['conf_agno']
     );
 
-    //Documentos
+    //Documentos (Se hace la relación en la tabla para luego actualizar)
     Inscripciones::guardarDocumentos($pdoI, $config, $idEstudiante);
     Inscripciones::finalizarTransacion();
 
@@ -192,7 +192,9 @@ if ($newId > 0) {
 
 	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
 
-    echo '<script type="text/javascript">window.location.href="consultar-estado.php?solicitud='.base64_encode($newId).'&documento='.base64_encode($_POST['documento']).'&idInst='.$_REQUEST['idInst'].'";</script>';
+    // Mostrar página de confirmación moderna
+    $urlConsulta = "consultar-estado.php?solicitud=".base64_encode($newId)."&documento=".base64_encode($_POST['documento'])."&idInst=".$_REQUEST['idInst'];
+    include("confirmation-template.php");
     exit();
 } else {
     redireccionMal('index.php', 3);

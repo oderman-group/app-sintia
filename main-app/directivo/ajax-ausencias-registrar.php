@@ -11,8 +11,17 @@ if(empty($rC)){
 
 	Ausencias::guardarAusencia($conexionPDO, "aus_id_estudiante, aus_ausencias, aus_id_clase, institucion, year, aus_id", [$_POST["codEst"],$_POST["nota"],$_POST["codNota"], $config['conf_id_institucion'], $_SESSION["bd"]]);
 	
+	// Migrado a PDO - Consulta preparada
 	try{
-		mysqli_query($conexion, "UPDATE academico_clases SET cls_registrada=1, cls_fecha_registro=now() WHERE cls_id='".$_POST["codNota"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "UPDATE academico_clases SET cls_registrada=1, cls_fecha_registro=now() 
+		        WHERE cls_id=? AND institucion=? AND year=?";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $_POST["codNota"], PDO::PARAM_STR);
+		$stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}	
@@ -23,8 +32,14 @@ if(empty($rC)){
 	];
 	Ausencias::actualizarAusencia($config, $rC['aus_id'], $update);
 	
+	// Migrado a PDO - Consulta preparada
 	try{
-		mysqli_query($conexion, "UPDATE academico_clases SET cls_registrada=1, cls_fecha_modificacion=now() WHERE cls_id='".$_POST["codNota"]."'");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "UPDATE academico_clases SET cls_registrada=1, cls_fecha_modificacion=now() WHERE cls_id=?";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $_POST["codNota"], PDO::PARAM_STR);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}	

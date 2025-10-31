@@ -1516,7 +1516,6 @@ class Estudiantes {
                  INNER JOIN ".BD_ADMISIONES.".aspirantes asp
                  ON asp_id = mat.mat_solicitud_inscripcion
                  AND asp_institucion = ?
-                 AND asp_agno = ?
                  
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
                  ON gra_id = asp_grado 
@@ -1533,7 +1532,7 @@ class Estudiantes {
                  
                  {$limite}";
 
-        $parametros = [$config['conf_id_institucion'], $year, $config['conf_id_institucion'], $year];
+        $parametros = [$config['conf_id_institucion'], $config['conf_id_institucion'], $year];
         
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 

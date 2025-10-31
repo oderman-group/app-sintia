@@ -11,12 +11,19 @@ Modulos::verificarPermisoDev();
 
 include("../compartido/head.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    $consulta=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id='".base64_decode($_GET["idP"])."'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idPagina = base64_decode($_GET["idP"]);
+    $sql = "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idPagina, PDO::PARAM_STR);
+    $stmt->execute();
+    $datosPaginas = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-$datosPaginas=mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
 $disabled='';
 if(!Modulos::validarPaginasHijasSubRol(base64_decode($_GET["idP"]))){

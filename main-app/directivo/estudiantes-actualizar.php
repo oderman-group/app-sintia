@@ -154,7 +154,7 @@ if ($_POST["documentoA"]!="") {
 		UsuariosPadre::actualizarUsuarios($config, $acudiente['uss_id'], $update);
 		$idAcudiente = $acudiente['uss_id'];
 	} else {
-		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
+		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 	}
 
 	$update = ['mat_acudiente' => $idAcudiente];
@@ -169,8 +169,20 @@ if ($_POST["documentoA"]!="") {
 
 	$idInsercion  =Utilidades::generateCode("UPE");
 
+	// Migrado a PDO - Consulta preparada
 	try {
-		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(upe_id, upe_id_usuario, upe_id_estudiante, institucion, year)VALUES('" .$idInsercion . "', '".$idAcudiente."', '".$_POST["id"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(
+		    upe_id, upe_id_usuario, upe_id_estudiante, institucion, year
+		) VALUES (?, ?, ?, ?, ?)";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $idInsercion, PDO::PARAM_STR);
+		$stmt->bindParam(2, $idAcudiente, PDO::PARAM_STR);
+		$stmt->bindParam(3, $_POST["id"], PDO::PARAM_STR);
+		$stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}	
