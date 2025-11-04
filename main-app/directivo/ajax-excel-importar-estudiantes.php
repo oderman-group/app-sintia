@@ -162,9 +162,10 @@ function mapearEstrato($numero) {
     $numeroOriginal = $numero;
     $numero = trim($numero);
     
-    // Si está vacío, devolver vacío
+    // Si está vacío, devolver null para que se inserte NULL en BD
     if (empty($numero)) {
-        return '';
+        error_log("Mapeo Estrato: vacío -> null");
+        return null;
     }
     
     // Si ya es un código numérico entre 114-125, devolverlo
@@ -174,11 +175,11 @@ function mapearEstrato($numero) {
     }
     
     // Mapear número a código
-    $codigo = isset($estratos[$numero]) ? $estratos[$numero] : '';
-    if (!empty($codigo)) {
+    $codigo = isset($estratos[$numero]) ? $estratos[$numero] : null;
+    if ($codigo !== null) {
         error_log("Mapeo Estrato: '$numeroOriginal' -> '$codigo'");
     } else {
-        error_log("Mapeo Estrato: '$numeroOriginal' -> sin mapeo (vacío)");
+        error_log("Mapeo Estrato: '$numeroOriginal' -> sin mapeo (null)");
     }
     
     return $codigo;
@@ -197,9 +198,10 @@ function mapearGenero($inicial) {
     $inicialOriginal = $inicial;
     $inicial = strtoupper(trim($inicial));
     
-    // Si está vacío, devolver vacío
+    // Si está vacío, devolver null para que se inserte NULL en BD
     if (empty($inicial)) {
-        return '';
+        error_log("Mapeo Género: vacío -> null");
+        return null;
     }
     
     // Si ya es un código numérico (126 o 127), devolverlo
@@ -209,11 +211,11 @@ function mapearGenero($inicial) {
     }
     
     // Mapear inicial a código
-    $codigo = isset($generos[$inicial]) ? $generos[$inicial] : '';
-    if (!empty($codigo)) {
+    $codigo = isset($generos[$inicial]) ? $generos[$inicial] : null;
+    if ($codigo !== null) {
         error_log("Mapeo Género: '$inicialOriginal' -> '$codigo'");
     } else {
-        error_log("Mapeo Género: '$inicialOriginal' -> sin mapeo (vacío)");
+        error_log("Mapeo Género: '$inicialOriginal' -> sin mapeo (null)");
     }
     
     return $codigo;
@@ -510,12 +512,12 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             'grado' => cleanExcelData($rowData['Grado']),
             'grupo' => intval(cleanExcelData($rowData['Grupo'] ?? '1')),
             'fNac' => $fechaNacimiento,
-            'genero' => mapearGenero(cleanExcelData($rowData['Genero'] ?? '')),
+            'genero' => mapearGenero(cleanExcelData($rowData['Genero'] ?? '')),  // Retorna null si está vacío
             'direccion' => cleanExcelData($rowData['Direccion'] ?? ''),
             'barrio' => cleanExcelData($rowData['Barrio'] ?? ''),
             'celular' => cleanExcelData($rowData['Celular'] ?? ''),
             'email' => cleanExcelData($rowData['Email'] ?? ''),
-            'estrato' => mapearEstrato(cleanExcelData($rowData['Estrato'] ?? '')),
+            'estrato' => mapearEstrato(cleanExcelData($rowData['Estrato'] ?? '')),  // Retorna null si está vacío
             'tipoSangre' => cleanExcelData($rowData['Grupo Sanguineo'] ?? ''),
             'eps' => cleanExcelData($rowData['EPS'] ?? '')
         ];
@@ -617,13 +619,33 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
         $stmt->bindParam(':nombre2', $nombre2, PDO::PARAM_STR);
         $stmt->bindParam(':grado', $grado, PDO::PARAM_STR);
         $stmt->bindParam(':grupo', $grupo, PDO::PARAM_INT);
-        $stmt->bindParam(':fNac', $fNac, PDO::PARAM_STR);
-        $stmt->bindParam(':genero', $genero, PDO::PARAM_STR);
+        
+        // Fecha de nacimiento puede ser NULL
+        if ($fNac === null) {
+            $stmt->bindParam(':fNac', $fNac, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindParam(':fNac', $fNac, PDO::PARAM_STR);
+        }
+        
+        // Género puede ser NULL (si no viene en Excel o no se mapea)
+        if ($genero === null) {
+            $stmt->bindParam(':genero', $genero, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindParam(':genero', $genero, PDO::PARAM_INT);
+        }
+        
         $stmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $stmt->bindParam(':barrio', $barrio, PDO::PARAM_STR);
         $stmt->bindParam(':celular', $celular, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':estrato', $estrato, PDO::PARAM_STR);
+        
+        // Estrato puede ser NULL (si no viene en Excel o no se mapea)
+        if ($estrato === null) {
+            $stmt->bindParam(':estrato', $estrato, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindParam(':estrato', $estrato, PDO::PARAM_INT);
+        }
+        
         $stmt->bindParam(':tipoSangre', $tipoSangre, PDO::PARAM_STR);
         $stmt->bindParam(':eps', $eps, PDO::PARAM_STR);
         $stmt->bindParam(':institucion', $institucion, PDO::PARAM_STR);
