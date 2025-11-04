@@ -7,6 +7,7 @@ require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.ph
 
 if(isset($_SESSION["id"]) and $_SESSION["id"]!=""){
 	$_SESSION["id"] = $_SESSION["id"];
+	error_log("Asignando sesion ID ".$_SESSION["id"]);
 }
 
 date_default_timezone_set("America/Bogota");//Zona horaria

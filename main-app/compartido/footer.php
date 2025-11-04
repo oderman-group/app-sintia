@@ -186,13 +186,13 @@ if(typeof formulario !== 'undefined' && formulario !== null) {
 </div>
 <!-- end footer -->
 <?php 
-error_log("El usuario llega hasta el footer antes de cerrar la conexión: ". $_SESSION["id"]);
+error_log("El usuario llega hasta el footer antes de cerrar la conexión: ". $_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);
 ?>
 
 <?php Conexion::getConexion()->closeConnection(); ?>
 
 <?php 
-error_log("El usuario llega hasta el footer después de cerrar la conexión: ".$_SESSION["id"]);
+error_log("El usuario llega hasta el footer después de cerrar la conexión: ".$_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);
 ?>
 
 
