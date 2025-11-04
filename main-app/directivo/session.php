@@ -6,6 +6,7 @@ if (isset($_SESSION["idO"]) and $_SESSION["idO"]!="") {
 } else {
 	$idSession = $_SESSION["id"];
 }
+error_log("Hay sesion activa de directivo: ".$idSession);
 
 if (empty($idSession)) {
 	require_once '../class/Utilidades.php';

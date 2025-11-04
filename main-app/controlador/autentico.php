@@ -180,7 +180,7 @@ if ($num>0)
 	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_estado=1, uss_ultimo_ingreso=now(), uss_intentos_fallidos=0 WHERE uss_id='".$fila['uss_id']."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
 
 	error_log("El usuario se autenticó bien ID: ".$_SESSION["id"]);
-	error_log("Datos del usuario autenticado: ".$_SESSION["datosUsuario"]);
+	error_log("Datos del usuario autenticado: ".$_SESSION["datosUsuario"]['uss_nombre']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
