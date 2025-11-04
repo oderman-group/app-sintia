@@ -2,7 +2,7 @@
 include("../modelo/conexion.php");
 require_once("../class/Modulos.php");
 
-error_log("Entrando al inicio de la pagina historial-acciones-guardar.php para verificar permisos");
+error_log("Entrando al inicio de la pagina historial-acciones-guardar.php para verificar permisos: ".$idPaginaInterna . " - ".$_SESSION["id"]);
 
 $tienePermiso = Modulos::verificarPermisosPaginas($idPaginaInterna);
 
@@ -18,4 +18,4 @@ if (!$tienePermiso && $idPaginaInterna!='DT0107') {
 
 $datosPaginaActual = Modulos::datosPaginaActual($idPaginaInterna);
 
-error_log("Saliendo desde el final de la pagina historial-acciones-guardar.php para verificar permisos");
+error_log("Saliendo desde el final de la pagina historial-acciones-guardar.php para verificar permisos: ".$idPaginaInterna . " - ".$_SESSION["id"]);
