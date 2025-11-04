@@ -90,7 +90,7 @@ LIMIT ".$empezar.",1
 		}
 	});
 </script>
-<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV && false){ ?>
+<?php if(false && ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV)){ ?>
 <script>
 	socket.on("notificar_solicitud_desbloqueo_<?=$_SESSION['idInstitucion']?>", (data) => {
 		contadorUsuariosBloqueados();
