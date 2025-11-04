@@ -17,6 +17,7 @@ if (empty($_SESSION["inst"])) {
 	require_once ROOT_PATH.'/main-app/class/Utilidades.php';
 	$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
 	$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
+	error_log("La sesion inst está vacía, sacamos al usuario desde conexion. US-REF: ".$_SESSION["id"]. " - " .$_SERVER["HTTP_REFERER"]);
 	header("Location:".REDIRECT_ROUTE."?error=4&urlDefault=".$page."&directory=".$directory);
 	exit();
 } else {
