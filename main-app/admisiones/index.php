@@ -18,6 +18,7 @@ $institucionesCantidad = mysqli_num_rows($institucionesConsulta);
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <?php include(ROOT_PATH."/config-general/analytics/instituciones.php");?>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Admisiones | Plataforma sintia</title>

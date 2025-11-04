@@ -101,7 +101,7 @@ if(empty($_POST["inclusion"]))     $_POST["inclusion"]     = 0;
 if(empty($_POST["tipoMatricula"])) $_POST["tipoMatricula"] = GRADO_GRUPAL;
 
 
-//Api solo para Icolven
+//Api solo para MODULO_API_SION_ACADEMICA
 $estado  ='';
 $mensaje ='';
 
@@ -134,36 +134,36 @@ if ($acudienteNum > 0) {
     }
 
 	if(empty($_POST["generoA"]))		$_POST["generoA"]       = 126;
-	if(empty($_POST["ocupacionA"]))		$_POST["ocupacionA"]    = '';
+	if(empty($_POST["ocupacionA"]))		$_POST["ocupacionA"]    = 'NO REGISTRA OCUPACIÓN';
 	if(empty($_POST["fechaNA"]))		$_POST["fechaNA"]       = '2000-01-01';
 	if(empty($_POST["folio"]))       	$_POST["folio"]       	='';
 	if(empty($_POST["codTesoreria"]))   $_POST["codTesoreria"]  = '';
 	if(empty($_POST["tipoSangre"]))     $_POST["tipoSangre"]    = '';
 	if(empty($_POST["eps"]))       		$_POST["eps"]       	= 126;
 	if(empty($_POST["matestM"]))       	$_POST["matestM"]       = NO_MATRICULADO;
-	
-	
-	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto,uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
-}
 
-$fechaNA = isset($_POST["fechaNA"]) ? trim($_POST["fechaNA"]) : '';
-if ($fechaNA !== '') {
-    $birthA = DateTime::createFromFormat('Y-m-d', $fechaNA);
-    $errorsA = DateTime::getLastErrors();
-    $todayA = new DateTime('today');
-    $maxDateA = (clone $todayA)->modify('-14 years');
+    $fechaNA = isset($_POST["fechaNA"]) ? trim($_POST["fechaNA"]) : '';
 
-    $invalidFormatA = !$birthA || $errorsA['warning_count'] > 0 || $errorsA['error_count'] > 0;
-    $tooRecentA = !$invalidFormatA && $birthA > $maxDateA; // menor de 14 años
+    if ($fechaNA !== '') {
+        $birthA = DateTime::createFromFormat('Y-m-d', $fechaNA);
+        $errorsA = DateTime::getLastErrors();
+        $todayA = new DateTime('today');
+        $maxDateA = (clone $todayA)->modify('-14 years');
 
-    if ($invalidFormatA || $tooRecentA) {
-        if (isAjaxRequest()) {
-            jsonResponse(['ok'=>false,'message'=>'La fecha de nacimiento del acudiente debe ser de al menos 14 años.','field'=>'fechaNA']);
+        $invalidFormatA = !$birthA || $errorsA['warning_count'] > 0 || $errorsA['error_count'] > 0;
+        $tooRecentA = !$invalidFormatA && $birthA > $maxDateA; // menor de 14 años
+
+        if ($invalidFormatA || $tooRecentA) {
+            if (isAjaxRequest()) {
+                jsonResponse(['ok'=>false,'message'=>'La fecha de nacimiento del acudiente debe ser de al menos 14 años.','field'=>'fechaNA']);
+            }
+            include("../compartido/guardar-historial-acciones.php");
+            echo '<script type="text/javascript">window.location.href="estudiantes-agregar.php?error=ER_DT_FNAC_A'.$parametrosPost.'";</script>';
+            exit();
         }
-        include("../compartido/guardar-historial-acciones.php");
-        echo '<script type="text/javascript">window.location.href="estudiantes-agregar.php?error=ER_DT_FNAC_A'.$parametrosPost.'";</script>';
-        exit();
     }
+
+	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 }
 
 // Validación básica de email en backend
@@ -215,7 +215,9 @@ if ($_POST["tipoMatricula"]==GRADO_INDIVIDUAL && !empty($_POST["cursosAdicionale
 		include("../compartido/error-catch-to-report.php");
 	}
 }
+
 $idInsercion=Utilidades::generateCode("UPE");
+
 try{
 	mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(upe_id, upe_id_usuario, upe_id_estudiante, institucion, year)VALUES('" .$idInsercion . "', '".$idAcudiente."', '".$idEstudiante."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
 } catch (Exception $e) {
@@ -227,9 +229,11 @@ if(!isset($estado) AND !isset($mensaje)){
     $estado="";
     $mensaje="";
 }
+
 $idUsr = mysqli_insert_id($conexion);
 $estadoSintia=false;
 $mensajeSintia='El estudiante no pudo ser creado correctamente en SINTIA.';
+
 if(isset($idUsr) AND $idUsr!=''){
     $estadoSintia=true;
     $mensajeSintia='El estudiante fue creado correctamente en SINTIA.';

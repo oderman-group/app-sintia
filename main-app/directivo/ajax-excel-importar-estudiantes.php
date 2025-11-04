@@ -108,6 +108,117 @@ function validateExcelFile($file) {
     return $errors;
 }
 
+/**
+ * Mapeo de tipos de documento desde Excel a códigos de opciones_generales
+ * Códigos en BD_ADMIN.opciones_generales del 105 al 110
+ */
+function mapearTipoDocumento($iniciales) {
+    $tiposDocumento = [
+        'RC' => '108',    // Registro civil
+        'TI' => '107',    // Tarjeta de identidad
+        'CC' => '105',    // Cédula de ciudadanía
+        'CE' => '109',    // Cédula de extranjería
+        'PP' => '110',    // Pasaporte
+        'PE' => '139',    // Pasaporte (alternativa)
+        'NUIP' => '106'   // NUIP
+    ];
+    
+    $inicialesOriginal = $iniciales;
+    $iniciales = strtoupper(trim($iniciales));
+    
+    // Si ya es un código numérico, devolverlo
+    if (is_numeric($iniciales) && intval($iniciales) >= 105 && intval($iniciales) <= 110) {
+        error_log("Mapeo Tipo Doc: '$inicialesOriginal' ya es código -> mantiene '$iniciales'");
+        return $iniciales;
+    }
+    
+    // Mapear iniciales a código
+    $codigo = isset($tiposDocumento[$iniciales]) ? $tiposDocumento[$iniciales] : '105';
+    error_log("Mapeo Tipo Doc: '$inicialesOriginal' -> '$codigo'");
+    
+    return $codigo;
+}
+
+/**
+ * Mapeo de estratos desde Excel a códigos de opciones_generales
+ * Códigos en BD_ADMIN.opciones_generales del 114 al 125
+ */
+function mapearEstrato($numero) {
+    $estratos = [
+        '1' => '114',
+        '2' => '115',
+        '3' => '116',
+        '4' => '117',
+        '5' => '118',
+        '6' => '119',
+        '7' => '120',
+        '8' => '121',
+        '9' => '122',
+        '10' => '123',
+        '11' => '124',
+        '12' => '125'
+    ];
+    
+    $numeroOriginal = $numero;
+    $numero = trim($numero);
+    
+    // Si está vacío, devolver vacío
+    if (empty($numero)) {
+        return '';
+    }
+    
+    // Si ya es un código numérico entre 114-125, devolverlo
+    if (is_numeric($numero) && intval($numero) >= 114 && intval($numero) <= 125) {
+        error_log("Mapeo Estrato: '$numeroOriginal' ya es código -> mantiene '$numero'");
+        return $numero;
+    }
+    
+    // Mapear número a código
+    $codigo = isset($estratos[$numero]) ? $estratos[$numero] : '';
+    if (!empty($codigo)) {
+        error_log("Mapeo Estrato: '$numeroOriginal' -> '$codigo'");
+    } else {
+        error_log("Mapeo Estrato: '$numeroOriginal' -> sin mapeo (vacío)");
+    }
+    
+    return $codigo;
+}
+
+/**
+ * Mapeo de géneros desde Excel a códigos de opciones_generales
+ * Códigos en BD_ADMIN.opciones_generales: 126 (Masculino), 127 (Femenino)
+ */
+function mapearGenero($inicial) {
+    $generos = [
+        'M' => '126',    // Masculino
+        'F' => '127'     // Femenino
+    ];
+    
+    $inicialOriginal = $inicial;
+    $inicial = strtoupper(trim($inicial));
+    
+    // Si está vacío, devolver vacío
+    if (empty($inicial)) {
+        return '';
+    }
+    
+    // Si ya es un código numérico (126 o 127), devolverlo
+    if (is_numeric($inicial) && (intval($inicial) == 126 || intval($inicial) == 127)) {
+        error_log("Mapeo Género: '$inicialOriginal' ya es código -> mantiene '$inicial'");
+        return $inicial;
+    }
+    
+    // Mapear inicial a código
+    $codigo = isset($generos[$inicial]) ? $generos[$inicial] : '';
+    if (!empty($codigo)) {
+        error_log("Mapeo Género: '$inicialOriginal' -> '$codigo'");
+    } else {
+        error_log("Mapeo Género: '$inicialOriginal' -> sin mapeo (vacío)");
+    }
+    
+    return $codigo;
+}
+
 // Función para limpiar datos de Excel
 function cleanExcelData($data) {
     // Manejar valores null
@@ -388,9 +499,9 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
         // Generar código de matrícula usando la función original
         $codigoMAT = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas');
         
-        // Preparar datos con limpieza extrema
+        // Preparar datos con limpieza extrema y conversión de códigos
         $datosLimpios = [
-            'tipoD' => cleanExcelData($rowData['Tipo de Documento'] ?? 'CC'),
+            'tipoD' => mapearTipoDocumento(cleanExcelData($rowData['Tipo de Documento'] ?? 'CC')),
             'nDoc' => cleanExcelData($rowData['Documento']),
             'nombres' => cleanExcelData($rowData['Primer Nombre']),
             'apellido1' => cleanExcelData($rowData['Primer Apellido']),
@@ -399,12 +510,12 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             'grado' => cleanExcelData($rowData['Grado']),
             'grupo' => intval(cleanExcelData($rowData['Grupo'] ?? '1')),
             'fNac' => $fechaNacimiento,
-            'genero' => cleanExcelData($rowData['Genero'] ?? ''),
+            'genero' => mapearGenero(cleanExcelData($rowData['Genero'] ?? '')),
             'direccion' => cleanExcelData($rowData['Direccion'] ?? ''),
             'barrio' => cleanExcelData($rowData['Barrio'] ?? ''),
             'celular' => cleanExcelData($rowData['Celular'] ?? ''),
             'email' => cleanExcelData($rowData['Email'] ?? ''),
-            'estrato' => cleanExcelData($rowData['Estrato'] ?? ''),
+            'estrato' => mapearEstrato(cleanExcelData($rowData['Estrato'] ?? '')),
             'tipoSangre' => cleanExcelData($rowData['Grupo Sanguineo'] ?? ''),
             'eps' => cleanExcelData($rowData['EPS'] ?? '')
         ];
@@ -567,7 +678,8 @@ function updateExistingStudentSafe($documento, $rowData, $actualizarCampo, $fech
                 case '3': // Tipo de Documento
                     if (isset($rowData['Tipo de Documento'])) {
                         $camposUpdate[] = "mat_tipo_documento = :tipoD";
-                        $valores['tipoD'] = cleanExcelData($rowData['Tipo de Documento']);
+                        // Aplicar mapeo de tipo de documento
+                        $valores['tipoD'] = mapearTipoDocumento(cleanExcelData($rowData['Tipo de Documento']));
                     }
                     break;
                 case '5': // Segundo nombre del estudiante
