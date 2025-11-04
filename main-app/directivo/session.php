@@ -17,7 +17,7 @@ if (empty($idSession)) {
 	require_once '../class/Utilidades.php';
 	$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
 	$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
-	error_log("Sacando al usuario sin sesión desde la pagina session.php");
+	error_log("Sacando al usuario sin sesión desde la pagina session.php: ".$_SERVER["HTTP_REFERER"] . " - ".$_SERVER["REMOTE_ADDR"]);
 	header("Location:../controlador/salir.php?urlDefault=".$page."&directory=".$directory);
 } else {
 	require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
