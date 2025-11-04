@@ -1,11 +1,16 @@
 <?php
 session_start();
+
+date_default_timezone_set('America/Bogota');
+error_log("Entra al archivo de sesion del directivo: ".$_SESSION["id"]);
+
 //Si otro usuario de mayor rango entra como él
 if (isset($_SESSION["idO"]) and $_SESSION["idO"]!="") {
 	$idSession = $_SESSION["idO"];
 } else {
 	$idSession = $_SESSION["id"];
 }
+
 error_log("Hay sesion activa de directivo: ".$idSession);
 
 if (empty($idSession)) {
