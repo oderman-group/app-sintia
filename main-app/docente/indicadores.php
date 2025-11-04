@@ -1614,11 +1614,11 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
         
         function inicializarIndicadores() {
             // Manejar z-index de dropdowns en la tabla
-            const table = document.querySelector('.indicadores-table-modern');
-            if (!table) return;
+            const table = $('.indicadores-table-modern');
+            if (!table.length) return;
             
             // Usar delegación de eventos para manejar todos los dropdowns
-            $(table).on('show.bs.dropdown', '.btn-group', function(e) {
+            table.on('show.bs.dropdown', '.btn-group', function(e) {
                 const btnGroup = $(this);
                 const row = btnGroup.closest('tr');
                 
@@ -1636,7 +1636,7 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                 btnGroup.addClass('open');
             });
             
-            $(table).on('hide.bs.dropdown', '.btn-group', function(e) {
+            table.on('hide.bs.dropdown', '.btn-group', function(e) {
                 const btnGroup = $(this);
                 const row = btnGroup.closest('tr');
                 

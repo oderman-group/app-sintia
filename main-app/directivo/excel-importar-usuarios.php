@@ -144,7 +144,7 @@ if($extension == 'xlsx'){
 					} else {
 
 						$idUsuarioEstudiante=Utilidades::generateCode("USS");
-						$sql .= "('".$idUsuarioEstudiante."', '".$arrayIndividual['uss_documento']."', '".$clavePorDefectoUsuarios."', '".$tipoUsuario."', '".$arrayIndividual['uss_nombre']."', 0, '".$arrayIndividual['uss_email']."', '".$arrayIndividual['uss_celular']."', '".$genero."', 'default.png', 'default.png', 1, 'green', 1, 0, now(), '".$_SESSION["id"]."', 0, 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', '".$tipoDocumento."', '".$arrayIndividual['uss_apellido1']."', '".$arrayIndividual['uss_apellido2']."', '".$arrayIndividual['uss_nombre2']."', '".$arrayIndividual['uss_documento']."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
+						$sql .= "('".$idUsuarioEstudiante."', '".$arrayIndividual['uss_documento']."', '".$clavePorDefectoUsuarios."', '".$tipoUsuario."', '".$arrayIndividual['uss_nombre']."', 0, '".$arrayIndividual['uss_email']."', '".$arrayIndividual['uss_celular']."', '".$genero."', 'default.png', 'default.png', 1, 'green', 1, 0, now(), '".$_SESSION["id"]."', 0, 'white-sidebar-color', 'header-white', 'logo-white', '".$tipoDocumento."', '".$arrayIndividual['uss_apellido1']."', '".$arrayIndividual['uss_apellido2']."', '".$arrayIndividual['uss_nombre2']."', '".$arrayIndividual['uss_documento']."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
 
 						$usuariosCreados["FILA_".$f] = $arrayIndividual['uss_documento'];
 

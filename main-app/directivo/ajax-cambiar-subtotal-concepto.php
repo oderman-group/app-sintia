@@ -5,8 +5,21 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0302';
 require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try {
-    $itemsConsulta = mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments_invoiced SET cantity='".$_REQUEST['cantidad']."', payment='".$_REQUEST['precio']."', subtotal='".$_REQUEST['subtotal']."' WHERE id='".$_REQUEST['idConcepto']."' AND institucion = {$config['conf_id_institucion']} AND year = {$_SESSION["bd"]}");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $sql = "UPDATE ".BD_FINANCIERA.".payments_invoiced 
+            SET cantity=?, payment=?, subtotal=? 
+            WHERE id=? AND institucion=? AND year=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_REQUEST['cantidad'], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_REQUEST['precio'], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_REQUEST['subtotal'], PDO::PARAM_STR);
+    $stmt->bindParam(4, $_REQUEST['idConcepto'], PDO::PARAM_STR);
+    $stmt->bindParam(5, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->bindParam(6, $_SESSION["bd"], PDO::PARAM_INT);
+    $stmt->execute();
 } catch(Exception $e) {
     echo $e->getMessage();
     exit();

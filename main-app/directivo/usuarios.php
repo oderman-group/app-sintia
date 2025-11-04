@@ -131,6 +131,9 @@ if (!Modulos::validarPermisoEdicion()) {
 		<!-- start page content -->
 		<div class="page-content-wrapper">
 			<div class="page-content">
+				<!-- Token CSRF para operaciones de eliminación -->
+				<?php echo Csrf::campoHTML(); ?>
+				
 				<div class="page-bar">
 					<div class="page-title-breadcrumb">
 						<div class=" pull-left">
@@ -856,6 +859,7 @@ if (!Modulos::validarPermisoEdicion()) {
 					<div id="usuarioFormulario" style="display:none;">
 						<input type="hidden" id="edit_idR" name="idR">
 						<input type="hidden" id="edit_tipoUsuario" name="tipoUsuario">
+						<?php echo Csrf::campoHTML(); ?>
 						
 						<div class="form-group">
 							<label>Usuario</label>
@@ -941,6 +945,7 @@ if (!Modulos::validarPermisoEdicion()) {
 			</div>
 			<form id="formAgregarUsuario" action="usuarios-guardar.php" method="post">
 				<div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+					<?php echo Csrf::campoHTML(); ?>
 					
 					<!-- Credenciales de acceso -->
 					<h5 class="mb-3"><i class="fa fa-key"></i> Credenciales de Acceso</h5>

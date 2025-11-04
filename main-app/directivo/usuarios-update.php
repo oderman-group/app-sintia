@@ -7,6 +7,7 @@ require_once("../class/SubRoles.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 $archivoSubido = new Archivos;
 
@@ -14,6 +15,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
+
+// Verificar token CSRF
+Csrf::verificar();
 
 if (!empty($_FILES['fotoUss']['name'])) {
 	$archivoSubido->validarArchivo($_FILES['fotoUss']['size'], $_FILES['fotoUss']['name']);
@@ -45,6 +49,9 @@ if ($intentosFallidos === false) {
     $intentosFallidos = 0;
 }
 
+// Obtener datos actuales del usuario ANTES de actualizar
+$datosAntesActualizar = UsuariosPadre::sesionUsuario($_POST["idR"]);
+
 $update = [
     "uss_usuario" => $_POST["usuario"],
     "uss_tipo" => $_POST["tipoUsuario"],
@@ -65,6 +72,22 @@ $update = [
 ];
 UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
+// Registrar auditoría si cambió el email
+if (!empty($datosAntesActualizar) && $datosAntesActualizar['uss_email'] !== strtolower($_POST["email"])) {
+	AuditoriaLogger::registrarEdicion(
+		'USUARIOS',
+		$_POST["idR"],
+		'Cambió email del usuario: ' . $_POST["usuario"],
+		[
+			'usuario' => $_POST["usuario"],
+			'email_anterior' => $datosAntesActualizar['uss_email'],
+			'email_nuevo' => strtolower($_POST["email"]),
+			'nombre_completo' => $_POST["nombre"] . ' ' . $_POST["apellido1"],
+			'admin' => $_SESSION["id"]
+		]
+	);
+}
+
 if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 
 	$validarClave=validarClave($_POST["clave"]);
@@ -81,12 +104,25 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 	];
 	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
+	// Registrar auditoría de cambio de contraseña por admin
+	AuditoriaLogger::registrarEdicion(
+		'SEGURIDAD',
+		$_POST["idR"],
+		'Admin cambió contraseña del usuario: ' . $_POST["usuario"],
+		[
+			'accion' => 'cambio_clave_admin',
+			'usuario_afectado' => $_POST["usuario"],
+			'email' => $_POST["email"],
+			'admin' => $_SESSION["id"]
+		]
+	);
+
 	$data = [
 		'institucion_id'   => $_SESSION["idInstitucion"],
 		'institucion_agno' => $_SESSION["bd"],
 		'usuario_id'       => $_POST["idR"],
 		'usuario_email'    => $_POST["email"],
-		'usuario_nombre'   => $datosUsuario['uss_nombre'],
+		'usuario_nombre'   => $_POST["nombre"] . ' ' . $_POST["apellido1"],
 		'usuario_usuario'  => $_POST["usuario"],
 		'nueva_clave'      => $_POST["clave"],
 	];
@@ -101,12 +137,13 @@ if ($_POST["tipoUsuario"] == 4) {
 	$update = ['mat_email' => strtolower($_POST["email"])];
 	Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
 }
-try{
-if(!empty($_POST["subroles"])){	
-	$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
-}else{
-	$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
-}
+
+try {
+	if (!empty($_POST["subroles"])) {	
+		$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
+	} else {
+		$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
+	}
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

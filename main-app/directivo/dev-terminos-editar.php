@@ -9,12 +9,19 @@ Modulos::verificarPermisoDev();
 
 include("../compartido/head.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    $consultaTerminos = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".terminos_tratamiento_politica WHERE ttp_id='".base64_decode($_GET['id'])."'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idTermino = base64_decode($_GET['id']);
+    $sql = "SELECT * FROM " . $baseDatosServicios . ".terminos_tratamiento_politica WHERE ttp_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idTermino, PDO::PARAM_STR);
+    $stmt->execute();
+    $resultadoTerminos = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-$resultadoTerminos = mysqli_fetch_array($consultaTerminos, MYSQLI_BOTH);
 ?>
 
 <!--bootstrap -->

@@ -166,7 +166,7 @@ class EnviarEmail {
      */
     private static function mensajeError($email) 
     {
-        $msj              = ' el Correo '.$email.' no cumple con la estructura de un correo valido';
+        $msj              = 'Correo electrónico inválido. El correo <strong>"'.htmlspecialchars($email).'"</strong> no cumple con la estructura de un correo válido. Por favor, verifique que el formato sea correcto (ejemplo: usuario@dominio.com)';
         $url              = $_SERVER["HTTP_REFERER"];
         $pos              = strpos($url, "?");
         $simbolConcatenar = $pos === false ? "?" : "&";
@@ -191,21 +191,19 @@ class EnviarEmail {
      * @return void
      */
     private static function enviarReporte($institucion, $mail, $remitente, $destinatario, $asunto, $body, $estado, $descripcion) {
-        global $conexion;
         global $baseDatosServicios;
 
-        if (is_null($conexion)) {
-            global $servidorConexion;
-            global $usuarioConexion;
-            global $claveConexion;
-            $conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
-        }
-
-        $adjunto = $mail->attachmentExists();
-
+        // Migrado a PDO - Soporte completo UTF-8 con emojis
         try {
-            $bodySanitizado = mysqli_real_escape_string($conexion, $body);
+            require_once(ROOT_PATH."/main-app/class/Conexion.php");
+            $conexionPDO = Conexion::newConnection('PDO');
+            $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            // Asegurar charset UTF-8 para soporte de emojis
+            $conexionPDO->exec("SET NAMES utf8mb4");
+            
+            $adjunto = $mail->attachmentExists();
             $referencia = $_SERVER["HTTP_REFERER"] ?? '';
+            
             $sql = "INSERT INTO ".$baseDatosServicios.".historial_correos_enviados(
                 hisco_fecha,
                 hisco_remitente,
@@ -217,19 +215,21 @@ class EnviarEmail {
                 hisco_estado,
                 hisco_descripcion_error,
                 hisco_id_institucion
-                )VALUES(
-                now(),
-                '".$remitente."',
-                '".$destinatario."',
-                '".$asunto."',
-                '".$bodySanitizado."',
-                '".$adjunto."',
-                '".$referencia."',
-                '".$estado."',
-                '".$descripcion."',
-                '".$institucion."')";
-            mysqli_query($conexion,$sql );
+            ) VALUES (now(), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $remitente, PDO::PARAM_STR);
+            $stmt->bindParam(2, $destinatario, PDO::PARAM_STR);
+            $stmt->bindParam(3, $asunto, PDO::PARAM_STR);
+            $stmt->bindParam(4, $body, PDO::PARAM_STR);
+            $stmt->bindParam(5, $adjunto, PDO::PARAM_STR);
+            $stmt->bindParam(6, $referencia, PDO::PARAM_STR);
+            $stmt->bindParam(7, $estado, PDO::PARAM_STR);
+            $stmt->bindParam(8, $descripcion, PDO::PARAM_STR);
+            $stmt->bindParam(9, $institucion, PDO::PARAM_STR);
+            $stmt->execute();
         } catch (Exception $e) {
+            error_log("Error en enviarReporte: " . $e->getMessage());
             include("../compartido/error-catch-to-report.php");
         }
     }

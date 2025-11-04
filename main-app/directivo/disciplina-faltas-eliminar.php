@@ -10,8 +10,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-mysqli_query($conexion, "DELETE FROM ".BD_DISCIPLINA.".disciplina_faltas WHERE dfal_id_nuevo='".base64_decode($_GET["id"])."'");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$idFalta = base64_decode($_GET["id"]);
+	$sql = "DELETE FROM ".BD_DISCIPLINA.".disciplina_faltas WHERE dfal_id_nuevo=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $idFalta, PDO::PARAM_STR);
+	$stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

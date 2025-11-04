@@ -5,8 +5,19 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'AC0036';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-	mysqli_query($conexion, "UPDATE ".BD_DISCIPLINA.".disciplina_reportes SET dr_aprobacion_acudiente=1, dr_aprobacion_acudiente_fecha=now(), dr_comentario='".$_POST["comentario"]."' WHERE dr_id='".$_POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$sql = "UPDATE ".BD_DISCIPLINA.".disciplina_reportes 
+	        SET dr_aprobacion_acudiente=1, dr_aprobacion_acudiente_fecha=now(), dr_comentario=? 
+	        WHERE dr_id=? AND institucion=? AND year=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $_POST["comentario"], PDO::PARAM_STR);
+	$stmt->bindParam(2, $_POST["id"], PDO::PARAM_STR);
+	$stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+	$stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+	$stmt->execute();
 } catch (Exception $e) {
 	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }

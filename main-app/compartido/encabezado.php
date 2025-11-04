@@ -9,6 +9,15 @@ WHERE ins_id='".$_SESSION["idInstitucion"]."' AND ins_enviroment='".ENVIROMENT."
 
 $institucion = mysqli_fetch_array($institucionConsulta, MYSQLI_BOTH);
 $institucionNombre = $institucion['ins_siglas'];
+
+// Contar mensajes sin leer para badge
+$mensajesNoLeidosConsulta = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".$baseDatosServicios.".social_emails 
+WHERE ema_para='".$_SESSION["id"]."' AND ema_visto=0 AND ema_institucion={$_SESSION["idInstitucion"]} AND ema_year={$_SESSION["bd"]}");
+$mensajesNoLeidos = 0;
+if ($mensajesNoLeidosConsulta) {
+    $resultado = mysqli_fetch_array($mensajesNoLeidosConsulta, MYSQLI_BOTH);
+    $mensajesNoLeidos = (int)$resultado['total'];
+}
 ?>
 
 
@@ -180,6 +189,18 @@ $institucionNombre = $institucion['ins_siglas'];
                             </li>
                         <?php }?>
 						
+						<!-- start dark mode toggle -->
+						<li class="dropdown" style="padding: 15px 10px;">
+							<label class="theme-switch-wrapper" data-toggle="tooltip" data-placement="bottom" title="Cambia entre modo claro y oscuro">
+								<input type="checkbox" class="theme-switch" id="themeToggle">
+								<span class="theme-slider">
+									<i class="fa fa-sun theme-icon-light"></i>
+									<i class="fa fa-moon theme-icon-dark"></i>
+								</span>
+							</label>
+						</li>
+						<!-- end dark mode toggle -->
+						
                     	<!-- start language menu -->
                         <li class="dropdown language-switch" data-scrollTo='tooltip'>
 							<?php
@@ -212,9 +233,10 @@ $institucionNombre = $institucion['ins_siglas'];
                         <!-- end language menu -->
 
                         <!-- start apps dropdown -->
-                        <li class="dropdown dropdown-extended dropdown-apps">
-                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                        <li class="dropdown dropdown-extended dropdown-apps" style="position: relative;">
+                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true" style="position: relative;">
                                 <i class="fa fa-th" data-toggle="tooltip" data-placement="top" title="Aplicaciones de Sintia"></i>
+                                <span id="badge_apps_mensajes" class="notification-dot" style="position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; display: <?php echo ($mensajesNoLeidos > 0) ? 'block' : 'none'; ?>; box-shadow: 0 0 0 0 rgba(231, 76, 60, 1);"></span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-default apps-grid" style="width: 400px; padding: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); background: #fff; border: 1px solid #e0e0e0;">
                                 <!-- Header del selector -->
@@ -241,7 +263,9 @@ $institucionNombre = $institucion['ins_siglas'];
                                             <i class="fa fa-envelope-o"></i>
                                         </div>
                                         <span class="app-name">Mensajes</span>
-                                        <span id="mensajes_numero_app" class="app-badge"></span>
+                                        <span id="mensajes_numero_app" class="app-badge" <?php echo ($mensajesNoLeidos > 0) ? 'style="display: flex;"' : 'style="display: none;"'; ?>>
+                                            <?php echo ($mensajesNoLeidos > 0) ? $mensajesNoLeidos : ''; ?>
+                                        </span>
                                     </div>
                                     <?php }?>
                                     
@@ -500,6 +524,23 @@ $institucionNombre = $institucion['ins_siglas'];
         
         <!-- CSS para el selector de aplicaciones estilo Google -->
         <style>
+        /* Animación de latido para el notification dot */
+        @keyframes pulse-dot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
+        }
+        
+        .notification-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        
         .apps-grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -724,5 +765,610 @@ $institucionNombre = $institucion['ins_siglas'];
             if (lessBtn) {
                 lessBtn.style.display = 'none';
             }
+        });
+        </script>
+        
+        <!-- CSS y JavaScript para Dark Mode -->
+        <style>
+        /* Switch de tema con animación */
+        .theme-switch-wrapper {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .theme-switch {
+            display: none;
+        }
+        
+        .theme-slider {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50px;
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .theme-slider::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.4s ease;
+            transform: translateX(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .theme-switch:checked + .theme-slider {
+            background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%);
+        }
+        
+        .theme-switch:checked + .theme-slider::before {
+            transform: translateX(30px);
+        }
+        
+        .theme-icon-light,
+        .theme-icon-dark {
+            position: absolute;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+        
+        .theme-icon-light {
+            left: 8px;
+            color: #fff;
+            opacity: 1;
+        }
+        
+        .theme-icon-dark {
+            right: 8px;
+            color: #fff;
+            opacity: 0.5;
+        }
+        
+        .theme-switch:checked ~ .theme-icon-light {
+            opacity: 0.5;
+        }
+        
+        .theme-switch:checked ~ .theme-icon-dark {
+            opacity: 1;
+        }
+        
+        /* Estilos del modo oscuro */
+        body.dark-mode {
+            background-color: #1a1a2e !important;
+            color: #eaeaea !important;
+        }
+        
+        /* Header/Encabezado */
+        body.dark-mode .page-header,
+        body.dark-mode .page-header.navbar,
+        body.dark-mode .page-header-inner {
+            background: #16213e !important;
+            background-color: #16213e !important;
+            border-bottom: 1px solid #0f3460 !important;
+        }
+        
+        body.dark-mode .page-header .top-menu .nav > li > a,
+        body.dark-mode .page-header .nav > li > a {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .page-header .top-menu .nav > li > a:hover {
+            background-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .page-header .username {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .page-logo {
+            background-color: #16213e !important;
+        }
+        
+        /* Sidebar/Menú - Sobrescribir white-sidebar-color */
+        body.dark-mode .page-sidebar,
+        body.dark-mode .page-sidebar-wrapper,
+        body.dark-mode .page-sidebar .sidebar-wrapper,
+        body.dark-mode .sidebar-wrapper,
+        body.dark-mode .page-sidebar-inner,
+        body.dark-mode .page-sidebar .page-sidebar-menu,
+        body.dark-mode .sidebar-content,
+        body.dark-mode .sidemenu-container,
+        body.dark-mode.white-sidebar-color .sidemenu-container,
+        body.dark-mode .white-sidebar-color .sidemenu-container {
+            background: #16213e !important;
+            background-color: #16213e !important;
+        }
+        
+        body.dark-mode .page-sidebar *:not(.sidebar-menu):not(li):not(a),
+        body.dark-mode .sidebar-wrapper *:not(.sidebar-menu):not(li):not(a) {
+            background-color: transparent !important;
+        }
+        
+        /* Forzar el fondo del sidebar con especificidad máxima */
+        body.dark-mode div.page-sidebar,
+        body.dark-mode aside.page-sidebar,
+        body.dark-mode .page-sidebar[style] {
+            background: #16213e !important;
+            background-color: #16213e !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu,
+        body.dark-mode .sidebar-menu,
+        body.dark-mode .page-sidebar-menu,
+        body.dark-mode .page-sidebar-menu-inner {
+            background: #16213e !important;
+            background-color: #16213e !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu > li > a,
+        body.dark-mode .sidebar-menu > li > a {
+            color: #eaeaea !important;
+            background: transparent !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu > li:hover > a,
+        body.dark-mode .sidebar-menu > li:hover > a {
+            background: #0f3460 !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu > li.active > a,
+        body.dark-mode .sidebar-menu > li.active > a {
+            background: #0f3460 !important;
+            border-left: 3px solid #667eea !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu > li > a > i,
+        body.dark-mode .sidebar-menu > li > a > i {
+            color: #eaeaea !important;
+        }
+        
+        /* Submenús */
+        body.dark-mode .page-sidebar .sidebar-menu .sub-menu,
+        body.dark-mode .sidebar-menu .sub-menu,
+        body.dark-mode .sidemenu .sub-menu,
+        body.dark-mode.white-sidebar-color .sidemenu-container .sidemenu .sub-menu,
+        body.dark-mode .white-sidebar-color .sidemenu-container .sidemenu .sub-menu,
+        body.dark-mode.white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu,
+        body.dark-mode .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu {
+            background: #0f3460 !important;
+            background-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu .sub-menu > li > a,
+        body.dark-mode .sidebar-menu .sub-menu > li > a,
+        body.dark-mode .sidemenu .sub-menu > li > a {
+            color: #d0d0d0 !important;
+            background: transparent !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu .sub-menu > li:hover > a,
+        body.dark-mode .sidebar-menu .sub-menu > li:hover > a,
+        body.dark-mode .sidemenu .sub-menu > li:hover > a {
+            background: #533483 !important;
+        }
+        
+        body.dark-mode .page-sidebar .sidebar-menu .sub-menu > li.active > a,
+        body.dark-mode .sidebar-menu .sub-menu > li.active > a,
+        body.dark-mode .sidemenu .sub-menu > li.active > a {
+            background: #533483 !important;
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .page-content,
+        body.dark-mode .page-content-wrapper,
+        body.dark-mode .page-container {
+            background-color: #1a1a2e !important;
+        }
+        
+        body.dark-mode .card,
+        body.dark-mode .panel,
+        body.dark-mode .card-box,
+        body.dark-mode .card-body,
+        body.dark-mode .panel-body,
+        body.dark-mode .portlet,
+        body.dark-mode .portlet-body {
+            background-color: #16213e !important;
+            color: #eaeaea !important;
+            border-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .page-bar {
+            background-color: transparent !important;
+        }
+        
+        body.dark-mode .panel-heading,
+        body.dark-mode .portlet-title {
+            background-color: #0f3460 !important;
+            color: #eaeaea !important;
+            border-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .panel-heading-yellow,
+        body.dark-mode .panel-heading-purple,
+        body.dark-mode .panel-heading-red,
+        body.dark-mode .panel-heading-blue,
+        body.dark-mode .panel-heading-green {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .list-group-item {
+            background-color: #16213e !important;
+            color: #eaeaea !important;
+            border-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .profile-desc-item {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .table {
+            color: #eaeaea;
+            background-color: #16213e;
+        }
+        
+        body.dark-mode .table thead th {
+            background-color: #0f3460 !important;
+            color: #eaeaea;
+            border-color: #0f3460;
+        }
+        
+        body.dark-mode .table tbody tr {
+            background-color: #16213e !important;
+            border-color: #0f3460;
+        }
+        
+        body.dark-mode .table tbody tr:hover {
+            background-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .table td,
+        body.dark-mode .table th {
+            border-color: #0f3460;
+        }
+        
+        body.dark-mode .form-control,
+        body.dark-mode .form-control:focus {
+            background-color: #0f3460;
+            color: #eaeaea;
+            border-color: #533483;
+        }
+        
+        body.dark-mode .btn,
+        body.dark-mode .btn-default {
+            background-color: #0f3460 !important;
+            color: #eaeaea !important;
+            border-color: #533483 !important;
+        }
+        
+        body.dark-mode .btn:hover,
+        body.dark-mode .btn-default:hover {
+            background-color: #533483 !important;
+        }
+        
+        body.dark-mode .btn-primary {
+            background-color: #667eea !important;
+            border-color: #667eea !important;
+        }
+        
+        body.dark-mode .btn-success {
+            background-color: #27ae60 !important;
+            border-color: #27ae60 !important;
+        }
+        
+        body.dark-mode .btn-info {
+            background-color: #3498db !important;
+            border-color: #3498db !important;
+        }
+        
+        body.dark-mode .btn-warning {
+            background-color: #f39c12 !important;
+            border-color: #f39c12 !important;
+        }
+        
+        body.dark-mode .btn-danger {
+            background-color: #e74c3c !important;
+            border-color: #e74c3c !important;
+        }
+        
+        /* Textos generales */
+        body.dark-mode p,
+        body.dark-mode span,
+        body.dark-mode div,
+        body.dark-mode label,
+        body.dark-mode a {
+            color: inherit;
+        }
+        
+        body.dark-mode a:not(.btn) {
+            color: #667eea !important;
+        }
+        
+        body.dark-mode a:not(.btn):hover {
+            color: #764ba2 !important;
+        }
+        
+        body.dark-mode .dropdown-menu {
+            background-color: #16213e !important;
+            border-color: #0f3460 !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+        }
+        
+        body.dark-mode .dropdown-menu > li > a {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .dropdown-menu > li > a:hover {
+            background-color: #0f3460 !important;
+        }
+        
+        /* Apps dropdown */
+        body.dark-mode .apps-grid .dropdown-menu {
+            background: #16213e !important;
+            border-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .apps-header h6 {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .app-item:hover {
+            background-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .app-name {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .modal-content {
+            background-color: #16213e;
+            color: #eaeaea;
+        }
+        
+        body.dark-mode .modal-header {
+            background-color: #0f3460;
+            border-bottom-color: #533483;
+        }
+        
+        body.dark-mode .modal-footer {
+            background-color: #0f3460;
+            border-top-color: #533483;
+        }
+        
+        body.dark-mode h1, 
+        body.dark-mode h2, 
+        body.dark-mode h3, 
+        body.dark-mode h4, 
+        body.dark-mode h5, 
+        body.dark-mode h6 {
+            color: #eaeaea;
+        }
+        
+        body.dark-mode .page-title {
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .breadcrumb {
+            background-color: #16213e;
+        }
+        
+        body.dark-mode .breadcrumb a {
+            color: #667eea;
+        }
+        
+        body.dark-mode .alert {
+            background-color: #0f3460;
+            border-color: #533483;
+            color: #eaeaea;
+        }
+        
+        body.dark-mode .nav-tabs {
+            border-bottom-color: #0f3460;
+        }
+        
+        body.dark-mode .nav-tabs > li > a {
+            color: #eaeaea;
+        }
+        
+        body.dark-mode .nav-tabs > li.active > a {
+            background-color: #16213e !important;
+            border-color: #0f3460;
+            color: #667eea;
+        }
+        
+        /* Cards modernos */
+        body.dark-mode .grades-card-modern,
+        body.dark-mode .indicadores-card-modern {
+            background-color: #16213e !important;
+            border-color: #0f3460 !important;
+        }
+        
+        body.dark-mode .grades-card-header,
+        body.dark-mode .indicadores-card-header {
+            background-color: #0f3460 !important;
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .table-modern thead th {
+            background-color: #0f3460 !important;
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .table-modern tbody tr {
+            background-color: #16213e !important;
+        }
+        
+        body.dark-mode .table-modern tbody tr:hover {
+            background-color: #0f3460 !important;
+        }
+        
+        /* Badges y labels */
+        body.dark-mode .badge-indicador {
+            background-color: #533483 !important;
+            color: #eaeaea !important;
+        }
+        
+        body.dark-mode .label {
+            background-color: #0f3460 !important;
+        }
+        
+        /* Inputs de búsqueda */
+        body.dark-mode .search-form-opened .form-control {
+            background-color: #0f3460 !important;
+            color: #eaeaea !important;
+        }
+        
+        /* Footer */
+        body.dark-mode .page-footer {
+            background-color: #16213e !important;
+            color: #eaeaea;
+            border-top: 1px solid #0f3460;
+        }
+        
+        /* Scrollbar personalizado para dark mode */
+        body.dark-mode ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: #16213e;
+        }
+        
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: #533483;
+            border-radius: 5px;
+        }
+        
+        body.dark-mode ::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+        
+        /* Transición suave */
+        body,
+        .page-header,
+        .page-sidebar,
+        .page-content,
+        .card,
+        .panel,
+        .table,
+        .form-control,
+        .btn,
+        .dropdown-menu,
+        .modal-content {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        </style>
+        
+        <script>
+        // Dark Mode Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Función para forzar estilos del sidebar
+            function forceSidebarStyles(enable) {
+                const sidebar = document.querySelector('.page-sidebar');
+                const sidemenuContainer = document.querySelector('.sidemenu-container');
+                const subMenus = document.querySelectorAll('.sub-menu');
+                
+                if (sidebar) {
+                    if (enable) {
+                        sidebar.style.setProperty('background', '#16213e', 'important');
+                        sidebar.style.setProperty('background-color', '#16213e', 'important');
+                    } else {
+                        sidebar.style.removeProperty('background');
+                        sidebar.style.removeProperty('background-color');
+                    }
+                }
+                
+                if (sidemenuContainer) {
+                    if (enable) {
+                        sidemenuContainer.style.setProperty('background', '#16213e', 'important');
+                        sidemenuContainer.style.setProperty('background-color', '#16213e', 'important');
+                    } else {
+                        sidemenuContainer.style.removeProperty('background');
+                        sidemenuContainer.style.removeProperty('background-color');
+                    }
+                }
+                
+                // Forzar estilos en submenús
+                subMenus.forEach(function(subMenu) {
+                    if (enable) {
+                        subMenu.style.setProperty('background', '#0f3460', 'important');
+                        subMenu.style.setProperty('background-color', '#0f3460', 'important');
+                    } else {
+                        subMenu.style.removeProperty('background');
+                        subMenu.style.removeProperty('background-color');
+                    }
+                });
+            }
+            
+            // Verificar si hay una preferencia guardada
+            const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
+            
+            // Aplicar el tema guardado
+            if (darkModeEnabled) {
+                document.body.classList.add('dark-mode');
+                themeToggle.checked = true;
+                
+                // Aplicar estilos inmediatamente y después de un pequeño delay
+                forceSidebarStyles(true);
+                setTimeout(() => forceSidebarStyles(true), 100);
+                setTimeout(() => forceSidebarStyles(true), 500);
+            }
+            
+            // Listener para el cambio de tema
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'enabled');
+                    forceSidebarStyles(true);
+                    setTimeout(() => forceSidebarStyles(true), 100);
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'disabled');
+                    forceSidebarStyles(false);
+                }
+            });
+            
+            // Observer para mantener el estilo si el sidebar se recarga o aparecen submenús
+            if (darkModeEnabled) {
+                const observer = new MutationObserver(function(mutations) {
+                    if (document.body.classList.contains('dark-mode')) {
+                        forceSidebarStyles(true);
+                    }
+                });
+                
+                // Observar cambios en el sidebar
+                const sidebarContainer = document.querySelector('.page-sidebar') || document.querySelector('.sidemenu-container');
+                if (sidebarContainer) {
+                    observer.observe(sidebarContainer, {
+                        attributes: true,
+                        attributeFilter: ['style', 'class'],
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            }
+            
+            // Observer adicional para submenús que se despliegan
+            document.addEventListener('click', function(e) {
+                if (document.body.classList.contains('dark-mode')) {
+                    const menuItem = e.target.closest('.sidemenu > li');
+                    if (menuItem) {
+                        setTimeout(() => forceSidebarStyles(true), 50);
+                    }
+                }
+            });
         });
         </script>

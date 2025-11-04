@@ -85,13 +85,17 @@
 													if(!empty($_GET["est"])){$filtro .= " AND dr_estudiante='".base64_decode($_GET["est"])."'";}
 													if(!empty($_GET["falta"])){$filtro .= " AND dr_falta='".base64_decode($_GET["falta"])."'";}
 												
-													if($datosUsuarioActual['uss_tipo']!=5 and !isset($_GET["fest"])){
-													$filtro .= " AND dr_usuario='".$_SESSION["id"]."'";
+													if(
+														$datosUsuarioActual['uss_tipo']!=TIPO_DIRECTIVO &&
+														$datosUsuarioActual['uss_tipo']!=TIPO_DEV &&
+														!isset($_GET["fest"])
+													) {
+														$filtro .= " AND dr_usuario='".$_SESSION["id"]."'";
 													}
 
 													include("../directivo/includes/consulta-paginacion-reportes-lista.php");
 													
-													$consulta = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disciplina_reportes dr
+													$sqlConsulta = "SELECT * FROM ".BD_DISCIPLINA.".disciplina_reportes dr
 													INNER JOIN ".BD_DISCIPLINA.".disciplina_faltas ON dfal_id=dr_falta AND dfal_institucion={$config['conf_id_institucion']} AND dfal_year={$_SESSION["bd"]}
 													INNER JOIN ".BD_DISCIPLINA.".disciplina_categorias ON dcat_id=dfal_id_categoria AND dcat_institucion={$config['conf_id_institucion']} AND dcat_year={$_SESSION["bd"]}
 													INNER JOIN ".BD_ACADEMICA.".academico_matriculas mat ON mat_id_usuario=dr_estudiante AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$_SESSION["bd"]}
@@ -99,7 +103,8 @@
 													LEFT JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=mat_grupo AND gru.institucion={$config['conf_id_institucion']} AND gru.year={$_SESSION["bd"]}
 													LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss_id=dr_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
 													WHERE dr_id=dr_id AND dr.institucion={$config['conf_id_institucion']} AND dr.year={$_SESSION["bd"]} $filtro
-													LIMIT $inicio,$registros");
+													LIMIT $inicio,$registros";
+													$consulta = mysqli_query($conexion, $sqlConsulta);
 													$contReg = 1;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>

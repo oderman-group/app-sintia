@@ -453,7 +453,7 @@ for ($p = 1; $p <= 4; $p++) {
                             <?php if($p == 4 && !empty($datosEditar['mat_estado_agno'])){?>
                             <div class="estado-agno">
                                 <?=strtoupper($frases[308][$datosUsuarioActual['uss_idioma']]);?>: 
-                                <strong><?php echo $estadoAgno[$datosEditar['mat_estado_agno']];?></strong>
+                                <strong><?php echo $estadoAgno[$datosEditar['mat_estado_agno']] ?? 'N/A';?></strong>
                                     </div>
                             <?php }?>
 

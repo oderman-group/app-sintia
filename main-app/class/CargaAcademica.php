@@ -1150,7 +1150,7 @@ class CargaAcademica {
     {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso=? AND car_director_grupo=1 AND car.institucion=? AND car.year=?";
+        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_cargas WHERE car_curso=? AND car_director_grupo=1 AND institucion=? AND year=?";
 
         $parametros = [$idCurso, $config['conf_id_institucion'], $year];
 

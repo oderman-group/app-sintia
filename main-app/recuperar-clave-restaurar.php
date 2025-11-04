@@ -1,5 +1,6 @@
 <?php
 require_once("index-logica.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 $Plataforma = new Plataforma;
 $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId']) : '';
 ?>
@@ -41,6 +42,20 @@ $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId
         
         .login-container {
             background: var(--sintia-primary-bg);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        
+        .vertical-center {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: 3rem;
         }
         
         /* Card de restauración */
@@ -52,7 +67,7 @@ $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId
             border: 1px solid rgba(65, 196, 196, 0.1);
             backdrop-filter: blur(10px);
             max-width: 600px;
-            margin: 0 auto;
+            margin: 2rem auto;
         }
         
         /* Header */
@@ -512,6 +527,7 @@ $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId
                                 <?php include("../config-general/mensajes-informativos.php"); ?>
                                 
                                 <input type="hidden" id="usuarioId" name="usuarioId" value="<?= htmlspecialchars($usuarioId); ?>" />
+                                <?php echo Csrf::campoHTML(); ?>
                                 
                                 <!-- Contenedor para mensajes dinámicos -->
                                 <div id="dynamicMessages"></div>

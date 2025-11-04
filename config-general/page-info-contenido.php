@@ -289,6 +289,11 @@ switch($_GET["idmsg"]){
 		$texto = 'Tu usuario se encuentra bloqueado por lo tanto no es posible acceder a ninguna opción de la plataforma. Si tienes alguna inquietud al respecto puedes ponerte en contacto con la Institución.';
 		$url1 = '../controlador/salir.php';
 		$boton1 = 'CERRAR SESIÓN';
+		// Agregar botón de solicitud de desbloqueo si tenemos los parámetros
+		if (!empty($_GET['inst']) && !empty($_GET['idU'])) {
+			$url2 = '../solicitud-desbloqueo.php?inst=' . $_GET['inst'] . '&idU=' . $_GET['idU'];
+			$boton2 = '📧 SOLICITAR DESBLOQUEO';
+		}
 		$lottie = 'https://lottie.host/b4de488e-1144-4216-965f-cc2a3d4296c3/EKGn9IPCsv.json';
 	break;
 		

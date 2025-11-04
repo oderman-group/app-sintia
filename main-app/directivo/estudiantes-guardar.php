@@ -5,6 +5,7 @@ require_once ROOT_PATH."/main-app/class/Modulos.php";
 require_once(ROOT_PATH."/main-app/class/servicios/MediaTecnicaServicios.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0192';
@@ -13,6 +14,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
+
+// Verificar token CSRF
+Csrf::verificar();
+
 include("../compartido/historial-acciones-guardar.php");
 
 $_POST["ciudadR"] = trim($_POST["ciudadR"]);
@@ -26,7 +31,12 @@ function jsonResponse($payload){
     echo json_encode($payload);
     exit();
 }
-$parametrosPost='&tipoD='.base64_encode($_POST["tipoD"]).'&documento='.base64_encode($_POST["nDoc"]).'&religion='.base64_encode($_POST["religion"]).'&email='.base64_encode($_POST["email"]).'&direcion='.base64_encode($_POST["direccion"]).'&barrio='.base64_encode($_POST["barrio"]).'&telefono='.base64_encode($_POST["telefono"]).'&celular='.base64_encode($_POST["celular"]).'&estrato='.base64_encode($_POST["estrato"]).'&genero='.base64_encode($_POST["genero"]).'&nacimiento='.base64_encode($_POST["fNac"]).'&apellido1='.base64_encode($_POST["apellido1"]).'&apellido2='.base64_encode($_POST["apellido2"]).'&nombre='.base64_encode($_POST["nombres"]).'&grado='.base64_encode($_POST["grado"]).'&grupo='.base64_encode($_POST["grupo"]).'&tipoE='.base64_encode($_POST["tipoEst"]).'&lugarEx='.base64_encode($_POST["lugarD"]).'&lugarNac='.base64_encode($_POST["lNac"]).'&matricula='.base64_encode($_POST["matricula"]).'&folio='.base64_encode($_POST["folio"]).'&tesoreria='.base64_encode($_POST["codTesoreria"]).'&vaMatricula='.base64_encode($_POST["va_matricula"]).'&inclusion='.base64_encode($_POST["inclusion"]).'&extran='.base64_encode($_POST["extran"]).'&tipoSangre='.base64_encode($_POST["tipoSangre"]).'&eps='.base64_encode($_POST["eps"]).'&celular2='.base64_encode($_POST["celular2"]).'&ciudadR='.base64_encode($_POST["ciudadR"]).'&nombre2='.base64_encode($_POST["nombre2"]).'&documentoA='.base64_encode($_POST["documentoA"]).'&nombreA='.base64_encode($_POST["nombreA"]).'&ocupacionA='.base64_encode($_POST["ocupacionA"]).'&generoA='.base64_encode($_POST["generoA"]).'&expedicionA='.base64_encode($_POST["lugardA"]).'&tipoDocA='.base64_encode($_POST["tipoDAcudiente"]).'&apellido1A='.base64_encode($_POST["apellido1A"]).'&apellido2A='.base64_encode($_POST["apellido2A"]).'&nombre2A='.base64_encode($_POST["nombre2A"]).'&matestM='.base64_encode($_POST["matestM"]);
+// Función auxiliar para codificar valores que pueden ser null
+$encodeParam = function($value) {
+    return base64_encode($value ?? '');
+};
+
+$parametrosPost='&tipoD='.$encodeParam($_POST["tipoD"] ?? null).'&documento='.$encodeParam($_POST["nDoc"] ?? null).'&religion='.$encodeParam($_POST["religion"] ?? null).'&email='.$encodeParam($_POST["email"] ?? null).'&direcion='.$encodeParam($_POST["direccion"] ?? null).'&barrio='.$encodeParam($_POST["barrio"] ?? null).'&telefono='.$encodeParam($_POST["telefono"] ?? null).'&celular='.$encodeParam($_POST["celular"] ?? null).'&estrato='.$encodeParam($_POST["estrato"] ?? null).'&genero='.$encodeParam($_POST["genero"] ?? null).'&nacimiento='.$encodeParam($_POST["fNac"] ?? null).'&apellido1='.$encodeParam($_POST["apellido1"] ?? null).'&apellido2='.$encodeParam($_POST["apellido2"] ?? null).'&nombre='.$encodeParam($_POST["nombres"] ?? null).'&grado='.$encodeParam($_POST["grado"] ?? null).'&grupo='.$encodeParam($_POST["grupo"] ?? null).'&tipoE='.$encodeParam($_POST["tipoEst"] ?? null).'&lugarEx='.$encodeParam($_POST["lugarD"] ?? null).'&lugarNac='.$encodeParam($_POST["lNac"] ?? null).'&matricula='.$encodeParam($_POST["matricula"] ?? null).'&folio='.$encodeParam($_POST["folio"] ?? null).'&tesoreria='.$encodeParam($_POST["codTesoreria"] ?? null).'&vaMatricula='.$encodeParam($_POST["va_matricula"] ?? null).'&inclusion='.$encodeParam($_POST["inclusion"] ?? null).'&extran='.$encodeParam($_POST["extran"] ?? null).'&tipoSangre='.$encodeParam($_POST["tipoSangre"] ?? null).'&eps='.$encodeParam($_POST["eps"] ?? null).'&celular2='.$encodeParam($_POST["celular2"] ?? null).'&ciudadR='.$encodeParam($_POST["ciudadR"] ?? null).'&nombre2='.$encodeParam($_POST["nombre2"] ?? null).'&documentoA='.$encodeParam($_POST["documentoA"] ?? null).'&nombreA='.$encodeParam($_POST["nombreA"] ?? null).'&ocupacionA='.$encodeParam($_POST["ocupacionA"] ?? null).'&generoA='.$encodeParam($_POST["generoA"] ?? null).'&expedicionA='.$encodeParam($_POST["lugardA"] ?? null).'&tipoDocA='.$encodeParam($_POST["tipoDAcudiente"] ?? null).'&apellido1A='.$encodeParam($_POST["apellido1A"] ?? null).'&apellido2A='.$encodeParam($_POST["apellido2A"] ?? null).'&nombre2A='.$encodeParam($_POST["nombre2A"] ?? null).'&matestM='.$encodeParam($_POST["matestM"] ?? null);
 
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 if (trim($_POST["nDoc"])=="" or trim($_POST["apellido1"])=="" or trim($_POST["nombres"])=="" or trim($_POST["grado"])=="" or trim($_POST["documentoA"])=="") {
@@ -91,7 +101,7 @@ if(empty($_POST["inclusion"]))     $_POST["inclusion"]     = 0;
 if(empty($_POST["tipoMatricula"])) $_POST["tipoMatricula"] = GRADO_GRUPAL;
 
 
-//Api solo para Icolven
+//Api solo para MODULO_API_SION_ACADEMICA
 $estado  ='';
 $mensaje ='';
 
@@ -124,36 +134,36 @@ if ($acudienteNum > 0) {
     }
 
 	if(empty($_POST["generoA"]))		$_POST["generoA"]       = 126;
-	if(empty($_POST["ocupacionA"]))		$_POST["ocupacionA"]    = '';
+	if(empty($_POST["ocupacionA"]))		$_POST["ocupacionA"]    = 'NO REGISTRA OCUPACIÓN';
 	if(empty($_POST["fechaNA"]))		$_POST["fechaNA"]       = '2000-01-01';
 	if(empty($_POST["folio"]))       	$_POST["folio"]       	='';
 	if(empty($_POST["codTesoreria"]))   $_POST["codTesoreria"]  = '';
 	if(empty($_POST["tipoSangre"]))     $_POST["tipoSangre"]    = '';
 	if(empty($_POST["eps"]))       		$_POST["eps"]       	= 126;
 	if(empty($_POST["matestM"]))       	$_POST["matestM"]       = NO_MATRICULADO;
-	
-	
-	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto,uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
-}
 
-$fechaNA = isset($_POST["fechaNA"]) ? trim($_POST["fechaNA"]) : '';
-if ($fechaNA !== '') {
-    $birthA = DateTime::createFromFormat('Y-m-d', $fechaNA);
-    $errorsA = DateTime::getLastErrors();
-    $todayA = new DateTime('today');
-    $maxDateA = (clone $todayA)->modify('-14 years');
+    $fechaNA = isset($_POST["fechaNA"]) ? trim($_POST["fechaNA"]) : '';
 
-    $invalidFormatA = !$birthA || $errorsA['warning_count'] > 0 || $errorsA['error_count'] > 0;
-    $tooRecentA = !$invalidFormatA && $birthA > $maxDateA; // menor de 14 años
+    if ($fechaNA !== '') {
+        $birthA = DateTime::createFromFormat('Y-m-d', $fechaNA);
+        $errorsA = DateTime::getLastErrors();
+        $todayA = new DateTime('today');
+        $maxDateA = (clone $todayA)->modify('-14 years');
 
-    if ($invalidFormatA || $tooRecentA) {
-        if (isAjaxRequest()) {
-            jsonResponse(['ok'=>false,'message'=>'La fecha de nacimiento del acudiente debe ser de al menos 14 años.','field'=>'fechaNA']);
+        $invalidFormatA = !$birthA || $errorsA['warning_count'] > 0 || $errorsA['error_count'] > 0;
+        $tooRecentA = !$invalidFormatA && $birthA > $maxDateA; // menor de 14 años
+
+        if ($invalidFormatA || $tooRecentA) {
+            if (isAjaxRequest()) {
+                jsonResponse(['ok'=>false,'message'=>'La fecha de nacimiento del acudiente debe ser de al menos 14 años.','field'=>'fechaNA']);
+            }
+            include("../compartido/guardar-historial-acciones.php");
+            echo '<script type="text/javascript">window.location.href="estudiantes-agregar.php?error=ER_DT_FNAC_A'.$parametrosPost.'";</script>';
+            exit();
         }
-        include("../compartido/guardar-historial-acciones.php");
-        echo '<script type="text/javascript">window.location.href="estudiantes-agregar.php?error=ER_DT_FNAC_A'.$parametrosPost.'";</script>';
-        exit();
     }
+
+	$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma,uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombresA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugarDa"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), 	$_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 }
 
 // Validación básica de email en backend
@@ -166,7 +176,7 @@ if (!empty($_POST["email"]) && !filter_var($_POST["email"], FILTER_VALIDATE_EMAI
     exit();
 }
 
-$idEstudianteU = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar,uss_tema_header,uss_tema_logo, institucion, year, uss_id", [$_POST["nDoc"], $clavePorDefectoUsuarios, 4, mysqli_real_escape_string($conexion,$_POST["nombres"]), 0, strtolower($_POST["email"]), $_POST["fNac"], 0, $_POST["genero"], $_POST["celular"], 'default.png', 1, $_POST["tipoD"], $_POST["lugarD"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1"]), mysqli_real_escape_string($conexion,$_POST["apellido2"]), mysqli_real_escape_string($conexion,$_POST["nombre2"]), $_POST["nDoc"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
+$idEstudianteU = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2,uss_documento, uss_tema_sidebar,uss_tema_header,uss_tema_logo, institucion, year, uss_id", [$_POST["nDoc"], $clavePorDefectoUsuarios, 4, mysqli_real_escape_string($conexion,$_POST["nombres"]), 0, strtolower($_POST["email"]), $_POST["fNac"], 0, $_POST["genero"], $_POST["celular"], 'default.png', 1, $_POST["tipoD"], $_POST["lugarD"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1"]), mysqli_real_escape_string($conexion,$_POST["apellido2"]), mysqli_real_escape_string($conexion,$_POST["nombre2"]), $_POST["nDoc"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 
 //Insertamos la matrícula
 $idEstudiante = Estudiantes::insertarEstudiantes(
@@ -181,6 +191,22 @@ $idEstudiante = Estudiantes::insertarEstudiantes(
 	$_SESSION["bd"]
 );
 
+// Registrar auditoría de creación de estudiante
+AuditoriaLogger::registrarCreacion(
+	'ESTUDIANTES',
+	$idEstudiante,
+	'Creado estudiante: ' . $_POST["nombres"] . ' ' . $_POST["apellido1"] . ' (Doc: ' . $_POST["nDoc"] . ')',
+	[
+		'nombre_completo' => $_POST["nombres"] . ' ' . $_POST["apellido1"] . ' ' . $_POST["apellido2"],
+		'documento' => $_POST["nDoc"],
+		'tipo_documento' => $_POST["tipoD"],
+		'email' => $_POST["email"],
+		'grado' => $_POST["grado"],
+		'grupo' => $_POST["grupo"],
+		'numero_matricula' => $result_numMat
+	]
+);
+
 //Insertamos las matrículas Adicionales
 if ($_POST["tipoMatricula"]==GRADO_INDIVIDUAL && !empty($_POST["cursosAdicionales"])) { 
 	try{
@@ -189,7 +215,9 @@ if ($_POST["tipoMatricula"]==GRADO_INDIVIDUAL && !empty($_POST["cursosAdicionale
 		include("../compartido/error-catch-to-report.php");
 	}
 }
+
 $idInsercion=Utilidades::generateCode("UPE");
+
 try{
 	mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(upe_id, upe_id_usuario, upe_id_estudiante, institucion, year)VALUES('" .$idInsercion . "', '".$idAcudiente."', '".$idEstudiante."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
 } catch (Exception $e) {
@@ -201,9 +229,11 @@ if(!isset($estado) AND !isset($mensaje)){
     $estado="";
     $mensaje="";
 }
+
 $idUsr = mysqli_insert_id($conexion);
 $estadoSintia=false;
 $mensajeSintia='El estudiante no pudo ser creado correctamente en SINTIA.';
+
 if(isset($idUsr) AND $idUsr!=''){
     $estadoSintia=true;
     $mensajeSintia='El estudiante fue creado correctamente en SINTIA.';

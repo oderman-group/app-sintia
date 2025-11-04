@@ -143,6 +143,7 @@ if(!Modulos::validarPermisoEdicion()){
 
                                  <div class="card-body">
                                     <form name="example_advanced_form" id="example-advanced-form" action="estudiantes-guardar.php" method="post" novalidate>
+									  <?php echo Csrf::campoHTML(); ?>
 									  
 										<h3>Información personal</h3>
 									    <fieldset>

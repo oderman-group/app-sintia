@@ -8,24 +8,39 @@ $usuariosClase = new UsuariosFunciones;
 
 $clave = rand(10000, 99999);
 
+// Migrado a PDO - Consultas preparadas
 try{
-    mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".empresas(emp_nombre, emp_email, emp_telefono, emp_verificada, emp_estado, emp_clave, emp_usuario, emp_institucion)VALUES('" . mysqli_real_escape_string($conexion,$_POST["nombre"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["email"]) . "', '" . mysqli_real_escape_string($conexion,$_POST["telefono"]) . "', 0, 1, '" . $clave . "', '" . $_SESSION["id"] . "', '" . $config['conf_id_institucion'] . "')");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    
+    $sql = "INSERT INTO " . $baseDatosMarketPlace . ".empresas(
+        emp_nombre, emp_email, emp_telefono, emp_verificada, emp_estado, 
+        emp_clave, emp_usuario, emp_institucion
+    ) VALUES (?, ?, ?, 0, 1, ?, ?, ?)";
+    
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["email"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_POST["telefono"], PDO::PARAM_STR);
+    $stmt->bindParam(4, $clave, PDO::PARAM_INT);
+    $stmt->bindParam(5, $_SESSION["id"], PDO::PARAM_STR);
+    $stmt->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->execute();
+    
+    $idRegistro = $conexionPDO->lastInsertId();
+    
+    if(!empty($_POST["sector"])){
+        $sqlCat = "INSERT INTO " . $baseDatosMarketPlace . ".empresas_categorias(excat_empresa, excat_categoria) VALUES (?, ?)";
+        $stmtCat = $conexionPDO->prepare($sqlCat);
+        
+        foreach ($_POST["sector"] as $sector) {
+            $stmtCat->bindParam(1, $idRegistro, PDO::PARAM_INT);
+            $stmtCat->bindParam(2, $sector, PDO::PARAM_STR);
+            $stmtCat->execute();
+        }
+    }
 } catch (Exception $e) {
 	include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-}
-$idRegistro = mysqli_insert_id($conexion);
-
-if(!empty($_POST["sector"])){
-    $cont = count($_POST["sector"]);
-    $i = 0;
-    while ($i < $cont) {
-        try{
-            mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".empresas_categorias(excat_empresa, excat_categoria)VALUES('" . $idRegistro . "', '" . $_POST["sector"][$i] . "')");
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-        }
-        $i++;
-    }
 }
 
 $_SESSION["empresa"] = $idRegistro;

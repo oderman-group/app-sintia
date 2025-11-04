@@ -5,14 +5,21 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DV0022';
 include("../compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    $consultaPagina=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id!='".$_POST["idPagina"]."' AND pagp_ruta='".$_POST["dato"]."' AND pagp_tipo_usuario='".$_POST["tipoUss"]."'");
-} catch (Exception $e) {
-    include("../compartido/error-catch-to-report.php");
-}
-$numDotos=mysqli_num_rows($consultaPagina);
-if ($numDotos > 0) {
-    $datosPaginas=mysqli_fetch_array($consultaPagina, MYSQLI_BOTH);
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $sql = "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad 
+            WHERE pagp_id!=? AND pagp_ruta=? AND pagp_tipo_usuario=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["idPagina"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["dato"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_POST["tipoUss"], PDO::PARAM_STR);
+    $stmt->execute();
+    $numDotos = $stmt->rowCount();
+    
+    if ($numDotos > 0) {
+        $datosPaginas = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
     <script type="application/javascript">
         document.getElementById('nombrePagina').disabled = 'disabled';

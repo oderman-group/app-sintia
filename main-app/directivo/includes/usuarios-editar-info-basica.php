@@ -4,6 +4,7 @@
         <form name="formularioGuardar" action="usuarios-update.php" method="post" enctype="multipart/form-data">
 
             <input type="hidden" value="<?=$datosEditar['uss_id'];?>" name="idR">
+            <?php echo Csrf::campoHTML(); ?>
             <?php 
             $rutaFoto = "../files/fotos/{$datosEditar['uss_foto']}";
             if(Utilidades::ArchivoExiste($rutaFoto)) {?>

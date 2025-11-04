@@ -12,12 +12,18 @@
         exit();
     }
 
+    // Migrado a PDO - Consulta preparada
     try{
-        mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".categorias_productos(catp_nombre) VALUES ('".$_POST["nombre"]."')");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "INSERT INTO " . $baseDatosMarketPlace . ".categorias_productos(catp_nombre) VALUES (?)";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+        $stmt->execute();
+        $idRegistro = $conexionPDO->lastInsertId();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}
-    $idRegistro = mysqli_insert_id($conexion);
     
     include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="mps-categorias-productos.php?success=SC_DT_1&id='.base64_encode($idRegistro).'";</script>';

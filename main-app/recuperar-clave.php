@@ -55,6 +55,20 @@ if (isset($_POST['usuariosEncontrados'])) {
         /* Fondo blanco limpio */
         .login-container {
             background: var(--sintia-primary-bg);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        
+        .vertical-center {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: 3rem;
         }
         
         /* Card de recuperación */
@@ -66,7 +80,7 @@ if (isset($_POST['usuariosEncontrados'])) {
             border: 1px solid rgba(65, 196, 196, 0.1);
             backdrop-filter: blur(10px);
             max-width: 600px;
-            margin: 0 auto;
+            margin: 2rem auto;
         }
         
         /* Header */
