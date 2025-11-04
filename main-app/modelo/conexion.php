@@ -48,7 +48,9 @@ if (empty($_SESSION["inst"])) {
     // Establecer el modo de error PDO a excepciones
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-	} catch(Exception $e){
+	error_log("La conexión se estableción correctamente para el año ".$agnoBD." y la institución: ".$_SESSION["inst"] . " - ID: ".$_SESSION["id"]);
+
+	} catch(Exception $e) {
 
 		switch($e->getCode()){
 			case 1044:
@@ -59,6 +61,8 @@ if (empty($_SESSION["inst"])) {
 				$exception = "error=".$e->getMessage()."&inst=".base64_encode($_POST["bd"]);
 			break;	
 		}
+
+		error_log("Problemas de conexión ".$e->getMessage());
 
 		session_destroy();
 		header("Location:".REDIRECT_ROUTE."/index.php?".$exception);
@@ -72,3 +76,5 @@ if (empty($_SESSION["inst"])) {
     }
 
 }
+
+error_log("Saliendo del archivo de conexión ".$_SESSION["id"] . " - IP: ".$_SERVER["REMOTE_ADDR"] . " - URL: ".$_SERVER["PHP_SELF"]);

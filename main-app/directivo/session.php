@@ -2,6 +2,7 @@
 session_start();
 
 date_default_timezone_set('America/Bogota');
+error_log("=================Entra al archivo de sesion del directivo : IP ".$_SERVER["REMOTE_ADDR"] . " - URL: ".$_SERVER["PHP_SELF"]);
 error_log("Entra al archivo de sesion del directivo: ".$_SESSION["id"]);
 
 //Si otro usuario de mayor rango entra como él
