@@ -33,7 +33,7 @@ if (!isset($_SESSION['user_agent'])) {
 } elseif ($_SESSION['user_agent'] !== $userAgent) {
     // Posible intento de hijacking
     session_destroy();
-    header("Location:../controlador/salir.php");
+    header("Location:../controlador/salir.php?msg=session_hijack");
     exit();
 }
 
@@ -46,7 +46,7 @@ if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){
 
 if (empty($idSession)) {
 	session_destroy();
-	header("Location:../controlador/salir.php");
+	header("Location:../controlador/salir.php?session_empty=true");
 	exit();
 } else {
 	require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");

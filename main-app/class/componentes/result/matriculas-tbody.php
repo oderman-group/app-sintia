@@ -248,7 +248,7 @@ foreach ($data["data"] as $resultado) {
 							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea reservar el cupo para este estudiante?','question','estudiantes-reservar-cupo.php?idEstudiante=<?= base64_encode($resultado['mat_id']); ?>')">Reservar cupo</a></li>
 						<?php } ?>
 
-						<?php if ($permisoEliminar) { ?>
+						<?php if ($permisoEliminar && !empty($resultado['mat_id']) && !empty($resultado['mat_id_usuario'])) { ?>
 							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro de ejecutar esta acción?','question','estudiantes-eliminar.php?idE=<?= base64_encode($resultado["mat_id"]); ?>&idU=<?= base64_encode($resultado["mat_id_usuario"]); ?>')">Eliminar</a></li>
 						<?php } ?>
 
@@ -293,7 +293,7 @@ foreach ($data["data"] as $resultado) {
 							<!-- <li><a href="reportes-lista.php?est=<?= base64_encode($resultado["mat_id_usuario"]); ?>&filtros=<?= base64_encode(1); ?>" target="_blank">Disciplina</a></li> -->
 					<?php }
 					} ?>
-					<?php if ($permisoAdjuntarDocumento) { ?>
+					<?php if ($permisoAdjuntarDocumento && !empty($resultado['mat_id_usuario']) && !empty($resultado['mat_id'])) { ?>
 						<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($resultado['mat_id_usuario']); ?>&idMatricula=<?= base64_encode($resultado['mat_id']); ?>"><?=$frases[434][$datosUsuarioActual['uss_idioma']];?></a></li>
 					<?php } ?>
 				</ul>
