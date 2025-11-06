@@ -196,7 +196,9 @@ function mapearGenero($inicial) {
     ];
     
     $inicialOriginal = $inicial;
-    $inicial = strtoupper(trim($inicial));
+    $inicial = strtoupper(trim(cleanExcelData($inicial)));
+    
+    error_log("Mapeo Género DEBUG: Original: '$inicialOriginal', Limpio: '$inicial', Tipo: " . gettype($inicial));
     
     // Si está vacío, devolver null para que se inserte NULL en BD
     if (empty($inicial)) {
@@ -213,12 +215,310 @@ function mapearGenero($inicial) {
     // Mapear inicial a código
     $codigo = isset($generos[$inicial]) ? $generos[$inicial] : null;
     if ($codigo !== null) {
-        error_log("Mapeo Género: '$inicialOriginal' -> '$codigo'");
+        error_log("Mapeo Género: '$inicialOriginal' -> '$codigo' ✅");
     } else {
-        error_log("Mapeo Género: '$inicialOriginal' -> sin mapeo (null)");
+        error_log("Mapeo Género: '$inicialOriginal' (limpio: '$inicial') -> sin mapeo (null) ❌");
     }
     
     return $codigo;
+}
+
+/**
+ * Mapea el nombre o código del grado a su ID en la base de datos
+ */
+function mapearGradoPorNombre($nombreGrado) {
+    global $conexionPDO, $config;
+    
+    if (empty($nombreGrado)) {
+        error_log("Mapeo Grado: vacío -> null");
+        return null;
+    }
+    
+    $nombreGrado = cleanExcelData($nombreGrado);
+    
+    try {
+        // Buscar por ID, nombre o código (case insensitive, permite alfanuméricos)
+        $sql = "SELECT gra_id FROM " . BD_ACADEMICA . ".academico_grados 
+                WHERE (gra_id = :id OR UPPER(gra_nombre) = UPPER(:nombre) OR UPPER(gra_codigo) = UPPER(:codigo))
+                AND gra_estado = 1 
+                AND institucion = :institucion 
+                AND year = :year
+                LIMIT 1";
+        
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindValue(':id', $nombreGrado, PDO::PARAM_STR);
+        $stmt->bindValue(':nombre', $nombreGrado, PDO::PARAM_STR);
+        $stmt->bindValue(':codigo', $nombreGrado, PDO::PARAM_STR);
+        $stmt->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmt->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($resultado) {
+            error_log("Mapeo Grado: '$nombreGrado' -> ID: {$resultado['gra_id']}");
+            return $resultado['gra_id'];
+        } else {
+            error_log("Mapeo Grado: '$nombreGrado' -> NO ENCONTRADO");
+            return null;
+        }
+    } catch (Exception $e) {
+        error_log("Error en mapearGradoPorNombre: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Crea un usuario para el estudiante
+ */
+function crearUsuarioEstudiante($documento, $nombre1, $nombre2, $apellido1, $apellido2, $email, $celular, $genero) {
+    global $conexionPDO, $config, $clavePorDefectoUsuarios;
+    
+    try {
+        // Verificar si ya existe por documento
+        $sqlCheckDoc = "SELECT uss_id, uss_usuario FROM " . BD_GENERAL . ".usuarios 
+                        WHERE uss_documento = :documento 
+                        AND institucion = :institucion 
+                        AND year = :year";
+        $stmtCheckDoc = $conexionPDO->prepare($sqlCheckDoc);
+        $stmtCheckDoc->bindValue(':documento', $documento, PDO::PARAM_STR);
+        $stmtCheckDoc->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmtCheckDoc->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+        $stmtCheckDoc->execute();
+        
+        if ($stmtCheckDoc->rowCount() > 0) {
+            $usuario = $stmtCheckDoc->fetch(PDO::FETCH_ASSOC);
+            error_log("Usuario estudiante ya existe con documento '$documento': ID {$usuario['uss_id']}");
+            return ['success' => true, 'id_usuario' => $usuario['uss_id'], 'existed' => true];
+        }
+        
+        // Generar usuario único basado en documento
+        $usuarioBase = $documento;
+        $usuario = $usuarioBase;
+        $contador = 1;
+        
+        // Verificar si el usuario ya existe y generar uno único
+        while (true) {
+            $sqlCheckUser = "SELECT uss_id FROM " . BD_GENERAL . ".usuarios 
+                            WHERE uss_usuario = :usuario";
+            $stmtCheckUser = $conexionPDO->prepare($sqlCheckUser);
+            $stmtCheckUser->bindValue(':usuario', $usuario, PDO::PARAM_STR);
+            $stmtCheckUser->execute();
+            
+            if ($stmtCheckUser->rowCount() == 0) {
+                // Usuario disponible
+                break;
+            }
+            
+            // Usuario ocupado, generar variación
+            $usuario = $usuarioBase . '_' . $contador;
+            $contador++;
+            
+            if ($contador > 100) {
+                throw new Exception("No se pudo generar un usuario único después de 100 intentos");
+            }
+        }
+        
+        error_log("Usuario generado para estudiante: '$usuario' (documento: $documento)");
+        
+        // Generar ID
+        $idUsuario = Utilidades::getNextIdSequence($conexionPDO, BD_GENERAL, 'usuarios');
+        $claveEncriptada = SHA1($clavePorDefectoUsuarios);
+        $tipoUsuario = 4; // Estudiante
+        
+        $sql = "INSERT INTO " . BD_GENERAL . ".usuarios (
+                    uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_nombre2,
+                    uss_apellido1, uss_apellido2, uss_documento, uss_email, uss_celular,
+                    uss_genero, uss_foto, uss_portada, uss_idioma, uss_tema, 
+                    uss_estado, uss_bloqueado, uss_fecha_registro, institucion, year
+                ) VALUES (
+                    :id, :usuario, :clave, :tipo, :nombre1, :nombre2,
+                    :apellido1, :apellido2, :documento, :email, :celular,
+                    :genero, 'default.png', 'default.png', '1', 'blue',
+                    '0', '0', NOW(), :institucion, :year
+                )";
+        
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindValue(':id', $idUsuario, PDO::PARAM_STR);
+        $stmt->bindValue(':usuario', $usuario, PDO::PARAM_STR);
+        $stmt->bindValue(':clave', $claveEncriptada, PDO::PARAM_STR);
+        $stmt->bindValue(':tipo', $tipoUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(':nombre1', $nombre1, PDO::PARAM_STR);
+        $stmt->bindValue(':nombre2', $nombre2, PDO::PARAM_STR);
+        $stmt->bindValue(':apellido1', $apellido1, PDO::PARAM_STR);
+        $stmt->bindValue(':apellido2', $apellido2, PDO::PARAM_STR);
+        $stmt->bindValue(':documento', $documento, PDO::PARAM_STR);
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':celular', $celular, PDO::PARAM_STR);
+        
+        if ($genero === null) {
+            $stmt->bindValue(':genero', $genero, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':genero', $genero, PDO::PARAM_INT);
+        }
+        
+        $stmt->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmt->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+        
+        $stmt->execute();
+        
+        return ['success' => true, 'id_usuario' => $idUsuario, 'existed' => false];
+        
+    } catch (Exception $e) {
+        error_log("Error en crearUsuarioEstudiante: " . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+/**
+ * Crea un usuario para el acudiente
+ */
+function crearUsuarioAcudiente($documento, $nombre, $apellido, $celular, $email) {
+    global $conexionPDO, $config, $clavePorDefectoUsuarios;
+    
+    try {
+        // Verificar si ya existe por documento (búsqueda global, sin filtro institución/año)
+        $sqlCheckDoc = "SELECT uss_id, uss_usuario FROM " . BD_GENERAL . ".usuarios 
+                        WHERE uss_documento = :documento";
+        $stmtCheckDoc = $conexionPDO->prepare($sqlCheckDoc);
+        $stmtCheckDoc->bindValue(':documento', $documento, PDO::PARAM_STR);
+        $stmtCheckDoc->execute();
+        
+        if ($stmtCheckDoc->rowCount() > 0) {
+            $usuario = $stmtCheckDoc->fetch(PDO::FETCH_ASSOC);
+            error_log("Usuario acudiente ya existe con documento '$documento': ID {$usuario['uss_id']}");
+            return ['success' => true, 'id_usuario' => $usuario['uss_id'], 'existed' => true];
+        }
+        
+        // Generar usuario único basado en documento
+        $usuarioBase = $documento;
+        $usuario = $usuarioBase;
+        $contador = 1;
+        
+        // Verificar si el usuario ya existe y generar uno único
+        while (true) {
+            $sqlCheckUser = "SELECT uss_id FROM " . BD_GENERAL . ".usuarios 
+                            WHERE uss_usuario = :usuario";
+            $stmtCheckUser = $conexionPDO->prepare($sqlCheckUser);
+            $stmtCheckUser->bindValue(':usuario', $usuario, PDO::PARAM_STR);
+            $stmtCheckUser->execute();
+            
+            if ($stmtCheckUser->rowCount() == 0) {
+                // Usuario disponible
+                break;
+            }
+            
+            // Usuario ocupado, generar variación
+            $usuario = $usuarioBase . '_' . $contador;
+            $contador++;
+            
+            if ($contador > 100) {
+                throw new Exception("No se pudo generar un usuario único después de 100 intentos");
+            }
+        }
+        
+        error_log("Usuario generado para acudiente: '$usuario' (documento: $documento)");
+        
+        // Generar ID
+        $idUsuario = Utilidades::getNextIdSequence($conexionPDO, BD_GENERAL, 'usuarios');
+        $claveEncriptada = SHA1($clavePorDefectoUsuarios);
+        $tipoUsuario = 3; // Acudiente
+        
+        $sql = "INSERT INTO " . BD_GENERAL . ".usuarios (
+                    uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre,
+                    uss_apellido1, uss_documento, uss_email, uss_celular,
+                    uss_foto, uss_portada, uss_idioma, uss_tema, 
+                    uss_estado, uss_bloqueado, uss_fecha_registro, institucion, year
+                ) VALUES (
+                    :id, :usuario, :clave, :tipo, :nombre,
+                    :apellido, :documento, :email, :celular,
+                    'default.png', 'default.png', '1', 'blue',
+                    '0', '0', NOW(), :institucion, :year
+                )";
+        
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindValue(':id', $idUsuario, PDO::PARAM_STR);
+        $stmt->bindValue(':usuario', $usuario, PDO::PARAM_STR);
+        $stmt->bindValue(':clave', $claveEncriptada, PDO::PARAM_STR);
+        $stmt->bindValue(':tipo', $tipoUsuario, PDO::PARAM_INT);
+        $stmt->bindValue(':nombre', $nombre, PDO::PARAM_STR);
+        $stmt->bindValue(':apellido', $apellido, PDO::PARAM_STR);
+        $stmt->bindValue(':documento', $documento, PDO::PARAM_STR);
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':celular', $celular, PDO::PARAM_STR);
+        $stmt->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmt->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+        
+        $stmt->execute();
+        
+        return ['success' => true, 'id_usuario' => $idUsuario, 'existed' => false];
+        
+    } catch (Exception $e) {
+        error_log("Error en crearUsuarioAcudiente: " . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
+
+/**
+ * Mapea el nombre o código del grupo a su ID en la base de datos
+ */
+function mapearGrupoPorNombre($nombreGrupo, $gradoId = null) {
+    global $conexionPDO, $config;
+    
+    if (empty($nombreGrupo)) {
+        error_log("Mapeo Grupo: vacío -> null");
+        return null;
+    }
+    
+    $nombreGrupo = trim(cleanExcelData($nombreGrupo));
+    error_log("Mapeo Grupo: Buscando grupo '$nombreGrupo' para grado: " . ($gradoId ?? 'NULL'));
+    
+    try {
+        // Buscar por ID, nombre o código (case insensitive, permite alfanuméricos)
+        // También busca con LIKE para encontrar "A" cuando el nombre es "Grupo A"
+        $sql = "SELECT gru_id, gru_nombre, gru_codigo FROM " . BD_ACADEMICA . ".academico_grupos 
+                WHERE (gru_id = :id OR 
+                       UPPER(gru_nombre) = UPPER(:nombre) OR 
+                       UPPER(gru_codigo) = UPPER(:codigo) OR
+                       UPPER(gru_nombre) LIKE UPPER(:nombreLike))
+                AND gru_estado = 1 
+                AND institucion = :institucion 
+                AND year = :year";
+        
+        // Si se proporciona el grado, filtrar también por él
+        if ($gradoId !== null) {
+            $sql .= " AND gru_grado = :grado";
+        }
+        
+        $sql .= " LIMIT 1";
+        
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindValue(':id', $nombreGrupo, PDO::PARAM_STR);
+        $stmt->bindValue(':nombre', $nombreGrupo, PDO::PARAM_STR);
+        $stmt->bindValue(':codigo', $nombreGrupo, PDO::PARAM_STR);
+        $stmt->bindValue(':nombreLike', '%' . $nombreGrupo . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmt->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+        
+        if ($gradoId !== null) {
+            $stmt->bindValue(':grado', $gradoId, PDO::PARAM_STR);
+        }
+        
+        $stmt->execute();
+        
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($resultado) {
+            error_log("Mapeo Grupo: '$nombreGrupo' -> ENCONTRADO: ID {$resultado['gru_id']}, Nombre: '{$resultado['gru_nombre']}', Código: '{$resultado['gru_codigo']}'");
+            return $resultado['gru_id'];
+        } else {
+            error_log("Mapeo Grupo: '$nombreGrupo' -> NO ENCONTRADO en BD (grado: " . ($gradoId ?? 'NULL') . ")");
+            return null;
+        }
+    } catch (Exception $e) {
+        error_log("Error en mapearGrupoPorNombre: " . $e->getMessage());
+        return null;
+    }
 }
 
 // Función para limpiar datos de Excel
@@ -353,8 +653,21 @@ function processExcelImmediately($file, $actualizarCampo) {
             'created' => 0,
             'updated' => 0,
             'errors' => 0,
-            'errorDetails' => []
+            'errorDetails' => [],
+            'usuariosEstudiantes' => [
+                'creados' => 0,
+                'reutilizados' => 0
+            ],
+            'usuariosAcudientes' => [
+                'creados' => 0,
+                'reutilizados' => 0,
+                'omitidos' => 0
+            ],
+            'relaciones' => 0
         ];
+        
+        // Arrays para controlar duplicados dentro del mismo Excel
+        $documentosEnExcel = [];
         
         // Obtener cabeceras
         $headers = [];
@@ -444,6 +757,17 @@ function processExcelImmediately($file, $actualizarCampo) {
                     continue;
                 }
                 
+                // Validar duplicados dentro del mismo Excel
+                $documento = $rowData['Documento'];
+                if (in_array($documento, $documentosEnExcel)) {
+                    $results['errors']++;
+                    $results['errorDetails'][] = "Fila $row: El documento '$documento' está duplicado en el archivo Excel (ya apareció en una fila anterior)";
+                    continue;
+                }
+                
+                // Registrar documento como procesado
+                $documentosEnExcel[] = $documento;
+                
                 // Validar formato de fecha si existe (Columna H) - OPCIONAL
                 $fechaNacimiento = null;
                 if (!empty($rowData['Fecha Nacimiento'])) {
@@ -456,8 +780,7 @@ function processExcelImmediately($file, $actualizarCampo) {
                     }
                 }
                 
-                // Verificar si el estudiante ya existe
-                $documento = $rowData['Documento'];
+                // Verificar si el estudiante ya existe en la BD
                 $existeEstudiante = Estudiantes::validarExistenciaEstudiante($documento);
                 
                 if ($existeEstudiante > 0) {
@@ -472,11 +795,36 @@ function processExcelImmediately($file, $actualizarCampo) {
                 } else {
                     // Crear nuevo estudiante usando función segura
                     $resultadoCreacion = createNewStudentSafe($rowData, $fechaNacimiento);
-                    if ($resultadoCreacion === true) {
+                    
+                    if (is_array($resultadoCreacion) && $resultadoCreacion['success']) {
                         $results['created']++;
+                        
+                        // Rastrear usuarios creados
+                        if (isset($resultadoCreacion['usuarios']['estudiante'])) {
+                            if ($resultadoCreacion['usuarios']['estudiante']['existed']) {
+                                $results['usuariosEstudiantes']['reutilizados']++;
+                            } else {
+                                $results['usuariosEstudiantes']['creados']++;
+                            }
+                        }
+                        
+                        if (isset($resultadoCreacion['usuarios']['acudiente'])) {
+                            if ($resultadoCreacion['usuarios']['acudiente']['existed']) {
+                                $results['usuariosAcudientes']['reutilizados']++;
+                            } else {
+                                $results['usuariosAcudientes']['creados']++;
+                            }
+                            $results['relaciones']++;
+                        } else {
+                            // Si no hay datos de acudiente en el Excel
+                            if (empty($rowData['Documento Acudiente'])) {
+                                $results['usuariosAcudientes']['omitidos']++;
+                            }
+                        }
                     } else {
                         $results['errors']++;
-                        $results['errorDetails'][] = "Fila $row: Error al crear - " . $resultadoCreacion;
+                        $errorMsg = is_array($resultadoCreacion) ? ($resultadoCreacion['message'] ?? 'Error desconocido') : $resultadoCreacion;
+                        $results['errorDetails'][] = "Fila $row: Error al crear - " . $errorMsg;
                     }
                 }
                 
@@ -493,13 +841,20 @@ function processExcelImmediately($file, $actualizarCampo) {
     }
 }
 
-// Función para crear nuevo estudiante con consulta SQL directa y segura
+/**
+ * Crea nuevo estudiante con consulta SQL directa y segura
+ * Retorna: ['success' => bool, 'usuarios' => ['estudiante' => [...], 'acudiente' => [...]]]
+ */
 function createNewStudentSafe($rowData, $fechaNacimiento = null) {
     try {
         global $conexionPDO, $config;
         
         // Generar código de matrícula usando la función original
         $codigoMAT = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_matriculas');
+        
+        // Mapear grado y grupo por nombre/código
+        $gradoMapeado = mapearGradoPorNombre(cleanExcelData($rowData['Grado']));
+        $grupoMapeado = mapearGrupoPorNombre(cleanExcelData($rowData['Grupo'] ?? ''), $gradoMapeado);
         
         // Preparar datos con limpieza extrema y conversión de códigos
         $datosLimpios = [
@@ -509,8 +864,8 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             'apellido1' => cleanExcelData($rowData['Primer Apellido']),
             'nombre2' => cleanExcelData($rowData['Segundo Nombre'] ?? ''),
             'apellido2' => cleanExcelData($rowData['Segundo Apellido'] ?? ''),
-            'grado' => cleanExcelData($rowData['Grado']),
-            'grupo' => intval(cleanExcelData($rowData['Grupo'] ?? '1')),
+            'grado' => $gradoMapeado,
+            'grupo' => $grupoMapeado,
             'fNac' => $fechaNacimiento,
             'genero' => mapearGenero(cleanExcelData($rowData['Genero'] ?? '')),  // Retorna null si está vacío
             'direccion' => cleanExcelData($rowData['Direccion'] ?? ''),
@@ -519,7 +874,13 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             'email' => cleanExcelData($rowData['Email'] ?? ''),
             'estrato' => mapearEstrato(cleanExcelData($rowData['Estrato'] ?? '')),  // Retorna null si está vacío
             'tipoSangre' => cleanExcelData($rowData['Grupo Sanguineo'] ?? ''),
-            'eps' => cleanExcelData($rowData['EPS'] ?? '')
+            'eps' => cleanExcelData($rowData['EPS'] ?? ''),
+            // Datos del acudiente
+            'docAcudiente' => cleanExcelData($rowData['Documento Acudiente'] ?? ''),
+            'nombreAcudiente' => cleanExcelData($rowData['Nombre Acudiente'] ?? ''),
+            'apellidoAcudiente' => cleanExcelData($rowData['Apellido Acudiente'] ?? ''),
+            'celularAcudiente' => cleanExcelData($rowData['Celular Acudiente'] ?? ''),
+            'emailAcudiente' => cleanExcelData($rowData['Email Acudiente'] ?? '')
         ];
         
         // Verificar que no haya caracteres problemáticos
@@ -653,14 +1014,111 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
         $stmt->bindParam(':formaCreacion', $formaCreacion, PDO::PARAM_STR);
         
         if ($stmt->execute()) {
-            return true;
+            // 🎯 CREACIÓN DE USUARIOS PARA ESTUDIANTE Y ACUDIENTE
+            $infoUsuarios = [
+                'estudiante' => null,
+                'acudiente' => null
+            ];
+            
+            try {
+                global $clavePorDefectoUsuarios;
+                
+                // 1️⃣ CREAR USUARIO PARA EL ESTUDIANTE
+                $usuarioEstudiante = crearUsuarioEstudiante(
+                    $datosLimpios['nDoc'],
+                    $datosLimpios['nombres'],
+                    $datosLimpios['nombre2'],
+                    $datosLimpios['apellido1'],
+                    $datosLimpios['apellido2'],
+                    $datosLimpios['email'],
+                    $datosLimpios['celular'],
+                    $datosLimpios['genero']
+                );
+                
+                if ($usuarioEstudiante['success']) {
+                    error_log("✅ Usuario estudiante creado: ID {$usuarioEstudiante['id_usuario']}");
+                    $infoUsuarios['estudiante'] = $usuarioEstudiante;
+                    
+                    // Actualizar mat_id_usuario en la matrícula
+                    $sqlUpdateMatricula = "UPDATE " . BD_ACADEMICA . ".academico_matriculas 
+                                          SET mat_id_usuario = :idUsuario 
+                                          WHERE mat_documento = :documento 
+                                          AND institucion = :institucion 
+                                          AND year = :year";
+                    $stmtUpdate = $conexionPDO->prepare($sqlUpdateMatricula);
+                    $stmtUpdate->bindValue(':idUsuario', $usuarioEstudiante['id_usuario'], PDO::PARAM_STR);
+                    $stmtUpdate->bindValue(':documento', $datosLimpios['nDoc'], PDO::PARAM_STR);
+                    $stmtUpdate->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+                    $stmtUpdate->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+                    $stmtUpdate->execute();
+                } else {
+                    error_log("⚠️ No se pudo crear usuario estudiante: " . $usuarioEstudiante['message']);
+                }
+                
+                // 2️⃣ CREAR USUARIO PARA EL ACUDIENTE (si tiene datos)
+                if (!empty($datosLimpios['docAcudiente']) && !empty($datosLimpios['nombreAcudiente'])) {
+                    $usuarioAcudiente = crearUsuarioAcudiente(
+                        $datosLimpios['docAcudiente'],
+                        $datosLimpios['nombreAcudiente'],
+                        $datosLimpios['apellidoAcudiente'],
+                        $datosLimpios['celularAcudiente'],
+                        $datosLimpios['emailAcudiente']
+                    );
+                    
+                    if ($usuarioAcudiente['success']) {
+                        error_log("✅ Usuario acudiente creado: ID {$usuarioAcudiente['id_usuario']}");
+                        $infoUsuarios['acudiente'] = $usuarioAcudiente;
+                        
+                        // Actualizar mat_acudiente en la matrícula
+                        $sqlUpdateAcudiente = "UPDATE " . BD_ACADEMICA . ".academico_matriculas 
+                                              SET mat_acudiente = :idAcudiente 
+                                              WHERE mat_documento = :documento 
+                                              AND institucion = :institucion 
+                                              AND year = :year";
+                        $stmtUpdateAcud = $conexionPDO->prepare($sqlUpdateAcudiente);
+                        $stmtUpdateAcud->bindValue(':idAcudiente', $usuarioAcudiente['id_usuario'], PDO::PARAM_STR);
+                        $stmtUpdateAcud->bindValue(':documento', $datosLimpios['nDoc'], PDO::PARAM_STR);
+                        $stmtUpdateAcud->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+                        $stmtUpdateAcud->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+                        $stmtUpdateAcud->execute();
+                        error_log("✅ mat_acudiente actualizado: {$usuarioAcudiente['id_usuario']} para estudiante doc {$datosLimpios['nDoc']}");
+                        
+                        // 3️⃣ RELACIONAR ESTUDIANTE CON ACUDIENTE en usuarios_por_estudiantes
+                        if (isset($usuarioEstudiante['id_usuario']) && isset($usuarioAcudiente['id_usuario'])) {
+                            $sqlRelacion = "INSERT INTO " . BD_GENERAL . ".usuarios_por_estudiantes 
+                                           (upe_id_usuario, upe_id_estudiante, institucion, year) 
+                                           VALUES (:idAcudiente, :idEstudiante, :institucion, :year)
+                                           ON DUPLICATE KEY UPDATE upe_id_usuario = :idAcudiente";
+                            $stmtRelacion = $conexionPDO->prepare($sqlRelacion);
+                            $stmtRelacion->bindValue(':idAcudiente', $usuarioAcudiente['id_usuario'], PDO::PARAM_STR);
+                            $stmtRelacion->bindValue(':idEstudiante', $usuarioEstudiante['id_usuario'], PDO::PARAM_STR);
+                            $stmtRelacion->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+                            $stmtRelacion->bindValue(':year', $config['conf_agno'], PDO::PARAM_INT);
+                            $stmtRelacion->execute();
+                            
+                            $filasAfectadas = $stmtRelacion->rowCount();
+                            error_log("✅ Relación usuarios_por_estudiantes: Acudiente {$usuarioAcudiente['id_usuario']} -> Estudiante {$usuarioEstudiante['id_usuario']} (Filas: $filasAfectadas)");
+                        } else {
+                            error_log("❌ No se pudo crear relación - usuarioEstudiante: " . (isset($usuarioEstudiante['id_usuario']) ? 'OK' : 'MISSING') . ", usuarioAcudiente: " . (isset($usuarioAcudiente['id_usuario']) ? 'OK' : 'MISSING'));
+                        }
+                    } else {
+                        error_log("⚠️ No se pudo crear usuario acudiente: " . $usuarioAcudiente['message']);
+                    }
+                }
+                
+            } catch (Exception $eUsuarios) {
+                error_log("⚠️ Error creando usuarios: " . $eUsuarios->getMessage());
+                // No lanzar excepción, el estudiante ya fue creado
+            }
+            
+            return ['success' => true, 'usuarios' => $infoUsuarios];
         } else {
             $errorInfo = $stmt->errorInfo();
-            return "Error SQL: " . $errorInfo[2];
+            return ['success' => false, 'message' => "Error SQL: " . $errorInfo[2]];
         }
         
     } catch (Exception $e) {
-        return "Excepción: " . $e->getMessage();
+        return ['success' => false, 'message' => "Excepción: " . $e->getMessage()];
     }
 }
 
@@ -688,13 +1146,16 @@ function updateExistingStudentSafe($documento, $rowData, $actualizarCampo, $fech
                 case '1': // Grado
                     if (isset($rowData['Grado'])) {
                         $camposUpdate[] = "mat_grado = :grado";
-                        $valores['grado'] = cleanExcelData($rowData['Grado']);
+                        // Aplicar mapeo de grado por nombre/código
+                        $valores['grado'] = mapearGradoPorNombre(cleanExcelData($rowData['Grado']));
                     }
                     break;
                 case '2': // Grupo
                     if (isset($rowData['Grupo'])) {
                         $camposUpdate[] = "mat_grupo = :grupo";
-                        $valores['grupo'] = intval(cleanExcelData($rowData['Grupo']));
+                        // Aplicar mapeo de grupo por nombre/código (con grado si está disponible)
+                        $gradoMapeado = isset($valores['grado']) ? $valores['grado'] : null;
+                        $valores['grupo'] = mapearGrupoPorNombre(cleanExcelData($rowData['Grupo']), $gradoMapeado);
                     }
                     break;
                 case '3': // Tipo de Documento
