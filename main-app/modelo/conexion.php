@@ -15,12 +15,46 @@ if(isset($_SESSION["id"]) and $_SESSION["id"]!=""){
 
 //seleccionamos la base de datos
 if (empty($_SESSION["inst"])) {
+	// 🔍 DETECTAR SESIÓN ZOMBIE: Sesión completamente vacía después de session_destroy()
+	$isZombieSession = (count($_SESSION) === 0);
+	
 	// LOG EXTENSO del problema
 	error_log("🔴 CONEXION.PHP: SESSION[inst] VACÍA - Intentando recuperar");
 	error_log("   └─ Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN'));
 	error_log("   └─ SESSION[id]: " . ($_SESSION["id"] ?? 'NULL'));
 	error_log("   └─ SESSION[idInstitucion]: " . ($_SESSION["idInstitucion"] ?? 'NULL'));
 	error_log("   └─ SESSION[datosUnicosInstitucion] existe: " . (isset($_SESSION["datosUnicosInstitucion"]) ? 'SÍ' : 'NO'));
+	error_log("   └─ Sesión Zombie (completamente vacía): " . ($isZombieSession ? 'SÍ' : 'NO'));
+	error_log("   └─ Total keys en SESSION: " . count($_SESSION));
+	
+	// Si es una sesión zombie, redirigir directamente sin intentar fallbacks
+	if ($isZombieSession) {
+		error_log("🧟 CONEXION.PHP: SESIÓN ZOMBIE DETECTADA (cookie mantenida después de session_destroy)");
+		error_log("   └─ Session ID: " . session_id());
+		error_log("   └─ Referer: " . ($_SERVER['HTTP_REFERER'] ?? 'N/A'));
+		error_log("   └─ IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'N/A'));
+		
+		// NO llamar session_destroy() aquí porque ya está destruida
+		// Solo borrar la cookie zombie
+		if (isset($_COOKIE[session_name()])) {
+			$params = session_get_cookie_params();
+			setcookie(
+				session_name(),
+				'',
+				time() - 42000,
+				$params['path'],
+				$params['domain'],
+				$params['secure'],
+				$params['httponly']
+			);
+		}
+		
+		require_once ROOT_PATH.'/main-app/class/Utilidades.php';
+		$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
+		$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
+		header("Location:".REDIRECT_ROUTE."?error=4&urlDefault=".$page."&directory=".$directory."&zombie=1");
+		exit();
+	}
 	
 	// FALLBACK: Intentar recuperar desde datosUnicosInstitucion
 	if (!empty($_SESSION["datosUnicosInstitucion"]) && isset($_SESSION["datosUnicosInstitucion"]["ins_bd"])) {
