@@ -438,33 +438,36 @@ if ($mensajesNoLeidosConsulta) {
                             <span id="mensajes_numero" style="display: none;"></span>
                             <span id="mensajes" style="display: none;"></span>
                             <script>
-                                socket.on("recibio_correo_<?=$_SESSION['id']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
-                                    mensajes();
-                                    $.toast({
-                                        heading: data['asunto'],  
-                                        text: 'Tienes un mensaje nuevo del usuario '+data['nombreEmisor']+', Revisalo en Aplicaciones de Sintia.',
-                                        position: 'bottom-right',
-                                        showHideTransition: 'slide',
-                                        loaderBg:'#ff6849',
-                                        icon: 'info',
-                                        hideAfter: 10000, 
-                                        stack: 6
-                                    })
-                                });
+                                // 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+                                if (typeof socket !== 'undefined') {
+                                    socket.on("recibio_correo_<?=$_SESSION['id']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
+                                        mensajes();
+                                        $.toast({
+                                            heading: data['asunto'],  
+                                            text: 'Tienes un mensaje nuevo del usuario '+data['nombreEmisor']+', Revisalo en Aplicaciones de Sintia.',
+                                            position: 'bottom-right',
+                                            showHideTransition: 'slide',
+                                            loaderBg:'#ff6849',
+                                            icon: 'info',
+                                            hideAfter: 10000, 
+                                            stack: 6
+                                        })
+                                    });
 
-                                socket.on("recibio_correo_modulos_dev_<?=$datosUsuarioActual['uss_tipo']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
-                                    mensajes();
-                                    $.toast({
-                                        heading: data['asunto'],  
-                                        text: 'Tienes un mensaje nuevo, Revisalo en Aplicaciones de Sintia.',
-                                        position: 'bottom-right',
-                                        showHideTransition: 'slide',
-                                        loaderBg:'#ff6849',
-                                        icon: 'info',
-                                        hideAfter: 10000, 
-                                        stack: 6
-                                    })
-                                });
+                                    socket.on("recibio_correo_modulos_dev_<?=$datosUsuarioActual['uss_tipo']?>_<?=$_SESSION['idInstitucion']?>",async (data) => {
+                                        mensajes();
+                                        $.toast({
+                                            heading: data['asunto'],  
+                                            text: 'Tienes un mensaje nuevo, Revisalo en Aplicaciones de Sintia.',
+                                            position: 'bottom-right',
+                                            showHideTransition: 'slide',
+                                            loaderBg:'#ff6849',
+                                            icon: 'info',
+                                            hideAfter: 10000, 
+                                            stack: 6
+                                        })
+                                    });
+                                }
                             </script>
                         <?php }?>
                         <!-- end message dropdown -->

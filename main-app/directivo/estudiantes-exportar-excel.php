@@ -90,6 +90,18 @@ if (!empty($_GET['estados'])) {
     }
 }
 
+// Filtro por fecha de matrícula (desde)
+if (!empty($_GET['fecha_desde'])) {
+    $fechaDesdeEscape = mysqli_real_escape_string($conexion, trim($_GET['fecha_desde']));
+    $filtro .= " AND DATE(mat.mat_fecha) >= '{$fechaDesdeEscape}'";
+}
+
+// Filtro por fecha de matrícula (hasta)
+if (!empty($_GET['fecha_hasta'])) {
+    $fechaHastaEscape = mysqli_real_escape_string($conexion, trim($_GET['fecha_hasta']));
+    $filtro .= " AND DATE(mat.mat_fecha) <= '{$fechaHastaEscape}'";
+}
+
 // Campos a seleccionar (sin ciudad por ahora, se obtendrá después si es necesario)
 $selectSql = [
     "mat.*",

@@ -878,6 +878,29 @@ if($config['conf_doble_buscador'] == 1) {
 														</div>
 													</div>
 													
+													<!-- Filtros por Fecha de Matrícula -->
+													<div class="row mt-3">
+														<div class="col-md-6">
+															<div class="form-group">
+																<label><i class="fa fa-calendar"></i> Fecha de Matrícula (Desde)</label>
+																<input type="date" id="filtro_fecha_desde" class="form-control" max="<?= date('Y-m-d'); ?>" placeholder="Fecha desde">
+																<small class="form-text text-muted">
+																	<i class="fa fa-info-circle"></i> Filtra estudiantes matriculados desde esta fecha
+																</small>
+															</div>
+														</div>
+														
+														<div class="col-md-6">
+															<div class="form-group">
+																<label><i class="fa fa-calendar"></i> Fecha de Matrícula (Hasta)</label>
+																<input type="date" id="filtro_fecha_hasta" class="form-control" max="<?= date('Y-m-d'); ?>" placeholder="Fecha hasta">
+																<small class="form-text text-muted">
+																	<i class="fa fa-info-circle"></i> Filtra estudiantes matriculados hasta esta fecha (no puede ser mayor a hoy)
+																</small>
+															</div>
+														</div>
+													</div>
+													
 													<div class="row">
 														<div class="col-md-12 text-right">
 															<button type="button" class="btn btn-secondary" id="btnLimpiarFiltros">
@@ -1311,6 +1334,8 @@ if($config['conf_doble_buscador'] == 1) {
 				var grupos = $('#filtro_grupos').val() || [];
 				var estados = $('#filtro_estados').val() || [];
 				var busqueda = $('#filtro_busqueda').val() || '';
+				var fechaDesde = $('#filtro_fecha_desde').val() || '';
+				var fechaHasta = $('#filtro_fecha_hasta').val() || '';
 				
 				$.ajax({
 					url: 'ajax-filtrar-estudiantes.php',
@@ -1319,7 +1344,9 @@ if($config['conf_doble_buscador'] == 1) {
 						cursos: cursos,
 						grupos: grupos,
 						estados: estados,
-						busqueda: busqueda
+						busqueda: busqueda,
+						fechaDesde: fechaDesde,
+						fechaHasta: fechaHasta
 					},
 					dataType: 'json',
 					success: function(response) {
@@ -1410,8 +1437,10 @@ if($config['conf_doble_buscador'] == 1) {
 				const grupos = $('#filtro_grupos').val() || [];
 				const estados = $('#filtro_estados').val() || [];
 				const busqueda = $('#filtro_busqueda').val() || '';
+				const fechaDesde = $('#filtro_fecha_desde').val() || '';
+				const fechaHasta = $('#filtro_fecha_hasta').val() || '';
 				
-				console.log('Aplicando filtros:', { cursos, grupos, estados, busqueda });
+				console.log('Aplicando filtros:', { cursos, grupos, estados, busqueda, fechaDesde, fechaHasta });
 				
 				// Mostrar loader
 				$('#gifCarga').show();
@@ -1425,7 +1454,9 @@ if($config['conf_doble_buscador'] == 1) {
 						cursos: cursos,
 						grupos: grupos,
 						estados: estados,
-						busqueda: busqueda
+						busqueda: busqueda,
+						fechaDesde: fechaDesde,
+						fechaHasta: fechaHasta
 					},
 					dataType: 'json',
 					success: function(response) {
@@ -1508,6 +1539,9 @@ if($config['conf_doble_buscador'] == 1) {
 				$('#filtro_cursos').val(null).trigger('change');
 				$('#filtro_grupos').val(null).trigger('change');
 				$('#filtro_estados').val(null).trigger('change');
+				$('#filtro_busqueda').val('');
+				$('#filtro_fecha_desde').val('');
+				$('#filtro_fecha_hasta').val('');
 				
 				// Recargar la página para mostrar todos los estudiantes
 				location.reload();
@@ -1534,6 +1568,55 @@ if($config['conf_doble_buscador'] == 1) {
 					aplicarFiltros();
 				}
 			});
+			
+			// Validación y aplicación de filtros al cambiar las fechas
+			$('#filtro_fecha_desde, #filtro_fecha_hasta').on('change', function() {
+				validarFechas();
+				clearTimeout(window.filtroTimeout);
+				window.filtroTimeout = setTimeout(function() {
+					aplicarFiltros();
+				}, 500);
+			});
+			
+			// Función para validar fechas y evitar errores humanos
+			function validarFechas() {
+				const fechaDesde = $('#filtro_fecha_desde').val();
+				const fechaHasta = $('#filtro_fecha_hasta').val();
+				const hoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+				
+				// Si hay fecha desde, actualizar el atributo min de fecha hasta
+				if (fechaDesde) {
+					$('#filtro_fecha_hasta').attr('min', fechaDesde);
+				} else {
+					$('#filtro_fecha_hasta').removeAttr('min');
+				}
+				
+				// Validar que fecha hasta no sea mayor a hoy
+				if (fechaHasta && fechaHasta > hoy) {
+					$('#filtro_fecha_hasta').val(hoy);
+					$.toast({
+						heading: 'Atención',
+						text: 'La fecha hasta no puede ser mayor a hoy. Se ajustó automáticamente.',
+						showHideTransition: 'slide',
+						icon: 'warning',
+						position: 'top-right',
+						hideAfter: 3000
+					});
+				}
+				
+				// Validar que fecha hasta sea mayor o igual a fecha desde
+				if (fechaDesde && fechaHasta && fechaHasta < fechaDesde) {
+					$('#filtro_fecha_hasta').val(fechaDesde);
+					$.toast({
+						heading: 'Atención',
+						text: 'La fecha hasta debe ser mayor o igual a la fecha desde. Se ajustó automáticamente.',
+						showHideTransition: 'slide',
+						icon: 'warning',
+						position: 'top-right',
+						hideAfter: 3000
+					});
+				}
+			}
 			
 			// Cerrar dropdowns al hacer scroll dentro del contenedor de la tabla
 			$('.table-estudiantes-wrapper').on('scroll', function() {
@@ -1778,6 +1861,10 @@ if($config['conf_doble_buscador'] == 1) {
 					loaderBg: '#26c281'
 				});
 				
+				// Obtener filtros adicionales
+				var fechaDesde = $('#filtro_fecha_desde').val() || '';
+				var fechaHasta = $('#filtro_fecha_hasta').val() || '';
+				
 				// Construir URL con parámetros
 				var url = 'estudiantes-exportar-excel.php?';
 				url += 'campos=' + encodeURIComponent(JSON.stringify(camposSeleccionados));
@@ -1793,6 +1880,12 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 				if (busqueda) {
 					url += '&busqueda=' + encodeURIComponent(busqueda);
+				}
+				if (fechaDesde) {
+					url += '&fecha_desde=' + encodeURIComponent(fechaDesde);
+				}
+				if (fechaHasta) {
+					url += '&fecha_hasta=' + encodeURIComponent(fechaHasta);
 				}
 				
 				// Abrir en nueva ventana para descargar
