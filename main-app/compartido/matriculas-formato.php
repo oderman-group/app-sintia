@@ -224,7 +224,7 @@ if(!isset($_GET["ref"]) or $_GET["ref"]=="" or !is_numeric($_GET["ref"]) or $_SE
                               Estimado usuario, guarde este comprobante en caso de que se presente alg&uacute;n incoveniente.
                               <br />
                               <br />
-                              Si tiene alguna inquietud sobre el manejo de la plataforma comuniquese al correo <a href="">plataforma@oderman.com.co</a> o al n&uacute;mero tel&eacute;fonico (4) 585 3755
+                              Si tiene alguna inquietud sobre el manejo de la plataforma comuniquese al correo <a href="mailto:plataforma@oderman.com.co">plataforma@oderman.com.co</a> o al n&uacute;mero tel&eacute;fonico (4) 585 3755
                               <br />
                               <br />
                               <b>ODERMAN, Contribuimos a la excelencia educativa.</b>

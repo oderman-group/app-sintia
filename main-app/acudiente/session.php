@@ -3,7 +3,7 @@ session_start();
 //Si otro usuario de mayor rango entra como él
 if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){$idSession = $_SESSION["idO"];}else{$idSession = $_SESSION["id"];}
 if($idSession==""){
-	header("Location:../controlador/salir.php");
+	header("Location:../controlador/salir.php?session_empty=true");
 }
 else
 {

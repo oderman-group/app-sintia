@@ -12,7 +12,9 @@ $urlOrigen = $explode[1];
 		</div>
 
 		<div class="modal-body" align="center">
-			<img id="imgPaquete" src="" style="width: 100%;" alt="Imagen de Paquetes">
+			<!-- 🔧 CORRECCIÓN: Usar imagen placeholder en lugar de src="" vacío para prevenir requests inesperados -->
+			<!-- El JavaScript (funciones.js línea 933) cambia el src dinámicamente -->
+			<img id="imgPaquete" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="width: 100%;" alt="Imagen de Paquetes">
 			<p>
 				<b id="tituloDescripcionPaquete"></b><br>
 				<span id="descripcionPaquete"></span>
