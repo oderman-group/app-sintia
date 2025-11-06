@@ -55,18 +55,22 @@ try {
     $valoresInsert = [];
     $usuariosCreados = [];
     
+    // Arrays para controlar duplicados dentro del mismo Excel
+    $documentosEnExcel = [];
+    $usuariosEnExcel = [];
+    
     // Recorrer filas (empezar desde fila 2, asumiendo que fila 1 es encabezado)
     error_log("Total filas a procesar: " . $numFilas);
     for ($fila = 2; $fila <= $numFilas; $fila++) {
         try {
-            // Leer columnas en el orden especificado
-            $tipoUsuario = trim($hojaActual->getCell('A' . $fila)->getValue());
-            $apellido1 = trim($hojaActual->getCell('B' . $fila)->getValue());
-            $apellido2 = trim($hojaActual->getCell('C' . $fila)->getValue());
-            $nombre1 = trim($hojaActual->getCell('D' . $fila)->getValue());
-            $nombre2 = trim($hojaActual->getCell('E' . $fila)->getValue());
-            $usuario = trim($hojaActual->getCell('F' . $fila)->getValue());
-            $documento = trim($hojaActual->getCell('G' . $fila)->getValue());
+            // Leer columnas en el orden especificado (con protección contra null para PHP 8.1+)
+            $tipoUsuario = trim($hojaActual->getCell('A' . $fila)->getValue() ?? '');
+            $apellido1 = trim($hojaActual->getCell('B' . $fila)->getValue() ?? '');
+            $apellido2 = trim($hojaActual->getCell('C' . $fila)->getValue() ?? '');
+            $nombre1 = trim($hojaActual->getCell('D' . $fila)->getValue() ?? '');
+            $nombre2 = trim($hojaActual->getCell('E' . $fila)->getValue() ?? '');
+            $usuario = trim($hojaActual->getCell('F' . $fila)->getValue() ?? '');
+            $documento = trim($hojaActual->getCell('G' . $fila)->getValue() ?? '');
             
             error_log("Fila $fila - Tipo: '$tipoUsuario', Apellido1: '$apellido1', Nombre1: '$nombre1', Doc: '$documento'");
             
@@ -103,40 +107,96 @@ try {
                 $usuario = $documento;
             }
             
-            // Sanitizar documento (quitar espacios, puntos, comas)
-            $documento = preg_replace('/[^0-9]/', '', $documento);
+            // Sanitizar documento (quitar solo espacios, permitir alfanuméricos)
+            $documento = preg_replace('/\s+/', '', $documento); // Eliminar espacios
+            $documento = trim($documento);
             
-            if (empty($documento)) {
+            // Validar que el documento no esté vacío y sea alfanumérico
+            if (empty($documento) || !preg_match('/^[a-zA-Z0-9\-]+$/', $documento)) {
                 $detalles[] = [
                     'fila' => $fila,
                     'usuario' => $usuario,
                     'nombre' => "$nombre1 $apellido1",
                     'estado' => 'error',
                     'estadoTexto' => 'Error',
-                    'mensaje' => 'Documento inválido (debe contener números)'
+                    'mensaje' => 'Documento inválido (debe ser alfanumérico, puede incluir guiones)'
                 ];
                 $errores++;
                 continue;
             }
             
-            // Verificar si el usuario ya existe
-            $consultaExiste = mysqli_query($conexion, "SELECT uss_id FROM ".BD_GENERAL.".usuarios 
-                WHERE uss_documento = '$documento' 
+            // Validar duplicados dentro del mismo Excel
+            if (in_array($documento, $documentosEnExcel)) {
+                $detalles[] = [
+                    'fila' => $fila,
+                    'usuario' => $usuario,
+                    'nombre' => "$nombre1 $apellido1",
+                    'estado' => 'error',
+                    'estadoTexto' => 'Error',
+                    'mensaje' => "Documento duplicado en el archivo Excel (ya apareció en una fila anterior)"
+                ];
+                $errores++;
+                continue;
+            }
+            
+            if (in_array($usuario, $usuariosEnExcel)) {
+                $detalles[] = [
+                    'fila' => $fila,
+                    'usuario' => $usuario,
+                    'nombre' => "$nombre1 $apellido1",
+                    'estado' => 'error',
+                    'estadoTexto' => 'Error',
+                    'mensaje' => "Usuario duplicado en el archivo Excel (ya apareció en una fila anterior)"
+                ];
+                $errores++;
+                continue;
+            }
+            
+            // Escapar valores para consultas de validación
+            $documentoEscapado = mysqli_real_escape_string($conexion, $documento);
+            $usuarioEscapado = mysqli_real_escape_string($conexion, $usuario);
+            
+            // Verificar si el documento ya existe en la base de datos
+            $consultaDocumento = mysqli_query($conexion, "SELECT uss_id, uss_documento FROM ".BD_GENERAL.".usuarios 
+                WHERE uss_documento = '$documentoEscapado' 
                 AND institucion = {$config['conf_id_institucion']} 
                 AND year = {$_SESSION['bd']}");
             
-            if (mysqli_num_rows($consultaExiste) > 0) {
+            if (mysqli_num_rows($consultaDocumento) > 0) {
+                $usuarioExistente = mysqli_fetch_assoc($consultaDocumento);
                 $detalles[] = [
                     'fila' => $fila,
                     'usuario' => $usuario,
                     'nombre' => "$nombre1 $apellido1",
                     'estado' => 'warning',
                     'estadoTexto' => 'Omitido',
-                    'mensaje' => 'El usuario ya existe en la plataforma'
+                    'mensaje' => "El documento ya existe en la plataforma (Documento: {$usuarioExistente['uss_documento']})"
                 ];
                 $omitidos++;
                 continue;
             }
+            
+            // Verificar si el usuario ya existe en la base de datos
+            $consultaUsuario = mysqli_query($conexion, "SELECT uss_id, uss_usuario FROM ".BD_GENERAL.".usuarios 
+                WHERE uss_usuario = '$usuarioEscapado'");
+            
+            if (mysqli_num_rows($consultaUsuario) > 0) {
+                $usuarioExistente = mysqli_fetch_assoc($consultaUsuario);
+                $detalles[] = [
+                    'fila' => $fila,
+                    'usuario' => $usuario,
+                    'nombre' => "$nombre1 $apellido1",
+                    'estado' => 'warning',
+                    'estadoTexto' => 'Omitido',
+                    'mensaje' => "El nombre de usuario ya existe en la plataforma (Usuario: {$usuarioExistente['uss_usuario']})"
+                ];
+                $omitidos++;
+                continue;
+            }
+            
+            // Registrar documento y usuario como procesados en este Excel
+            $documentosEnExcel[] = $documento;
+            $usuariosEnExcel[] = $usuario;
             
             // Escapar valores
             $usuario = mysqli_real_escape_string($conexion, $usuario);
