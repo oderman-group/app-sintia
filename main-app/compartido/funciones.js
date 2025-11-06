@@ -962,11 +962,14 @@ function mostrarModalCompraModulos(idModulo, year) {
         document.getElementById('nombreModulo').value = "MÓDULO "+data.nombreModulo;
         document.getElementById('idModulo').value = idModulo;
 
-        socket.emit("enviar_mensajes_modulos_dev", {
-            year: year,
-            asunto: 'Un usuario está interesado en el módulo '+data.nombreModulo,
-            contenido: data.mensaje
-        });
+        // 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+        if (typeof socket !== 'undefined') {
+            socket.emit("enviar_mensajes_modulos_dev", {
+                year: year,
+                asunto: 'Un usuario está interesado en el módulo '+data.nombreModulo,
+                contenido: data.mensaje
+            });
+        }
 
         $("#modalComprarModulo").modal("show");
     })

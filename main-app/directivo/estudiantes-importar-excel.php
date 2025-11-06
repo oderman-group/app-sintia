@@ -116,16 +116,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <div class="form-group row">
                                                 <label class="col-sm-3 control-label">Modo de procesamiento <span class="text-danger">*</span></label>
                                                 <div class="col-sm-9">
-                                                    <div class="radio" style="margin-bottom: 10px;">
-                                                        <label style="cursor: pointer;">
-                                                            <input type="radio" name="modoProcesamiento" value="job" checked style="margin-right: 8px;">
-                                                            <strong>Procesar después (Job)</strong> - Se programará para procesar en segundo plano
-                                                        </label>
-                                                    </div>
                                                     <div class="radio">
                                                         <label style="cursor: pointer;">
-                                                            <input type="radio" name="modoProcesamiento" value="inmediato" style="margin-right: 8px;">
+                                                            <input type="radio" name="modoProcesamiento" value="inmediato" checked style="margin-right: 8px;">
                                                             <strong>Procesar inmediatamente</strong> - Se procesará ahora con barra de progreso
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio" style="margin-bottom: 10px;">
+                                                        <label style="cursor: pointer;">
+                                                            <input type="radio" name="modoProcesamiento" value="job" style="margin-right: 8px;">
+                                                            <strong>Procesar después (Job)</strong> - Se programará para procesar en segundo plano
                                                         </label>
                                                     </div>
                                                 </div>
@@ -194,7 +194,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                                                        <button type="button" class="btn btn-primary" onclick="location.reload()">Procesar otro archivo</button>
+                                                        <a href="estudiantes.php" class="btn btn-success">
+                                                            <i class="fa fa-list"></i> Volver al Listado
+                                                        </a>
+                                                        <button type="button" class="btn btn-primary" onclick="location.reload()">
+                                                            <i class="fa fa-refresh"></i> Procesar otro archivo
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -935,15 +940,50 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
         function showResults(results) {
             let html = '<div class="alert alert-success">';
             html += '<h6><i class="fa fa-check-circle"></i> Procesamiento completado</h6>';
-            html += '<p><strong>Estudiantes creados:</strong> ' + results.created + '</p>';
-            html += '<p><strong>Estudiantes actualizados:</strong> ' + results.updated + '</p>';
-            html += '<p><strong>Errores encontrados:</strong> ' + results.errors + '</p>';
+            html += '<hr>';
+            
+            // Sección de Estudiantes
+            html += '<h6 class="mt-3"><i class="fa fa-graduation-cap"></i> Estudiantes Importados</h6>';
+            html += '<div class="row">';
+            html += '<div class="col-md-4"><strong>Creados:</strong> ' + results.created + '</div>';
+            html += '<div class="col-md-4"><strong>Actualizados:</strong> ' + results.updated + '</div>';
+            html += '<div class="col-md-4"><strong>Errores:</strong> ' + results.errors + '</div>';
+            html += '</div>';
+            
+            // Sección de Usuarios Estudiantes
+            if (results.usuariosEstudiantes) {
+                html += '<hr>';
+                html += '<h6 class="mt-3"><i class="fa fa-user"></i> Usuarios de Estudiantes</h6>';
+                html += '<div class="row">';
+                html += '<div class="col-md-6"><strong>Nuevos creados:</strong> ' + (results.usuariosEstudiantes.creados || 0) + '</div>';
+                html += '<div class="col-md-6"><strong>Reutilizados:</strong> ' + (results.usuariosEstudiantes.reutilizados || 0) + '</div>';
+                html += '</div>';
+            }
+            
+            // Sección de Usuarios Acudientes
+            if (results.usuariosAcudientes) {
+                html += '<hr>';
+                html += '<h6 class="mt-3"><i class="fa fa-users"></i> Usuarios de Acudientes</h6>';
+                html += '<div class="row">';
+                html += '<div class="col-md-4"><strong>Nuevos creados:</strong> ' + (results.usuariosAcudientes.creados || 0) + '</div>';
+                html += '<div class="col-md-4"><strong>Reutilizados:</strong> ' + (results.usuariosAcudientes.reutilizados || 0) + '</div>';
+                html += '<div class="col-md-4"><strong>Sin datos:</strong> ' + (results.usuariosAcudientes.omitidos || 0) + '</div>';
+                html += '</div>';
+            }
+            
+            // Sección de Relaciones
+            if (results.relaciones !== undefined) {
+                html += '<hr>';
+                html += '<h6 class="mt-3"><i class="fa fa-link"></i> Relaciones Estudiante-Acudiente</h6>';
+                html += '<p><strong>Relaciones creadas:</strong> ' + results.relaciones + '</p>';
+            }
+            
             html += '</div>';
 
             if (results.errorDetails && results.errorDetails.length > 0) {
-                html += '<div class="alert alert-warning">';
-                html += '<h6><i class="fa fa-exclamation-triangle"></i> Detalles de errores:</h6>';
-                html += '<ul>';
+                html += '<div class="alert alert-warning mt-3">';
+                html += '<h6><i class="fa fa-exclamation-triangle"></i> Detalles de errores y advertencias:</h6>';
+                html += '<ul style="max-height: 300px; overflow-y: auto;">';
                 results.errorDetails.forEach(error => {
                     html += '<li>' + error + '</li>';
                 });
