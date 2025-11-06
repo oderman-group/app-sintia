@@ -63,48 +63,54 @@ LIMIT ".$empezar.",1
 	}
 </style>
 <script>
-	// socket en la espera de una notificacion general
-	var id_usuario = '<?=$_SESSION['id']?>';
-	var institucion_actual = <?=$_SESSION['idInstitucion']?>;
-	socket.on("notificacion_sala_" + id_usuario+"_inst_"+institucion_actual, (data) => {
-		let div_notificacion = document.getElementById('div_notificacion');
-		let boton_notificacion = document.getElementById('boton_notificacion');
-		if(boton_notificacion){
-			console.log(data);
-			if(div_notificacion!=null){
-				if (data> 0) {
-				div_notificacion.innerHTML=data;
-				div_notificacion.classList.add("fa-beat-fade");
-				}else if(data==0){
-					boton_notificacion.removeChild(div_notificacion);
+	// 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+	if (typeof socket !== 'undefined') {
+		// socket en la espera de una notificacion general
+		var id_usuario = '<?=$_SESSION['id']?>';
+		var institucion_actual = <?=$_SESSION['idInstitucion']?>;
+		socket.on("notificacion_sala_" + id_usuario+"_inst_"+institucion_actual, (data) => {
+			let div_notificacion = document.getElementById('div_notificacion');
+			let boton_notificacion = document.getElementById('boton_notificacion');
+			if(boton_notificacion){
+				console.log(data);
+				if(div_notificacion!=null){
+					if (data> 0) {
+					div_notificacion.innerHTML=data;
+					div_notificacion.classList.add("fa-beat-fade");
+					}else if(data==0){
+						boton_notificacion.removeChild(div_notificacion);
+					}
+				}else{
+					const div_notificacion_new = document.createElement('div');
+					div_notificacion_new.classList.add("my-notificacion","fa-beat-fade");
+					div_notificacion_new.id="div_notificacion";
+					div_notificacion_new.innerHTML=data;
+					if (data> 0) {
+					boton_notificacion.appendChild(div_notificacion_new);
+					};
 				}
-			}else{
-				const div_notificacion_new = document.createElement('div');
-				div_notificacion_new.classList.add("my-notificacion","fa-beat-fade");
-				div_notificacion_new.id="div_notificacion";
-				div_notificacion_new.innerHTML=data;
-				if (data> 0) {
-				boton_notificacion.appendChild(div_notificacion_new);
-				};
 			}
-		}
-	});
+		});
+	}
 </script>
 <?php if(false && ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV)){ ?>
 <script>
-	socket.on("notificar_solicitud_desbloqueo_<?=$_SESSION['idInstitucion']?>", (data) => {
-		contadorUsuariosBloqueados();
-		$.toast({
-			heading: 'SOLICITUD DE DESBLOQUEO',  
-			text: 'Ha recibido una nueva solicitud de desbloqueo para el usuario '+data['nombre']+'.',
-			position: 'bottom-right',
-			showHideTransition: 'slide',
-			loaderBg:'#26c281', 
-			icon: 'warning', 
-			hideAfter: 10000, 
-			stack: 6
-		})
-	});
+	// 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+	if (typeof socket !== 'undefined') {
+		socket.on("notificar_solicitud_desbloqueo_<?=$_SESSION['idInstitucion']?>", (data) => {
+			contadorUsuariosBloqueados();
+			$.toast({
+				heading: 'SOLICITUD DE DESBLOQUEO',  
+				text: 'Ha recibido una nueva solicitud de desbloqueo para el usuario '+data['nombre']+'.',
+				position: 'bottom-right',
+				showHideTransition: 'slide',
+				loaderBg:'#26c281', 
+				icon: 'warning', 
+				hideAfter: 10000, 
+				stack: 6
+			})
+		});
+	}
 </script>
 <?php } ?>
 <!-- boton de chat -->
