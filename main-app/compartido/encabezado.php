@@ -471,8 +471,14 @@ if ($mensajesNoLeidosConsulta) {
  						<!-- start manage user dropdown -->
                         <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MI_CUENTA)) {?>
                             <li class="dropdown dropdown-user" data-step="500" data-intro="<b>Cuenta personal:</b> Aquí puedes acceder a tu perfil a cambiar tus datos personales, y en la opción salir podrás cerrar tu sesión con seguirdad cuando hayas terminado de trabajar con la plataforma." data-position='bottom' data-scrollTo='tooltip'>
+                                <?php 
+                                // 🛡️ PROTECCIÓN: Validar foto de perfil para evitar rutas incorrectas
+                                $fotoUsuario = !empty($datosUsuarioActual['uss_foto']) && file_exists("../files/fotos/".$datosUsuarioActual['uss_foto']) 
+                                    ? $datosUsuarioActual['uss_foto'] 
+                                    : 'default.png';
+                                ?>
                                 <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                    <img alt="" class="img-circle " src="<?=BASE_URL;?>/main-app/files/fotos/<?=$datosUsuarioActual['uss_foto'];?>"/>
+                                    <img alt="" class="img-circle " src="<?=BASE_URL;?>/main-app/files/fotos/<?=$fotoUsuario;?>"/>
                                     <span class="username username-hide-on-mobile" data-toggle="tooltip" data-placement="top" title="Editar tu perfil, cambia tu clave y más..."> <?=UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual);?> </span>
                                     <i class="fa fa-angle-down"></i>
                                 </a>

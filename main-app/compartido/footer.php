@@ -90,7 +90,7 @@ LIMIT ".$empezar.",1
 		}
 	});
 </script>
-<?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV){ ?>
+<?php if(false && ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV)){ ?>
 <script>
 	socket.on("notificar_solicitud_desbloqueo_<?=$_SESSION['idInstitucion']?>", (data) => {
 		contadorUsuariosBloqueados();
@@ -199,6 +199,9 @@ if(typeof formulario !== 'undefined' && formulario !== null) {
 	</div>
 </div>
 <!-- end footer -->
+<?php 
+error_log("El usuario llega hasta el footer antes de cerrar la conexión: ". $_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);
+?>
 
 <?php 
 // Agregar padding al body si la barra de desarrollador está activa
@@ -219,6 +222,10 @@ if(
 <?php include_once(ROOT_PATH."/main-app/compartido/barra-developer.php");?>
 
 <?php Conexion::getConexion()->closeConnection(); ?>
+
+<?php 
+error_log("El usuario llega hasta el footer después de cerrar la conexión: ".$_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);
+?>
 
 
 <!-- <script type="text/javascript">

@@ -240,7 +240,7 @@ function validarUsuarioActual($datosUsuarioActual) {
 			break;	
 
 		default:
-			echo '<script type="text/javascript">window.location.href='.BASE_URL.'/controlador/salir.php";</script>'; exit();
+			echo '<script type="text/javascript">window.location.href='.BASE_URL.'/controlador/salir.php?invalid_user=true";</script>'; exit();
 			break;
 	}
 	return $destinos;

@@ -25,6 +25,11 @@ if (!isset($_SESSION['last_regeneration'])) {
     session_regenerate_id(true);
     $_SESSION['last_regeneration'] = time();
 }
+//Si otro usuario de mayor rango entra como él
+if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){$idSession = $_SESSION["idO"];}else{$idSession = $_SESSION["id"];}
+if($idSession==""){
+	header("Location:../controlador/salir.php?session_empty=true");
+}
 
 // Validar User-Agent (prevenir session hijacking básico)
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
