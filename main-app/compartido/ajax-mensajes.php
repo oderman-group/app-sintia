@@ -1,11 +1,55 @@
 <?php
-session_start();
+/**
+ * AJAX para verificar mensajes nuevos
+ * Este archivo se ejecuta en CADA carga de página (window.onload)
+ * CRÍTICO: Usar read_and_close para evitar bloqueo de sesiones
+ */
+
+// Log de inicio
+error_log("🔵 AJAX-MENSAJES INICIO - IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN') . " - Time: " . microtime(true));
+
+// Verificar si la sesión ya está activa
+if (session_status() === PHP_SESSION_NONE) {
+    // CRÍTICO: Usar read_and_close para liberar el archivo de sesión INMEDIATAMENTE
+    // Esto previene bloqueos con otros requests que también necesitan la sesión
+    session_start([
+        'read_and_close' => true  // Lee la sesión y la cierra en < 1ms
+    ]);
+    error_log("✅ AJAX-MENSAJES: Sesión iniciada con read_and_close");
+} else {
+    error_log("⚠️ AJAX-MENSAJES: Sesión ya estaba activa (status: " . session_status() . ")");
+}
+
 include("../modelo/conexion.php");
-$datosUnicosInstitucion=$_SESSION["datosUnicosInstitucion"];
-$mensajesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".social_emails 
-INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=ema_de AND uss.institucion={$_SESSION["idInstitucion"]} AND uss.year={$_SESSION["bd"]}
-WHERE ema_para='".$_SESSION["id"]."' AND ema_visto=0 AND ema_institucion={$_SESSION["idInstitucion"]} AND ema_year={$_SESSION["bd"]} ORDER BY ema_id DESC");
-$mensajesNumero = mysqli_num_rows($mensajesConsulta);
+
+// VALIDACIÓN CRÍTICA: Verificar que las variables de sesión existan
+// En condiciones de alta carga, la sesión puede estar vacía o corrupta
+if (empty($_SESSION["id"]) || empty($_SESSION["datosUnicosInstitucion"])) {
+    error_log("🔴 AJAX-MENSAJES: Sesión VACÍA detectada - ID: " . ($_SESSION["id"] ?? 'NULL') . " - datosUnicosInstitucion: " . (isset($_SESSION["datosUnicosInstitucion"]) ? 'EXISTE pero vacío' : 'NO EXISTE'));
+    error_log("   └─ Session ID: " . session_id());
+    error_log("   └─ Todas las keys en SESSION: " . implode(', ', array_keys($_SESSION)));
+    error_log("   └─ Referer: " . ($_SERVER['HTTP_REFERER'] ?? 'NONE'));
+    
+    // Salir silenciosamente con valores vacíos (no romper el HTML)
+    $mensajesNumero = 0;
+    $mensajesConsulta = null;
+    $datosUnicosInstitucion = ['ins_url_acceso' => '#'];
+} else {
+    // Sesión válida - proceder normalmente
+    $datosUnicosInstitucion = $_SESSION["datosUnicosInstitucion"];
+    
+    error_log("✅ AJAX-MENSAJES: Sesión válida - Usuario: " . $_SESSION["id"] . " - Ejecutando query mensajes");
+    
+    $mensajesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".social_emails 
+    INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=ema_de AND uss.institucion={$_SESSION["idInstitucion"]} AND uss.year={$_SESSION["bd"]}
+    WHERE ema_para='".$_SESSION["id"]."' AND ema_visto=0 AND ema_institucion={$_SESSION["idInstitucion"]} AND ema_year={$_SESSION["bd"]} ORDER BY ema_id DESC");
+    
+    $mensajesNumero = mysqli_num_rows($mensajesConsulta);
+    
+    error_log("✅ AJAX-MENSAJES: Query exitoso - Mensajes encontrados: " . $mensajesNumero);
+}
+
+error_log("🔵 AJAX-MENSAJES FIN - Time: " . microtime(true));
 ?>
 
                             <ul class="dropdown-menu">
@@ -17,7 +61,9 @@ $mensajesNumero = mysqli_num_rows($mensajesConsulta);
                                     <ul class="dropdown-menu-list small-slimscroll-style" data-handle-color="#637283">
 										
 										<?php
-										while($mensajesDatos = mysqli_fetch_array($mensajesConsulta, MYSQLI_BOTH)){
+										// Solo iterar si la consulta es válida (no null por sesión vacía)
+										if ($mensajesConsulta !== null) {
+											while($mensajesDatos = mysqli_fetch_array($mensajesConsulta, MYSQLI_BOTH)){
 										?>
 											<li>
 												<a href="mensajes-ver.php?idR=<?=base64_encode($mensajesDatos['ema_id']);?>">
@@ -26,7 +72,10 @@ $mensajesNumero = mysqli_num_rows($mensajesConsulta);
 													<span class="time"><?=$mensajesDatos['ema_fecha'];?> </span>
 												</a>
 											</li>
-										<?php }?>
+										<?php 
+											}
+										}
+										?>
                                        
                                     </ul>
                                     <div class="dropdown-menu-footer">
