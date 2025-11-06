@@ -12,6 +12,17 @@ try {
     $grupos = isset($_POST['grupos']) ? $_POST['grupos'] : [];
     $estados = isset($_POST['estados']) ? $_POST['estados'] : [];
     $busqueda = isset($_POST['busqueda']) ? trim($_POST['busqueda']) : '';
+    $fechaDesde = isset($_POST['fechaDesde']) ? trim($_POST['fechaDesde']) : '';
+    $fechaHasta = isset($_POST['fechaHasta']) ? trim($_POST['fechaHasta']) : '';
+    
+    // Log de filtros recibidos
+    error_log("FILTRAR-ESTUDIANTES: Filtros recibidos:");
+    error_log("  - cursos: " . json_encode($cursos));
+    error_log("  - grupos: " . json_encode($grupos));
+    error_log("  - estados: " . json_encode($estados));
+    error_log("  - busqueda: '$busqueda'");
+    error_log("  - fechaDesde: '$fechaDesde'");
+    error_log("  - fechaHasta: '$fechaHasta'");
     
     // Construir filtro SQL
     $filtro = "";
@@ -68,20 +79,36 @@ try {
     // Filtro de cursos (múltiple)
     if (!empty($cursos) && is_array($cursos)) {
         $cursosStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($cursos), $conexion), $cursos));
-        $filtro .= " AND mat_grado IN ('{$cursosStr}')";
+        $filtro .= " AND mat.mat_grado IN ('{$cursosStr}')";
     }
     
     // Filtro de grupos (múltiple)
     if (!empty($grupos) && is_array($grupos)) {
         $gruposStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($grupos), $conexion), $grupos));
-        $filtro .= " AND mat_grupo IN ('{$gruposStr}')";
+        $filtro .= " AND mat.mat_grupo IN ('{$gruposStr}')";
     }
     
     // Filtro de estados (múltiple)
     if (!empty($estados) && is_array($estados)) {
         $estadosStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($estados), $conexion), $estados));
-        $filtro .= " AND mat_estado_matricula IN ('{$estadosStr}')";
+        $filtro .= " AND mat.mat_estado_matricula IN ('{$estadosStr}')";
     }
+    
+    // Filtro por fecha de matrícula (desde)
+    if (!empty($fechaDesde)) {
+        $fechaDesdeEscape = mysqli_real_escape_string($conexion, $fechaDesde);
+        $filtro .= " AND DATE(mat.mat_fecha) >= '{$fechaDesdeEscape}'";
+        error_log("FILTRAR-ESTUDIANTES: Aplicado filtro fecha desde: $fechaDesdeEscape");
+    }
+    
+    // Filtro por fecha de matrícula (hasta)
+    if (!empty($fechaHasta)) {
+        $fechaHastaEscape = mysqli_real_escape_string($conexion, $fechaHasta);
+        $filtro .= " AND DATE(mat.mat_fecha) <= '{$fechaHastaEscape}'";
+        error_log("FILTRAR-ESTUDIANTES: Aplicado filtro fecha hasta: $fechaHastaEscape");
+    }
+    
+    error_log("FILTRAR-ESTUDIANTES: Filtro SQL completo: $filtro");
     
     // Campos a seleccionar
     $selectSql = [
