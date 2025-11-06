@@ -500,7 +500,7 @@ if ($mensajesNoLeidosConsulta) {
                                         <li><a href="consumo-plan.php"><i class="fa fa-pie-chart"></i>Consumo Del Plan</a></li>
                                     <?php }?>
                                     <li><a href="<?=BASE_URL;?>/main-app/compartido/sintia-refresh.php" onClick="localStorage.clear();"><i class="fa fa-refresh"></i>Refrescar SINTIA</a></li>
-                                    <li><a href="<?=BASE_URL;?>/main-app/controlador/salir.php" onClick="localStorage.clear();"><i class="icon-logout"></i><?=$frases[15][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                    <li><a href="<?=BASE_URL;?>/main-app/controlador/salir.php?logout=true" onClick="localStorage.clear();"><i class="icon-logout"></i><?=$frases[15][$datosUsuarioActual['uss_idioma']];?></a></li>
                                 </ul>
                             </li>
                         <?php }?>

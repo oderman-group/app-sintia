@@ -108,7 +108,9 @@ if (!empty($_SESSION["datosUsuario"])) {
 $auth = Autenticate::getInstance();
 
 if (empty($_SESSION["id"])) {
-	$urlRedirect = "../index.php?error=4&urlDefault=".$_GET["urlDefault"]."&directory=".$_GET["directory"];
+	$urlDefault = $_GET["urlDefault"] ?? '';
+	$directory = $_GET["directory"] ?? '';
+	$urlRedirect = "../index.php?error=4&urlDefault=".$urlDefault."&directory=".$directory;
 	error_log("⚠️ SALIR.PHP: La sesión está vacía, sacamos al usuario");
 	error_log("   └─ URL Redirect: " . $urlRedirect);
 	$auth->cerrarSesion($urlRedirect);

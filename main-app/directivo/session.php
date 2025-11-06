@@ -38,16 +38,13 @@ if (!isset($_SESSION['user_agent'])) {
     header("Location:../controlador/salir.php?urlDefault=".$page."&directory=".$directory."&msg=session_hijack");
     exit();
 }
-// Log ANTES de session_start
-error_log("🔵 SESSION.PHP INICIO - Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN') . " - IP: " . ($_SERVER["REMOTE_ADDR"] ?? 'UNKNOWN') . " - Time: " . microtime(true));
-
-session_start();
 
 date_default_timezone_set('America/Bogota');
 
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 
-// Log detallado del estado de la sesión
+// Log detallado del estado de la sesión DESPUÉS de session_start (línea 19)
+error_log("🔵 SESSION.PHP INICIO - Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN') . " - IP: " . ($_SERVER["REMOTE_ADDR"] ?? 'UNKNOWN') . " - Time: " . microtime(true));
 error_log("✅ SESSION.PHP: session_start() exitoso - Session ID: " . session_id());
 error_log("   └─ SESSION[id]: " . ($_SESSION["id"] ?? 'NULL'));
 error_log("   └─ SESSION[bd]: " . ($_SESSION["bd"] ?? 'NULL'));
@@ -58,19 +55,10 @@ error_log("   └─ SESSION[yearAnterior]: " . ($_SESSION["yearAnterior"] ?? 'N
 //Si otro usuario de mayor rango entra como él
 if (isset($_SESSION["idO"]) and $_SESSION["idO"]!="") {
 	$idSession = $_SESSION["idO"];
-	error_log("ℹ️ SESSION.PHP: Usando idSession de idO (auto-login) - idO: " . $_SESSION["idO"]);
+	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[idO] (auto-login) - idO: " . $_SESSION["idO"]);
 } else {
 	$idSession = $_SESSION["id"] ?? '';
-}
-
-if (empty($idSession)) {
-	session_destroy();
-	require_once '../class/Utilidades.php';
-	$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
-	$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
-	header("Location:../controlador/salir.php?urlDefault=".$page."&directory=".$directory);
-	$idSession = $_SESSION["id"];
-	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[id] - id: " . ($_SESSION["id"] ?? 'NULL'));
+	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[id] - id: " . ($idSession ?: 'NULL'));
 }
 
 if (empty($idSession)) {

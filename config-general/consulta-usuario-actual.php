@@ -38,12 +38,6 @@ if (empty($datosUsuarioActual) && !empty($idSession)) {
 	$datosUsuarioActual = UsuariosPadre::sesionUsuario($idSession);
 	
 	if (!empty($datosUsuarioActual)) {
-		// Recargar también los sub-roles si existen
-		require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php");
-		$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($datosUsuarioActual['uss_id'], $_SESSION['idInstitucion']);
-		
-		$datosUsuarioActual["sub_roles"] = $infoRolesUsuario['datos_sub_roles_usuario'] ?? [];
-		$datosUsuarioActual["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'] ?? [];
 		// CRÍTICO: SIEMPRE recargar sub-roles para directivos
 		if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
 			if (file_exists(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php")) {

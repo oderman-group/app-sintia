@@ -25,11 +25,6 @@ if (!isset($_SESSION['last_regeneration'])) {
     session_regenerate_id(true);
     $_SESSION['last_regeneration'] = time();
 }
-//Si otro usuario de mayor rango entra como él
-if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){$idSession = $_SESSION["idO"];}else{$idSession = $_SESSION["id"];}
-if($idSession==""){
-	header("Location:../controlador/salir.php?session_empty=true");
-}
 
 // Validar User-Agent (prevenir session hijacking básico)
 $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
@@ -38,7 +33,7 @@ if (!isset($_SESSION['user_agent'])) {
 } elseif ($_SESSION['user_agent'] !== $userAgent) {
     // Posible intento de hijacking
     session_destroy();
-    header("Location:../controlador/salir.php");
+    header("Location:../controlador/salir.php?msg=session_hijack");
     exit();
 }
 
@@ -51,7 +46,7 @@ if(isset($_SESSION["idO"]) and $_SESSION["idO"]!=""){
 
 if (empty($idSession)) {
 	session_destroy();
-	header("Location:../controlador/salir.php");
+	header("Location:../controlador/salir.php?session_empty=true");
 	exit();
 } else {
 	require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
