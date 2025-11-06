@@ -1,4 +1,21 @@
 <?php 
+// 🔧 CONFIGURAR LOGS ANTES DE TODO (para capturar información incluso si hacemos exit() temprano)
+// Esto es necesario porque constantes.php (que configura error_log) está en conexion.php
+// y si bloqueamos antes, nunca llegaríamos a esa configuración
+
+// Determinar el archivo de log según el entorno
+$logFile = $_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/errores_prod.log";
+
+// Verificar si estamos en local (para usar errores_local.log)
+if (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false) {
+    $logFile = $_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/errores_local.log";
+}
+
+// Configurar PHP para guardar logs en el archivo correcto
+ini_set('log_errors', 1);
+ini_set('error_log', $logFile);
+date_default_timezone_set("America/Bogota");
+
 // 🔍 LOG DETALLADO DE QUIEN LLAMA A SALIR.PHP (ANTES de session_start para evitar bloqueos)
 error_log("🚪 SALIR.PHP LLAMADO - INICIO");
 error_log("   └─ Timestamp: " . date('Y-m-d H:i:s'));
@@ -8,6 +25,8 @@ error_log("   └─ Referer: " . ($_SERVER['HTTP_REFERER'] ?? 'DIRECTO/SIN REFE
 error_log("   └─ Query String: " . ($_SERVER['QUERY_STRING'] ?? 'VACÍO'));
 error_log("   └─ Request Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
 error_log("   └─ Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'UNKNOWN'));
+error_log("   └─ HTTP_HOST: " . ($_SERVER['HTTP_HOST'] ?? 'UNKNOWN'));
+error_log("   └─ Archivo de log configurado: " . $logFile);
 
 // 🛡️ PROTECCIÓN MEJORADA: Bloquear SOLO recursos automáticos sospechosos
 // IMPORTANTE: Esta validación debe estar ANTES de include("../modelo/conexion.php")
