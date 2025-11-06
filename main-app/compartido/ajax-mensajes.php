@@ -2,7 +2,9 @@
 /**
  * AJAX para verificar mensajes nuevos
  * Este archivo se ejecuta en CADA carga de página (window.onload)
- * CRÍTICO: Usar read_and_close para evitar bloqueo de sesiones
+ * 
+ * ESTRATEGIA: Iniciar sesión normal pero cerrar INMEDIATAMENTE después de leer
+ * para no bloquear otros requests
  */
 
 // Log de inicio
@@ -10,12 +12,9 @@ error_log("🔵 AJAX-MENSAJES INICIO - IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKN
 
 // Verificar si la sesión ya está activa
 if (session_status() === PHP_SESSION_NONE) {
-    // CRÍTICO: Usar read_and_close para liberar el archivo de sesión INMEDIATAMENTE
-    // Esto previene bloqueos con otros requests que también necesitan la sesión
-    session_start([
-        'read_and_close' => true  // Lee la sesión y la cierra en < 1ms
-    ]);
-    error_log("✅ AJAX-MENSAJES: Sesión iniciada con read_and_close");
+    // Iniciar sesión normalmente (SIN read_and_close que causa problemas)
+    session_start();
+    error_log("✅ AJAX-MENSAJES: Sesión iniciada normalmente");
 } else {
     error_log("⚠️ AJAX-MENSAJES: Sesión ya estaba activa (status: " . session_status() . ")");
 }
@@ -47,6 +46,13 @@ if (empty($_SESSION["id"]) || empty($_SESSION["datosUnicosInstitucion"])) {
     $mensajesNumero = mysqli_num_rows($mensajesConsulta);
     
     error_log("✅ AJAX-MENSAJES: Query exitoso - Mensajes encontrados: " . $mensajesNumero);
+}
+
+// CRÍTICO: Cerrar la sesión MANUALMENTE después de leer para liberar el bloqueo
+// Esto permite que otros requests puedan acceder a la sesión sin esperar
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+    error_log("✅ AJAX-MENSAJES: Sesión cerrada manualmente para liberar bloqueo");
 }
 
 error_log("🔵 AJAX-MENSAJES FIN - Time: " . microtime(true));
