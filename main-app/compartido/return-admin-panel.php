@@ -13,7 +13,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
 }
 
 if (empty($_SESSION["id"])) {
-    header("Location:../controlador/salir.php");
+    header("Location:../controlador/salir.php?return_admin=true");
     exit();
 }
 
