@@ -53,26 +53,27 @@ $isLegitimateLogout = (
     isset($_GET['return_admin'])
 );
 
-// Si NO es un logout legítimo Y NO tiene NINGÚN parámetro
-$isSuspiciousCall = empty($queryString);
-
-// Verificar si viene desde dentro de la aplicación
-$isInternalReferer = !empty($referer) && 
-                      (strpos($referer, 'plataformasintia.com') !== false || 
-                       strpos($referer, 'app-sintia') !== false);
-
-// 🛡️ BLOQUEAR: Llamados sin parámetros desde dentro de la app = recursos con ruta incorrecta
-if ($isSuspiciousCall && $isInternalReferer && !$isLegitimateLogout) {
+// 🛡️ BLOQUEAR: CUALQUIER llamado sin parámetros legítimos
+// CAMBIO CRÍTICO: Ya no verificamos si tiene referer o no
+// TODOS los llamados sin parámetros válidos son sospechosos y se bloquean
+// Esto previene el bug donde llamados "DIRECTO/SIN REFERER" cerraban sesión
+if (!$isLegitimateLogout) {
     error_log("⚠️⚠️⚠️ SALIR.PHP: LLAMADO SOSPECHOSO BLOQUEADO ⚠️⚠️⚠️");
-    error_log("   └─ Referer: " . $referer);
-    error_log("   └─ Query String: VACÍO (sin parámetros legítimos)");
-    error_log("   └─ Razón: Llamado automático - probablemente recurso con ruta incorrecta");
-    error_log("   └─ Hipótesis: Imagen, CSS, JS o link con href malformado");
+    error_log("   └─ Referer: " . ($referer ?: 'DIRECTO/SIN REFERER'));
+    error_log("   └─ Query String: " . ($queryString ?: 'VACÍO (sin parámetros legítimos)'));
+    error_log("   └─ Razón: Llamado sin parámetros válidos - BLOQUEADO automáticamente");
+    error_log("   └─ IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN'));
     error_log("   └─ User-Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN'));
     error_log("   └─ Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'UNKNOWN'));
-    error_log("   └─ Acción: BLOQUEADO - Devolviendo 204 No Content (previene loop infinito)");
-    error_log("   └─ Seguridad: Usuario PUEDE cerrar sesión normalmente con botón legítimo");
-    error_log("   └─ PREVIENE: urlDefault=c2FsaXIucGhw (salir.php en base64) en login");
+    error_log("   └─ Posibles causas:");
+    error_log("      • Recurso con ruta incorrecta (imagen, CSS, JS)");
+    error_log("      • Link con href malformado o vacío (<a href=''>)");
+    error_log("      • Navegador haciendo prefetch/preload automático");
+    error_log("      • Extensión del navegador interceptando requests");
+    error_log("      • JavaScript redirigiendo incorrectamente");
+    error_log("   └─ Acción: BLOQUEADO - Devolviendo HTTP 204 No Content");
+    error_log("   └─ Seguridad: Usuario PUEDE cerrar sesión con botón legítimo (?logout=true)");
+    error_log("   └─ PREVIENE: Cierre inesperado + urlDefault=c2FsaXIucGhw en login");
     error_log("⚠️⚠️⚠️ FIN BLOQUEO ⚠️⚠️⚠️");
     
     // 🔥 CRÍTICO: NO redirigir (causa loop infinito)
