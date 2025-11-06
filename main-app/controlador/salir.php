@@ -1,10 +1,5 @@
 <?php 
-include("../modelo/conexion.php");
-require_once(ROOT_PATH."/main-app/class/Autenticate.php");
-
-$idPaginaInterna = 'GN0002';
-
-// 🔍 LOG DETALLADO DE QUIEN LLAMA A SALIR.PHP
+// 🔍 LOG DETALLADO DE QUIEN LLAMA A SALIR.PHP (ANTES de session_start para evitar bloqueos)
 error_log("🚪 SALIR.PHP LLAMADO - INICIO");
 error_log("   └─ Timestamp: " . date('Y-m-d H:i:s'));
 error_log("   └─ IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN'));
@@ -12,7 +7,76 @@ error_log("   └─ User-Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN'))
 error_log("   └─ Referer: " . ($_SERVER['HTTP_REFERER'] ?? 'DIRECTO/SIN REFERER'));
 error_log("   └─ Query String: " . ($_SERVER['QUERY_STRING'] ?? 'VACÍO'));
 error_log("   └─ Request Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
-error_log("   └─ Session ID: " . session_id());
+error_log("   └─ Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'UNKNOWN'));
+
+// 🛡️ PROTECCIÓN MEJORADA: Bloquear SOLO recursos automáticos sospechosos
+// IMPORTANTE: Esta validación debe estar ANTES de include("../modelo/conexion.php")
+// para prevenir que conexion.php detecte sesión zombie y haga redirect con urlDefault=salir.php
+
+$referer = $_SERVER['HTTP_REFERER'] ?? '';
+$queryString = $_SERVER['QUERY_STRING'] ?? '';
+
+// Identificar llamados LEGÍTIMOS del usuario o del sistema:
+// 1. Tiene parámetro 'logout=true' (botón de cerrar sesión en encabezado)
+// 2. Tiene parámetro 'urlDefault' (redirect desde session.php)
+// 3. Tiene parámetro 'directory' (redirect desde session.php)
+// 4. Tiene parámetro 'invalid_user=true' (validación de tipo de usuario inválido)
+// 5. Tiene parámetro 'msg' (mensajes del sistema)
+// 6. Tiene parámetro 'session_empty' (sesión vacía desde estudiante/acudiente/compartida)
+// 7. Tiene parámetro 'return_admin' (retorno al panel admin)
+$isLegitimateLogout = (
+    isset($_GET['logout']) ||
+    isset($_GET['urlDefault']) ||
+    isset($_GET['directory']) ||
+    isset($_GET['invalid_user']) ||
+    isset($_GET['msg']) ||
+    isset($_GET['session_empty']) ||
+    isset($_GET['return_admin'])
+);
+
+// Si NO es un logout legítimo Y NO tiene NINGÚN parámetro
+$isSuspiciousCall = empty($queryString);
+
+// Verificar si viene desde dentro de la aplicación
+$isInternalReferer = !empty($referer) && 
+                      (strpos($referer, 'plataformasintia.com') !== false || 
+                       strpos($referer, 'app-sintia') !== false);
+
+// 🛡️ BLOQUEAR: Llamados sin parámetros desde dentro de la app = recursos con ruta incorrecta
+if ($isSuspiciousCall && $isInternalReferer && !$isLegitimateLogout) {
+    error_log("⚠️⚠️⚠️ SALIR.PHP: LLAMADO SOSPECHOSO BLOQUEADO ⚠️⚠️⚠️");
+    error_log("   └─ Referer: " . $referer);
+    error_log("   └─ Query String: VACÍO (sin parámetros legítimos)");
+    error_log("   └─ Razón: Llamado automático - probablemente recurso con ruta incorrecta");
+    error_log("   └─ Hipótesis: Imagen, CSS, JS o link con href malformado");
+    error_log("   └─ User-Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'UNKNOWN'));
+    error_log("   └─ Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'UNKNOWN'));
+    error_log("   └─ Acción: BLOQUEADO - Devolviendo 204 No Content (previene loop infinito)");
+    error_log("   └─ Seguridad: Usuario PUEDE cerrar sesión normalmente con botón legítimo");
+    error_log("   └─ PREVIENE: urlDefault=c2FsaXIucGhw (salir.php en base64) en login");
+    error_log("⚠️⚠️⚠️ FIN BLOQUEO ⚠️⚠️⚠️");
+    
+    // 🔥 CRÍTICO: NO redirigir (causa loop infinito)
+    // En su lugar, devolver HTTP 204 No Content
+    // Esto hace que el navegador reciba una respuesta válida pero sin contenido
+    // Previene loops infinitos porque el recurso no se vuelve a cargar
+    http_response_code(204); // 204 No Content
+    exit();
+}
+
+// Si llegamos aquí, es un logout LEGÍTIMO → proceder normalmente
+if ($isLegitimateLogout) {
+    error_log("✅ SALIR.PHP: Logout legítimo detectado - Procediendo a cerrar sesión");
+}
+
+// Ahora sí, incluir conexión y demás
+include("../modelo/conexion.php");
+require_once(ROOT_PATH."/main-app/class/Autenticate.php");
+
+$idPaginaInterna = 'GN0002';
+
+// Log adicional DESPUÉS de session_start (desde conexion.php)
+error_log("   └─ Session ID (después de conexion): " . session_id());
 error_log("   └─ SESSION[id]: " . ($_SESSION["id"] ?? 'NULL'));
 error_log("   └─ SESSION[bd]: " . ($_SESSION["bd"] ?? 'NULL'));
 error_log("   └─ SESSION[idInstitucion]: " . ($_SESSION["idInstitucion"] ?? 'NULL'));
