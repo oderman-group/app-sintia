@@ -37,11 +37,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        
-                        <?php include("../compartido/cambiar-clave-contenido.php");?>
-						
-                    </div>
+                    <?php include("../compartido/cambiar-clave-contenido.php");?>
 					
 					</div>
                 </div>
