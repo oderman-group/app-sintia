@@ -38,12 +38,21 @@ if (empty($datosUsuarioActual) && !empty($idSession)) {
 	$datosUsuarioActual = UsuariosPadre::sesionUsuario($idSession);
 	
 	if (!empty($datosUsuarioActual)) {
-		// Recargar también los sub-roles si existen
-		if (file_exists(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php")) {
-			require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php");
-			$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($datosUsuarioActual['uss_id'], $_SESSION['idInstitucion']);
-			$datosUsuarioActual["sub_roles"] = $infoRolesUsuario['datos_sub_roles_usuario'] ?? [];
-			$datosUsuarioActual["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'] ?? [];
+		// CRÍTICO: SIEMPRE recargar sub-roles para directivos
+		if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
+			if (file_exists(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php")) {
+				require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/SubRoles.php");
+				$infoRolesUsuario = Administrativo_Usuario_SubRoles::getInfoRolesFromUser($datosUsuarioActual['uss_id'], $_SESSION['idInstitucion']);
+				$datosUsuarioActual["sub_roles"] = $infoRolesUsuario['datos_sub_roles_usuario'] ?? [];
+				$datosUsuarioActual["sub_roles_paginas"] = $infoRolesUsuario['valores_paginas'] ?? [];
+				
+				error_log("✅ CONSULTA-USUARIO: sub_roles recargados - Total: " . count($datosUsuarioActual["sub_roles"]));
+			} else {
+				// Si el archivo no existe, asignar arrays vacíos como fallback
+				error_log("⚠️ CONSULTA-USUARIO: Archivo SubRoles.php no existe - Asignando arrays vacíos");
+				$datosUsuarioActual["sub_roles"] = [];
+				$datosUsuarioActual["sub_roles_paginas"] = [];
+			}
 		}
 		
 		// Actualizar la sesión con los datos recargados
@@ -53,6 +62,19 @@ if (empty($datosUsuarioActual) && !empty($idSession)) {
 	} else {
 		error_log("🔴 CONSULTA-USUARIO: FALLBACK FALLÓ - No se encontró usuario en BD - ID: " . $idSession . " - Año: " . ($_SESSION["bd"] ?? 'NULL'));
 	}
+}
+
+// VALIDACIÓN ADICIONAL: Asegurar que sub_roles existan para directivos
+if (!empty($datosUsuarioActual) && 
+    ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV)) {
+    
+    if (!isset($datosUsuarioActual["sub_roles"]) || !is_array($datosUsuarioActual["sub_roles"])) {
+        error_log("⚠️ CONSULTA-USUARIO: sub_roles faltante en directivo - Inicializando arrays vacíos");
+        $datosUsuarioActual["sub_roles"] = [];
+        $datosUsuarioActual["sub_roles_paginas"] = [];
+        $_SESSION["datosUsuario"]["sub_roles"] = [];
+        $_SESSION["datosUsuario"]["sub_roles_paginas"] = [];
+    }
 }
 
 // Log final del estado
