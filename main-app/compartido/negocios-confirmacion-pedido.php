@@ -245,7 +245,7 @@ include("../../config-general/consulta-usuario-actual.php");?>
                               Estimado usuario, guarde este comprobante para reclamar su pedido.
                               <br />
                               <br />
-                              Para preguntas sobre su pedido comuniquese al correo <a href="">pedidos@jacademico.com</a> o al n&uacute;mero tel&eacute;fonico (4) 585 3755
+                              Para preguntas sobre su pedido comuniquese al correo <a href="mailto:pedidos@jacademico.com">pedidos@jacademico.com</a> o al n&uacute;mero tel&eacute;fonico (4) 585 3755
                               <br />
                               <br />
                               <b>ODERMAN CORPORATION, Contribuimos a la excelencia educativa.</b>

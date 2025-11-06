@@ -239,9 +239,9 @@ function validarUsuarioActual($datosUsuarioActual) {
 			$destinos = BASE_URL."/main-app/directivo/";
 			break;	
 
-		default:
-			echo '<script type="text/javascript">window.location.href='.BASE_URL.'/controlador/salir.php";</script>'; exit();
-			break;
+	default:
+		echo '<script type="text/javascript">window.location.href="../controlador/salir.php?invalid_user=true";</script>'; exit();
+		break;
 	}
 	return $destinos;
 }

@@ -4,6 +4,9 @@
 */
 
 include_once(ROOT_PATH."/main-app/modelo/conexion.php");
+error_log("Entrando al inicio de la pagina historial-acciones-guardar.php para verificar permisos: ".$idPaginaInterna . " - ".$_SESSION["id"]);
+
+$tienePermiso = Modulos::verificarPermisosPaginas($idPaginaInterna);
 
 //Haces esto para cada tabla que necesitemos hacer el JOIN con la tabla principal
 Modulos::foreignKey(Modulos::INNER, [
@@ -60,3 +63,6 @@ if (empty($datosPaginaActual) && $idPaginaInterna!='DT0107' && !in_array($modulo
 	Utilidades::redirect($url, 302, $additionalParams);
 }
 
+$datosPaginaActual = Modulos::datosPaginaActual($idPaginaInterna);
+
+error_log("Saliendo desde el final de la pagina historial-acciones-guardar.php para verificar permisos: ".$idPaginaInterna . " - ".$_SESSION["id"]);

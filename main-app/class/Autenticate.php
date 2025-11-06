@@ -96,6 +96,22 @@ class Autenticate {
         $this->limpiarCookiesDocentes();
         $this->limpiarCookiesEstudiantes();
 
+        // 🔧 CRÍTICO: Borrar cookie de sesión ANTES de session_destroy()
+        // Esto previene que el navegador mantenga un Session ID "zombie"
+        if (isset($_COOKIE[session_name()])) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+            error_log("🔥 CERRAR-SESION: Cookie de sesión borrada - Session ID: " . session_id() . " - Usuario: " . ($_SESSION["id"] ?? 'N/A'));
+        }
+
         session_destroy();
 
         Conexion::getConexion()->closeConnection();

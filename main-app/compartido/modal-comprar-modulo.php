@@ -12,7 +12,9 @@ $urlOrigen = $explode[1];
 		</div>
 
 		<div class="modal-body" align="center">
-			<img id="imgModulo" src="" style="width: 100%;" alt="Imagen de modulos">
+			<!-- 🔧 CORRECCIÓN: Usar imagen placeholder en lugar de src="" vacío para prevenir requests inesperados -->
+			<!-- El JavaScript (funciones.js línea 898) cambia el src dinámicamente -->
+			<img id="imgModulo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="width: 100%;" alt="Imagen de modulos">
 			<p>
 				Tu plan actual no tiene acceso a este módulo, adquiere este módulo y activa su funcionamiento.<br>
 				<b id="tituloDescripcion"></b><br>

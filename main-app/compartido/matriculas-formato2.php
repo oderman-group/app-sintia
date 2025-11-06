@@ -95,7 +95,8 @@ else{
 </script>
 
 <div align="center">
-	<a href="" id="imp" onClick="imprimir()"><img src="../files/iconos/agt_print.png"></a>
+	<!-- 🔧 CORRECCIÓN: Usar javascript:void(0) en lugar de href="" vacío -->
+	<a href="javascript:void(0);" id="imp" onClick="imprimir()"><img src="../files/iconos/agt_print.png"></a>
 </div>
   
 </body>
