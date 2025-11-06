@@ -15,13 +15,38 @@ if(isset($_SESSION["id"]) and $_SESSION["id"]!=""){
 
 //seleccionamos la base de datos
 if (empty($_SESSION["inst"])) {
-	session_destroy();
-	require_once ROOT_PATH.'/main-app/class/Utilidades.php';
-	$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
-	$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
-	error_log("La sesion inst está vacía, sacamos al usuario desde conexion. US-REF: ".$_SESSION["id"]. " - " .$_SERVER["HTTP_REFERER"]);
-	header("Location:".REDIRECT_ROUTE."?error=4&urlDefault=".$page."&directory=".$directory);
-	exit();
+	// LOG EXTENSO del problema
+	error_log("🔴 CONEXION.PHP: SESSION[inst] VACÍA - Intentando recuperar");
+	error_log("   └─ Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN'));
+	error_log("   └─ SESSION[id]: " . ($_SESSION["id"] ?? 'NULL'));
+	error_log("   └─ SESSION[idInstitucion]: " . ($_SESSION["idInstitucion"] ?? 'NULL'));
+	error_log("   └─ SESSION[datosUnicosInstitucion] existe: " . (isset($_SESSION["datosUnicosInstitucion"]) ? 'SÍ' : 'NO'));
+	
+	// FALLBACK: Intentar recuperar desde datosUnicosInstitucion
+	if (!empty($_SESSION["datosUnicosInstitucion"]) && isset($_SESSION["datosUnicosInstitucion"]["ins_bd"])) {
+		$_SESSION["inst"] = $_SESSION["datosUnicosInstitucion"]["ins_bd"];
+		error_log("✅ CONEXION.PHP: SESSION[inst] recuperada desde datosUnicosInstitucion: " . $_SESSION["inst"]);
+	}
+	// Segundo fallback: Buscar en información de institución en sesión
+	elseif (!empty($_SESSION["informacionInstConsulta"]) && isset($_SESSION["informacionInstConsulta"]["ins_bd"])) {
+		$_SESSION["inst"] = $_SESSION["informacionInstConsulta"]["ins_bd"];
+		error_log("✅ CONEXION.PHP: SESSION[inst] recuperada desde informacionInstConsulta: " . $_SESSION["inst"]);
+	}
+	
+	// Si después de todos los fallbacks sigue vacío, ENTONCES sí cerrar sesión
+	if (empty($_SESSION["inst"])) {
+		error_log("🔴🔴🔴 CONEXION.PHP: SESSION[inst] NO SE PUDO RECUPERAR - CERRANDO SESIÓN 🔴🔴🔴");
+		error_log("   └─ Session ID: " . session_id());
+		error_log("   └─ Todas las keys en SESSION: " . (count($_SESSION) > 0 ? implode(', ', array_keys($_SESSION)) : 'VACÍO'));
+		error_log("🔴🔴🔴 FIN LOG SESSION[inst] NO RECUPERABLE 🔴🔴🔴");
+		
+		session_destroy();
+		require_once ROOT_PATH.'/main-app/class/Utilidades.php';
+		$directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
+		$page      = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
+		header("Location:".REDIRECT_ROUTE."?error=4&urlDefault=".$page."&directory=".$directory);
+		exit();
+	}
 } else {
 	
 	//seleccionamos el año de la base de datos
