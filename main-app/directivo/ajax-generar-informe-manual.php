@@ -57,7 +57,6 @@ try {
     // Validar permisos
     error_log("Validando permisos...");
     error_log("Usuario en sesión: " . ($_SESSION['id'] ?? 'no definido'));
-    error_log("Tipo de usuario: " . ($_SESSION['tipo'] ?? 'no definido'));
     
     $tienePermiso = Modulos::validarSubRol(['DT0237']);
     error_log("Resultado validación permiso DT0237: " . ($tienePermiso ? 'SI' : 'NO'));

@@ -573,22 +573,22 @@
                 <p style="font-size: 16px; color: #6c757d; margin-bottom: 25px; text-align: center;">
                     Estamos encantados de tenerte aquí. Comienza explorando estas opciones:
                 </p>
-                
+
                 <!-- 4 Opciones - 2 por fila -->
                 <div class="row mb-4">
-                    <!-- Opción 1: Crear Matrícula -->
+                    <!-- Opción 1: Configurar Plataforma -->
                     <div class="col-md-6 mb-3">
-                        <a href="estudiantes-agregar.php" class="welcome-option-card">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                                <i class="fa fa-user-graduate fa-2x"></i>
+                        <a href="configuracion-sistema.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                                <i class="fa fa-cogs fa-2x"></i>
                             </div>
                             <div class="welcome-text">
-                                <h5>Crear Matrícula</h5>
-                                <p>Registra nuevos estudiantes en el sistema</p>
+                                <h5>Configurar Plataforma</h5>
+                                <p>Ajusta los parámetros del sistema</p>
                             </div>
                         </a>
                     </div>
-                    
+
                     <!-- Opción 2: Crear Usuarios -->
                     <div class="col-md-6 mb-3">
                         <a href="usuarios-agregar.php" class="welcome-option-card">
@@ -601,23 +601,10 @@
                             </div>
                         </a>
                     </div>
-                    
-                    <!-- Opción 3: Configurar Plataforma -->
-                    <div class="col-md-6 mb-3">
-                        <a href="configuracion-sistema.php" class="welcome-option-card">
-                            <div class="welcome-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
-                                <i class="fa fa-cogs fa-2x"></i>
-                            </div>
-                            <div class="welcome-text">
-                                <h5>Configurar Plataforma</h5>
-                                <p>Ajusta los parámetros del sistema</p>
-                            </div>
-                        </a>
-                    </div>
-                    
+
                     <!-- Opción 4: Información de la Institución -->
                     <div class="col-md-6 mb-3">
-                        <a href="instituciones-editar.php" class="welcome-option-card">
+                        <a href="configuracion-institucion.php" class="welcome-option-card">
                             <div class="welcome-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
                                 <i class="fa fa-school fa-2x"></i>
                             </div>
@@ -627,6 +614,20 @@
                             </div>
                         </a>
                     </div>
+
+                    <!-- Opción 1: Crear Matrícula -->
+                    <div class="col-md-6 mb-3">
+                        <a href="estudiantes-agregar.php" class="welcome-option-card">
+                            <div class="welcome-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                <i class="fa fa-user-graduate fa-2x"></i>
+                            </div>
+                            <div class="welcome-text">
+                                <h5>Crear Matrícula</h5>
+                                <p>Registra nuevos estudiantes en el sistema</p>
+                            </div>
+                        </a>
+                    </div>
+
                 </div>
                 
                 <!-- Video Tutorial -->
@@ -644,9 +645,6 @@
                                 allowfullscreen>
                             </iframe>
                         </div>
-                        <p style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                            <i class="fa fa-info-circle"></i> Puedes cambiar este video desde la configuración del sistema
-                        </p>
                     </div>
                 </div>
                 
@@ -656,7 +654,7 @@
                         <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
                             <i class="fa fa-book fa-2x" style="color: #667eea; margin-bottom: 10px;"></i>
                             <h6 style="margin-bottom: 10px;">Documentación</h6>
-                            <a href="https://sintia.org/documentacion" target="_blank" class="btn btn-sm" style="background: #667eea; color: white;">
+                            <a href="como-empezar.php" target="_blank" class="btn btn-sm" style="background: #667eea; color: white;">
                                 <i class="fa fa-external-link-alt"></i> Ver Guía Completa
                             </a>
                         </div>
@@ -667,10 +665,10 @@
                             <i class="fa fa-headset fa-2x" style="color: #764ba2; margin-bottom: 10px;"></i>
                             <h6 style="margin-bottom: 10px;">¿Necesitas Ayuda?</h6>
                             <p style="margin: 5px 0; font-size: 14px;">
-                                <i class="fa fa-phone"></i> <strong>+57 300 123 4567</strong>
+                                <i class="fa fa-phone"></i> <strong>+57 300 607 5800</strong>
                             </p>
                             <p style="margin: 5px 0; font-size: 14px;">
-                                <i class="fa fa-envelope"></i> <strong>soporte@sintia.org</strong>
+                                <i class="fa fa-envelope"></i> <strong>soporte@plataformasintia.com</strong>
                             </p>
                         </div>
                     </div>

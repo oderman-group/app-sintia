@@ -263,13 +263,18 @@ function deseaGenerarIndicadores(dato) {
  * @param {Array} dato 
  */
 function deseaEliminar(dato) {
+    
+    let varObjet = undefined;
 
-    if (dato.title !== '') {
-
-        let variable = (dato.title);
-        var varObjet = JSON.parse(variable);
-        var input = document.getElementById(parseInt(varObjet.idInput));
-
+    if (dato.title !== '' && dato.title !== undefined) {
+        try {
+            let variable = (dato.title);
+            varObjet = JSON.parse(variable);
+            var input = document.getElementById(parseInt(varObjet.idInput));
+        } catch (e) {
+            console.log('ℹ️ No hay datos JSON en title (o no es válido), continuando con eliminación simple');
+            // No es un error crítico, simplemente no hay datos extra
+        }
     }
 
     var url = dato.name;
@@ -292,10 +297,13 @@ function deseaEliminar(dato) {
         `,
     }).then((result) => {
         if (result.isConfirmed) {
+            
+            // Variable para el overlay (scope accesible en then y catch)
+            let overlay = null;
 
             if (elementoGlobalBloquear) {
                 elementoGlobalBloquear.style.position = 'relative';
-                var overlay = document.createElement('div');
+                overlay = document.createElement('div');
                 overlay.style.position = 'absolute';
                 overlay.style.top = 0;
                 overlay.style.left = 0;
@@ -325,7 +333,65 @@ function deseaEliminar(dato) {
                 const separator = url.includes('?') ? '&' : '?';
                 const urlWithToken = url + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
                 
-                axios.get(urlWithToken).then(function(response) {
+                axios.get(urlWithToken)
+                .then(function(response) {
+                    // Verificar si la respuesta es JSON
+                    const data = response.data;
+                    
+                    console.log('✅ Respuesta de eliminación:', data);
+                    
+                    // Manejar respuesta JSON estructurada
+                    if (data && typeof data === 'object' && data.hasOwnProperty('success')) {
+                        // Remover overlay de carga
+                        if (elementoGlobalBloquear && overlay) {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        }
+                        
+                        if (data.success) {
+                            // ÉXITO: Mostrar toast y eliminar el registro
+                            if (typeof $.toast === 'function') {
+                                $.toast({
+                                    heading: 'Eliminado Exitosamente',
+                                    text: data.message || 'El registro ha sido eliminado correctamente',
+                                    showHideTransition: 'slide',
+                                    icon: 'success',
+                                    position: 'top-right',
+                                    hideAfter: 4000
+                                });
+                            }
+                            
+                            // Animar y eliminar el registro visual
+                            if (registro) {
+                                registro.classList.add('animate__animated', 'animate__fadeOutRight');
+                                setTimeout(() => {
+                                    registro.style.display = "none";
+                                    registro.remove();
+                                }, 800);
+                            }
+                        } else {
+                            // ERROR: Mostrar mensaje de error
+                            if (typeof $.toast === 'function') {
+                                $.toast({
+                                    heading: 'Error al Eliminar',
+                                    text: data.message || 'No se pudo eliminar el registro',
+                                    showHideTransition: 'slide',
+                                    icon: 'error',
+                                    position: 'top-right',
+                                    hideAfter: 6000
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error al Eliminar',
+                                    text: data.message || 'No se pudo eliminar el registro'
+                                });
+                            }
+                        }
+                        return;
+                    }
+                    
+                    // FALLBACK: Si no es JSON estructurado, usar lógica antigua
+                    console.log('⚠️ Respuesta no es JSON estructurado, usando lógica legacy');
                     if (typeof varObjet !== "undefined") {
                         // handle success
                         if (varObjet.tipo === 1) {
@@ -400,26 +466,53 @@ function deseaEliminar(dato) {
                             publicacion.classList.add('animate__animated', 'animate__bounceOutRight', 'animate__delay-0.5s');
                             
                         }
-                    }
-
-                        $.toast({
-                            heading: 'Acción realizada',
-                            text: 'El registro fue eliminado correctamente.',
-                            position: 'bottom-right',
-                            showHideTransition: 'slide',
-                            loaderBg: '#26c281',
-                            icon: 'success',
-                            hideAfter: 5000,
-                            stack: 6
-                        });
-
-                        if (elementoGlobalBloquear) {
-                            elementoGlobalBloquear.removeChild(overlay);
+                        
+                        // Toast legacy para tipos antiguos
+                        if (typeof $.toast === 'function') {
+                            $.toast({
+                                heading: 'Acción realizada',
+                                text: 'El registro fue eliminado correctamente.',
+                                position: 'bottom-right',
+                                showHideTransition: 'slide',
+                                loaderBg: '#26c281',
+                                icon: 'success',
+                                hideAfter: 5000,
+                                stack: 6
+                            });
                         }
 
+                        if (elementoGlobalBloquear && overlay) {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        }
+                    }
+
                 }).catch(function(error) {
-                    // handle error
-                    console.error(error);
+                    console.error('❌ Error en eliminación:', error);
+                    
+                    // Remover overlay de carga
+                    if (elementoGlobalBloquear && overlay) {
+                        try {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        } catch(e) {}
+                    }
+                    
+                    // Mostrar error al usuario
+                    if (typeof $.toast === 'function') {
+                        $.toast({
+                            heading: 'Error de Conexión',
+                            text: 'No se pudo completar la eliminación. Verifica tu conexión e intenta de nuevo.',
+                            showHideTransition: 'slide',
+                            icon: 'error',
+                            position: 'top-right',
+                            hideAfter: 6000
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de Conexión',
+                            text: 'No se pudo completar la eliminación. Verifica tu conexión e intenta de nuevo.'
+                        });
+                    }
                 });
             } else {
                 window.location.href = url;

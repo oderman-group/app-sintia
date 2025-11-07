@@ -242,7 +242,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="https://plataformasintia.com/images/logo-white.png" alt="SINTIA Logo">
+            <img src="https://main.plataformasintia.com/app-sintia/sintia-color.png" alt="SINTIA Logo">
             <h1>🔐 Recuperación de Contraseña</h1>
             <p>Solicitud de restablecimiento de acceso</p>
         </div>
@@ -325,7 +325,7 @@
             <div class="social-links">
                 <a href="https://facebook.com/plataformasintia" target="_blank">Facebook</a> | 
                 <a href="https://twitter.com/plataformasintia" target="_blank">Twitter</a> | 
-                <a href="https://instagram.com/plataformasintia" target="_blank">Instagram</a>
+                <a href="https://instagram.com/platsintia" target="_blank">Instagram</a>
             </div>
             
             <p style="margin-top: 20px; font-size: 12px;">
@@ -337,7 +337,7 @@
             <p style="margin-top: 15px; font-size: 11px; color: #6b7280;">
                 © <?php echo date('Y'); ?> SINTIA. Todos los derechos reservados.
                 <br>
-                <a href="https://plataformasintia.com/privacidad" style="color: #ef4444;">Política de Privacidad</a> | 
+                <a href="https://sintia.co/blog/" style="color: #667eea;">Blog</a> | 
                 <a href="https://plataformasintia.com/terminos" style="color: #ef4444;">Términos de Servicio</a>
             </p>
         </div>

@@ -529,7 +529,29 @@ error_log("Valores extraídos - idRegistro: $idRegistro, usuarioId: $usuarioId, 
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive */
+        /* Responsive para tablets y móviles */
+        @media (max-width: 1024px) {
+            /* Ocultar galería de fotos en tablets y móviles */
+            .photo-gallery {
+                display: none !important;
+            }
+            
+            /* Centrar el formulario */
+            .login-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .vertical-center {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .validation-card {
+                max-width: 550px;
+                margin: 1.5rem auto;
+            }
+        }
+        
         @media (max-width: 768px) {
             .validation-card {
                 margin: 1rem;
@@ -548,6 +570,37 @@ error_log("Valores extraídos - idRegistro: $idRegistro, usuarioId: $usuarioId, 
             
             .code-input-container {
                 gap: 0.25rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .validation-card {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            .validation-title {
+                font-size: 1.5rem;
+            }
+            
+            .validation-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            .code-input {
+                width: 45px;
+                height: 55px;
+                font-size: 1.25rem;
+            }
+            
+            .code-input-container {
+                gap: 0.15rem;
+            }
+            
+            .btn-validate {
+                font-size: 1rem;
+                padding: 0.75rem 1.25rem;
             }
         }
     </style>

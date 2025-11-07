@@ -486,7 +486,7 @@
             <div class="social-links">
                 <a href="https://facebook.com/plataformasintia" target="_blank">Facebook</a> | 
                 <a href="https://twitter.com/plataformasintia" target="_blank">Twitter</a> | 
-                <a href="https://instagram.com/plataformasintia" target="_blank">Instagram</a> | 
+                <a href="https://instagram.com/platasintia" target="_blank">Instagram</a> | 
                 <a href="https://plataformasintia.com" target="_blank">Sitio Web</a>
             </div>
             
@@ -497,7 +497,7 @@
             <p style="margin-top: 15px; font-size: 11px; color: #6b7280;">
                 © <?=date('Y')?> SINTIA. Todos los derechos reservados.
                 <br>
-                <a href="https://plataformasintia.com/privacidad" style="color: #3b82f6;">Política de Privacidad</a> | 
+                <a href="https://sintia.co/blog/" style="color: #667eea;">Blog</a> | 
                 <a href="https://plataformasintia.com/terminos" style="color: #3b82f6;">Términos de Servicio</a>
             </p>
         </div>
