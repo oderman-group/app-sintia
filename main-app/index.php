@@ -477,7 +477,30 @@ if(!isset($_GET['nodb'])) {
             border-left: 4px solid var(--sintia-secondary);
         }
         
-        /* Responsive mejorado */
+        /* Responsive para tablets y móviles */
+        @media (max-width: 1024px) {
+            /* Ocultar galería de fotos en tablets y móviles */
+            .photo-gallery {
+                display: none !important;
+            }
+            
+            /* Centrar el formulario de login */
+            .login-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .vertical-center {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .login-card {
+                max-width: 500px;
+                margin: 1.5rem auto;
+                padding: 2.5rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .login-card {
                 margin: 1rem;
@@ -494,6 +517,26 @@ if(!isset($_GET['nodb'])) {
             
             .btn-social {
                 padding: 0.875rem 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-card {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            .login-title {
+                font-size: 1.5rem;
+            }
+            
+            .login-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            .login-logo {
+                max-width: 180px;
             }
         }
     </style>

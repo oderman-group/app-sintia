@@ -16,13 +16,36 @@ Csrf::verificar();
 
 $idUsuario = base64_decode($_GET["id"]);
 
-// Obtener datos del usuario ANTES de eliminar
-$datosUsuario = UsuariosPadre::sesionUsuario($idUsuario);
+// Configurar respuesta JSON
+header('Content-Type: application/json; charset=utf-8');
 
-UsuariosPadre::eliminarUsuarioPorID($config, $idUsuario);
-
-// Registrar auditoría de eliminación
-if (!empty($datosUsuario)) {
+try {
+	// Obtener datos del usuario ANTES de eliminar
+	$datosUsuario = UsuariosPadre::sesionUsuario($idUsuario);
+	
+	if (empty($datosUsuario)) {
+		echo json_encode([
+			'success' => false,
+			'message' => 'Usuario no encontrado',
+			'code' => 'USER_NOT_FOUND'
+		]);
+		exit();
+	}
+	
+	// Prevenir eliminar al usuario actual
+	if ($idUsuario == $_SESSION['id']) {
+		echo json_encode([
+			'success' => false,
+			'message' => 'No puedes eliminar tu propia cuenta',
+			'code' => 'CANNOT_DELETE_SELF'
+		]);
+		exit();
+	}
+	
+	// Eliminar usuario
+	UsuariosPadre::eliminarUsuarioPorID($config, $idUsuario);
+	
+	// Registrar auditoría de eliminación
 	AuditoriaLogger::registrarEliminacion(
 		'USUARIOS',
 		$idUsuario,
@@ -35,8 +58,26 @@ if (!empty($datosUsuario)) {
 			'documento' => $datosUsuario['uss_documento']
 		]
 	);
+	
+	include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+	
+	// Respuesta exitosa
+	echo json_encode([
+		'success' => true,
+		'message' => 'Usuario eliminado correctamente: ' . $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1'],
+		'code' => 'USER_DELETED',
+		'data' => [
+			'id' => $idUsuario,
+			'nombre' => $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1']
+		]
+	]);
+	exit();
+	
+} catch (Exception $e) {
+	echo json_encode([
+		'success' => false,
+		'message' => 'Error al eliminar usuario: ' . $e->getMessage(),
+		'code' => 'DELETE_ERROR'
+	]);
+	exit();
 }
-
-include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
-echo '<script type="text/javascript">window.location.href="usuarios.php?error=ER_DT_3";</script>';
-exit();

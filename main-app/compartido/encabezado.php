@@ -650,6 +650,163 @@ if ($mensajesNoLeidosConsulta) {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* ========================================
+           RESPONSIVE - HEADER OPTIMIZADO PARA MÓVILES
+           ======================================== */
+        
+        /* Tablets y móviles grandes */
+        @media (max-width: 1024px) {
+            /* Ocultar textos largos en header */
+            .username-hide-on-mobile {
+                display: none !important;
+            }
+            
+            /* Buscador más compacto */
+            #buscador-general-container {
+                max-width: 350px;
+            }
+            
+            #buscador-general-input {
+                font-size: 14px;
+            }
+        }
+        
+        /* Móviles */
+        @media (max-width: 768px) {
+            /* Header con altura flexible */
+            .page-header .page-header-inner {
+                padding: 8px 10px;
+            }
+            
+            /* Logo más pequeño */
+            .page-logo {
+                width: auto !important;
+                padding: 5px 10px !important;
+            }
+            
+            .page-logo img {
+                max-height: 35px !important;
+            }
+            
+            /* Buscador más pequeño */
+            #buscador-general-container {
+                max-width: 200px;
+                margin-right: 5px;
+            }
+            
+            #buscador-general-input {
+                font-size: 13px;
+                padding: 6px 10px;
+                height: 35px;
+            }
+            
+            .search-form-opened .input-icon > i {
+                top: 8px;
+                font-size: 14px;
+            }
+            
+            /* Top menu más compacto */
+            .top-menu .navbar-nav > li > a {
+                padding: 8px 6px !important;
+                font-size: 18px;
+            }
+            
+            .top-menu .dropdown-toggle {
+                padding: 6px 8px !important;
+            }
+            
+            /* Ocultar selectores de año/periodo en móvil */
+            .top-menu .navbar-nav > li.dropdown.dropdown-extended.dropdown-light:nth-child(1),
+            .top-menu .navbar-nav > li.dropdown.dropdown-extended.dropdown-light:nth-child(2) {
+                display: none !important;
+            }
+            
+            /* Toggle oscuro más pequeño */
+            .dark-mode-toggle {
+                transform: scale(0.85);
+            }
+            
+            /* Dropdown de usuario */
+            .top-menu .dropdown-user > a {
+                padding: 4px 8px !important;
+            }
+            
+            .top-menu .dropdown-user img {
+                width: 32px !important;
+                height: 32px !important;
+            }
+        }
+        
+        /* Móviles muy pequeños */
+        @media (max-width: 480px) {
+            /* Header ultra compacto */
+            .page-header .page-header-inner {
+                padding: 5px 8px;
+            }
+            
+            /* Logo aún más pequeño */
+            .page-logo {
+                padding: 3px 8px !important;
+            }
+            
+            .page-logo img {
+                max-height: 28px !important;
+            }
+            
+            /* Buscador ultra compacto */
+            #buscador-general-container {
+                max-width: 140px;
+            }
+            
+            #buscador-general-input {
+                font-size: 12px;
+                padding: 4px 8px;
+                height: 30px;
+            }
+            
+            .search-form-opened .input-icon > i {
+                display: none; /* Ocultar ícono de búsqueda */
+            }
+            
+            /* Iconos más pequeños */
+            .top-menu .navbar-nav > li > a {
+                padding: 6px 4px !important;
+                font-size: 16px;
+            }
+            
+            /* Ocultar selector de idioma en pantallas muy pequeñas */
+            .top-menu .navbar-nav > li.dropdown.dropdown-language {
+                display: none !important;
+            }
+            
+            /* Foto de perfil más pequeña */
+            .top-menu .dropdown-user img {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            /* Menú hamburguesa más visible */
+            .menu-toggler.responsive-toggler {
+                padding: 8px 10px;
+                font-size: 20px;
+            }
+        }
+        
+        /* Ajustes para modo landscape en móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .page-header .page-header-inner {
+                padding: 4px 8px;
+            }
+            
+            #buscador-general-container {
+                max-width: 180px;
+            }
+            
+            .page-logo img {
+                max-height: 30px !important;
+            }
+        }
         </style>
         
         <!-- JavaScript para el selector de aplicaciones -->
