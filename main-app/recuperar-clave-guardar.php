@@ -7,6 +7,11 @@ require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH . "/main-app/class/App/Seguridad/AuditoriaLogger.php");
 require_once(ROOT_PATH . "/main-app/class/App/Seguridad/Csrf.php");
 
+// Iniciar sesión si no está activa
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Verificar token CSRF
 Csrf::verificar();
 
