@@ -414,19 +414,15 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         
         // Verificar tipo de usuario desde $datosUsuarioActual si existe
         if (isset($datosUsuarioActual) && isset($datosUsuarioActual['uss_tipo'])) {
-            $esDirectivo = ($datosUsuarioActual['uss_tipo'] == 5);
+            $esDirectivo = ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV);
         } 
-        // Si no existe $datosUsuarioActual, verificar desde SESSION
-        elseif (isset($_SESSION['tipo'])) {
-            $esDirectivo = ($_SESSION['tipo'] == 5);
-        }
         // Último recurso: consultar directamente la BD
         elseif (isset($_SESSION['id']) && isset($conexion)) {
             $sqlTipoUsuario = "SELECT uss_tipo FROM " . BD_GENERAL . ".usuarios WHERE uss_id = '" . $_SESSION['id'] . "' LIMIT 1";
             $consultaTipo = mysqli_query($conexion, $sqlTipoUsuario);
             if ($consultaTipo && mysqli_num_rows($consultaTipo) > 0) {
                 $datosTipo = mysqli_fetch_assoc($consultaTipo);
-                $esDirectivo = ($datosTipo['uss_tipo'] == 5);
+                $esDirectivo = ($datosTipo['uss_tipo'] == TIPO_DIRECTIVO || $datosTipo['uss_tipo'] == TIPO_DEV);
             }
         }
         
@@ -466,17 +462,6 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             <i class="fa fa-chevron-right help-menu-arrow"></i>
         </a>
 
-        <a href="#" class="help-menu-item" onclick="abrirPreguntasFrecuentes(event)">
-            <div class="help-menu-icon">
-                <i class="fa fa-question-circle"></i>
-            </div>
-            <div class="help-menu-content">
-                <h5 class="help-menu-item-title">Preguntas Frecuentes</h5>
-                <p class="help-menu-item-desc">Respuestas rápidas</p>
-            </div>
-            <i class="fa fa-chevron-right help-menu-arrow"></i>
-        </a>
-
         <a href="#" class="help-menu-item" onclick="reportarProblema(event)">
             <div class="help-menu-icon">
                 <i class="fa fa-bug"></i>
@@ -499,21 +484,10 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             <i class="fa fa-chevron-right help-menu-arrow"></i>
         </a>
 
-        <a href="#" class="help-menu-item" onclick="abrirCentroRecursos(event)">
-            <div class="help-menu-icon">
-                <i class="fa fa-graduation-cap"></i>
-            </div>
-            <div class="help-menu-content">
-                <h5 class="help-menu-item-title">Centro de Recursos</h5>
-                <p class="help-menu-item-desc">Documentación completa</p>
-            </div>
-            <i class="fa fa-chevron-right help-menu-arrow"></i>
-        </a>
-
         <div class="help-menu-footer">
             <p class="help-menu-footer-text">
                 ¿Necesitas ayuda inmediata? <br>
-                <a href="https://wa.me/573006075800" target="_blank" class="help-menu-footer-link">
+                <a href="https://ayuda.plataformasintia.com/" target="_blank" class="help-menu-footer-link">
                     Visita nuestro portal de soporte
                 </a>
             </p>
@@ -654,23 +628,6 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         });
     }
 
-    function abrirPreguntasFrecuentes(event) {
-        event.preventDefault();
-        toggleHelpMenu();
-        
-        // Abrir FAQ en una nueva ventana
-        window.open('https://ayuda.plataformasintia.com/', '_blank');
-        
-        $.toast({
-            heading: 'Preguntas Frecuentes',
-            text: 'Abriendo las preguntas frecuentes...',
-            position: 'bottom-right',
-            icon: 'info',
-            hideAfter: 3000,
-            loaderBg: '#00f2fe'
-        });
-    }
-
     function reportarProblema(event) {
         event.preventDefault();
         toggleHelpMenu();
@@ -700,7 +657,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
         toggleHelpMenu();
         
         // Abrir página de video tutoriales
-        window.open('https://ayuda.plataformasintia.com/', '_blank');
+        window.open('https://www.youtube.com/c/Plataformasintia/videos', '_blank');
         
         $.toast({
             heading: 'Video Tutoriales',
@@ -709,23 +666,6 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             icon: 'success',
             hideAfter: 3000,
             loaderBg: '#fee140'
-        });
-    }
-
-    function abrirCentroRecursos(event) {
-        event.preventDefault();
-        toggleHelpMenu();
-        
-        // Abrir centro de recursos
-        window.open('como-empezar.php');
-        
-        $.toast({
-            heading: 'Centro de Recursos',
-            text: 'Accediendo al centro de recursos...',
-            position: 'bottom-right',
-            icon: 'info',
-            hideAfter: 3000,
-            loaderBg: '#330867'
         });
     }
 

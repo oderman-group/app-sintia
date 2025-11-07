@@ -477,7 +477,30 @@ if(!isset($_GET['nodb'])) {
             border-left: 4px solid var(--sintia-secondary);
         }
         
-        /* Responsive mejorado */
+        /* Responsive para tablets y móviles */
+        @media (max-width: 1024px) {
+            /* Ocultar galería de fotos en tablets y móviles */
+            .photo-gallery {
+                display: none !important;
+            }
+            
+            /* Centrar el formulario de login */
+            .login-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .vertical-center {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .login-card {
+                max-width: 500px;
+                margin: 1.5rem auto;
+                padding: 2.5rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .login-card {
                 margin: 1rem;
@@ -494,6 +517,26 @@ if(!isset($_GET['nodb'])) {
             
             .btn-social {
                 padding: 0.875rem 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-card {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            .login-title {
+                font-size: 1.5rem;
+            }
+            
+            .login-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            .login-logo {
+                max-width: 180px;
             }
         }
     </style>
@@ -650,11 +693,12 @@ if(!isset($_GET['nodb'])) {
         
         <!-- Galería de fotos rotando en el lado derecho -->
         <div class="logo-container vertical-center photo-gallery">
-            <div class="photo-slide active" style="background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');"></div>
-            <div class="photo-slide" style="background-image: url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2022&q=80');"></div>
+            <div class="photo-slide" style="background-image: url('../files-general/imagen-sintia1.jpg');"></div>
+            <div class="photo-slide" style="background-image: url('../files-general/imagen-sintia2.jpg');"></div>
+            <div class="photo-slide" style="background-image: url('../files-general/imagen-sintia3.jpg');"></div>
+            <div class="photo-slide" style="background-image: url('../files-general/imagen-sintia4.jpg');"></div>
+            <div class="photo-slide" style="background-image: url('../files-general/imagen-sintia5.jpg');"></div>
             <div class="photo-slide" style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80');"></div>
-            <div class="photo-slide" style="background-image: url('https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2049&q=80');"></div>
-            <div class="photo-slide" style="background-image: url('https://images.unsplash.com/photo-1523240798033-32679a3ea1f6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');"></div>
         </div>
     </div>
     

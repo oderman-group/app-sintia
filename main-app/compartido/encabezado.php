@@ -270,7 +270,7 @@ if ($mensajesNoLeidosConsulta) {
                                     <?php }?>
                                     
                                     <!-- Carpetas - Tercera opción -->
-                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) {?>
+                                    <?php if (false && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) {?>
                                     <div class="app-item" onclick="navigateToApp('carpetas')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                                             <i class="fa fa-folder"></i>
@@ -290,7 +290,7 @@ if ($mensajesNoLeidosConsulta) {
                                     <?php }?>
                                     
                                     <!-- Fila 1 -->
-                                    <div class="app-item" onclick="navigateToApp('directivo')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('directivo')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                             <i class="fa fa-cogs"></i>
                                         </div>
@@ -309,10 +309,10 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-graduation-cap"></i>
                                         </div>
                                         <span class="app-name">Estudiante</span>
-                                    </div>
+                                    </div> -->
                                     
                                     <!-- Fila 2 -->
-                                    <div class="app-item" onclick="navigateToApp('acudiente')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('acudiente')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                                             <i class="fa fa-users"></i>
                                         </div>
@@ -331,10 +331,10 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-chart-bar"></i>
                                         </div>
                                         <span class="app-name">Reportes</span>
-                                    </div>
+                                    </div> -->
                                     
                                     <!-- Fila 3 -->
-                                    <div class="app-item" onclick="navigateToApp('calendario')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('calendario')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
                                             <i class="fa fa-calendar-alt"></i>
                                         </div>
@@ -353,7 +353,7 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-plus" style="color: #666;"></i>
                                         </div>
                                         <span class="app-name">Más</span>
-                                    </div>
+                                    </div> -->
                                 </div>
                                 
                                 <!-- Apps ocultas -->
@@ -649,6 +649,163 @@ if ($mensajesNoLeidosConsulta) {
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ========================================
+           RESPONSIVE - HEADER OPTIMIZADO PARA MÓVILES
+           ======================================== */
+        
+        /* Tablets y móviles grandes */
+        @media (max-width: 1024px) {
+            /* Ocultar textos largos en header */
+            .username-hide-on-mobile {
+                display: none !important;
+            }
+            
+            /* Buscador más compacto */
+            #buscador-general-container {
+                max-width: 350px;
+            }
+            
+            #buscador-general-input {
+                font-size: 14px;
+            }
+        }
+        
+        /* Móviles */
+        @media (max-width: 768px) {
+            /* Header con altura flexible */
+            .page-header .page-header-inner {
+                padding: 8px 10px;
+            }
+            
+            /* Logo más pequeño */
+            .page-logo {
+                width: auto !important;
+                padding: 5px 10px !important;
+            }
+            
+            .page-logo img {
+                max-height: 35px !important;
+            }
+            
+            /* Buscador más pequeño */
+            #buscador-general-container {
+                max-width: 200px;
+                margin-right: 5px;
+            }
+            
+            #buscador-general-input {
+                font-size: 13px;
+                padding: 6px 10px;
+                height: 35px;
+            }
+            
+            .search-form-opened .input-icon > i {
+                top: 8px;
+                font-size: 14px;
+            }
+            
+            /* Top menu más compacto */
+            .top-menu .navbar-nav > li > a {
+                padding: 8px 6px !important;
+                font-size: 18px;
+            }
+            
+            .top-menu .dropdown-toggle {
+                padding: 6px 8px !important;
+            }
+            
+            /* Ocultar selectores de año/periodo en móvil */
+            .top-menu .navbar-nav > li.dropdown.dropdown-extended.dropdown-light:nth-child(1),
+            .top-menu .navbar-nav > li.dropdown.dropdown-extended.dropdown-light:nth-child(2) {
+                display: none !important;
+            }
+            
+            /* Toggle oscuro más pequeño */
+            .dark-mode-toggle {
+                transform: scale(0.85);
+            }
+            
+            /* Dropdown de usuario */
+            .top-menu .dropdown-user > a {
+                padding: 4px 8px !important;
+            }
+            
+            .top-menu .dropdown-user img {
+                width: 32px !important;
+                height: 32px !important;
+            }
+        }
+        
+        /* Móviles muy pequeños */
+        @media (max-width: 480px) {
+            /* Header ultra compacto */
+            .page-header .page-header-inner {
+                padding: 5px 8px;
+            }
+            
+            /* Logo aún más pequeño */
+            .page-logo {
+                padding: 3px 8px !important;
+            }
+            
+            .page-logo img {
+                max-height: 28px !important;
+            }
+            
+            /* Buscador ultra compacto */
+            #buscador-general-container {
+                max-width: 140px;
+            }
+            
+            #buscador-general-input {
+                font-size: 12px;
+                padding: 4px 8px;
+                height: 30px;
+            }
+            
+            .search-form-opened .input-icon > i {
+                display: none; /* Ocultar ícono de búsqueda */
+            }
+            
+            /* Iconos más pequeños */
+            .top-menu .navbar-nav > li > a {
+                padding: 6px 4px !important;
+                font-size: 16px;
+            }
+            
+            /* Ocultar selector de idioma en pantallas muy pequeñas */
+            .top-menu .navbar-nav > li.dropdown.dropdown-language {
+                display: none !important;
+            }
+            
+            /* Foto de perfil más pequeña */
+            .top-menu .dropdown-user img {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            /* Menú hamburguesa más visible */
+            .menu-toggler.responsive-toggler {
+                padding: 8px 10px;
+                font-size: 20px;
+            }
+        }
+        
+        /* Ajustes para modo landscape en móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .page-header .page-header-inner {
+                padding: 4px 8px;
+            }
+            
+            #buscador-general-container {
+                max-width: 180px;
+            }
+            
+            .page-logo img {
+                max-height: 30px !important;
+            }
         }
         </style>
         

@@ -11,7 +11,7 @@ require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
 
 // Verificar permisos de desarrollador
 session_start();
-if (empty($_SESSION['id']) || $_SESSION['tipo'] != TIPO_DEV) {
+if (empty($_SESSION['id']) || $_SESSION['datosUsuario']['uss_tipo'] != TIPO_DEV) {
     echo json_encode([
         'success' => false,
         'message' => 'No tienes permisos para realizar esta acción'

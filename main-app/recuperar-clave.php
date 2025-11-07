@@ -426,7 +426,29 @@ if (isset($_POST['usuariosEncontrados'])) {
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive */
+        /* Responsive para tablets y móviles */
+        @media (max-width: 1024px) {
+            /* Ocultar galería de fotos en tablets y móviles */
+            .photo-gallery {
+                display: none !important;
+            }
+            
+            /* Centrar el formulario */
+            .login-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .vertical-center {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .recovery-card {
+                max-width: 550px;
+                margin: 1.5rem auto;
+            }
+        }
+        
         @media (max-width: 768px) {
             .recovery-card {
                 margin: 1rem;
@@ -448,6 +470,40 @@ if (isset($_POST['usuariosEncontrados'])) {
             
             .progress-step-label {
                 font-size: 0.65rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .recovery-card {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            .recovery-title {
+                font-size: 1.5rem;
+            }
+            
+            .recovery-subtitle {
+                font-size: 0.875rem;
+            }
+            
+            .recovery-icon {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .recovery-icon i {
+                font-size: 1.25rem;
+            }
+            
+            .btn-recovery {
+                font-size: 1rem;
+                padding: 0.75rem 1.25rem;
+            }
+            
+            .progress-step-label {
+                font-size: 0.6rem;
             }
         }
     </style>

@@ -501,7 +501,29 @@ $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive */
+        /* Responsive para tablets y móviles */
+        @media (max-width: 1024px) {
+            /* Ocultar galería de fotos en tablets y móviles */
+            .photo-gallery {
+                display: none !important;
+            }
+            
+            /* Centrar el formulario */
+            .login-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            
+            .vertical-center {
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .restore-card {
+                max-width: 600px;
+                margin: 1.5rem auto;
+            }
+        }
+        
         @media (max-width: 768px) {
             .restore-card {
                 margin: 1rem;
@@ -510,6 +532,50 @@ $usuarioId = !empty($_REQUEST['usuarioId']) ? base64_decode($_REQUEST['usuarioId
             
             .restore-title {
                 font-size: 1.75rem;
+            }
+            
+            .progress-steps {
+                gap: 0.5rem;
+            }
+            
+            .progress-step-label {
+                font-size: 0.65rem;
+            }
+            
+            .progress-step-circle {
+                width: 35px;
+                height: 35px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .restore-card {
+                margin: 0.5rem;
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            .restore-title {
+                font-size: 1.5rem;
+            }
+            
+            .restore-icon {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .restore-icon i {
+                font-size: 1.5rem;
+            }
+            
+            .progress-step-circle {
+                width: 30px;
+                height: 30px;
+                font-size: 0.75rem;
+            }
+            
+            .progress-step-label {
+                font-size: 0.6rem;
             }
         }
     </style>
