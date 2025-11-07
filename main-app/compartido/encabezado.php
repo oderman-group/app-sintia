@@ -270,7 +270,7 @@ if ($mensajesNoLeidosConsulta) {
                                     <?php }?>
                                     
                                     <!-- Carpetas - Tercera opción -->
-                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) {?>
+                                    <?php if (false && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CARPETAS)) {?>
                                     <div class="app-item" onclick="navigateToApp('carpetas')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                                             <i class="fa fa-folder"></i>
@@ -290,7 +290,7 @@ if ($mensajesNoLeidosConsulta) {
                                     <?php }?>
                                     
                                     <!-- Fila 1 -->
-                                    <div class="app-item" onclick="navigateToApp('directivo')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('directivo')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                             <i class="fa fa-cogs"></i>
                                         </div>
@@ -309,10 +309,10 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-graduation-cap"></i>
                                         </div>
                                         <span class="app-name">Estudiante</span>
-                                    </div>
+                                    </div> -->
                                     
                                     <!-- Fila 2 -->
-                                    <div class="app-item" onclick="navigateToApp('acudiente')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('acudiente')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
                                             <i class="fa fa-users"></i>
                                         </div>
@@ -331,10 +331,10 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-chart-bar"></i>
                                         </div>
                                         <span class="app-name">Reportes</span>
-                                    </div>
+                                    </div> -->
                                     
                                     <!-- Fila 3 -->
-                                    <div class="app-item" onclick="navigateToApp('calendario')">
+                                    <!-- <div class="app-item" onclick="navigateToApp('calendario')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
                                             <i class="fa fa-calendar-alt"></i>
                                         </div>
@@ -353,7 +353,7 @@ if ($mensajesNoLeidosConsulta) {
                                             <i class="fa fa-plus" style="color: #666;"></i>
                                         </div>
                                         <span class="app-name">Más</span>
-                                    </div>
+                                    </div> -->
                                 </div>
                                 
                                 <!-- Apps ocultas -->
