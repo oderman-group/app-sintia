@@ -19,6 +19,8 @@ if(!Modulos::validarPermisoEdicion()){
 	<!-- steps -->
 	<link rel="stylesheet" href="../../config-general/assets/plugins/steps/steps.css"> 
 	
+	<!-- 📝 Estilos mejorados para formulario de estudiante -->
+	<link href="../css/formulario-estudiante.css?v=<?=time()?>" rel="stylesheet" type="text/css" />
 
 	<!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
@@ -147,7 +149,7 @@ if(!Modulos::validarPermisoEdicion()){
 									  
 										<h3>Información personal</h3>
 									    <fieldset>
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Identificación <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-id-card"></i> Identificación <span class="toggle-indicator">▼</span></h4></div></div>
 									
 
 											
@@ -180,8 +182,35 @@ if(!Modulos::validarPermisoEdicion()){
 
 											</div>	
 												
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Datos personales <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-user"></i> Nombres y datos básicos <span class="toggle-indicator">▼</span></h4></div></div>
+								
+								<!-- ✅ NOMBRES - Lo más importante después del documento -->
 								<div class="form-group row">
+												<label class="col-sm-2 control-label"><i class="fa fa-user-circle"></i> Primer apellido <span style="color: red;">(*)</span></label>
+												<div class="col-sm-4">
+													<input type="text" id="apellido1" name="apellido1" class="form-control" autocomplete="off" required value="<?=$datosMatricula['apellido1'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
+												</div>
+												
+												<label class="col-sm-2 control-label">Segundo apellido</label>
+												<div class="col-sm-4">
+													<input type="text" id="apellido2" name="apellido2" class="form-control" autocomplete="off" value="<?=$datosMatricula['apellido2'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
+												</div>
+											</div>
+											
+											<div class="form-group row">
+												<label class="col-sm-2 control-label"><i class="fa fa-user"></i> Primer Nombre <span style="color: red;">(*)</span></label>
+												<div class="col-sm-4">
+													<input type="text" id="nombres" name="nombres" class="form-control" autocomplete="off" required value="<?=$datosMatricula['nombre'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
+												</div>
+
+												<label class="col-sm-2 control-label">Otro Nombre</label>
+												<div class="col-sm-4">
+													<input type="text" name="nombre2" class="form-control" autocomplete="off" value="<?=$datosMatricula['nombre2'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
+												</div>
+											</div>
+											
+											<!-- Lugar de expedición del documento -->
+											<div class="form-group row">
 												<label class="col-sm-2 control-label">Lugar de expedición</label>
 												<div class="col-sm-4">
 													<select class="form-control  select2" name="lugarD" <?=$disabledPermiso;?>>
@@ -195,45 +224,6 @@ if(!Modulos::validarPermisoEdicion()){
 														<option value="<?=$opg['ciu_id'];?>" <?php if($opg['ciu_id']==$datosMatricula['lugarEx']){echo "selected";}?>><?=$opg['ciu_nombre'].", ".$opg['dep_nombre'];?></option>
 														<?php }?>
 													</select>
-												</div>
-											</div>
-											
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
-												?>
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Folio</label>
-												<div class="col-sm-2">
-													<input type="text" name="folio" class="form-control" autocomplete="off" value="<?=$datosMatricula['folio'];?>" <?=$disabledPermiso;?>>
-												</div>
-												
-												<label class="col-sm-2 control-label">Codigo Tesoreria</label>
-												<div class="col-sm-2">
-													<input type="text" name="codTesoreria" class="form-control" autocomplete="off" value="<?=$datosMatricula['tesoreria'];?>" <?=$disabledPermiso;?>>
-												</div>
-											</div>
-											<?php }?>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Primer apellido <span style="color: red;">(*)</span></label>
-												<div class="col-sm-4">
-													<input type="text" id="apellido1" name="apellido1" class="form-control" autocomplete="off" required value="<?=$datosMatricula['apellido1'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
-												</div>
-												
-												<label class="col-sm-2 control-label">Segundo apellido</label>
-												<div class="col-sm-4">
-													<input type="text" id="apellido2" name="apellido2" class="form-control" autocomplete="off" value="<?=$datosMatricula['apellido2'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
-												</div>
-											</div>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Primer Nombre <span style="color: red;">(*)</span></label>
-												<div class="col-sm-4">
-													<input type="text" id="nombres" name="nombres" class="form-control" autocomplete="off" required value="<?=$datosMatricula['nombre'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
-												</div>
-
-												<label class="col-sm-2 control-label">Otro Nombre</label>
-												<div class="col-sm-4">
-													<input type="text" name="nombre2" class="form-control" autocomplete="off" value="<?=$datosMatricula['nombre2'];?>" <?=$disabledPermiso;?> style="text-transform: uppercase;">
 												</div>
 											</div>
 											
@@ -296,50 +286,6 @@ if(!Modulos::validarPermisoEdicion()){
 													</select>
 												</div>
 											</div>
-
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
-												?>
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Grupo Sanguineo</label>
-												<div class="col-sm-2">
-													<input type="text" name="tipoSangre" class="form-control" autocomplete="off" value="<?=$datosMatricula['tipoSangre'];?>" <?=$disabledPermiso;?>>
-												</div>
-											</div>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">EPS</label>
-												<div class="col-sm-2">
-													<input type="text" name="eps" class="form-control" autocomplete="off" value="<?=$datosMatricula['eps'];?>" <?=$disabledPermiso;?>>
-												</div>
-											</div>
-												
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Estudiante de Inclusión</label>
-												<div class="col-sm-2">
-													<select class="form-control  select2" name="inclusion" <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
-														<option value="1"<?php if ($datosMatricula['inclusion']==1){echo "selected";}?>>Si</option>
-														<option value="0"<?php if ($datosMatricula['inclusion']==0){echo "selected";}?>>No</option>
-													</select>
-												</div>
-												
-												
-												<label class="col-sm-2 control-label">Religi&oacute;n</label>
-												<div class="col-sm-2">
-													<select class="form-control  select2" name="religion" <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
-														<?php
-										  				$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2");
-														while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
-															if($o['ogen_id']==$datosMatricula['religion'])
-																echo '<option value="'.$o['ogen_id'].'" selected>'.$o['ogen_nombre'].'</option>';
-															else
-																echo '<option value="'.$o['ogen_id'].'">'.$o['ogen_nombre'].'</option>';	
-														}?>
-													</select>
-												</div>
-											</div>
-											<?php }?>
 												
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Extranjero?</label>
@@ -405,7 +351,7 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 											
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Residencia y contacto <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-map-marker"></i> Residencia y contacto <span class="toggle-indicator">▼</span></h4></div></div>
 								<div class="form-group row">
 												<label class="col-sm-2 control-label">Direcci&oacute;n</label>
 												<div class="col-sm-4">
@@ -439,46 +385,111 @@ if(!Modulos::validarPermisoEdicion()){
 													</select>
 												</div>
 											</div>
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
-												?>	
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Estrato</label>
-												<div class="col-sm-2">
-													<select class="form-control  select2" name="estrato" <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
-														<?php
-															$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3");
-														while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
-															if($o['ogen_id']==$datosMatricula['estrato'])
-																echo '<option value="'.$o['ogen_id'].'" selected>'.$o['ogen_nombre'].'</option>';
-															else
-																echo '<option value="'.$o['ogen_id'].'">'.$o['ogen_nombre'].'</option>';	
-														}?>
-													</select>
-												</div>
-											</div>
-											<?php }?>
 											
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Contactos</label>
 												<div class="col-sm-2">
-													<input type="text" name="telefono" class="form-control" placeholder="Telefono" <?=$_SESSION['idInstitucion'] != ICOLVEN ? 'data-mask="999-9999"' : "";?> autocomplete="off" value="<?=$datosMatricula['telefono'];?>" <?=$disabledPermiso;?>>
+													<input type="text" name="telefono" class="form-control" placeholder="Telefono" autocomplete="off" value="<?=$datosMatricula['telefono'];?>" <?=$disabledPermiso;?>>
 												</div>
 												<div class="col-sm-2">
-													<input type="text" name="celular" class="form-control" placeholder="celular" <?=$_SESSION['idInstitucion'] != ICOLVEN ? 'data-mask="(999) 999-9999"' : "";?> autocomplete="off" value="<?=$datosMatricula['celular'];?>" <?=$disabledPermiso;?>>
+													<input type="text" name="celular" class="form-control" placeholder="celular" autocomplete="off" value="<?=$datosMatricula['celular'];?>" <?=$disabledPermiso;?>>
 												</div>
 												<div class="col-sm-2">
-													<input type="text" name="celular2" class="form-control" placeholder="celular #2" <?=$_SESSION['idInstitucion'] != ICOLVEN ? 'data-mask="(999) 999-9999"' : "";?> autocomplete="off" value="<?=$datosMatricula['celular2'];?>" <?=$disabledPermiso;?>>
+													<input type="text" name="celular2" class="form-control" placeholder="celular #2" autocomplete="off" value="<?=$datosMatricula['celular2'];?>" <?=$disabledPermiso;?>>
 												</div>
-											</div>								   
+											</div>
+											
+											<!-- ============================================= -->
+											<!-- CAMPOS ADICIONALES DEL ESTUDIANTE            -->
+											<!-- Solo visible para instituciones específicas  -->
+											<!-- ============================================= -->
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>
+											<div class="conditional-section">
+												<div class="conditional-section-header" onclick="$(this).next('.conditional-section-body').slideToggle(300); $(this).find('.toggle-indicator').text(function(i,txt){return txt==='▼'?'▶':'▼';});">
+													<i class="fa fa-cog"></i>
+													<strong>Campos Adicionales del Estudiante</strong>
+													<span class="conditional-badge">Institución Específica</span>
+													<span class="toggle-indicator">▼</span>
+												</div>
+												
+												<div class="conditional-section-body" style="display: none;">
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Folio</label>
+														<div class="col-sm-2">
+															<input type="text" name="folio" class="form-control" autocomplete="off" value="<?=$datosMatricula['folio'];?>" <?=$disabledPermiso;?>>
+														</div>
+														
+														<label class="col-sm-2 control-label">Código Tesorería</label>
+														<div class="col-sm-2">
+															<input type="text" name="codTesoreria" class="form-control" autocomplete="off" value="<?=$datosMatricula['tesoreria'];?>" <?=$disabledPermiso;?>>
+														</div>
+													</div>
+													
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Grupo Sanguíneo</label>
+														<div class="col-sm-2">
+															<input type="text" name="tipoSangre" class="form-control" autocomplete="off" value="<?=$datosMatricula['tipoSangre'];?>" <?=$disabledPermiso;?>>
+														</div>
+														
+														<label class="col-sm-2 control-label">EPS</label>
+														<div class="col-sm-2">
+															<input type="text" name="eps" class="form-control" autocomplete="off" value="<?=$datosMatricula['eps'];?>" <?=$disabledPermiso;?>>
+														</div>
+													</div>
+													
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Estudiante de Inclusión</label>
+														<div class="col-sm-2">
+															<select class="form-control select2" name="inclusion" <?=$disabledPermiso;?>>
+																<option value="">Seleccione una opción</option>
+																<option value="1"<?php if ($datosMatricula['inclusion']==1){echo " selected";}?>>Si</option>
+																<option value="0"<?php if ($datosMatricula['inclusion']==0){echo " selected";}?>>No</option>
+															</select>
+														</div>
+														
+														<label class="col-sm-2 control-label">Religión</label>
+														<div class="col-sm-2">
+															<select class="form-control select2" name="religion" <?=$disabledPermiso;?>>
+																<option value="">Seleccione una opción</option>
+																<?php
+																$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=2");
+																while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
+																	if($o['ogen_id']==$datosMatricula['religion'])
+																		echo '<option value="'.$o['ogen_id'].'" selected>'.$o['ogen_nombre'].'</option>';
+																	else
+																		echo '<option value="'.$o['ogen_id'].'">'.$o['ogen_nombre'].'</option>';	
+																}?>
+															</select>
+														</div>
+													</div>
+													
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Estrato</label>
+														<div class="col-sm-2">
+															<select class="form-control select2" name="estrato" <?=$disabledPermiso;?>>
+																<option value="">Seleccione una opción</option>
+																<?php
+																$op = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=3");
+																while($o = mysqli_fetch_array($op, MYSQLI_BOTH)){
+																	if($o['ogen_id']==$datosMatricula['estrato'])
+																		echo '<option value="'.$o['ogen_id'].'" selected>'.$o['ogen_nombre'].'</option>';
+																	else
+																		echo '<option value="'.$o['ogen_id'].'">'.$o['ogen_nombre'].'</option>';	
+																}?>
+															</select>
+														</div>
+													</div>
+												</div>
+											</div>
+											<?php } ?>								   
 									       
 							</fieldset>
 										
 									    <h3>Información académica</h3>
 									    <fieldset>
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Curso y grupo <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-graduation-cap"></i> Curso y grupo <span class="toggle-indicator">▼</span></h4></div></div>
 
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Tipo y estado <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-list-alt"></i> Tipo y estado académico <span class="toggle-indicator">▼</span></h4></div></div>
 								<div class="form-group row">
 												<label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
 												<div class="col-sm-4">
@@ -496,7 +507,7 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>
 												
-								<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Pagos y opciones <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+								<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-dollar"></i> Información de pagos <span class="toggle-indicator">▼</span></h4></div></div>
 								<div class="form-group row">
 												<label class="col-sm-2 control-label">Grupo</label>
 												<div class="col-sm-2">
@@ -619,8 +630,8 @@ if(!Modulos::validarPermisoEdicion()){
 										   
 										<h3>Información del Acudiente</h3>
 										<fieldset>
-							<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:0; margin-bottom:10px; cursor: pointer;">Identificación del acudiente <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
-							<div class="row"><div class="col-sm-12"><h4 class="section-toggle" style="margin-top:15px; margin-bottom:10px; cursor: pointer;">Datos del acudiente <span class="toggle-indicator">▼</span></h4><hr style="margin-top:5px;"></div></div>
+							<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-users"></i> Identificación del acudiente <span class="toggle-indicator">▼</span></h4></div></div>
+							<div class="row"><div class="col-sm-12"><h4 class="section-toggle"><i class="fa fa-id-badge"></i> Datos del acudiente <span class="toggle-indicator">▼</span></h4></div></div>
 							<div class="form-group row">
 												<label class="col-sm-2 control-label">Tipo de documento</label>
 												<div class="col-sm-3">
@@ -643,16 +654,15 @@ if(!Modulos::validarPermisoEdicion()){
                         
 												<label class="col-sm-2 control-label">Documento <span style="color: red;">(*)</span></label>
 												<div class="col-sm-3">
-                          
-                        <div class="cargando row">       
-                        <div class="d-flex justify-content-center">
-                          <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Verificando Documento, Espere Por Favor!</span>
-                          </div>
-                        </div>
-                      </div>
-
-													<input type="text" name="documentoA" id="doc" onblur="buscar_datos();" class="form-control"  required value="<?=$datosMatricula['documentoA'];?>" <?=$disabledPermiso;?>>
+													<div style="position: relative;">
+														<input type="text" name="documentoA" id="doc" onblur="buscar_datos();" class="form-control"  required value="<?=$datosMatricula['documentoA'];?>" <?=$disabledPermiso;?>>
+														<span class="cargando" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);">
+															<i class="fa fa-spinner fa-spin" style="color: #667eea; font-size: 16px;"></i>
+														</span>
+													</div>
+													<small class="form-text text-muted" style="display: none;" id="verificando-text">
+														<i class="fa fa-info-circle"></i> Verificando si el acudiente ya existe...
+													</small>
 												</div>
 											</div>
 												
@@ -671,15 +681,6 @@ if(!Modulos::validarPermisoEdicion()){
 														<?php }?>
 													</select>
 												</div>
-
-												<?php if($config['conf_id_institucion'] ==  ICOLVEN){ //TODO: Esto debe ser una configuración
-													?>
-												<label class="col-sm-2 control-label">Ocupaci&oacute;n</label>
-												<div class="col-sm-3">
-													<input type="text" name="ocupacionA" class="form-control" autocomplete="off" value="<?=$datosMatricula['ocupacionA'];?>" <?=$disabledPermiso;?>>
-												</div>
-												<?php }?>
-
 											</div>
 
 											<div class="form-group row">												
@@ -706,19 +707,7 @@ if(!Modulos::validarPermisoEdicion()){
 												</div>
 											</div>	
 												
-											<?php if($config['conf_id_institucion'] == ICOLVEN){ //TODO: Esto debe ser una configuración
-												?>
 											<div class="form-group row">
-												<label class="col-sm-2 control-label">Fecha de nacimiento</label>
-								<div class="col-sm-3" id="fNacAGroup">
-									<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input2" data-link-format="yyyy-mm-dd" data-date-enddate="<?=date('Y-m-d', strtotime('-14 year'));?>">
-									<input class="form-control" size="16" type="text" <?=$disabledPermiso;?> readonly aria-describedby="fNacAError" aria-invalid="false">
-									<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
-									</div>
-									<small id="fNacAError" class="text-danger" style="display:none;">El acudiente debe tener al menos 14 años.</small>
-								</div>
-								<input type="hidden" id="dtp_input2" name="fechaNA">
-
 												<label class="col-sm-2 control-label">Genero</label>
 												<div class="col-sm-3">
 													<select class="form-control select2" name="generoA" <?=$disabledPermiso;?>>
@@ -734,7 +723,42 @@ if(!Modulos::validarPermisoEdicion()){
 													</select>
 												</div>
 											</div>
-											<?php }?>									   
+											
+											<!-- ============================================= -->
+											<!-- CAMPOS ADICIONALES DEL ACUDIENTE             -->
+											<!-- Solo visible para instituciones específicas  -->
+											<!-- ============================================= -->
+											<?php if($config['conf_id_institucion'] == ICOLVEN){ ?>
+											<div class="conditional-section">
+												<div class="conditional-section-header" onclick="$(this).next('.conditional-section-body').slideToggle(300); $(this).find('.toggle-indicator').text(function(i,txt){return txt==='▼'?'▶':'▼';});">
+													<i class="fa fa-cog"></i>
+													<strong>Campos Adicionales del Acudiente</strong>
+													<span class="conditional-badge">Institución Específica</span>
+													<span class="toggle-indicator">▼</span>
+												</div>
+												
+												<div class="conditional-section-body" style="display: none;">
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Ocupación</label>
+														<div class="col-sm-3">
+															<input type="text" name="ocupacionA" class="form-control" autocomplete="off" value="<?=$datosMatricula['ocupacionA'];?>" <?=$disabledPermiso;?>>
+														</div>
+													</div>
+													
+													<div class="form-group row">
+														<label class="col-sm-2 control-label">Fecha de nacimiento</label>
+														<div class="col-sm-3" id="fNacAGroup">
+															<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input2" data-link-format="yyyy-mm-dd" data-date-enddate="<?=date('Y-m-d', strtotime('-14 year'));?>">
+																<input class="form-control" size="16" type="text" <?=$disabledPermiso;?> readonly aria-describedby="fNacAError" aria-invalid="false">
+																<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
+															</div>
+															<small id="fNacAError" class="text-danger" style="display:none;">El acudiente debe tener al menos 14 años.</small>
+														</div>
+														<input type="hidden" id="dtp_input2" name="fechaNA">
+													</div>
+												</div>
+											</div>
+											<?php } ?>									   
 									       
 									    </fieldset>
 										
@@ -763,6 +787,12 @@ if(!Modulos::validarPermisoEdicion()){
   function buscar_datos()
   {
     doc = $("#doc").val();
+    
+    // Solo buscar si hay documento
+    if (!doc || doc.trim() === '') {
+      return;
+    }
+    
     var parametros = 
     {
       "buscar": "1",
@@ -776,21 +806,34 @@ if(!Modulos::validarPermisoEdicion()){
       type:  'post',
       beforeSend: function() 
       {
-        $('.cargando').show();
+        $('.cargando').fadeIn(200);
+        $('#verificando-text').fadeIn(200);
       }, 
       error: function()
-      {alert("Error");},
+      {
+        console.error("Error al verificar acudiente");
+      },
       complete: function() 
       {
-        $('.cargando').hide();
+        $('.cargando').fadeOut(200);
+        $('#verificando-text').fadeOut(200);
       },
       success:  function (valores) 
       {
-         $("#apellido1A").val(valores.apellido1);
-          $("#apellido2A").val(valores.apellido2);
-          $("#nombresA").val(valores.nombre1);
-          $("#nombre2A").val(valores.nombre2);
-          $("#lugardE").val(valores.lugardE);
+         if (valores && valores.apellido1) {
+           $("#apellido1A").val(valores.apellido1);
+           $("#apellido2A").val(valores.apellido2);
+           $("#nombresA").val(valores.nombre1);
+           $("#nombre2A").val(valores.nombre2);
+           $("#lugardE").val(valores.lugardE);
+           
+           // Feedback visual sutil
+           $("#doc").parent().find('small').remove();
+           $("#doc").parent().append('<small class="form-text text-success"><i class="fa fa-check-circle"></i> Acudiente encontrado en el sistema</small>');
+           setTimeout(function() {
+             $("#doc").parent().find('small.text-success').fadeOut(300, function() { $(this).remove(); });
+           }, 3000);
+         }
       }
     }) 
   }
@@ -839,6 +882,7 @@ if(!Modulos::validarPermisoEdicion()){
     				<p>El estudiante se creó correctamente. ¿Qué deseas hacer?</p>
     			</div>
     			<div class="modal-footer">
+    				<a href="estudiantes.php" class="btn btn-info"><i class="fa fa-list"></i> Ver Listado</a>
     				<button type="button" class="btn btn-secondary" data-dismiss="modal" id="btnAddAnother">Agregar otro</button>
     				<a href="#" class="btn btn-primary" id="btnGoEdit">Ir a editar</a>
     			</div>
@@ -1154,7 +1198,7 @@ if(!Modulos::validarPermisoEdicion()){
     	$h.on('click', function(){
     		$targets = getSectionElements($h); // recalcular por si el DOM cambió
     		var willCollapse = $targets.is(':visible');
-    		$targets.toggle();
+    		$targets.slideToggle(300); // Animación suave de 300ms
     		$ind.text(willCollapse ? '▲' : '▼');
     		localStorage.setItem(key, willCollapse ? '1' : '0');
     	});

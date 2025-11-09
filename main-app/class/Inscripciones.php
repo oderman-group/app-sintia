@@ -85,7 +85,8 @@ class Inscripciones extends BindSQL{
         $resultado = [];
 
         try {
-            $configConsulta = mysqli_query($conexion,"SELECT * FROM {$baseDatosAdmisiones}.config_instituciones WHERE cfgi_id_institucion = ".$idInsti." AND cfgi_year = ".$year);
+            $sql = "SELECT * FROM {$baseDatosAdmisiones}.config_instituciones WHERE cfgi_id_institucion = ".$idInsti." AND cfgi_year = ".$year;
+            $configConsulta = mysqli_query($conexion,$sql);
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }

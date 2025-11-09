@@ -385,6 +385,11 @@ if(!Modulos::validarPermisoEdicion()){
           <button type="button" class="close" data-dismiss="alert">×</button>
           <h4 class="alert-heading">SION!</h4>
           <p><?=$mensajeSion;?></p>
+          <?php if(base64_decode($_GET['stadsion'])==true){ ?>
+          <div style="margin-top: 15px;">
+           <a href="estudiantes.php" class="btn btn-info btn-sm"><i class="fa fa-list"></i> Ver Listado de Estudiantes</a>
+          </div>
+          <?php } ?>
          </div>
         <?php
         }
@@ -399,6 +404,11 @@ if(!Modulos::validarPermisoEdicion()){
         <button type="button" class="close" data-dismiss="alert">×</button>
         <h4 class="alert-heading">SINTIA!</h4>
         <p><?=base64_decode($_GET['msgsintia']);?></p>
+        <?php if(base64_decode($_GET['stadsintia'])==true){ ?>
+        <div style="margin-top: 15px;">
+         <a href="estudiantes.php" class="btn btn-info btn-sm"><i class="fa fa-list"></i> Ver Listado de Estudiantes</a>
+        </div>
+        <?php } ?>
        </div>
        <?php }?>
 

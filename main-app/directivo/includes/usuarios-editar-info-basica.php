@@ -238,7 +238,18 @@
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Lugar de expedición del documento</label>
                 <div class="col-sm-4">
-                    <input type="text" name="lExpedicion" class="form-control" value="<?=$datosEditar['uss_lugar_expedicion'];?>" <?=$disabledPermiso;?>>
+                    <select class="form-control select2" name="lExpedicion" <?=$disabledPermiso;?>>
+                        <option value="">Seleccione una ciudad</option>
+                        <?php
+                        $ciudadesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                        INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                        ORDER BY ciu_nombre ASC
+                        ");
+                        while($ciudad = mysqli_fetch_array($ciudadesConsulta, MYSQLI_BOTH)){
+                        ?>
+                        <option value="<?=$ciudad['ciu_id'];?>" <?php if($ciudad['ciu_id']==$datosEditar['uss_lugar_expedicion']){echo "selected";}?>><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+                        <?php }?>
+                    </select>
                 </div>
             </div>
             
