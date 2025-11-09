@@ -156,16 +156,69 @@
                                 </button> 
                             </label>
                             <div class="col-sm-9">
-                                <input 
-                                    type="number" 
-                                    name="decimalesNotas" 
-                                    class="form-control" 
-                                    value="<?=$datosConfiguracion['conf_decimales_notas'];?>"
-                                    style="max-width: 150px;"
-                                    min="0"
-                                    max="4"
-                                >
-                                <small class="form-text text-muted">Rango: 0 a 4 decimales</small>
+                                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                                    <div style="flex: 0 0 150px;">
+                                        <input 
+                                            type="number" 
+                                            name="decimalesNotas" 
+                                            id="decimalesNotasInput"
+                                            class="form-control" 
+                                            value="<?=$datosConfiguracion['conf_decimales_notas'];?>"
+                                            min="0"
+                                            max="4"
+                                            onchange="actualizarEjemploDecimales(this.value)"
+                                            oninput="actualizarEjemploDecimales(this.value)"
+                                        >
+                                        <small class="form-text text-muted">Rango: 0 a 4</small>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 15px; border-radius: 8px; border-left: 3px solid #41c4c4;">
+                                            <div style="font-size: 12px; color: #64748b; margin-bottom: 8px; font-weight: 600;">
+                                                <i class="fa fa-eye"></i> Vista Previa en Informes:
+                                            </div>
+                                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                                <div>
+                                                    <span style="font-size: 11px; color: #94a3b8;">Boletines:</span>
+                                                    <div style="font-size: 18px; font-weight: 700; color: #667eea; font-family: monospace;" id="ejemploBoletin">4.5</div>
+                                                </div>
+                                                <div>
+                                                    <span style="font-size: 11px; color: #94a3b8;">Sábanas:</span>
+                                                    <div style="font-size: 18px; font-weight: 700; color: #667eea; font-family: monospace;" id="ejemploSabana">4.5</div>
+                                                </div>
+                                                <div>
+                                                    <span style="font-size: 11px; color: #94a3b8;">Libros:</span>
+                                                    <div style="font-size: 18px; font-weight: 700; color: #667eea; font-family: monospace;" id="ejemploLibro">4.5</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <script>
+                                function actualizarEjemploDecimales(decimales) {
+                                    decimales = parseInt(decimales) || 0;
+                                    if (decimales < 0) decimales = 0;
+                                    if (decimales > 4) decimales = 4;
+                                    
+                                    // Actualizar el input si está fuera de rango
+                                    document.getElementById('decimalesNotasInput').value = decimales;
+                                    
+                                    // Generar nota de ejemplo según decimales
+                                    const notaBase = 4.456789;
+                                    const notaFormateada = notaBase.toFixed(decimales);
+                                    
+                                    // Actualizar ejemplos
+                                    document.getElementById('ejemploBoletin').textContent = notaFormateada;
+                                    document.getElementById('ejemploSabana').textContent = notaFormateada;
+                                    document.getElementById('ejemploLibro').textContent = notaFormateada;
+                                }
+                                
+                                // Inicializar al cargar
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const valorActual = document.getElementById('decimalesNotasInput').value;
+                                    actualizarEjemploDecimales(valorActual);
+                                });
+                                </script>
                             </div>
                         </div>
                     </div>
@@ -280,9 +333,9 @@
                                 </button>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="observacionesMultiples" style="max-width: 200px;" <?=$disabledPermiso;?>>
-                                    <option value="1" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento']==1){ echo "selected";} ?>>SÍ, permitir múltiples</option>
-                                    <option value="0" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento'] == 0 || $datosConfiguracion['conf_observaciones_multiples_comportamiento'] == null){ echo "selected";} ?>>NO, solo una observación</option>
+                                <select class="form-control" name="observacionesMultiples" <?=$disabledPermiso;?>>
+                                    <option value="1" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento']==1){ echo "selected";} ?>>✓ SÍ, permitir múltiples observaciones</option>
+                                    <option value="0" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento'] == 0 || $datosConfiguracion['conf_observaciones_multiples_comportamiento'] == null){ echo "selected";} ?>>✗ NO, solo una observación</option>
                                 </select>
                             </div>
                         </div>

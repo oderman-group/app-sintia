@@ -42,7 +42,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="cambiarNombreUsuario" style="max-width: 200px;">
+                                <select class="form-control" name="cambiarNombreUsuario" style="max-width: 200px;">
                                     <option value="SI" <?php if ($datosConfiguracion['conf_cambiar_nombre_usuario'] == 'SI') { echo "selected"; } ?>>✓ SÍ, permitir</option>
                                     <option value="NO" <?php if ($datosConfiguracion['conf_cambiar_nombre_usuario'] == 'NO') { echo "selected"; } ?>>✗ NO, bloquear</option>
                                 </select>
@@ -62,7 +62,7 @@
                                 </button>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="editarInfoYears" style="max-width: 200px;">
+                                <select class="form-control" name="editarInfoYears" style="max-width: 200px;">
                                     <option value="1" <?php if($datosConfiguracion['conf_permiso_edicion_years_anteriores']==1){ echo "selected";} ?>>✓ SÍ, permitir edición</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_permiso_edicion_years_anteriores']==0){ echo "selected";} ?>>✗ NO, solo consulta</option>
                                 </select>
@@ -81,7 +81,7 @@
                                 </button>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="dobleBuscador" style="max-width: 200px;">
+                                <select class="form-control" name="dobleBuscador" style="max-width: 200px;">
                                     <option value="SI" <?php if ($datosConfiguracion['conf_doble_buscador'] == 'SI') { echo "selected"; } ?>>✓ SÍ, activar</option>
                                     <option value="NO" <?php if ($datosConfiguracion['conf_doble_buscador'] == 'NO') { echo "selected"; } ?>>✗ NO, un solo buscador</option>
                                 </select>
@@ -100,7 +100,7 @@
                                 </button> 
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="permisoConsolidado" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="permisoConsolidado" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_editar_definitivas_consolidado']==1){ echo "selected";} ?>>✓ SÍ, permitir</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_editar_definitivas_consolidado']==0){ echo "selected";} ?>>✗ NO, bloquear</option>
                                 </select>
@@ -116,7 +116,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="permisoEliminarCargas" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="permisoEliminarCargas" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="SI" <?php if($datosConfiguracion['conf_permiso_eliminar_cargas'] == 'SI'){ echo "selected";} ?>>✓ SÍ, permitir eliminación</option>
                                     <option value="NO" <?php if($datosConfiguracion['conf_permiso_eliminar_cargas'] == 'NO'){ echo "selected";} ?>>✗ NO, solo archivar</option>
                                 </select>
@@ -147,7 +147,7 @@
                                 </button> 
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="permisoDocentesPuestosSabanas" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="permisoDocentesPuestosSabanas" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_ver_promedios_sabanas_docentes']==1){ echo "selected";} ?>>✓ SÍ, mostrar puestos</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_ver_promedios_sabanas_docentes']==0){ echo "selected";} ?>>✗ NO, ocultar puestos</option>
                                 </select>
@@ -169,7 +169,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="caliAcudientes" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="caliAcudientes" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_calificaciones_acudientes']==1){ echo "selected";} ?>>✓ SÍ, ver calificaciones</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_calificaciones_acudientes']==0){ echo "selected";} ?>>✗ NO, ocultar</option>
                                 </select>
@@ -185,7 +185,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="informeParcial" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="informeParcial" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_informe_parcial']==1){ echo "selected";} ?>>✓ SÍ, permitir descarga</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_informe_parcial']==0){ echo "selected";} ?>>✗ NO, bloquear</option>
                                 </select>
@@ -204,7 +204,7 @@
                                 </button> 
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="descargarBoletin" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="descargarBoletin" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_permiso_descargar_boletin']==1){ echo "selected";} ?>>✓ SÍ, permitir descarga</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_permiso_descargar_boletin']==0){ echo "selected";} ?>>✗ NO, bloquear</option>
                                 </select>
@@ -223,7 +223,7 @@
                                 </button> 
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="activarEncuestaReservaCupo" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="activarEncuestaReservaCupo" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_activar_encuesta']==1){ echo "selected";} ?>>✓ SÍ, activar encuesta</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_activar_encuesta']==0){ echo "selected";} ?>>✗ NO, desactivar</option>
                                 </select>
@@ -245,7 +245,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="caliEstudiantes" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="caliEstudiantes" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_mostrar_calificaciones_estudiantes']==1){ echo "selected";} ?>>✓ SÍ, ver calificaciones</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_mostrar_calificaciones_estudiantes']==0){ echo "selected";} ?>>✗ NO, ocultar</option>
                                 </select>
@@ -261,7 +261,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="cambiarClaveEstudiantes" style="max-width: 200px;">
+                                <select class="form-control" name="cambiarClaveEstudiantes" style="max-width: 200px;">
                                     <option value="SI" <?php if ($datosConfiguracion['conf_cambiar_clave_estudiantes'] == 'SI') { echo "selected"; } ?>>✓ SÍ, permitir cambio</option>
                                     <option value="NO" <?php if ($datosConfiguracion['conf_cambiar_clave_estudiantes'] == 'NO') { echo "selected"; } ?>>✗ NO, bloquear</option>
                                 </select>
@@ -280,7 +280,7 @@
                                 </button>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="pasosMatricula" style="max-width: 200px;">
+                                <select class="form-control" name="pasosMatricula" style="max-width: 200px;">
                                     <option value="1" <?php if ($datosConfiguracion['conf_mostrar_pasos_matricula'] == 1) { echo "selected"; } ?>>✓ SÍ, mostrar pasos</option>
                                     <option value="0" <?php if ($datosConfiguracion['conf_mostrar_pasos_matricula'] == 0) { echo "selected"; } ?>>✗ NO, ocultar</option>
                                 </select>

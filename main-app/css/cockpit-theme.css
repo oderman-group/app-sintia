@@ -82,10 +82,10 @@ body {
         var(--led-cyan) 50%, 
         transparent 100%);
     box-shadow: var(--glow-cyan);
-    animation: scan 4s linear infinite;
+    animation: scan 60s linear infinite;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.3;
+    opacity: 0.08;
 }
 
 @keyframes scan {
@@ -1063,17 +1063,160 @@ small.form-text {
 
 .scan-line-1 {
     top: 20%;
-    animation: scanVertical 3s ease-in-out infinite;
+    animation: scanVertical 40s ease-in-out infinite;
 }
 
 .scan-line-2 {
     top: 80%;
-    animation: scanVertical 3s ease-in-out infinite 1.5s;
+    animation: scanVertical 40s ease-in-out infinite 20s;
 }
 
 @keyframes scanVertical {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.6; }
+    0%, 100% { opacity: 0.03; }
+    50% { opacity: 0.1; }
+}
+
+/* ========================================
+   POPOVERS DE VISTA PREVIA
+   ======================================== */
+
+/* Popover más grande para preview de imágenes */
+.popover-preview-large {
+    max-width: 600px !important;
+    width: 600px;
+    border: 2px solid var(--cockpit-border);
+    box-shadow: var(--shadow-panel);
+    background: var(--cockpit-panel);
+}
+
+.popover-preview-large .popover-header {
+    background: linear-gradient(135deg, var(--led-cyan) 0%, var(--led-blue) 100%);
+    color: white;
+    border-bottom: 2px solid var(--cockpit-border);
+    font-weight: 600;
+}
+
+.popover-preview-large .popover-body {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Imagen de preview */
+.preview-image-large {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+}
+
+.preview-image-large:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* ========================================
+   LIGHTBOX MODERNO
+   ======================================== */
+
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 99999;
+    animation: fadeIn 0.3s ease-out;
+    backdrop-filter: blur(10px);
+}
+
+.lightbox-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    animation: zoomIn 0.3s ease-out;
+}
+
+.lightbox-image {
+    max-width: 100%;
+    max-height: 95vh;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.lightbox-title {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive para popovers */
+@media (max-width: 768px) {
+    .popover-preview-large {
+        max-width: 95vw !important;
+        width: 95vw;
+    }
+    
+    .popover-preview-large .popover-body {
+        padding: 15px;
+        max-height: 70vh;
+    }
 }
 
 /* Radar Container */
@@ -1400,7 +1543,5 @@ small.form-text {
         gap: 10px;
     }
 }
-    </style>
-</head>
-<!-- END HEAD -->
+
 

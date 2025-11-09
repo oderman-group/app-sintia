@@ -86,7 +86,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="mostrarEstudiantesCancelados" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="mostrarEstudiantesCancelados" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="SI" <?php if($datosConfiguracion['conf_mostrar_estudiantes_cancelados'] == 'SI'){ echo "selected";} ?>>✓ SÍ, mostrar en informes</option>
                                     <option value="NO" <?php if($datosConfiguracion['conf_mostrar_estudiantes_cancelados'] == 'NO'){ echo "selected";} ?>>✗ NO, ocultar de informes</option>
                                 </select>
@@ -109,7 +109,7 @@
                                 <span class="required-indicator">*</span>
                             </label>
                             <div class="col-sm-9">
-                                <select class="form-control select2" name="mostrarNotasPanelLateral" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                <select class="form-control" name="mostrarNotasPanelLateral" style="max-width: 200px;" <?=$disabledPermiso;?>>
                                     <option value="1" <?php if($datosConfiguracion['conf_ocultar_panel_lateral_notas_estudiantes'] == 1){ echo "selected";} ?>>✓ SÍ, mostrar notas y desempeño</option>
                                     <option value="0" <?php if($datosConfiguracion['conf_ocultar_panel_lateral_notas_estudiantes'] == '0'){ echo "selected";} ?>>✗ NO, ocultar información</option>
                                 </select>
