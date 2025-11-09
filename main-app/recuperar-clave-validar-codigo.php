@@ -555,6 +555,7 @@ error_log("Valores extraídos - idRegistro: $idRegistro, usuarioId: $usuarioId, 
         @media (max-width: 768px) {
             .validation-card {
                 margin: 1rem;
+                margin-top: 80px; /* Espacio extra para mensajes */
                 padding: 2rem;
             }
             
@@ -571,11 +572,35 @@ error_log("Valores extraídos - idRegistro: $idRegistro, usuarioId: $usuarioId, 
             .code-input-container {
                 gap: 0.25rem;
             }
+            
+            /* Contenedor con espacio superior */
+            .vertical-center {
+                padding-top: 80px;
+                padding-bottom: 40px;
+            }
+            
+            /* Mensajes fijos en la parte superior */
+            .alert-dynamic {
+                position: fixed !important;
+                top: 20px;
+                left: 10px;
+                right: 10px;
+                z-index: 9999;
+                margin: 0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                animation: fadeIn 0.3s ease-out !important; /* Cambiar animación */
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
         }
         
         @media (max-width: 480px) {
             .validation-card {
                 margin: 0.5rem;
+                margin-top: 70px; /* Espacio extra para mensajes */
                 padding: 1.5rem;
                 border-radius: 12px;
             }
@@ -601,6 +626,15 @@ error_log("Valores extraídos - idRegistro: $idRegistro, usuarioId: $usuarioId, 
             .btn-validate {
                 font-size: 1rem;
                 padding: 0.75rem 1.25rem;
+            }
+            
+            /* Mensajes más compactos */
+            .alert-dynamic {
+                top: 15px;
+                left: 8px;
+                right: 8px;
+                font-size: 0.875rem;
+                padding: 0.75rem 1rem;
             }
         }
     </style>

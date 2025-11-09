@@ -220,6 +220,27 @@ if(!isset($_GET['nodb'])) {
             border: none;
             font-weight: 500;
             animation: slideInDown 0.5s ease-out;
+            position: relative;
+            z-index: 1000;
+        }
+        
+        /* En móviles, mensajes fijos en la parte superior */
+        @media (max-width: 768px) {
+            .alert-dynamic {
+                position: fixed !important;
+                top: 20px;
+                left: 10px;
+                right: 10px;
+                z-index: 9999;
+                margin: 0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                animation: fadeIn 0.3s ease-out !important; /* Cambiar animación */
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
         }
         
         .alert-dynamic.error {
@@ -504,6 +525,7 @@ if(!isset($_GET['nodb'])) {
         @media (max-width: 768px) {
             .login-card {
                 margin: 1rem;
+                margin-top: 80px; /* Espacio extra para mensajes */
                 padding: 2rem;
             }
             
@@ -518,11 +540,18 @@ if(!isset($_GET['nodb'])) {
             .btn-social {
                 padding: 0.875rem 1rem;
             }
+            
+            /* Contenedor con scroll suave */
+            .vertical-center {
+                padding-top: 80px;
+                padding-bottom: 40px;
+            }
         }
         
         @media (max-width: 480px) {
             .login-card {
                 margin: 0.5rem;
+                margin-top: 70px; /* Espacio extra para mensajes en móviles pequeños */
                 padding: 1.5rem;
                 border-radius: 12px;
             }
@@ -537,6 +566,15 @@ if(!isset($_GET['nodb'])) {
             
             .login-logo {
                 max-width: 180px;
+            }
+            
+            /* Mensajes más compactos en móviles pequeños */
+            .alert-dynamic {
+                top: 15px;
+                left: 8px;
+                right: 8px;
+                font-size: 0.875rem;
+                padding: 0.75rem 1rem;
             }
         }
     </style>
