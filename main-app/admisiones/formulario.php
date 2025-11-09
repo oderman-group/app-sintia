@@ -326,12 +326,21 @@ $discapacidades = [
         
         select.form-control {
             cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 12px center;
             background-size: 16px 12px;
             padding-right: 40px;
-            appearance: none;
+            height: 48px;
+            line-height: 1.5;
+        }
+        
+        /* Ocultar flechas nativas en IE */
+        select.form-control::-ms-expand {
+            display: none;
         }
         
         /* File inputs */
@@ -658,7 +667,7 @@ $discapacidades = [
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Género <span class="required">*</span></label>
                                 <select class="form-control" name="genero" required>
@@ -669,7 +678,7 @@ $discapacidades = [
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tipo de documento <span class="required">*</span></label>
                                 <select class="form-control" name="tipoDoc" required>
@@ -685,17 +694,30 @@ $discapacidades = [
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="numeroDoc" value="<?= $datos['mat_documento']; ?>" required>
                             </div>
                         </div>
-                        
-                        <div class="col-md-3">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Lugar de expedición <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="LugarExp" value="<?= $datos['mat_lugar_expedicion']; ?>" required>
+                                <select class="form-control select2" name="LugarExp" required>
+                                    <option value="">Seleccione una ciudad</option>
+                                    <?php
+                                    $ciudadesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                    INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                    ORDER BY ciu_nombre ASC
+                                    ");
+                                    while($ciudad = mysqli_fetch_array($ciudadesConsulta, MYSQLI_BOTH)){
+                                    ?>
+                                    <option value="<?=$ciudad['ciu_id'];?>" <?php if($ciudad['ciu_id']==$datos['mat_lugar_expedicion']){echo "selected";}?>><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+                                    <?php }?>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -704,7 +726,18 @@ $discapacidades = [
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Lugar de nacimiento <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="LugarNacimiento" value="<?= $datos['mat_lugar_nacimiento']; ?>" required>
+                                <select class="form-control select2" name="LugarNacimiento" required>
+                                    <option value="">Seleccione una ciudad</option>
+                                    <?php
+                                    $ciudadesConsulta2 = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                    INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                    ORDER BY ciu_nombre ASC
+                                    ");
+                                    while($ciudad2 = mysqli_fetch_array($ciudadesConsulta2, MYSQLI_BOTH)){
+                                    ?>
+                                    <option value="<?=$ciudad2['ciu_id'];?>" <?php if($ciudad2['ciu_id']==$datos['mat_lugar_nacimiento']){echo "selected";}?>><?=$ciudad2['ciu_nombre'].", ".$ciudad2['dep_nombre'];?></option>
+                                    <?php }?>
+                                </select>
                             </div>
                         </div>
                         
@@ -772,7 +805,18 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Municipio <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="municipio" value="<?= $datos['mat_ciudad_actual']; ?>" required>
+                                <select class="form-control select2" name="municipio" required>
+                                    <option value="">Seleccione una ciudad</option>
+                                    <?php
+                                    $ciudadesConsulta3 = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                    INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                    ORDER BY ciu_nombre ASC
+                                    ");
+                                    while($ciudad3 = mysqli_fetch_array($ciudadesConsulta3, MYSQLI_BOTH)){
+                                    ?>
+                                    <option value="<?=$ciudad3['ciu_id'];?>" <?php if($ciudad3['ciu_id']==$datos['mat_ciudad_actual']){echo "selected";}?>><?=$ciudad3['ciu_nombre'].", ".$ciudad3['dep_nombre'];?></option>
+                                    <?php }?>
+                                </select>
                             </div>
                         </div>
                     </div>
