@@ -69,7 +69,7 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
     
     <!-- 🛩️ Cockpit Theme - Aviation Control Panel -->
-    <link href="../css/cockpit-theme.css" rel="stylesheet" type="text/css" />
+    <link href="../css/cockpit-theme.css?v=<?=time()?>" rel="stylesheet" type="text/css" />
     
     <style>
         /* Ajustes finos específicos de esta página si son necesarios */
@@ -361,6 +361,65 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
                 $('#cockpitEntry').addClass('hidden');
             }
         });
+    </script>
+    
+    <!-- 🖼️ Lightbox Moderno para Imágenes -->
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <div class="lightbox-close" id="lightboxClose">
+            <i class="fa fa-times"></i>
+        </div>
+        <div class="lightbox-content">
+            <img src="" alt="Vista previa" class="lightbox-image" id="lightboxImage">
+        </div>
+        <div class="lightbox-title" id="lightboxTitle">Vista Previa</div>
+    </div>
+    
+    <script>
+    // Sistema de Lightbox para Imágenes
+    $(document).ready(function() {
+        // Click en cualquier imagen con clase preview-image-large
+        $(document).on('click', '.preview-image-large', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const imgSrc = $(this).attr('src');
+            const imgAlt = $(this).closest('.popover-content').find('label').text() || 'Vista Previa';
+            
+            // Configurar lightbox
+            $('#lightboxImage').attr('src', imgSrc);
+            $('#lightboxTitle').text(imgAlt);
+            
+            // Mostrar lightbox con animación
+            $('#lightboxOverlay').addClass('active');
+            
+            // Prevenir scroll del body
+            $('body').css('overflow', 'hidden');
+        });
+        
+        // Cerrar lightbox al hacer click en X
+        $('#lightboxClose').on('click', function() {
+            cerrarLightbox();
+        });
+        
+        // Cerrar lightbox al hacer click en el fondo oscuro
+        $('#lightboxOverlay').on('click', function(e) {
+            if (e.target === this) {
+                cerrarLightbox();
+            }
+        });
+        
+        // Cerrar lightbox con tecla ESC
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#lightboxOverlay').hasClass('active')) {
+                cerrarLightbox();
+            }
+        });
+        
+        function cerrarLightbox() {
+            $('#lightboxOverlay').removeClass('active');
+            $('body').css('overflow', 'auto');
+        }
+    });
     </script>
 </body>
 

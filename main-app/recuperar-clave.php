@@ -260,6 +260,25 @@ if (isset($_POST['usuariosEncontrados'])) {
             border-left: 4px solid var(--sintia-secondary);
         }
         
+        /* Mensajes estáticos (no dinámicos) - NO usan position fixed */
+        .alert-static-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            color: #1e40af;
+            border-left: 4px solid var(--sintia-secondary);
+            border-radius: 10px;
+            border: none;
+            font-weight: 500;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-static-info i {
+            font-size: 1.25rem;
+        }
+        
         @keyframes slideInDown {
             from {
                 opacity: 0;
@@ -452,6 +471,7 @@ if (isset($_POST['usuariosEncontrados'])) {
         @media (max-width: 768px) {
             .recovery-card {
                 margin: 1rem;
+                margin-top: 80px; /* Espacio extra para mensajes */
                 padding: 2rem;
             }
             
@@ -471,11 +491,43 @@ if (isset($_POST['usuariosEncontrados'])) {
             .progress-step-label {
                 font-size: 0.65rem;
             }
+            
+            /* Contenedor con espacio superior */
+            .vertical-center {
+                padding-top: 80px;
+                padding-bottom: 40px;
+            }
+            
+            /* Mensajes dinámicos fijos en la parte superior */
+            .alert-dynamic {
+                position: fixed !important;
+                top: 20px;
+                left: 10px;
+                right: 10px;
+                z-index: 9999;
+                margin: 0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                animation: fadeIn 0.3s ease-out !important; /* Cambiar animación */
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            /* Mensajes estáticos se posicionan DEBAJO del contenido */
+            .alert-static-info {
+                position: relative !important;
+                margin-top: 1rem;
+                font-size: 0.875rem;
+                padding: 0.875rem 1rem;
+            }
         }
         
         @media (max-width: 480px) {
             .recovery-card {
                 margin: 0.5rem;
+                margin-top: 70px; /* Espacio extra para mensajes */
                 padding: 1.5rem;
                 border-radius: 12px;
             }
@@ -504,6 +556,25 @@ if (isset($_POST['usuariosEncontrados'])) {
             
             .progress-step-label {
                 font-size: 0.6rem;
+            }
+            
+            /* Mensajes dinámicos más compactos */
+            .alert-dynamic {
+                top: 15px;
+                left: 8px;
+                right: 8px;
+                font-size: 0.875rem;
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Mensajes estáticos aún más compactos */
+            .alert-static-info {
+                font-size: 0.8125rem;
+                padding: 0.75rem 0.875rem;
+            }
+            
+            .alert-static-info i {
+                font-size: 1rem;
             }
         }
     </style>
@@ -577,7 +648,7 @@ if (isset($_POST['usuariosEncontrados'])) {
                                 </div>
                                 
                                 <!-- Información de seguridad -->
-                                <div class="alert alert-dynamic info mt-4">
+                                <div class="alert alert-static-info mt-4">
                                     <i class="bi bi-info-circle me-2"></i>
                                     <strong>Proceso seguro:</strong> El código de verificación será enviado a tu correo electrónico registrado. Revisa tu bandeja de entrada y spam.
                                 </div>

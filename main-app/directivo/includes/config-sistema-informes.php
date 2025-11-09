@@ -58,10 +58,21 @@
                                     $(document).ready(function() {
                                     $('[data-toggle="popover_boletin"]').popover({
                                         html: true,
+                                        trigger: 'click',
+                                        placement: 'right',
+                                        template: '<div class="popover popover-preview-large" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
                                         content: function () {
                                             valorB = document.getElementById("formatoBoletin");
-                                            return '<div id="myPopoverBol" class="popover-content"><label id="lbl_tipo_bol">Estilo Boletín '+valorB.value+'</label>'+
-                                            '<img id="img-boletin-true" src="../files/images/boletines/tipo'+valorB.value+'.png" class="w-100" />'+'</div>';}
+                                            const imagePath = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/tipo'+valorB.value+'.png';
+                                            return '<div id="myPopoverBol" class="popover-content"><label id="lbl_tipo_bol" style="font-weight: 600; margin-bottom: 10px; display: block;">Estilo Boletín '+valorB.value+'</label>'+
+                                            '<img id="img-boletin-true" src="'+imagePath+'" class="preview-image-large" onerror="this.src=\'../files/images/boletines/default.png\'; this.onerror=null;" />'+'</div>';}
+                                        });
+                                        
+                                        // Cerrar popover al hacer click fuera
+                                        $(document).on('click', function(e) {
+                                            if (!$(e.target).closest('[data-toggle="popover_boletin"], .popover').length) {
+                                                $('[data-toggle="popover_boletin"]').popover('hide');
+                                            }
                                         });
                                     });
                                     function cambiarTipoBoletin() {
@@ -69,7 +80,12 @@
                                         if (imagen_boletin) {
                                             var valor    = document.getElementById("formatoBoletin");  
                                             var lbl_tipo = document.getElementById('lbl_tipo_bol');
-                                            imagen_boletin.src ="../files/images/boletines/tipo"+valor.value+".png";
+                                            const imagePath = "https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/tipo"+valor.value+".png";
+                                            imagen_boletin.src = imagePath;
+                                            imagen_boletin.onerror = function() {
+                                                this.src = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/default.png';
+                                                this.onerror = null;
+                                            };
                                             lbl_tipo.textContent='Estilo Boletín '+valor.value;
                                         }
                                     }
@@ -100,10 +116,21 @@
                                     $(document).ready(function() {
                                     $('[data-toggle="popover"]').popover({
                                         html: true,
+                                        trigger: 'click',
+                                        placement: 'right',
+                                        template: '<div class="popover popover-preview-large" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
                                         content: function () {
                                             valor = document.getElementById("tipoCertificado");
-                                            return '<div id="myPopover" class="popover-content"><label id="lbl_tipo">Estilo Certificado '+valor.value+'</label>'+
-                                            '<img id="img-boletin" src="../files/images/certificados/tipo'+valor.value+'.png" class="w-100" />'+'</div>';}
+                                            const imagePath = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/certificados/tipo'+valor.value+'.png';
+                                            return '<div id="myPopover" class="popover-content"><label id="lbl_tipo" style="font-weight: 600; margin-bottom: 10px; display: block;">Estilo Certificado '+valor.value+'</label>'+
+                                            '<img id="img-boletin" src="'+imagePath+'" class="preview-image-large" onerror="this.src=\'https://main.plataformasintia.com/app-sintia/main-app/files/images/certificados/default.png\'; this.onerror=null;" />'+'</div>';}
+                                        });
+                                        
+                                        // Cerrar popover al hacer click fuera
+                                        $(document).on('click', function(e) {
+                                            if (!$(e.target).closest('[data-toggle="popover"], .popover').length) {
+                                                $('[data-toggle="popover"]').popover('hide');
+                                            }
                                         });
                                     });
                                     function cambiarTipo() {
@@ -111,7 +138,12 @@
                                         if (imagen_boletin) {
                                             var valor    = document.getElementById("tipoCertificado");
                                             var lbl_tipo = document.getElementById('lbl_tipo');
-                                            imagen_boletin.src ="../files/images/certificados/tipo"+valor.value+".png";
+                                            const imagePath = "https://main.plataformasintia.com/app-sintia/main-app/files/images/certificados/tipo"+valor.value+".png";
+                                            imagen_boletin.src = imagePath;
+                                            imagen_boletin.onerror = function() {
+                                                this.src = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/certificados/default.png';
+                                                this.onerror = null;
+                                            };
                                             lbl_tipo.textContent='Estilo Certificado '+valor.value;
                                         }
                                     }
@@ -162,19 +194,35 @@
                                     $(document).ready(function(){
                                     $('[data-toggle="popover_2"]').popover({
                                         html: true,
+                                        trigger: 'click',
+                                        placement: 'right',
+                                        template: '<div class="popover popover-preview-large" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
                                         content: function () {
                                             valor = document.getElementById("tipoLibroFinal");
-                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipo_libro">Estilo libro final '+valor.value+'</label>'+
-                                        '<img id="img-libro" src="../files/images/libros/tipo'+valor.value+'.png" class="w-100" />'+                                                       
+                                            const imagePath = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/libros/tipo'+valor.value+'.png';
+                                        return '<div id="myPopover" class="popover-content"><label id="lbl_tipo_libro" style="font-weight: 600; margin-bottom: 10px; display: block;">Estilo libro final '+valor.value+'</label>'+
+                                        '<img id="img-libro" src="'+imagePath+'" class="preview-image-large" onerror="this.src=\'https://main.plataformasintia.com/app-sintia/main-app/files/images/libros/default.png\'; this.onerror=null;" />'+                                                       
                                         '</div>';}
-                                        });                                                    
+                                        });
+                                        
+                                        // Cerrar popover al hacer click fuera
+                                        $(document).on('click', function(e) {
+                                            if (!$(e.target).closest('[data-toggle="popover_2"], .popover').length) {
+                                                $('[data-toggle="popover_2"]').popover('hide');
+                                            }
+                                        });
                                     });
                                     function cambiarTipoLibro(){  
                                         var imagen_libro = document.getElementById('img-libro'); 
                                         if(imagen_libro){                                                     
                                         var valor = document.getElementById("tipoLibroFinal");  
                                         var lbl_tipo_libro = document.getElementById('lbl_tipo_libro');
-                                        imagen_libro.src ="../files/images/libros/tipo"+valor.value+".png";
+                                        const imagePath = "https://main.plataformasintia.com/app-sintia/main-app/files/images/libros/tipo"+valor.value+".png";
+                                        imagen_libro.src = imagePath;
+                                        imagen_libro.onerror = function() {
+                                            this.src = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/libros/default.png';
+                                            this.onerror = null;
+                                        };
                                         lbl_tipo_libro.textContent='Estilo libro final '+valor.value;
                                         }
                                     }
