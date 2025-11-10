@@ -263,7 +263,11 @@ class Modulos extends BDT_Tablas implements BDT_JoinImplements{
     public static function validarPermisoEdicion(){
         global $config;
 
-        if($config['conf_permiso_edicion_years_anteriores']==0 && $_SESSION["bd"] <> date("Y")){
+        if(
+            isset($config['conf_permiso_edicion_years_anteriores']) && 
+            $config['conf_permiso_edicion_years_anteriores']==0 && 
+            $_SESSION["bd"] <> date("Y")
+        ) {
             return false;
         }
         return true;

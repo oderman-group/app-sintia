@@ -62,7 +62,7 @@ class BindSQL
             }
         } catch (Exception $e) {
             self::revertirTransacion();
-            Utilidades::writeLog('Se jodió esta vaina porque '.$e->getMessage());
+            Utilidades::writeLog('LOG desde el método prepararSQL: '.$e->getMessage());
             include(ROOT_PATH . "/main-app/compartido/error-catch-to-report.php");
         }
     }

@@ -436,7 +436,7 @@ class Utilidades {
      * Escribe un registro detallado en el archivo de logs del sistema.
      *
      * El archivo se crea (si no existe) dentro de la carpeta /Logs, localizada
-     * dentro del directorio MAIN_PATH.  El nombre del archivo de log tiene el
+     * dentro del directorio MAIN_PATH. El nombre del archivo de log tiene el
      * siguiente formato:
      *
      *     log_<NombreDeLaClase>.log
@@ -445,17 +445,22 @@ class Utilidades {
      *
      * El contenido de cada línea incluye:
      *   - Fecha y hora en formato "YYYY-MM-DD HH:MM:SS"
-     *   - Usuario que ejecuta (si existe en $_SESSION['datosUsuario']['uss_usuario'])
-     *   - Clase y método desde el cual fue invocada la función
+     *   - ID de transacción único por petición HTTP
+     *   - Usuario que ejecuta (de $_SESSION['datosUsuario']['uss_usuario'])
+     *   - ID de institución (de $_SESSION['idInstitucion'])
+     *   - Año académico (de $_SESSION['bd'])
+     *   - Clase y método donde se ejecutó el writeLog
+     *   - Caller: quién llamó a la función que ejecutó el writeLog (clase::método@línea)
      *   - Mensaje de log recibido por parámetro
-     *   - Línea y archivo donde se ejecutó
+     *   - Línea y archivo donde se ejecutó el writeLog
      *
      * Ejemplo de línea en un log:
      *
-     *   [2024-08-15 08:12:41] [admin] [Boletin::generarBoletin] Error al generar reporte
+     *   [2025-11-09 08:12:41] [TX-691081070d7f4] [Usuario:admin] [Inst:1] [Year:2025]
+     *   [Boletin::generarBoletin] [caller:ajax-generar-boletin.php@45] Error al generar reporte
      *   [linea:335] [archivo:C:\xampp\htdocs\app-sintia\main-app\class\Boletin.php]
      *
-     * @param string $mensaje  Mensaje o excepción que se desea registrar en el log.
+     * @param string $mensaje Mensaje o excepción que se desea registrar en el log.
      *
      * @return void
      */
@@ -476,18 +481,39 @@ class Utilidades {
             mkdir($logDir, 0777, true);
         }
 
-        $usuario  = isset($_SESSION['datosUsuario']['uss_usuario']) ? $_SESSION['datosUsuario']['uss_usuario'] : 'SIN_SESION';
-        $fecha    = date('Y-m-d H:i:s');
+        $usuario     = isset($_SESSION['datosUsuario']['uss_usuario']) ? $_SESSION['datosUsuario']['uss_usuario'] : 'SIN_SESION';
+        $institucion = isset($_SESSION['idInstitucion']) ? $_SESSION['idInstitucion'] : 'N/A';
+        $year        = isset($_SESSION['bd']) ? $_SESSION['bd'] : 'N/A';
+        $fecha       = date('Y-m-d H:i:s');
 
-        // Backtrace para saber desde dónde fue llamado
-        $trace      = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        // Backtrace completo para saber desde dónde fue llamado
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+        
+        // Función/clase donde se hizo el writeLog
         $clase      = $trace[1]['class']   ?? 'Global';
         $funcion    = $trace[1]['function'] ?? 'N/A';
         $linea      = $trace[0]['line']    ?? 'N/A';
         $archivo    = $trace[0]['file']    ?? 'N/A';
+        
+        // Caller: quién llamó a la función que hizo el log
+        $callerClase    = $trace[2]['class']    ?? '';
+        $callerFuncion  = $trace[2]['function'] ?? '';
+        $callerLinea    = $trace[1]['line']     ?? 'N/A';
+        $callerArchivo  = $trace[1]['file']     ?? 'N/A';
+        
+        // Formatear caller
+        $caller = '';
+        if (!empty($callerClase) && !empty($callerFuncion)) {
+            $caller = " [caller:{$callerClase}::{$callerFuncion}@{$callerLinea}]";
+        } elseif (!empty($callerFuncion)) {
+            $caller = " [caller:{$callerFuncion}@{$callerLinea}]";
+        } elseif (!empty($callerArchivo)) {
+            $archivoCorto = basename($callerArchivo);
+            $caller = " [caller:{$archivoCorto}@{$callerLinea}]";
+        }
 
-        // Mensaje final
-        $line = "[{$fecha}] [{$txId}] [{$usuario}] [{$clase}::{$funcion}] {$mensaje}";
+        // Mensaje final con año, institución y caller
+        $line = "[{$fecha}] [{$txId}] [Usuario:{$usuario}] [Inst:{$institucion}] [Year:{$year}] [{$clase}::{$funcion}]{$caller} {$mensaje}";
         $line .= " [linea:{$linea}] [archivo:{$archivo}]" . PHP_EOL;
 
         $logFile = $logDir . '/log_' . $clase . '.log';

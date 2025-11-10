@@ -24,6 +24,91 @@ if ($mensajesNoLeidosConsulta) {
 <!-- start header -->
         <div class="page-header navbar navbar-fixed-top">
 			
+			<!-- ⚠️ BARRA DE MODO SOLO LECTURA -->
+			<?php if(!Modulos::validarPermisoEdicion()){ ?>
+			<style>
+				.readonly-mode-banner {
+					background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+					color: #78350f;
+					padding: 8px 20px;
+					text-align: center;
+					font-size: 13px;
+					font-weight: 600;
+					box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+					border-bottom: 2px solid #f97316;
+					position: relative;
+					z-index: 1000;
+					animation: slideDownBanner 0.5s ease-out;
+				}
+				
+				@keyframes slideDownBanner {
+					from {
+						opacity: 0;
+						transform: translateY(-100%);
+					}
+					to {
+						opacity: 1;
+						transform: translateY(0);
+					}
+				}
+				
+				.readonly-content {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 10px;
+				}
+				
+				.readonly-text {
+					letter-spacing: 0.5px;
+					text-transform: uppercase;
+				}
+				
+				.readonly-icon-lock {
+					animation: lockPulse 2s ease-in-out infinite;
+				}
+				
+				@keyframes lockPulse {
+					0%, 100% {
+						opacity: 1;
+						transform: scale(1);
+					}
+					50% {
+						opacity: 0.7;
+						transform: scale(1.1);
+					}
+				}
+				
+				/* Ajustar margen del header principal */
+				.readonly-mode-banner ~ .page-header-inner {
+					margin-top: 0 !important;
+				}
+				
+				/* Responsive */
+				@media (max-width: 768px) {
+					.readonly-mode-banner {
+						padding: 6px 15px;
+						font-size: 12px;
+					}
+					
+					.readonly-content {
+						gap: 8px;
+					}
+					
+					.readonly-text {
+						letter-spacing: 0.3px;
+					}
+				}
+			</style>
+			<div class="readonly-mode-banner">
+				<div class="readonly-content">
+					<i class="fa fa-eye"></i>
+					<span class="readonly-text">Modo Solo Lectura</span>
+					<i class="fa fa-lock readonly-icon-lock"></i>
+				</div>
+			</div>
+			<?php } ?>
+			
             <div class="page-header-inner">
                 <!-- logo start -->
                 <div class="page-logo">
