@@ -347,7 +347,7 @@
                                     <p>Mira este video para una guía visual paso a paso</p>
                                 </div>
                                 <div class="video-wrapper">
-                                    <iframe src="https://www.loom.com/embed/8eac333b167c48d98ca3b459e78faeac" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                                    <iframe src="https://www.youtube.com/embed/BcGzd_Sr1oE?si=2xaNY4v-XbnlOVgK" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
                                 </div>
                             </div>
 
