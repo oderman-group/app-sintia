@@ -24,10 +24,12 @@ try {
                         h.hil_titulo,
                         h.hil_url,
                         h.hil_usuario,
-                        u.uss_nombre
+                        u.uss_nombre,
+                        pagp_pagina
                       FROM `" . BD_ADMIN . "`.`seguridad_historial_acciones` h
-                      LEFT JOIN `" . BD_GENERAL . "`.`usuarios` u ON h.hil_usuario = u.uss_id
-                      WHERE h.hil_institucion = " . intval($config['conf_id_institucion']) . " 
+                      LEFT JOIN `" . BD_GENERAL . "`.`usuarios` u ON h.hil_usuario = u.uss_id AND u.year = ".$_SESSION["bd"]." AND u.institucion = ".intval($config['conf_id_institucion'])."
+                      LEFT JOIN `" . BD_ADMIN . "`.`paginas_publicidad` ON pagp_id = h.hil_titulo
+                      WHERE h.hil_institucion = " . intval($config['conf_id_institucion']) . "  AND YEAR(h.hil_fecha)=".$_SESSION["bd"]."
                       ORDER BY h.hil_fecha DESC
                       LIMIT 10";
     
@@ -43,7 +45,7 @@ try {
             $usuario = $row['uss_nombre'] ?: 'Usuario';
             
             // Determinar icono y color según el título de la página
-            $titulo = $row['hil_titulo'] ?: 'Actividad';
+            $titulo = $row['pagp_pagina'] ?: 'Actividad';
             $iconoColor = getIconoYColor($titulo);
             
             $actividades[] = [
