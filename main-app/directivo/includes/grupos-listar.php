@@ -16,13 +16,23 @@
                         <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevoGrupoModal" class="btn deepPink-bgcolor">
                             Agregar nuevo <i class="fa fa-plus"></i>
                         </a>
-                    <?php
-                        $idModal = "nuevoGrupoModal";
-                        $contenido = "../directivo/grupos-agregar-modal.php";
-                        include("../compartido/contenido-modal.php");
-                    } ?>
-
+                    <?php } ?>
+                    
+                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0199'])) { ?>
+                        <button type="button" class="btn btn-success" id="btnGenerarGrupos">
+                            <i class="fa fa-magic"></i> Generar Grupos
+                        </button>
+                    <?php } ?>
                 </div>
+                
+                <?php
+                // Incluir modal después de los botones
+                if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0196'])) {
+                    $idModal = "nuevoGrupoModal";
+                    $contenido = "../directivo/grupos-agregar-modal.php";
+                    include("../compartido/contenido-modal.php");
+                }
+                ?>
 
             </div>
         </div>

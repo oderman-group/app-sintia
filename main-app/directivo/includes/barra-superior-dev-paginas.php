@@ -29,7 +29,7 @@ if (!empty($_GET['busqueda'])) {
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
                     try{
-                        $consultaFiltro = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+                        $consultaFiltro = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                     } catch (Exception $e) {
                         include("../compartido/error-catch-to-report.php");
                     }

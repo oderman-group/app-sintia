@@ -55,6 +55,19 @@ $fechaNacimiento  = "";
 $fechaNacimientoU = "";
 
 if (!empty($_POST["fNac"])) {
+	// Validar que la fecha de nacimiento no sea futura ni menor de 1 año
+	$fechaTimestamp = strtotime($_POST["fNac"]);
+	if ($fechaTimestamp === false) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('Formato de fecha de nacimiento inválido').'";</script>';
+		exit();
+	}
+	
+	$fechaMinima = strtotime('-1 year');
+	if ($fechaTimestamp > $fechaMinima) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('La fecha de nacimiento no puede ser futura ni menor de 1 año').'";</script>';
+		exit();
+	}
+	
 	$fechaNacimiento  = "mat_fecha_nacimiento='" . $_POST["fNac"] . "', ";
 	$fechaNacimientoU = "uss_fecha_nacimiento='" . $_POST["fNac"] . "', ";
 }

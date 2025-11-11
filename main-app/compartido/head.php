@@ -93,6 +93,8 @@ if (!empty($datosPaginaActual)) {
 	<script src="<?=BASE_URL;?>/config-general/assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="<?=BASE_URL;?>/config-general/assets/plugins/sweetalert/sweetalert2.all.min.css">
 	<link rel="stylesheet" href="<?=BASE_URL;?>/librerias/Zindex/z-index.css">
+	<!-- Fix para iconos de calendario -->
+	<link href="<?=BASE_URL;?>/config-general/assets/css/datepicker-fontawesome-fix.css" rel="stylesheet" type="text/css" />
 
 	<!-- libreria de animate.style -->
 	<link

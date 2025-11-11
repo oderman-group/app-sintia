@@ -8,8 +8,13 @@ require_once("../class/servicios/GradoServicios.php");
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 
-
-Utilidades::validarParametros($_GET);
+// Validar solo parámetros GET que no sean arrays (para evitar error con filtros)
+$parametrosSimples = array_filter($_GET, function($value) {
+    return !is_array($value);
+});
+if(!empty($parametrosSimples)){
+    Utilidades::validarParametros($parametrosSimples);
+}
 
 if (isset($_GET['mode']) && $_GET['mode'] === 'DEV') {
 	$redis = RedisInstance::getRedisInstance();
@@ -612,6 +617,21 @@ if($config['conf_doble_buscador'] == 1) {
 				padding: 5px 10px;
 			}
 		}
+		
+		/* ========================================
+		   ESTILOS PARA BOTONES DESHABILITADOS
+		   ======================================== */
+		
+		/* Botones deshabilitados con cursor not-allowed */
+		button[disabled], button:disabled {
+			cursor: not-allowed !important;
+			opacity: 0.6;
+		}
+		
+		/* Tooltip mejorado para botones deshabilitados */
+		button[disabled]:hover, button:disabled:hover {
+			opacity: 0.6;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
@@ -671,6 +691,14 @@ if($config['conf_doble_buscador'] == 1) {
 								
 								<?php
 								 $filtro="";
+								 
+								 // Incluir archivo para obtener el número de registros ANTES de usarlo en los botones
+								 $cursoActual = '';
+								 include("includes/consulta-paginacion-estudiantes.php");
+								 
+								 // Verificar si hay cursos/grados creados
+								 $cursosConsulta = Grados::listarGrados(1);
+								 $numCursosCreados = mysqli_num_rows($cursosConsulta);
 								?>
 
 									<?php
@@ -710,6 +738,27 @@ if($config['conf_doble_buscador'] == 1) {
 									</div>
 									<?php }?>
 
+									<!-- Advertencia si no hay cursos creados -->
+									<?php if($numCursosCreados == 0){ ?>
+									<div class="alert alert-danger alert-dismissible fade show" role="alert">
+										<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+											<span aria-hidden="true">&times;</span>
+										</button>
+										<h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> No hay cursos/grados creados</h4>
+										<p class="mb-2">
+											<strong>Atención:</strong> Antes de agregar estudiantes, debes crear al menos un curso/grado en el sistema.
+										</p>
+										<hr>
+										<p class="mb-0">
+											<i class="fa fa-info-circle"></i> 
+											Para crear cursos, dirígete a: 
+											<a href="cursos.php" class="alert-link font-weight-bold">
+												<i class="fa fa-graduation-cap"></i> Gestión de Cursos/Grados
+											</a>
+										</p>
+									</div>
+									<?php } ?>
+
 									<!-- Barra de herramientas superior -->
 									<div class="row mb-3">
 										<div class="col-sm-12">
@@ -717,91 +766,108 @@ if($config['conf_doble_buscador'] == 1) {
 												<!-- Botones principales -->
 												<div class="btn-group">
 													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0084'])){?>
-														<a href="estudiantes-agregar.php" class="btn deepPink-bgcolor">
-															<i class="fa fa-plus"></i> Agregar Estudiante
-														</a>
-													<?php }?>
-													
-													<!-- Botón de Edición Masiva -->
-													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0078'])){?>
-														<button type="button" id="editarMasivoEstudiantesBtn" class="btn btn-warning" disabled>
-															<i class="fa fa-edit"></i> Editar Seleccionados
-														</button>
-													<?php }?>
-													
-													<?php if(Modulos::validarSubRol(['DT0002'])){?>
-														<a href="estudiantes-promedios.php" class="btn btn-info">
-															<i class="fa fa-chart-line"></i> Promedios
-														</a>
-													<?php }?>
-													
-													<!-- Menú Matrículas -->
-													<?php if(Modulos::validarSubRol(['DT0077', 'DT0080', 'DT0075'])){?>
-														<div class="btn-group" role="group">
-															<button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-																<i class="fa fa-list"></i> Menú Matrículas <span class="caret"></span>
+														<?php if($numCursosCreados > 0){ ?>
+															<a href="estudiantes-agregar.php" class="btn deepPink-bgcolor">
+																<i class="fa fa-plus"></i> Agregar Estudiante
+															</a>
+														<?php } else { ?>
+															<button type="button" class="btn deepPink-bgcolor" disabled title="Debes crear al menos un curso antes de agregar estudiantes">
+																<i class="fa fa-plus"></i> Agregar Estudiante
 															</button>
-															<ul class="dropdown-menu">
-																<?php if(Modulos::validarSubRol(['DT0077'])){?>
-																	<li><a href="estudiantes-importar-excel.php"><i class="fa fa-file-excel"></i> Importar desde Excel</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0080'])){?>
-																	<li><a href="estudiantes-consolidado-final.php"><i class="fa fa-file-alt"></i> Consolidado Final</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0075'])){?>
-																	<li><a href="estudiantes-nivelaciones.php"><i class="fa fa-balance-scale"></i> Nivelaciones</a></li>
-																<?php }?>
-															</ul>
-														</div>
+														<?php } ?>
 													<?php }?>
 													
-													<!-- Más Opciones -->
-													<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0212', 'DT0213', 'DT0214', 'DT0215', 'DT0175', 'DT0216', 'DT0149'])){?>
-														<div class="btn-group" role="group">
-															<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-																<i class="fa fa-tools"></i> Más Opciones <span class="caret"></span>
+													<?php if(Modulos::validarSubRol(['DT0077'])){?>
+														<?php if($numCursosCreados > 0){ ?>
+															<a href="estudiantes-importar-excel.php" class="btn btn-success">
+																<i class="fa fa-file-excel"></i> Importar desde Excel
+															</a>
+														<?php } else { ?>
+															<button type="button" class="btn btn-success" disabled title="Debes crear al menos un curso antes de importar estudiantes">
+																<i class="fa fa-file-excel"></i> Importar desde Excel
 															</button>
-															<ul class="dropdown-menu">
-																<?php if(Modulos::validarSubRol(['DT0212'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matricular-todos.php')"><i class="fa fa-check-circle"></i> Matricular a Todos</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0213'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matriculas-cancelar.php')"><i class="fa fa-times-circle"></i> Cancelar a Todos</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0214'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-grupoa-todos.php')"><i class="fa fa-users"></i> Asignar a Todos al Grupo A</a></li>
-																	<li class="divider"></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0215'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Esta opción removerá a todos lo estudiantes que no estén en estado Matriculado, desea continuar?','question','estudiantes-inactivos-remover.php')"><i class="fa fa-trash"></i> Remover Estudiantes Inactivos</a></li>
-																	<li class="divider"></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0175'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-documento-usuario-actualizar.php')"><i class="fa fa-id-card"></i> Documento como Usuario</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0216'])){?>
-																	<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-crear-usuarios.php')"><i class="fa fa-key"></i> Generar Credenciales</a></li>
-																<?php }?>
-																<?php if(Modulos::validarSubRol(['DT0149'])){?>
-																	<li><a href="filtro-general-folio.php"><i class="fa fa-file-pdf"></i> Generar Folios</a></li>
-																<?php }?>
-															</ul>
-														</div>
+														<?php } ?>
 													<?php }?>
+													
+													<?php if($numRegistros > 0){ ?>
+														<!-- Botón de Edición Masiva - Solo visible cuando hay selección -->
+														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0078'])){?>
+															<button type="button" id="editarMasivoEstudiantesBtn" class="btn btn-warning" style="display:none;">
+																<i class="fa fa-edit"></i> Editar Seleccionados
+															</button>
+														<?php }?>
+														
+														<!-- Menú Más Opciones (incluye Promedios) -->
+														<?php if(Modulos::validarSubRol(['DT0002', 'DT0080', 'DT0075'])){?>
+															<div class="btn-group" role="group">
+																<button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+																	<i class="fa fa-list"></i> Más Opciones <span class="caret"></span>
+																</button>
+																<ul class="dropdown-menu">
+																	<?php if(Modulos::validarSubRol(['DT0002'])){?>
+																		<li><a href="estudiantes-promedios.php"><i class="fa fa-chart-line"></i> Promedios</a></li>
+																		<li class="divider"></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0080'])){?>
+																		<li><a href="estudiantes-consolidado-final.php"><i class="fa fa-file-alt"></i> Consolidado Final</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0075'])){?>
+																		<li><a href="estudiantes-nivelaciones.php"><i class="fa fa-balance-scale"></i> Nivelaciones</a></li>
+																	<?php }?>
+																</ul>
+															</div>
+														<?php }?>
+														
+														<!-- Acciones Masivas -->
+														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0212', 'DT0213', 'DT0214', 'DT0215', 'DT0175', 'DT0216', 'DT0149'])){?>
+															<div class="btn-group" role="group">
+																<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+																	<i class="fa fa-tools"></i> Acciones Masivas <span class="caret"></span>
+																</button>
+																<ul class="dropdown-menu">
+																	<?php if(Modulos::validarSubRol(['DT0212'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matricular-todos.php')"><i class="fa fa-check-circle"></i> Matricular a Todos</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0213'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-matriculas-cancelar.php')"><i class="fa fa-times-circle"></i> Cancelar a Todos</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0214'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-grupoa-todos.php')"><i class="fa fa-users"></i> Asignar a Todos al Grupo A</a></li>
+																		<li class="divider"></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0215'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Esta opción removerá a todos lo estudiantes que no estén en estado Matriculado, desea continuar?','question','estudiantes-inactivos-remover.php')"><i class="fa fa-trash"></i> Remover Estudiantes Inactivos</a></li>
+																		<li class="divider"></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0175'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-documento-usuario-actualizar.php')"><i class="fa fa-id-card"></i> Documento como Usuario</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0216'])){?>
+																		<li><a href="javascript:void(0);" onclick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-crear-usuarios.php')"><i class="fa fa-key"></i> Generar Credenciales</a></li>
+																	<?php }?>
+																	<?php if(Modulos::validarSubRol(['DT0149'])){?>
+																		<li><a href="filtro-general-folio.php"><i class="fa fa-file-pdf"></i> Generar Folios</a></li>
+																	<?php }?>
+																</ul>
+															</div>
+														<?php }?>
+													<?php } ?>
 												</div>
 												
-												<!-- Botones del lado derecho -->
-												<div class="d-flex align-items-center" style="gap: 8px;">
-													<!-- Botón de exportar a Excel -->
-													<button type="button" class="btn btn-success" id="btnExportarExcel">
-														<i class="fa fa-file-excel"></i> Exportar a Excel
-													</button>
-													
-													<!-- Botón de filtros -->
-													<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltros">
-														<i class="fa fa-filter"></i> Filtros y Búsqueda
-													</button>
-												</div>
+												<?php if($numRegistros > 0){ ?>
+													<!-- Botones del lado derecho -->
+													<div class="d-flex align-items-center" style="gap: 8px;">
+														<!-- Botón de exportar a Excel -->
+														<button type="button" class="btn btn-success" id="btnExportarExcel">
+															<i class="fa fa-file-excel"></i> Exportar a Excel
+														</button>
+														
+														<!-- Botón de filtros -->
+														<button type="button" class="btn btn-outline-secondary" id="btnToggleFiltros">
+															<i class="fa fa-filter"></i> Filtros y Búsqueda
+														</button>
+													</div>
+												<?php } ?>
 											</div>
 										</div>
 									</div>
@@ -939,10 +1005,8 @@ if($config['conf_doble_buscador'] == 1) {
                                                 </thead>
                                                 <tbody id="matriculas_result">
 													<?php
-													// Inicializar variables necesarias
-													$cursoActual = '';
-													
-													include("includes/consulta-paginacion-estudiantes.php");
+													// Variables ya inicializadas en la línea 676-677
+													// include("includes/consulta-paginacion-estudiantes.php"); - Ya no es necesario, se incluye arriba
 													$filtroLimite = 'LIMIT '.$inicio.','.$registros;
 													
 													$selectSql = ["mat.*",
@@ -1067,7 +1131,12 @@ if($config['conf_doble_buscador'] == 1) {
 			
 			function toggleActionButtons() {
 				var hasSelection = selectedEstudiantes.length > 0;
-				$('#editarMasivoEstudiantesBtn').prop('disabled', !hasSelection);
+				// Mostrar/ocultar el botón en lugar de deshabilitarlo
+				if (hasSelection) {
+					$('#editarMasivoEstudiantesBtn').fadeIn(200);
+				} else {
+					$('#editarMasivoEstudiantesBtn').fadeOut(200);
+				}
 			}
 			
 			// Manejar clic del botón de edición masiva

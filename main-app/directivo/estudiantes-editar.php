@@ -373,7 +373,7 @@ if(!Modulos::validarPermisoEdicion()){
                     	<div class="col-sm-12">
        <?php include("../../config-general/mensajes-informativos.php"); ?>
        <?php
-       if($config['conf_id_institucion'] == ICOLVEN){
+       if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)){
         if(isset($_GET['msgsion']) AND $_GET['msgsion']!=''){
          $aler='alert-success';
          $mensajeSion=base64_decode($_GET['msgsion']);
@@ -614,6 +614,63 @@ if(!Modulos::validarPermisoEdicion()){
 			            console.error('Error loading documents:', error);
 			        }
 			    });
+			}
+			
+			// ========================================
+			// VALIDACIÓN DE FECHA DE NACIMIENTO
+			// ========================================
+			
+			// Validación de fecha de nacimiento del estudiante (mínimo 1 año)
+			var today = new Date();
+			var maxDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+			var $picker = $(".form_date[data-link-field='dtp_input1']");
+			
+			if ($picker.length && typeof $picker.datetimepicker === 'function') {
+				$picker.datetimepicker('setEndDate', maxDate);
+				
+				// Validación inmediata al cambiar la fecha
+				var $hidden = $("#dtp_input1");
+				var $input = $picker.find('input.form-control');
+				var $error = $("#fNacError");
+				var $group = $("#fNacGroup");
+				
+				var showError = function(msg){
+					if(msg){ $error.text(msg); }
+					$error.show();
+					$input.attr('aria-invalid','true');
+					$group.addClass('has-error');
+				};
+				
+				var clearError = function(){
+					$error.hide();
+					$input.attr('aria-invalid','false');
+					$group.removeClass('has-error');
+				};
+				
+				var validateDate = function(){
+					var val = $hidden.val();
+					if(!val){ clearError(); return; }
+					var parts = val.split('-');
+					if(parts.length !== 3){
+						$hidden.val('');
+						$input.val('');
+						showError('Fecha de nacimiento inválida.');
+						return;
+					}
+					var selected = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+					var todayLocal = new Date();
+					var max = new Date(todayLocal.getFullYear() - 1, todayLocal.getMonth(), todayLocal.getDate());
+					if(selected > max){
+						$hidden.val('');
+						$input.val('');
+						showError('La fecha de nacimiento no puede ser futura ni menor de 1 año.');
+						return;
+					}
+					clearError();
+				};
+				
+				$hidden.on('change', validateDate);
+				$picker.on('changeDate', validateDate);
 			}
 });
 

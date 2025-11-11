@@ -1,0 +1,81 @@
+/*!
+ * Fix para Bootstrap Datetimepicker - Usar Font Awesome en lugar de Glyphicons
+ * Este archivo corrige el problema de las flechitas invisibles en los calendarios
+ */
+
+/* ===================================
+   FIX PARA VERSIÓN ANTIGUA DE DATETIMEPICKER
+   =================================== */
+
+/* Ocultar completamente los glyphicons que no se ven */
+.datetimepicker table th span.glyphicon,
+.bootstrap-datetimepicker-widget table th span.glyphicon,
+.datetimepicker .glyphicon,
+.bootstrap-datetimepicker-widget .glyphicon {
+    display: none !important;
+}
+
+/* Estilo base para las celdas de navegación */
+.datetimepicker table th.prev,
+.datetimepicker table th.next,
+.datetimepicker .picker-switch,
+.bootstrap-datetimepicker-widget table th.prev,
+.bootstrap-datetimepicker-widget table th.next,
+.bootstrap-datetimepicker-widget .picker-switch {
+    font-family: 'FontAwesome' !important;
+    font-size: 11px !important;
+    visibility: visible !important;
+    cursor: pointer !important;
+    color: #337ab7 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Flecha IZQUIERDA usando ::before */
+.datetimepicker table th.prev::before,
+.bootstrap-datetimepicker-widget table th.prev::before {
+    font-family: 'FontAwesome' !important;
+    content: '\f053' !important; /* fa-chevron-left ‹ */
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+/* Flecha DERECHA usando ::before */
+.datetimepicker table th.next::before,
+.bootstrap-datetimepicker-widget table th.next::before {
+    font-family: 'FontAwesome' !important;
+    content: '\f054' !important; /* fa-chevron-right › */
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+/* Hover para las flechas */
+.datetimepicker table th.prev:hover,
+.datetimepicker table th.next:hover,
+.bootstrap-datetimepicker-widget table th.prev:hover,
+.bootstrap-datetimepicker-widget table th.next:hover {
+    background-color: #eeeeee !important;
+}
+
+/* Asegurar que el contenido del th sea visible */
+.datetimepicker table th,
+.bootstrap-datetimepicker-widget table th {
+    font-weight: bold !important;
+}
+
+/* Fix adicional: si el contenido está vacío, mostrar las flechas */
+.datetimepicker table th.prev:empty::before,
+.datetimepicker table th.next:empty::before {
+    font-family: 'FontAwesome' !important;
+    display: inline-block !important;
+}
+
+.datetimepicker table th.prev:empty::before {
+    content: '\f053' !important;
+}
+
+.datetimepicker table th.next:empty::before {
+    content: '\f054' !important;
+}
+
+

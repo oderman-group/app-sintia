@@ -129,7 +129,7 @@ if(!Modulos::validarPaginasHijasSubRol(base64_decode($_GET["idP"]))){
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
                                                     try{
-                                                        $consultaUsuarios = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+                                                        $consultaUsuarios = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                                                     } catch (Exception $e) {
                                                         include("../compartido/error-catch-to-report.php");
                                                     }

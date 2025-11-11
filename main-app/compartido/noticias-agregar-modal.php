@@ -345,7 +345,7 @@ require_once("../../main-app/class/Grados.php");
                 <option value="">Seleccione los destinatarios</option>
                 <?php
                 try {
-                    $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".general_perfiles");
+                    $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".general_perfiles WHERE pes_disponible = 1");
                 } catch (Exception $e) {
                     include("../compartido/error-catch-to-report.php");
                 }

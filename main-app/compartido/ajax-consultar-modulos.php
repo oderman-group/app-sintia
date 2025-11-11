@@ -18,7 +18,7 @@ require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
         $imgModulo = !empty($resultado['mod_imagen']) && file_exists("../files/modulos/".$resultado['mod_imagen']) ? "../files/modulos/".$resultado['mod_imagen'] : "../files/modulos/default.png";
         $descripcionModulo = !empty($resultado['mod_description']) ? $resultado['mod_description'] : "";
 
-        $sqlTipo = "SELECT pes_nombre FROM ".BD_ADMIN.".general_perfiles WHERE pes_id=?";
+        $sqlTipo = "SELECT pes_nombre FROM ".BD_ADMIN.".general_perfiles WHERE pes_id=? AND pes_disponible = 1";
         $stmtTipo = $conexionPDO->prepare($sqlTipo);
         $stmtTipo->bindParam(1, $datosUsuarioActual['uss_tipo'], PDO::PARAM_INT);
         $stmtTipo->execute();
