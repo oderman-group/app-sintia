@@ -477,9 +477,10 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 								<input type="text" class="form-control" id="segundo_apellido_modal" name="segundo_apellido" maxlength="50">
 							</div>
 							
-							<div class="form-group">
+							<div class="form-group" id="fNacModalGroup">
 								<label for="fecha_nacimiento_modal">Fecha de Nacimiento</label>
-								<input type="date" class="form-control" id="fecha_nacimiento_modal" name="fecha_nacimiento">
+								<input type="date" class="form-control" id="fecha_nacimiento_modal" name="fecha_nacimiento" max="<?=date('Y-m-d', strtotime('-1 year'));?>">
+								<small id="fNacModalError" class="text-danger" style="display:none;">La fecha de nacimiento no puede ser futura ni menor de 1 año.</small>
 							</div>
 							
 							<div class="form-group">
@@ -688,6 +689,21 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 			return;
 		}
 		
+		// Validar fecha de nacimiento
+		var fechaNacimiento = $('#fecha_nacimiento_modal').val();
+		if (fechaNacimiento) {
+			var today = new Date();
+			var maxDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+			var selectedDate = new Date(fechaNacimiento);
+			
+			if (selectedDate > maxDate) {
+				$('#fNacModalError').text('La fecha de nacimiento no puede ser futura ni menor de 1 año.').show();
+				$('#fNacModalGroup').addClass('has-error');
+				$('#fecha_nacimiento_modal').focus();
+				return;
+			}
+		}
+		
 		// Mostrar indicador de carga
 		var saveBtn = $('#btnGuardarRapido');
 		var originalText = saveBtn.html();
@@ -757,6 +773,33 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 		// Event listener para el botón de guardar en el modal
 		$('#btnGuardarRapido').on('click', function() {
 			guardarCambiosRapidos();
+		});
+		
+		// Validación en tiempo real de fecha de nacimiento en el modal
+		$('#fecha_nacimiento_modal').on('change', function() {
+			var fechaNacimiento = $(this).val();
+			var $error = $('#fNacModalError');
+			var $group = $('#fNacModalGroup');
+			
+			if (fechaNacimiento) {
+				var today = new Date();
+				var maxDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+				var selectedDate = new Date(fechaNacimiento);
+				
+				if (selectedDate > maxDate) {
+					$error.text('La fecha de nacimiento no puede ser futura ni menor de 1 año.').show();
+					$group.addClass('has-error');
+					$(this).addClass('is-invalid');
+				} else {
+					$error.hide();
+					$group.removeClass('has-error');
+					$(this).removeClass('is-invalid');
+				}
+			} else {
+				$error.hide();
+				$group.removeClass('has-error');
+				$(this).removeClass('is-invalid');
+			}
 		});
 		
 		// Use event delegation for dynamically loaded content

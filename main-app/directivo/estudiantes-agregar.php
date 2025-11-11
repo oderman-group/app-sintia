@@ -29,6 +29,8 @@ if(!Modulos::validarPermisoEdicion()){
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
     <link href="../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
+    <!-- Fix para iconos de calendario -->
+    <link href="../../config-general/assets/css/datepicker-fontawesome-fix.css" rel="stylesheet" type="text/css" />
 
 	<script type="application/javascript">
 		function nuevoEstudiante(enviada){
@@ -862,6 +864,8 @@ if(!Modulos::validarPermisoEdicion()){
 
 	<script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js"  charset="UTF-8"></script>
     <script src="../../config-general/assets/plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker-init.js"  charset="UTF-8"></script>
+    <!-- Fix para iconos de calendario -->
+    <script src="../../config-general/assets/js/datepicker-fontawesome-fix.js"></script>
     <script src="../../config-general/assets/plugins/jquery-validation/js/additional-methods.min.js"></script>
     <div id="submitOverlay" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.7); z-index: 2000;">
     	<div style="position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); width:320px;">
