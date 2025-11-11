@@ -132,15 +132,16 @@
 												</div>
 											</div>
 											
-											<div class="form-group row">
+											<div class="form-group row" id="fNacGroup">
 												<label class="col-sm-2 control-label">Fecha de nacimiento</label>
 												<div class="col-sm-4">
-													<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input1" data-link-format="yyyy-mm-dd">
-													<input class="form-control" size="16" type="text" value="<?=$datosEstudianteActual['mat_fecha_nacimiento'];?>" <?=$disabledPermiso;?>>
-													<span class="input-group-addon"><span class="fa fa-calendar"></span>
+													<div class="input-group date form_date" data-date-format="dd MM yyyy" data-link-field="dtp_input1" data-link-format="yyyy-mm-dd" data-date-enddate="<?=date('Y-m-d', strtotime('-1 year'));?>">
+													<input class="form-control" size="16" type="text" value="<?=$datosEstudianteActual['mat_fecha_nacimiento'];?>" <?=$disabledPermiso;?> readonly aria-describedby="fNacError" aria-invalid="false">
+													<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
 													</div>
+													<small id="fNacError" class="text-danger" style="display:none;">La fecha de nacimiento no puede ser futura ni menor de 1 año.</small>
 												</div>
-												<input type="hidden" id="dtp_input1" name="fNac">
+												<input type="hidden" id="dtp_input1" name="fNac" value="<?=$datosEstudianteActual['mat_fecha_nacimiento'];?>">
 											</div>
 												
 											<div class="form-group row">

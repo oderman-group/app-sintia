@@ -488,7 +488,7 @@ require_once(ROOT_PATH."/main-app/class/Grados.php");
                         <select class="form-select select2-multiple" multiple name="destinatarios[]">
                             <?php
                             try {
-                                $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".general_perfiles");
+                                $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".general_perfiles WHERE pes_disponible = 1");
                             } catch (Exception $e) {
                                 include("../compartido/error-catch-to-report.php");
                             }
