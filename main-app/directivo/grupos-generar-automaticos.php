@@ -90,7 +90,7 @@ try {
             error_log("Grupo {$grupo['nombre']} no existe, procediendo a crear...");
             
             // Generar código único basado en timestamp
-            $codigoUnico = time() . $index;
+            $codigoUnico = rand(10000,999999) . $index;
             
             // Preparar datos para guardar usando el mismo método que grupos-guardar.php
             $datosGrupo = [
