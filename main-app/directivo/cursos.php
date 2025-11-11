@@ -40,9 +40,17 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 								
 								<div class="col-md-12">
 								
-									<?php include("../../config-general/mensajes-informativos.php"); ?>
+									<?php 
+									include("../../config-general/mensajes-informativos.php");
 									
-									<?php include("includes/barra-superior-cursos.php"); ?>
+									// Contar cursos existentes
+									$consultaCursos = Grados::listarGrados(1);
+									$numCursosExistentes = mysqli_num_rows($consultaCursos);
+									?>
+									
+									<?php if($numCursosExistentes > 0){ ?>
+										<?php include("includes/barra-superior-cursos.php"); ?>
+									<?php } ?>
 								
 
                                     <div class="card card-topline-purple">
@@ -63,12 +71,23 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															<a href="javascript:void(0);"  data-toggle="modal" data-target="#nuevoCursoModal"  class="btn deepPink-bgcolor">
 																<?=__('general.agregar_nuevo');?> <i class="fa fa-plus"></i>
 															</a>
-														<?php 
-													$idModal="nuevoCursoModal";															
-													$contenido="../directivo/cursos-agregar-modal.php"; 
-													include("../compartido/contenido-modal.php");
-													}?>
+														<?php }?>
+														
+														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0188'])){?>
+															<button type="button" class="btn btn-success" id="btnGenerarCursos">
+																<i class="fa fa-magic"></i> Generar Cursos
+															</button>
+														<?php }?>
 													</div>
+													
+													<?php
+													// Incluir modal después de los botones
+													if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0065'])){
+														$idModal="nuevoCursoModal";															
+														$contenido="../directivo/cursos-agregar-modal.php"; 
+														include("../compartido/contenido-modal.php");
+													}
+													?>
 												</div>
 											</div>
 											
@@ -191,7 +210,231 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js" ></script>
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
+	<!-- SweetAlert2 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- end js include path -->
+
+<!-- Modal de Generar Cursos Automáticamente -->
+<div class="modal fade" id="modalGenerarCursos" tabindex="-1" role="dialog" aria-labelledby="modalGenerarCursosLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-success text-white">
+				<h5 class="modal-title" id="modalGenerarCursosLabel">
+					<i class="fa fa-magic"></i> Generar Cursos Automáticamente
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formGenerarCursos">
+				<div class="modal-body">
+					<div class="alert alert-success">
+						<i class="fa fa-info-circle"></i> 
+						<strong>Instrucciones:</strong> Selecciona qué niveles de cursos deseas generar automáticamente. 
+						Puedes seleccionar uno o varios niveles según tus necesidades.
+					</div>
+					
+					<!-- Opciones de niveles -->
+					<div class="form-group">
+						<label><strong>Selecciona los niveles a generar:</strong></label>
+						
+						<div class="form-check mb-3">
+							<input class="form-check-input" type="checkbox" id="generarPreescolar" name="niveles[]" value="preescolar">
+							<label class="form-check-label" for="generarPreescolar">
+								<strong><i class="fa fa-baby"></i> Preescolar</strong>
+								<br>
+								<small class="text-muted">Se crearán 4 cursos: Párvulos, Prejardín, Jardín y Transición</small>
+							</label>
+						</div>
+						
+						<div class="form-check mb-3">
+							<input class="form-check-input" type="checkbox" id="generarPrimaria" name="niveles[]" value="primaria">
+							<label class="form-check-label" for="generarPrimaria">
+								<strong><i class="fa fa-child"></i> Primaria (Grados 1° a 5°)</strong>
+								<br>
+								<small class="text-muted">Se crearán 5 cursos: Primero, Segundo, Tercero, Cuarto y Quinto</small>
+							</label>
+						</div>
+						
+						<div class="form-check mb-3">
+							<input class="form-check-input" type="checkbox" id="generarSecundaria" name="niveles[]" value="secundaria">
+							<label class="form-check-label" for="generarSecundaria">
+								<strong><i class="fa fa-graduation-cap"></i> Secundaria (Grados 6° a 9°)</strong>
+								<br>
+								<small class="text-muted">Se crearán 4 cursos: Sexto, Séptimo, Octavo y Noveno</small>
+							</label>
+						</div>
+						
+						<div class="form-check mb-3">
+							<input class="form-check-input" type="checkbox" id="generarMedia" name="niveles[]" value="media">
+							<label class="form-check-label" for="generarMedia">
+								<strong><i class="fa fa-university"></i> Media (Grados 10° y 11°)</strong>
+								<br>
+								<small class="text-muted">Se crearán 2 cursos: Décimo y Undécimo</small>
+							</label>
+						</div>
+					</div>
+					
+					<hr>
+					
+					<div class="alert alert-info">
+						<i class="fa fa-lightbulb"></i> 
+						<strong>Nota:</strong> Los cursos se crearán con la configuración por defecto. Puedes editarlos posteriormente para ajustar valores de matrícula, pensión, y otros detalles.
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-success" id="btnConfirmarGenerarCursos">
+						<i class="fa fa-magic"></i> Generar Cursos Seleccionados
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	// ========================================
+	// SISTEMA DE GENERAR CURSOS AUTOMÁTICAMENTE
+	// ========================================
+	
+	// Abrir modal de generar cursos
+	$('#btnGenerarCursos').on('click', function() {
+		$('#modalGenerarCursos').modal('show');
+	});
+	
+	// Enviar formulario de generar cursos
+	$('#formGenerarCursos').on('submit', function(e) {
+		e.preventDefault();
+		
+		// Verificar que al menos un nivel esté seleccionado
+		var nivelesSeleccionados = [];
+		$('input[name="niveles[]"]:checked').each(function() {
+			nivelesSeleccionados.push($(this).val());
+		});
+		
+		if (nivelesSeleccionados.length === 0) {
+			$.toast({
+				heading: 'Advertencia',
+				text: 'Debes seleccionar al menos un nivel para generar cursos.',
+				showHideTransition: 'slide',
+				icon: 'warning',
+				position: 'top-right'
+			});
+			return;
+		}
+		
+		// Calcular total de cursos a crear
+		var totalCursos = 0;
+		if (nivelesSeleccionados.includes('preescolar')) totalCursos += 4;
+		if (nivelesSeleccionados.includes('primaria')) totalCursos += 5;
+		if (nivelesSeleccionados.includes('secundaria')) totalCursos += 4;
+		if (nivelesSeleccionados.includes('media')) totalCursos += 2;
+		
+		// Confirmar acción
+		Swal.fire({
+			title: '¿Confirmar generación?',
+			html: `Se crearán <strong>${totalCursos} cursos</strong> automáticamente.<br><br>¿Deseas continuar?`,
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonColor: '#28a745',
+			cancelButtonColor: '#6c757d',
+			confirmButtonText: '<i class="fa fa-check"></i> Sí, generar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar'
+		}).then((result) => {
+			if (result.isConfirmed) {
+				generarCursosAutomaticamente(nivelesSeleccionados);
+			}
+		});
+	});
+	
+	function generarCursosAutomaticamente(niveles) {
+		// Deshabilitar botón y mostrar loader
+		var btnOriginal = $('#btnConfirmarGenerarCursos').html();
+		$('#btnConfirmarGenerarCursos').html('<i class="fa fa-spinner fa-spin"></i> Generando...').prop('disabled', true);
+		
+		// Mostrar toast de procesamiento
+		$.toast({
+			heading: 'Generando cursos',
+			text: 'Por favor espera mientras se crean los cursos...',
+			showHideTransition: 'slide',
+			icon: 'info',
+			position: 'top-right',
+			hideAfter: false,
+			loader: true,
+			loaderBg: '#28a745'
+		});
+		
+		// Enviar datos por AJAX
+		$.ajax({
+			url: 'cursos-generar-automaticos.php',
+			type: 'POST',
+			data: {
+				niveles: niveles
+			},
+			dataType: 'json',
+			success: function(response) {
+				$('#btnConfirmarGenerarCursos').html(btnOriginal).prop('disabled', false);
+				
+				// Cerrar toast de procesamiento
+				$('.jq-toast-wrap').remove();
+				
+				if (response.success) {
+					// Cerrar modal
+					$('#modalGenerarCursos').modal('hide');
+					
+					// Limpiar checkboxes
+					$('input[name="niveles[]"]').prop('checked', false);
+					
+					// Mostrar mensaje de éxito con SweetAlert
+					Swal.fire({
+						title: '¡Cursos Generados!',
+						html: response.message,
+						icon: 'success',
+						confirmButtonColor: '#28a745',
+						confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+					}).then(() => {
+						// Recargar la página
+						location.reload();
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						text: response.message || 'No se pudieron generar los cursos.',
+						icon: 'error',
+						confirmButtonColor: '#dc3545',
+						confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX:', error);
+				console.error('Response:', xhr.responseText);
+				
+				$('#btnConfirmarGenerarCursos').html(btnOriginal).prop('disabled', false);
+				
+				// Cerrar toast de procesamiento
+				$('.jq-toast-wrap').remove();
+				
+				Swal.fire({
+					title: 'Error de Conexión',
+					text: 'No se pudo conectar con el servidor.',
+					icon: 'error',
+					confirmButtonColor: '#dc3545',
+					confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+				});
+			}
+		});
+	}
+	
+	// ========================================
+	// FIN SISTEMA GENERAR CURSOS
+	// ========================================
+});
+</script>
 
 <!-- Modal para edición rápida de curso -->
 <div class="modal fade" id="modalEditarCurso" tabindex="-1" role="dialog">
