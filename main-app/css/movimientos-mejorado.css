@@ -1,0 +1,390 @@
+/**
+ * Estilos mejorados para la página de movimientos financieros
+ * Diseño profesional tipo software de facturación
+ */
+
+/* KPI Cards */
+.kpi-card {
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.kpi-card.ventas { 
+    border-left-color: #00c292;
+    background: linear-gradient(to right, rgba(0,194,146,0.05), white);
+}
+
+.kpi-card.compras { 
+    border-left-color: #ff5722;
+    background: linear-gradient(to right, rgba(255,87,34,0.05), white);
+}
+
+.kpi-card.por-cobrar { 
+    border-left-color: #ffc107;
+    background: linear-gradient(to right, rgba(255,193,7,0.05), white);
+}
+
+.kpi-card.cobrado { 
+    border-left-color: #03a9f4;
+    background: linear-gradient(to right, rgba(3,169,244,0.05), white);
+}
+
+.kpi-icon {
+    font-size: 40px;
+    opacity: 0.8;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.kpi-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #2c3e50;
+}
+
+.kpi-label {
+    font-size: 14px;
+    color: #757575;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Filter Section */
+.filter-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+/* Quick Action Button - En la parte superior derecha de la tabla */
+.quick-action-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 18px;
+    border: none;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Satoshi', 'Poppins', sans-serif;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.quick-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.quick-action-btn:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+.quick-action-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+}
+
+.quick-action-btn:active {
+    transform: scale(0.95);
+}
+
+.quick-action-btn i {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+.quick-action-btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Modal Styles */
+.modal-header-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 5px 5px 0 0;
+}
+
+.modal-header-custom .close {
+    color: white;
+    opacity: 0.8;
+}
+
+.modal-header-custom .close:hover {
+    opacity: 1;
+}
+
+.modal-header-custom .modal-title {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Table Improvements */
+.table-responsive-custom {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    overflow: visible !important;
+}
+
+.table-responsive-custom .card-body {
+    overflow: visible !important;
+}
+
+.table-responsive-custom .dataTables_wrapper {
+    overflow: visible !important;
+}
+
+/* Dropdown de acciones mejorado - Posicionamiento correcto */
+.table-responsive-custom tbody tr td:last-child {
+    position: relative;
+    overflow: visible;
+}
+
+.table-responsive-custom .btn-group {
+    position: relative;
+    z-index: 1000;
+}
+
+.table-responsive-custom .btn-group.show,
+.table-responsive-custom .btn-group.open {
+    z-index: 10000;
+}
+
+.table-responsive-custom .dropdown-menu {
+    z-index: 10000 !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 0.125rem !important;
+    min-width: 160px;
+    transform: none !important;
+}
+
+/* Asegurar que DataTables wrapper no interfiera */
+.table-responsive-custom .dataTables_wrapper {
+    position: relative;
+    z-index: 1;
+}
+
+.table-responsive-custom .dataTables_wrapper .dataTables_paginate {
+    position: relative;
+    z-index: 1;
+}
+
+.table-responsive-custom .dataTables_wrapper .dataTables_info {
+    position: relative;
+    z-index: 1;
+}
+
+/* Cuando el dropdown está abierto, asegurar que esté por encima */
+.table-responsive-custom tbody tr .btn-group.show .dropdown-menu,
+.table-responsive-custom tbody tr .btn-group.open .dropdown-menu {
+    z-index: 10000 !important;
+    position: absolute !important;
+    display: block !important;
+    top: 100% !important;
+    left: 0 !important;
+    transform: none !important;
+}
+
+/* Asegurar que las filas de la tabla permitan overflow visible */
+.table-responsive-custom table tbody tr {
+    position: relative;
+}
+
+.table-responsive-custom table tbody tr:hover {
+    z-index: 10;
+}
+
+.table-responsive-custom table tbody tr td:last-child {
+    overflow: visible !important;
+}
+
+.table-responsive-custom table {
+    margin-bottom: 0;
+}
+
+.table-responsive-custom table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.table-responsive-custom table thead th {
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 15px 10px;
+}
+
+.table-responsive-custom table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-responsive-custom table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+/* Form Improvements */
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.select2-container--default .select2-selection--single:focus {
+    border-color: #667eea;
+}
+
+/* Card Improvements */
+.card-topline-purple {
+    border-top: 3px solid #764ba2;
+}
+
+/* Loading Animation */
+.gif-carga {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .kpi-value {
+        font-size: 22px;
+    }
+    
+    .kpi-icon {
+        font-size: 30px;
+    }
+    
+    .quick-action-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+}
+
+/* Badge Improvements */
+.badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #00c292;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+}
+
+.badge-danger {
+    background-color: #ff5722;
+}
+
+/* Button Improvements */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.deepPink-bgcolor {
+    background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+    border: none;
+}
+
+.deepPink-bgcolor:hover {
+    background: linear-gradient(135deg, #c06c84 0%, #ff6b9d 100%);
+}
+
+/* Panel Improvements */
+.panel {
+    transition: all 0.3s ease;
+}
+
+.panel:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Alert Improvements */
+.alert {
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    border-left-color: #03a9f4;
+    background-color: rgba(3, 169, 244, 0.1);
+}
+
+/* Smooth Transitions */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+

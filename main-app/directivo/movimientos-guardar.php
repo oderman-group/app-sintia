@@ -1,4 +1,6 @@
 <?php
+// Iniciar output buffering para evitar problemas con header()
+ob_start();
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Movimientos.php");
@@ -173,5 +175,28 @@ if (!empty($_POST["abonoAutomatico"]) && $_POST["abonoAutomatico"] == 1) {
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 
-echo '<script type="text/javascript">window.location.href="movimientos-editar.php?success=SC_DT_1&id='.base64_encode($idInsercion).'";</script>';
-exit();
+// Verificar que el registro se insertó correctamente
+try {
+    $sqlVerificar = "SELECT fcu_id FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_id=? AND institucion=? AND year=?";
+    $stmtVerificar = $conexionPDO->prepare($sqlVerificar);
+    $stmtVerificar->bindParam(1, $idInsercion, PDO::PARAM_STR);
+    $stmtVerificar->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmtVerificar->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+    $stmtVerificar->execute();
+    $verificacion = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
+    
+    if ($verificacion && !empty($verificacion['fcu_id'])) {
+        // Limpiar cualquier output buffer antes de redirigir
+        ob_clean();
+        // Redirigir directamente a la página de edición
+        header("Location: movimientos-editar.php?success=SC_DT_1&id=".urlencode(base64_encode($idInsercion)));
+        exit();
+    } else {
+        throw new Exception("No se pudo verificar la creación de la transacción");
+    }
+} catch (Exception $e) {
+    include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+    ob_clean();
+    header("Location: movimientos.php?error=ER_DT_CREATE");
+    exit();
+}

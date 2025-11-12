@@ -15,7 +15,9 @@
 			</li>
 		</ul> 
 	</div> -->
+	<?php if (!empty($resultado) && isset($resultado['fcu_id']) && !empty($resultado['fcu_id'])) { ?>
 	<a href="movimientos-factura-venta.php?id=<?=base64_encode($resultado['fcu_id']);?>" class="btn btn-danger" target="_blank">
 		<i class="fa fa-print"></i> Imprimir factura
 	</a>
+	<?php } ?>
 </nav><br>
