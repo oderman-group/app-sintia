@@ -72,8 +72,9 @@ class Csrf {
                 http_response_code(403);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Token de seguridad inválido. Por favor, recarga la página.',
-                    'code' => 'CSRF_INVALID'
+                    'message' => '⚠️ Tu sesión ha expirado o el token de seguridad es inválido. La página se recargará automáticamente.',
+                    'code' => 'CSRF_INVALID',
+                    'reload' => true
                 ]);
             } else {
                 // Solo destruir sesión si existe una activa
