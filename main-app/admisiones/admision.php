@@ -221,11 +221,21 @@ $num = $grados->rowCount();
         
         select.form-control {
             cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 12px center;
             background-size: 16px 12px;
             padding-right: 40px;
+            height: 48px;
+            line-height: 1.5;
+        }
+        
+        /* Ocultar flechas nativas en IE */
+        select.form-control::-ms-expand {
+            display: none;
         }
         
         /* Checkbox de políticas */
@@ -569,7 +579,7 @@ $num = $grados->rowCount();
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tipo de documento <span class="required">*</span></label>
                                 <select name="tipoDocumento" class="form-control" required>
@@ -585,44 +595,46 @@ $num = $grados->rowCount();
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="documento" required>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer apellido <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="apellido1" required>
                             </div>
                         </div>
-                        
-                        <div class="col-md-3">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo apellido</label>
                                 <input type="text" class="form-control" name="apellido2">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
+                        
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer nombre <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="nombreEstudiante" required>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo nombre</label>
                                 <input type="text" class="form-control" name="nombreEstudiante2">
                             </div>
                         </div>
-                        
-                        <div class="col-md-3">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Grado al que aspira <span class="required">*</span></label>
                                 <select name="grado" class="form-control" required>
@@ -637,7 +649,7 @@ $num = $grados->rowCount();
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>¿Hizo el proceso antes? <span class="required">*</span></label>
                                 <select class="form-control" name="procesoAdmisionAntes" required>
@@ -658,7 +670,7 @@ $num = $grados->rowCount();
                     </div>
                     
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tipo de documento <span class="required">*</span></label>
                                 <select name="tipoDocumentoAcudiente" class="form-control" required>
@@ -674,51 +686,53 @@ $num = $grados->rowCount();
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="documentoAcudiente" required>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer apellido <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="apellido1Acudiente" required>
                             </div>
                         </div>
-                        
-                        <div class="col-md-3">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo apellido</label>
                                 <input type="text" class="form-control" name="apellido2Acudiente">
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
+                        
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer nombre <span class="required">*</span></label>
                                 <input type="text" class="form-control" name="nombre1Acudiente" required>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo nombre</label>
                                 <input type="text" class="form-control" name="nombre2Acudiente">
                             </div>
                         </div>
-                        
-                        <div class="col-md-3">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Email <span class="required">*</span></label>
                                 <input type="email" class="form-control" name="email" required>
                             </div>
                         </div>
                         
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Celular <span class="required">*</span></label>
                                 <input type="tel" class="form-control" name="celular" required>

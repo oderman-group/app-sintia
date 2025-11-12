@@ -15,7 +15,17 @@ $parametros = "";
 if ( isset($_GET) ) {
     foreach ($_GET as $key => $value) {
         if ($key != 'nume') {
-            $parametros .= "&{$key}={$value}";
+            // Manejar arrays (como filtros múltiples)
+            if (is_array($value)) {
+                foreach ($value as $subValue) {
+                    // Verificar si el subvalor también es un array (arrays anidados)
+                    if (!is_array($subValue)) {
+                        $parametros .= "&{$key}[]=" . urlencode($subValue);
+                    }
+                }
+            } else {
+                $parametros .= "&{$key}=" . urlencode($value);
+            }
         }    
     }
 }

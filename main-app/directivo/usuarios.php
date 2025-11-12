@@ -245,7 +245,7 @@ if (!Modulos::validarPermisoEdicion()) {
 															<select id="filtro_usuarios_tipo" class="form-control select2-multiple-usuarios" multiple="multiple" style="width: 100%;">
 																<?php
 																try{
-																	$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+																	$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
 																	while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
 																?>
 																	<option value="<?=$opcionesDatos['pes_id'];?>"><?=$opcionesDatos['pes_nombre'];?></option>
@@ -956,7 +956,7 @@ if (!Modulos::validarPermisoEdicion()) {
 								<label>Tipo de Usuario <span class="text-danger">*</span></label>
 								<?php
 								try{
-									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
 								} catch (Exception $e) {
 									include("../compartido/error-catch-to-report.php");
 								}

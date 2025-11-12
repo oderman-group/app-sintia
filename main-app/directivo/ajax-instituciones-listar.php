@@ -33,11 +33,13 @@ if (!empty($plan) && $plan !== 'todos') {
     $filtros[] = "ins_id_plan = '$plan'";
 }
 
-if (!empty($estado) && $estado !== 'todos') {
+// Usar isset en lugar de !empty para permitir el valor "0" (Inactivo)
+if (isset($estado) && $estado !== '' && $estado !== 'todos') {
     $filtros[] = "ins_estado = '$estado'";
 }
 
-if (!empty($bloqueado) && $bloqueado !== 'todos') {
+// Usar isset en lugar de !empty para permitir el valor "0" (No bloqueado)
+if (isset($bloqueado) && $bloqueado !== '' && $bloqueado !== 'todos') {
     $filtros[] = "ins_bloqueada = '$bloqueado'";
 }
 
@@ -47,7 +49,7 @@ try {
     // Contar total de registros
     $consultaTotal = mysqli_query($conexion, "
         SELECT COUNT(*) as total 
-        FROM " . BD_ADMIN . ".instituciones 
+        FROM " . $baseDatosServicios . ".instituciones 
         $whereClause
     ");
     $totalRegistros = mysqli_fetch_array($consultaTotal, MYSQLI_BOTH)['total'];
@@ -56,8 +58,8 @@ try {
     // Obtener instituciones con paginación
     $consulta = mysqli_query($conexion, "
         SELECT i.*, p.plns_nombre, p.plns_espacio_gb
-        FROM " . BD_ADMIN . ".instituciones i
-        LEFT JOIN " . BD_ADMIN . ".planes_sintia p ON p.plns_id = i.ins_id_plan
+        FROM " . $baseDatosServicios . ".instituciones i
+        LEFT JOIN " . $baseDatosServicios . ".planes_sintia p ON p.plns_id = i.ins_id_plan
         $whereClause
         ORDER BY i.ins_id DESC
         LIMIT $inicio, $porPagina

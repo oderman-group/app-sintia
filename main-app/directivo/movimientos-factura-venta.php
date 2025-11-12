@@ -82,7 +82,7 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                 <tr>
                     <td align="left" width="55%">
                         <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="70%"><br><br>
-                        <span style="font-weight:bold; margin: 0"><?=strtoupper($informacion_inst["info_nombre"])?></span><br>
+                        <span style="font-weight:bold; margin: 0"><?=strtoupper($informacion_inst["info_nombre"] ?? '')?></span><br>
                         <span style="font-weight:bold; margin: 0">Nit: <?=$informacion_inst["info_nit"];?></span><br>
                         <?=$informacion_inst["info_direccion"]?><br>
                         Tel: <?=$informacion_inst["info_telefono"]?><br><br>

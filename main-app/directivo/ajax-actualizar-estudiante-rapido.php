@@ -66,6 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fechaTimestamp === false) {
                 jsonResponse(['success' => false, 'message' => 'Formato de fecha inválido.']);
             }
+            
+            // Validar que la fecha de nacimiento no sea futura ni menor de 1 año
+            $fechaMinima = strtotime('-1 year');
+            $fechaMaxima = time(); // Fecha actual
+            
+            if ($fechaTimestamp > $fechaMinima) {
+                jsonResponse(['success' => false, 'message' => 'La fecha de nacimiento no puede ser futura ni menor de 1 año.']);
+            }
         }
         
         // Validar email si se proporciona

@@ -130,6 +130,16 @@ if($config['conf_doble_buscador'] == 1) {
 			font-size: 16px;
 			font-weight: 600;
 		}
+		
+		/* Estilos para botones deshabilitados */
+		button[disabled], button:disabled {
+			cursor: not-allowed !important;
+			opacity: 0.6;
+		}
+		
+		button[disabled]:hover, button:disabled:hover {
+			opacity: 0.6;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
@@ -170,7 +180,114 @@ if($config['conf_doble_buscador'] == 1) {
                     
                     <?php
                         include("../../config-general/mensajes-informativos.php");
+                        
+                        // Verificar requisitos para crear cargas
+                        $cursosConsulta = Grados::listarGrados(1);
+                        $numCursosCreados = mysqli_num_rows($cursosConsulta);
+                        
+                        $gruposConsulta = Grupos::listarGrupos();
+                        $numGruposCreados = mysqli_num_rows($gruposConsulta);
+                        
+                        require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
+                        $asignaturasConsulta = Asignaturas::consultarTodasAsignaturas($conexion, $config);
+                        $numAsignaturasCreadas = mysqli_num_rows($asignaturasConsulta);
+                        
+                        require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+                        $docentesConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=".TIPO_DOCENTE);
+                        $numDocentesCreados = mysqli_num_rows($docentesConsulta);
+                        
+                        $periodosConfigurados = !empty($config['conf_periodos_maximos']) && is_numeric($config['conf_periodos_maximos']) && $config['conf_periodos_maximos'] > 0;
+                        
+                        // Verificar si faltan requisitos
+                        $faltanRequisitos = ($numCursosCreados == 0 || $numGruposCreados == 0 || $numAsignaturasCreadas == 0 || $numDocentesCreados == 0 || !$periodosConfigurados);
+                        
+                        // Obtener filtro y contar total de cargas ANTES de mostrar botones
+                        $filtro = '';
+                        if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
+                            try {
+                                $cursoDecoded = base64_decode($_GET['curso'], true);
+                                if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
+                                    $curso = mysqli_real_escape_string($conexion, $cursoDecoded);
+                                    $filtro .= " AND car_curso='".$curso."'";
+                                }
+                            } catch(Exception $e) {}
+                        }
+                        if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
+                            try {
+                                $grupoDecoded = base64_decode($_GET["grupo"], true);
+                                if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
+                                    $grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
+                                    $filtro .= " AND car_grupo='".$grupo."'";
+                                }
+                            } catch(Exception $e) {}
+                        }
+                        if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
+                            try {
+                                $docenteDecoded = base64_decode($_GET["docente"], true);
+                                if ($docenteDecoded !== false && !empty($docenteDecoded)) {
+                                    $docente = mysqli_real_escape_string($conexion, $docenteDecoded);
+                                    $filtro .= " AND car_docente='".$docente."'";
+                                }
+                            } catch(Exception $e) {}
+                        }
+                        if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
+                            try {
+                                $asignaturaDecoded = base64_decode($_GET["asignatura"], true);
+                                if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
+                                    $asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
+                                    $filtro .= " AND car_materia='".$asignatura."'";
+                                }
+                            } catch(Exception $e) {}
+                        }
+                        
+                        require_once(ROOT_PATH."/main-app/class/CargaAcademicaOptimizada.php");
+                        $totalCargas = CargaAcademicaOptimizada::contarTotalCargas($conexion, $config, $filtro);
                     ?>
+                    
+                    <!-- Advertencia si faltan requisitos para crear cargas -->
+                    <?php if($faltanRequisitos){ ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> No se pueden crear cargas académicas</h4>
+                        <p class="mb-2">
+                            <strong>Atención:</strong> Antes de crear cargas académicas, debes asegurarte de cumplir con los siguientes requisitos:
+                        </p>
+                        <hr>
+                        <ul class="mb-2">
+                            <?php if($numCursosCreados == 0){ ?>
+                                <li><i class="fa fa-times-circle text-danger"></i> <strong>No hay cursos/grados creados.</strong> 
+                                    <a href="cursos.php" class="alert-link font-weight-bold">Crear cursos/grados</a>
+                                </li>
+                            <?php } ?>
+                            <?php if($numGruposCreados == 0){ ?>
+                                <li><i class="fa fa-times-circle text-danger"></i> <strong>No hay grupos creados.</strong> 
+                                    <a href="grupos.php" class="alert-link font-weight-bold">Crear grupos</a>
+                                </li>
+                            <?php } ?>
+                            <?php if($numAsignaturasCreadas == 0){ ?>
+                                <li><i class="fa fa-times-circle text-danger"></i> <strong>No hay asignaturas creadas.</strong> 
+                                    <a href="asignaturas.php" class="alert-link font-weight-bold">Crear asignaturas</a>
+                                </li>
+                            <?php } ?>
+                            <?php if($numDocentesCreados == 0){ ?>
+                                <li><i class="fa fa-times-circle text-danger"></i> <strong>No hay docentes registrados.</strong> 
+                                    <a href="usuarios.php?tipo=<?=TIPO_DOCENTE?>" class="alert-link font-weight-bold">Registrar docentes</a>
+                                </li>
+                            <?php } ?>
+                            <?php if(!$periodosConfigurados){ ?>
+                                <li><i class="fa fa-times-circle text-danger"></i> <strong>No está configurada la cantidad de periodos.</strong> 
+                                    <a href="configuracion-sistema.php" class="alert-link font-weight-bold">Configurar periodos</a>
+                                </li>
+                            <?php } ?>
+                        </ul>
+                        <p class="mb-0">
+                            <i class="fa fa-info-circle"></i> 
+                            Una vez completados todos los requisitos, podrás crear cargas académicas.
+                        </p>
+                    </div>
+                    <?php } ?>
                     
                     <!-- Barra de herramientas superior - FUERA DEL CARD -->
                     <div class="row mb-3">
@@ -179,21 +296,27 @@ if($config['conf_doble_buscador'] == 1) {
                                 <!-- Botones principales -->
                                 <div class="btn-group">
                                     <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0052'])) { ?>
-                                        <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
-                                            <i class="fa fa-plus"></i> Nueva Carga
-                                        </a>
+                                        <?php if(!$faltanRequisitos){ ?>
+                                            <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaCargModal" class="btn deepPink-bgcolor">
+                                                <i class="fa fa-plus"></i> Nueva Carga
+                                            </a>
+                                        <?php } else { ?>
+                                            <button type="button" class="btn deepPink-bgcolor" disabled title="Debes cumplir con todos los requisitos antes de crear cargas">
+                                                <i class="fa fa-plus"></i> Nueva Carga
+                                            </button>
+                                        <?php } ?>
                                         <?php
                                         $idModal = "nuevaCargModal";
                                         $contenido = "../directivo/cargas-agregar-modal.php";
                                         include("../compartido/contenido-modal.php");
                                         } ?>
                                     
-                                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
-                                        <button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
+                                    <?php if($totalCargas > 0 && Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
+                                        <button type="button" id="moverCargasBtn" class="btn btn-info" style="display:none;">
                                             <i class="fa fa-arrows-alt"></i> Mover Seleccionadas
                                         </button>
                                         
-                                        <button type="button" id="editarMasivoBtn" class="btn btn-warning" disabled>
+                                        <button type="button" id="editarMasivoBtn" class="btn btn-warning" style="display:none;">
                                             <i class="fa fa-edit"></i> Editar Seleccionadas
                                         </button>
                                     <?php } ?>
@@ -213,7 +336,9 @@ if($config['conf_doble_buscador'] == 1) {
                                                 <li role="separator" class="divider"></li>
                                                 <li><a href="cargas-indicadores-obligatorios.php"><i class="fa fa-list-check"></i> Indicadores Obligatorios</a></li>
                                                 <li><a href="cargas-comportamiento-filtros.php"><i class="fa fa-user-check"></i> Notas de Comportamiento</a></li>
-                                                <li><a href="javascript:void(0);" data-toggle="modal" data-target="#modalTranferirCargas"><i class="fa fa-exchange-alt"></i> Transferir Cargas</a></li>
+                                                <?php if($totalCargas > 0){ ?>
+                                                    <li><a href="javascript:void(0);" data-toggle="modal" data-target="#modalTranferirCargas"><i class="fa fa-exchange-alt"></i> Transferir Cargas</a></li>
+                                                <?php } ?>
                                                 <li><a href="cargas-estilo-notas.php"><i class="fa fa-palette"></i> Estilo de Notas</a></li>
                                             </ul>
                                         </div>
@@ -239,9 +364,11 @@ if($config['conf_doble_buscador'] == 1) {
                                 </div>
                                 
                                 <!-- Botón de filtros -->
-                                <button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosCargas">
-                                    <i class="fa fa-filter"></i> Filtros Avanzados
-                                </button>
+                                <?php if($totalCargas > 0){ ?>
+                                    <button type="button" class="btn btn-outline-secondary" id="btnToggleFiltrosCargas">
+                                        <i class="fa fa-filter"></i> Filtros Avanzados
+                                    </button>
+                                <?php } ?>
                             </div>
                         </div>
                     </div>
@@ -330,57 +457,8 @@ if($config['conf_doble_buscador'] == 1) {
                     <div class="row">
                         <div class="col-md-12">
                             <?php 
-                            $filtro = '';
-                            $curso = '';
-                            
-                            // Validar y sanitizar parámetros GET antes de usarlos
-                            if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
-                                try {
-                                    $cursoDecoded = base64_decode($_GET['curso'], true);
-                                    if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
-                                        $curso = mysqli_real_escape_string($conexion, $cursoDecoded);
-                                        $filtro .= " AND car_curso='".$curso."'";
-                                    }
-                                } catch(Exception $e) {
-                                    // Ignorar error de decodificación
-                                }
-                            }
-                            
-                            if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
-                                try {
-                                    $grupoDecoded = base64_decode($_GET["grupo"], true);
-                                    if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
-                                        $grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
-                                        $filtro .= " AND car_grupo='".$grupo."'";
-                                    }
-                                } catch(Exception $e) {
-                                    // Ignorar error de decodificación
-                                }
-                            }
-                            
-                            if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
-                                try {
-                                    $docenteDecoded = base64_decode($_GET["docente"], true);
-                                    if ($docenteDecoded !== false && !empty($docenteDecoded)) {
-                                        $docente = mysqli_real_escape_string($conexion, $docenteDecoded);
-                                        $filtro .= " AND car_docente='".$docente."'";
-                                    }
-                                } catch(Exception $e) {
-                                    // Ignorar error de decodificación
-                                }
-                            }
-                            
-                            if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
-                                try {
-                                    $asignaturaDecoded = base64_decode($_GET["asignatura"], true);
-                                    if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
-                                        $asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
-                                        $filtro .= " AND car_materia='".$asignatura."'";
-                                    }
-                                } catch(Exception $e) {
-                                    // Ignorar error de decodificación
-                                }
-                            }
+                            // La variable $filtro ya está definida en las líneas 195-234
+                            // No necesitamos redefinirla aquí
                             ?>
                             
                             <div class="card card-topline-purple">
@@ -835,8 +913,14 @@ if($config['conf_doble_buscador'] == 1) {
 
 		function toggleActionButtons() {
 			var hasSelection = selectedCargas.length > 0;
-			$('#moverCargasBtn').prop('disabled', !hasSelection);
-			$('#editarMasivoBtn').prop('disabled', !hasSelection);
+			// Mostrar/ocultar los botones en lugar de deshabilitarlos
+			if (hasSelection) {
+				$('#moverCargasBtn').fadeIn(200);
+				$('#editarMasivoBtn').fadeIn(200);
+			} else {
+				$('#moverCargasBtn').fadeOut(200);
+				$('#editarMasivoBtn').fadeOut(200);
+			}
 		}
 
 		$('#moverCargasBtn').on('click', function() {

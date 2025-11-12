@@ -887,6 +887,19 @@ if(!isset($_GET['nodb'])) {
                             }, 1500);
                         } else {
                             // Error en el login
+                            
+                            // Verificar si es un error CSRF
+                            if (data.code === 'CSRF_INVALID' || data.reload === true) {
+                                setButtonState('error', 'Sesión expirada');
+                                showMessage(data.message || '⚠️ Tu sesión ha expirado. Recargando página...', 'error');
+                                
+                                // Recargar la página después de 2 segundos
+                                setTimeout(() => {
+                                    window.location.href = window.location.pathname + window.location.search;
+                                }, 2000);
+                                return;
+                            }
+                            
                             setButtonState('error', 'Error de acceso');
                             showMessage(data.message || 'Credenciales incorrectas', 'error');
                             
@@ -907,6 +920,31 @@ if(!isset($_GET['nodb'])) {
                     
                     error: function(xhr, status, error) {
                         console.error('Error AJAX:', status, error);
+                        console.log('XHR Status:', xhr.status);
+                        console.log('XHR Response:', xhr.responseText);
+                        
+                        // Verificar si es un error 403 (CSRF)
+                        if (xhr.status === 403) {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                console.log('Response 403 parseada:', response);
+                                
+                                // Verificar si es error CSRF
+                                if (response.code === 'CSRF_INVALID' || response.reload === true) {
+                                    setButtonState('error', 'Sesión expirada');
+                                    showMessage(response.message || '⚠️ Tu sesión ha expirado. Recargando página...', 'error');
+                                    
+                                    // Recargar la página después de 2 segundos
+                                    setTimeout(() => {
+                                        window.location.href = window.location.pathname + window.location.search;
+                                    }, 2000);
+                                    return;
+                                }
+                            } catch (e) {
+                                console.error('Error parseando respuesta 403:', e);
+                            }
+                        }
+                        
                         let errorMessage = 'Error de conexión. Verifica tu internet.';
                         
                         if (status === 'timeout') {

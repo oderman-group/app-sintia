@@ -59,12 +59,23 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <a href="javascript:void(0);" data-toggle="modal" data-target="#nuevaAreaModal" class="btn deepPink-bgcolor">
                                                             <?=__('general.agregar_nuevo');?> <i class="fa fa-plus"></i>
                                                         </a>
-                                                        <?php
-                                                        $idModal = "nuevaAreaModal";
-                                                        $contenido = "../directivo/areas-agregar-modal.php";
-                                                        include("../compartido/contenido-modal.php");
-                                                        } ?>
+                                                        <?php } ?>
+														
+														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0179'])) { ?>
+														<button type="button" class="btn btn-info" id="btnAgregarAreasMasivo">
+															<i class="fa fa-list"></i> Agregar Masivo
+														</button>
+														<?php } ?>
 													</div>
+													
+													<?php
+													// Incluir modal después de los botones para no afectar el renderizado
+													if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0019'])) {
+														$idModal = "nuevaAreaModal";
+														$contenido = "../directivo/areas-agregar-modal.php";
+														include("../compartido/contenido-modal.php");
+													}
+													?>
 												</div>
 											</div>
 											
@@ -172,6 +183,102 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
 
+<!-- Modal de Agregar Áreas Masivo -->
+<div class="modal fade" id="modalAgregarAreasMasivo" tabindex="-1" role="dialog" aria-labelledby="modalAgregarAreasMasivoLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-info text-white">
+				<h5 class="modal-title" id="modalAgregarAreasMasivoLabel">
+					<i class="fa fa-list"></i> Agregar Áreas Rápidamente
+				</h5>
+				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<form id="formAgregarAreasMasivo">
+				<div class="modal-body">
+					<div class="alert alert-info">
+						<i class="fa fa-info-circle"></i> 
+						<strong>Instrucciones:</strong> Completa el nombre de cada área y su posición. 
+						Puedes agregar más filas usando el botón <i class="fa fa-plus-circle"></i>.
+					</div>
+					
+					<!-- Contenedor de filas de áreas -->
+					<div id="contenedorAreas">
+						<!-- Primera fila (template) -->
+						<div class="row area-row mb-3" data-index="0">
+							<div class="col-md-8">
+								<label>Nombre del Área <span class="text-danger">*</span></label>
+								<input type="text" class="form-control area-nombre" name="areas[0][nombre]" placeholder="Ej: Ciencias Naturales" required>
+							</div>
+							<div class="col-md-3">
+								<label>Posición <span class="text-danger">*</span></label>
+								<input type="number" class="form-control area-posicion" name="areas[0][posicion]" placeholder="1" min="1" value="1" required>
+								<small class="text-muted">Orden de visualización</small>
+							</div>
+							<div class="col-md-1 d-flex align-items-end">
+								<button type="button" class="btn btn-danger btn-sm btn-eliminar-fila-area" title="Eliminar fila" style="margin-bottom: 0;">
+									<i class="fa fa-trash"></i>
+								</button>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Botón para agregar más filas -->
+					<div class="row">
+						<div class="col-md-12">
+							<button type="button" class="btn btn-success btn-sm" id="btnAgregarFilaArea">
+								<i class="fa fa-plus-circle"></i> Agregar otra área
+							</button>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-info" id="btnGuardarAreasMasivo">
+						<i class="fa fa-save"></i> Guardar Todas las Áreas
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<style>
+	/* Estilos para el modal de áreas */
+	.area-row {
+		padding: 15px;
+		background: #f8f9fa;
+		border-radius: 8px;
+		border: 1px solid #dee2e6;
+		margin-bottom: 15px;
+	}
+	
+	.area-row:hover {
+		background: #e9ecef;
+		border-color: #adb5bd;
+	}
+	
+	.btn-eliminar-fila-area {
+		height: 38px;
+		width: 38px;
+		padding: 0;
+	}
+	
+	#modalAgregarAreasMasivo .modal-body {
+		max-height: 600px;
+		overflow-y: auto;
+	}
+	
+	#contenedorAreas {
+		max-height: 400px;
+		overflow-y: auto;
+		margin-bottom: 15px;
+	}
+</style>
+
 <!-- Modal para edición rápida de área -->
 <div class="modal fade" id="modalEditarArea" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
@@ -220,6 +327,219 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
 <script>
 $(document).ready(function() {
+	// ========================================
+	// SISTEMA DE AGREGAR ÁREAS MASIVO
+	// ========================================
+	
+	var contadorFilasArea = 1;
+	
+	// Abrir modal de agregar áreas
+	$('#btnAgregarAreasMasivo').on('click', function() {
+		$('#modalAgregarAreasMasivo').modal('show');
+	});
+	
+	// Agregar nueva fila de área
+	$('#btnAgregarFilaArea').on('click', function() {
+		// Calcular automáticamente la próxima posición
+		var ultimaPosicion = 0;
+		$('.area-posicion').each(function() {
+			var valor = parseInt($(this).val()) || 0;
+			if (valor > ultimaPosicion) {
+				ultimaPosicion = valor;
+			}
+		});
+		var proximaPosicion = ultimaPosicion + 1;
+		
+		var nuevaFila = `
+			<div class="row area-row mb-3" data-index="${contadorFilasArea}">
+				<div class="col-md-8">
+					<label>Nombre del Área <span class="text-danger">*</span></label>
+					<input type="text" class="form-control area-nombre" name="areas[${contadorFilasArea}][nombre]" placeholder="Ej: Ciencias Naturales" required>
+				</div>
+				<div class="col-md-3">
+					<label>Posición <span class="text-danger">*</span></label>
+					<input type="number" class="form-control area-posicion" name="areas[${contadorFilasArea}][posicion]" placeholder="${proximaPosicion}" min="1" value="${proximaPosicion}" required>
+					<small class="text-muted">Orden de visualización</small>
+				</div>
+				<div class="col-md-1 d-flex align-items-end">
+					<button type="button" class="btn btn-danger btn-sm btn-eliminar-fila-area" title="Eliminar fila" style="margin-bottom: 0;">
+						<i class="fa fa-trash"></i>
+					</button>
+				</div>
+			</div>
+		`;
+		
+		$('#contenedorAreas').append(nuevaFila);
+		contadorFilasArea++;
+		
+		// Scroll suave hacia la nueva fila
+		$('#contenedorAreas').animate({
+			scrollTop: $('#contenedorAreas')[0].scrollHeight
+		}, 300);
+	});
+	
+	// Eliminar fila de área
+	$(document).on('click', '.btn-eliminar-fila-area', function() {
+		var totalFilas = $('.area-row').length;
+		
+		if (totalFilas === 1) {
+			$.toast({
+				heading: 'Advertencia',
+				text: 'Debe haber al menos un área para agregar.',
+				showHideTransition: 'slide',
+				icon: 'warning',
+				position: 'top-right'
+			});
+			return;
+		}
+		
+		$(this).closest('.area-row').fadeOut(300, function() {
+			$(this).remove();
+		});
+	});
+	
+	// Enviar formulario de áreas masivo
+	$('#formAgregarAreasMasivo').on('submit', function(e) {
+		e.preventDefault();
+		
+		// Recopilar todas las áreas
+		var areas = [];
+		var esValido = true;
+		
+		$('.area-row').each(function() {
+			var nombre = $(this).find('.area-nombre').val().trim();
+			var posicion = $(this).find('.area-posicion').val().trim();
+			
+			if (!nombre) {
+				esValido = false;
+				$(this).find('.area-nombre').addClass('is-invalid');
+			} else {
+				$(this).find('.area-nombre').removeClass('is-invalid');
+			}
+			
+			if (!posicion || parseInt(posicion) < 1) {
+				esValido = false;
+				$(this).find('.area-posicion').addClass('is-invalid');
+			} else {
+				$(this).find('.area-posicion').removeClass('is-invalid');
+				
+				areas.push({
+					nombre: nombre,
+					posicion: parseInt(posicion)
+				});
+			}
+		});
+		
+		if (!esValido) {
+			$.toast({
+				heading: 'Error',
+				text: 'Por favor completa todos los campos obligatorios.',
+				showHideTransition: 'slide',
+				icon: 'error',
+				position: 'top-right'
+			});
+			return;
+		}
+		
+		if (areas.length === 0) {
+			$.toast({
+				heading: 'Error',
+				text: 'Debes agregar al menos un área.',
+				showHideTransition: 'slide',
+				icon: 'error',
+				position: 'top-right'
+			});
+			return;
+		}
+		
+		// Deshabilitar botón y mostrar loader
+		var btnOriginal = $('#btnGuardarAreasMasivo').html();
+		$('#btnGuardarAreasMasivo').html('<i class="fa fa-spinner fa-spin"></i> Guardando...').prop('disabled', true);
+		
+		// Enviar datos por AJAX
+		$.ajax({
+			url: 'areas-guardar-masivo.php',
+			type: 'POST',
+			data: {
+				areas: areas
+			},
+			dataType: 'json',
+			success: function(response) {
+				$('#btnGuardarAreasMasivo').html(btnOriginal).prop('disabled', false);
+				
+				if (response.success) {
+					// Cerrar modal
+					$('#modalAgregarAreasMasivo').modal('hide');
+					
+					// Limpiar formulario
+					$('#formAgregarAreasMasivo')[0].reset();
+					$('#contenedorAreas').html(`
+						<div class="row area-row mb-3" data-index="0">
+							<div class="col-md-8">
+								<label>Nombre del Área <span class="text-danger">*</span></label>
+								<input type="text" class="form-control area-nombre" name="areas[0][nombre]" placeholder="Ej: Ciencias Naturales" required>
+							</div>
+							<div class="col-md-3">
+								<label>Posición <span class="text-danger">*</span></label>
+								<input type="number" class="form-control area-posicion" name="areas[0][posicion]" placeholder="1" min="1" value="1" required>
+								<small class="text-muted">Orden de visualización</small>
+							</div>
+							<div class="col-md-1 d-flex align-items-end">
+								<button type="button" class="btn btn-danger btn-sm btn-eliminar-fila-area" title="Eliminar fila" style="margin-bottom: 0;">
+									<i class="fa fa-trash"></i>
+								</button>
+							</div>
+						</div>
+					`);
+					contadorFilasArea = 1;
+					
+					// Mostrar mensaje de éxito
+					$.toast({
+						heading: '¡Éxito!',
+						text: response.message,
+						showHideTransition: 'slide',
+						icon: 'success',
+						position: 'top-right',
+						hideAfter: 5000
+					});
+					
+					// Recargar la página después de 1 segundo
+					setTimeout(function() {
+						location.reload();
+					}, 1000);
+				} else {
+					$.toast({
+						heading: 'Error',
+						text: response.message || 'No se pudieron guardar las áreas.',
+						showHideTransition: 'slide',
+						icon: 'error',
+						position: 'top-right',
+						hideAfter: 5000
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX:', error);
+				console.error('Response:', xhr.responseText);
+				
+				$('#btnGuardarAreasMasivo').html(btnOriginal).prop('disabled', false);
+				
+				$.toast({
+					heading: 'Error',
+					text: 'Error de conexión al servidor.',
+					showHideTransition: 'slide',
+					icon: 'error',
+					position: 'top-right',
+					hideAfter: 5000
+				});
+			}
+		});
+	});
+	
+	// ========================================
+	// FIN SISTEMA AGREGAR ÁREAS MASIVO
+	// ========================================
+	
 	// Edición rápida de área
 	$(document).on('click', '.btn-editar-area-modal', function() {
 		var areaId = $(this).data('area-id');
