@@ -47,7 +47,7 @@ try {
     // Contar total de registros
     $consultaTotal = mysqli_query($conexion, "
         SELECT COUNT(*) as total 
-        FROM " . BD_ADMIN . ".instituciones 
+        FROM " . $baseDatosServicios . ".instituciones 
         $whereClause
     ");
     $totalRegistros = mysqli_fetch_array($consultaTotal, MYSQLI_BOTH)['total'];
@@ -56,8 +56,8 @@ try {
     // Obtener instituciones con paginación
     $consulta = mysqli_query($conexion, "
         SELECT i.*, p.plns_nombre, p.plns_espacio_gb
-        FROM " . BD_ADMIN . ".instituciones i
-        LEFT JOIN " . BD_ADMIN . ".planes_sintia p ON p.plns_id = i.ins_id_plan
+        FROM " . $baseDatosServicios . ".instituciones i
+        LEFT JOIN " . $baseDatosServicios . ".planes_sintia p ON p.plns_id = i.ins_id_plan
         $whereClause
         ORDER BY i.ins_id DESC
         LIMIT $inicio, $porPagina
