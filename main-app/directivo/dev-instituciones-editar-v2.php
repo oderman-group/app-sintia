@@ -786,10 +786,16 @@ input:checked + .toggle-slider:before {
                                     <i class="fas fa-puzzle-piece"></i> Módulos
                                 </a>
                             </li>
-                            <li class="nav-item">
+                            <li class="nav-item" style="margin-right: 10px;">
                                 <a class="nav-link" data-toggle="tab" href="#tab_datos" role="tab" 
                                    style="padding: 12px 24px; border: none; border-bottom: 3px solid transparent; background: transparent; color: #666; font-weight: 600; transition: all 0.3s;">
                                     <i class="fas fa-edit"></i> Datos de la Institución
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tab_estadisticas" role="tab" onclick="cargarEstadisticas()"
+                                   style="padding: 12px 24px; border: none; border-bottom: 3px solid transparent; background: transparent; color: #666; font-weight: 600; transition: all 0.3s;">
+                                    <i class="fas fa-chart-bar"></i> Estadísticas
                                 </a>
                             </li>
                         </ul>
@@ -1088,6 +1094,30 @@ input:checked + .toggle-slider:before {
                                 </form>
                             </div>
                             <!-- FIN TAB DATOS -->
+
+                            <!-- TAB 3: ESTADÍSTICAS -->
+                            <div class="tab-pane fade" id="tab_estadisticas" role="tabpanel">
+                                <!-- Loading -->
+                                <div id="loading_estadisticas" class="text-center py-5" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Cargando...</span>
+                                    </div>
+                                    <p class="mt-3">Cargando estadísticas...</p>
+                                </div>
+
+                                <!-- Contenedor de estadísticas -->
+                                <div id="contenedor_estadisticas">
+                                    <p class="text-center text-muted">Haz clic en "Cargar Estadísticas" para ver los datos</p>
+                                </div>
+
+                                <!-- Botón para recargar -->
+                                <div class="text-center mt-4">
+                                    <button class="btn btn-primary" onclick="cargarEstadisticas()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 30px;">
+                                        <i class="fas fa-sync-alt"></i> Recargar Estadísticas
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- FIN TAB ESTADÍSTICAS -->
                         </div>
                     </div>
                 </div>
@@ -1245,6 +1275,228 @@ function resetFormulario() {
         // Recargar la página para obtener los valores originales
         location.reload();
     }
+}
+
+// Función para cargar estadísticas
+function cargarEstadisticas() {
+    $('#loading_estadisticas').show();
+    $('#contenedor_estadisticas').html('');
+    
+    $.ajax({
+        url: 'ajax-instituciones-estadisticas.php',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            institucion_id: INSTITUCION_ACTUAL,
+            year: YEAR_ACTUAL
+        },
+        success: function(response) {
+            $('#loading_estadisticas').hide();
+            
+            if (response.success) {
+                renderizarEstadisticas(response.estadisticas);
+            } else {
+                $('#contenedor_estadisticas').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> ${response.message}
+                    </div>
+                `);
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#loading_estadisticas').hide();
+            console.error('Error:', error);
+            $('#contenedor_estadisticas').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle"></i> Error de conexión al cargar estadísticas
+                </div>
+            `);
+        }
+    });
+}
+
+function renderizarEstadisticas(stats) {
+    const html = `
+        <!-- Estudiantes -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin-bottom: 25px;">
+            <h4 style="color: white; margin: 0; font-weight: 600;">
+                <i class="fas fa-user-graduate"></i> Estudiantes
+            </h4>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                    <i class="fas fa-check-circle" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.matriculados}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Matriculados</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                    <i class="fas fa-user-check" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.asistentes}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Asistentes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">
+                    <i class="fas fa-user-slash" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.cancelados}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Cancelados</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);">
+                    <i class="fas fa-user-clock" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.en_inscripcion}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">En Inscripción</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-5">
+            <div class="col-md-4">
+                <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);">
+                    <i class="fas fa-user-times" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.no_matriculados}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">No Matriculados</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">
+                    <i class="fas fa-trash-alt" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.eliminados}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Eliminados</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    <i class="fas fa-users" style="font-size: 32px; margin-bottom: 10px;"></i>
+                    <div style="font-size: 36px; font-weight: 700;">${stats.estudiantes.total}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">Total Activos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usuarios -->
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; padding: 15px 20px; margin-bottom: 25px;">
+            <h4 style="color: white; margin: 0; font-weight: 600;">
+                <i class="fas fa-users-cog"></i> Usuarios del Sistema
+            </h4>
+        </div>
+        
+        <div class="row mb-5">
+            <div class="col-md-3">
+                <div style="background: white; border: 2px solid #10b981; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <i class="fas fa-chalkboard-teacher" style="font-size: 32px; margin-bottom: 10px; color: #10b981;"></i>
+                    <div style="font-size: 36px; font-weight: 700; color: #10b981;">${stats.usuarios.docentes}</div>
+                    <div style="font-size: 14px; color: #6b7280;">Docentes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: white; border: 2px solid #667eea; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <i class="fas fa-user-tie" style="font-size: 32px; margin-bottom: 10px; color: #667eea;"></i>
+                    <div style="font-size: 36px; font-weight: 700; color: #667eea;">${stats.usuarios.directivos}</div>
+                    <div style="font-size: 14px; color: #6b7280;">Directivos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: white; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <i class="fas fa-user-friends" style="font-size: 32px; margin-bottom: 10px; color: #f59e0b;"></i>
+                    <div style="font-size: 36px; font-weight: 700; color: #f59e0b;">${stats.usuarios.acudientes}</div>
+                    <div style="font-size: 14px; color: #6b7280;">Acudientes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div style="background: white; border: 2px solid #8b5cf6; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <i class="fas fa-user-graduate" style="font-size: 32px; margin-bottom: 10px; color: #8b5cf6;"></i>
+                    <div style="font-size: 36px; font-weight: 700; color: #8b5cf6;">${stats.usuarios.estudiantes}</div>
+                    <div style="font-size: 14px; color: #6b7280;">Usuarios Estudiante</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos Académicos -->
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 10px; padding: 15px 20px; margin-bottom: 25px;">
+            <h4 style="color: white; margin: 0; font-weight: 600;">
+                <i class="fas fa-graduation-cap"></i> Datos Académicos
+            </h4>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div style="background: white; border-left: 4px solid #667eea; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-book" style="font-size: 24px; color: white;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #667eea;">${stats.otros.cursos}</div>
+                            <div style="font-size: 14px; color: #6b7280;">Cursos/Grados</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: white; border-left: 4px solid #10b981; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-layer-group" style="font-size: 24px; color: white;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #10b981;">${stats.otros.grupos}</div>
+                            <div style="font-size: 14px; color: #6b7280;">Grupos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: white; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-clipboard-list" style="font-size: 24px; color: white;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 28px; font-weight: 700; color: #f59e0b;">${stats.otros.cargas}</div>
+                            <div style="font-size: 14px; color: #6b7280;">Cargas Activas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resumen Total -->
+        <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 25px; margin-top: 30px;">
+            <h5 style="margin-bottom: 20px; color: #374151;">
+                <i class="fas fa-chart-pie"></i> Resumen General
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div style="padding: 15px; background: white; border-radius: 8px; margin-bottom: 10px;">
+                        <strong style="color: #374151;">Total Estudiantes Activos:</strong>
+                        <span style="float: right; font-size: 20px; font-weight: 700; color: #667eea;">${stats.estudiantes.total}</span>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px;">
+                        <strong style="color: #374151;">Total Usuarios del Sistema:</strong>
+                        <span style="float: right; font-size: 20px; font-weight: 700; color: #10b981;">${stats.usuarios.total}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 15px; background: white; border-radius: 8px; margin-bottom: 10px;">
+                        <strong style="color: #374151;">Estudiantes Eliminados:</strong>
+                        <span style="float: right; font-size: 20px; font-weight: 700; color: #ef4444;">${stats.estudiantes.eliminados}</span>
+                    </div>
+                    <div style="padding: 15px; background: white; border-radius: 8px;">
+                        <strong style="color: #374151;">Estructura Académica:</strong>
+                        <span style="float: right; font-size: 16px; color: #6b7280;">${stats.otros.cursos} cursos, ${stats.otros.grupos} grupos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#contenedor_estadisticas').html(html);
 }
 
 // Manejo del formulario de datos de institución

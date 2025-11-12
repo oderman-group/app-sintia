@@ -42,7 +42,7 @@ try {
         'ins_nombre', 'ins_siglas', 'ins_nit', 'ins_contacto_principal', 
         'ins_cargo_contacto', 'ins_telefono_principal', 'ins_celular_contacto',
         'ins_email_contacto', 'ins_email_institucion', 'ins_ciudad', 'ins_url_acceso',
-        'ins_medio_info', 'ins_years', 'ins_concepto_deuda'
+        'ins_years', 'ins_concepto_deuda'
     ];
     
     foreach ($camposTexto as $campo) {
@@ -50,6 +50,18 @@ try {
             $valor = mysqli_real_escape_string($conexion, $_POST[$campo]);
             $datosActualizar[] = "$campo = '$valor'";
         }
+    }
+    
+    // Campo ins_medio_info con valor por defecto si está vacío
+    if (isset($_POST['ins_medio_info'])) {
+        $medioInfo = trim($_POST['ins_medio_info']);
+        // Si está vacío, usar valor por defecto 1
+        if (empty($medioInfo)) {
+            $medioInfo = '1';
+            error_log("ins_medio_info vacío, usando valor por defecto: 1");
+        }
+        $valor = mysqli_real_escape_string($conexion, $medioInfo);
+        $datosActualizar[] = "ins_medio_info = '$valor'";
     }
     
     // Campos de fecha - Convertir de DATE (YYYY-MM-DD) a DATETIME (YYYY-MM-DD HH:MM:SS)

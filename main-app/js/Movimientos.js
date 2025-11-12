@@ -549,6 +549,10 @@ function tipoAbono(tipo){
         .then(response => response.text())
         .then(data => {
             $('#mostrarFacturas').empty().hide().html(data).show(1);
+            // Llamar a totalizarAbonos después de cargar las facturas
+            setTimeout(function() {
+                totalizarAbonos();
+            }, 100);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -929,24 +933,57 @@ function deseaEliminarNuevoConcepto(dato) {
 
 function totalizarAbonos(){
     var tabla = document.getElementById('tablaItems');
+    if (!tabla) {
+        return; // Si no existe la tabla, salir
+    }
 
     var totalNeto = 0;
     var totalAbonos = 0;
     var totalPorCobrar = 0;
+    
+    // Buscar todas las filas de facturas (excluyendo la fila de detalles expandida)
     for (let i = 1; i < tabla.rows.length; i++) {
         var fila = tabla.rows[i];
-
-        var total = parseFloat(fila.cells[2].getAttribute('data-total-neto'));
-        totalNeto = totalNeto + total;
-
-        var abonos = parseFloat(fila.cells[3].getAttribute('data-abonos'));
-        if (isNaN(abonos)) {
-            var abonos = 0;
+        
+        // Saltar filas de detalles expandidas
+        if (fila.classList.contains('factura-details-row')) {
+            continue;
         }
-        totalAbonos = totalAbonos + abonos;
+        
+        // La estructura de la tabla tiene:
+        // cells[0]: botón expandir
+        // cells[1]: Cod. Factura
+        // cells[2]: Fecha
+        // cells[3]: Total Neto (con data-total-neto)
+        // cells[4]: Abonos (con data-abonos)
+        // cells[5]: Por Cobrar (con data-por-cobrar)
+        // cells[6]: Valor recibido
+        
+        var celdaTotalNeto = fila.cells[3];
+        var celdaAbonos = fila.cells[4];
+        var celdaPorCobrar = fila.cells[5];
+        
+        if (celdaTotalNeto) {
+            var total = parseFloat(celdaTotalNeto.getAttribute('data-total-neto'));
+            if (!isNaN(total)) {
+                totalNeto = totalNeto + total;
+            }
+        }
 
-        var porCobrar = parseFloat(fila.cells[4].getAttribute('data-por-cobrar'));
-        totalPorCobrar = totalPorCobrar + porCobrar;
+        if (celdaAbonos) {
+            var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
+            if (isNaN(abonos)) {
+                abonos = 0;
+            }
+            totalAbonos = totalAbonos + abonos;
+        }
+
+        if (celdaPorCobrar) {
+            var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
+            if (!isNaN(porCobrar)) {
+                totalPorCobrar = totalPorCobrar + porCobrar;
+            }
+        }
     }
 
     //TOTAL NETO
@@ -966,6 +1003,30 @@ function totalizarAbonos(){
     var elementPorCobrarNeto = document.getElementById('porCobrarNeto');
     elementPorCobrarNeto.innerHTML = '';
     elementPorCobrarNeto.appendChild(document.createTextNode(porCobrarNetoFinal));
+}
+
+/**
+ * Actualiza los KPIs de la página principal
+ */
+function actualizarKPIs() {
+    fetch('../directivo/ajax-calcular-kpis-movimientos.php', {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar cada KPI con animación
+            Object.keys(data.kpis).forEach(key => {
+                const elemento = document.querySelector(`[data-kpi="${key}"]`);
+                if (elemento) {
+                    elemento.textContent = '$' + numberFormat(data.kpis[key], 0, ',', '.');
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando KPIs:', error);
+    });
 }
 
 /**

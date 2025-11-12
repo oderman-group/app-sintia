@@ -382,8 +382,24 @@ class Movimientos {
             move_uploaded_file($FILES['comprobante']['tmp_name'], $destino . "/" . $comprobante);
         }
 
+        // Preparar fecha si viene en el POST
+        $fechaRegistro = date('Y-m-d H:i:s'); // Fecha por defecto
+        if (!empty($POST["fecha"])) {
+            // Convertir datetime-local a formato MySQL
+            $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
+            if ($fecha !== false) {
+                $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+            } else {
+                // Intentar otro formato si falla
+                $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
+                if ($fecha !== false) {
+                    $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+                }
+            }
+        }
+        
         try {
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments (responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, institucion, year)VALUES('{$_SESSION["id"]}', '".$POST["cliente"]."', '".$POST["codigoUnico"]."', '".$POST["tipoTransaccion"]."', '".$POST["metodoPago"]."', '".$POST["obser"]."', '".$comprobante."', '".$POST["notas"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]});");
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments (responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, registration_date, institucion, year)VALUES('{$_SESSION["id"]}', '".$POST["cliente"]."', '".$POST["codigoUnico"]."', '".$POST["tipoTransaccion"]."', '".$POST["metodoPago"]."', '".$POST["obser"]."', '".$comprobante."', '".$POST["notas"]."', '".$fechaRegistro."', {$config['conf_id_institucion']}, {$_SESSION["bd"]});");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -409,26 +425,43 @@ class Movimientos {
     {
         $resultado = [];
         try {
-            $consulta = mysqli_query($conexion, "SELECT pay.id, pay.registration_date, pay.responsible_user, pay.invoiced, pay.cod_payment, pay.payment_method, pay.voucher,
-            uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2,
-            pi.invoiced as numeroFactura, pi.payment as valorAbono
+            // Consulta mejorada para traer todos los datos del abono
+            $consulta = mysqli_query($conexion, "SELECT 
+            pay.id, pay.registration_date, pay.responsible_user, pay.invoiced, pay.cod_payment, 
+            pay.payment_method, pay.voucher, pay.type_payments, pay.observation, pay.note,
+            uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, uss.uss_id, uss.uss_tipo,
+            pes.pes_nombre,
+            cli.uss_nombre AS cli_nombre, cli.uss_nombre2 AS cli_nombre2, cli.uss_apellido1 AS cli_apellido1, cli.uss_apellido2 AS cli_apellido2,
+            cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_documento AS cli_documento,
+            cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil
             FROM ".BD_FINANCIERA.".payments pay
-            INNER JOIN ".BD_GENERAL.".usuarios uss 
-                ON uss_id=responsible_user 
+            LEFT JOIN ".BD_GENERAL.".usuarios uss 
+                ON uss.uss_id=pay.responsible_user 
                 AND uss.institucion={$config['conf_id_institucion']} 
                 AND uss.year={$_SESSION["bd"]}
-            INNER JOIN ".BD_FINANCIERA.".payments_invoiced pi 
-                ON pi.payments=pay.cod_payment
+            LEFT JOIN ".BD_ADMIN.".general_perfiles pes
+                ON pes.pes_id=uss.uss_tipo
+            LEFT JOIN ".BD_GENERAL.".usuarios cli
+                ON cli.uss_id=pay.invoiced
+                AND cli.institucion={$config['conf_id_institucion']}
+                AND cli.year={$_SESSION["bd"]}
+            LEFT JOIN ".BD_ADMIN.".general_perfiles pes_cli
+                ON pes_cli.pes_id=cli.uss_tipo
             WHERE 
-                is_deleted=0 
+                pay.is_deleted=0 
             AND pay.id='{$idAbono}'
             AND pay.institucion = {$config['conf_id_institucion']} 
             AND pay.year = {$_SESSION["bd"]}
+            LIMIT 1
             ");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        
+        $resultado = [];
+        if ($consulta && mysqli_num_rows($consulta) > 0) {
+            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        }
 
         return $resultado;
     }
@@ -463,8 +496,29 @@ class Movimientos {
             }
         }
 
+        // Preparar fecha si viene en el POST
+        $fechaActualizada = '';
+        if (!empty($POST["fecha"])) {
+            // Convertir datetime-local a formato MySQL
+            $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
+            if ($fecha !== false) {
+                $fechaActualizada = $fecha->format('Y-m-d H:i:s');
+            } else {
+                // Intentar otro formato si falla
+                $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
+                if ($fecha !== false) {
+                    $fechaActualizada = $fecha->format('Y-m-d H:i:s');
+                }
+            }
+        }
+        
         try {
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments SET invoiced='".$POST["cliente"]."', payment_method='".$POST["metodoPago"]."', observation='".$POST["obser"]."', note='".$POST["notas"]."' WHERE id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            $sqlUpdate = "UPDATE ".BD_FINANCIERA.".payments SET invoiced='".$POST["cliente"]."', payment_method='".$POST["metodoPago"]."', observation='".$POST["obser"]."', note='".$POST["notas"]."'";
+            if (!empty($fechaActualizada)) {
+                $sqlUpdate .= ", registration_date='".$fechaActualizada."'";
+            }
+            $sqlUpdate .= " WHERE id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}";
+            mysqli_query($conexion, $sqlUpdate);
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -933,14 +987,20 @@ class Movimientos {
     public static function listarConceptos (
         mysqli  $conexion, 
         array   $config, 
-        string   $codAbono
+        ?string   $codAbono = null
     )
     {
+        // Si no hay código de abono, retornar resultado vacío
+        if (empty($codAbono)) {
+            return false;
+        }
+        
         try {
             $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".payments_invoiced
             WHERE payments='{$codAbono}' AND institucion = {$config['conf_id_institucion']} AND year = {$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            return false;
         }
 
         return $consulta;

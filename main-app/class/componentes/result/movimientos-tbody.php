@@ -38,9 +38,9 @@ foreach ($data["data"] as $resultado) {
 			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($usuario) ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($resultado['fcu_fecha']); ?>" style="text-decoration: underline;"><?= $resultado['fcu_fecha']; ?></a>
 		</td>
 		<td><?= $resultado['fcu_detalle']; ?></td>
-		<td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-anulado="<?= $resultado['fcu_anulado'] ?>" data-total-neto="<?= $totalNeto ?>">$<?= !empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0 ?></td>
-		<td data-abonos="<?= $abonos ?>">$<?= !empty($abonos) ? number_format($abonos, 0, ",", ".") : 0 ?></td>
-		<td data-por-cobrar="<?= $porCobrar ?>">$<?= !empty($porCobrar) ? number_format($porCobrar, 0, ",", ".") : 0 ?></td>
+		<td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-anulado="<?= $resultado['fcu_anulado'] ?>" data-total-neto="<?= $totalNeto ?>">$<?= !empty($totalNeto) ? number_format((float)$totalNeto, 0, ",", ".") : 0 ?></td>
+		<td id="abonos<?= $resultado['fcu_id']; ?>" data-abonos="<?= $abonos ?>">$<?= !empty($abonos) ? number_format((float)$abonos, 0, ",", ".") : 0 ?></td>
+		<td id="porCobrar<?= $resultado['fcu_id']; ?>" data-por-cobrar="<?= $porCobrar ?>">$<?= !empty($porCobrar) ? number_format((float)$porCobrar, 0, ",", ".") : 0 ?></td>
 		<td>
 			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($usuario); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($resultado['fcu_tipo']); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: underline;"><?= $estadosCuentas[$resultado['fcu_tipo']]; ?></a>
 		</td>
@@ -49,13 +49,13 @@ foreach ($data["data"] as $resultado) {
 		</td>
 		<td align="center" style="background-color:<?= $bgColorEstado; ?>; color: black;"><?= $estado ?></td>
 		<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
-			<td>
-				<div class="btn-group">
+			<td style="position: relative;">
+				<div class="btn-group" style="position: static;">
 					<button type="button" class="btn btn-primary"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></button>
-					<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
+					<button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 						<i class="fa fa-angle-down"></i>
 					</button>
-					<ul class="dropdown-menu" role="menu" style="z-index: 10000;">
+					<ul class="dropdown-menu" role="menu" style="z-index: 999999 !important;">
 						<?php if (Modulos::validarSubRol(['DT0128'])) { ?>
 							<li><a href="movimientos-editar.php?id=<?= base64_encode($resultado['fcu_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?></a></li>
 						<?php } ?>

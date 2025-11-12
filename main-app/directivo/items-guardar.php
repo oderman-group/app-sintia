@@ -22,5 +22,14 @@
 	$codigo=Movimientos::guardarItems($conexion, $config, $_POST);
 	
 	require_once(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+	
+	// Si es una petición AJAX, retornar JSON
+	if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+		header('Content-Type: application/json');
+		echo json_encode(['success' => true, 'id' => $codigo, 'message' => 'Item creado correctamente']);
+		exit();
+	}
+	
+	// Si no es AJAX, redirigir normalmente
 	echo '<script type="text/javascript">window.location.href="items.php?success=SC_DT_1&id='.base64_encode($codigo).'";</script>';
 	exit();
