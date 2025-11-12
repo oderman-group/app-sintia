@@ -312,11 +312,11 @@ if($config['conf_doble_buscador'] == 1) {
                                         } ?>
                                     
                                     <?php if($totalCargas > 0 && Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
-                                        <button type="button" id="moverCargasBtn" class="btn btn-info" disabled>
+                                        <button type="button" id="moverCargasBtn" class="btn btn-info" style="display:none;">
                                             <i class="fa fa-arrows-alt"></i> Mover Seleccionadas
                                         </button>
                                         
-                                        <button type="button" id="editarMasivoBtn" class="btn btn-warning" disabled>
+                                        <button type="button" id="editarMasivoBtn" class="btn btn-warning" style="display:none;">
                                             <i class="fa fa-edit"></i> Editar Seleccionadas
                                         </button>
                                     <?php } ?>
@@ -913,8 +913,14 @@ if($config['conf_doble_buscador'] == 1) {
 
 		function toggleActionButtons() {
 			var hasSelection = selectedCargas.length > 0;
-			$('#moverCargasBtn').prop('disabled', !hasSelection);
-			$('#editarMasivoBtn').prop('disabled', !hasSelection);
+			// Mostrar/ocultar los botones en lugar de deshabilitarlos
+			if (hasSelection) {
+				$('#moverCargasBtn').fadeIn(200);
+				$('#editarMasivoBtn').fadeIn(200);
+			} else {
+				$('#moverCargasBtn').fadeOut(200);
+				$('#editarMasivoBtn').fadeOut(200);
+			}
 		}
 
 		$('#moverCargasBtn').on('click', function() {
