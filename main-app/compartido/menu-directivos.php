@@ -410,7 +410,7 @@
 										<li class="nav-item"><a href="dev-errores-sistema.php" class="nav-link"> <span class="title"><?=$frases[398][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<li class="nav-item"><a href="dev-seguridad-dashboard.php" class="nav-link"> <span class="title"><i class="fas fa-shield-alt"></i> Rate Limiting</span></a></li>
 										<li class="nav-item"><a href="dev-auditoria-dashboard.php" class="nav-link"> <span class="title"><i class="fas fa-clipboard-list"></i> Auditoría</span></a></li>
-										<li class="nav-item"><a href="dev-console.php" class="nav-link"> <span class="title">Console</span></a></li>
+										<li class="nav-item"><a href="dev-console-v2.php" class="nav-link"> <span class="title"><i class="fas fa-terminal"></i> Console</span></a></li>
 										<li class="nav-item"><a href="dev-historial-acciones.php" class="nav-link"> <span class="title"><?=$frases[400][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<li class="nav-item"><a href="dev-instituciones.php" class="nav-link"> <span class="title"><?=$frases[399][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<li  <?php agregarClass(MENU,["DV0038","DV0039"]) ?>><a href="dev-solicitudes-cancelacion.php" class="nav-link"> <span class="title"><?=$frases[401][$datosUsuarioActual['uss_idioma']];?></span></a></li>
