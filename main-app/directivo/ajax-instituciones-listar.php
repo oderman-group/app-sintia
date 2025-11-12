@@ -33,11 +33,13 @@ if (!empty($plan) && $plan !== 'todos') {
     $filtros[] = "ins_id_plan = '$plan'";
 }
 
-if (!empty($estado) && $estado !== 'todos') {
+// Usar isset en lugar de !empty para permitir el valor "0" (Inactivo)
+if (isset($estado) && $estado !== '' && $estado !== 'todos') {
     $filtros[] = "ins_estado = '$estado'";
 }
 
-if (!empty($bloqueado) && $bloqueado !== 'todos') {
+// Usar isset en lugar de !empty para permitir el valor "0" (No bloqueado)
+if (isset($bloqueado) && $bloqueado !== '' && $bloqueado !== 'todos') {
     $filtros[] = "ins_bloqueada = '$bloqueado'";
 }
 
