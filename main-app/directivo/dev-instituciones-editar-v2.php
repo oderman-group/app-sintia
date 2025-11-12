@@ -588,6 +588,39 @@ input:checked + .toggle-slider:before {
 .success-alert .config-alert-icon {
     color: #10b981;
 }
+
+/* Estilos para Tabs */
+.nav-tabs .nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #667eea !important;
+    border-bottom-color: #667eea !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: #667eea !important;
+    border-bottom: 3px solid #667eea !important;
+    font-weight: 700 !important;
+}
+
+/* Estilos para formulario */
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
 </style>
 
 </head>
@@ -655,68 +688,35 @@ input:checked + .toggle-slider:before {
                     </div>
                 </div>
 
-                <!-- Información de la Institución -->
+                <!-- Acciones Rápidas -->
                 <div class="row" style="margin-bottom: 20px;">
                     <div class="col-md-12">
-                        <div style="background: white; border-radius: 12px; padding: 25px; box-shadow: 0 3px 10px rgba(0,0,0,0.05);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h4 style="margin: 0; color: #667eea;">
-                                    <i class="fas fa-info-circle"></i> Información de la Institución
-                                </h4>
-                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <a href="auto-login-dev.php?user=<?=base64_encode(1);?>&idInstitucion=<?=base64_encode($datosInstitucion['ins_id']);?>&bd=<?=base64_encode($datosInstitucion['ins_bd']);?>&yearDefault=<?=base64_encode($yearActual);?>" 
-                                       class="btn btn-sm" 
-                                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
-                                       title="Iniciar sesión automáticamente en esta institución">
-                                        <i class="fas fa-sign-in-alt"></i> Autologin
-                                    </a>
-                                    <button 
-                                       onclick="enviarCorreoBienvenida()" 
-                                       class="btn btn-sm" 
-                                       style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"
-                                       title="Enviar correo de bienvenida al contacto principal">
-                                        <i class="fas fa-envelope"></i> Enviar Bienvenida
-                                    </button>
-                                    <a href="configuracion-sistema.php?year=<?=base64_encode($yearActual)?>&id=<?=base64_encode($datosInstitucion['ins_id'])?>" 
-                                       class="btn btn-sm" 
-                                       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
-                                       title="Editar configuración del sistema">
-                                        <i class="fas fa-cog"></i> Config. Sistema
-                                    </a>
-                                    <a href="configuracion-institucion.php" 
-                                       class="btn btn-sm" 
-                                       style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;"
-                                       title="Editar información institucional">
-                                        <i class="fas fa-building"></i> Config. Institución
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <strong>ID:</strong> <span id="infoId"><?= $datosInstitucion['ins_id']; ?></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>NIT:</strong> <span id="infoNit"><?= $datosInstitucion['ins_nit']; ?></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>BD:</strong> <span id="infoBd"><?= $datosInstitucion['ins_bd']; ?></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>Estado:</strong> 
-                                    <span id="infoEstado" class="badge" style="background: <?= ($datosInstitucion['ins_estado'] == 1) ? '#38ef7d' : '#f45c43'; ?>;">
-                                        <?= ($datosInstitucion['ins_estado'] == 1) ? 'Activa' : 'Inactiva'; ?>
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <?php if ($tieneGeneralInfo && $tieneConfiguracion): ?>
-                            <div style="margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 8px; border-left: 4px solid #10b981;">
-                                <span style="color: #065f46; font-weight: 600;">
-                                    <i class="fas fa-check-circle"></i>
-                                    Configuración completa para el año <?=$yearActual?>
-                                </span>
-                            </div>
-                            <?php endif; ?>
+                        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                            <a href="auto-login-dev.php?user=<?=base64_encode(1);?>&idInstitucion=<?=base64_encode($datosInstitucion['ins_id']);?>&bd=<?=base64_encode($datosInstitucion['ins_bd']);?>&yearDefault=<?=base64_encode($yearActual);?>" 
+                               class="btn btn-sm" 
+                               style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"
+                               title="Iniciar sesión automáticamente en esta institución">
+                                <i class="fas fa-sign-in-alt"></i> Autologin
+                            </a>
+                            <button 
+                               onclick="enviarCorreoBienvenida()" 
+                               class="btn btn-sm" 
+                               style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;"
+                               title="Enviar correo de bienvenida al contacto principal">
+                                <i class="fas fa-envelope"></i> Enviar Bienvenida
+                            </button>
+                            <a href="configuracion-sistema.php?year=<?=base64_encode($yearActual)?>&id=<?=base64_encode($datosInstitucion['ins_id'])?>" 
+                               class="btn btn-sm" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"
+                               title="Editar configuración del sistema">
+                                <i class="fas fa-cog"></i> Config. Sistema
+                            </a>
+                            <a href="configuracion-institucion.php" 
+                               class="btn btn-sm" 
+                               style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"
+                               title="Editar información institucional">
+                                <i class="fas fa-building"></i> Config. Institución
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -775,8 +775,31 @@ input:checked + .toggle-slider:before {
                 </div>
                 <?php endif; ?>
 
-                <!-- Buscador y Filtros -->
-                <div class="buscador-modulos">
+                <!-- Sistema de Tabs -->
+                <div class="card card-topline-purple" style="border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                    <div class="card-body" style="padding: 0;">
+                        <!-- Nav Tabs -->
+                        <ul class="nav nav-tabs" role="tablist" style="border-bottom: 2px solid #e8ecf1; padding: 20px 20px 0 20px; margin: 0;">
+                            <li class="nav-item" style="margin-right: 10px;">
+                                <a class="nav-link active" data-toggle="tab" href="#tab_modulos" role="tab" 
+                                   style="padding: 12px 24px; border: none; border-bottom: 3px solid transparent; background: transparent; color: #666; font-weight: 600; transition: all 0.3s;">
+                                    <i class="fas fa-puzzle-piece"></i> Módulos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tab_datos" role="tab" 
+                                   style="padding: 12px 24px; border: none; border-bottom: 3px solid transparent; background: transparent; color: #666; font-weight: 600; transition: all 0.3s;">
+                                    <i class="fas fa-edit"></i> Datos de la Institución
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" style="padding: 30px;">
+                            <!-- TAB 1: MÓDULOS -->
+                            <div class="tab-pane fade show active" id="tab_modulos" role="tabpanel">
+                                <!-- Buscador y Filtros -->
+                                <div class="buscador-modulos">
                     <div style="position: relative;">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" id="buscarModulo" placeholder="Buscar módulos por nombre o ID..." autocomplete="off">
@@ -839,11 +862,236 @@ input:checked + .toggle-slider:before {
                     <?php } ?>
                 </div>
 
-                <div class="no-results" id="noResults" style="display: none;">
-                    <i class="fas fa-search"></i>
-                    <h3>No se encontraron módulos</h3>
-                    <p>Intenta con otros términos de búsqueda</p>
+                                <div class="no-results" id="noResults" style="display: none;">
+                                    <i class="fas fa-search"></i>
+                                    <h3>No se encontraron módulos</h3>
+                                    <p>Intenta con otros términos de búsqueda</p>
+                                </div>
+                            </div>
+                            <!-- FIN TAB MÓDULOS -->
+
+                            <!-- TAB 2: DATOS DE LA INSTITUCIÓN -->
+                            <div class="tab-pane fade" id="tab_datos" role="tabpanel">
+                                <form id="formDatosInstitucion">
+                                    <input type="hidden" name="ins_id" id="ins_id" value="<?= $datosInstitucion['ins_id']; ?>">
+                                    
+                                    <!-- Información Básica -->
+                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin-bottom: 25px;">
+                                        <h4 style="color: white; margin: 0; font-weight: 600;">
+                                            <i class="fas fa-info-circle"></i> Información Básica
+                                        </h4>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-building"></i> Nombre de la Institución *</label>
+                                            <input type="text" class="form-control" name="ins_nombre" id="ins_nombre" value="<?= $datosInstitucion['ins_nombre']; ?>" required>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label"><i class="fas fa-tag"></i> Siglas *</label>
+                                            <input type="text" class="form-control" name="ins_siglas" id="ins_siglas" value="<?= $datosInstitucion['ins_siglas']; ?>" required>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label"><i class="fas fa-id-card"></i> NIT</label>
+                                            <input type="text" class="form-control" name="ins_nit" id="ins_nit" value="<?= $datosInstitucion['ins_nit']; ?>">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-calendar"></i> Fecha de Inicio</label>
+                                            <?php
+                                            // Extraer solo la fecha (YYYY-MM-DD) del datetime
+                                            $fechaInicio = '';
+                                            if (!empty($datosInstitucion['ins_fecha_inicio'])) {
+                                                $fechaInicio = date('Y-m-d', strtotime($datosInstitucion['ins_fecha_inicio']));
+                                            }
+                                            ?>
+                                            <input type="date" class="form-control" name="ins_fecha_inicio" id="ins_fecha_inicio" value="<?= $fechaInicio; ?>">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-calendar-alt"></i> Fecha de Renovación</label>
+                                            <?php
+                                            // Extraer solo la fecha (YYYY-MM-DD) del datetime
+                                            $fechaRenovacion = '';
+                                            if (!empty($datosInstitucion['ins_fecha_renovacion'])) {
+                                                $fechaRenovacion = date('Y-m-d', strtotime($datosInstitucion['ins_fecha_renovacion']));
+                                            }
+                                            ?>
+                                            <input type="date" class="form-control" name="ins_fecha_renovacion" id="ins_fecha_renovacion" value="<?= $fechaRenovacion; ?>">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-database"></i> Base de Datos</label>
+                                            <input type="text" class="form-control" name="ins_bd" id="ins_bd" value="<?= $datosInstitucion['ins_bd']; ?>" readonly style="background-color: #f5f7fa;">
+                                            <small class="text-muted">Este campo no se puede modificar</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Información de Contacto -->
+                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin: 30px 0 25px 0;">
+                                        <h4 style="color: white; margin: 0; font-weight: 600;">
+                                            <i class="fas fa-address-book"></i> Información de Contacto
+                                        </h4>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-user"></i> Contacto Principal *</label>
+                                            <input type="text" class="form-control" name="ins_contacto_principal" id="ins_contacto_principal" value="<?= $datosInstitucion['ins_contacto_principal']; ?>" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-briefcase"></i> Cargo del Contacto</label>
+                                            <input type="text" class="form-control" name="ins_cargo_contacto" id="ins_cargo_contacto" value="<?= $datosInstitucion['ins_cargo_contacto']; ?>">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-phone"></i> Teléfono Principal</label>
+                                            <input type="tel" class="form-control" name="ins_telefono_principal" id="ins_telefono_principal" value="<?= $datosInstitucion['ins_telefono_principal']; ?>">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-mobile-alt"></i> Celular de Contacto</label>
+                                            <input type="tel" class="form-control" name="ins_celular_contacto" id="ins_celular_contacto" value="<?= $datosInstitucion['ins_celular_contacto']; ?>">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-map-marker-alt"></i> Ciudad</label>
+                                            <input type="text" class="form-control" name="ins_ciudad" id="ins_ciudad" value="<?= $datosInstitucion['ins_ciudad']; ?>">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-envelope"></i> Email de Contacto</label>
+                                            <input type="email" class="form-control" name="ins_email_contacto" id="ins_email_contacto" value="<?= $datosInstitucion['ins_email_contacto']; ?>">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-at"></i> Email Institucional</label>
+                                            <input type="email" class="form-control" name="ins_email_institucion" id="ins_email_institucion" value="<?= $datosInstitucion['ins_email_institucion']; ?>">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label"><i class="fas fa-link"></i> URL de Acceso</label>
+                                            <input type="url" class="form-control" name="ins_url_acceso" id="ins_url_acceso" value="<?= $datosInstitucion['ins_url_acceso']; ?>" placeholder="https://ejemplo.sintia.com">
+                                        </div>
+                                    </div>
+
+                                    <!-- Configuración del Plan -->
+                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin: 30px 0 25px 0;">
+                                        <h4 style="color: white; margin: 0; font-weight: 600;">
+                                            <i class="fas fa-cog"></i> Configuración y Plan
+                                        </h4>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-certificate"></i> Plan</label>
+                                            <select class="form-control" name="ins_id_plan" id="ins_id_plan">
+                                                <option value="">Sin plan</option>
+                                                <?php
+                                                try{
+                                                    $planesQuery = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".planes_sintia WHERE plns_tipo='".PLANES."' ORDER BY plns_nombre");
+                                                    while ($plan = mysqli_fetch_array($planesQuery, MYSQLI_BOTH)) {
+                                                        $selected = ($plan['plns_id'] == $datosInstitucion['ins_id_plan']) ? 'selected' : '';
+                                                        echo '<option value="'.$plan['plns_id'].'" '.$selected.'>'.$plan['plns_nombre'].'</option>';
+                                                    }
+                                                } catch (Exception $e) {
+                                                    echo "<!-- Error cargando planes -->";
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-calendar-check"></i> Año por Defecto</label>
+                                            <input type="number" class="form-control" name="ins_year_default" id="ins_year_default" value="<?= $datosInstitucion['ins_year_default']; ?>" min="2020" max="2050">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-toggle-on"></i> Estado</label>
+                                            <select class="form-control" name="ins_estado" id="ins_estado">
+                                                <option value="1" <?= ($datosInstitucion['ins_estado'] == 1) ? 'selected' : ''; ?>>Activa</option>
+                                                <option value="0" <?= ($datosInstitucion['ins_estado'] == 0) ? 'selected' : ''; ?>>Inactiva</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-lock"></i> Bloqueada</label>
+                                            <select class="form-control" name="ins_bloqueada" id="ins_bloqueada">
+                                                <option value="0" <?= ($datosInstitucion['ins_bloqueada'] == 0) ? 'selected' : ''; ?>>No</option>
+                                                <option value="1" <?= ($datosInstitucion['ins_bloqueada'] == 1) ? 'selected' : ''; ?>>Sí</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8 mb-3">
+                                            <label class="form-label"><i class="fas fa-calendar-plus"></i> Años Disponibles</label>
+                                            <input type="text" class="form-control" name="ins_years" id="ins_years" value="<?= $datosInstitucion['ins_years']; ?>" placeholder="2023,2024,2025">
+                                            <small class="text-muted">Separados por comas (ej: 2023,2024,2025)</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label"><i class="fas fa-bullhorn"></i> ¿Cómo se enteró de nosotros?</label>
+                                            <input type="text" class="form-control" name="ins_medio_info" id="ins_medio_info" value="<?= $datosInstitucion['ins_medio_info']; ?>" placeholder="Redes sociales, recomendación, búsqueda web, etc.">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="ins_notificaciones_acudientes" id="ins_notificaciones_acudientes" value="1" <?= ($datosInstitucion['ins_notificaciones_acudientes'] == 1) ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="ins_notificaciones_acudientes">
+                                                    <i class="fas fa-bell"></i> Habilitar notificaciones a acudientes
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Información de Deuda (si aplica) -->
+                                    <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 10px; padding: 15px 20px; margin: 30px 0 25px 0;">
+                                        <h4 style="color: white; margin: 0; font-weight: 600;">
+                                            <i class="fas fa-dollar-sign"></i> Información de Deuda
+                                        </h4>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-exclamation-triangle"></i> ¿Tiene Deuda?</label>
+                                            <select class="form-control" name="ins_deuda" id="ins_deuda">
+                                                <option value="0" <?= ($datosInstitucion['ins_deuda'] == 0) ? 'selected' : ''; ?>>No</option>
+                                                <option value="1" <?= ($datosInstitucion['ins_deuda'] == 1) ? 'selected' : ''; ?>>Sí</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-money-bill-wave"></i> Valor de la Deuda</label>
+                                            <input type="number" class="form-control" name="ins_valor_deuda" id="ins_valor_deuda" value="<?= $datosInstitucion['ins_valor_deuda']; ?>" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-file-invoice-dollar"></i> Concepto de la Deuda</label>
+                                            <input type="text" class="form-control" name="ins_concepto_deuda" id="ins_concepto_deuda" value="<?= $datosInstitucion['ins_concepto_deuda']; ?>" placeholder="Descripción del concepto">
+                                        </div>
+                                    </div>
+
+                                    <!-- Botones de Acción -->
+                                    <div class="row mt-4">
+                                        <div class="col-md-12 text-right">
+                                            <button type="button" class="btn btn-secondary" onclick="resetFormulario()">
+                                                <i class="fas fa-undo"></i> Restablecer
+                                            </button>
+                                            <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 30px;">
+                                                <i class="fas fa-save"></i> Guardar Cambios
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <!-- FIN TAB DATOS -->
+                        </div>
+                    </div>
                 </div>
+                <!-- FIN SISTEMA DE TABS -->
 
             </div>
         </div>
@@ -989,6 +1237,108 @@ function enviarCorreoBienvenida() {
         console.error('Error:', error);
     });
 }
+
+// Función para resetear el formulario
+function resetFormulario() {
+    if (confirm('¿Estás seguro de que deseas restablecer el formulario a los valores originales?')) {
+        document.getElementById('formDatosInstitucion').reset();
+        // Recargar la página para obtener los valores originales
+        location.reload();
+    }
+}
+
+// Manejo del formulario de datos de institución
+$(document).ready(function() {
+    $('#formDatosInstitucion').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar campos requeridos
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            mostrarNotificacion('Por favor completa todos los campos requeridos', 'error');
+            return false;
+        }
+        
+        // Obtener datos del formulario
+        const formData = new FormData(this);
+        
+        // Convertir FormData a objeto
+        const datos = {};
+        formData.forEach((value, key) => {
+            // Manejar checkbox de notificaciones
+            if (key === 'ins_notificaciones_acudientes') {
+                datos[key] = value;
+            } else {
+                datos[key] = value;
+            }
+        });
+        
+        // Si el checkbox no está marcado, agregar valor 0
+        if (!formData.has('ins_notificaciones_acudientes')) {
+            datos['ins_notificaciones_acudientes'] = 0;
+        }
+        
+        // Mostrar loading
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        // Enviar datos por AJAX
+        $.ajax({
+            url: 'dev-instituciones-guardar-datos.php',
+            type: 'POST',
+            data: datos,
+            dataType: 'json',
+            success: function(response) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.log('Respuesta del servidor:', response);
+                
+                if (response.success) {
+                    mostrarNotificacion(response.message || 'Datos actualizados correctamente', 'success');
+                    
+                    // Recargar después de 1.5 segundos para reflejar cambios
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    // Mostrar mensaje de error detallado
+                    let mensajeError = response.message || 'Error al actualizar los datos';
+                    
+                    if (response.error_detallado) {
+                        mensajeError += '\n\nDetalle: ' + response.error_detallado;
+                    }
+                    
+                    if (response.archivo && response.linea) {
+                        mensajeError += '\n\nArchivo: ' + response.archivo + ' (línea ' + response.linea + ')';
+                    }
+                    
+                    console.error('Error del servidor:', response);
+                    mostrarNotificacion(mensajeError, 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error('Error AJAX completo:', {xhr: xhr, status: status, error: error});
+                console.error('Respuesta del servidor:', xhr.responseText);
+                
+                // Intentar parsear la respuesta como JSON
+                let mensajeError = 'Error de conexión al guardar los datos';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        mensajeError = response.message;
+                    }
+                } catch (e) {
+                    // Si no es JSON, mostrar el texto plano
+                    if (xhr.responseText) {
+                        mensajeError += '\n\nRespuesta del servidor: ' + xhr.responseText.substring(0, 200);
+                    }
+                }
+                
+                mensajeError += '\n\nCódigo de estado HTTP: ' + xhr.status;
+                mostrarNotificacion(mensajeError, 'error');
+            }
+        });
+    });
+});
 </script>
 
 <script src="../js/instituciones-modulos-v2.js"></script>
