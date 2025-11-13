@@ -110,16 +110,16 @@ try {
         if (!empty($modulosConfigurados['financiero'])) {
             try {
                 // Verificar si ya existe configuración
-                $consultaConfig = mysqli_query($conexion, "SELECT id FROM {$baseDatosFinanciera}.configuration 
+                $consultaConfig = mysqli_query($conexion, "SELECT id FROM ".BD_FINANCIERA.".configuration 
                     WHERE institucion = {$institucionId} AND year = {$_SESSION["bd"]}");
-                
-                if (mysqli_num_rows($consultaConfig) == 0) {
-                    // Insertar configuración inicial para el módulo financiero
-                    $sql = "INSERT INTO {$baseDatosFinanciera}.configuration(
+                    if (mysqli_num_rows($consultaConfig) == 0) {
+                        // Insertar configuración inicial para el módulo financiero
+
+                    $sql = "INSERT INTO ".BD_FINANCIERA.".configuration(
                         consecutive_start,
                         invoice_footer,
                         institucion,
-                        year
+                        `year`
                     ) VALUES ('1', 'Gracias por su preferencia', ?, ?)";
                     
                     $stmt = mysqli_prepare($conexion, $sql);
