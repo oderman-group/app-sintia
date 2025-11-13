@@ -156,6 +156,11 @@ $urlOcultarAnuladas .= http_build_query($params);
 
 $colorPrimario = isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea';
 $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764ba2';
+$urlReporteMorosos = 'movimientos-reporte-morosos.php';
+$queryActual = $_GET;
+if (!empty($queryActual)) {
+    $urlReporteMorosos .= '?' . http_build_query($queryActual);
+}
 ?>
 <div class="movimientos-actions-bar" style="margin: 12px 0; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
 	<?php if ($mostrarAnuladas) { ?>
@@ -171,6 +176,16 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
 	<?php if (Modulos::validarPermisoEdicion()) { ?>
 	<button class="btn btn-warning btn-sm" onclick="bloquearUsuariosPendientes()" title="Bloquear usuarios con saldo pendiente">
 		<i class="fa fa-user-slash"></i> Bloquear usuarios con saldo pendiente
+	</button>
+	<?php } ?>
+
+	<a href="<?= $urlReporteMorosos ?>" target="_blank" class="btn btn-success btn-sm" title="Imprimir informe de morosos">
+		<i class="fa fa-print"></i> Informe morosos
+	</a>
+
+	<?php if (Modulos::validarPermisoEdicion()) { ?>
+	<button class="btn btn-primary btn-sm" onclick="recordarSaldoSeleccionados()" title="Recordar saldo pendiente por correo">
+		<i class="fa fa-envelope"></i> Recordar saldo
 	</button>
 	<?php } ?>
 

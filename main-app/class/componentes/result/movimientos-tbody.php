@@ -30,6 +30,7 @@ foreach ($data["data"] as $resultado) {
 	$abonos       = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
 	$porCobrar    = $totalNeto - $abonos;
 	$usuario      = UsuariosPadre::nombreCompletoDelUsuario($resultado);
+	$correoUsuario = trim($resultado['uss_email'] ?? '');
 	$esFacturaCompra = ((int)$resultado['fcu_tipo'] === 2);
 	$totalFormateado = number_format((float)$totalNeto, 0, ",", ".");
 	$prefijoTotal = '$';
@@ -46,9 +47,20 @@ foreach ($data["data"] as $resultado) {
 	$tipoFacturaTexto = $estadosCuentas[$resultado['fcu_tipo']] ?? 'N/D';
 	$claseBadgeTipo = ($resultado['fcu_tipo'] == 1) ? 'badge badge-tipo-venta' : 'badge badge-tipo-compra';
 	$puedeAgregarAbono = ($resultado['fcu_anulado'] != 1 && $saldoPendiente > 0);
+	$puedeRecordar = ($resultado['fcu_tipo'] == 1 && $resultado['fcu_anulado'] != 1 && $saldoPendiente > 0);
 ?>
 	<tr id="reg<?= $resultado['fcu_id']; ?>" style="background-color:<?= $bgColor; ?>;" class="movimiento-row" data-factura-id="<?= $resultado['fcu_id']; ?>">
 		<td><i class="fa fa-chevron-right detalle-movimiento-btn" data-id="<?= $resultado['fcu_id']; ?>"></i></td>
+		<td align="center">
+			<input type="checkbox"
+				class="factura-checkbox"
+				data-factura="<?= $resultado['fcu_id']; ?>"
+				data-consecutivo="<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>"
+				data-usuario="<?= htmlspecialchars($usuario, ENT_QUOTES); ?>"
+				data-email="<?= htmlspecialchars($correoUsuario, ENT_QUOTES); ?>"
+				data-saldo="<?= $saldoPendiente; ?>"
+				<?= $puedeRecordar ? '' : 'disabled'; ?>>
+		</td>
 		<td><?= $contReg; ?></td>
 		<td><?= $resultado['id_nuevo_movimientos']; ?></td>
 		<td>
@@ -64,7 +76,7 @@ foreach ($data["data"] as $resultado) {
 			</a>
 		</td>
 		<td>
-			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($resultado['uss_id']); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: underline;"><?= UsuariosPadre::nombreCompletoDelUsuario($resultado); ?></a>
+			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($resultado['uss_id']); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: underline;"><?= $usuario; ?></a>
 		</td>
 		<td align="center" style="background-color:<?= $bgColorEstado; ?>; color: black;"><?= $estado ?></td>
 		<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
@@ -85,6 +97,9 @@ foreach ($data["data"] as $resultado) {
 						<li><a href="javascript:void(0);" onClick="sincronizarAbonos('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>')">Sync abonos</a></li>
 						<?php if ($puedeAgregarAbono) { ?>
 							<li><a href="javascript:void(0);" onClick="abrirModalAbonoRapido('<?= $resultado['fcu_id']; ?>', '<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>', '<?= $saldoPendienteFormateado; ?>')">Agregar abono</a></li>
+						<?php } ?>
+						<?php if ($puedeRecordar) { ?>
+							<li><a href="javascript:void(0);" onClick="enviarRecordatorioFactura('<?= $resultado['fcu_id']; ?>')">Enviar recordatorio</a></li>
 						<?php } ?>
 						<?php if ($resultado['fcu_tipo'] == 1 && $resultado['fcu_anulado'] != 1 && $saldoPendiente > 0) { ?>
 							<li><a href="javascript:void(0);" onClick="bloquearUsuarioFactura('<?= $resultado['uss_id']; ?>','<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>','<?= $saldoPendienteFormateado; ?>')">Bloquear usuario</a></li>
