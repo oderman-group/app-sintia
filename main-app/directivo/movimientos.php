@@ -179,6 +179,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 									<thead>
 										<tr>
 											<th style="width: 30px;"></th>
+											<th style="width: 40px;"><input type="checkbox" id="selectAllFacturas" title="Seleccionar todas las facturas habilitadas"></th>
 											<th>#</th>
 											<th><?= $frases[49][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<th>Fecha</th>
@@ -611,20 +612,44 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		}
 
 		var totalColumnas = $('#tablaItems thead th').length;
-		var columnDefs = [{ orderable: false, searchable: false, targets: 0 }];
+		var columnDefs = [
+			{ orderable: false, searchable: false, targets: 0 },
+			{ orderable: false, searchable: false, targets: 1 }
+		];
 		if (totalColumnas > 1) {
 			columnDefs.push({ orderable: false, searchable: false, targets: totalColumnas - 1 });
 		}
 
 		var tablaMovimientos = $('#tablaItems').DataTable({
 			columnDefs: columnDefs,
-			order: [[1, 'desc']]
+			order: [[3, 'desc']]
 		});
 
 		totalizarMovimientos();
 	tablaMovimientos.on('draw', function(){
 		totalizarMovimientos();
+		actualizarEstadoSeleccionGeneral();
 	});
+
+		function actualizarEstadoSeleccionGeneral(){
+			var $checkboxes = $('#tablaItems tbody .factura-checkbox:not(:disabled)');
+			if ($checkboxes.length === 0) {
+				$('#selectAllFacturas').prop({ checked: false, indeterminate: false });
+				return;
+			}
+			var seleccionadas = $checkboxes.filter(':checked').length;
+			$('#selectAllFacturas').prop('checked', seleccionadas === $checkboxes.length);
+			$('#selectAllFacturas').prop('indeterminate', seleccionadas > 0 && seleccionadas < $checkboxes.length);
+		}
+
+		$('#selectAllFacturas').on('change', function(){
+			var estado = $(this).is(':checked');
+			$('#tablaItems tbody .factura-checkbox:not(:disabled)').prop('checked', estado);
+		});
+
+		$(document).on('change', '#tablaItems tbody .factura-checkbox', function(){
+			actualizarEstadoSeleccionGeneral();
+		});
 
 		$('#tablaItems tbody').on('click', '.detalle-movimiento-btn', function () {
 			var $btn = $(this);
@@ -649,13 +674,17 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 							row.child('<div class="detalle-factura-wrapper">No se encontraron detalles para esta factura.</div>').show();
 						}
 						totalizarMovimientos();
+						actualizarEstadoSeleccionGeneral();
 					})
 					.fail(function () {
 						row.child('<div class="detalle-factura-wrapper">Error al cargar los detalles. Intenta nuevamente.</div>').show();
 						totalizarMovimientos();
+						actualizarEstadoSeleccionGeneral();
 					});
 			}
 		});
+
+		actualizarEstadoSeleccionGeneral();
 	});
 
 	function sincronizarAbonos(idFactura, consecutivo){
@@ -851,6 +880,124 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 				hideAfter: 4000
 			});
 		});
+	}
+
+	function obtenerFacturasSeleccionadas(incluirTodas){
+		var facturas = [];
+		$('#tablaItems tbody tr').each(function(){
+			var $fila = $(this);
+			if ($fila.hasClass('child')) {
+				return;
+			}
+			var $checkbox = $fila.find('.factura-checkbox');
+			if ($checkbox.length === 0 || $checkbox.is(':disabled')) {
+				return;
+			}
+			if (!incluirTodas && !$checkbox.is(':checked')) {
+				return;
+			}
+			var facturaId = $checkbox.data('factura');
+			if (!facturaId) {
+				return;
+			}
+			facturas.push(facturaId);
+		});
+		return facturas;
+	}
+
+	function enviarRecordatoriosFacturas(ids){
+		if (!ids || !ids.length) {
+			$.toast({
+				heading: 'Sin facturas',
+				text: 'No hay facturas con saldo pendiente para enviar recordatorios.',
+				position: 'bottom-right',
+				icon: 'info',
+				hideAfter: 4000
+			});
+			return;
+		}
+
+		$('#gifCarga').show();
+		$.ajax({
+			url: 'ajax-recordatorio-facturas.php',
+			method: 'POST',
+			data: { facturas: ids },
+			dataType: 'json'
+		}).done(function(resp){
+			var mensaje = resp && resp.message ? resp.message : 'Se procesó la solicitud.';
+			var omitidasInfo = '';
+			if (resp && resp.detalle && resp.detalle.omitidas && resp.detalle.omitidas.length) {
+				var razones = resp.detalle.omitidas.map(function(item){
+					return (item.factura ? ('#' + item.factura + ': ') : '') + (item.razon || 'Omitida');
+				}).join('<br>- ');
+				omitidasInfo = '<br>Omitidas:<br>- ' + razones;
+			}
+
+			if(resp && resp.success){
+				$.toast({
+					heading: 'Recordatorios enviados',
+					text: mensaje + omitidasInfo,
+					position: 'bottom-right',
+					icon: 'success',
+					hideAfter: 6000
+				});
+			}else{
+				$.toast({
+					heading: 'Aviso',
+					text: mensaje + omitidasInfo,
+					position: 'bottom-right',
+					loader:false,
+					icon: 'warning',
+					hideAfter: 6000
+				});
+			}
+		}).fail(function(){
+			$.toast({
+				heading: 'Error',
+				text: 'Ocurrió un error al enviar los recordatorios.',
+				position: 'bottom-right',
+				icon: 'error',
+				hideAfter: 4000
+			});
+		}).always(function(){
+			$('#gifCarga').hide();
+		});
+	}
+
+	function enviarRecordatorioFactura(idFactura){
+		if(!idFactura){ return; }
+		if(!confirm('Se enviará un recordatorio de saldo para la factura seleccionada. ¿Deseas continuar?')){
+			return;
+		}
+		enviarRecordatoriosFacturas([idFactura]);
+	}
+
+	function recordarSaldoSeleccionados(){
+		var seleccionadas = obtenerFacturasSeleccionadas(false);
+		var mensajeConfirmacion = '';
+
+		if (seleccionadas.length === 0) {
+			seleccionadas = obtenerFacturasSeleccionadas(true);
+			if (seleccionadas.length === 0) {
+				$.toast({
+					heading: 'Sin facturas disponibles',
+					text: 'No hay facturas con saldo pendiente para enviar recordatorio.',
+					position: 'bottom-right',
+					icon: 'info',
+					hideAfter: 4000
+				});
+				return;
+			}
+			mensajeConfirmacion = 'No seleccionaste facturas. Se enviará recordatorio a ' + seleccionadas.length + ' factura(s) con saldo pendiente. ¿Deseas continuar?';
+		} else {
+			mensajeConfirmacion = 'Se enviará recordatorio a ' + seleccionadas.length + ' factura(s) seleccionada(s). ¿Deseas continuar?';
+		}
+
+		if(!confirm(mensajeConfirmacion)){
+			return;
+		}
+
+		enviarRecordatoriosFacturas(seleccionadas);
 	}
 
 	function bloquearUsuariosPendientes(){

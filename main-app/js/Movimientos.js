@@ -1053,18 +1053,16 @@ function totalizarMovimientos() {
         if (fila.classList.contains('child')) {
             continue;
         }
-        if (fila.cells.length < 8) {
-            continue;
-        }
 
-        var celdaTotal = fila.cells[5];
+        var celdaTotal = fila.querySelector('td[data-total-neto]');
         if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
 
         // Obtener el valor neto total del atributo de datos
         var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
         // Obtenga el valor total de abonos del atributo de datos
-        var celdaAbonos = fila.cells[6];
-        var celdaPorCobrar = fila.cells[7];
+        var celdaAbonos = fila.querySelector('td[data-abonos]');
+        var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
+        if (!celdaAbonos || !celdaPorCobrar) { continue; }
         var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
         // Validar si abonos es un número válido, establecer en 0 si NaN
         if (isNaN(abonos)) {
