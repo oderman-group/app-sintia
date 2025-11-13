@@ -69,6 +69,32 @@ $tieneGeneralInfo = false;
 $tieneConfiguracion = false;
 $yearActual = $datosInstitucion['ins_year_default'] ?? date('Y');
 
+// Información del contrato
+$contratoActual = $datosInstitucion['ins_contrato'] ?? '';
+$contratoExiste = false;
+$contratoRutaRelativa = '';
+$contratoTamano = '';
+$contratoFechaActualizacion = '';
+if (!empty($contratoActual)) {
+    $contratoRutaFisica = ROOT_PATH . "/files-general/contratos/" . $contratoActual;
+    if (file_exists($contratoRutaFisica)) {
+        $contratoExiste = true;
+        $contratoRutaRelativa = "../../files-general/contratos/" . $contratoActual;
+        $bytesContrato = @filesize($contratoRutaFisica);
+        if ($bytesContrato !== false) {
+            if ($bytesContrato >= 1048576) {
+                $contratoTamano = number_format($bytesContrato / 1048576, 2) . ' MB';
+            } else {
+                $contratoTamano = number_format(max($bytesContrato, 1) / 1024, 2) . ' KB';
+            }
+        }
+        $timestampContrato = @filemtime($contratoRutaFisica);
+        if ($timestampContrato !== false) {
+            $contratoFechaActualizacion = date('d/m/Y H:i', $timestampContrato);
+        }
+    }
+}
+
 if (!empty($datosInstitucion['ins_id'])) {
     // Verificar general_informacion
     try {
@@ -878,8 +904,9 @@ input:checked + .toggle-slider:before {
 
                             <!-- TAB 2: DATOS DE LA INSTITUCIÓN -->
                             <div class="tab-pane fade" id="tab_datos" role="tabpanel">
-                                <form id="formDatosInstitucion">
+                                <form id="formDatosInstitucion" enctype="multipart/form-data">
                                     <input type="hidden" name="ins_id" id="ins_id" value="<?= $datosInstitucion['ins_id']; ?>">
+                                    <input type="hidden" name="ins_contrato_actual" id="ins_contrato_actual" value="<?= htmlspecialchars($contratoActual); ?>">
                                     
                                     <!-- Información Básica -->
                                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin-bottom: 25px;">
@@ -981,6 +1008,58 @@ input:checked + .toggle-slider:before {
                                         <div class="col-md-12 mb-3">
                                             <label class="form-label"><i class="fas fa-link"></i> URL de Acceso</label>
                                             <input type="url" class="form-control" name="ins_url_acceso" id="ins_url_acceso" value="<?= $datosInstitucion['ins_url_acceso']; ?>" placeholder="https://ejemplo.sintia.com">
+                                        </div>
+                                    </div>
+
+                                    <!-- Gestión de Contrato -->
+                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 15px 20px; margin: 30px 0 25px 0;">
+                                        <h4 style="color: white; margin: 0; font-weight: 600;">
+                                            <i class="fas fa-file-contract"></i> Contrato de la Institución
+                                        </h4>
+                                    </div>
+
+                                    <div class="row align-items-stretch">
+                                        <div class="col-md-6 mb-3">
+                                            <?php if ($contratoExiste) { ?>
+                                                <div class="border rounded p-3 h-100" style="background: #f8fafc;">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">
+                                                            <i class="fas fa-file-pdf"></i>
+                                                        </div>
+                                                        <div class="ml-3">
+                                                            <h5 class="mb-1" style="font-weight: 600; color: #1f2937;">Contrato vigente</h5>
+                                                            <small class="text-muted">Última actualización: <?= !empty($contratoFechaActualizacion) ? $contratoFechaActualizacion : 'N/D'; ?></small>
+                                                        </div>
+                                                    </div>
+                                                    <p class="mb-2" style="color: #4b5563; word-break: break-all;">
+                                                        <strong>Archivo:</strong> <?= htmlspecialchars($contratoActual); ?><br>
+                                                        <strong>Tamaño:</strong> <?= !empty($contratoTamano) ? $contratoTamano : 'N/D'; ?>
+                                                    </p>
+                                                    <div class="d-flex flex-wrap">
+                                                        <a href="<?= $contratoRutaRelativa; ?>" target="_blank" class="btn btn-sm btn-primary mr-2 mb-2" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none;">
+                                                            <i class="fas fa-download"></i> Ver / Descargar
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-secondary mb-2" id="btnEnviarContrato" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
+                                                            <i class="fas fa-paper-plane"></i> Enviar por correo
+                                                        </button>
+                                                    </div>
+                                                    <small class="d-block mt-3 text-muted">Al adjuntar un nuevo archivo se reemplazará el contrato actual.</small>
+                                                </div>
+                                            <?php } else { ?>
+                                                <div class="alert alert-info h-100" role="alert" style="display: flex; flex-direction: column; justify-content: center;">
+                                                    <i class="fas fa-info-circle mb-2"></i>
+                                                    <strong>No hay un contrato cargado para esta institución.</strong>
+                                                    <span>Carga un archivo en el panel derecho para agregarlo.</span>
+                                                </div>
+                                            <?php } ?>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label"><i class="fas fa-upload"></i> Adjuntar/Actualizar contrato</label>
+                                            <input type="file" class="form-control" name="ins_contrato_archivo" id="ins_contrato_archivo" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                            <small class="text-muted d-block mt-2">
+                                                Formatos permitidos: PDF, DOC, DOCX, JPG, JPEG, PNG. Tamaño máximo 10 MB.<br>
+                                                El archivo se almacenará en <code>files-general/contratos</code>.
+                                            </small>
                                         </div>
                                     </div>
 
@@ -1138,6 +1217,44 @@ input:checked + .toggle-slider:before {
 <!-- Toast Notification -->
 <div class="toast-notification" id="toastNotification"></div>
 
+<!-- Modal Enviar Contrato -->
+<div class="modal fade" id="modalEnviarContrato" tabindex="-1" role="dialog" aria-labelledby="modalEnviarContratoLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form class="modal-content" id="formEnviarContrato">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEnviarContratoLabel"><i class="fas fa-paper-plane"></i> Enviar contrato por correo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <?php if ($contratoExiste) { ?>
+                <div class="alert alert-light border mb-3" role="alert" style="background: #f9fafb; color: #1f2937;">
+                    <i class="fas fa-file-contract"></i> Archivo a enviar: <strong><?= htmlspecialchars($contratoActual); ?></strong>
+                </div>
+                <?php } ?>
+                <div class="form-group">
+                    <label for="nombreDestinatarioContrato"><i class="fas fa-user"></i> Nombre del destinatario <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nombreDestinatarioContrato" name="nombreDestinatarioContrato" placeholder="Ej: Juan Pérez" required>
+                    <small class="form-text text-muted">Este nombre aparecerá en el saludo del correo.</small>
+                </div>
+                <div class="form-group mb-0">
+                    <label for="correoContrato"><i class="fas fa-envelope"></i> Correo destinatario <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="correoContrato" name="correoContrato" placeholder="correo@ejemplo.com" required>
+                    <small class="form-text text-muted">El contrato se enviará como adjunto al correo especificado.</small>
+                    <small class="text-danger d-none" id="errorCorreoContrato"></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                    <i class="fas fa-paper-plane"></i> Enviar contrato
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Scripts esenciales (igual que en otras páginas) -->
 <script src="../../config-general/assets/plugins/jquery/jquery.min.js"></script>
 <script src="../../config-general/assets/plugins/popper/popper.js"></script>
@@ -1159,6 +1276,8 @@ input:checked + .toggle-slider:before {
 // Configuración global
 const INSTITUCION_ACTUAL = <?= $datosInstitucion['ins_id']; ?>;
 const YEAR_ACTUAL = '<?= $yearActual; ?>';
+const CONTRATO_DISPONIBLE = <?= $contratoExiste ? 'true' : 'false'; ?>;
+const CONTRATO_NOMBRE = '<?= htmlspecialchars($contratoActual, ENT_QUOTES); ?>';
 
 // Función para crear registros de configuración faltantes
 function crearRegistrosConfiguracion() {
@@ -1499,59 +1618,87 @@ function renderizarEstadisticas(stats) {
     $('#contenedor_estadisticas').html(html);
 }
 
+// Función auxiliar para validar correo
+function validarEmailContrato(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
 // Manejo del formulario de datos de institución
 $(document).ready(function() {
     $('#formDatosInstitucion').on('submit', function(e) {
         e.preventDefault();
         
-        // Validar campos requeridos
         if (!this.checkValidity()) {
             this.classList.add('was-validated');
             mostrarNotificacion('Por favor completa todos los campos requeridos', 'error');
             return false;
         }
         
-        // Obtener datos del formulario
-        const formData = new FormData(this);
-        
-        // Convertir FormData a objeto
-        const datos = {};
-        formData.forEach((value, key) => {
-            // Manejar checkbox de notificaciones
-            if (key === 'ins_notificaciones_acudientes') {
-                datos[key] = value;
-            } else {
-                datos[key] = value;
-            }
-        });
-        
-        // Si el checkbox no está marcado, agregar valor 0
+        const formElement = this;
+        const formData = new FormData(formElement);
+
         if (!formData.has('ins_notificaciones_acudientes')) {
-            datos['ins_notificaciones_acudientes'] = 0;
+            formData.append('ins_notificaciones_acudientes', 0);
         }
         
-        // Mostrar loading
+        // Verificar si hay un archivo de contrato para subir
+        const archivoContrato = document.getElementById('ins_contrato_archivo');
+        const tieneArchivoNuevo = archivoContrato && archivoContrato.files && archivoContrato.files.length > 0;
+        
         document.getElementById('loadingOverlay').style.display = 'flex';
         
-        // Enviar datos por AJAX
+        // Guardar datos básicos primero
         $.ajax({
             url: 'dev-instituciones-guardar-datos.php',
             type: 'POST',
-            data: datos,
+            data: formData,
             dataType: 'json',
+            processData: false,
+            contentType: false,
             success: function(response) {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                console.log('Respuesta del servidor:', response);
-                
                 if (response.success) {
-                    mostrarNotificacion(response.message || 'Datos actualizados correctamente', 'success');
-                    
-                    // Recargar después de 1.5 segundos para reflejar cambios
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
+                    // Si hay un archivo de contrato nuevo, subirlo
+                    if (tieneArchivoNuevo) {
+                        const contratoFormData = new FormData();
+                        contratoFormData.append('ins_id', INSTITUCION_ACTUAL);
+                        contratoFormData.append('ins_contrato_archivo', archivoContrato.files[0]);
+                        
+                        $.ajax({
+                            url: 'dev-instituciones-guardar-contrato.php',
+                            type: 'POST',
+                            data: contratoFormData,
+                            dataType: 'json',
+                            processData: false,
+                            contentType: false,
+                            success: function(contratoResponse) {
+                                document.getElementById('loadingOverlay').style.display = 'none';
+                                if (contratoResponse.success) {
+                                    mostrarNotificacion('✅ Datos y contrato actualizados correctamente', 'success');
+                                } else {
+                                    mostrarNotificacion('✅ Datos actualizados. ⚠️ Error al subir contrato: ' + contratoResponse.message, 'warning');
+                                }
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1500);
+                            },
+                            error: function(xhr, status, error) {
+                                document.getElementById('loadingOverlay').style.display = 'none';
+                                mostrarNotificacion('✅ Datos actualizados. ⚠️ Error de conexión al subir contrato', 'warning');
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 1500);
+                            }
+                        });
+                    } else {
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        mostrarNotificacion(response.message || 'Datos actualizados correctamente', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    }
                 } else {
-                    // Mostrar mensaje de error detallado
+                    document.getElementById('loadingOverlay').style.display = 'none';
                     let mensajeError = response.message || 'Error al actualizar los datos';
                     
                     if (response.error_detallado) {
@@ -1571,7 +1718,6 @@ $(document).ready(function() {
                 console.error('Error AJAX completo:', {xhr: xhr, status: status, error: error});
                 console.error('Respuesta del servidor:', xhr.responseText);
                 
-                // Intentar parsear la respuesta como JSON
                 let mensajeError = 'Error de conexión al guardar los datos';
                 try {
                     const response = JSON.parse(xhr.responseText);
@@ -1579,7 +1725,6 @@ $(document).ready(function() {
                         mensajeError = response.message;
                     }
                 } catch (e) {
-                    // Si no es JSON, mostrar el texto plano
                     if (xhr.responseText) {
                         mensajeError += '\n\nRespuesta del servidor: ' + xhr.responseText.substring(0, 200);
                     }
@@ -1588,6 +1733,82 @@ $(document).ready(function() {
                 mensajeError += '\n\nCódigo de estado HTTP: ' + xhr.status;
                 mostrarNotificacion(mensajeError, 'error');
             }
+        });
+    });
+
+    $('#btnEnviarContrato').on('click', function() {
+        if (!CONTRATO_DISPONIBLE) {
+            mostrarNotificacion('No hay un contrato cargado para esta institución.', 'error');
+            return;
+        }
+        $('#nombreDestinatarioContrato').val('');
+        $('#correoContrato').val('');
+        $('#errorCorreoContrato').addClass('d-none').text('');
+        $('#modalEnviarContrato').modal('show');
+    });
+
+    $('#modalEnviarContrato').on('hidden.bs.modal', function() {
+        $('#nombreDestinatarioContrato').val('');
+        $('#correoContrato').val('');
+        $('#errorCorreoContrato').addClass('d-none').text('');
+    });
+
+    $('#formEnviarContrato').on('submit', function(e) {
+        e.preventDefault();
+
+        if (!CONTRATO_DISPONIBLE) {
+            mostrarNotificacion('No hay un contrato cargado para esta institución.', 'error');
+            return;
+        }
+
+        const nombreDestinatario = ($('#nombreDestinatarioContrato').val() || '').trim();
+        const correo = ($('#correoContrato').val() || '').trim();
+        const errorLabel = $('#errorCorreoContrato');
+
+        if (nombreDestinatario === '') {
+            errorLabel.text('Por favor ingresa el nombre del destinatario.').removeClass('d-none');
+            return;
+        }
+
+        if (correo === '') {
+            errorLabel.text('Por favor ingresa un correo destinatario.').removeClass('d-none');
+            return;
+        }
+
+        if (!validarEmailContrato(correo)) {
+            errorLabel.text('Ingresa un correo electrónico válido.').removeClass('d-none');
+            return;
+        }
+
+        errorLabel.addClass('d-none').text('');
+        mostrarLoading(true);
+
+        const formData = new FormData();
+        formData.append('ins_id', INSTITUCION_ACTUAL);
+        formData.append('correo_destino', correo);
+        formData.append('nombre_destinatario', nombreDestinatario);
+
+        fetch('dev-instituciones-enviar-contrato.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            mostrarLoading(false);
+            if (data.success) {
+                $('#modalEnviarContrato').modal('hide');
+                mostrarNotificacion(data.message || 'Contrato enviado correctamente', 'success');
+            } else {
+                mostrarNotificacion(data.message || 'No se pudo enviar el contrato', 'error');
+                if (data.detalle) {
+                    console.error('Detalle envío contrato:', data.detalle);
+                }
+            }
+        })
+        .catch(error => {
+            mostrarLoading(false);
+            mostrarNotificacion('Error de conexión al enviar el contrato', 'error');
+            console.error('Error envío contrato:', error);
         });
     });
 });

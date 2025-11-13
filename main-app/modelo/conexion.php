@@ -111,13 +111,20 @@ if (empty($_SESSION["inst"])) {
 
 	} catch(Exception $e) {
 
+		$bdSolicitada = $_POST["bd"] ?? ($_SESSION["inst"] ?? '');
+		if ($bdSolicitada === null) {
+			$bdSolicitada = '';
+		}
+		$bdSolicitada = (string)$bdSolicitada;
+		$bdBase64 = base64_encode($bdSolicitada);
+
 		switch($e->getCode()){
 			case 1044:
-				$exception = "error=7&inst=".base64_encode($_POST["bd"]);
+				$exception = "error=7&inst=".$bdBase64;
 			break;
 
 			default:
-				$exception = "error=".$e->getMessage()."&inst=".base64_encode($_POST["bd"]);
+				$exception = "error=".$e->getMessage()."&inst=".$bdBase64;
 			break;	
 		}
 
