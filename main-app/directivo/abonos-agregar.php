@@ -132,8 +132,10 @@ $codigoUnico=Utilidades::generateCode("ABO");
                                     </h4>
                                 </header>
                                 <div class="panel-body" style="padding: 25px;">
-									<form name="formularioGuardar" action="abonos-guardar.php" method="post" enctype="multipart/form-data">
-										<input type="hidden" value="<?=$codigoUnico?>" name="codigoUnico" id="idAbono">
+									<form name="formularioGuardar" id="formularioGuardar" action="abonos-guardar.php" method="post" enctype="multipart/form-data">
+										<input type="hidden" value="<?=$codigoUnico?>" name="codigoUnicoTemporal" id="idAbono">
+										<input type="hidden" name="abonos_facturas_json" id="abonos_facturas_json">
+										<input type="hidden" name="conceptos_contables_json" id="conceptos_contables_json">
 
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[424][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
@@ -407,6 +409,105 @@ $codigoUnico=Utilidades::generateCode("ABO");
                 }
             }
         }
+        
+        // Interceptar submit del formulario para validar y recopilar abonos
+        $(document).ready(function() {
+            $('#formularioGuardar').on('submit', function(e) {
+                var tipoTransaccion = $('input[name="tipoTransaccion"]:checked').val();
+                
+                // Validar que se seleccionó un tipo de transacción
+                if (!tipoTransaccion) {
+                    e.preventDefault();
+                    alert('Por favor selecciona si el abono se asociará a una factura o no.');
+                    return false;
+                }
+                
+                // Solo procesar si es tipo INVOICE
+                if (tipoTransaccion === '<?=INVOICE?>') {
+                    var abonosFacturas = [];
+                    var totalAbonar = 0;
+                    var erroresValidacion = [];
+                    
+                    // Recorrer todos los inputs de abono en la tabla
+                    $('input.input-abono-factura').each(function() {
+                        var valorAbono = parseFloat($(this).val()) || 0;
+                        var idFactura = $(this).attr('data-id-factura');
+                        
+                        console.log('Procesando factura:', idFactura, 'valor:', valorAbono);
+                        
+                        if (valorAbono > 0) {
+                            // Validar que el abono no exceda el saldo pendiente
+                            var saldoPendiente = parseFloat($(this).attr('max')) || 0;
+                            
+                            if (valorAbono > saldoPendiente) {
+                                var nombreFactura = $(this).closest('tr').find('td:eq(1)').text();
+                                erroresValidacion.push('Factura ' + nombreFactura + ': El abono ($' + 
+                                    valorAbono.toLocaleString() + ') excede el saldo pendiente ($' + 
+                                    saldoPendiente.toLocaleString() + ')');
+                            } else {
+                                abonosFacturas.push({
+                                    idFactura: idFactura,
+                                    valorAbono: valorAbono
+                                });
+                                totalAbonar += valorAbono;
+                                console.log('Abono agregado:', {idFactura: idFactura, valorAbono: valorAbono});
+                            }
+                        }
+                    });
+                    
+                    console.log('Total abonos recopilados:', abonosFacturas.length);
+                    console.log('JSON a enviar:', JSON.stringify(abonosFacturas));
+                    
+                    // Si hay errores de validación, mostrarlos y detener el submit
+                    if (erroresValidacion.length > 0) {
+                        e.preventDefault();
+                        alert('⚠️ Errores de validación:\n\n' + erroresValidacion.join('\n\n'));
+                        return false;
+                    }
+                    
+                    // Validar que al menos se haya ingresado un abono
+                    if (abonosFacturas.length === 0) {
+                        e.preventDefault();
+                        alert('Debes ingresar al menos un valor de abono a una factura.');
+                        return false;
+                    }
+                    
+                    // Guardar en campo hidden como JSON
+                    $('#abonos_facturas_json').val(JSON.stringify(abonosFacturas));
+                    $('#conceptos_contables_json').val('');
+                    
+                } else if (tipoTransaccion === '<?=ACCOUNT?>') {
+                    // Procesar conceptos contables
+                    var conceptos = [];
+                    var concepto = $('#idConcepto').text().trim();
+                    var precio = parseFloat($('#precioNuevo').val()) || 0;
+                    var cantidad = parseFloat($('#cantidadNuevo').val()) || 1;
+                    var descripcion = $('#descripNueva').val().trim();
+                    
+                    if (concepto && precio > 0) {
+                        conceptos.push({
+                            concepto: concepto,
+                            precio: precio,
+                            cantidad: cantidad,
+                            subtotal: precio * cantidad,
+                            descripcion: descripcion
+                        });
+                    }
+                    
+                    if (conceptos.length === 0) {
+                        e.preventDefault();
+                        alert('Debes seleccionar un concepto contable e ingresar un valor.');
+                        return false;
+                    }
+                    
+                    $('#conceptos_contables_json').val(JSON.stringify(conceptos));
+                    $('#abonos_facturas_json').val('');
+                }
+                
+                // Continuar con el submit normal
+                return true;
+            });
+        });
     </script>
 </body>
 
