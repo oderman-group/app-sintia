@@ -166,14 +166,6 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 							<div class="card-head">
 								<header><?= $frases[95][$datosUsuarioActual['uss_idioma']]; ?></header>
 								<div class="tools">
-									<?php if (Modulos::validarPermisoEdicion() &&  Modulos::validarSubRol(['DT0106'])) { 
-										$colorPrimario = isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea';
-										$colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764ba2';
-									?>
-									<button class="quick-action-btn" onclick="abrirModalAgregarMovimiento()" title="Agregar nueva transacción" style="background: linear-gradient(135deg, <?= $colorPrimario ?> 0%, <?= $colorSecundario ?> 100%);">
-										<i class="fa fa-plus"></i>
-									</button>
-									<?php } ?>
 									<a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
 									<a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
 									<a class="t-close btn-color fa fa-times" href="javascript:;"></a>
@@ -186,6 +178,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 								<table class="display" style="width:100%;" id="tablaItems">
 									<thead>
 										<tr>
+											<th style="width: 30px;"></th>
 											<th>#</th>
 											<th><?= $frases[49][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<th>Fecha</th>
@@ -404,6 +397,99 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 	</div>
 </div>
 
+<!-- Modal Ver Abonos de Factura -->
+<div class="modal fade" id="modalAbonosFactura" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header modal-header-custom">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title">
+					<i class="fa fa-hand-holding-usd"></i> Abonos de la Factura <span id="modalAbonosFacturaTitulo"></span>
+				</h4>
+			</div>
+			<div class="modal-body">
+				<div class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Fecha</th>
+								<th>Código</th>
+								<th>Valor</th>
+								<th>Método</th>
+								<th>Responsable</th>
+								<th>Observaciones</th>
+							</tr>
+						</thead>
+						<tbody id="listaAbonosFactura">
+							<tr>
+								<td colspan="6" align="center">Seleccione una factura para consultar sus abonos.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div id="infoAbonosFactura" style="margin-top: 10px;"></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Abono Rápido -->
+<div class="modal fade" id="modalAbonoRapido" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header modal-header-custom">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title">
+					<i class="fa fa-hand-holding-usd"></i> Abono rápido a factura <span id="modalAbonoRapidoTitulo"></span>
+				</h4>
+			</div>
+			<form id="formAbonoRapido" enctype="multipart/form-data">
+				<input type="hidden" name="idFactura" id="abonoRapidoIdFactura">
+				<div class="modal-body">
+					<div class="alert alert-info">
+						Saldo pendiente actual: <strong id="abonoRapidoSaldoPendiente">$0</strong>
+					</div>
+					<div class="form-group">
+						<label>Valor del abono</label>
+						<input type="number" min="0" step="1" class="form-control" id="abonoRapidoValor" name="valor" required>
+					</div>
+					<div class="form-group">
+						<label>Método de pago</label>
+						<select class="form-control" id="abonoRapidoMetodo" name="metodo" required>
+							<option value="">Seleccione...</option>
+							<option value="EFECTIVO">Efectivo</option>
+							<option value="CHEQUE">Cheque</option>
+							<option value="T_DEBITO">T. Débito</option>
+							<option value="T_CREDITO">T. Crédito</option>
+							<option value="TRANSFERENCIA">Transferencia</option>
+							<option value="OTROS">Otras formas</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label>Observaciones</label>
+						<textarea class="form-control" id="abonoRapidoObservaciones" name="observaciones" rows="3"></textarea>
+					</div>
+					<div class="form-group">
+						<label>Comprobante (opcional)</label>
+						<input type="file" class="form-control" id="abonoRapidoComprobante" name="comprobante" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+					<button type="submit" class="btn deepPink-bgcolor">Guardar abono</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script type="text/javascript">
 	function mostrarResultado(dato) {
 		console.log(dato);
@@ -518,6 +604,292 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 <script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
 <!-- Movimientos JS -->
 <script src="../js/Movimientos.js"></script>
+<script>
+	$(document).ready(function(){
+		if ($.fn.DataTable.isDataTable('#tablaItems')) {
+			$('#tablaItems').DataTable().destroy();
+		}
+
+		var totalColumnas = $('#tablaItems thead th').length;
+		var columnDefs = [{ orderable: false, searchable: false, targets: 0 }];
+		if (totalColumnas > 1) {
+			columnDefs.push({ orderable: false, searchable: false, targets: totalColumnas - 1 });
+		}
+
+		var tablaMovimientos = $('#tablaItems').DataTable({
+			columnDefs: columnDefs,
+			order: [[1, 'desc']]
+		});
+
+		totalizarMovimientos();
+	tablaMovimientos.on('draw', function(){
+		totalizarMovimientos();
+	});
+
+		$('#tablaItems tbody').on('click', '.detalle-movimiento-btn', function () {
+			var $btn = $(this);
+			var tr = $btn.closest('tr');
+			var row = tablaMovimientos.row(tr);
+			var idFactura = $btn.data('id');
+
+			if (row.child.isShown()) {
+				row.child.hide();
+				tr.removeClass('detalle-abierto');
+				$btn.removeClass('expanded');
+				totalizarMovimientos();
+			} else {
+				$btn.addClass('expanded');
+				tr.addClass('detalle-abierto');
+				row.child('<div class="detalle-factura-wrapper">Cargando detalles...</div>').show();
+				$.getJSON('ajax-detalle-factura.php', { idFactura: idFactura })
+					.done(function (resp) {
+						if (resp && resp.success) {
+							row.child(resp.html).show();
+						} else {
+							row.child('<div class="detalle-factura-wrapper">No se encontraron detalles para esta factura.</div>').show();
+						}
+						totalizarMovimientos();
+					})
+					.fail(function () {
+						row.child('<div class="detalle-factura-wrapper">Error al cargar los detalles. Intenta nuevamente.</div>').show();
+						totalizarMovimientos();
+					});
+			}
+		});
+	});
+
+	function sincronizarAbonos(idFactura, consecutivo){
+		if(!confirm('¿Sincronizar abonos de la factura '+consecutivo+'?')){
+			return;
+		}
+
+		$.post('ajax-sync-abonos.php', { idFactura: idFactura })
+			.done(function(resp){
+				if(resp && resp.success){
+					$.toast({
+						heading: 'Sincronización completada',
+						text: 'Estado actualizado: ' + resp.estado + '.',
+						position: 'bottom-right',
+						icon: 'success',
+						hideAfter: 4000
+					});
+					location.reload();
+				}else{
+					$.toast({
+						heading: 'No se pudo sincronizar',
+						text: resp && resp.message ? resp.message : 'Error al sincronizar la factura.',
+						position: 'bottom-right',
+						icon: 'warning',
+						hideAfter: 4000
+					});
+				}
+			})
+			.fail(function(){
+				$.toast({
+					heading: 'Error',
+					text: 'Error inesperado al sincronizar.',
+					position: 'bottom-right',
+					icon: 'error',
+					hideAfter: 4000
+				});
+			});
+	}
+
+	function verAbonosFactura(idFactura, consecutivo){
+		$('#modalAbonosFacturaTitulo').text(consecutivo);
+		$('#listaAbonosFactura').html('<tr><td colspan="6" align="center">Cargando abonos...</td></tr>');
+		$('#infoAbonosFactura').html('');
+		$('#modalAbonosFactura').modal('show');
+
+		$.get('ajax-abonos-por-factura.php', { idFactura: idFactura })
+			.done(function(response){
+				if(!response || response.success !== true){
+					$('#listaAbonosFactura').html('<tr><td colspan="6" align="center">No se pudieron obtener los abonos.</td></tr>');
+					return;
+				}
+
+				if(response.data.length === 0){
+					$('#listaAbonosFactura').html('<tr><td colspan="6" align="center">Esta factura no tiene abonos registrados.</td></tr>');
+					return;
+				}
+
+				var total = 0;
+				var rows = '';
+				response.data.forEach(function(item){
+					var valor = parseFloat(item.payment || 0);
+					total += valor;
+					rows += '<tr>' +
+						'<td>'+ (item.registration_date || '') +'</td>' +
+						'<td>'+ (item.cod_payment || '') +'</td>' +
+						'<td>$'+ new Intl.NumberFormat("es-CO").format(valor) +'</td>' +
+						'<td>'+ (item.payment_method || 'N/A') +'</td>' +
+						'<td>'+ (item.responsible_name || 'N/A') +'</td>' +
+						'<td>'+ (item.observation ? $('<div>').text(item.observation).html() : '—') +'</td>' +
+					'</tr>';
+				});
+
+				$('#listaAbonosFactura').html(rows);
+				$('#infoAbonosFactura').html('<strong>Total abonado: </strong>$' + new Intl.NumberFormat("es-CO").format(total));
+			})
+			.fail(function(){
+				$('#listaAbonosFactura').html('<tr><td colspan="6" align="center">Error consultando los abonos.</td></tr>');
+			});
+	}
+
+	var saldoPendienteActual = 0;
+
+	function abrirModalAbonoRapido(idFactura, consecutivo, saldoPendiente){
+		saldoPendienteActual = parseFloat(saldoPendiente.replace(/[^\d]/g, ''));
+		$('#abonoRapidoIdFactura').val(idFactura);
+		$('#modalAbonoRapidoTitulo').text(consecutivo);
+		$('#abonoRapidoSaldoPendiente').text('$' + saldoPendiente);
+		$('#abonoRapidoValor').val('');
+		$('#abonoRapidoMetodo').val('');
+		$('#abonoRapidoObservaciones').val('');
+		$('#modalAbonoRapido').modal('show');
+	}
+
+	$('#formAbonoRapido').on('submit', function(e){
+		e.preventDefault();
+		var valor = parseFloat($('#abonoRapidoValor').val() || 0);
+		if (isNaN(valor) || valor <= 0) {
+			$.toast({
+				heading: 'Valor inválido',
+				text: 'Ingrese un valor de abono mayor a cero.',
+				position: 'bottom-right',
+				icon: 'warning',
+				hideAfter: 4000
+			});
+			return;
+		}
+		if (valor > saldoPendienteActual) {
+			$.toast({
+				heading: 'Valor excedido',
+				text: 'El abono no puede superar el saldo pendiente.',
+				position: 'bottom-right',
+				icon: 'warning',
+				hideAfter: 4000
+			});
+			return;
+		}
+
+		var formData = new FormData(this);
+		$.ajax({
+			url: 'ajax-abono-rapido.php',
+			method: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false
+		})
+		.done(function(resp){
+				if(resp && resp.success){
+					$('#modalAbonoRapido').modal('hide');
+					$.toast({
+						heading: 'Abono registrado',
+						text: resp.message || 'El abono se registró correctamente.',
+						position: 'bottom-right',
+						icon: 'success',
+						hideAfter: 4000
+					});
+					location.reload();
+				}else{
+					$.toast({
+						heading: 'No se pudo guardar',
+						text: resp && resp.message ? resp.message : 'No fue posible registrar el abono.',
+						position: 'bottom-right',
+						icon: 'warning',
+						hideAfter: 5000
+					});
+				}
+			})
+			.fail(function(){
+				$.toast({
+					heading: 'Error',
+					text: 'Ocurrió un error al registrar el abono.',
+					position: 'bottom-right',
+					icon: 'error',
+					hideAfter: 4000
+				});
+			});
+	});
+
+	function bloquearUsuarioFactura(idUsuario, idFactura, consecutivo, saldo){
+		if(!confirm('¿Bloquear al usuario asociado a la factura '+consecutivo+'? Saldo pendiente: $'+saldo)){
+			return;
+		}
+
+		$.post('ajax-bloquear-usuario-factura.php', {
+			usuario: idUsuario,
+			factura: idFactura,
+			saldo: saldo
+		})
+		.done(function(response){
+			if(response && response.success){
+				$.toast({
+					heading: 'Usuario bloqueado',
+					text: response.message || 'Se bloqueó correctamente.',
+					position: 'bottom-right',
+					icon: 'success',
+					hideAfter: 4000
+				});
+			}else{
+				$.toast({
+					heading: 'Aviso',
+					text: response && response.message ? response.message : 'No fue posible bloquear al usuario.',
+					position: 'bottom-right',
+					icon: 'warning',
+					hideAfter: 4000
+				});
+			}
+		})
+		.fail(function(){
+			$.toast({
+				heading: 'Error',
+				text: 'Ocurrió un error y no se pudo bloquear al usuario.',
+				position: 'bottom-right',
+				icon: 'error',
+				hideAfter: 4000
+			});
+		});
+	}
+
+	function bloquearUsuariosPendientes(){
+		if(!confirm('¿Bloquear a todos los usuarios con saldo pendiente por cobrar?')){
+			return;
+		}
+
+		$.post('ajax-bloquear-usuarios-pendientes.php')
+		.done(function(response){
+			if(response && response.success){
+				var bloqueados = response.usuariosBloqueados ? response.usuariosBloqueados.length : 0;
+				$.toast({
+					heading: 'Proceso completado',
+					text: 'Usuarios evaluados: '+ (response.totalEvaluados || 0) +'. Bloqueados: '+ bloqueados +'.',
+					position: 'bottom-right',
+					icon: 'success',
+					hideAfter: 5000
+				});
+			}else{
+				$.toast({
+					heading: 'Aviso',
+					text: response && response.message ? response.message : 'No fue posible completar la acción.',
+					position: 'bottom-right',
+					icon: 'warning',
+					hideAfter: 4000
+				});
+			}
+		})
+		.fail(function(){
+			$.toast({
+				heading: 'Error',
+				text: 'Ocurrió un error bloqueando a los usuarios.',
+				position: 'bottom-right',
+				icon: 'error',
+				hideAfter: 4000
+			});
+		});
+	}
+</script>
 <!-- end js include path -->
 </body>
 

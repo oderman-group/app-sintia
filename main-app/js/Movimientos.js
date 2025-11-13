@@ -1050,21 +1050,30 @@ function totalizarMovimientos() {
     for (let i = 1; i < tabla.rows.length; i++) {
         // Obtener la fila actual
         var fila = tabla.rows[i];
+        if (fila.classList.contains('child')) {
+            continue;
+        }
+        if (fila.cells.length < 8) {
+            continue;
+        }
 
-        if (fila.cells[4].getAttribute('data-anulado') == 1) { continue; }
+        var celdaTotal = fila.cells[5];
+        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
 
         // Obtener el valor neto total del atributo de datos
-        var total = parseFloat(fila.cells[4].getAttribute('data-total-neto'));
+        var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
         // Obtenga el valor total de abonos del atributo de datos
-        var abonos = parseFloat(fila.cells[5].getAttribute('data-abonos'));
+        var celdaAbonos = fila.cells[6];
+        var celdaPorCobrar = fila.cells[7];
+        var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
         // Validar si abonos es un número válido, establecer en 0 si NaN
         if (isNaN(abonos)) {
             abonos = 0;
         }
         // Obtener el valor total por cobrar del atributo de datos
-        var porCobrar = parseFloat(fila.cells[6].getAttribute('data-por-cobrar'));
+        var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
 
-        if (fila.cells[4].getAttribute('data-tipo') == 1) {
+        if (celdaTotal.getAttribute('data-tipo') == 1) {
 
             // Acumular el valor neto total del atributo de datos
             totalNetoVenta = totalNetoVenta + total;
@@ -1073,7 +1082,7 @@ function totalizarMovimientos() {
             // Acumular el valor total por cobrar del atributo de datos
             totalPorCobrarVenta = totalPorCobrarVenta + porCobrar;
 
-        } else if (fila.cells[4].getAttribute('data-tipo') == 2) {
+        } else if (celdaTotal.getAttribute('data-tipo') == 2) {
 
             // Acumular el valor neto total del atributo de datos
             totalNetoCompra = totalNetoCompra + total;

@@ -431,9 +431,11 @@ class Movimientos {
             pay.payment_method, pay.voucher, pay.type_payments, pay.observation, pay.note,
             uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, uss.uss_id, uss.uss_tipo,
             pes.pes_nombre,
+            CONCAT_WS(' ', cli.uss_nombre, cli.uss_nombre2, cli.uss_apellido1, cli.uss_apellido2) AS cliente_nombre,
             cli.uss_nombre AS cli_nombre, cli.uss_nombre2 AS cli_nombre2, cli.uss_apellido1 AS cli_apellido1, cli.uss_apellido2 AS cli_apellido2,
             cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_documento AS cli_documento,
-            cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil
+            cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil,
+            pi.numeroFactura, pi.totalAbono
             FROM ".BD_FINANCIERA.".payments pay
             LEFT JOIN ".BD_GENERAL.".usuarios uss 
                 ON uss.uss_id=pay.responsible_user 
@@ -447,6 +449,12 @@ class Movimientos {
                 AND cli.year={$_SESSION["bd"]}
             LEFT JOIN ".BD_ADMIN.".general_perfiles pes_cli
                 ON pes_cli.pes_id=cli.uss_tipo
+            LEFT JOIN (
+                SELECT payments, MIN(invoiced) AS numeroFactura, SUM(payment) AS valorAbono, institucion, year
+                FROM ".BD_FINANCIERA.".payments_invoiced
+                WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
+                GROUP BY payments, institucion, year
+            ) pi ON pi.payments = pay.cod_payment AND pi.institucion = pay.institucion AND pi.year = pay.year
             WHERE 
                 pay.is_deleted=0 
             AND pay.id='{$idAbono}'
@@ -914,6 +922,66 @@ class Movimientos {
     }
 
     /**
+     * Devuelve información extendida de una factura y sus ítems
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idFactura
+     * @return array
+     */
+    public static function obtenerDetallesFactura(
+        mysqli $conexion,
+        array $config,
+        string $idFactura
+    )
+    {
+        $detalles = [
+            'factura' => null,
+            'items' => []
+        ];
+
+        try {
+            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2
+                FROM ".BD_FINANCIERA.".finanzas_cuentas fc
+                LEFT JOIN ".BD_GENERAL.".usuarios uss
+                    ON uss.uss_id = fc.fcu_usuario
+                    AND uss.institucion = {$config['conf_id_institucion']}
+                    AND uss.year = {$_SESSION['bd']}
+                WHERE fc.fcu_id = '{$idFactura}'
+                  AND fc.institucion = {$config['conf_id_institucion']}
+                  AND fc.year = {$_SESSION['bd']}
+                LIMIT 1");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            $consultaFactura = false;
+        }
+
+        if ($consultaFactura && mysqli_num_rows($consultaFactura) > 0) {
+            $detalles['factura'] = mysqli_fetch_array($consultaFactura, MYSQLI_BOTH);
+        }
+
+        try {
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.name as item_name
+                FROM ".BD_FINANCIERA.".transaction_items ti
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION['bd']}
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION['bd']}
+                WHERE ti.id_transaction='{$idFactura}'
+                AND ti.institucion={$config['conf_id_institucion']}
+                AND ti.year={$_SESSION['bd']}");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            $consultaItems = false;
+        }
+
+        if ($consultaItems) {
+            while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
+                $detalles['items'][] = $item;
+            }
+        }
+
+        return $detalles;
+    }
+
+    /**
      * Este metodo me trae las facturas de un usuario para listar
      * @param mysqli            $conexion
      * @param array             $config
@@ -1188,25 +1256,29 @@ class Movimientos {
         try {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
-                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN IFNULL(totalAbonos, 0) ELSE 0 END) AS abonosRecibidos,
-                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
+                SUM(CASE WHEN fc.fcu_tipo = 2 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos,
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosVentas,
+                SUM(CASE WHEN fc.fcu_tipo = 2 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosEgreso,
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalFacturado
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti 
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction
+                GROUP BY ti.id_transaction, ti.institucion, ti.year
             ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
             LEFT JOIN (
-                SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
-                FROM ".BD_FINANCIERA.".payments_invoiced pi 
-                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
+                SELECT pi.invoiced, pi.institucion, pi.year, SUM(pi.payment) AS totalAbonos
+                FROM ".BD_FINANCIERA.".payments_invoiced pi
+                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment = pi.payments AND p.institucion = pi.institucion AND p.year = pi.year
                 WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
-                GROUP BY pi.invoiced
-            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
-            WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
+                GROUP BY pi.invoiced, pi.institucion, pi.year
+            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion = fc.institucion AND pi.year = fc.year
+            WHERE fc.fcu_anulado = 0
+              AND fc.institucion={$config['conf_id_institucion']}
+              AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
         } catch (Exception $e) {
@@ -1231,23 +1303,31 @@ class Movimientos {
         try {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0) - IFNULL(totalAbonos, 0)) ELSE 0 END) AS totalPorCobrar
+                SUM(
+                    GREATEST(
+                        (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) - IFNULL(pi.totalAbonos, 0),
+                        0
+                    )
+                ) AS totalPorCobrar
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction
+                GROUP BY ti.id_transaction, ti.institucion, ti.year
             ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
             LEFT JOIN (
                 SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
                 FROM ".BD_FINANCIERA.".payments_invoiced pi 
                 INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
                 WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
-                GROUP BY pi.invoiced
+                GROUP BY pi.invoiced, pi.institucion, pi.year
             ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
-            WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
+            WHERE fc.fcu_anulado = 0
+              AND fc.fcu_tipo = 1
+              AND fc.institucion={$config['conf_id_institucion']}
+              AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
         } catch (Exception $e) {
