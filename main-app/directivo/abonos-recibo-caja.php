@@ -17,12 +17,50 @@ if (!empty($_GET["id"])) {
 
 $resultado = Movimientos::traerDatosAbonos($conexion, $config, $id);
 
-// Crear un objeto DateTime a partir de la cadena de fecha y hora
-$fechaBD = new DateTime($resultado['registration_date']);
-$fechaReplace = $fechaBD->format('d/m/Y');
+if (empty($resultado)) {
+    echo '<script type="text/javascript">alert("No se encontraron datos del abono solicitado."); window.close();</script>';
+    exit();
+}
 
+$fechaReplace = date('d/m/Y');
+if (!empty($resultado['registration_date'])) {
+    try {
+        $fechaBD = new DateTime($resultado['registration_date']);
+        $fechaReplace = $fechaBD->format('d/m/Y');
+    } catch (Exception $e) {
+        $fechaReplace = date('d/m/Y');
+    }
+}
 
-$resultadoFactura = UsuariosPadre::sesionUsuario($resultado['invoiced']);
+$resultadoFactura = [];
+if (!empty($resultado['invoiced'])) {
+    $resultadoFactura = UsuariosPadre::sesionUsuario($resultado['invoiced']);
+}
+
+$nombreCliente = 'N/A';
+if (!empty($resultadoFactura)) {
+    $nombreCliente = UsuariosPadre::nombreCompletoDelUsuario($resultadoFactura);
+}
+
+$direccionCliente = $resultadoFactura['uss_direccion'] ?? 'N/A';
+$ciudadCliente    = $resultadoFactura['ciu_nombre'] ?? 'N/A';
+$celularCliente   = $resultadoFactura['uss_celular'] ?? '';
+$telefonoCliente  = $resultadoFactura['uss_telefono'] ?? '';
+$documentoCliente = $resultadoFactura['uss_documento'] ?? 'N/A';
+$contactoCliente  = trim($celularCliente . ((!empty($celularCliente) && !empty($telefonoCliente)) ? '-' : '') . $telefonoCliente);
+if ($contactoCliente === '') {
+    $contactoCliente = 'N/A';
+}
+
+$numeroFactura = $resultado['numeroFactura'] ?? 'N/A';
+$valorAbono    = (float)($resultado['valorAbono'] ?? 0);
+$observacion   = $resultado['observation'] ?? '';
+
+$infoLogo      = $informacion_inst["info_logo"] ?? '';
+$infoNombre    = strtoupper((string)($informacion_inst["info_nombre"] ?? ''));
+$infoNit       = $informacion_inst["info_nit"] ?? '';
+$infoTelefono  = $informacion_inst["info_telefono"] ?? '';
+$infoDireccion = $informacion_inst["info_direccion"] ?? '';
 
 switch ($resultado['payment_method']) {
     case "EFECTIVO":
@@ -110,13 +148,15 @@ switch ($resultado['payment_method']) {
             <table width="100%">
                 <tr>
                     <td align="left" width="30%">
-                        <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="100%"><br><br>
+                        <?php if(!empty($infoLogo)){ ?>
+                            <img src="../files/images/logo/<?=$infoLogo?>" width="100%"><br><br>
+                        <?php } ?>
                     </td>
                     <td align="center" width="40%">
-                        <span style="font-weight:bold; margin: 0"><?=strtoupper($informacion_inst["info_nombre"])?></span><br>
-                        NIT: <?=$informacion_inst["info_nit"]?><br>
-                        <?=$informacion_inst["info_telefono"]?><br>
-                        <?=$informacion_inst["info_direccion"]?>
+                        <span style="font-weight:bold; margin: 0"><?=htmlspecialchars($infoNombre)?></span><br>
+                        NIT: <?=htmlspecialchars($infoNit)?><br>
+                        <?=htmlspecialchars($infoTelefono)?><br>
+                        <?=htmlspecialchars($infoDireccion)?>
                     </td>
                     <td align="center" width="30%">
                         <h2 style="margin: 0px; padding: 10px; background-color: #a8a8a8;">RECIBO DE CAJA</h2>
@@ -127,27 +167,27 @@ switch ($resultado['payment_method']) {
             <table class="table_datos" style="font-size: 15px; margin-bottom: 5px;" width="100%">
                 <tr>
                     <td align="right" width="20%" class="borde_superior_izquierdo" style="background-color: #a8a8a8; font-weight:bold;">SEÑOR(ES) </td>
-                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=UsuariosPadre::nombreCompletoDelUsuario($resultadoFactura)?></td>
+                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($nombreCliente)?></td>
                     <td align="center" width="20%" class="borde_superior_derecho" style="background-color: #a8a8a8; font-weight:bold;">FECHA</td>
                 </tr>
                 <tr>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">DIRECCIÓN</td>
-                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=$resultadoFactura['uss_direccion']?></td>
+                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($direccionCliente)?></td>
                     <td align="center" rowspan="4" style="border: 1px solid #a8a8a8;"><?=$fechaReplace?></td>
                 </tr>
                 <tr>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">CIUDAD</td>
-                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=$resultadoFactura['ciu_nombre']?></td>
+                    <td align="left" colspan="3" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($ciudadCliente)?></td>
                 </tr>
                 <tr>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">TELÉFONO</td>
-                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?php echo $resultadoFactura['uss_celular']; if (!empty($resultadoFactura['uss_celular']) && !empty($resultadoFactura['uss_telefono'])) { echo "-"; } echo $resultadoFactura['uss_telefono']; ?></td>
+                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($contactoCliente)?></td>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">MÉTODO DE PAGO</td>
-                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=$metodoPago?></td>
+                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($metodoPago)?></td>
                 </tr>
                 <tr>
                     <td align="right" width="20%" class="borde_inferior_izquierdo" style="background-color: #a8a8a8; font-weight:bold;">CC/NIT</td>
-                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=$resultadoFactura['uss_documento']?></td>
+                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($documentoCliente)?></td>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">CUENTA</td>
                     <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"></td>
                 </tr>
@@ -161,8 +201,8 @@ switch ($resultado['payment_method']) {
                 </thead>
                 <tbody>
                     <tr>
-                        <td><div style="height: 200px;">Abono a la factura no. <?=$resultado['numeroFactura'];?></div></td>
-                        <td align="right" style="vertical-align: top;">$<?=number_format($resultado['valorAbono'], 0, ",", ".")?></td>
+                        <td><div style="height: 200px;">Abono a la factura no. <?=htmlspecialchars($numeroFactura)?></div></td>
+                        <td align="right" style="vertical-align: top;">$<?=number_format($valorAbono, 0, ",", ".")?></td>
                     </tr>
                 </tbody>
                 <tfoot>
@@ -173,7 +213,7 @@ switch ($resultado['payment_method']) {
                                     <td align="center" style="background-color: #a8a8a8; font-weight:bold;">DETALLES</td>
                                 </tr>
                                 <tr>
-                                    <td align="left"><?=$resultado['observation'];?></td>
+                                    <td align="left"><?=nl2br(htmlspecialchars($observacion))?></td>
                                 </tr>
                             </table>
                         </td>
@@ -181,11 +221,11 @@ switch ($resultado['payment_method']) {
                             <table width="100%">
                                 <tr>
                                     <td align="center" width="30%" style="font-weight:bold;">Subtotal</td>
-                                    <td align="right" width="70%"><?="$".number_format($resultado['valorAbono'], 0, ",", ".");?></td>
+                                    <td align="right" width="70%"><?="$".number_format($valorAbono, 0, ",", ".");?></td>
                                 </tr>
                                 <tr style="background-color: #a8a8a8;">
                                     <td align="center" width="30%">Total</td>
-                                    <td align="right" width="70%"><?="$".number_format($resultado['valorAbono'], 0, ",", ".");?></td>
+                                    <td align="right" width="70%"><?="$".number_format($valorAbono, 0, ",", ".");?></td>
                                 </tr>
                             </table>
                         </td>

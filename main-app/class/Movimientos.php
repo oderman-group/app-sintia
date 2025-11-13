@@ -435,7 +435,7 @@ class Movimientos {
             cli.uss_nombre AS cli_nombre, cli.uss_nombre2 AS cli_nombre2, cli.uss_apellido1 AS cli_apellido1, cli.uss_apellido2 AS cli_apellido2,
             cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_documento AS cli_documento,
             cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil,
-            pi.numeroFactura, pi.totalAbono
+            pi.numeroFactura, pi.valorAbono
             FROM ".BD_FINANCIERA.".payments pay
             LEFT JOIN ".BD_GENERAL.".usuarios uss 
                 ON uss.uss_id=pay.responsible_user 
