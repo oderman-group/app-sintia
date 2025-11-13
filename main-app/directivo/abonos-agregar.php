@@ -29,6 +29,74 @@ $codigoUnico=Utilidades::generateCode("ABO");
     <!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Estilos mejorados para abonos -->
+    <link href="../css/movimientos-mejorado.css" rel="stylesheet" type="text/css" />
+    <style>
+        .abono-form-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .panel-heading-purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .panel-heading-blue {
+            background: linear-gradient(135deg, #03a9f4 0%, #00c292 100%);
+            color: white;
+        }
+        input[type="number"], textarea, select, input[type="date"], input[type="datetime-local"] {
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        input[type="number"]:focus, textarea:focus, select:focus, input[type="date"]:focus, input[type="datetime-local"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .table-scrollable table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table-scrollable table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border: none;
+        }
+        .table-scrollable table tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .table-scrollable table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .factura-details-row {
+            display: none;
+            background-color: #f8f9fa;
+        }
+        .factura-details-row.show {
+            display: table-row;
+        }
+        .expand-btn {
+            cursor: pointer;
+            color: #667eea;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        .expand-btn.expanded {
+            transform: rotate(90deg);
+        }
+        .factura-details-content {
+            padding: 15px;
+            background: white;
+            border-left: 3px solid #667eea;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <!-- END HEAD -->
 <?php require_once(ROOT_PATH."/main-app/compartido/body.php");?>
@@ -57,17 +125,29 @@ $codigoUnico=Utilidades::generateCode("ABO");
                     <div class="row">
                         <div class="col-sm-9">
                             <?php require_once(ROOT_PATH."/config-general/mensajes-informativos.php"); ?>
-                            <div class="panel">
-                                <header class="panel-heading panel-heading-purple"><?=$frases[56][$datosUsuarioActual['uss_idioma']];?> <?=$frases[413][$datosUsuarioActual['uss_idioma']];?></header>
-                                <div class="panel-body">
+                            <div class="panel abono-form-section">
+                                <header class="panel-heading panel-heading-purple">
+                                    <h4 style="margin: 0; color: white;">
+                                        <i class="fa fa-plus-circle"></i> <?=$frases[56][$datosUsuarioActual['uss_idioma']];?> <?=$frases[413][$datosUsuarioActual['uss_idioma']];?>
+                                    </h4>
+                                </header>
+                                <div class="panel-body" style="padding: 25px;">
 									<form name="formularioGuardar" action="abonos-guardar.php" method="post" enctype="multipart/form-data">
 										<input type="hidden" value="<?=$codigoUnico?>" name="codigoUnico" id="idAbono">
 
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[424][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
-                                            <div class="col-sm-10">
+                                            <div class="col-sm-5">
                                                 <select class="form-control select2" id="select_cliente" name="cliente" onchange="mostrarTipoTransaccion()" required <?=$disabledPermiso;?>>
                                                 </select>
+                                            </div>
+                                            
+                                            <label class="col-sm-2 control-label"><?=$frases[51][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-3">
+                                                <?php 
+                                                $fechaActual = date('Y-m-d\TH:i');
+                                                ?>
+                                                <input type="datetime-local" name="fecha" class="form-control" value="<?=$fechaActual?>" required <?=$disabledPermiso;?>>
                                             </div>
                                         </div>
 
@@ -128,31 +208,44 @@ $codigoUnico=Utilidades::generateCode("ABO");
 										</div>
 
                                         <div id="divTipoTransaccion" style="display: none;">
-                                            <div class="panel">
-                                                <header class="panel-heading panel-heading-blue"> Tipo de Transacción</header>
-                                                <div class="panel-body" style="text-align: center;">
-                                                    <span style="font-size: 17px;">Ajustar este ingreso a una <b>factura de venta</b> existente en el sistema?</span><br>
-                                                    Recuerda que puedes registrar un ingreso sin necesidad de que este asociado a una factura de venta<br>
+                                            <div class="panel" style="margin-top: 20px;">
+                                                <header class="panel-heading panel-heading-blue">
+                                                    <h5 style="margin: 0; color: white;">
+                                                        <i class="fa fa-exchange"></i> Tipo de Transacción
+                                                    </h5>
+                                                </header>
+                                                <div class="panel-body" style="text-align: center; padding: 25px;">
+                                                    <span style="font-size: 17px; color: #333;">Ajustar este ingreso a una <b>factura de venta</b> existente en el sistema?</span><br>
+                                                    <small style="color: #666;">Recuerda que puedes registrar un ingreso sin necesidad de que este asociado a una factura de venta</small><br><br>
                                                 
                                                     <div class="form-group row" style="align-items: center; justify-content: center;">
-                                                        <div class="col-sm-2">
-                                                            <input type="radio" name="tipoTransaccion" id="opt1" value="<?=INVOICE?>" onClick="tipoAbono(1)"> SÍ
+                                                        <div class="col-sm-3">
+                                                            <label style="font-weight: normal; cursor: pointer; padding: 10px 20px; border: 2px solid #667eea; border-radius: 5px; display: inline-block; min-width: 120px; background: white; color: #667eea;">
+                                                                <input type="radio" name="tipoTransaccion" id="opt1" value="<?=INVOICE?>" onClick="tipoAbono(1)" style="margin-right: 8px;"> SÍ
+                                                            </label>
                                                         </div>
-                                                        <div class="col-sm-2">
-                                                            <input type="radio" name="tipoTransaccion" id="opt2" value="<?=ACCOUNT?>" onChange="tipoAbono(2)"> NO
+                                                        <div class="col-sm-3">
+                                                            <label style="font-weight: normal; cursor: pointer; padding: 10px 20px; border: 2px solid #667eea; border-radius: 5px; display: inline-block; min-width: 120px; background: white; color: #667eea;">
+                                                                <input type="radio" name="tipoTransaccion" id="opt2" value="<?=ACCOUNT?>" onClick="tipoAbono(2)" style="margin-right: 8px;"> NO
+                                                            </label>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="panel" id="divFacturas" style="display: none;">
-                                                <header class="panel-heading panel-heading-blue"> Facturas Pendientes</header>
-                                                <div class="panel-body">
+                                            <div class="panel" id="divFacturas" style="display: none; margin-top: 20px;">
+                                                <header class="panel-heading panel-heading-blue">
+                                                    <h5 style="margin: 0; color: white;">
+                                                        <i class="fa fa-file-text-o"></i> Facturas Pendientes
+                                                    </h5>
+                                                </header>
+                                                <div class="panel-body" style="padding: 20px;">
 
                                                     <div class="table-scrollable">
                                                         <table class="display" style="width:100%;" id="tablaItems">
                                                             <thead>
                                                                 <tr>
+                                                                    <th style="width: 40px;"></th>
                                                                     <th>Cod. Factura</th>
                                                                     <th>Fecha</th>
                                                                     <th><?=$frases[107][$datosUsuarioActual['uss_idioma']];?></th>
@@ -298,6 +391,22 @@ $codigoUnico=Utilidades::generateCode("ABO");
     <script>
         CKEDITOR.replace( 'editor1' );
         CKEDITOR.replace( 'editor2' );
+        
+        // Función global para expandir/contraer detalles de facturas
+        function toggleFacturaDetails(facturaId) {
+            var detailsRow = document.getElementById('details' + facturaId);
+            var expandBtn = document.getElementById('expand' + facturaId);
+            
+            if (detailsRow && expandBtn) {
+                if (detailsRow.classList.contains('show')) {
+                    detailsRow.classList.remove('show');
+                    expandBtn.classList.remove('expanded');
+                } else {
+                    detailsRow.classList.add('show');
+                    expandBtn.classList.add('expanded');
+                }
+            }
+        }
     </script>
 </body>
 

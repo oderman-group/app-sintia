@@ -153,8 +153,11 @@ $urlOcultarAnuladas = $_SERVER['PHP_SELF'] . "?";
 $params = $_GET;
 unset($params['mostrarAnuladas']);
 $urlOcultarAnuladas .= http_build_query($params);
+
+$colorPrimario = isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea';
+$colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764ba2';
 ?>
-<div style="margin: 10px 0; text-align: right;">
+<div class="movimientos-actions-bar" style="margin: 12px 0; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
 	<?php if ($mostrarAnuladas) { ?>
 		<a href="<?= $urlOcultarAnuladas ?>" class="btn btn-warning btn-sm">
 			<i class="fa fa-eye-slash"></i> Ocultar Facturas Anuladas
@@ -164,4 +167,27 @@ $urlOcultarAnuladas .= http_build_query($params);
 			<i class="fa fa-eye"></i> Mostrar Facturas Anuladas
 		</a>
 	<?php } ?>
+
+	<?php if (Modulos::validarPermisoEdicion()) { ?>
+	<button class="btn btn-warning btn-sm" onclick="bloquearUsuariosPendientes()" title="Bloquear usuarios con saldo pendiente">
+		<i class="fa fa-user-slash"></i> Bloquear usuarios con saldo pendiente
+	</button>
+	<?php } ?>
+
+	<?php if (Modulos::validarPermisoEdicion() &&  Modulos::validarSubRol(['DT0106'])) { ?>
+	<button class="btn btn-sm" onclick="abrirModalAgregarMovimiento()" title="Agregar nueva transacción" style="background: linear-gradient(135deg, <?= $colorPrimario ?> 0%, <?= $colorSecundario ?> 100%); color: #fff; border: none; border-radius: 20px; padding: 8px 18px; font-weight: 600;">
+		<i class="fa fa-plus"></i> Agregar transacción
+	</button>
+	<?php } ?>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $(document).off('click', '.filtro-async');
+    $(document).on('click', '.filtro-async', function(e) {
+        e.preventDefault();
+        var destino = $(this).data('url') || '';
+        var extras = $(this).data('parametros') || '';
+        window.location.href = destino + extras;
+    });
+});
+</script>

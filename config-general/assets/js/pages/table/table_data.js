@@ -11,7 +11,9 @@ $(document).ready(function() {
         $('#example1').DataTable();
     }
 
-    $('#tablaItems').DataTable();
+    if (!$.fn.DataTable.isDataTable('#tablaItems')) {
+        $('#tablaItems').DataTable();
+    }
     
     var table = $('#example2').DataTable( {
         "scrollY": "200px",
