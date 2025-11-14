@@ -203,40 +203,41 @@ if($config['conf_doble_buscador'] == 1) {
                         
                         // Obtener filtro y contar total de cargas ANTES de mostrar botones
                         $filtro = '';
+
+                        /**
+                         * Decodifica valores base64 y permite identificadores alfanuméricos.
+                         * Si la decodificación falla, usa el valor original sanitizado.
+                         */
+                        $decodeFiltro = function(string $valor) use ($conexion){
+                            $decoded = base64_decode($valor, true);
+                            $limpio = (string)($decoded !== false ? $decoded : $valor);
+                            return mysqli_real_escape_string($conexion, $limpio);
+                        };
+
                         if(!empty($_GET["curso"]) && is_string($_GET['curso'])){ 
                             try {
-                                $cursoDecoded = base64_decode($_GET['curso'], true);
-                                if ($cursoDecoded !== false && is_numeric($cursoDecoded)) {
-                                    $curso = mysqli_real_escape_string($conexion, $cursoDecoded);
-                                    $filtro .= " AND car_curso='".$curso."'";
-                                }
+                                $curso = $decodeFiltro($_GET['curso']);
+                                $filtro .= " AND car.car_curso='".$curso."'";
                             } catch(Exception $e) {}
                         }
                         if(!empty($_GET["grupo"]) && is_string($_GET['grupo'])){
                             try {
-                                $grupoDecoded = base64_decode($_GET["grupo"], true);
-                                if ($grupoDecoded !== false && is_numeric($grupoDecoded)) {
-                                    $grupo = mysqli_real_escape_string($conexion, $grupoDecoded);
-                                    $filtro .= " AND car_grupo='".$grupo."'";
-                                }
+                                $grupo = $decodeFiltro($_GET["grupo"]);
+                                $filtro .= " AND car.car_grupo='".$grupo."'";
                             } catch(Exception $e) {}
                         }
                         if(!empty($_GET["docente"]) && is_string($_GET['docente'])){
                             try {
-                                $docenteDecoded = base64_decode($_GET["docente"], true);
-                                if ($docenteDecoded !== false && !empty($docenteDecoded)) {
-                                    $docente = mysqli_real_escape_string($conexion, $docenteDecoded);
-                                    $filtro .= " AND car_docente='".$docente."'";
+                                $docente = $decodeFiltro($_GET["docente"]);
+                                if($docente !== ''){
+                                    $filtro .= " AND car.car_docente='".$docente."'";
                                 }
                             } catch(Exception $e) {}
                         }
                         if(!empty($_GET["asignatura"]) && is_string($_GET['asignatura'])){
                             try {
-                                $asignaturaDecoded = base64_decode($_GET["asignatura"], true);
-                                if ($asignaturaDecoded !== false && is_numeric($asignaturaDecoded)) {
-                                    $asignatura = mysqli_real_escape_string($conexion, $asignaturaDecoded);
-                                    $filtro .= " AND car_materia='".$asignatura."'";
-                                }
+                                $asignatura = $decodeFiltro($_GET["asignatura"]);
+                                $filtro .= " AND car.car_materia='".$asignatura."'";
                             } catch(Exception $e) {}
                         }
                         
@@ -663,122 +664,111 @@ if($config['conf_doble_buscador'] == 1) {
 			}
 		});
 
-		// DataTable initialization with child rows
-		$(document).ready(function() {
-			console.log('Inicializando DataTable y funcionalidades...');
-			if (!$.fn.DataTable.isDataTable('#example1')) {
-				var table = $('#example1').DataTable({
-					"paging": false,   // Desactivar paginación de DataTable
-					"pageLength": 500, // Mostrar todos los registros cargados
-					"columnDefs": [
-						{
-							"targets": 0,
-							"orderable": false,
-							"searchable": false
-						},
-						{
-							"targets": 1,
-							"orderable": false,
-							"searchable": false
+		function registrarEventosExpand(table) {
+			var expandedRows = {};
+			$('#example1 tbody').off('click', '.expand-btn').on('click', '.expand-btn', function () {
+				var button = $(this);
+				var cargaId = button.data('id');
+				var icon = button.find('i');
+
+				var codigo = button.data('codigo');
+				var docente = button.data('docente');
+				var curso = button.data('curso');
+				var asignatura = button.data('asignatura');
+				var ih = button.data('ih');
+				var periodo = button.data('periodo');
+				var actividades = button.data('actividades');
+				var actividadesRegistradas = button.data('actividades-registradas');
+				var directorGrupo = button.data('director-grupo');
+				var permiso2 = button.data('permiso2');
+				var indicadorAutomatico = button.data('indicador-automatico');
+				var maxIndicadores = button.data('max-indicadores');
+				var maxCalificaciones = button.data('max-calificaciones');
+				var cantidadEstudiantes = button.data('cantidad-estudiantes');
+				var activa = button.data('activa');
+
+				var tr = $(this).closest('tr');
+				var row = table.row(tr);
+				var isExpanded = expandedRows[cargaId] || false;
+
+				if (isExpanded) {
+					try {
+						if (row && row.child && typeof row.child === 'function') {
+							row.child.hide();
+						} else {
+							tr.next('tr').remove();
 						}
-					],
-					"order": [[2, 'asc']],
-					"language": {
-						"lengthMenu": "<?=__('datatables.length_menu');?>",
-						"zeroRecords": "<?=__('datatables.zero_records');?>",
-						"info": "<?=__('datatables.info');?>",
-						"infoEmpty": "<?=__('datatables.info_empty');?>",
-						"infoFiltered": "<?=__('datatables.info_filtered');?>",
-						"search": "<?=__('datatables.search');?>",
-						"paginate": {
-							"first": "<?=__('datatables.first');?>",
-							"last": "<?=__('datatables.last');?>",
-							"next": "<?=__('datatables.next');?>",
-							"previous": "<?=__('datatables.previous');?>"
-						}
-					},
-					"initComplete": function(settings, json) {
-						// Attach expand button events initially
-						var table = this.api();
-						var expandedRows = {}; // Track expanded rows by cargaId
-
-						$('#example1 tbody').on('click', '.expand-btn', function () {
-							var button = $(this);
-							var cargaId = button.data('id');
-							var icon = button.find('i');
-
-							// Get data from button attributes
-							var codigo = button.data('codigo');
-							var docente = button.data('docente');
-							var curso = button.data('curso');
-							var asignatura = button.data('asignatura');
-							var ih = button.data('ih');
-							var periodo = button.data('periodo');
-							var actividades = button.data('actividades');
-							var actividadesRegistradas = button.data('actividades-registradas');
-							var directorGrupo = button.data('director-grupo');
-							var permiso2 = button.data('permiso2');
-							var indicadorAutomatico = button.data('indicador-automatico');
-							var maxIndicadores = button.data('max-indicadores');
-							var maxCalificaciones = button.data('max-calificaciones');
-							var cantidadEstudiantes = button.data('cantidad-estudiantes');
-							var activa = button.data('activa');
-
-							// Find the current row in the table
-							var tr = $(this).closest('tr');
-							var row = table.row(tr);
-
-							// Check if this row is currently expanded
-							var isExpanded = expandedRows[cargaId] || false;
-
-							if (isExpanded) {
-								// This row is already open - close it
-								try {
-									if (row && row.child && typeof row.child === 'function') {
-										row.child.hide();
-									} else {
-										// Fallback: remove any child rows manually
-										tr.next('tr').remove();
-									}
-									expandedRows[cargaId] = false;
-									icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
-									button.removeClass('text-primary').addClass('text-secondary');
-								} catch (error) {
-									console.error('Error hiding child row:', error);
-									// Fallback cleanup
-									tr.next('tr').remove();
-									expandedRows[cargaId] = false;
-									icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
-									button.removeClass('text-primary').addClass('text-secondary');
-								}
-							} else {
-								// Open this row
-								try {
-									if (row && row.child && typeof row.child === 'function') {
-										row.child(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).show();
-									} else {
-										// Fallback: insert child row manually
-										$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
-									}
-									expandedRows[cargaId] = true;
-									icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
-									button.removeClass('text-secondary').addClass('text-primary');
-								} catch (error) {
-									console.error('Error showing child row:', error);
-									// Fallback insertion
-									$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
-									expandedRows[cargaId] = true;
-									icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
-									button.removeClass('text-secondary').addClass('text-primary');
-								}
-							}
-						});
+					} catch (error) {
+						console.error('Error hiding child row:', error);
+						tr.next('tr').remove();
 					}
-				});
-			} else {
-				var table = $('#example1').DataTable();
+					expandedRows[cargaId] = false;
+					icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+					button.removeClass('text-primary').addClass('text-secondary');
+				} else {
+					try {
+						if (row && row.child && typeof row.child === 'function') {
+							row.child(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).show();
+						} else {
+							$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
+						}
+						expandedRows[cargaId] = true;
+						icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+						button.removeClass('text-secondary').addClass('text-primary');
+					} catch (error) {
+						console.error('Error showing child row:', error);
+						$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
+						expandedRows[cargaId] = true;
+						icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+						button.removeClass('text-secondary').addClass('text-primary');
+					}
+				}
+			});
+		}
+
+		function inicializarDataTableCargas() {
+			console.log('Inicializando DataTable y funcionalidades...');
+			if ($.fn.DataTable.isDataTable('#example1')) {
+				$('#example1').DataTable().destroy();
 			}
 
+			var table = $('#example1').DataTable({
+				"paging": false,
+				"pageLength": 500,
+				"columnDefs": [
+					{
+						"targets": 0,
+						"orderable": false,
+						"searchable": false
+					},
+					{
+						"targets": 1,
+						"orderable": false,
+						"searchable": false
+					}
+				],
+				"order": [[2, 'asc']],
+				"language": {
+					"lengthMenu": "<?=__('datatables.length_menu');?>",
+					"zeroRecords": "<?=__('datatables.zero_records');?>",
+					"info": "<?=__('datatables.info');?>",
+					"infoEmpty": "<?=__('datatables.info_empty');?>",
+					"infoFiltered": "<?=__('datatables.info_filtered');?>",
+					"search": "<?=__('datatables.search');?>",
+					"paginate": {
+						"first": "<?=__('datatables.first');?>",
+						"last": "<?=__('datatables.last');?>",
+						"next": "<?=__('datatables.next');?>",
+						"previous": "<?=__('datatables.previous');?>"
+					}
+				}
+			});
+
+			registrarEventosExpand(table);
+		}
+
+		$(document).ready(function() {
+			inicializarDataTableCargas();
 		});
 
 		function formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId) {
@@ -1294,6 +1284,11 @@ if($config['conf_doble_buscador'] == 1) {
 					$('#gifCarga').hide();
 					
 					if (response.success) {
+						// Destruir DataTable antes de reemplazar el contenido
+						if ($.fn.DataTable.isDataTable('#example1')) {
+							$('#example1').DataTable().destroy();
+						}
+						
 						// Actualizar el contenido de la tabla
 						$('#cargas_result').html(response.html);
 						
@@ -1302,10 +1297,8 @@ if($config['conf_doble_buscador'] == 1) {
 						$('#selectAllCargas').prop('checked', false);
 						toggleActionButtons();
 						
-						// IMPORTANTE: Reinicializar event listeners de expandir/contraer
-						reinicializarEventListenersExpandir();
-						
-						// Reinicializar tooltips
+						// Reinicializar DataTable y tooltips
+						inicializarDataTableCargas();
 						$('[data-toggle="tooltip"]').tooltip();
 						
 						console.log('Tabla recargada exitosamente');
@@ -1329,53 +1322,7 @@ if($config['conf_doble_buscador'] == 1) {
 			});
 		}
 		
-		// Función para reinicializar event listeners de expandir/contraer
-		function reinicializarEventListenersExpandir() {
-			console.log('Reinicializando event listeners de expandir/contraer...');
-			
-			$('.expand-btn').off('click').on('click', function() {
-				var button = $(this);
-				var cargaId = button.data('id');
-				var icon = button.find('i');
-				
-				// Verificar si la fila expandible ya existe
-				var expandRow = button.closest('tr').next('tr.expandable-row');
-				
-				if (expandRow.length && expandRow.is(':visible')) {
-					// Contraer
-					expandRow.slideUp(300, function() {
-						icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
-						button.removeClass('text-primary').addClass('text-secondary');
-					});
-				} else {
-					// Expandir - obtener datos de los atributos del botón
-					var codigo = button.data('codigo');
-					var docente = button.data('docente');
-					var curso = button.data('curso');
-					var asignatura = button.data('asignatura');
-					var ih = button.data('ih');
-					var periodo = button.data('periodo');
-					var actividades = button.data('actividades');
-					var actividadesRegistradas = button.data('actividades-registradas');
-					var directorGrupo = button.data('director-grupo');
-					var permiso2 = button.data('permiso2');
-					var indicadorAutomatico = button.data('indicador-automatico');
-					var maxIndicadores = button.data('max-indicadores');
-					var maxCalificaciones = button.data('max-calificaciones');
-					var cantidadEstudiantes = button.data('cantidad-estudiantes');
-					var activa = button.data('activa');
-					
-					// Crear el HTML de detalles y insertarlo
-					var detailsHtml = formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId);
-					$(detailsHtml).insertAfter(button.closest('tr')).slideDown(300);
-					
-					icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
-					button.removeClass('text-secondary').addClass('text-primary');
-				}
-			});
-			
-			console.log('Event listeners reinicializados correctamente');
-		}
+		
 
 		// Limpiar selección al cerrar el modal
 		$('#editarMasivoModal').on('hidden.bs.modal', function () {
