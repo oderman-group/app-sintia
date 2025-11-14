@@ -22,7 +22,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             <div class="form-group row">
                 <label class="col-sm-2 control-label"><?= $frases[26][$datosUsuarioActual['uss_idioma']]; ?></label>
                 <div class="col-sm-10">
-                    <select class="form-control  select2" style="width: 100%;" name="grado" required>
+                    <select class="form-control  select2 select-grado-reportes" style="width: 100%;" name="grado">
                         <option value="">Seleccione una opción</option>
                         <?php
                         $datosConsulta = Grados::traerGradosInstitucion($config);
@@ -31,13 +31,14 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                             <option value="<?= $datos['gra_id']; ?>"><?= $datos['gra_nombre'] ?></option>
                         <?php } ?>
                     </select>
+                    <small class="text-muted">Opcional. Úsalo si deseas filtrar por curso específico.</small>
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label"><?= $frases[250][$datosUsuarioActual['uss_idioma']]; ?></label>
                 <div class="col-sm-10">
-                    <select class="form-control  select2" style="width: 100%;" name="grupo" required>
+                    <select class="form-control  select2 select-grupo-reportes" style="width: 100%;" name="grupo">
                         <option value="">Seleccione una opción</option>
                         <?php
                         $datosConsulta = Grupos::listarGrupos();
@@ -46,6 +47,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                             <option value="<?= $datos['gru_id']; ?>"><?= $datos['gru_nombre'] ?></option>
                         <?php } ?>
                     </select>
+                    <small class="text-muted">Opcional. Se recomienda escogerlo junto al grado solo cuando necesites filtrar estudiantes.</small>
                 </div>
             </div>
 
@@ -72,16 +74,10 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             <div class="form-group row">
                 <label class="col-sm-2 control-label"><?= $frases[55][$datosUsuarioActual['uss_idioma']]; ?></label>
                 <div class="col-sm-10">
-                    <select class="form-control  select2" id="selectEstudiantesReportes" style="width: 100%;" name="est" multiple>
-                        <option value="">Seleccione una opción</option>
-                        <?php
-                        $datosConsulta = Estudiantes::listarEstudiantesEnGrados();
-                        while ($datos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)) {
-                        ?>
-                            <option value="<?= $datos['uss_id']; ?>"><?= UsuariosPadre::nombreCompletoDelUsuario($datos); ?></option>
-                        <?php } ?>
+                    <select class="form-control  select2 select-estudiantes-reportes" style="width: 100%;" name="est" multiple disabled>
+                        <option value=""><?= $frases[83][$datosUsuarioActual['uss_idioma']] ?? 'Seleccione una opción'; ?></option>
                     </select>
-                    <span style="color: darkblue;">Seleccione solo una opción de este listado.</span>
+                    <span style="color: darkblue;">Seleccione solo una opción de este listado. Los estudiantes se habilitan después de elegir grado y grupo.</span>
                 </div>
             </div>
 
@@ -137,9 +133,60 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 <script src="../../config-general/assets/plugins/popper/popper.js" ></script>
 
 <script>
-// Agregar el evento onchange al select
-var miSelect = document.getElementById('selectEstudiantesReportes');
-miSelect.onchange = function() {
-    limitarSeleccion(this);
-};
+$(function(){
+    function resetSelectEstudiantes($form, mensaje){
+        var $sel = $form.find('.select-estudiantes-reportes');
+        $sel.prop('disabled', true);
+        $sel.html('<option value="">' + mensaje + '</option>');
+        $sel.val(null).trigger('change');
+    }
+
+    function cargarEstudiantesPorGradoGrupo($form){
+        var grado = $form.find('.select-grado-reportes').val();
+        var grupo = $form.find('.select-grupo-reportes').val();
+        if(!grado || !grupo){
+            resetSelectEstudiantes($form, 'Seleccione un grado y grupo primero');
+            return;
+        }
+
+        resetSelectEstudiantes($form, 'Cargando estudiantes...');
+
+        $.ajax({
+            url: 'ajax-estudiantes-por-grado-grupo.php',
+            type: 'POST',
+            dataType: 'json',
+            data: { grado: grado, grupo: grupo },
+            success: function(resp){
+                if(resp.success && resp.estudiantes.length > 0){
+                    var $sel = $form.find('.select-estudiantes-reportes');
+                    $sel.empty();
+                    $sel.append('<option value="">Seleccione una opción</option>');
+                    resp.estudiantes.forEach(function(item){
+                        $sel.append('<option value="'+item.id+'">'+item.nombre+'</option>');
+                    });
+                    $sel.prop('disabled', false);
+                    $sel.trigger('change');
+                }else{
+                    resetSelectEstudiantes($form, resp.message || 'No se encontraron estudiantes con esos filtros');
+                }
+            },
+            error: function(){
+                resetSelectEstudiantes($form, 'Error al cargar estudiantes. Intenta nuevamente.');
+            }
+        });
+    }
+
+    $(document).on('change', '.select-grado-reportes, .select-grupo-reportes', function(){
+        var $form = $(this).closest('form');
+        cargarEstudiantesPorGradoGrupo($form);
+    });
+
+    $(document).on('change', '.select-estudiantes-reportes', function(){
+        limitarSeleccion(this);
+    });
+
+    $('.select-estudiantes-reportes').each(function(){
+        resetSelectEstudiantes($(this).closest('form'), 'Seleccione un grado y grupo primero');
+    });
+});
 </script>

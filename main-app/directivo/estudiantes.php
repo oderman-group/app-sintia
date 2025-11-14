@@ -1009,16 +1009,19 @@ if($config['conf_doble_buscador'] == 1) {
 													// include("includes/consulta-paginacion-estudiantes.php"); - Ya no es necesario, se incluye arriba
 													$filtroLimite = 'LIMIT '.$inicio.','.$registros;
 													
-													$selectSql = ["mat.*",
-																  "uss.uss_id","uss.uss_usuario","uss.uss_bloqueado",
-																  "gra_nombre","gru_nombre","gra_formato_boletin",
-																  "acud.uss_nombre","acud.uss_nombre2","acud.uss_nombre2", "mat.id_nuevo AS mat_id_nuevo",
-																  "og_tipo_doc.ogen_nombre as tipo_doc_nombre",
-																  "og_genero.ogen_nombre as genero_nombre",
-																  "og_estrato.ogen_nombre as estrato_nombre",
-																  "og_tipo_sangre.ogen_nombre as tipo_sangre_nombre"];
+													$selectSql = [
+														"mat.mat_id","mat.id_nuevo AS mat_id_nuevo","mat.mat_documento","mat.mat_compromiso",
+														"mat.mat_estado_matricula","mat.mat_id_usuario","mat.mat_grado","mat.mat_grupo",
+														"mat.mat_inclusion","mat.mat_foto","mat.mat_acudiente",
+														"mat.mat_matricula","mat.mat_codigo_tesoreria","mat.mat_folio",
+														"mat.mat_valor_matricula","mat.mat_fecha",
+														"mat.mat_nombres","mat.mat_nombre2","mat.mat_primer_apellido","mat.mat_segundo_apellido",
+														"uss.uss_id","uss.uss_usuario","uss.uss_bloqueado",
+														"gra.gra_nombre","gra.gra_formato_boletin",
+														"gru.gru_nombre"
+													];
 
-													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual,null,$selectSql);
+													$consulta = Estudiantes::listarEstudiantes(0, $filtro, $filtroLimite, $cursoActual, null, $selectSql);
 													
 													$contReg = 1;
 

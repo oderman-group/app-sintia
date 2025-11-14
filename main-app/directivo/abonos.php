@@ -62,6 +62,86 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													</div>
 												</div>
 											</div>
+
+                                            <?php
+                                            // Calcular resúmenes por método de pago
+                                            $resumenMetodos = [];
+                                            $totalGeneral = 0;
+                                            $totalAbonos = 0;
+                                            
+                                            try {
+                                                $consultaResumen = mysqli_query($conexion, "SELECT 
+                                                    pay.payment_method,
+                                                    COUNT(DISTINCT pay.id) as cantidad_abonos,
+                                                    SUM(COALESCE(pi.payment, 0)) as total_abonado
+                                                FROM ".BD_FINANCIERA.".payments pay
+                                                LEFT JOIN ".BD_FINANCIERA.".payments_invoiced pi 
+                                                    ON pi.payments = pay.cod_payment 
+                                                    AND pi.institucion = pay.institucion 
+                                                    AND pi.year = pay.year
+                                                WHERE pay.is_deleted = 0 
+                                                    AND pay.institucion = {$config['conf_id_institucion']} 
+                                                    AND pay.year = {$_SESSION["bd"]}
+                                                GROUP BY pay.payment_method
+                                                ORDER BY total_abonado DESC");
+                                                
+                                                if ($consultaResumen) {
+                                                    while ($resumen = mysqli_fetch_array($consultaResumen, MYSQLI_BOTH)) {
+                                                        $metodo = $resumen['payment_method'] ?? 'Sin método';
+                                                        $cantidad = intval($resumen['cantidad_abonos']);
+                                                        $total = floatval($resumen['total_abonado']);
+                                                        
+                                                        $resumenMetodos[$metodo] = [
+                                                            'cantidad' => $cantidad,
+                                                            'total' => $total
+                                                        ];
+                                                        
+                                                        $totalGeneral += $total;
+                                                        $totalAbonos += $cantidad;
+                                                    }
+                                                }
+                                            } catch (Exception $e) {
+                                                include("../compartido/error-catch-to-report.php");
+                                            }
+                                            ?>
+
+                                            <!-- Resumen por métodos de pago -->
+                                            <div class="row" style="margin-bottom: 20px;">
+                                                <div class="col-sm-12">
+                                                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 20px;">
+                                                        <h5 style="color: white; margin-bottom: 15px; font-weight: 600;">
+                                                            <i class="fa fa-bar-chart"></i> Resumen de Abonos por Método de Pago
+                                                        </h5>
+                                                        <div class="row">
+                                                            <div class="col-md-3">
+                                                                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                                                                    <div style="color: rgba(255,255,255,0.8); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Total General</div>
+                                                                    <div style="color: white; font-size: 24px; font-weight: 700; margin-top: 5px;">$<?=number_format($totalGeneral, 0, ",", ".")?></div>
+                                                                    <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 5px;"><?=$totalAbonos?> abonos</div>
+                                                                </div>
+                                                            </div>
+                                                            <?php 
+                                                            $coloresBg = ['rgba(46, 204, 113, 0.2)', 'rgba(52, 152, 219, 0.2)', 'rgba(241, 196, 15, 0.2)', 'rgba(155, 89, 182, 0.2)', 'rgba(230, 126, 34, 0.2)'];
+                                                            $coloresBorder = ['rgba(46, 204, 113, 0.4)', 'rgba(52, 152, 219, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(230, 126, 34, 0.4)'];
+                                                            $i = 0;
+                                                            foreach ($resumenMetodos as $metodo => $datos) { 
+                                                                $colorBg = $coloresBg[$i % count($coloresBg)];
+                                                                $colorBorder = $coloresBorder[$i % count($coloresBorder)];
+                                                                $porcentaje = $totalGeneral > 0 ? round(($datos['total'] / $totalGeneral) * 100, 1) : 0;
+                                                                $i++;
+                                                            ?>
+                                                            <div class="col-md-3">
+                                                                <div style="background: <?=$colorBg?>; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid <?=$colorBorder?>;">
+                                                                    <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;"><?=$metodo?></div>
+                                                                    <div style="color: white; font-size: 20px; font-weight: 700; margin-top: 5px;">$<?=number_format($datos['total'], 0, ",", ".")?></div>
+                                                                    <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 5px;"><?=$datos['cantidad']?> abonos (<?=$porcentaje?>%)</div>
+                                                                </div>
+                                                            </div>
+                                                            <?php } ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 											
                                     <style>
                                         .expand-btn {
@@ -300,7 +380,18 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<td><?=$resultado['registration_date'];?></td>
 														<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></td>
 														<td><?=$clienteNombre;?></td>
-                                                        <td><?=$resultado['numeroFactura'];?></td>
+                                                        <td>
+                                                            <?php if (!empty($facturasAsociadas) && count($facturasAsociadas) == 1) {
+                                                                $facturaId = $facturasAsociadas[0]['datos']['fcu_id'];
+                                                                $facturaConsec = $facturasAsociadas[0]['datos']['id_nuevo'];
+                                                            ?>
+                                                                <a href="movimientos-editar.php?id=<?=base64_encode($facturaId)?>" style="text-decoration: underline; color: #667eea; font-weight: 600;" title="Ver detalle de factura">
+                                                                    <?=$facturaConsec?>
+                                                                </a>
+                                                            <?php } else { ?>
+                                                                <?=$resultado['numeroFactura'] ?? 'N/A';?>
+                                                            <?php } ?>
+                                                        </td>
 														<td>$<?=number_format($abonos,0,",",".")?></td>
 														<td><?=$resultado['payment_method'];?></td>
 														<td><?=$vaucher;?></td>
@@ -317,7 +408,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                             <li><a href="abonos-editar.php?id=<?=base64_encode($resultado['id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
                                                                         <?php } if(Modulos::validarSubRol(['DT0269'])){?>
                                                                             <li><a href="javascript:void(0);" title="<?=$objetoEnviar;?>" id="<?=$resultado['id'];?>" name="abonos-eliminar.php?id=<?=base64_encode($resultado['id']);?>" onClick="deseaEliminar(this)"><?=$frases[174][$datosUsuarioActual['uss_idioma']];?></a></li>
-                                                                        <?php } if( Modulos::validarSubRol(['DT0271']) ){?>
+																		<?php } if( Modulos::validarSubRol(['DT0271']) ){?>
 																			<li><a href="abonos-recibo-caja.php?id=<?=base64_encode($resultado['id']);?>" target="_blank"><?=$frases[57][$datosUsuarioActual['uss_idioma']];?></a></li>
 																		<?php }?>
                                                                     </ul>
@@ -530,6 +621,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
             });
         });
     </script>
+
 </body>
 
 </html>
