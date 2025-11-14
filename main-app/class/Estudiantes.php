@@ -116,13 +116,13 @@ class Estudiantes {
                         
                         LEFT JOIN ".BD_ADMIN.".localidad_ciudades 
                         ON ciu_id               = mat.mat_lugar_nacimiento
-
+                        
                         LEFT JOIN ".BD_GENERAL.".usuarios  acud
                         ON acud.institucion          = mat.institucion
 						AND acud.year                = mat.year
 						AND acud.uss_id              = mat.mat_acudiente
                         
-                        WHERE mat.mat_eliminado IN (0, '".$eliminados."') 
+                        WHERE mat.mat_eliminado IN (0, ?) 
                         AND mat.institucion     = ? 
                         AND mat.year            = ?
                         
@@ -133,7 +133,7 @@ class Estudiantes {
 
                         {$filtroLimite}";
         
-                $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+                $parametros = [$eliminados, $config['conf_id_institucion'], $_SESSION["bd"]];
                 
                 $resultado = BindSQL::prepararSQL($sql, $parametros);
             }else{
