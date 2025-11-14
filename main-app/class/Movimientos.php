@@ -370,43 +370,150 @@ class Movimientos {
         array $FILES
     )
     {
-
-        $comprobante= '';
-
-        if (!empty($FILES['comprobante']['name'])) {
-            $destino = ROOT_PATH.'/main-app/files/comprobantes';
-            $explode = explode(".", $FILES['comprobante']['name']);
-            $extension = end($explode);
-            $comprobante= uniqid('abono_'.$POST["cliente"].'_') . "." . $extension;
-            @unlink($destino . "/" . $comprobante);
-            move_uploaded_file($FILES['comprobante']['tmp_name'], $destino . "/" . $comprobante);
-        }
-
-        // Preparar fecha si viene en el POST
-        $fechaRegistro = date('Y-m-d H:i:s'); // Fecha por defecto
-        if (!empty($POST["fecha"])) {
-            // Convertir datetime-local a formato MySQL
-            $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
-            if ($fecha !== false) {
-                $fechaRegistro = $fecha->format('Y-m-d H:i:s');
-            } else {
-                // Intentar otro formato si falla
-                $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
-                if ($fecha !== false) {
-                    $fechaRegistro = $fecha->format('Y-m-d H:i:s');
-                }
-            }
-        }
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
         try {
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments (responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, registration_date, institucion, year)VALUES('{$_SESSION["id"]}', '".$POST["cliente"]."', '".$POST["codigoUnico"]."', '".$POST["tipoTransaccion"]."', '".$POST["metodoPago"]."', '".$POST["obser"]."', '".$comprobante."', '".$POST["notas"]."', '".$fechaRegistro."', {$config['conf_id_institucion']}, {$_SESSION["bd"]});");
+            $conexionPDO->beginTransaction();
+            
+            // Generar código único para este abono
+            $codigoAbonoFinal = Utilidades::generateCode("ABO");
+            
+            $comprobante = '';
+            if (!empty($FILES['comprobante']['name'])) {
+                $destino = ROOT_PATH.'/main-app/files/comprobantes';
+                if (!file_exists($destino)) {
+                    @mkdir($destino, 0777, true);
+                }
+                $explode = explode(".", $FILES['comprobante']['name']);
+                $extension = end($explode);
+                $comprobante = uniqid('abono_'.$POST["cliente"].'_') . "." . $extension;
+                move_uploaded_file($FILES['comprobante']['tmp_name'], $destino . "/" . $comprobante);
+            }
+
+            // Preparar fecha
+            $fechaRegistro = date('Y-m-d H:i:s');
+            if (!empty($POST["fecha"])) {
+                $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
+                if ($fecha !== false) {
+                    $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+                } else {
+                    $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
+                    if ($fecha !== false) {
+                        $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+                    }
+                }
+            }
+            
+            $tipoTransaccion = trim($POST["tipoTransaccion"] ?? '');
+            
+            // PROCESAR ABONOS A FACTURAS (TIPO INVOICE)
+            // Buscar en el POST todos los campos que empiecen con "abono_factura["
+            $abonosAFacturas = [];
+            if ($tipoTransaccion == INVOICE && !empty($POST['abono_factura']) && is_array($POST['abono_factura'])) {
+                foreach ($POST['abono_factura'] as $idFactura => $valorAbono) {
+                    $valorAbono = floatval($valorAbono);
+                    if ($valorAbono > 0) {
+                        // Validar que no exceda el saldo pendiente
+                        $totalNetoFactura = self::calcularTotalNeto($conexion, $config, $idFactura, 0);
+                        $totalAbonadoFactura = self::calcularTotalAbonado($conexion, $config, $idFactura);
+                        $saldoPendiente = $totalNetoFactura - $totalAbonadoFactura;
+                        
+                        if ($valorAbono > $saldoPendiente + 0.5) {
+                            throw new Exception("El abono de $$valorAbono a la factura $idFactura excede el saldo pendiente de $" . number_format($saldoPendiente, 0, ",", "."));
+                        }
+                        
+                        $abonosAFacturas[] = [
+                            'idFactura' => $idFactura,
+                            'valorAbono' => $valorAbono
+                        ];
+                    }
+                }
+            }
+            
+            // Validar que haya al menos un abono si es tipo INVOICE
+            if ($tipoTransaccion == INVOICE && empty($abonosAFacturas)) {
+                throw new Exception("Debes ingresar al menos un valor de abono a una factura.");
+            }
+            
+            // 1. INSERTAR en payments_invoiced PRIMERO (para tipo INVOICE)
+            if ($tipoTransaccion == INVOICE && !empty($abonosAFacturas)) {
+                $sqlInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
+                    payment, invoiced, payments, institucion, year
+                ) VALUES (?, ?, ?, ?, ?)";
+                $stmtInvoiced = $conexionPDO->prepare($sqlInvoiced);
+                
+                foreach ($abonosAFacturas as $abono) {
+                    $stmtInvoiced->bindParam(1, $abono['valorAbono'], PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(2, $abono['idFactura'], PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(3, $codigoAbonoFinal, PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+                    $stmtInvoiced->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+                    $stmtInvoiced->execute();
+                }
+            }
+            
+            // 2. INSERTAR conceptos contables si es tipo ACCOUNT
+            if ($tipoTransaccion == ACCOUNT && !empty($POST["conceptos_contables_json"])) {
+                $conceptos = json_decode($POST["conceptos_contables_json"], true);
+                
+                if (is_array($conceptos) && count($conceptos) > 0) {
+                    $sqlConcepto = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
+                        invoiced, payment, cantity, subtotal, description, payments, institucion, year
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmtConcepto = $conexionPDO->prepare($sqlConcepto);
+                    
+                    foreach ($conceptos as $concepto) {
+                        if (!empty($concepto['concepto']) && floatval($concepto['precio']) > 0) {
+                            $stmtConcepto->bindParam(1, $concepto['concepto'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(2, $concepto['precio'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(3, $concepto['cantidad'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(4, $concepto['subtotal'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(5, $concepto['descripcion'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(6, $codigoAbonoFinal, PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+                            $stmtConcepto->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+                            $stmtConcepto->execute();
+                        }
+                    }
+                }
+            }
+            
+            // 3. FINALMENTE, INSERTAR registro en payments con el código generado
+            $sqlPayment = "INSERT INTO ".BD_FINANCIERA.".payments (
+                responsible_user, invoiced, cod_payment, type_payments, payment_method, 
+                observation, voucher, note, registration_date, institucion, year
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmtPayment = $conexionPDO->prepare($sqlPayment);
+            $stmtPayment->bindParam(1, $_SESSION["id"], PDO::PARAM_INT);
+            $stmtPayment->bindParam(2, $POST["cliente"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(3, $codigoAbonoFinal, PDO::PARAM_STR);
+            $stmtPayment->bindParam(4, $POST["tipoTransaccion"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(5, $POST["metodoPago"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(6, $POST["obser"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(7, $comprobante, PDO::PARAM_STR);
+            $stmtPayment->bindParam(8, $POST["notas"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(9, $fechaRegistro, PDO::PARAM_STR);
+            $stmtPayment->bindParam(10, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtPayment->bindParam(11, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtPayment->execute();
+            
+            $idRegistro = $conexionPDO->lastInsertId();
+            
+            $conexionPDO->commit();
+            
+            return $idRegistro;
+            
         } catch (Exception $e) {
+            $conexionPDO->rollBack();
+            if (!empty($comprobante)) {
+                @unlink(ROOT_PATH.'/main-app/files/comprobantes/' . $comprobante);
+            }
             include("../compartido/error-catch-to-report.php");
+            throw $e;
         }
-
-        $idRegistro = mysqli_insert_id($conexion);
-
-        return $idRegistro;
     }
 
     /**

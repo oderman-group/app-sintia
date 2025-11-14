@@ -63,7 +63,20 @@ if ($numFacturas > 0) {
         <td style="color: green;" id="abonos<?=$resultado['fcu_id'];?>" data-abonos="<?=$abonos?>">$<?=number_format($abonos, 0, ",", ".")?></td>
         <td style="color: red;" id="porCobrar<?=$resultado['fcu_id'];?>" data-por-cobrar="<?=$porCobrar?>">$<?=number_format($porCobrar, 0, ",", ".")?></td>
         <td>
-            <input type="number" min="0" step="0.01" class="form-control" onchange="actualizarAbonado(this)" data-id-factura="<?=$resultado['fcu_id'];?>" data-id-abono="<?=$_REQUEST["idAbono"];?>" data-abono-anterior="0" value="0" <?=$disabled?>>
+            <input type="number" 
+                name="abono_factura[<?=$resultado['fcu_id'];?>]"
+                min="0" 
+                max="<?=$porCobrar?>" 
+                step="0.01" 
+                class="form-control input-abono-factura" 
+                onchange="actualizarAbonado(this)" 
+                data-id-factura="<?=$resultado['fcu_id'];?>" 
+                data-id-abono="<?=$_REQUEST["idAbono"];?>" 
+                data-abono-anterior="0" 
+                data-saldo-pendiente="<?=$porCobrar?>"
+                value="0" 
+                title="Saldo pendiente: $<?=number_format($porCobrar, 0, ",", ".")?>"
+                <?=$disabled?>>
         </td>
     </tr>
     <tr class="factura-details-row" id="details<?=$resultado['fcu_id'];?>">

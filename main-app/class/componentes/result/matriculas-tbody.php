@@ -135,17 +135,12 @@ foreach ($data["data"] as $resultado) {
 
 	$marcaMediaTecnica     = '';
 	if (
-		$resultado['mat_tipo_matricula'] == GRADO_INDIVIDUAL && 
+		(isset($resultado['mat_tipo_matricula']) && $resultado['mat_tipo_matricula'] == GRADO_INDIVIDUAL) && 
 		array_key_exists(10, $arregloModulos) 
 		&& $moduloMediaTecnica
 	) {
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	}
-
-	$acudiente       = $resultado["mat_acudiente"];
-	$nombreAcudiente = UsuariosPadre::nombreCompletoDelUsuario($resultado);
-	$idAcudiente     = $acudiente;
-
 
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
@@ -303,125 +298,9 @@ foreach ($data["data"] as $resultado) {
 	</tr>
 	<tr class="expandable-row" id="expand-<?= $resultado['mat_id']; ?>" style="display: none;">
 		<td colspan="10" style="background-color: #f8f9fa; padding: 20px;">
-			<div class="row">
-				<!-- Foto del Estudiante -->
-				<div class="col-md-2 text-center">
-					<div class="student-photo-container">
-						<?php if (!empty($fotoEstudiante)) { ?>
-							<img src="<?= $fotoEstudiante; ?>" alt="Foto del estudiante" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
-						<?php } else { ?>
-							<div class="img-thumbnail d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background-color: #f8f9fa;">
-								<i class="fa fa-user fa-3x text-muted"></i>
-							</div>
-						<?php } ?>
-						<p class="mt-2 mb-0"><small class="text-muted">Foto del Estudiante</small></p>
-					</div>
-				</div>
-				
-				<!-- Información Personal del Estudiante -->
-				<div class="col-md-4">
-					<h6 class="text-primary mb-3"><i class="fa fa-user"></i> Información Personal</h6>
-					<div class="row">
-						<div class="col-6">
-							<p class="mb-2"><strong>Documento:</strong><br><span class="text-muted"><?= $resultado['mat_documento'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Tipo Doc:</strong><br><span class="text-muted"><?= $resultado['tipo_doc_nombre'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Fecha Nacimiento:</strong><br><span class="text-muted"><?= $resultado['mat_fecha_nacimiento'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Género:</strong><br><span class="text-muted"><?= $resultado['genero_nombre'] ?? 'No disponible'; ?></span></p>
-						</div>
-						<div class="col-6">
-							<p class="mb-2"><strong>Dirección:</strong><br><span class="text-muted"><?= $resultado['mat_direccion'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Barrio:</strong><br><span class="text-muted"><?= $resultado['mat_barrio'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Celular:</strong><br><span class="text-muted"><?= $resultado['mat_celular'] ?? 'No disponible'; ?></span></p>
-							<p class="mb-2"><strong>Email:</strong><br><span class="text-muted"><?= $resultado['mat_email'] ?? 'No disponible'; ?></span></p>
-						</div>
-					</div>
-					<div class="row mt-2">
-						<div class="col-6">
-							<p class="mb-2"><strong>Estrato:</strong><br><span class="text-muted"><?= $resultado['estrato_nombre'] ?? 'No disponible'; ?></span></p>
-						</div>
-						<div class="col-6">
-							<p class="mb-2"><strong>EPS:</strong><br><span class="text-muted"><?= $resultado['mat_eps'] ?? 'No disponible'; ?></span></p>
-						</div>
-					</div>
-				</div>
-				
-				<!-- Información Académica -->
-				<div class="col-md-3">
-					<h6 class="text-success mb-3"><i class="fa fa-graduation-cap"></i> Información Académica</h6>
-					<p class="mb-2"><strong>Grado:</strong><br><span class="text-muted"><?= $resultado['gra_nombre'] ?? 'No disponible'; ?></span></p>
-					<p class="mb-2"><strong>Grupo:</strong><br><span class="text-muted"><?= $resultado['gru_nombre'] ?? 'No disponible'; ?></span></p>
-					<p class="mb-2"><strong>Estado Matrícula:</strong><br>
-						<span class="<?= $estadosEtiquetasMatriculas[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary'; ?>">
-							<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']] ?? 'No disponible'; ?>
-						</span>
-					</p>
-					<p class="mb-2"><strong>Fecha Matrícula:</strong><br><span class="text-muted"><?= $resultado['mat_fecha'] ?? 'No disponible'; ?></span></p>
-					<p class="mb-2"><strong>Usuario:</strong><br><span class="text-muted"><?= $resultado['uss_usuario'] ?? 'No disponible'; ?></span></p>
-					<?php if ($resultado['mat_inclusion'] == 1) { ?>
-						<p class="mb-2"><span class="badge badge-info">Estudiante con Inclusión</span></p>
-					<?php } ?>
-				</div>
-				
-				<!-- Información del Acudiente -->
-				<div class="col-md-3">
-					<h6 class="text-warning mb-3"><i class="fa fa-users"></i> Información del Acudiente</h6>
-					<?php if (!empty($idAcudiente) && !empty($nombreAcudiente)) { ?>
-						<p class="mb-2"><strong>Nombre:</strong><br>
-							<?php if ($permisoEditarUsuario) { ?>
-								<a href="usuarios-editar.php?id=<?= base64_encode($idAcudiente); ?>" class="text-primary">
-									<?= $nombreAcudiente; ?>
-								</a>
-							<?php } else { ?>
-								<span class="text-muted"><?= $nombreAcudiente; ?></span>
-							<?php } ?>
-						</p>
-						<p class="mb-2"><strong>ID Acudiente:</strong><br><span class="text-muted"><?= $idAcudiente; ?></span></p>
-						<div class="mt-3">
-							<a href="mensajes-redactar.php?para=<?= base64_encode($idAcudiente); ?>" class="btn btn-sm btn-outline-primary">
-								<i class="fa fa-envelope"></i> Enviar Mensaje
-							</a>
-						</div>
-					<?php } else { ?>
-						<p class="text-muted"><em>No hay acudiente registrado</em></p>
-					<?php } ?>
-				</div>
-			</div>
-			
-			<!-- Información Adicional -->
-			<div class="row mt-3">
-				<div class="col-12">
-					<hr>
-					<h6 class="text-info mb-3"><i class="fa fa-info-circle"></i> Información Adicional</h6>
-			<div class="row">
-						<div class="col-md-3">
-							<p class="mb-1"><strong>Grupo Sanguíneo:</strong><br><span class="text-muted"><?= $resultado['tipo_sangre_nombre'] ?? 'No disponible'; ?></span></p>
-						</div>
-						<div class="col-md-3">
-							<p class="mb-1"><strong>Teléfono:</strong><br><span class="text-muted"><?= $resultado['mat_telefono'] ?? 'No disponible'; ?></span></p>
-						</div>
-						<div class="col-md-3">
-							<p class="mb-1"><strong>Celular 2:</strong><br><span class="text-muted"><?= $resultado['mat_celular2'] ?? 'No disponible'; ?></span></p>
-						</div>
-						<div class="col-md-3">
-							<p class="mb-1"><strong>Ciudad Residencia:</strong><br><span class="text-muted"><?= $resultado['mat_ciudad_residencia'] ?? 'No disponible'; ?></span></p>
-						</div>
-					</div>
-					<?php if (!empty($resultado['mat_matricula'])) { ?>
-						<div class="row mt-2">
-							<div class="col-md-3">
-								<p class="mb-1"><strong>Número Matrícula:</strong><br><span class="text-muted"><?= $resultado['mat_matricula']; ?></span></p>
-							</div>
-							<div class="col-md-3">
-								<p class="mb-1"><strong>Código Tesorería:</strong><br><span class="text-muted"><?= $resultado['mat_codigo_tesoreria'] ?? 'No disponible'; ?></span></p>
-							</div>
-							<div class="col-md-3">
-								<p class="mb-1"><strong>Folio:</strong><br><span class="text-muted"><?= $resultado['mat_folio'] ?? 'No disponible'; ?></span></p>
-							</div>
-							<div class="col-md-3">
-								<p class="mb-1"><strong>Valor Matrícula:</strong><br><span class="text-muted">$<?= number_format($resultado['mat_valor_matricula'] ?? 0, 0, ',', '.'); ?></span></p>
-							</div>
-				</div>
-					<?php } ?>
+			<div class="detalle-estudiante" data-id="<?= $resultado['mat_id']; ?>" data-loaded="0">
+				<div class="text-center text-muted">
+					<i class="fa fa-spinner fa-spin"></i> Cargando detalles...
 				</div>
 			</div>
 		</td>
@@ -816,6 +695,10 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 					button.removeClass('text-primary').addClass('text-secondary');
 				});
 			} else {
+				var contenedor = row.find('.detalle-estudiante');
+				if (contenedor.data('loaded') === 0) {
+					cargarDetalleEstudiante(id, contenedor);
+				}
 				// Expand with animation
 				row.slideDown(300, function() {
 					icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
@@ -823,6 +706,27 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 				});
 			}
 		});
+
+		function cargarDetalleEstudiante(id, contenedor) {
+			contenedor.html('<div class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Cargando detalles...</div>');
+			$.ajax({
+				url: 'ajax-detalle-estudiante.php',
+				type: 'POST',
+				dataType: 'json',
+				data: { mat_id: id },
+				success: function(resp) {
+					if (resp.success) {
+						contenedor.html(resp.html);
+						contenedor.data('loaded', 1).attr('data-loaded', '1');
+					} else {
+						contenedor.html('<div class="alert alert-danger mb-0"><i class="fa fa-exclamation-triangle"></i> ' + (resp.message || 'No se pudo cargar la información.') + '</div>');
+					}
+				},
+				error: function() {
+					contenedor.html('<div class="alert alert-danger mb-0"><i class="fa fa-plug"></i> Error de conexión al cargar detalles.</div>');
+				}
+			});
+		}
 		
 		// Event listener para editar nombre
 		$(document).on('click', '.student-name-display', function() {
