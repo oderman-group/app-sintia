@@ -4,6 +4,8 @@ $idPaginaInterna = 'DC0010';
 include("../compartido/historial-acciones-guardar.php");
 include("verificar-carga.php");
 require_once("../class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Actividades.php");
+require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 include("../compartido/head.php");
 ?>
 	<!-- data tables -->
@@ -60,22 +62,85 @@ include("../compartido/head.php");
                                                 </thead>
                                                 <tbody>
 													<?php
+													// ===============================
+													// PRE-CARGAR DATOS AUXILIARES
+													// ===============================
+													// 1) Mapa de géneros para evitar una consulta por estudiante
+													$mapaGeneros = [];
+													$consultaGeneros = mysqli_query(
+														$conexion,
+														"SELECT ogen_id, ogen_nombre FROM ".$baseDatosServicios.".opciones_generales"
+													);
+													while ($gen = mysqli_fetch_array($consultaGeneros, MYSQLI_BOTH)) {
+														$mapaGeneros[$gen['ogen_id']] = $gen['ogen_nombre'];
+													}
+
+													// 2) Actividades de la carga y periodo actuales (una sola vez)
+													$actividadesCarga = [];
+													$carga   = $cargaConsultaActual;
+													$periodo = $periodoConsultaActual;
+
+													$cA = Actividades::traerActividadesCarga($config, $carga, $periodo);
+													while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
+														$actividadesCarga[] = $rA;
+													}
+
+													// 3) Mapa de calificaciones [idEstudiante][idActividad] => fila calificación
+													$calificacionesMapa = Calificaciones::traerCalificacionesCargaPeriodo(
+														$config,
+														$carga,
+														$periodo
+													);
+
+													// 4) Consulta de estudiantes (una vez)
 													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
-													 $contReg = 1;
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+
+													$contReg = 1;
+
+													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$fotoEstudiante = $usuariosClase->verificarFoto($resultado['uss_foto']);
-														$consultaGenero=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_id='".$resultado['mat_genero']."'");
-														 $genero = mysqli_fetch_array($consultaGenero, MYSQLI_BOTH);
-														 if (!$genero) {
-															$genero = array('', 'N/A'); // Valor por defecto si no se encuentra
-														 }
-														//DEFINITIVAS
-														$carga = $cargaConsultaActual;
-														$periodo = $periodoConsultaActual;
-														$estudiante = $resultado['mat_id'];
-														include("../definitivas.php");
-														if($definitiva<$config[5] and $definitiva!="") $colorNota = $config[6]; elseif($definitiva>=$config[5]) $colorNota = $config[7]; else {$colorNota = 'black'; $definitiva='';}
-														 
+														$idGenero       = $resultado['mat_genero'];
+
+														$generoNombre = isset($mapaGeneros[$idGenero])
+															? $mapaGeneros[$idGenero]
+															: 'N/A';
+
+														// ================================
+														// CÁLCULO DE DEFINITIVA OPTIMIZADO
+														// ================================
+														$estudianteId = $resultado['mat_id'];
+
+														$acumulaValor    = 0;
+														$sumaNota        = 0;
+														$definitiva      = 0;
+
+														if (!empty($actividadesCarga)) {
+															foreach ($actividadesCarga as $act) {
+																$idActividad = $act['act_id'];
+
+																$notaFila = $calificacionesMapa[$estudianteId][$idActividad] ?? null;
+																if (isset($notaFila['cal_nota']) && $notaFila['cal_nota'] !== "") {
+																	$porNuevo       = ($act['act_valor'] / 100);
+																	$acumulaValor  += $porNuevo;
+																	$sumaNota      += ((float)$notaFila['cal_nota'] * $porNuevo);
+																}
+															}
+
+															if ($acumulaValor > 0) {
+																$definitiva = round(($sumaNota / $acumulaValor), $config['conf_decimales_notas']);
+															}
+														}
+
+														// Color de nota y ajustes de presentación
+														if($definitiva < $config['conf_nota_minima_aprobar'] && $definitiva !== 0){
+															$colorNota = $config['conf_color_perdida'];
+														} elseif($definitiva >= $config['conf_nota_minima_aprobar'] && $definitiva !== 0){
+															$colorNota = $config['conf_color_ganada'];
+														} else {
+															$colorNota  = 'black';
+															$definitiva = '';
+														}
+
 														$colorEstudiante = '#000;';
 														if($resultado['mat_inclusion']==1){$colorEstudiante = 'blue;';} 
 													 ?>
@@ -90,7 +155,7 @@ include("../compartido/head.php");
 															<img src="<?=$fotoEstudiante;?>" width="50">
 															<?=Estudiantes::NombreCompletoDelEstudiante($resultado);?>
 														</td>
-														<td><?=$genero[1];?></td>
+														<td><?=$generoNombre;?></td>
 														<td><a href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($periodoConsultaActual);?>&carga=<?=base64_encode($cargaConsultaActual);?>" style="text-decoration:underline; color:<?=$colorNota;?>;"><?=$definitiva;?></a></td>
 														<td>
 														
