@@ -39,19 +39,129 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 								
 								
 								<div class="col-md-12">
-								
 									<?php 
 									include("../../config-general/mensajes-informativos.php");
 									
-									// Contar cursos existentes
-									$consultaCursos = Grados::listarGrados(1);
-									$numCursosExistentes = mysqli_num_rows($consultaCursos);
+									// ============================================
+									// ESTADÍSTICAS RÁPIDAS DE CURSOS
+									// ============================================
+									$consultaCursos        = Grados::listarGrados(1);
+									$totalCursos           = mysqli_num_rows($consultaCursos);
+									$totalCursosActivos    = 0;
+									$totalCursosInactivos  = 0;
+									
+									// Contar activos / inactivos sin volver a consultar
+									while ($filaCurso = mysqli_fetch_array($consultaCursos, MYSQLI_BOTH)) {
+										if (!empty($filaCurso['gra_estado'])) {
+											if ((int)$filaCurso['gra_estado'] === 1) {
+												$totalCursosActivos++;
+											} else {
+												$totalCursosInactivos++;
+											}
+										} else {
+											$totalCursosActivos++;
+										}
+									}
+									mysqli_free_result($consultaCursos);
+									
+									// Total de estudiantes matriculados (estado 1 o 2)
+									$totalEstudiantes = 0;
+									$consultaEst = mysqli_query(
+										$conexion,
+										"SELECT COUNT(*) AS total 
+										 FROM ".BD_ACADEMICA.".academico_matriculas 
+										 WHERE (mat_estado_matricula=".MATRICULADO." OR mat_estado_matricula=".ASISTENTE.")
+										   AND institucion={$config['conf_id_institucion']}
+										   AND year={$_SESSION['bd']}"
+									);
+									if ($consultaEst) {
+										$filaEst = mysqli_fetch_array($consultaEst, MYSQLI_BOTH);
+										$totalEstudiantes = (int)($filaEst['total'] ?? 0);
+										mysqli_free_result($consultaEst);
+									}
+									
+									// Promedio de estudiantes por curso
+									$promedioEstudiantesCurso = ($totalCursos > 0)
+										? round($totalEstudiantes / $totalCursos, 1)
+										: 0;
 									?>
 									
-									<?php if($numCursosExistentes > 0){ ?>
+									<?php if ($totalCursos > 0) { ?>
+									<div class="row" style="margin-bottom: 20px;">
+										<div class="col-md-3 col-sm-6">
+											<div class="card" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+												<div class="card-body" style="padding: 15px 18px;">
+													<div style="font-size: 12px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">
+														Total de cursos
+													</div>
+													<div style="font-size: 26px; font-weight: 700; color: #2c3e50; margin-top: 5px;">
+														<?= $totalCursos; ?>
+													</div>
+													<div style="font-size: 11px; color: #95a5a6; margin-top: 4px;">
+														Activos: <?= $totalCursosActivos; ?> • Inactivos: <?= $totalCursosInactivos; ?>
+													</div>
+												</div>
+											</div>
+										</div>
+										
+										<div class="col-md-3 col-sm-6">
+											<div class="card" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+												<div class="card-body" style="padding: 15px 18px;">
+													<div style="font-size: 12px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">
+														Estudiantes matriculados
+													</div>
+													<div style="font-size: 26px; font-weight: 700; color: #16a085; margin-top: 5px;">
+														<?= number_format($totalEstudiantes); ?>
+													</div>
+													<div style="font-size: 11px; color: #95a5a6; margin-top: 4px;">
+														Estados: Matriculados / Asistentes
+													</div>
+												</div>
+											</div>
+										</div>
+										
+										<div class="col-md-3 col-sm-6">
+											<div class="card" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+												<div class="card-body" style="padding: 15px 18px;">
+													<div style="font-size: 12px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">
+														Promedio estudiantes / curso
+													</div>
+													<div style="font-size: 26px; font-weight: 700; color: #2980b9; margin-top: 5px;">
+														<?= $promedioEstudiantesCurso; ?>
+													</div>
+													<div style="font-size: 11px; color: #95a5a6; margin-top: 4px;">
+														Distribución general de matrícula
+													</div>
+												</div>
+											</div>
+										</div>
+										
+										<div class="col-md-3 col-sm-6">
+											<div class="card" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+												<div class="card-body" style="padding: 15px 18px;">
+													<div style="font-size: 12px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">
+														% cursos activos
+													</div>
+													<?php 
+													$porcentajeActivos = $totalCursos > 0 
+														? round(($totalCursosActivos / $totalCursos) * 100) 
+														: 0;
+													?>
+													<div style="font-size: 26px; font-weight: 700; color: #8e44ad; margin-top: 5px;">
+														<?= $porcentajeActivos; ?>%
+													</div>
+													<div style="font-size: 11px; color: #95a5a6; margin-top: 4px;">
+														Salud general de la oferta académica
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<?php } ?>
+									
+									<?php if($totalCursos > 0){ ?>
 										<?php include("includes/barra-superior-cursos.php"); ?>
 									<?php } ?>
-								
 
                                     <div class="card card-topline-purple">
                                         <div class="card-head">
@@ -95,6 +205,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                     		<table id="example1" class="display" style="width:100%;">
                                                 <thead>
                                                     <tr>
+														<th style="width:40px;"></th>
                                                         <th>#</th>
 														<th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[5][$datosUsuarioActual['uss_idioma']];?></th>
@@ -121,6 +232,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
 													<tr>
+														<td style="text-align:center;">
+															<button 
+																type="button" 
+																class="btn btn-link btn-sm text-secondary expand-curso-btn" 
+																data-id="<?=$resultado['gra_id'];?>" 
+																title="Ver detalles del curso"
+															>
+																<i class="fa fa-chevron-right"></i>
+															</button>
+														</td>
                                                         <td><?=$contReg;?></td>
 														<td><?=$resultado['gra_id'];?></td>
 														<td><?=$resultado['gra_nombre'];?></td>
@@ -431,7 +552,164 @@ $(document).ready(function() {
 	}
 	
 	// ========================================
-	// FIN SISTEMA GENERAR CURSOS
+	// DETALLES EXPANDIBLES POR CURSO
+	// ========================================
+	$(document).on('click', '.expand-curso-btn', function() {
+		var id   = $(this).data('id');
+		var btn  = $(this);
+		var icon = btn.find('i');
+		var tr   = btn.closest('tr');
+
+		// Buscar si ya existe una fila de detalles inmediatamente después
+		var row  = tr.next('tr.expandable-curso-row');
+
+		if (row.length && row.is(':visible')) {
+			// Contraer: ocultar y eliminar la fila de detalles
+			row.slideUp(200, function() {
+				$(this).remove();
+				icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+				btn.removeClass('text-primary').addClass('text-secondary');
+			});
+			return;
+		}
+
+		// Si ya existe pero está oculta (caso raro), eliminarla para recrearla limpia
+		if (row.length && !row.is(':visible')) {
+			row.remove();
+		}
+
+		// Calcular cuántas columnas tiene la fila principal
+		var colCount = tr.children('td').length;
+
+		// Crear HTML de la fila expandible dinámicamente
+		var detallesRowHtml  = '<tr id="expand-curso-' + id + '" class="expandable-curso-row">';
+		detallesRowHtml     += '  <td colspan="' + colCount + '">';
+		detallesRowHtml     += '    <div class="p-3">';
+		detallesRowHtml     += '      <div id="curso-detalles-' + id + '">';
+		detallesRowHtml     += '        <p class="text-center mb-0">';
+		detallesRowHtml     += '          <i class="fa fa-spinner fa-spin"></i> Cargando detalles del curso...';
+		detallesRowHtml     += '        </p>';
+		detallesRowHtml     += '      </div>';
+		detallesRowHtml     += '    </div>';
+		detallesRowHtml     += '  </td>';
+		detallesRowHtml     += '</tr>';
+
+		// Insertar la fila inmediatamente después de la fila del curso
+		tr.after(detallesRowHtml);
+
+		// Obtener referencia a la nueva fila y al contenedor de detalles
+		row = tr.next('tr.expandable-curso-row');
+
+		row.hide().slideDown(200, function() {
+			icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+			btn.removeClass('text-secondary').addClass('text-primary');
+
+			var contenedor = $('#curso-detalles-' + id);
+			cargarDetallesCurso(id, contenedor);
+		});
+	});
+
+	function cargarDetallesCurso(idCurso, contenedor) {
+		$.ajax({
+			url: 'ajax-obtener-detalles-curso.php',
+			type: 'POST',
+			data: { curso_id: idCurso },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					renderizarDetallesCurso(response.stats, contenedor);
+				} else {
+					contenedor.html('<p class="text-danger text-center"><i class="fa fa-exclamation-triangle"></i> ' + (response.message || 'Error al cargar detalles.') + '</p>');
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error AJAX curso:', error);
+				contenedor.html('<p class="text-danger text-center"><i class="fa fa-exclamation-triangle"></i> Error de conexión.</p>');
+			}
+		});
+	}
+
+	function renderizarDetallesCurso(stats, contenedor) {
+		var total = stats.total || 0;
+		var html  = '';
+
+		if (total === 0) {
+			html = '<p class="text-muted text-center mb-0"><em>No hay estudiantes asociados a este curso en el año actual.</em></p>';
+		} else {
+			var porcentaje = function(valor) {
+				if (!total || valor === 0) return '0%';
+				return Math.round((valor / total) * 100) + '%';
+			};
+
+			html += '<div class="row">';
+
+			html += '<div class="col-md-2 col-sm-4 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Total</div>';
+			html += '      <div style="font-size:20px; font-weight:700; color:#2c3e50;">' + total + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '<div class="col-md-2 col-sm-4 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Matriculados</div>';
+			html += '      <div style="font-size:18px; font-weight:700; color:#16a085;">' + (stats.matriculados || 0) + '</div>';
+			html += '      <div style="font-size:10px; color:#95a5a6;">' + porcentaje(stats.matriculados || 0) + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '<div class="col-md-2 col-sm-4 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Asistentes</div>';
+			html += '      <div style="font-size:18px; font-weight:700; color:#2980b9;">' + (stats.asistentes || 0) + '</div>';
+			html += '      <div style="font-size:10px; color:#95a5a6;">' + porcentaje(stats.asistentes || 0) + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '<div class="col-md-2 col-sm-4 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Cancelados</div>';
+			html += '      <div style="font-size:18px; font-weight:700; color:#c0392b;">' + (stats.cancelados || 0) + '</div>';
+			html += '      <div style="font-size:10px; color:#95a5a6;">' + porcentaje(stats.cancelados || 0) + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '<div class="col-md-3 col-sm-6 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">No matriculados</div>';
+			html += '      <div style="font-size:18px; font-weight:700; color:#7f8c8d;">' + (stats.no_matriculados || 0) + '</div>';
+			html += '      <div style="font-size:10px; color:#95a5a6;">' + porcentaje(stats.no_matriculados || 0) + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '<div class="col-md-3 col-sm-6 mb-2">';
+			html += '  <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">';
+			html += '    <div class="card-body p-2 text-center">';
+			html += '      <div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">En inscripción</div>';
+			html += '      <div style="font-size:18px; font-weight:700; color:#8e44ad;">' + (stats.inscritos || 0) + '</div>';
+			html += '      <div style="font-size:10px; color:#95a5a6;">' + porcentaje(stats.inscritos || 0) + '</div>';
+			html += '    </div>';
+			html += '  </div>';
+			html += '</div>';
+
+			html += '</div>';
+		}
+
+		contenedor.html(html);
+	}
+
+	// ========================================
+	// FIN SISTEMA GENERAR CURSOS + DETALLES
 	// ========================================
 });
 </script>
