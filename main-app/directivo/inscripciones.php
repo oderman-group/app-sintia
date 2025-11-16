@@ -11,9 +11,21 @@ include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Inscripciones.php");
 
-$configAdmisiones=Inscripciones::configuracionAdmisiones($conexion,$baseDatosAdmisiones,$config['conf_id_institucion'],$_SESSION["bd"]);
+ $configAdmisiones=Inscripciones::configuracionAdmisiones($conexion,$baseDatosAdmisiones,$config['conf_id_institucion'],$_SESSION["bd"]);
 
 $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
+if (!isset($_SESSION['cacheInscripciones'])) {
+	$_SESSION['cacheInscripciones'] = [];
+}
+$cacheInscripciones = &$_SESSION['cacheInscripciones'];
+$catalogoGrados = $cacheInscripciones['grados'] ?? [];
+if (empty($catalogoGrados)) {
+	$grados = Grados::listarGrados(1);
+	while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
+		$catalogoGrados[] = $grado;
+	}
+	$cacheInscripciones['grados'] = $catalogoGrados;
+}
 ?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
@@ -176,7 +188,7 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                 </div>
                                 
                                 <?php
-                                    $filtro="";
+                                    $filtro=""; 
                                     include(ROOT_PATH."/config-general/config-admisiones.php");
                                     include(ROOT_PATH."/config-general/mensajes-informativos.php");
                                     // Barra superior antigua - removida
@@ -262,10 +274,7 @@ $urlInscripcion=REDIRECT_ROUTE.'/admisiones/';
                                                     <div class="form-group">
                                                         <label><i class="fa fa-graduation-cap"></i> Grado</label>
                                                         <select id="filtro_inscripciones_grado" class="form-control select2-multiple-inscripciones" multiple="multiple" style="width: 100%;">
-                                                            <?php
-                                                            $grados = Grados::listarGrados(1);
-                                                            while ($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)) {
-                                                            ?>
+                                                            <?php foreach ($catalogoGrados as $grado) { ?>
                                                                 <option value="<?=$grado['gra_id'];?>"><?=$grado['gra_nombre'];?></option>
                                                             <?php }?>
                                                         </select>
