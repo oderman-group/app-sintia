@@ -696,6 +696,71 @@ class Calificaciones {
     }
 
     /**
+     * Trae las definitivas de un indicador para todos los estudiantes de una carga y periodo.
+     *
+     * Devuelve un mapa indexado por idEstudiante con la misma lógica de cálculo que
+     * `definitivaIndicadorEstudiante`, pero en una sola consulta por indicador.
+     *
+     * @return array [idEstudiante => ['definitiva' => float, 'valorPorcentual' => float]]
+     */
+    public static function traerDefinitivasIndicadorParaCarga(
+        array  $config,
+        string $idCarga,
+        string $idIndicador,
+        int    $periodo,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $decimales = !empty($config['conf_decimales_notas']) ? (int)$config['conf_decimales_notas'] : 1;
+
+        $sql = "SELECT
+                    ac.cal_id_estudiante,
+                    SUM(aa.act_valor / 100)                           AS totalValorDecimal,
+                    SUM(ac.cal_nota * (aa.act_valor / 100))          AS totalEquivalenteCien,
+                    CASE 
+                        WHEN SUM(aa.act_valor / 100) <> 0 THEN 
+                            ROUND(SUM(ac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), {$decimales})
+                        ELSE 0 
+                    END                                              AS definitiva,
+                    ROUND(SUM(aa.act_valor / 100) * 100, 2)          AS valorPorcentual
+                FROM " . BD_ACADEMICA . ".academico_calificaciones ac
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividades aa
+                    ON aa.act_id = ac.cal_id_actividad
+                    AND aa.act_id_tipo   = ?
+                    AND aa.act_id_carga  = ?
+                    AND aa.act_periodo   = ?
+                    AND aa.act_estado    = 1
+                    AND aa.institucion   = ?
+                    AND aa.year          = ?
+                WHERE ac.institucion = ?
+                  AND ac.year        = ?
+                GROUP BY ac.cal_id_estudiante";
+
+        $parametros = [
+            $idIndicador,
+            $idCarga,
+            $periodo,
+            $config['conf_id_institucion'],
+            $year,
+            $config['conf_id_institucion'],
+            $year
+        ];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idEst = $fila['cal_id_estudiante'];
+            $mapa[$idEst] = [
+                'definitiva'      => isset($fila['definitiva']) ? (float)$fila['definitiva'] : 0.0,
+                'valorPorcentual' => isset($fila['valorPorcentual']) ? (float)$fila['valorPorcentual'] : 0.0,
+            ];
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo me trae la nota de un indicador
      */
     public static function consultaNotaIndicadoresPromedio(
