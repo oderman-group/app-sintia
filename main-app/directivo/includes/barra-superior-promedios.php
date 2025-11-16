@@ -2,14 +2,21 @@
 <?php
     $filtro = '';
     $curso = '';
-    if(isset($_GET["curso"]) && is_numeric(base64_decode($_GET["curso"]))){
-        $curso = base64_decode($_GET["curso"]);
-        $filtro .= " AND mat_grado='".$curso."'";
+    // IDs de curso/grupo pueden ser ALFANUMÉRICOS, no usar is_numeric
+    if(isset($_GET["curso"])){
+        $cursoDecod = base64_decode($_GET["curso"]);
+        if($cursoDecod !== false && $cursoDecod !== ''){
+            $curso = $cursoDecod;
+            $filtro .= " AND mat_grado='".$curso."'";
+        }
     }
     $grupo = '';
-    if(isset($_GET["grupo"]) && is_numeric(base64_decode($_GET["grupo"]))){
-        $grupo = base64_decode($_GET["grupo"]);
-        $filtro .= " AND mat_grupo='".$grupo."'";
+    if(isset($_GET["grupo"])){
+        $grupoDecod = base64_decode($_GET["grupo"]);
+        if($grupoDecod !== false && $grupoDecod !== ''){
+            $grupo = $grupoDecod;
+            $filtro .= " AND mat_grupo='".$grupo."'";
+        }
     }
     
     $filtroBoletin = '';

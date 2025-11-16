@@ -657,6 +657,43 @@ class Indicadores {
     }
 
     /**
+     * Trae todas las recuperaciones de un indicador para una carga y periodo,
+     * organizadas en un mapa [idEstudiante] => fila.
+     *
+     * Se usa para optimizar pantallas donde se muestran/usan recuperaciones
+     * de muchos estudiantes a la vez (evitar una consulta por estudiante).
+     */
+    public static function traerRecuperacionesIndicadorCargaPeriodoMapa ( 
+        array   $config,  
+        string  $idIndicador,  
+        string  $idCarga,  
+        int     $periodo,  
+        string  $yearBd = ""
+    ): array
+    {
+        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * 
+                FROM ".BD_ACADEMICA.".academico_indicadores_recuperacion 
+                WHERE rind_carga = ? 
+                  AND rind_periodo = ? 
+                  AND rind_indicador = ? 
+                  AND institucion = ? 
+                  AND year = ?";
+
+        $parametros = [$idCarga, $periodo, $idIndicador, $config['conf_id_institucion'], $year];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $mapa[$fila['rind_estudiante']] = $fila;
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo me trae la recuperacion del indicador de una carga en un periodo para un estudiante
      * @param array             $config
      * @param string            $estudiante

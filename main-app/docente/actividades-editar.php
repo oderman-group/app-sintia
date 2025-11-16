@@ -235,5 +235,4 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
     <!-- end js include path -->
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

@@ -24,6 +24,40 @@ if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+
+if (!isset($_SESSION['cacheCatalogos'])) {
+	$_SESSION['cacheCatalogos'] = [];
+}
+$cacheSuffix = $config['conf_id_institucion'].'_'.$_SESSION["bd"];
+$cacheCatalogos = &$_SESSION['cacheCatalogos'];
+
+$docentesKey = 'docentes_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$docentesKey])) {
+	$resultadoDocentes = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=2 ORDER BY uss_nombre");
+	$cacheCatalogos[$docentesKey] = $resultadoDocentes ? mysqli_fetch_all($resultadoDocentes, MYSQLI_ASSOC) : [];
+}
+$docentesCatalogo = $cacheCatalogos[$docentesKey];
+
+$gradosKey = 'grados_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$gradosKey])) {
+	$consultaGrados = Grados::traerGradosInstitucion($config);
+	$cacheCatalogos[$gradosKey] = $consultaGrados ? mysqli_fetch_all($consultaGrados, MYSQLI_ASSOC) : [];
+}
+$gradosCatalogo = $cacheCatalogos[$gradosKey];
+
+$gruposKey = 'grupos_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$gruposKey])) {
+	$consultaGrupos = Grupos::listarGrupos();
+	$cacheCatalogos[$gruposKey] = $consultaGrupos ? mysqli_fetch_all($consultaGrupos, MYSQLI_ASSOC) : [];
+}
+$gruposCatalogo = $cacheCatalogos[$gruposKey];
+
+$asignaturasKey = 'asignaturas_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$asignaturasKey])) {
+	$consultaAsignaturas = Asignaturas::consultarTodasAsignaturas($conexion, $config);
+	$cacheCatalogos[$asignaturasKey] = $consultaAsignaturas ? mysqli_fetch_all($consultaAsignaturas, MYSQLI_ASSOC) : [];
+}
+$asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
 ?>
 
 	<!--bootstrap -->
@@ -94,13 +128,9 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Docente <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
-												<?php
-												$opcionesConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=2 ORDER BY uss_nombre");
-												?>
                                                 <select class="form-control  select2" name="docente" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($docentesCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos['uss_id']==$datosEditar['car_docente']) $select = 'selected';
@@ -117,9 +147,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="curso" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-                                                	$opcionesConsulta = Grados::traerGradosInstitucion($config);
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($gradosCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos['gra_id']==$datosEditar['car_curso']) $select = 'selected';
@@ -136,9 +164,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="grupo" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-                        							$opcionesConsulta = Grupos::listarGrupos();
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($gruposCatalogo as $opcionesDatos){
 														$select = '';
 														if($opcionesDatos['gru_id']==$datosEditar['car_grupo']) $select = 'selected';
 													?>
@@ -362,11 +388,15 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 										$consulta = CargaAcademica::consultaCargasRelacionadas($config, $datosEditar["car_docente"], $datosEditar["car_curso"]);
 										while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 											$resaltaItem = $Plataforma->colorDos;
-											if($resultado['car_id']==base64_decode($_GET["idR"])){$resaltaItem = $Plataforma->colorUno;}
+											$decoracion = 'none';
+											if($resultado['car_id']==base64_decode($_GET["idR"])){
+												$resaltaItem = $Plataforma->colorUno;
+												$decoracion = 'underline';
+											}
 
 										?>
 										<li class="list-group-item">
-											<a href="cargas-editar.php?idR=<?=base64_encode($resultado['car_id']);?>" style="color:<?=$resaltaItem;?>; text-decoration:<?=$tachaItem;?>;"><?=$resultado['gra_nombre']." ".$resultado['gru_nombre']." - ".$resultado['mat_nombre']." - ".UsuariosPadre::nombreCompletoDelUsuario($resultado);?></a> 
+											<a href="cargas-editar.php?idR=<?=base64_encode($resultado['car_id']);?>" style="color:<?=$resaltaItem;?>; text-decoration:<?=$decoracion;?>;"><?=$resultado['gra_nombre']." ".$resultado['gru_nombre']." - ".$resultado['mat_nombre']." - ".UsuariosPadre::nombreCompletoDelUsuario($resultado);?></a> 
 											<div class="profile-desc-item pull-right">&nbsp;</div>
 										</li>
 										<?php }?>
@@ -417,6 +447,4 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
     <!-- end js include path -->
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

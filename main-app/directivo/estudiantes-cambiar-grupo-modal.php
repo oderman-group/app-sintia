@@ -192,6 +192,9 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
     
 
     $e = Estudiantes::obtenerDatosEstudiante($id);
+    $gradoActualId = (string)($e["mat_grado"] ?? '');
+    $grupoActualId = (string)($e["mat_grupo"] ?? '');
+    $sinGrupoAsignado = ($gradoActualId === '' || $grupoActualId === '');
 
     $cambiar = "";
     if (!empty($_GET["cambiar"])) {
@@ -210,7 +213,7 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
                 <i class="fa fa-id-badge"></i>
                 <span><strong>ID:</strong> <?= $e['mat_id']; ?> | <strong>Nombre:</strong> <?= Estudiantes::NombreCompletoDelEstudiante($e); ?></span>
             </div>
-            <?php $gradoActual = Grados::obtenerGrado($e["mat_grado"]); ?>
+            <?php $gradoActual = $gradoActualId !== '' ? Grados::obtenerGrado($gradoActualId) : ['gra_id' => 'N/A', 'gra_nombre' => 'Sin grado']; ?>
             <div class="detalle">
                 <i class="fa fa-graduation-cap"></i>
                 <span><strong>Curso Actual:</strong> <?= $gradoActual["gra_id"]; ?> - <?= $gradoActual["gra_nombre"]; ?></span>
@@ -223,12 +226,15 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
             <div class="col-sm-9">
                 <select class="form-control select2" id="estudianteGrupo" name="grupoNuevo" onchange="traerCargaCursoGrupo('<?= $gradoActual['gra_id'] ?>',this.value)" required>
                     <?php
-                    $opcionesConsulta = CargaAcademica::listarGruposCursos([$e["mat_grado"]]);
+                    $opcionesConsulta = !$sinGrupoAsignado ? CargaAcademica::listarGruposCursos([$gradoActualId]) : [];
                     foreach ($opcionesConsulta as $gru) {
                         if ($gru["car_grupo"] == $e['mat_grupo'])
                             echo '<option value="' . $gru["car_grupo"] . '" selected style="color:blue; font-weight:bold;">✓ Actual: ' . $gru["gru_nombre"] . '</option>';
                         else
                             echo '<option value="' . $gru["car_grupo"] . '">' . $gru["gru_nombre"] . '</option>';
+                    }
+                    if ($sinGrupoAsignado) {
+                        echo '<option value="" selected>Estudiante sin grupo actual</option>';
                     }
                     ?>
                 </select>
@@ -252,6 +258,12 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
         <!-- Tabla de notas -->
         <div id="rowNotas">
             <div class="notas-card">
+                <?php if ($sinGrupoAsignado) { ?>
+                    <div class="alert alert-warning">
+                        El estudiante no tiene curso y grupo asignados actualmente, por lo que no hay notas para transferir.
+                    </div>
+                <?php } ?>
+                <?php if (!$sinGrupoAsignado) { ?>
                 <h6><i class="fa fa-clipboard-list"></i> Notas por Período y Relación de Materias</h6>
                 <table>
 
@@ -275,11 +287,15 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
                         $filtroLimite = '';
 
 
-                        $consulta = CargaAcademica::consultarEstudianteMateriasNotasPeridos($e['mat_grado'], $e['mat_id'], $e['mat_grupo']);
-                        $consultaR = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $e['mat_grado'], $e['mat_grupo']);
+                        $consulta = [];
+                        $consultaR = null;
+                        if (!$sinGrupoAsignado) {
+                            $consulta = CargaAcademica::consultarEstudianteMateriasNotasPeridos($gradoActualId, $e['mat_id'], $grupoActualId);
+                            $consultaR = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActualId, $grupoActualId);
+                        }
                         $cargasArray = array();
                         $cargasDisponibles = [];
-                        if (!empty($consulta)) {
+                        if (!empty($consulta) && $consultaR) {
                             while ($fila = $consultaR->fetch_assoc()) {
                                 $cargasArray[]       = $fila;
                                 $cargasDisponibles[] = $fila;
@@ -362,6 +378,7 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
                         <?php } ?>
                     </tbody>
                 </table>
+                <?php } ?>
                 <select class="form-control select2" id="listaCargasGrado" hidden>
                 <?php foreach ($cargasArray as $cargaGrupo) {?>
                     <option value="<?= $cargaGrupo['car_id']; ?>"><?= $cargaGrupo['car_id']."$".$cargaGrupo['car_materia'] . "$" . strtoupper($cargaGrupo['mat_nombre']). "$" .$cargaGrupo['uss_nombre']; ?></option>

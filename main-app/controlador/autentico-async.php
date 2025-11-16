@@ -1,17 +1,24 @@
 <?php
-// Desactivar errores de PHP para evitar que aparezcan en la respuesta JSON
-error_reporting(0);
+// Desactivar errores visibles pero mantener logging
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 
 // Configurar zona horaria de Colombia
 date_default_timezone_set('America/Bogota');
+
+// Encabezados seguros para respuestas JSON
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
 
 // Configuración segura de sesiones
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_samesite', 'Lax');
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+	session_start();
+}
 $idPaginaInterna = 'GN0001';
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
@@ -25,7 +32,6 @@ require_once ROOT_PATH.'/main-app/class/App/Administrativo/Usuario/Usuario.php';
 
 // Función para devolver respuesta JSON
 function sendJsonResponse($success, $message, $redirect = null, $data = []) {
-    header('Content-Type: application/json');
     echo json_encode([
         'success' => $success,
         'message' => $message,
@@ -42,8 +48,6 @@ if(!empty($_POST)) {
 
 $auth = Autenticate::getInstance();
 
-$conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
-
 if(!empty($_GET)) {
 	$_POST["Usuario"]		=	base64_decode($_GET["Usuario"]);
 	$_POST["Clave"] 		= 	base64_decode($_GET["Clave"]);
@@ -58,8 +62,12 @@ if(!empty($_GET)) {
 // ============================================
 // VERIFICAR RATE LIMITING
 // ============================================
-$ipUsuario = $_SERVER['REMOTE_ADDR'];
-$nombreUsuario = $_POST["Usuario"];
+$ipUsuario = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+$nombreUsuario = isset($_POST["Usuario"]) ? trim($_POST["Usuario"]) : '';
+
+if ($nombreUsuario === '' || empty($_POST["Clave"])) {
+	sendJsonResponse(false, "Usuario y contraseña son requeridos.", null);
+}
 
 // 1. Verificar bloqueo por IP
 $bloqueoIP = RateLimit::verificarBloqueoIP($ipUsuario);

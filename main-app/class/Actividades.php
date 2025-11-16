@@ -411,6 +411,48 @@ class Actividades {
     }
 
     /**
+     * Trae todas las entregas de una actividad para todos los estudiantes
+     * y las organiza en un mapa [idEstudiante] => datosEntrega.
+     *
+     * Se usa para optimizar pantallas donde se listan todas las entregas
+     * de una actividad, evitando una consulta por estudiante.
+     */
+    public static function traerEntregasActividadMapa(
+        array  $config,
+        string $idActividad,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        // Importante: mantener el orden de columnas original para no cambiar
+        // los índices numéricos usados en las vistas (0:fecha, 1:min, 2:seg, ...)
+        $sql = "SELECT 
+                    ent_fecha,
+                    MOD(TIMESTAMPDIFF(MINUTE, ent_fecha, now()),60),
+                    MOD(TIMESTAMPDIFF(SECOND, ent_fecha, now()),60),
+                    ent_archivo,
+                    ent_comentario,
+                    ent_archivo2,
+                    ent_archivo3,
+                    ent_id_estudiante
+                FROM " . BD_ACADEMICA . ".academico_actividad_tareas_entregas
+                WHERE ent_id_actividad=? AND institucion=? AND year=?";
+
+        $parametros = [$idActividad, $config['conf_id_institucion'], $year];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            if (!empty($fila['ent_id_estudiante'])) {
+                $mapa[$fila['ent_id_estudiante']] = $fila;
+            }
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo guarda una entrega
      * @param mysqli $conexion
      * @param array $config

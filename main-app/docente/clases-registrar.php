@@ -349,22 +349,62 @@ function notas(enviada) {
                                                 </thead>
                                                 <tbody>
 													<?php
-													 $contReg = 1;
-													 $consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+													 $contReg   = 1;
+													 $consulta  = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
 													 $colorNota = "black";
+
+													 // ============================================
+													 // PRE-CARGAR AUSENCIAS DE LA CLASE (MAPA)
+													 // ============================================
+													 $ausenciasClaseMapa = [];
+													 if ($datosConsulta['cls_registrada'] == 1) {
+														 $ausenciasClaseMapa = Ausencias::traerAusenciasClaseMapa($config, $idR);
+													 }
+
+													 // ============================================
+													 // PRE-CARGAR AUSENCIAS ACUMULADAS POR ESTUDIANTE
+													 // ============================================
+													 $acumuladosMapa = [];
+													 $idCargaParaAcumulado = !empty($cargaConsultaActual)
+														 ? $cargaConsultaActual
+														 : (isset($datosConsulta['cls_id_carga']) ? $datosConsulta['cls_id_carga'] : '');
+
+													 if (!empty($idCargaParaAcumulado)) {
+														 // Traer todas las ausencias de la carga y agrupar por estudiante
+														 $sqlAcum = "SELECT aus.aus_id_estudiante, SUM(aus.aus_ausencias) AS total_ausencias
+																	 FROM " . BD_ACADEMICA . ".academico_ausencias aus
+																	 INNER JOIN " . BD_ACADEMICA . ".academico_clases cls 
+																		ON cls.cls_id = aus.aus_id_clase
+																		AND cls.cls_id_carga = ?
+																		AND cls.institucion = ?
+																		AND cls.year = ?
+																	 WHERE aus.institucion = ?
+																	   AND aus.year = ?
+																	 GROUP BY aus.aus_id_estudiante";
+
+														 $paramsAcum = [
+															 $idCargaParaAcumulado,
+															 $config['conf_id_institucion'],
+															 $_SESSION["bd"],
+															 $config['conf_id_institucion'],
+															 $_SESSION["bd"]
+														 ];
+
+														 $resAcum = BindSQL::prepararSQL($sqlAcum, $paramsAcum);
+														 while ($filaAcum = mysqli_fetch_array($resAcum, MYSQLI_BOTH)) {
+															 // Usar siempre la clave aus_id_estudiante; no existe aus_ausencias como índice
+															 if (isset($filaAcum['aus_id_estudiante'])) {
+																 $acumuladosMapa[$filaAcum['aus_id_estudiante']] = (int)$filaAcum['total_ausencias'];
+															 }
+														 }
+													 }
+
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														 $notas = [];
-														 if($datosConsulta['cls_registrada']==1){
-															 //Consulta de ausencias si ya la tienen puestas.
-                                                             $notas = Ausencias::traerAusenciasClaseEstudiante($config, $idR, $resultado['mat_id']);
-														 }
+														 // Ausencias de esta clase para el estudiante
+														 $notas = $ausenciasClaseMapa[$resultado['mat_id']] ?? null;
 														 
-														 // ✅ Obtener ausencias acumuladas para este estudiante en esta carga
-														 $acumuladoAusencias = 0;
-														 $idCargaParaAcumulado = !empty($cargaConsultaActual) ? $cargaConsultaActual : (isset($datosConsulta['cls_id_carga']) ? $datosConsulta['cls_id_carga'] : '');
-														 if (!empty($idCargaParaAcumulado)) {
-															 $acumuladoAusencias = Ausencias::traerAusenciasAcumuladasEstudiante($config, $idCargaParaAcumulado, $resultado['mat_id']);
-														 }
+														 // Ausencias acumuladas para este estudiante en la carga
+														 $acumuladoAusencias = $acumuladosMapa[$resultado['mat_id']] ?? 0;
 														 
 														 // Determinar color según acumulado
 														 $colorAcumulado = '#3498db'; // Azul (bajo)
@@ -397,7 +437,7 @@ function notas(enviada) {
 																class="input-ausencias"
 																size="5" 
 																maxlength="3" 
-																value="<?=!empty($notas['aus_ausencias']) ? $notas['aus_ausencias'] : '';?>" 
+																value="<?=(is_array($notas) && isset($notas['aus_ausencias']) && $notas['aus_ausencias'] !== '') ? $notas['aus_ausencias'] : '';?>" 
 																name="N<?=$contReg;?>" 
 																id="<?=$resultado['mat_id'];?>" 
 																alt="<?=$resultado['mat_nombres'];?>" 
@@ -406,25 +446,33 @@ function notas(enviada) {
 																tabindex="<?=$contReg;?>"
 																min="0"
 															>
-															<?php if(!empty($notas['aus_ausencias'])){?>
+															<?php if(is_array($notas) && !empty($notas['aus_ausencias'])){?>
 															<a href="#" name="clases-ausencia-eliminar.php?id=<?=base64_encode($notas['aus_id']);?>" onClick="deseaEliminar(this)" style="margin-left: 8px; color: #e74c3c; font-weight: bold;">×</a>
 															<?php }?>
 														</td>
 														<td class="columna-justificada">
 															<div class="checkbox-container">
+																<?php
+																$sinAusencias = !(is_array($notas) && !empty($notas['aus_ausencias']));
+																$estaJustificada = (is_array($notas) && !empty($notas['aus_justificadas']) && $notas['aus_justificadas'] == 1);
+																$tituloCheckbox = 'Registra ausencias primero';
+																if (!$sinAusencias) {
+																	$tituloCheckbox = $estaJustificada ? 'Ausencia justificada' : 'Marcar como justificada';
+																}
+																?>
 																<input 
 																	type="checkbox" 
 																	class="checkbox-justificada" 
 																	id="justificada_<?=$resultado['mat_id'];?>" 
 																	data-id-estudiante="<?=$resultado['mat_id'];?>" 
-																	data-id-ausencia="<?=!empty($notas['aus_id']) ? $notas['aus_id'] : '';?>" 
-																	<?=(!empty($notas['aus_justificadas']) && $notas['aus_justificadas'] == 1) ? 'checked' : '';?> 
-																	<?=empty($notas['aus_ausencias']) ? 'disabled' : '';?> 
+																	data-id-ausencia="<?=(is_array($notas) && !empty($notas['aus_id'])) ? $notas['aus_id'] : '';?>" 
+																	<?=$estaJustificada ? 'checked' : '';?> 
+																	<?=$sinAusencias ? 'disabled' : '';?> 
 																	onChange="cambiarJustificacion(this)"
-																	title="<?=empty($notas['aus_ausencias']) ? 'Registra ausencias primero' : ($notas['aus_justificadas'] == 1 ? 'Ausencia justificada' : 'Marcar como justificada');?>"
+																	title="<?=$tituloCheckbox;?>"
 																>
 																<label for="justificada_<?=$resultado['mat_id'];?>" style="margin: 0; cursor: pointer;">
-																	<?php if(!empty($notas['aus_justificadas']) && $notas['aus_justificadas'] == 1): ?>
+																	<?php if($estaJustificada): ?>
 																		<span class="badge badge-si badge-justificada"><i class="fa fa-check"></i> Sí</span>
 																	<?php else: ?>
 																		<span class="badge badge-no badge-justificada"><i class="fa fa-times"></i> No</span>

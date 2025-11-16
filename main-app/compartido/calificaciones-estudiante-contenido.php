@@ -296,51 +296,80 @@
                                                 <tbody>
 
 													<?php
-													$consulta = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+													// PRE-CARGAR ACTIVIDADES DE LA CARGA / PERIODO
+													$actividades = [];
+													$consultaAct = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
 													if(!empty($_GET["indicador"])){
-														$consulta = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+														$consultaAct = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+													}
+													while ($rowAct = mysqli_fetch_array($consultaAct, MYSQLI_BOTH)) {
+														$actividades[] = $rowAct;
 													}
 
-													 $contReg = 1;
+													// PRE-CARGAR TODAS LAS CALIFICACIONES DE LA CARGA / PERIODO
+													$calificacionesMapa = Calificaciones::traerCalificacionesCargaPeriodo(
+														$config,
+														$cargaConsultaActual,
+														$periodoConsultaActual
+													);
+													$calificacionesEst = $calificacionesMapa[$datosEstudianteActual['mat_id']] ?? [];
 
-													 $acumulaValor = 0;
+													// PRE-CARGAR INDICADORES DE LA CARGA / PERIODO
+													$indicadoresMapa = [];
+													$consultaInd = Indicadores::traerCargaIndicadorPorPeriodo(
+														$conexion,
+														$config,
+														$cargaConsultaActual,
+														$periodoConsultaActual
+													);
+													while ($rowInd = mysqli_fetch_array($consultaInd, MYSQLI_BOTH)) {
+														// ai_ind_id es el ID del indicador en la tabla de indicadores
+														$indicadoresMapa[$rowInd['ai_ind_id']] = $rowInd;
+													}
 
-													 $sumaNota = 0;
+													$contReg = 1;
+													$acumulaValor = 0;
+													$sumaNota = 0;
+													$porcentajeActualActividad = 0;
 
-													 $porcentajeActualActividad = 0;
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+													foreach ($actividades as $resultado){
+														$idActividad = $resultado['act_id'];
 
-														$nota = Calificaciones::traerCalificacionActividadEstudiante($config, $resultado['act_id'], $datosEstudianteActual['mat_id']);
+														$nota      = $calificacionesEst[$idActividad] ?? null;
+														$porNuevo  = ($resultado['act_valor'] / 100);
+														$acumulaValor += $porNuevo;
 
-														$porNuevo = ($resultado['act_valor'] / 100);
-
-														$acumulaValor = ($acumulaValor + $porNuevo);
-
-														$notaMultiplicada=0;
-														$nota3="";
-														$nota4="";
-														if(!empty($nota['cal_nota'])){
-															$nota3=$nota['cal_nota'];
-															$nota4=$nota['cal_observaciones'];
-															$notaMultiplicada = ($nota['cal_nota'] * $porNuevo);
+														$notaMultiplicada = 0;
+														$nota3            = "";
+														$nota4            = "";
+														if (!empty($nota['cal_nota'])) {
+															$nota3           = $nota['cal_nota'];
+															$nota4           = $nota['cal_observaciones'];
+															$notaMultiplicada= ((float)$nota['cal_nota'] * $porNuevo);
 														}
 
-														$sumaNota = ($sumaNota + $notaMultiplicada);
-														$porcentajeActualActividad +=$resultado['act_valor'];
+														$sumaNota += $notaMultiplicada;
+														$porcentajeActualActividad += $resultado['act_valor'];
 
-														//COLOR DE CADA NOTA
+														// COLOR DE CADA NOTA
+														if (!empty($nota['cal_nota']) && $nota['cal_nota'] < $config[5]) {
+															$colorNota = $config[6];
+														} else {
+															$colorNota = $config[7];
+														}
 
-														if(!empty($nota['cal_nota']) && $nota['cal_nota']<$config[5]) $colorNota = $config[6];
+														$indicadorName = $indicadoresMapa[$resultado['act_id_tipo']] ?? null; 
 
-														else $colorNota = $config[7];
+														$notaFinal = $nota3;
+														if($config['conf_forma_mostrar_notas'] == CUALITATIVA && $nota3 !== ''){
+															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota3);
+															$notaFinal  = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+														}
 
-														$indicadorName = Indicadores::traerIndicadoresDatosRelacion($resultado['act_id_tipo']); 
-
-															$notaFinal=$nota3;
-															if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-																$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota3);
-																$notaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-															}
+														$textoIndicador = '';
+														if (!empty($indicadorName)) {
+															$textoIndicador = $indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";
+														}
 
 													 ?>
 
@@ -354,7 +383,11 @@
 
 														<td>
 															<?=$resultado['act_descripcion'];?><br>
-															<span class="badge-indicador"><i class="fa fa-tag"></i> <?=$indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";?></span>
+															<?php if($textoIndicador !== '') { ?>
+																<span class="badge-indicador">
+																	<i class="fa fa-tag"></i> <?=$textoIndicador;?>
+																</span>
+															<?php } ?>
 														</td>
 
 														<td><?=$resultado['act_fecha'];?></td>
@@ -367,28 +400,38 @@
 
                                                     </tr>
 
-													<?php 
-
-														 $contReg++;
-
-													  }
-
-														//DEFINITIVAS
-
-														$carga = $cargaConsultaActual;
-
-														$periodo = $periodoConsultaActual;
-
-														$estudiante = $datosEstudianteActual['mat_id'];
-
-														include("../definitivas.php");
-
-														$definitivaFinal=$definitiva;
-														if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-															$estiloNotaDefinitiva = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitiva);
-															$definitivaFinal= !empty($estiloNotaDefinitiva['notip_nombre']) ? $estiloNotaDefinitiva['notip_nombre'] : "";
+														<?php 
+															$contReg++;
 														}
 
+														// DEFINITIVA CALCULADA UNA SOLA VEZ
+														$definitiva      = 0;
+														$colorDefinitiva = 'black';
+														if ($acumulaValor > 0) {
+															$definitiva = round(($sumaNota / $acumulaValor), $config['conf_decimales_notas']);
+
+															if ($definitiva < $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_perdida'];
+															} elseif ($definitiva == $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_ganada'];
+															} elseif ($definitiva > $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_ganada'];
+															}
+
+															// Añadir ".0" a enteros dentro del rango
+															for($i = $config['conf_nota_desde']; $i <= $config['conf_nota_hasta']; $i++){
+																if($definitiva == $i){
+																	$definitiva = $definitiva.".0";
+																	break;
+																}
+															}
+														}
+
+														$definitivaFinal = $definitiva;
+														if($config['conf_forma_mostrar_notas'] == CUALITATIVA && $definitivaFinal !== ''){
+															$estiloNotaDefinitiva = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitivaFinal);
+															$definitivaFinal= !empty($estiloNotaDefinitiva['notip_nombre']) ? $estiloNotaDefinitiva['notip_nombre'] : "";
+														}
 													  ?>
 
                                                 </tbody>

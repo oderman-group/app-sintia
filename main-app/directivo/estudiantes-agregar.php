@@ -1211,6 +1211,4 @@ if(!Modulos::validarPermisoEdicion()){
     </script>
     <!-- end js include path -->
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/wizard.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:55 GMT -->
 </html>
