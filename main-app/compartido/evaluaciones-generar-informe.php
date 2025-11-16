@@ -66,39 +66,108 @@ switch ($asignacion['gal_tipo']) {
   font-size:11px;
   ">
 
+		<?php
+		// =====================================
+		// PRE-CARGAR PREGUNTAS DE LA EVALUACIÓN
+		// =====================================
+		$preguntasLista = [];
+		$consultaPreguntas = EvaluacionGeneral::traerPreguntasEvaluacion($conexion, $config, $asignacion['gal_id_evaluacion']);
+		while ($preg = mysqli_fetch_array($consultaPreguntas, MYSQLI_BOTH)) {
+			$preguntasLista[] = $preg;
+		}
+
+		// =====================================
+		// PRE-CARGAR EVALUADORES Y RESPUESTAS
+		// =====================================
+		$consultaEvaluadores = Asignaciones::resultadoEncuestasFinalizadas($conexion, $config, $asignacion['gal_id_evaluacion']);
+		$filasEvaluadores    = [];
+		$idsUsuarios         = [];
+
+		while ($rowEval = mysqli_fetch_array($consultaEvaluadores, MYSQLI_BOTH)) {
+			$filasEvaluadores[] = $rowEval;
+			$idsUsuarios[]      = $rowEval['uss_id'];
+		}
+
+		$idsUsuarios = array_values(array_unique(array_filter($idsUsuarios, 'strlen')));
+
+		// Construir mapa de respuestas [idUsuario][idPregunta] => fila respuesta
+		$respuestasMapa = [];
+		if (!empty($idsUsuarios) && !empty($preguntasLista)) {
+			$idsUsuariosEsc = array_map('intval', $idsUsuarios);
+			$idsPreguntas   = array_map(function($p){ return (int)$p['pregg_id']; }, $preguntasLista);
+			$idsPreguntasEsc= $idsPreguntas;
+
+			$inUsuarios  = implode(',', $idsUsuariosEsc);
+			$inPreguntas = implode(',', $idsPreguntasEsc);
+
+			try {
+				$sqlResp = "SELECT gr.*, gr2.resg_descripcion, gr2.resg_valor 
+							FROM ".BD_ADMIN.".general_resultados gr 
+							LEFT JOIN ".BD_ADMIN.".general_respuestas gr2 
+								ON gr2.resg_id = gr.resg_respuesta 
+								AND gr2.resg_institucion = gr.resg_institucion 
+								AND gr2.resg_year = gr.resg_year
+							WHERE gr.resg_institucion = {$config['conf_id_institucion']} 
+							  AND gr.resg_year = {$_SESSION['bd']}
+							  AND gr.resg_id_usuario IN ({$inUsuarios})
+							  AND gr.resg_id_pregunta IN ({$inPreguntas})";
+
+				$consultaResp = mysqli_query($conexion, $sqlResp);
+				while ($rowResp = mysqli_fetch_array($consultaResp, MYSQLI_BOTH)) {
+					$idUsuario  = $rowResp['resg_id_usuario'];
+					$idPregunta = $rowResp['resg_id_pregunta'];
+					if (!isset($respuestasMapa[$idUsuario])) {
+						$respuestasMapa[$idUsuario] = [];
+					}
+					$respuestasMapa[$idUsuario][$idPregunta] = $rowResp;
+				}
+			} catch (Exception $e) {
+				include("../compartido/error-catch-to-report.php");
+			}
+		}
+
+		$numContestados = count($filasEvaluadores);
+		$promedioFinal  = 0;
+		$sumaPregunta   = [];
+		?>
+
 		<tr style="font-weight:bold; height:30px; background:<?= $Plataforma->colorUno; ?>; color:#FFF;">
 
 			<th style="font-size:9px;">Cod</th>
 			<th style="font-size:9px;">Evaluador</th>
-			<?php
-			$consultaPreguntas = EvaluacionGeneral::traerPreguntasEvaluacion($conexion, $config, $asignacion['gal_id_evaluacion']);
-			while ($preguntas = mysqli_fetch_array($consultaPreguntas, MYSQLI_BOTH)) {
-			?>
-				<th style="font-size:9px; text-align:center; border:groove;"><?=!empty($preguntas['pregg_descripcion']) ? $preguntas['pregg_descripcion'] : "" ?></th>
-			<?php
-			}
-			?>
+			<?php foreach ($preguntasLista as $preguntas) { ?>
+				<th style="font-size:9px; text-align:center; border:groove;"><?= !empty($preguntas['pregg_descripcion']) ? $preguntas['pregg_descripcion'] : "" ?></th>
+			<?php } ?>
 			<th style="text-align:center;">PROM</th>
 		</tr>
 		<?php
-		$consulta = Asignaciones::resultadoEncuestasFinalizadas($conexion, $config, $asignacion['gal_id_evaluacion']);
-		$numContestados = mysqli_num_rows($consulta);
-		$promedioFinal = 0;
-		$sumaPregunta = array();
-		while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+		foreach ($filasEvaluadores as $resultado) {
 		?>
 			<tr style="border-color:<?= $Plataforma->colorDos; ?>;">
 				<td style="font-size:9px;"><?= $resultado['uss_id']; ?></td>
 				<td style="font-size:9px;"><?= UsuariosPadre::nombreCompletoDelUsuario($resultado); ?></td>
 				<?php
-					$consultaPreguntas = EvaluacionGeneral::traerPreguntasEvaluacion($conexion, $config, $asignacion['gal_id_evaluacion']);
-					while ($preguntas = mysqli_fetch_array($consultaPreguntas, MYSQLI_BOTH)) {
-						$respuesta = Respuesta::traerRespuestaPregunta($conexion, $config, $preguntas['pregg_id'], $resultado['uss_id']);
-						$valorRespuesta = $preguntas['pregg_tipo_pregunta']==TEXT ? $respuesta['resg_respuesta'] : $respuesta['resg_valor']." Ptos <mark style='color: darkgrey'>(".$respuesta['resg_descripcion'].")</mark>";
+					foreach ($preguntasLista as $preguntas) {
+						$idPregunta = $preguntas['pregg_id'];
+						$respuesta  = $respuestasMapa[$resultado['uss_id']][$idPregunta] ?? null;
+
+						if ($preguntas['pregg_tipo_pregunta'] == TEXT) {
+							$valorRespuesta = !empty($respuesta['resg_respuesta']) ? $respuesta['resg_respuesta'] : "";
+						} else {
+							if (!empty($respuesta['resg_valor'])) {
+								$valorRespuesta = $respuesta['resg_valor']." Ptos <mark style='color: darkgrey'>(".($respuesta['resg_descripcion'] ?? "").")</mark>";
+							} else {
+								$valorRespuesta = "";
+							}
+						}
 				?>
 					<td style="text-align:center;"><?=$valorRespuesta?></td>
 				<?php
-						$sumaPregunta[$preguntas['pregg_id']] = !empty($sumaPregunta[$preguntas['pregg_id']]) ? $sumaPregunta[$preguntas['pregg_id']]+$respuesta['resg_valor'] : $respuesta['resg_valor'];
+						if (!empty($respuesta['resg_valor'])) {
+							$sumaPregunta[$idPregunta] = !empty($sumaPregunta[$idPregunta])
+								? $sumaPregunta[$idPregunta] + $respuesta['resg_valor']
+								: $respuesta['resg_valor'];
+						}
 					}
 				?>
 				<td style="text-align:center; width:40px; font-weight:bold;"><?= $resultado['promedio']; ?></td>
@@ -110,10 +179,9 @@ switch ($asignacion['gal_tipo']) {
 		<tr style="border-color:<?= $Plataforma->colorDos; ?>;">
 			<td style="font-size:9px;" colspan="2">Promedio General</td>
 			<?php
-				$consultaPreguntas = EvaluacionGeneral::traerPreguntasEvaluacion($conexion, $config, $asignacion['gal_id_evaluacion']);
-				while ($preguntas = mysqli_fetch_array($consultaPreguntas, MYSQLI_BOTH)) {
+				foreach ($preguntasLista as $preguntas) {
 			?>
-				<td style="text-align:center;"><?=!empty($sumaPregunta[$preguntas['pregg_id']]) ? ($sumaPregunta[$preguntas['pregg_id']] / $numContestados) : ""?></td>
+				<td style="text-align:center;"><?= !empty($sumaPregunta[$preguntas['pregg_id']]) && $numContestados > 0 ? ($sumaPregunta[$preguntas['pregg_id']] / $numContestados) : ""?></td>
 			<?php
 			}
 			?>

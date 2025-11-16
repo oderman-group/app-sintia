@@ -196,15 +196,52 @@ if(typeof formulario !== 'undefined' && formulario !== null) {
 
 <!-- start footer -->
 <div class="page-footer">
-	<div class="page-footer-inner"> <?=date("Y");?> &copy; Plataforma SINTIA By
-		<a href="#" target="_top" class="makerCss">ODERMAN</a> | Tiempo de carga de la pagina: <b><?=$tiempoMostrar;?></b> segundos
+	<div class="page-footer-inner">
+        <?=date("Y");?> &copy; Plataforma SINTIA By
+		<a href="#" target="_top" class="makerCss">ODERMAN</a>
+        | Tiempo de ejecución en servidor: <b><?=$tiempoMostrar;?></b> segundos
+        | Tiempo de carga en navegador: <b><span id="tiempo-carga-navegador">calculando...</span></b> segundos
 	</div>
-
+	
 	<div class="scroll-to-top">
 		<i class="icon-arrow-up"></i>
 	</div>
 </div>
 <!-- end footer -->
+
+<script>
+// Métrica de tiempo de carga en el navegador (cliente)
+window.addEventListener('load', function () {
+    try {
+        var segundos = null;
+
+        if (performance && performance.getEntriesByType) {
+            var navEntries = performance.getEntriesByType('navigation');
+            if (navEntries && navEntries.length > 0 && typeof navEntries[0].duration === 'number') {
+                segundos = navEntries[0].duration / 1000;
+            }
+        }
+
+        // Fallback para navegadores antiguos
+        if (segundos === null && performance && performance.timing) {
+            var t = performance.timing;
+            if (t.loadEventEnd && t.navigationStart) {
+                segundos = (t.loadEventEnd - t.navigationStart) / 1000;
+            }
+        }
+
+        if (segundos !== null) {
+            var span = document.getElementById('tiempo-carga-navegador');
+            if (span) {
+                span.textContent = segundos.toFixed(2);
+            }
+        }
+    } catch (e) {
+        // Silenciar errores para no afectar al usuario final
+        console && console.warn && console.warn('No se pudo calcular el tiempo de carga del navegador', e);
+    }
+});
+</script>
 <?php 
 error_log("El usuario llega hasta el footer antes de cerrar la conexión: ". $_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);
 ?>

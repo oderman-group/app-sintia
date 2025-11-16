@@ -1,3 +1,12 @@
+<?php
+// Asegurar que la foto de perfil del usuario actual esté siempre definida para este módulo
+if (!isset($fotoPerfilUsr)) {
+    if (!class_exists('UsuariosFunciones')) {
+        require_once ROOT_PATH . "/main-app/compartido/sintia-funciones.php";
+    }
+    $fotoPerfilUsr = UsuariosFunciones::verificarFoto($datosUsuarioActual['uss_foto'] ?? '');
+}
+?>
 <div class="page-content">
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">

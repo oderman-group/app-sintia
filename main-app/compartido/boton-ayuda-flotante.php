@@ -438,7 +438,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             </div>
             <i class="fa fa-chevron-right help-menu-arrow"></i>
         </a>
-        <?php endif; ?>
+        
 
         <a href="#" class="help-menu-item" onclick="contactarSoporte(event)">
             <div class="help-menu-icon">
@@ -450,6 +450,7 @@ $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764b
             </div>
             <i class="fa fa-chevron-right help-menu-arrow"></i>
         </a>
+        <?php endif; ?>
 
         <a href="#" class="help-menu-item" onclick="abrirManualAyuda(event)">
             <div class="help-menu-icon">
