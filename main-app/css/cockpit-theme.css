@@ -5,34 +5,44 @@
 
 /* Variables Aeronáuticas */
 :root {
-    --cockpit-bg: #0a0e1a;
-    --cockpit-panel: #151923;
-    --cockpit-panel-light: #1a1f2e;
-    --cockpit-border: #2a3142;
-    --cockpit-border-light: #3a4152;
-    --cockpit-text: #e0e7ff;
-    --cockpit-text-dim: #8892a6;
-    --cockpit-text-bright: #ffffff;
+    --cockpit-bg: #fef6e4;
+    --cockpit-panel: rgba(255, 255, 255, 0.82);
+    --cockpit-panel-light: rgba(255, 255, 255, 0.92);
+    --cockpit-border: rgba(255, 255, 255, 0.45);
+    --cockpit-border-light: rgba(255, 255, 255, 0.7);
+    --cockpit-text: #3b4a62;
+    --cockpit-text-dim: #71809a;
+    --cockpit-text-bright: #163152;
+    
+    --dawn-sky-top: #6fb1ff;
+    --dawn-sky-mid: #fdd1a0;
+    --dawn-sky-bottom: #fff7ea;
+    --horizon-mist: rgba(255, 255, 255, 0.6);
+    --cloud-color: rgba(220, 229, 238, 0.55);
+    --cloud-gray: rgba(173, 183, 199, 0.55);
+    --cloud-gray-dark: rgba(138, 149, 172, 0.45);
+    --sun-core: #ffd56f;
+    --sun-glow: rgba(255, 214, 138, 0.55);
     
     /* Colores LED Aeronáuticos */
-    --led-green: #00ff88;
-    --led-blue: #00d4ff;
-    --led-cyan: #00ffff;
-    --led-amber: #ffa500;
-    --led-red: #ff4444;
+    --led-green: #6adf9c;
+    --led-blue: #4eb6ff;
+    --led-cyan: #52d5ff;
+    --led-amber: #ffb347;
+    --led-red: #ff6b6b;
     --led-white: #ffffff;
     
-    /* Efectos de luz neón */
-    --glow-green: 0 0 10px rgba(0, 255, 136, 0.6), 0 0 20px rgba(0, 255, 136, 0.4), 0 0 30px rgba(0, 255, 136, 0.2);
-    --glow-blue: 0 0 10px rgba(0, 212, 255, 0.6), 0 0 20px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.2);
-    --glow-cyan: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.4);
-    --glow-amber: 0 0 10px rgba(255, 165, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.4);
-    --glow-red: 0 0 10px rgba(255, 68, 68, 0.6), 0 0 20px rgba(255, 68, 68, 0.4);
+    /* Efectos de luz suave */
+    --glow-green: 0 0 12px rgba(106, 223, 156, 0.45);
+    --glow-blue: 0 0 14px rgba(78, 182, 255, 0.4);
+    --glow-cyan: 0 0 14px rgba(82, 213, 255, 0.45);
+    --glow-amber: 0 0 12px rgba(255, 179, 71, 0.45);
+    --glow-red: 0 0 12px rgba(255, 107, 107, 0.45);
     
     /* Sombras de panel */
-    --shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    --shadow-deep: inset 0 4px 12px rgba(0, 0, 0, 0.8);
-    --shadow-raised: 0 2px 10px rgba(0, 0, 0, 0.5);
+    --shadow-panel: 0 15px 35px rgba(17, 40, 77, 0.18);
+    --shadow-deep: inset 0 2px 6px rgba(17, 40, 77, 0.18);
+    --shadow-raised: 0 10px 18px rgba(17, 40, 77, 0.16);
     
     /* Tipografía */
     --font-digital: 'Courier New', 'Consolas', 'Monaco', monospace;
@@ -44,53 +54,86 @@
    ======================================== */
 
 body {
-    background: var(--cockpit-bg) !important;
+    background:
+        radial-gradient(circle at 20% 30%, var(--cloud-gray) 0%, transparent 55%),
+        radial-gradient(ellipse at 60% 25%, var(--cloud-color) 0%, transparent 60%),
+        radial-gradient(circle at 80% 45%, var(--cloud-gray-dark) 0%, transparent 65%),
+        linear-gradient(180deg, var(--dawn-sky-top) 0%, var(--dawn-sky-mid) 45%, var(--dawn-sky-bottom) 100%) !important;
+    background-attachment: fixed;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: -180px;
+    left: 50%;
+    width: 650px;
+    height: 650px;
+    background: radial-gradient(circle, var(--sun-core) 0%, rgba(255, 213, 111, 0.8) 35%, transparent 70%);
+    transform: translateX(-50%);
+    opacity: 0.8;
+    z-index: 0;
+    filter: blur(5px);
+    animation: sunriseGlow 10s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 50vh;
+    left: 0;
+    right: 0;
+    height: 50vh;
+    background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.4) 60%, rgba(255, 255, 255, 0.7) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+@keyframes sunriseGlow {
+    from { opacity: 0.65; transform: translateX(-50%) scale(0.95); }
+    to { opacity: 0.9; transform: translateX(-50%) scale(1.05); }
 }
 
 .page-content {
-    background: var(--cockpit-bg);
+    background: transparent;
     min-height: 100vh;
     padding: 20px;
     position: relative;
+    z-index: 1;
 }
 
-/* Textura de metal perforado del cockpit */
-.page-content::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 32px 32px;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Líneas de escaneo estilo radar */
+/* Capas de nubes suaves */
+.page-content::before,
 .page-content::after {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, 
-        transparent 0%, 
-        var(--led-cyan) 50%, 
-        transparent 100%);
-    box-shadow: var(--glow-cyan);
-    animation: scan 60s linear infinite;
+    width: 220%;
+    height: 80vh;
+    left: -60%;
+    background: radial-gradient(circle at 20% 20%, var(--cloud-color) 0%, transparent 60%),
+                radial-gradient(circle at 60% 30%, rgba(255, 255, 255, 0.45) 0%, transparent 55%),
+                radial-gradient(circle at 80% 60%, rgba(255, 255, 255, 0.35) 0%, transparent 65%);
+    opacity: 0.7;
+    filter: blur(8px);
     pointer-events: none;
-    z-index: 1;
-    opacity: 0.08;
+    animation: cloudDrift 60s linear infinite;
+    z-index: 0;
 }
 
-@keyframes scan {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(100vh); }
+.page-content::after {
+    top: 25vh;
+    animation-duration: 80s;
+    opacity: 0.5;
+    transform: scale(-1, 1);
+}
+
+@keyframes cloudDrift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(25%); }
 }
 
 /* ========================================
@@ -98,14 +141,15 @@ body {
    ======================================== */
 
 .config-page-header {
-    background: linear-gradient(180deg, var(--cockpit-panel-light) 0%, var(--cockpit-panel) 100%);
-    border: 2px solid var(--cockpit-border-light);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: 12px;
     padding: 30px;
     margin-bottom: 25px;
     box-shadow: var(--shadow-panel);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(6px);
 }
 
 .config-page-header::before {
@@ -115,11 +159,8 @@ body {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, 
-        transparent 0%,
-        var(--led-cyan) 50%,
-        transparent 100%);
-    box-shadow: var(--glow-cyan);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    opacity: 0.6;
 }
 
 .config-page-header::after {
@@ -129,9 +170,9 @@ body {
     right: 20px;
     width: 8px;
     height: 8px;
-    background: var(--led-green);
+    background: var(--led-amber);
     border-radius: 50%;
-    box-shadow: var(--glow-green);
+    box-shadow: var(--glow-amber);
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -178,13 +219,13 @@ body {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: rgba(0, 255, 136, 0.15);
-    border: 1px solid var(--led-green);
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 20px;
     padding: 6px 15px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--led-green);
+    color: #e08b27;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-family: var(--font-digital);
@@ -197,7 +238,7 @@ body {
 
 .nav-tabs-modern {
     background: var(--cockpit-panel);
-    border: 2px solid var(--cockpit-border);
+    border: 2px solid rgba(255, 255, 255, 0.5);
     border-bottom: none;
     border-radius: 10px 10px 0 0;
     padding: 12px 15px 0 15px;
@@ -226,10 +267,10 @@ body {
 }
 
 .nav-tabs-modern .nav-link {
-    background: rgba(42, 49, 66, 0.5);
-    border: 1px solid var(--cockpit-border);
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.65);
     border-bottom: none;
-    color: var(--cockpit-text-dim);
+    color: var(--cockpit-text);
     padding: 12px 20px;
     border-radius: 8px 8px 0 0;
     font-weight: 600;
@@ -250,9 +291,9 @@ body {
 }
 
 .nav-tabs-modern .nav-link:hover {
-    background: rgba(58, 65, 82, 0.8);
-    color: var(--led-cyan);
-    border-color: var(--cockpit-border-light);
+    background: rgba(255, 255, 255, 0.85);
+    color: #f18b49;
+    border-color: rgba(255, 255, 255, 0.9);
 }
 
 .nav-tabs-modern .nav-link:hover i {
@@ -261,9 +302,9 @@ body {
 }
 
 .nav-tabs-modern .nav-link.active {
-    background: linear-gradient(180deg, var(--cockpit-panel-light) 0%, var(--cockpit-panel) 100%);
-    color: var(--led-cyan);
-    border-color: var(--led-blue);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.75) 100%);
+    color: #f18b49;
+    border-color: rgba(241, 139, 73, 0.4);
     box-shadow: 
         0 -2px 8px rgba(0, 212, 255, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -282,8 +323,8 @@ body {
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--led-cyan);
-    box-shadow: var(--glow-cyan);
+    background: linear-gradient(90deg, #fdd491 0%, #88c3ff 100%);
+    box-shadow: 0 0 12px rgba(253, 212, 145, 0.7);
 }
 
 /* ========================================
@@ -292,7 +333,7 @@ body {
 
 .tab-content-modern {
     background: var(--cockpit-panel);
-    border: 2px solid var(--cockpit-border);
+    border: 2px solid rgba(255, 255, 255, 0.55);
     border-top: none;
     padding: 30px;
     border-radius: 0 0 10px 10px;
@@ -321,7 +362,7 @@ body {
 
 .panel-modern {
     background: var(--cockpit-panel-light);
-    border: 2px solid var(--cockpit-border-light);
+    border: 2px solid rgba(255, 255, 255, 0.65);
     border-radius: 10px;
     overflow: hidden;
     box-shadow: var(--shadow-panel);
@@ -344,12 +385,12 @@ body {
 }
 
 .panel-modern .panel-heading {
-    background: linear-gradient(180deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%);
-    border-bottom: 1px solid var(--led-blue);
+    background: linear-gradient(135deg, rgba(253, 212, 145, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
+    border-bottom: 1px solid rgba(253, 212, 145, 0.6);
     padding: 18px 25px 18px 35px;
     font-size: 16px;
     font-weight: 700;
-    color: var(--led-cyan);
+    color: #f18b49;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     display: flex;
@@ -361,13 +402,13 @@ body {
 
 .panel-modern .panel-heading i {
     font-size: 20px;
-    color: var(--led-cyan);
-    filter: drop-shadow(var(--glow-cyan));
+    color: #f18b49;
+    filter: drop-shadow(0 0 6px rgba(241, 139, 73, 0.5));
 }
 
 .panel-modern .panel-body {
     padding: 30px 25px 30px 35px;
-    background: var(--cockpit-panel);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 /* ========================================
@@ -375,9 +416,9 @@ body {
    ======================================== */
 
 .form-group-modern {
-    background: rgba(21, 25, 35, 0.6);
-    border: 1px solid var(--cockpit-border);
-    border-left: 3px solid var(--led-blue);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-left: 3px solid rgba(136, 195, 255, 0.9);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
@@ -386,10 +427,8 @@ body {
 }
 
 .form-group-modern:hover {
-    border-left-color: var(--led-cyan);
-    box-shadow: 
-        var(--shadow-deep),
-        -3px 0 12px rgba(0, 212, 255, 0.2);
+    border-left-color: #f18b49;
+    box-shadow: var(--shadow-raised);
 }
 
 .form-group-modern label {
@@ -405,7 +444,7 @@ body {
 }
 
 .form-group-modern label i {
-    color: var(--led-cyan);
+    color: #f18b49;
     font-size: 16px;
     filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.4));
 }
@@ -416,10 +455,10 @@ body {
 
 .form-group-modern .form-control,
 .form-group-modern select.form-control {
-    background: #0d1117;
-    border: 2px solid var(--cockpit-border);
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(136, 195, 255, 0.4);
     border-radius: 6px;
-    color: var(--led-green);
+    color: var(--cockpit-text-bright);
     padding: 12px 15px;
     font-size: 14px;
     font-family: var(--font-digital);
@@ -430,13 +469,10 @@ body {
 
 .form-group-modern .form-control:focus,
 .form-group-modern select.form-control:focus {
-    background: #0a0d12;
-    border-color: var(--led-cyan);
-    color: var(--led-cyan);
-    box-shadow: 
-        var(--shadow-deep),
-        0 0 0 3px rgba(0, 212, 255, 0.15),
-        inset 0 0 8px rgba(0, 212, 255, 0.1);
+    background: #fff;
+    border-color: #f18b49;
+    color: #f18b49;
+    box-shadow: 0 0 0 3px rgba(241, 139, 73, 0.15);
     outline: none;
 }
 
@@ -458,14 +494,14 @@ body {
    ======================================== */
 
 .panel-body h4 {
-    color: var(--led-amber);
+    color: #f18b49;
     font-weight: 700;
     font-size: 15px;
     margin: 35px 0 20px 0;
     padding: 12px 20px;
-    background: rgba(255, 165, 0, 0.08);
-    border: 1px solid rgba(255, 165, 0, 0.3);
-    border-left: 4px solid var(--led-amber);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-left: 4px solid rgba(241, 139, 73, 0.8);
     border-radius: 6px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -611,18 +647,16 @@ body {
    ======================================== */
 
 .btn-modern-primary {
-    background: linear-gradient(180deg, #1a4d7a 0%, #0d2940 100%);
-    border: 2px solid var(--led-cyan);
-    color: var(--led-cyan);
+    background: linear-gradient(135deg, #fdd491 0%, #f18b49 100%);
+    border: 2px solid rgba(241, 139, 73, 0.4);
+    color: #fff;
     padding: 14px 35px;
     border-radius: 6px;
     font-weight: 700;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 
-        var(--shadow-raised),
-        0 0 15px rgba(0, 212, 255, 0.3);
+    box-shadow: var(--shadow-raised);
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
@@ -638,10 +672,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        transparent 0%,
-        rgba(0, 212, 255, 0.3) 50%,
-        transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
     transition: left 0.5s ease;
 }
 
@@ -650,13 +681,11 @@ body {
 }
 
 .btn-modern-primary:hover {
-    background: linear-gradient(180deg, #1f5a8f 0%, #123650 100%);
-    border-color: var(--led-cyan);
-    box-shadow: 
-        var(--shadow-raised),
-        0 0 25px rgba(0, 212, 255, 0.5);
+    background: linear-gradient(135deg, #ffe2b6 0%, #f7a461 100%);
+    border-color: rgba(241, 139, 73, 0.6);
+    box-shadow: 0 10px 24px rgba(241, 139, 73, 0.35);
     transform: translateY(-2px);
-    color: var(--cockpit-text-bright);
+    color: #fff;
 }
 
 .btn-modern-primary i {
@@ -664,9 +693,9 @@ body {
 }
 
 .btn-modern-secondary {
-    background: var(--cockpit-panel-light);
-    border: 2px solid var(--cockpit-border-light);
-    color: var(--cockpit-text-dim);
+    background: rgba(255, 255, 255, 0.85);
+    border: 2px solid rgba(136, 195, 255, 0.4);
+    color: var(--cockpit-text);
     padding: 14px 35px;
     border-radius: 6px;
     font-weight: 600;
@@ -680,9 +709,9 @@ body {
 }
 
 .btn-modern-secondary:hover {
-    border-color: var(--led-blue);
-    background: rgba(0, 212, 255, 0.05);
-    color: var(--led-cyan);
+    border-color: rgba(241, 139, 73, 0.5);
+    background: rgba(255, 255, 255, 0.95);
+    color: #f18b49;
 }
 
 /* ========================================
@@ -690,8 +719,8 @@ body {
    ======================================== */
 
 .save-button-container {
-    background: linear-gradient(180deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 212, 255, 0.05) 100%);
-    border-top: 2px solid var(--led-green);
+    background: linear-gradient(180deg, rgba(253, 212, 145, 0.35) 0%, rgba(255, 255, 255, 0.6) 100%);
+    border-top: 2px solid rgba(253, 212, 145, 0.8);
     padding: 20px 25px;
     margin: 30px -25px -30px -35px;
     border-radius: 0 0 8px 8px;
@@ -723,8 +752,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: #0d1117;
-    border: 2px solid var(--cockpit-border);
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(136, 195, 255, 0.4);
     transition: .3s;
     border-radius: 30px;
     box-shadow: var(--shadow-deep);
@@ -737,24 +766,22 @@ body {
     width: 20px;
     left: 3px;
     bottom: 3px;
-    background: var(--cockpit-text-dim);
+    background: #fff;
     transition: .3s;
     border-radius: 50%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 input:checked + .cockpit-slider {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: var(--led-green);
-    box-shadow: 
-        var(--shadow-deep),
-        inset 0 0 10px rgba(0, 255, 136, 0.3);
+    background: rgba(241, 139, 73, 0.25);
+    border-color: rgba(241, 139, 73, 0.6);
+    box-shadow: inset 0 0 10px rgba(241, 139, 73, 0.35);
 }
 
 input:checked + .cockpit-slider:before {
     transform: translateX(28px);
-    background: var(--led-green);
-    box-shadow: var(--glow-green);
+    background: #f18b49;
+    box-shadow: 0 0 10px rgba(241, 139, 73, 0.4);
 }
 
 /* ========================================
@@ -784,7 +811,7 @@ small.form-text {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(10, 14, 26, 0.95);
+    background: rgba(255, 255, 255, 0.85);
     display: none;
     align-items: center;
     justify-content: center;
@@ -800,15 +827,15 @@ small.form-text {
 .loading-spinner {
     width: 80px;
     height: 80px;
-    border: 4px solid rgba(0, 212, 255, 0.2);
-    border-top: 4px solid var(--led-cyan);
+    border: 4px solid rgba(241, 139, 73, 0.2);
+    border-top: 4px solid #f18b49;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     box-shadow: var(--glow-cyan);
 }
 
 .loading-overlay p {
-    color: var(--led-cyan);
+    color: #f18b49;
     font-family: var(--font-digital);
     font-size: 14px;
     text-transform: uppercase;
@@ -824,14 +851,14 @@ small.form-text {
    ======================================== */
 
 .select2-container--default .select2-selection--single {
-    background: #0d1117 !important;
-    border: 2px solid var(--cockpit-border) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid rgba(136, 195, 255, 0.4) !important;
     border-radius: 6px !important;
     height: 45px !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: var(--led-green) !important;
+    color: var(--cockpit-text-bright) !important;
     line-height: 41px !important;
     font-family: var(--font-digital) !important;
 }
@@ -841,19 +868,19 @@ small.form-text {
 }
 
 .select2-dropdown {
-    background: var(--cockpit-panel) !important;
-    border: 2px solid var(--led-blue) !important;
-    box-shadow: var(--glow-blue) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid rgba(136, 195, 255, 0.4) !important;
+    box-shadow: 0 10px 20px rgba(17, 40, 77, 0.12) !important;
 }
 
 .select2-results__option {
-    background: var(--cockpit-panel) !important;
+    background: transparent !important;
     color: var(--cockpit-text) !important;
 }
 
 .select2-results__option--highlighted {
-    background: rgba(0, 212, 255, 0.2) !important;
-    color: var(--led-cyan) !important;
+    background: rgba(241, 139, 73, 0.15) !important;
+    color: #f18b49 !important;
 }
 
 /* ========================================
@@ -899,8 +926,8 @@ small.form-text {
    ======================================== */
 
 .breadcrumb {
-    background: rgba(21, 25, 35, 0.6);
-    border: 1px solid var(--cockpit-border);
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 6px;
     padding: 12px 20px;
     margin-bottom: 20px;
@@ -980,8 +1007,8 @@ small.form-text {
 
 /* Panel de métricas */
 .metrics-panel {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--cockpit-border);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 15px;
@@ -992,7 +1019,7 @@ small.form-text {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(42, 49, 66, 0.5);
+    border-bottom: 1px solid rgba(136, 195, 255, 0.35);
 }
 
 .metric-item:last-child {
@@ -1024,15 +1051,28 @@ small.form-text {
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-        linear-gradient(180deg, #000814 0%, #001d3d 50%, #000814 100%),
-        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
-    background-size: cover, 20px 20px;
+    background: linear-gradient(180deg, rgba(111, 177, 255, 0.95) 0%, rgba(253, 209, 160, 0.92) 50%, rgba(255, 247, 234, 0.95) 100%);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.cockpit-entry-overlay::before,
+.cockpit-entry-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.6) 0%, transparent 50%);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.cockpit-entry-overlay::after {
+    background: radial-gradient(circle at 70% 10%, rgba(255, 255, 255, 0.3) 0%, transparent 55%);
+    filter: blur(10px);
+    opacity: 0.4;
 }
 
 .cockpit-entry-overlay.hidden {
@@ -1407,9 +1447,9 @@ small.form-text {
 
 /* Botón de entrada al cockpit */
 .btn-enter-cockpit {
-    background: linear-gradient(180deg, #1a4d7a 0%, #0d2940 100%);
-    border: 3px solid var(--led-cyan);
-    color: var(--led-cyan);
+    background: linear-gradient(135deg, #fdd491 0%, #f18b49 100%);
+    border: 3px solid rgba(241, 139, 73, 0.5);
+    color: #fff;
     padding: 18px 45px;
     border-radius: 8px;
     font-weight: 700;
@@ -1436,10 +1476,7 @@ small.form-text {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-        transparent 0%,
-        rgba(0, 212, 255, 0.4) 50%,
-        transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
     transition: left 0.6s ease;
 }
 
@@ -1448,21 +1485,19 @@ small.form-text {
 }
 
 .btn-enter-cockpit:hover {
-    background: linear-gradient(180deg, #1f5a8f 0%, #123650 100%);
-    border-color: var(--led-white);
-    color: var(--led-white);
-    box-shadow: 
-        0 6px 30px rgba(0, 212, 255, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, #ffe2b6 0%, #f7a461 100%);
+    border-color: rgba(255, 255, 255, 0.8);
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(241, 139, 73, 0.4);
     transform: translateY(-3px);
 }
 
 .btn-enter-cockpit .btn-led {
     width: 10px;
     height: 10px;
-    background: var(--led-green);
+    background: #fef3c7;
     border-radius: 50%;
-    box-shadow: var(--glow-green);
+    box-shadow: 0 0 10px rgba(255, 243, 199, 0.6);
     animation: pulse 1.5s ease-in-out infinite;
 }
 

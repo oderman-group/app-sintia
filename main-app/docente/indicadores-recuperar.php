@@ -147,21 +147,61 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 													$contReg   = 1;
 													$colorNota = "black";
 
+													// ============================================
+													// PRE-CARGAR NOTAS POR INDICADOR (ICOLVEN)
+													// ============================================
+													$notasIndicadoresMapa = [];
+													if ($informacion_inst["info_institucion"] == ICOLVEN) {
+														// Para este indicador específico ($idR) en toda la carga y periodo
+														$notasIndicadoresMapa = Calificaciones::traerDefinitivasIndicadorParaCarga(
+															$config,
+															$cargaConsultaActual,
+															$idR,
+															$periodoConsultaActual
+														);
+													}
+
+													// ============================================
+													// PRE-CARGAR RECUPERACIONES DEL INDICADOR
+													// ============================================
+													$recuperacionesMapa = Indicadores::traerRecuperacionesIndicadorCargaPeriodoMapa(
+														$config,
+														$idR,
+														$cargaConsultaActual,
+														$periodoConsultaActual
+													);
+
+													// ============================================
+													// PRE-CARGAR NOTAS DE BOLETÍN POR ESTUDIANTE
+													// ============================================
+													$boletinMapa = [];
+													// Usamos una sola consulta para traer todas las notas del boletín de la carga/periodo
+													$yearActual = $_SESSION["bd"];
+													$sqlBol = "SELECT * 
+															   FROM " . BD_ACADEMICA . ".academico_boletin bol
+															   WHERE bol_carga = ?
+															     AND bol_periodo = ?
+															     AND institucion = ?
+															     AND year = ?";
+													$paramsBol = [
+														$cargaConsultaActual,
+														$periodoConsultaActual,
+														$config['conf_id_institucion'],
+														$yearActual
+													];
+													$resBol = BindSQL::prepararSQL($sqlBol, $paramsBol);
+													while ($filaBol = mysqli_fetch_array($resBol, MYSQLI_BOTH)) {
+														$boletinMapa[$filaBol['bol_estudiante']] = $filaBol;
+													}
+
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
 														$generarDefintivasIndicadores = true;
 														$iteraciones = 0;
 
 														while($generarDefintivasIndicadores) {
-															//Consulta de recuperaciones si ya la tienen puestas.
-															$consultaNotas = Indicadores::consultaRecuperacionIndicadorPeriodo(
-																$config, 
-																$idR, 
-																$resultado['mat_id'], 
-																$cargaConsultaActual, 
-																$periodoConsultaActual
-															);
-															$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
+															// Recuperación ya cargada en memoria (si existe)
+															$notas = $recuperacionesMapa[$resultado['mat_id']] ?? null;
 
 															$iteraciones ++;
 															// Esto es para garantizar que maximo haga dos veces la entrada a este ciclo.
@@ -187,6 +227,7 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 																$sumaNotaIndicador = 0; 
 
 																while ($notInd = mysqli_fetch_array($notasPorIndicador, MYSQLI_BOTH)) {
+																	// Para cada indicador del estudiante, verificamos en la tabla completa
 																	$consultaNum = Indicadores::consultaRecuperacionIndicadorPeriodo(
 																		$config, 
 																		$notInd[1], 
@@ -233,12 +274,16 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 															}
 														}
 
-														//Promedio nota indicador según nota de actividades relacionadas
-														$notaIndicadorSegunActividades = Calificaciones::consultaNotaIndicadoresPromedio($config, $idR, $cargaConsultaActual, $resultado['mat_id'], $periodoConsultaActual);
+														// Promedio nota indicador según nota de actividades relacionadas (pre-cargado)
+														$notaIndicadorSegunActividades = [0 => 0];
+														if (isset($notasIndicadoresMapa[$resultado['mat_id']])) {
+															$notaIndicadorSegunActividades[0] = $notasIndicadoresMapa[$resultado['mat_id']]['definitiva'];
+														}
 
 														$notaRecuperacion = "";
 
 														if (
+															is_array($notas) &&
 															!empty($notas['rind_nota']) && 
 															$notas['rind_nota'] > $notas['rind_nota_original'] && 
 															$notas['rind_nota'] > $notaIndicadorSegunActividades[0]
@@ -249,12 +294,8 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 															$colorNota = $notaRecuperacion < $config['conf_nota_minima_aprobar'] ? $config['conf_color_perdida'] : $config['conf_color_ganada'];
 														}
 
-														$notasResultado = Boletin::traerNotaBoletinCargaPeriodo(
-															$config, 
-															$periodoConsultaActual, 
-															$resultado['mat_id'], 
-															$cargaConsultaActual
-														);
+														// Nota definitiva del periodo (boletín) desde mapa
+														$notasResultado = $boletinMapa[$resultado['mat_id']] ?? null;
 
 														if (!empty($notaIndicadorSegunActividades[0]) && $notaIndicadorSegunActividades[0] < $config['conf_nota_minima_aprobar'])
 															$color = $config['conf_color_perdida']; 

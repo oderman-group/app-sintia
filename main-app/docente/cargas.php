@@ -754,9 +754,48 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
                 <?php
                 // Obtener datos de cargas
-                $filtro      = " AND car_docente = '" . $_SESSION['id'] . "'";
-                $order       = "CAST(car_posicion_docente AS SIGNED),car_curso, car_grupo, am.mat_nombre";
-                $cCargas     = CargaAcademica::listarCargas($conexion, $config, "", $filtro, $order);
+                $filtro = " AND car_docente = '" . $_SESSION['id'] . "'";
+                $order  = "CAST(car_posicion_docente AS SIGNED),car_curso, car_grupo, am.mat_nombre";
+
+                // Seleccionar solo las columnas necesarias para mejorar rendimiento
+                $selectConsulta = [
+                    // Campos de carga
+                    "car.car_id",
+                    "car.car_curso",
+                    "car.car_grupo",
+                    "car.car_periodo",
+                    "car.car_materia",
+                    "car.car_director_grupo",
+                    "car.car_posicion_docente",
+                    "car.car_ultimo_acceso_docente",
+                    "car.car_permiso1",
+                    // Grado y grupo
+                    "gra.gra_nombre",
+                    "gra.gra_tipo",
+                    "gra.gra_periodos",
+                    "gru.gru_nombre",
+                    // Materia
+                    "am.mat_nombre",
+                    "am.mat_area",
+                    "am.mat_valor",
+                    // Información de job (generación informes)
+                    "jobs.job_id",
+                    "jobs.job_estado",
+                    "jobs.job_intentos",
+                    "jobs.job_mensaje"
+                ];
+
+                $cCargas = CargaAcademica::listarCargas(
+                    $conexion,
+                    $config,
+                    "",
+                    $filtro,
+                    $order,
+                    "",
+                    "",
+                    [],
+                    $selectConsulta
+                );
                 $contReg     = 1;
                 $index       = 0;
                 $listaCargas = [];

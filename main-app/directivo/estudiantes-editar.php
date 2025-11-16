@@ -32,6 +32,52 @@ $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
+
+/**
+ * Catálogos reutilizables para reducir consultas repetidas.
+ */
+$opcionesGeneralesPorGrupo = [];
+$catalogoCiudades = [];
+$gruposOpcionesNecesarios = [1, 2, 3, 4, 5];
+
+try {
+	$idsGrupos = implode(',', $gruposOpcionesNecesarios);
+	$consultaOpciones = mysqli_query(
+		$conexion,
+		"SELECT ogen_id, ogen_nombre, ogen_grupo 
+		 FROM {$baseDatosServicios}.opciones_generales 
+		 WHERE ogen_grupo IN ({$idsGrupos})
+		 ORDER BY ogen_grupo, ogen_nombre"
+	);
+	if ($consultaOpciones) {
+		while ($fila = mysqli_fetch_assoc($consultaOpciones)) {
+			$grupo = (int) $fila['ogen_grupo'];
+			if (!isset($opcionesGeneralesPorGrupo[$grupo])) {
+				$opcionesGeneralesPorGrupo[$grupo] = [];
+			}
+			$opcionesGeneralesPorGrupo[$grupo][] = $fila;
+		}
+	}
+} catch (Exception $e) {
+	include("../compartido/error-catch-to-report.php");
+}
+
+try {
+	$consultaCiudades = mysqli_query(
+		$conexion,
+		"SELECT ciu_id, TRIM(ciu_codigo) AS ciu_codigo, ciu_nombre, dep_nombre 
+		 FROM {$baseDatosServicios}.localidad_ciudades
+		 INNER JOIN {$baseDatosServicios}.localidad_departamentos ON dep_id = ciu_departamento
+		 ORDER BY ciu_nombre"
+	);
+	if ($consultaCiudades) {
+		while ($ciudad = mysqli_fetch_assoc($consultaCiudades)) {
+			$catalogoCiudades[] = $ciudad;
+		}
+	}
+} catch (Exception $e) {
+	include("../compartido/error-catch-to-report.php");
+}
 ?>
 
 	<!-- steps -->

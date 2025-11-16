@@ -9,6 +9,8 @@ $tieneRegistrosAcademicos = (bool) $Estudiante->tieneRegistrosAcademicos();
 
 $disabledCampoGradoGrupo = $tieneRegistrosAcademicos && $config['conf_puede_cambiar_grado_y_grupo'] != 1 ? 'disabled' : '';
 $disabledCamposAcademicos = $tieneRegistrosAcademicos ? 'disabled' : '';
+$fondoBarra = $Plataforma->colorUno ?? ($config['conf_color_barra_superior'] ?? '#6017dc');
+$colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#ffffff');
 ?>
 
 <fieldset>

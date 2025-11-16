@@ -321,18 +321,50 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 														$consulta = Estudiantes::listarEstudiantesParaDocentes($filtroDocentesParaListarEstudiantes);
 													}
 													
-													$contReg = 1;
+													$contReg   = 1;
 													$colorNota = "black";
+													// ============================================
+													// PRE-CARGAR TODAS LAS CALIFICACIONES DE LA
+													// ACTIVIDAD PARA EVITAR UNA CONSULTA POR FILA
+													// ============================================
+													$calificacionesActividad = [];
+													$calificacionesResult = Calificaciones::traerCalificacionActividad($config, $idR);
+													while ($filaCal = mysqli_fetch_array($calificacionesResult, MYSQLI_BOTH)) {
+														$calificacionesActividad[$filaCal['cal_id_estudiante']] = $filaCal;
+													}
+
+													// Pre-cargar tabla de desempeño cualitativo si aplica
+													$listaDesemp = [];
+													if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+														$tablaNotasRes = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
+														while ($filaDes = mysqli_fetch_array($tablaNotasRes, MYSQLI_BOTH)) {
+															$listaDesemp[] = $filaDes;
+														}
+														mysqli_free_result($tablaNotasRes);
+													}
+
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
+														$notas = null;
+														$estiloNotaFinal = "";
+														$colorNota = "black";
+
 														if ($calificacion['act_registrada']==1) {
+				
+															 // Usar calificaciones precargadas (si existen)
+															$notas = $calificacionesActividad[$resultado['mat_id']] ?? null;
 
-															 //Consulta de calificaciones si ya la tienen puestas.
-															$notas = Calificaciones::traerCalificacionActividadEstudiante($config, $idR, $resultado['mat_id']);
+															if (!empty($notas['cal_nota']) && $notas['cal_nota'] < $config[5]) {
+																$colorNota = $config[6];
+															} elseif (!empty($notas['cal_nota']) && $notas['cal_nota'] >= $config[5]) {
+																$colorNota = $config[7];
+															}
 
-															if (!empty($notas['cal_nota']) && $notas['cal_nota'] < $config[5]) $colorNota = $config[6]; 
-															elseif(!empty($notas['cal_nota']) && $notas['cal_nota'] >= $config[5]) $colorNota = $config[7];
-
+															// Si la institución usa escala cualitativa, obtener nombre desde la lista precargada
+															if (!empty($notas['cal_nota']) && $config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($listaDesemp)) {
+																$desemp = Boletin::obtenerDatosTipoDeNotasCargadas($listaDesemp, $notas['cal_nota']);
+																$estiloNotaFinal = !empty($desemp['notip_nombre']) ? $desemp['notip_nombre'] : "";
+															}
 														}
 
 														$fotoEst = $usuariosClase->verificarFoto($resultado['uss_foto']);
@@ -351,13 +383,7 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 													$objetoEnviar = htmlentities($arrayDatos);
                         
-													$estiloNotaFinal="";
-													if(!empty($notas['cal_nota']) && $config['conf_forma_mostrar_notas'] == CUALITATIVA){		
-														$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notas['cal_nota']);
-														$estiloNotaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-													}
-
-													$notaActual = !empty($notas['cal_nota']) ? $notas['cal_nota'] : '';
+													$notaActual = (!empty($notas) && isset($notas['cal_nota'])) ? $notas['cal_nota'] : '';
 
 													?>
 

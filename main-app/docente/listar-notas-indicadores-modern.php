@@ -18,10 +18,18 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
                     <th style="width: 300px; text-align: left;"><?= $frases[61][$datosUsuarioActual['uss_idioma']]; ?></th>
 
                     <?php
+                    // ============================================
+                    // PRE-CARGAR INDICADORES DE LA CARGA/PERIODO
+                    // ============================================
+                    $indicadores = [];
                     $cA = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
-                    $numIndicadores = mysqli_num_rows($cA);
-
                     while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
+                        $indicadores[] = $rA;
+                    }
+                    $numIndicadores = count($indicadores);
+
+                    // Pintar encabezados de indicadores
+                    foreach ($indicadores as $rA) {
                         echo '<th class="indicador-header-cell">
                             ' . $rA['ind_nombre'] . '
                             <small>ID: ' . $rA['ai_ind_id'] . ' (' . $rA['ipc_valor'] . '%)</small>
@@ -36,8 +44,22 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
             <tbody>
                 <?php
-                $contReg = 1;
+                $contReg  = 1;
                 $consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+
+                // ============================================
+                // PRE-CARGAR NOTAS POR INDICADOR Y ESTUDIANTE
+                // ============================================
+                $notasIndicadoresMapa = [];
+                foreach ($indicadores as $ind) {
+                    $idIndicador = $ind['ipc_indicador'];
+                    $notasIndicadoresMapa[$idIndicador] = Calificaciones::traerDefinitivasIndicadorParaCarga(
+                        $config,
+                        $cargaConsultaActual,
+                        $idIndicador,
+                        $periodoConsultaActual
+                    );
+                }
 
                 while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
                     //DEFINITIVAS
@@ -76,17 +98,16 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
                         </td>
 
                         <?php
-                        $cA = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
+                        foreach ($indicadores as $rA) {
+                            $idIndicador = $rA['ipc_indicador'];
+                            $notaIndicadorEst = $notasIndicadoresMapa[$idIndicador][$resultado['mat_id']] ?? null;
 
-                        while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
-                            //LAS CALIFICACIONES
-                            $sumaNotas = Calificaciones::definitivaIndicadorEstudiante($rA['ipc_indicador'], $cargaConsultaActual, $resultado['mat_id'], $periodoConsultaActual)[0];
-
-                            $notasResultado = $sumaNotas['definitiva'] ?? 0;
+                            $notasResultado    = $notaIndicadorEst['definitiva']      ?? 0;
+                            $valorPorcentual   = $notaIndicadorEst['valorPorcentual'] ?? 0;
 
                             // Determinar clase de color
                             $claseNota = 'nota-pendiente';
-                            if ($notasResultado < $config[5] && $notasResultado != "") {
+                            if ($notasResultado < $config[5] && $notasResultado !== "" && $notasResultado !== null) {
                                 $claseNota = 'nota-reprobado';
                                 $colorNota = $config[6];
                             } elseif ($notasResultado >= $config[5]) {
@@ -96,12 +117,12 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
                                 $colorNota = "#616161";
                             }
 
-                            $notasResultadoFinal = $notasResultado ?: '-';
+                            $notasResultadoFinal = ($notasResultado !== null && $notasResultado !== "") ? $notasResultado : '-';
                             $atributosA = '';
 
-                            if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                            if ($config['conf_forma_mostrar_notas'] == CUALITATIVA && $notasResultado !== null && $notasResultado !== "") {
                                 $atributosA = 'tabindex="0" role="button" data-toggle="popover" data-trigger="hover" 
-                                               title="Nota Cuantitativa: '.$notasResultado.' ('.$sumaNotas['valorPorcentual'].'%)" 
+                                               title="Nota Cuantitativa: '.$notasResultado.' ('.$valorPorcentual.'%)" 
                                                data-content="<b>Nota Cuantitativa:</b><br>'.$notasResultado.'" 
                                                data-html="true" data-placement="top"';
         

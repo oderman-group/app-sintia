@@ -3,13 +3,28 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
+require_once(ROOT_PATH."/main-app/class/App/Academico/Calificacion.php");
+require_once(ROOT_PATH."/main-app/class/Boletin.php");
 
 Utilidades::validarParametros($_GET);
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
-}?>
+}
+
+// Verificar si existen registros académicos (calificaciones) en la institución/año actual
+try {
+	$predicadoCal = [
+		'institucion' => $config['conf_id_institucion'],
+		'year'        => $_SESSION['bd']
+	];
+	$hayRegistrosAcademicosNotas = Academico_Calificacion::contarRegistrosEnCalificaciones($predicadoCal) > 0;
+} catch (Exception $e) {
+	$hayRegistrosAcademicosNotas = false;
+	include("../compartido/error-catch-to-report.php");
+}
+?>
 	<!-- data tables -->
     <link href="../../config-general/assets/plugins/datatables/plugins/bootstrap/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -56,9 +71,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												<div class="col-sm-12">
 													<div class="btn-group">
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0048'])){?>
-                                                            <a href="cargas-estilo-notas-agregar.php" id="addRow" class="btn deepPink-bgcolor">
+                                                            <button type="button" id="btnAgregarCategoriaNotas" class="btn deepPink-bgcolor">
                                                                 Agregar nuevo <i class="fa fa-plus"></i>
-                                                            </a>
+                                                            </button>
                                                         <?php }?>
 													</div>
 												</div>
@@ -89,14 +104,27 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0045','DT0154'])){?>													
                                                             <td>
                                                                 <div class="btn-group">
-                                                                    <button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
+                                                                    <button type="button" class="btn btn-primary">Acciones</button>
                                                                     <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
                                                                         <i class="fa fa-angle-down"></i>
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0045'])){?>
-                                                                        <li><a href="cargas-estilo-notas-especifica.php?id=<?=base64_encode($resultado['catn_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
-																		<?php } if(Modulos::validarSubRol(['DT0154'])){?>
+                                                                        <li>
+																			<a href="javascript:void(0);"
+																			   class="btn-editar-categoria-nota-modal"
+																			   data-id="<?=$resultado["catn_id"];?>"
+																			   data-nombre="<?=htmlspecialchars($resultado["catn_nombre"], ENT_QUOTES, 'UTF-8');?>"
+																			>
+																				<?=$frases[165][$datosUsuarioActual['uss_idioma']];?> rápida
+																			</a>
+																		</li>
+																		<li>
+																			<a href="cargas-estilo-notas-especifica.php?id=<?=base64_encode($resultado['catn_id']);?>">
+																				Configurar rangos
+																			</a>
+																		</li>
+																		<?php } if(Modulos::validarSubRol(['DT0154']) && !$hayRegistrosAcademicosNotas){?>
                                                                         <li>
                                                                             <a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','cargas-estilo-notas-eliminar.php?idR=<?=base64_encode($resultado["catn_id"]);?>')">Eliminar</a>                                                                            
                                                                         </li>
@@ -158,6 +186,127 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
+
+<!-- Modal para edición rápida de categoría de notas -->
+<div class="modal fade" id="modalEditarCategoriaNotas" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title"><i class="fa fa-edit"></i> Edición rápida de categoría</h4>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formEditarCategoriaNotas" action="cargas-estilo-notas-actualizar.php" method="post">
+				<div class="modal-body">
+					<input type="hidden" name="id" id="edit_catn_id">
+					
+					<div class="form-group">
+						<label>Código</label>
+						<input type="text" class="form-control" id="edit_codigo_cat" name="codigo" readonly>
+					</div>
+
+					<div class="form-group">
+						<label>Nombre de la categoría <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="edit_nombre_cat" name="nombre" required>
+					</div>
+
+					<div id="editCatError" class="alert alert-danger" style="display:none;">
+						<i class="fa fa-exclamation-triangle"></i>
+						<span id="editCatErrorMensaje"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary">
+						<i class="fa fa-save"></i> Guardar cambios
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal para agregar rápida una categoría de notas -->
+<div class="modal fade" id="modalAgregarCategoriaNotas" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-info text-white">
+				<h4 class="modal-title"><i class="fa fa-plus-circle"></i> Agregar nueva categoría</h4>
+				<button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formAgregarCategoriaNotas" action="cargas-estilo-notas-guardar.php" method="post">
+				<div class="modal-body">
+					<div class="form-group">
+						<label>Código <span class="text-muted">(opcional)</span></label>
+						<input type="text" class="form-control" id="add_codigo_cat" name="codigo" placeholder="Ej: CN1, DESEMP, etc.">
+					</div>
+
+					<div class="form-group">
+						<label>Nombre de la categoría <span class="text-danger">*</span></label>
+						<input type="text" class="form-control" id="add_nombre_cat" name="nombre" placeholder="Ej: Desempeño Académico" required>
+					</div>
+
+					<div id="addCatError" class="alert alert-danger" style="display:none;">
+						<i class="fa fa-exclamation-triangle"></i>
+						<span id="addCatErrorMensaje"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-info">
+						<i class="fa fa-save"></i> Guardar</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	// Abrir modal de agregar categoría
+	$('#btnAgregarCategoriaNotas').on('click', function() {
+		$('#formAgregarCategoriaNotas')[0].reset();
+		$('#addCatError').hide();
+		$('#modalAgregarCategoriaNotas').modal('show');
+	});
+
+	// Abrir modal de edición rápida de categoría
+	$(document).on('click', '.btn-editar-categoria-nota-modal', function() {
+		var id     = $(this).data('id');
+		var nombre = $(this).data('nombre');
+
+		$('#edit_catn_id').val(id);
+		$('#edit_codigo_cat').val(id);
+		$('#edit_nombre_cat').val(nombre);
+
+		$('#editCatError').hide();
+		$('#modalEditarCategoriaNotas').modal('show');
+	});
+
+	// Validación simple: nombre obligatorio
+	$('#formAgregarCategoriaNotas').on('submit', function(e) {
+		var nombre = $('#add_nombre_cat').val().trim();
+		if (!nombre) {
+			e.preventDefault();
+			$('#addCatErrorMensaje').text('El nombre de la categoría es obligatorio.');
+			$('#addCatError').show();
+		}
+	});
+
+	$('#formEditarCategoriaNotas').on('submit', function(e) {
+		var nombre = $('#edit_nombre_cat').val().trim();
+		if (!nombre) {
+			e.preventDefault();
+			$('#editCatErrorMensaje').text('El nombre de la categoría es obligatorio.');
+			$('#editCatError').show();
+		}
+	});
+});
+</script>
+
 </body>
 
 </html>

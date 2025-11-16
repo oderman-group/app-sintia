@@ -12,6 +12,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_configuracion.php");
 require_once ROOT_PATH.'/main-app/class/App/Academico/Calificacion.php';
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 $year = $_SESSION["bd"];
 if (!empty($_GET['year'])) {
@@ -24,14 +25,17 @@ if (!empty($_GET['id'])) {
 }
 
 try {
-    $consultaConfiguracion = mysqli_query($conexion, "SELECT configuracion.*, ins_siglas, ins_years FROM " . $baseDatosServicios . ".configuracion 
-    INNER JOIN " . $baseDatosServicios . ".instituciones ON ins_id=conf_id_institucion
-    WHERE conf_id_institucion='" . $id . "' AND conf_agno='" . $year . "'");
+	$sqlConfig = "SELECT configuracion.*, ins_siglas, ins_years 
+		FROM {$baseDatosServicios}.configuracion 
+		INNER JOIN {$baseDatosServicios}.instituciones ON ins_id = conf_id_institucion
+		WHERE conf_id_institucion = ? AND conf_agno = ?";
+
+	$consultaConfiguracion = BindSQL::prepararSQL($sqlConfig, [$id, $year]);
+	$datosConfiguracion = $consultaConfiguracion ? mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH) : [];
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
+	$datosConfiguracion = [];
 }
-
-$datosConfiguracion = mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH);
 
 $disabledPermiso = "";
 
@@ -423,5 +427,4 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
     </script>
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>
