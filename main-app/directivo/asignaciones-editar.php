@@ -150,7 +150,17 @@ if (!Modulos::validarPermisoEdicion() || $iniciadas > 0) {
                                         </div>
                                     </div>
                                     
-                                    <?php $botones = new botonesGuardar("asignaciones.php?idE=".base64_encode($resultado['gal_id_evaluacion']),Modulos::validarPermisoEdicion()); ?>
+                                    <?php
+                                        // Evitar pasar null a base64_encode (PHP 8.1+ lo marca como deprecated)
+                                        $idEvaluacionEncoded = "";
+                                        if (!empty($resultado['gal_id_evaluacion'])) {
+                                            $idEvaluacionEncoded = base64_encode((string)$resultado['gal_id_evaluacion']);
+                                        }
+                                        $botones = new botonesGuardar(
+                                            "asignaciones.php".(!empty($idEvaluacionEncoded) ? "?idE=".$idEvaluacionEncoded : ""),
+                                            Modulos::validarPermisoEdicion()
+                                        );
+                                    ?>
                                 </form>
                             </div>
                         </div>
