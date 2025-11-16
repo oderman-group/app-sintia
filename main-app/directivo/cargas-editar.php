@@ -24,6 +24,40 @@ if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+
+if (!isset($_SESSION['cacheCatalogos'])) {
+	$_SESSION['cacheCatalogos'] = [];
+}
+$cacheSuffix = $config['conf_id_institucion'].'_'.$_SESSION["bd"];
+$cacheCatalogos = &$_SESSION['cacheCatalogos'];
+
+$docentesKey = 'docentes_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$docentesKey])) {
+	$resultadoDocentes = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=2 ORDER BY uss_nombre");
+	$cacheCatalogos[$docentesKey] = $resultadoDocentes ? mysqli_fetch_all($resultadoDocentes, MYSQLI_ASSOC) : [];
+}
+$docentesCatalogo = $cacheCatalogos[$docentesKey];
+
+$gradosKey = 'grados_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$gradosKey])) {
+	$consultaGrados = Grados::traerGradosInstitucion($config);
+	$cacheCatalogos[$gradosKey] = $consultaGrados ? mysqli_fetch_all($consultaGrados, MYSQLI_ASSOC) : [];
+}
+$gradosCatalogo = $cacheCatalogos[$gradosKey];
+
+$gruposKey = 'grupos_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$gruposKey])) {
+	$consultaGrupos = Grupos::listarGrupos();
+	$cacheCatalogos[$gruposKey] = $consultaGrupos ? mysqli_fetch_all($consultaGrupos, MYSQLI_ASSOC) : [];
+}
+$gruposCatalogo = $cacheCatalogos[$gruposKey];
+
+$asignaturasKey = 'asignaturas_'.$cacheSuffix;
+if (!isset($cacheCatalogos[$asignaturasKey])) {
+	$consultaAsignaturas = Asignaturas::consultarTodasAsignaturas($conexion, $config);
+	$cacheCatalogos[$asignaturasKey] = $consultaAsignaturas ? mysqli_fetch_all($consultaAsignaturas, MYSQLI_ASSOC) : [];
+}
+$asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
 ?>
 
 	<!--bootstrap -->
@@ -94,13 +128,9 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Docente <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
-												<?php
-												$opcionesConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios(" AND uss_tipo=2 ORDER BY uss_nombre");
-												?>
                                                 <select class="form-control  select2" name="docente" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($docentesCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos['uss_id']==$datosEditar['car_docente']) $select = 'selected';
@@ -117,9 +147,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="curso" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-                                                	$opcionesConsulta = Grados::traerGradosInstitucion($config);
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($gradosCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
 														if($opcionesDatos['gra_id']==$datosEditar['car_curso']) $select = 'selected';
@@ -136,9 +164,7 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="grupo" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-													<?php
-                        							$opcionesConsulta = Grupos::listarGrupos();
-													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+													<?php foreach($gruposCatalogo as $opcionesDatos){
 														$select = '';
 														if($opcionesDatos['gru_id']==$datosEditar['car_grupo']) $select = 'selected';
 													?>
