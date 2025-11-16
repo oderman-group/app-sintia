@@ -750,6 +750,4 @@ if (empty($resultado['cod_payment'])) {
     </script>
     <script src="../js/Movimientos.js"></script>
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

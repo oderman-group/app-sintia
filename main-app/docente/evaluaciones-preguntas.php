@@ -329,5 +329,5 @@ function mostrarNuevaRespuesta(datos){
 		
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/course_details.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:31:36 GMT -->
+
 </html>
