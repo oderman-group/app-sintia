@@ -36,6 +36,35 @@ class Ausencias {
     }
 
     /**
+     * Trae todas las ausencias de una clase para todos los estudiantes
+     * y las organiza en un mapa [idEstudiante] => datosAusencia.
+     *
+     * Esta función se usa para optimizar pantallas donde se muestran
+     * las ausencias de toda la clase, evitando una consulta por estudiante.
+     */
+    public static function traerAusenciasClaseMapa(
+        array  $config,
+        string $idClase,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM " . BD_ACADEMICA . ".academico_ausencias 
+                WHERE aus_id_clase=? AND institucion=? AND year=?";
+
+        $parametros = [$idClase, $config['conf_id_institucion'], $year];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $mapa[$fila['aus_id_estudiante']] = $fila;
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este método ejecuta una consulta SQL para obtener la suma total de ausencias de un estudiante
      * en una carga académica determinada, considerando un período específico.
      *

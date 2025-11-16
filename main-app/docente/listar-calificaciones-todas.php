@@ -129,6 +129,23 @@ $porcentajeRestante = 100 - $valores[0];
         ];
         $arrayDatos = json_encode($arrayEnviar);
         $objetoEnviar = htmlentities($arrayDatos);
+
+        // ============================================
+        // PRE-CARGAR ACTIVIDADES Y CALIFICACIONES
+        // PARA EVITAR CONSULTAS DENTRO DE CADA FILA
+        // ============================================
+        $actividadesCarga = [];
+        $cA = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+        while ($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)) {
+            $actividadesCarga[] = $rA;
+        }
+
+        // Mapa [idEstudiante][idActividad] => datosCalificacion
+        $calificacionesMapa = Calificaciones::traerCalificacionesCargaPeriodo(
+            $config,
+            $cargaConsultaActual,
+            $periodoConsultaActual
+        );
         ?>
         
         <table class="table table-striped custom-table table-hover" id="tabla_notas" style="margin-bottom: 0;">
@@ -138,35 +155,34 @@ $porcentajeRestante = 100 - $valores[0];
                 <th style="text-align:center;">ID</th>
                 <th style="text-align:left;"><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></th>
                 <?php
-                    $cA = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
-                    while($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)){
-                    $descripcionLimpia = htmlspecialchars($rA['act_descripcion'], ENT_QUOTES, 'UTF-8');
-                    echo '<th class="columna-actividad-header">
-                        <a href="calificaciones-editar.php?idR='.base64_encode($rA['act_id']).'" 
-                           title="'.$descripcionLimpia.' - Valor: '.$rA['act_valor'].'%" 
-                           class="actividad-link">
-                            <span class="actividad-id">'.$rA['act_id'].'</span>
-                            <span class="actividad-descripcion">'.$descripcionLimpia.'</span>
-                            <span class="actividad-porcentaje">('.$rA['act_valor'].'%)</span>
-                        </a>
-                        <a href="#" 
-                           name="calificaciones-eliminar.php?idR='.base64_encode($rA['act_id']).'&idIndicador='.base64_encode($rA['act_id_tipo']).'&carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'" 
-                           onClick="deseaEliminar(this)" 
-                           class="actividad-eliminar" 
-                           '.$deleteOculto.'>
-                            <i class="fa fa-times"></i>
-                        </a>
-                        <input 
-                            type="text" 
-                            style="text-align: center; font-weight: bold;"
-                            size="10" 
-                            title="Nota masiva para esta actividad"
-                            name="'.$rA['act_id'].'" 
-                            onChange="notasMasiva(this)" 
-                            class="input-nota-masiva"
-                            '.$habilitado.'
-                        >
-                    </th>';
+                    foreach ($actividadesCarga as $rA) {
+                        $descripcionLimpia = htmlspecialchars($rA['act_descripcion'], ENT_QUOTES, 'UTF-8');
+                        echo '<th class="columna-actividad-header">
+                            <a href="calificaciones-editar.php?idR=' . base64_encode($rA['act_id']) . '" 
+                               title="' . $descripcionLimpia . ' - Valor: ' . $rA['act_valor'] . '%" 
+                               class="actividad-link">
+                                <span class="actividad-id">' . $rA['act_id'] . '</span>
+                                <span class="actividad-descripcion">' . $descripcionLimpia . '</span>
+                                <span class="actividad-porcentaje">(' . $rA['act_valor'] . '%)</span>
+                            </a>
+                            <a href="#" 
+                               name="calificaciones-eliminar.php?idR=' . base64_encode($rA['act_id']) . '&idIndicador=' . base64_encode($rA['act_id_tipo']) . '&carga=' . base64_encode($cargaConsultaActual) . '&periodo=' . base64_encode($periodoConsultaActual) . '" 
+                               onClick="deseaEliminar(this)" 
+                               class="actividad-eliminar" 
+                               ' . $deleteOculto . '>
+                                <i class="fa fa-times"></i>
+                            </a>
+                            <input 
+                                type="text" 
+                                style="text-align: center; font-weight: bold;"
+                                size="10" 
+                                title="Nota masiva para esta actividad"
+                                name="' . $rA['act_id'] . '" 
+                                onChange="notasMasiva(this)" 
+                                class="input-nota-masiva"
+                                ' . $habilitado . '
+                            >
+                        </th>';
                     }
                 ?>
                 <th style="text-align:center; width:60px;">%</th>
@@ -205,11 +221,10 @@ $porcentajeRestante = 100 - $valores[0];
                     </td>
 
                     <?php
-                        $cA = Actividades::traerActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
                         $contRegActividades = 1;
-                        while($rA = mysqli_fetch_array($cA, MYSQLI_BOTH)){
-                        //LAS CALIFICACIONES
-                        $notasResultado = Calificaciones::traerCalificacionActividadEstudiante($config, $rA['act_id'], $resultado['mat_id']);
+                        foreach ($actividadesCarga as $rA) {
+                        // Obtener calificación desde el mapa precargado (si existe)
+                        $notasResultado = $calificacionesMapa[$resultado['mat_id']][$rA['act_id']] ?? null;
 
                         $arrayEnviar = [
                             "tipo"=>5, 

@@ -88,24 +88,80 @@ include("../compartido/head.php");
 														<?php }?>
                                                     </tr>
                                                 </thead>
-                                                <tbody>
+												<tbody>
 													<?php
 													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
-													 $contReg = 1;
-													 $colorNota = "black";
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														 $consultaNotas=mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='".$resultado['mat_id']."' AND dn_periodo='".$periodoConsultaActual."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-														$notas = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH);
-														if(!empty($notas['dn_nota']) && $notas['dn_nota']<$config[5]) $colorNota = $config[6]; elseif(!empty($notas['dn_nota']) && $notas['dn_nota']>=$config[5]) $colorNota = $config[7];
+													$contReg = 1;
 
-														$observacion="";
-														$numDatos = 0;
-														if(!empty($notas['dn_observacion'])){
-															$observacion=$notas['dn_observacion'];
-															$explode=explode(",",$notas['dn_observacion']);
-															$numDatos=count($explode);
-															if(ctype_digit($explode[0])){
-																$observacion="";
+													// ============================================
+													// PRE-CARGAR NOTAS DE COMPORTAMIENTO
+													// PARA EVITAR UNA CONSULTA POR ESTUDIANTE
+													// ============================================
+													$notasDisciplinaMapa = [];
+													$consultaNotasTodos = mysqli_query(
+														$conexion,
+														"SELECT * FROM " . BD_DISCIPLINA . ".disiplina_nota 
+														 WHERE dn_id_carga='" . $cargaConsultaActual . "' 
+														   AND dn_periodo='" . $periodoConsultaActual . "' 
+														   AND institucion={$config['conf_id_institucion']} 
+														   AND year={$_SESSION['bd']}"
+													);
+													while ($filaNota = mysqli_fetch_array($consultaNotasTodos, MYSQLI_BOTH)) {
+														$notasDisciplinaMapa[$filaNota['dn_cod_estudiante']] = $filaNota;
+													}
+
+													// ============================================
+													// PRE-CARGAR OBSERVACIONES SEGÚN CONFIGURACIÓN
+													// ============================================
+													$observacionesInstitucionales = [];
+													$bancoFrases = [];
+
+													if ($config['conf_observaciones_multiples_comportamiento'] == '1') {
+														$consultaObservacionesGlobal = mysqli_query(
+															$conexion,
+															"SELECT * FROM " . $baseDatosServicios . ".observaciones 
+															 WHERE obser_id_institucion=" . $config['conf_id_institucion'] . " 
+															   AND obser_years=" . $config['conf_agno'] . " 
+															 ORDER BY obser_categoria"
+														);
+														while ($obs = mysqli_fetch_array($consultaObservacionesGlobal, MYSQLI_BOTH)) {
+															$observacionesInstitucionales[] = $obs;
+														}
+													} else {
+														$consultaFrases = mysqli_query(
+															$conexion,
+															"SELECT DISTINCT dn_observacion 
+															 FROM " . BD_DISCIPLINA . ".disiplina_nota 
+															 WHERE dn_id_carga='" . $cargaConsultaActual . "' 
+															   AND dn_observacion IS NOT NULL 
+															   AND dn_observacion<>''
+															   AND institucion={$config['conf_id_institucion']} 
+															   AND year={$_SESSION['bd']}"
+														);
+														while ($frase = mysqli_fetch_array($consultaFrases, MYSQLI_BOTH)) {
+															$bancoFrases[] = $frase['dn_observacion'];
+														}
+													}
+
+													while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+														$colorNota = "black";
+														$notas     = $notasDisciplinaMapa[$resultado['mat_id']] ?? null;
+
+														if (!empty($notas['dn_nota']) && $notas['dn_nota'] < $config[5]) {
+															$colorNota = $config[6];
+														} elseif (!empty($notas['dn_nota']) && $notas['dn_nota'] >= $config[5]) {
+															$colorNota = $config[7];
+														}
+
+														$observacion = "";
+														$numDatos    = 0;
+														$explode     = [];
+														if (!empty($notas['dn_observacion'])) {
+															$observacion = $notas['dn_observacion'];
+															$explode     = explode(",", $notas['dn_observacion']);
+															$numDatos    = count($explode);
+															if (ctype_digit($explode[0])) {
+																$observacion = "";
 															}
 														}
 													?>
@@ -124,13 +180,10 @@ include("../compartido/head.php");
 														<td width="50%">
 														<?php if($config['conf_observaciones_multiples_comportamiento'] == '1'){?>
 															<p>
-																<?php
-																$consultaObservaciones = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".observaciones WHERE obser_id_institucion=".$config['conf_id_institucion']." AND obser_years=".$config['conf_agno']." ORDER BY obser_categoria");
-																?>
 																<select class="form-control  select2-multiple" name="Ob<?=$resultado['mat_id'];?>[]" id="Ob<?=$resultado['mat_id'];?>" multiple>
 																	<option value="0" disabled>--Observaciones Institucionales--</option>
 																	<?php
-																	while($observaciones = mysqli_fetch_array($consultaObservaciones, MYSQLI_BOTH)){
+																	foreach($observacionesInstitucionales as $observaciones){
 																		$selected="";
 																		for($i=0;$i<$numDatos;$i++){
 																			if($observaciones['obser_id']==$explode[$i] && $notas['dn_cod_estudiante']==$resultado['mat_id']){
@@ -145,16 +198,13 @@ include("../compartido/head.php");
 														<?php } else {?>	
 															
 															<p>
-															<?php
-															$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_id_carga='".$cargaConsultaActual."' AND dn_observacion IS NOT NULL AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-															?>
 															<select class="form-control  select2" name="O<?=$contReg;?>" step="<?=$cargaConsultaActual;?>" title="<?=$periodoConsultaActual;?>" id="<?=$resultado['mat_id'];?>" alt="0" onChange="observacionDisciplina(this)">
 																<option value="">Seleccione una opción</option>
 																<option value="0" selected>--Banco de frases--</option>
 																<?php
-																while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+																foreach($bancoFrases as $fraseBanco){
 																?>
-																	<option value="<?=$opcionesDatos['dn_observacion'];?>"><?=$opcionesDatos['dn_observacion'];?></option>
+																	<option value="<?=$fraseBanco;?>"><?=$fraseBanco;?></option>
 																<?php }?>
 															</select>
 															</p>

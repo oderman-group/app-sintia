@@ -128,12 +128,16 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
                                                 <tbody>
 													<?php
 													 $consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
-													 $contReg = 1;
+													 $contReg  = 1;
+
+													 // ============================================
+													 // PRE-CARGAR ENTREGAS DE LA ACTIVIDAD (MAPA)
+													 // ============================================
+													 $entregasMapa = Actividades::traerEntregasActividadMapa($config, $idR);
+
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														$consultaDatos1 = Actividades::actividadesEntregasEstudiante($conexion,  $config, $resultado['mat_id'], $idR);
-														$numEntregas=mysqli_num_rows($consultaDatos1);
-														if ($numEntregas>0){
-															$datos1 = mysqli_fetch_array($consultaDatos1, MYSQLI_BOTH);
+														$datos1 = $entregasMapa[$resultado['mat_id']] ?? null;
+														if ($datos1){
 													 ?>
 													<tr>
                                                         <td><?=$contReg;?></td>
@@ -216,5 +220,5 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
 		
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/course_details.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:31:36 GMT -->
+
 </html>

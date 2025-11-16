@@ -480,6 +480,59 @@ class Calificaciones {
     }
 
     /**
+     * Trae todas las calificaciones de una carga y periodo en una sola consulta
+     * y las organiza en un mapa [idEstudiante][idActividad] => datosCalificacion.
+     *
+     * Esta función se usa para optimizar pantallas donde se muestran muchas
+     * notas simultáneamente (ej. calificaciones-todas-rapido) evitando
+     * consultas por cada estudiante/actividad.
+     */
+    public static function traerCalificacionesCargaPeriodo(
+        array $config,
+        string $idCarga,
+        int $periodo,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT aac.* 
+                FROM " . BD_ACADEMICA . ".academico_calificaciones aac
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividades aa 
+                    ON aa.act_id = aac.cal_id_actividad
+                    AND aa.act_id_carga = ?
+                    AND aa.act_periodo = ?
+                    AND aa.act_estado = 1
+                    AND aa.institucion = ?
+                    AND aa.year = ?
+                WHERE aac.institucion = ?
+                AND aac.year = ?";
+
+        $parametros = [
+            $idCarga,
+            $periodo,
+            $config['conf_id_institucion'],
+            $year,
+            $config['conf_id_institucion'],
+            $year
+        ];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idEst = $fila['cal_id_estudiante'];
+            $idAct = $fila['cal_id_actividad'];
+
+            if (!isset($mapa[$idEst])) {
+                $mapa[$idEst] = [];
+            }
+            $mapa[$idEst][$idAct] = $fila;
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo me trae las notas por indicador
      */
     public static function traerNotasPorIndicador(
