@@ -388,11 +388,15 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
 										$consulta = CargaAcademica::consultaCargasRelacionadas($config, $datosEditar["car_docente"], $datosEditar["car_curso"]);
 										while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 											$resaltaItem = $Plataforma->colorDos;
-											if($resultado['car_id']==base64_decode($_GET["idR"])){$resaltaItem = $Plataforma->colorUno;}
+											$decoracion = 'none';
+											if($resultado['car_id']==base64_decode($_GET["idR"])){
+												$resaltaItem = $Plataforma->colorUno;
+												$decoracion = 'underline';
+											}
 
 										?>
 										<li class="list-group-item">
-											<a href="cargas-editar.php?idR=<?=base64_encode($resultado['car_id']);?>" style="color:<?=$resaltaItem;?>; text-decoration:<?=$tachaItem;?>;"><?=$resultado['gra_nombre']." ".$resultado['gru_nombre']." - ".$resultado['mat_nombre']." - ".UsuariosPadre::nombreCompletoDelUsuario($resultado);?></a> 
+											<a href="cargas-editar.php?idR=<?=base64_encode($resultado['car_id']);?>" style="color:<?=$resaltaItem;?>; text-decoration:<?=$decoracion;?>;"><?=$resultado['gra_nombre']." ".$resultado['gru_nombre']." - ".$resultado['mat_nombre']." - ".UsuariosPadre::nombreCompletoDelUsuario($resultado);?></a> 
 											<div class="profile-desc-item pull-right">&nbsp;</div>
 										</li>
 										<?php }?>
