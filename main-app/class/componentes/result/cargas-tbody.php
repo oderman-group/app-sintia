@@ -6,18 +6,35 @@ if (!empty($data["dataTotal"])) {
 	require_once("../Boletin.php");
 }
 
-$permisoReportesNotas = Modulos::validarSubRol(['DT0238']);
-$permisoedicion       = Modulos::validarSubRol(['DT0049', 'DT0148', 'DT0129']);
-$permisoEditar        = Modulos::validarSubRol(['DT0049']);
-$permisoEliminar      = Modulos::validarSubRol(['DT0148']);
-$permisoAutologin     = Modulos::validarSubRol(['DT0129']);
-$permisoHorarios      = Modulos::validarSubRol(['DT0041']);
-$permisoResumen       = Modulos::validarSubRol(['DT0111']);
-$permisoIndicadores   = Modulos::validarSubRol(['DT0034']);
-$permisoPlanilla      = Modulos::validarSubRol(['DT0239']);
-$permisoPlanillaNotas = Modulos::validarSubRol(['DT0237']);
+if (!isset($opcionSINO) || !is_array($opcionSINO)) {
+	$opcionSINO = [0 => 'NO', 1 => 'SI'];
+}
+
+$permisoReportesNotas  = Modulos::validarSubRol(['DT0238']);
+$permisoedicion        = Modulos::validarSubRol(['DT0049', 'DT0148', 'DT0129']);
+$permisoEditar         = Modulos::validarSubRol(['DT0049']);
+$permisoEliminar       = Modulos::validarSubRol(['DT0148']);
+$permisoAutologin      = Modulos::validarSubRol(['DT0129']);
+$permisoHorarios       = Modulos::validarSubRol(['DT0041']);
+$permisoResumen        = Modulos::validarSubRol(['DT0111']);
+$permisoIndicadores    = Modulos::validarSubRol(['DT0034']);
+$permisoPlanilla       = Modulos::validarSubRol(['DT0239']);
+$permisoPlanillaNotas  = Modulos::validarSubRol(['DT0237']);
 $permisoGenerarInforme = Modulos::validarSubRol(['DT0237']);
 $permisoComportamiento = Modulos::validarSubRol(['DT0343']);
+
+$normalizarSiNo = function ($valor) use ($opcionSINO) {
+	if (isset($opcionSINO[$valor])) {
+		return $opcionSINO[$valor];
+	}
+
+	$valorNormalizado = strtoupper(trim((string) $valor));
+	if (in_array($valorNormalizado, ['1', 'SI', 'SÍ'], true)) {
+		return $opcionSINO[1] ?? 'SI';
+	}
+
+	return $opcionSINO[0] ?? 'NO';
+};
 
 $contReg = 1;
 foreach ($data["data"] as $resultado) {
@@ -45,22 +62,22 @@ foreach ($data["data"] as $resultado) {
 	<tr <?=$claseInactiva;?>>
 	   <td>
 	   <button class="btn btn-sm btn-link text-secondary expand-btn"
-		   data-id="<?=$resultado['car_id'];?>"
-		   data-codigo="<?=$resultado['id_nuevo_carga'];?>"
-		   data-docente="<?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?>"
-		   data-curso="<?="[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']);?>"
-		   data-asignatura="[<?=$resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)";?>"
-		   data-ih="<?=$resultado['car_ih'];?>"
-		   data-periodo="<?=$resultado['car_periodo'];?>"
-		   data-actividades="<?=!empty($resultado['actividades']) ? $resultado['actividades'] : 0;?>"
-		   data-actividades-registradas="<?=!empty($resultado['actividades_registradas']) ? $resultado['actividades_registradas'] : 0;?>"
-		   data-director-grupo="<?=$opcionSINO[$resultado['car_director_grupo']];?>"
-		   data-permiso2="<?=$opcionSINO[$resultado['car_permiso2']];?>"
-		   data-indicador-automatico="<?=$opcionSINO[$resultado['car_indicador_automatico']];?>"
-		   data-max-indicadores="<?=$resultado['car_maximos_indicadores'];?>"
-		   data-max-calificaciones="<?=$resultado['car_maximas_calificaciones'];?>"
-		   data-cantidad-estudiantes="<?=$cantidadEstudiantes;?>"
-		   data-activa="<?=isset($resultado['car_activa']) ? $resultado['car_activa'] : 1;?>"
+		   data-id="<?=htmlspecialchars($resultado['car_id'], ENT_QUOTES, 'UTF-8');?>"
+		   data-codigo="<?=htmlspecialchars($resultado['id_nuevo_carga'], ENT_QUOTES, 'UTF-8');?>"
+		   data-docente="<?=htmlspecialchars(UsuariosPadre::nombreCompletoDelUsuario($resultado), ENT_QUOTES, 'UTF-8');?>"
+		   data-curso="<?=htmlspecialchars("[" . $resultado['gra_id'] . "] " . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']), ENT_QUOTES, 'UTF-8');?>"
+		   data-asignatura="<?=htmlspecialchars("[" . $resultado['mat_id'] . "] " . strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)", ENT_QUOTES, 'UTF-8');?>"
+		   data-ih="<?=htmlspecialchars($resultado['car_ih'], ENT_QUOTES, 'UTF-8');?>"
+		   data-periodo="<?=htmlspecialchars($resultado['car_periodo'], ENT_QUOTES, 'UTF-8');?>"
+		   data-actividades="<?=htmlspecialchars(!empty($resultado['actividades']) ? $resultado['actividades'] : 0, ENT_QUOTES, 'UTF-8');?>"
+		   data-actividades-registradas="<?=htmlspecialchars(!empty($resultado['actividades_registradas']) ? $resultado['actividades_registradas'] : 0, ENT_QUOTES, 'UTF-8');?>"
+		   data-director-grupo="<?=htmlspecialchars($normalizarSiNo($resultado['car_director_grupo'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
+		   data-permiso2="<?=htmlspecialchars($normalizarSiNo($resultado['car_permiso2'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
+		   data-indicador-automatico="<?=htmlspecialchars($normalizarSiNo($resultado['car_indicador_automatico'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
+		   data-max-indicadores="<?=htmlspecialchars($resultado['car_maximos_indicadores'], ENT_QUOTES, 'UTF-8');?>"
+		   data-max-calificaciones="<?=htmlspecialchars($resultado['car_maximas_calificaciones'], ENT_QUOTES, 'UTF-8');?>"
+		   data-cantidad-estudiantes="<?=htmlspecialchars($cantidadEstudiantes, ENT_QUOTES, 'UTF-8');?>"
+		   data-activa="<?=htmlspecialchars(isset($resultado['car_activa']) ? $resultado['car_activa'] : 1, ENT_QUOTES, 'UTF-8');?>"
 		   title="Ver detalles">
 		   <i class="fa fa-chevron-right"></i>
 	   </button>

@@ -15,6 +15,28 @@ $disabledPermiso = "";
 if (!Modulos::validarPermisoEdicion()) {
 	$disabledPermiso = "disabled";
 }
+
+$catalogoPerfiles = [];
+$catalogoTiposDocumento = [];
+$catalogoGeneros = [];
+
+$sqlPerfiles = "SELECT pes_id, pes_nombre FROM {$baseDatosServicios}.general_perfiles WHERE pes_disponible = 1";
+$resultPerfiles = mysqli_query($conexion, $sqlPerfiles);
+if ($resultPerfiles) {
+	$catalogoPerfiles = mysqli_fetch_all($resultPerfiles, MYSQLI_ASSOC);
+}
+
+$sqlTiposDoc = "SELECT ogen_id, ogen_nombre FROM {$baseDatosServicios}.opciones_generales WHERE ogen_grupo=1 ORDER BY ogen_nombre";
+$resultTiposDoc = mysqli_query($conexion, $sqlTiposDoc);
+if ($resultTiposDoc) {
+	$catalogoTiposDocumento = mysqli_fetch_all($resultTiposDoc, MYSQLI_ASSOC);
+}
+
+$sqlGeneros = "SELECT ogen_id, ogen_nombre FROM {$baseDatosServicios}.opciones_generales WHERE ogen_grupo=4 ORDER BY ogen_nombre";
+$resultGeneros = mysqli_query($conexion, $sqlGeneros);
+if ($resultGeneros) {
+	$catalogoGeneros = mysqli_fetch_all($resultGeneros, MYSQLI_ASSOC);
+}
 ?>
 <!-- Theme Styles -->
 <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
@@ -243,15 +265,9 @@ if (!Modulos::validarPermisoEdicion()) {
 														<div class="form-group">
 															<label><i class="fa fa-user-tag"></i> Tipo de Usuario</label>
 															<select id="filtro_usuarios_tipo" class="form-control select2-multiple-usuarios" multiple="multiple" style="width: 100%;">
-																<?php
-																try{
-																	$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
-																	while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
-																?>
+																<?php foreach($catalogoPerfiles as $opcionesDatos){ ?>
 																	<option value="<?=$opcionesDatos['pes_id'];?>"><?=$opcionesDatos['pes_nombre'];?></option>
-																<?php }
-																} catch (Exception $e) {}
-																?>
+																<?php } ?>
 															</select>
 														</div>
 													</div>
@@ -954,17 +970,10 @@ if (!Modulos::validarPermisoEdicion()) {
 						<div class="col-md-6">
 							<div class="form-group">
 								<label>Tipo de Usuario <span class="text-danger">*</span></label>
-								<?php
-								try{
-									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
-								} catch (Exception $e) {
-									include("../compartido/error-catch-to-report.php");
-								}
-								?>
 								<select class="form-control" name="tipoUsuario" id="modal_tipoUsuario" required>
 									<option value="">Seleccione una opción</option>
 									<?php
-									while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
+									foreach($catalogoPerfiles as $opcionesDatos){
 										if(($opcionesDatos['pes_id'] == TIPO_DEV || $opcionesDatos['pes_id'] == TIPO_ESTUDIANTE ) 
 										&& $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
 											continue;
@@ -1004,16 +1013,9 @@ if (!Modulos::validarPermisoEdicion()) {
 						<div class="col-md-6">
 							<div class="form-group">
 								<label>Tipo de Documento</label>
-								<?php
-								try{
-									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=1");
-								} catch (Exception $e) {
-									include("../compartido/error-catch-to-report.php");
-								}
-								?>
 								<select class="form-control" name="tipoD">
 									<option value="">Seleccione una opción</option>
-									<?php while($o = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){?>
+									<?php foreach($catalogoTiposDocumento as $o){?>
 									<option value="<?=$o['ogen_id'];?>"><?=$o['ogen_nombre'];?></option>
 									<?php }?>
 								</select>
@@ -1081,16 +1083,9 @@ if (!Modulos::validarPermisoEdicion()) {
 						<div class="col-md-6">
 							<div class="form-group">
 								<label>Género <span class="text-danger">*</span></label>
-								<?php
-								try{
-									$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=4");
-								} catch (Exception $e) {
-									include("../compartido/error-catch-to-report.php");
-								}
-								?>
 								<select class="form-control" name="genero" required>
 									<option value="">Seleccione una opción</option>
-									<?php while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){?>
+									<?php foreach($catalogoGeneros as $opcionesDatos){?>
 									<option value="<?=$opcionesDatos['ogen_id'];?>"><?=$opcionesDatos['ogen_nombre'];?></option>
 									<?php }?>
 								</select>
