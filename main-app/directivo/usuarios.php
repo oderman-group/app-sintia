@@ -4,6 +4,7 @@
 <?php include("../compartido/head.php");
 require_once '../class/Estudiantes.php';
 require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
+require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
 
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -242,6 +243,11 @@ if ($resultGeneros) {
 																		<li class="divider"></li>
 																		<li><a href="usuarios-anios.php"><i class="fa fa-calendar-alt"></i> Consultar Todos los Años</a></li>
 																	<?php }?>
+																	<li class="divider"></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_DIRECTIVO?>)"><i class="fa fa-book"></i> Enviar Guía a Directivos</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_DOCENTE?>)"><i class="fa fa-book"></i> Enviar Guía a Docentes</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_ACUDIENTE?>)"><i class="fa fa-book"></i> Enviar Guía a Acudientes</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_ESTUDIANTE?>)"><i class="fa fa-book"></i> Enviar Guía a Estudiantes</a></li>
 																</ul>
 															</div>
 														<?php }?>
@@ -329,6 +335,12 @@ if ($resultGeneros) {
 																					href="javascript:void(0);"
 																					onClick="actualizarBloqueo(false)">
 																					Desbloquear
+																				</a>
+																				<li class="divider"></li>
+																				<a class="dropdown-item"
+																					href="javascript:void(0);"
+																					onClick="enviarGuiaSeleccionados()">
+																					<i class="fa fa-book"></i> Enviar Guía a Seleccionados
 																				</a>
 																			</div>
 																		<?php } ?>
@@ -526,8 +538,13 @@ if ($resultGeneros) {
 																		<?php } ?>
 																	<?php } ?>
 
-																	<?php if ($usuario['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && $permisoPlantilla) { ?>
+																		<?php if ($usuario['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && $permisoPlantilla) { ?>
 																		<li><a href="../compartido/planilla-docentes.php?docente=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Planillas de las cargas</a></li>
+																	<?php } ?>
+																	
+																	<?php if (!empty($usuario['uss_email']) && EnviarEmail::validarEmail($usuario['uss_email'])) { ?>
+																		<li class="divider"></li>
+																		<li><a href="javascript:void(0);" onclick="enviarGuiaIndividual('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', <?= $usuario['uss_tipo']; ?>)"><i class="fa fa-book"></i> Enviar Guía por Email</a></li>
 																	<?php } ?>
 
 																	<?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
@@ -1585,6 +1602,192 @@ $(document).ready(function() {
 			aplicarFiltrosUsuarios();
 		}, 500);
 	});
+	
+	// ========================================
+	// === FUNCIONES PARA ENVIAR GUÍAS ===
+	// ========================================
+	
+	// Función para obtener el nombre del tipo de usuario
+	function getNombreTipoUsuario(tipo) {
+		const nombres = {
+			1: 'Desarrolladores',
+			2: 'Docentes',
+			3: 'Acudientes',
+			4: 'Estudiantes',
+			5: 'Directivos'
+		};
+		return nombres[tipo] || 'Usuarios';
+	}
+	
+	// Función para enviar guía individual
+	window.enviarGuiaIndividual = function(usuarioId, tipoUsuario) {
+		Swal.fire({
+			title: '¿Enviar Guía?',
+			html: '¿Deseas enviar la guía de <strong>' + getNombreTipoUsuario(tipoUsuario) + '</strong> por correo electrónico a este usuario?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuario.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						usuario_id: usuarioId,
+						tipo_usuario: tipoUsuario,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guía enviada correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudo enviar la guía',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
+	
+	// Función para enviar guía masiva por tipo
+	window.enviarGuiaMasivo = function(tipoUsuario) {
+		const nombreTipo = getNombreTipoUsuario(tipoUsuario);
+		
+		Swal.fire({
+			title: '¿Enviar Guía Masiva?',
+			html: '¿Deseas enviar la guía de <strong>' + nombreTipo + '</strong> por correo electrónico a todos los usuarios de este tipo?<br><br><small class="text-muted">Se enviará solo a usuarios que tengan un email válido registrado.</small>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar a Todos',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuarios-masivo.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						tipo_usuario: tipoUsuario,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guías enviadas correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea',
+						width: '600px'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudieron enviar las guías',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
+	
+	// Función para enviar guía a usuarios seleccionados
+	window.enviarGuiaSeleccionados = function() {
+		let seleccionados = getSelecionados('example1', 'selecionado', 'lblCantSeleccionados');
+		
+		if (seleccionados.length === 0) {
+			Swal.fire({
+				title: 'No hay usuarios seleccionados',
+				text: 'Por favor selecciona al menos un usuario para enviar la guía',
+				icon: 'warning',
+				confirmButtonColor: '#667eea'
+			});
+			return;
+		}
+		
+		Swal.fire({
+			title: '¿Enviar Guías?',
+			html: '¿Deseas enviar las guías por correo electrónico a los <strong>' + seleccionados.length + ' usuarios seleccionados</strong>?<br><br><small class="text-muted">Se enviará solo a usuarios que tengan un email válido registrado.</small>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuarios-masivo.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						usuarios_ids: seleccionados,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guías enviadas correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea',
+						width: '600px'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudieron enviar las guías',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
 });
 </script>
 
