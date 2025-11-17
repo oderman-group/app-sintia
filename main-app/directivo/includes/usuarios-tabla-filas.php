@@ -169,6 +169,20 @@ $objetoEnviar = htmlspecialchars(json_encode([
                 <li><a href="../compartido/planilla-docentes.php?docente=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Planillas de las cargas</a></li>
             <?php } ?>
 
+            <?php
+            // Verificar si EnviarEmail está disponible
+            $enviarEmailDisponible = class_exists('EnviarEmail');
+            if (!$enviarEmailDisponible && file_exists(ROOT_PATH . "/main-app/class/EnviarEmail.php")) {
+                require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
+                $enviarEmailDisponible = class_exists('EnviarEmail');
+            }
+            ?>
+            
+            <?php if ($enviarEmailDisponible && !empty($usuario['uss_email']) && EnviarEmail::validarEmail($usuario['uss_email'])) { ?>
+                <li class="divider"></li>
+                <li><a href="javascript:void(0);" onclick="enviarGuiaIndividual('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', <?= $usuario['uss_tipo']; ?>)"><i class="fa fa-book"></i> Enviar Guía por Email</a></li>
+            <?php } ?>
+
             <?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
                     ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $usuario['uss_tipo'] != TIPO_DEV && $usuario['uss_tipo'] != TIPO_DIRECTIVO) && $permisoHistorial) { ?>
                 <li><a href="../compartido/informe-historial-ingreso.php?id=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Historial de Ingreso</a></li>

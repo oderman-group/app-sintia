@@ -9,6 +9,13 @@ include("../compartido/historial-acciones-guardar.php");
 try{
     require_once(ROOT_PATH."/main-app/class/Conexion.php");
     $conexionPDO = Conexion::newConnection('PDO');
+    $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Verificar que la variable baseDatosServicios esté definida
+    if (!isset($baseDatosServicios) || empty($baseDatosServicios)) {
+        throw new Exception('Variable baseDatosServicios no está definida');
+    }
+    
     $sql = "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id=? OR pagp_ruta=?";
     $stmt = $conexionPDO->prepare($sql);
     $stmt->bindParam(1, $_POST["dato"], PDO::PARAM_STR);
@@ -21,12 +28,12 @@ try{
 ?>
     <script type="application/javascript">
         document.getElementById('codigo').style.backgroundColor = "#f8d7da";
-        document.getElementById('nombrePagina').disabled = 'disabled';
-        document.getElementById('tipoUsuario').disabled = 'disabled';
-        document.getElementById('modulo').disabled = 'disabled';
+        document.getElementById('nombrePagina').setAttribute('disabled', 'disabled');
+        document.getElementById('tipoUsuario').setAttribute('disabled', 'disabled');
+        document.getElementById('modulo').setAttribute('disabled', 'disabled');
         document.getElementById('rutaPagina').style.backgroundColor = "#f8d7da";
-        document.getElementById('navegable').disabled = 'disabled';
-        document.getElementById('crud').disabled = 'disabled';
+        document.getElementById('navegable').setAttribute('disabled', 'disabled');
+        document.getElementById('crud').setAttribute('disabled', 'disabled');
         document.getElementById('btnGuardar').style.display = 'none';
     </script>   
     
@@ -53,13 +60,16 @@ try{
 ?>
     <script type="application/javascript">
         document.getElementById('codigo').style.backgroundColor = "";
-        document.getElementById('nombrePagina').disabled = '';
-        document.getElementById('tipoUsuario').disabled = '';
-        document.getElementById('modulo').disabled = '';
+        document.getElementById('nombrePagina').removeAttribute('disabled');
+        document.getElementById('tipoUsuario').removeAttribute('disabled');
+        document.getElementById('modulo').removeAttribute('disabled');
         document.getElementById('rutaPagina').style.backgroundColor = "";
-        document.getElementById('navegable').disabled = '';
-        document.getElementById('crud').disabled = '';
+        document.getElementById('navegable').removeAttribute('disabled');
+        document.getElementById('crud').removeAttribute('disabled');
         document.getElementById('btnGuardar').style.display = 'block';
     </script> 
 <?php    
+}
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
 }
