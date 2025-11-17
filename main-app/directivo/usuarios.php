@@ -345,6 +345,12 @@ if ($resultGeneros) {
 																					onClick="actualizarBloqueo(false)">
 																					Desbloquear
 																				</a>
+																				<li class="divider"></li>
+																				<a class="dropdown-item"
+																					href="javascript:void(0);"
+																					onClick="enviarGuiaSeleccionados()">
+																					<i class="fa fa-book"></i> Enviar Guía a Seleccionados
+																				</a>
 																			</div>
 																		<?php } ?>
 																	</li>
