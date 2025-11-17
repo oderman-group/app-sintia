@@ -203,7 +203,6 @@
         
         .access-button {
             text-align: center;
-            margin: 35px 0;
         }
         
         .access-button a {
@@ -217,6 +216,36 @@
             font-size: 18px;
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
             transition: all 0.3s ease;
+        }
+        
+        .access-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 35px 0;
+        }
+        
+        .access-button-secondary {
+            text-align: center;
+        }
+        
+        .access-button-secondary a {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 16px 45px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .access-button-secondary a:hover,
+        .access-button a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
         }
         
         .next-steps {
@@ -388,6 +417,16 @@
                 width: 100%;
                 justify-content: center;
             }
+            
+            .access-buttons {
+                gap: 12px;
+            }
+            
+            .access-button a,
+            .access-button-secondary a {
+                padding: 14px 30px;
+                font-size: 15px;
+            }
         }
     </style>
 </head>
@@ -483,11 +522,19 @@
                 </p>
             </div>
             
-            <!-- Access Button -->
-            <div class="access-button">
-                <a href="<?=REDIRECT_ROUTE?>" target="_blank">
-                    Acceder a Mi Cuenta Ahora
-                </a>
+            <!-- Access Buttons -->
+            <div class="access-buttons">
+                <div class="access-button">
+                    <a href="<?=REDIRECT_ROUTE?>" target="_blank">
+                        Acceder a Mi Cuenta Ahora
+                    </a>
+                </div>
+                
+                <div class="access-button-secondary">
+                    <a href="<?=REDIRECT_ROUTE?>/guias-iniciales-sintia/guia-directivos.php" target="_blank">
+                        📚 Ver Instructivo Inicial para Directivos
+                    </a>
+                </div>
             </div>
             
             <div class="divider"></div>

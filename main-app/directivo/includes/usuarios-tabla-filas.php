@@ -183,6 +183,29 @@ $objetoEnviar = htmlspecialchars(json_encode([
                 <li><a href="javascript:void(0);" onclick="enviarGuiaIndividual('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', <?= $usuario['uss_tipo']; ?>)"><i class="fa fa-book"></i> Enviar Guía por Email</a></li>
             <?php } ?>
 
+            <?php 
+            // Verificar si tiene número de celular para WhatsApp
+            // Intentar obtener el celular de diferentes formas por compatibilidad
+            $celular = '';
+            if (isset($usuario['uss_celular']) && !empty($usuario['uss_celular'])) {
+                $celular = $usuario['uss_celular'];
+            } elseif (isset($usuario['celular']) && !empty($usuario['celular'])) {
+                $celular = $usuario['celular'];
+            }
+            
+            $numeroCelular = !empty($celular) ? preg_replace('/[()\s-]/', '', $celular) : '';
+            
+            // Verificar si tiene email o teléfono para mostrar opción de comunicado
+            // Solo mostrar si la institución tiene el módulo de comunicados activo
+            $moduloComunicadosActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_COMUNICADOS);
+            $tieneEmail = !empty($usuario['uss_email']) && $enviarEmailDisponible && EnviarEmail::validarEmail($usuario['uss_email']);
+            $tieneTelefono = !empty($numeroCelular);
+            
+            if ($moduloComunicadosActivo && ($tieneEmail || $tieneTelefono)) { ?>
+                <li class="divider"></li>
+                <li><a href="javascript:void(0);" onclick="abrirModalEnviarComunicado('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars(UsuariosPadre::nombreCompletoDelUsuario($usuario), ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars($usuario['uss_email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars($celular ?? '', ENT_QUOTES, 'UTF-8'); ?>', <?= $tieneEmail ? 'true' : 'false'; ?>, <?= $tieneTelefono ? 'true' : 'false'; ?>)"><i class="fa fa-paper-plane"></i> Enviar Comunicado</a></li>
+            <?php } ?>
+
             <?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
                     ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $usuario['uss_tipo'] != TIPO_DEV && $usuario['uss_tipo'] != TIPO_DIRECTIVO) && $permisoHistorial) { ?>
                 <li><a href="../compartido/informe-historial-ingreso.php?id=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Historial de Ingreso</a></li>
