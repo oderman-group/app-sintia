@@ -87,7 +87,8 @@ try {
     $year = $_SESSION["bd"] ?? date('Y');
     
     // Función auxiliar para guardar registro en BD
-    $guardarRegistro = function($canal, $destinatario, $estado, $error = null, $codigoError = null, $twilioSid = null) use ($usuarioId, $nombreUsuario, $mensaje, $institucion, $year, $usuarioEnvio) {
+    // Nota: $destinatario debe ser el número/email REAL del usuario, no el de prueba
+    $guardarRegistro = function($canal, $destinatario, $estado, $error = null, $codigoError = null, $twilioSid = null, $destinatarioReal = null) use ($usuarioId, $nombreUsuario, $mensaje, $institucion, $year, $usuarioEnvio) {
         global $conexion, $baseDatosServicios;
         
         $canalUpper = strtoupper($canal);
@@ -103,6 +104,9 @@ try {
         
         $estadoBD = $estado === 'exito' ? 'ENVIADO' : 'ERROR';
         
+        // Usar el destinatario real si está disponible, sino usar el destinatario proporcionado
+        $destinatarioFinal = $destinatarioReal !== null ? $destinatarioReal : $destinatario;
+        
         $sql = "INSERT INTO " . $baseDatosServicios . ".comunicaciones_enviadas (
             com_usuario_id, com_usuario_nombre, com_canal, com_destinatario, com_mensaje,
             com_estado, com_error, com_codigo_error, com_institucion, com_year, com_usuario_envio, com_twilio_sid
@@ -114,7 +118,7 @@ try {
                 $usuarioId,
                 $nombreUsuario,
                 $canalBD,
-                $destinatario,
+                $destinatarioFinal, // Guardar el número real del usuario
                 $mensaje,
                 $estadoBD,
                 $error,
@@ -182,8 +186,15 @@ try {
                         $twilioSid = $resultadoSms->sid;
                     }
                     
-                    $exitosos[] = 'SMS enviado a ' . $celularRaw;
-                    $guardarRegistro('sms', $celularRaw, 'exito', null, null, $twilioSid);
+                    // Determinar mensaje de éxito según si se redirigió o no
+                    $mensajeExito = 'SMS enviado a ' . $celularRaw;
+                    if (defined('ENVIROMENT') && ENVIROMENT !== 'PROD' && defined('TWILIO_SMS_TEST_DESTINATION') && !empty(TWILIO_SMS_TEST_DESTINATION)) {
+                        $mensajeExito = 'SMS enviado a ' . $celularRaw . ' (redirigido a número de prueba: ' . TWILIO_SMS_TEST_DESTINATION . ')';
+                    }
+                    
+                    $exitosos[] = $mensajeExito;
+                    // Guardar con el número real del usuario, no el de prueba
+                    $guardarRegistro('sms', $celularRaw, 'exito', null, null, $twilioSid, $celularRaw);
                     break;
                     
                 case 'whatsapp':
