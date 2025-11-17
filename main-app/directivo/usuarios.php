@@ -4,6 +4,7 @@
 <?php include("../compartido/head.php");
 require_once '../class/Estudiantes.php';
 require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
+require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
 
 if (!Modulos::validarSubRol([$idPaginaInterna])) {
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -242,6 +243,11 @@ if ($resultGeneros) {
 																		<li class="divider"></li>
 																		<li><a href="usuarios-anios.php"><i class="fa fa-calendar-alt"></i> Consultar Todos los Años</a></li>
 																	<?php }?>
+																	<li class="divider"></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_DIRECTIVO?>)"><i class="fa fa-book"></i> Enviar Guía a Directivos</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_DOCENTE?>)"><i class="fa fa-book"></i> Enviar Guía a Docentes</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_ACUDIENTE?>)"><i class="fa fa-book"></i> Enviar Guía a Acudientes</a></li>
+																	<li><a href="javascript:void(0);" onclick="enviarGuiaMasivo(<?=TIPO_ESTUDIANTE?>)"><i class="fa fa-book"></i> Enviar Guía a Estudiantes</a></li>
 																</ul>
 															</div>
 														<?php }?>
@@ -295,6 +301,15 @@ if ($resultGeneros) {
 
 										<span id="respuestaGuardar"></span>
 
+										<!-- Botón para enviar guía a seleccionados (se muestra solo cuando hay selección) -->
+										<?php if (Modulos::validarPermisoEdicion()) { ?>
+										<div id="btnEnviarGuiaSeleccionadosContainer" style="display: none; margin-bottom: 15px;">
+											<button type="button" class="btn btn-success" id="btnEnviarGuiaSeleccionados" onclick="enviarGuiaSeleccionados()">
+												<i class="fa fa-book"></i> Enviar Guía a Seleccionados (<span id="contadorGuiaSeleccionados">0</span>)
+											</button>
+										</div>
+										<?php } ?>
+
 										<div class="table-scrollable">
 											<table id="example1" class="display" style="width:100%;">
 												<thead>
@@ -329,6 +344,12 @@ if ($resultGeneros) {
 																					href="javascript:void(0);"
 																					onClick="actualizarBloqueo(false)">
 																					Desbloquear
+																				</a>
+																				<li class="divider"></li>
+																				<a class="dropdown-item"
+																					href="javascript:void(0);"
+																					onClick="enviarGuiaSeleccionados()">
+																					<i class="fa fa-book"></i> Enviar Guía a Seleccionados
 																				</a>
 																			</div>
 																		<?php } ?>
@@ -370,6 +391,7 @@ if ($resultGeneros) {
 														"uss_bloqueado",
 														"uss_ultimo_ingreso",
 														"uss_telefono",
+														"uss_celular",
 														"uss_direccion",
 														"uss_ocupacion",
 														"uss_genero",
@@ -526,8 +548,34 @@ if ($resultGeneros) {
 																		<?php } ?>
 																	<?php } ?>
 
-																	<?php if ($usuario['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && $permisoPlantilla) { ?>
+																		<?php if ($usuario['uss_tipo'] == TIPO_DOCENTE && $numCarga > 0 && $permisoPlantilla) { ?>
 																		<li><a href="../compartido/planilla-docentes.php?docente=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Planillas de las cargas</a></li>
+																	<?php } ?>
+																	
+																	<?php if (!empty($usuario['uss_email']) && EnviarEmail::validarEmail($usuario['uss_email'])) { ?>
+																		<li class="divider"></li>
+																		<li><a href="javascript:void(0);" onclick="enviarGuiaIndividual('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', <?= $usuario['uss_tipo']; ?>)"><i class="fa fa-book"></i> Enviar Guía por Email</a></li>
+																	<?php } ?>
+
+																	<?php 
+																	// Verificar si tiene número de celular para WhatsApp
+																	$celular = '';
+																	if (isset($usuario['uss_celular']) && !empty($usuario['uss_celular'])) {
+																		$celular = $usuario['uss_celular'];
+																	} elseif (isset($usuario['celular']) && !empty($usuario['celular'])) {
+																		$celular = $usuario['celular'];
+																	}
+																	$numeroCelular = !empty($celular) ? preg_replace('/[()\s-]/', '', $celular) : '';
+																	
+																	// Verificar si tiene email o teléfono para mostrar opción de comunicado
+																	// Solo mostrar si la institución tiene el módulo de comunicados activo
+																	$moduloComunicadosActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_COMUNICADOS);
+																	$tieneEmailComunicado = !empty($usuario['uss_email']) && EnviarEmail::validarEmail($usuario['uss_email']);
+																	$tieneTelefonoComunicado = !empty($numeroCelular);
+																	
+																	if ($moduloComunicadosActivo && ($tieneEmailComunicado || $tieneTelefonoComunicado)) { ?>
+																		<li class="divider"></li>
+																		<li><a href="javascript:void(0);" onclick="abrirModalEnviarComunicado('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars(UsuariosPadre::nombreCompletoDelUsuario($usuario), ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars($usuario['uss_email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars($celular ?? '', ENT_QUOTES, 'UTF-8'); ?>', <?= $tieneEmailComunicado ? 'true' : 'false'; ?>, <?= $tieneTelefonoComunicado ? 'true' : 'false'; ?>)"><i class="fa fa-paper-plane"></i> Enviar Comunicado</a></li>
 																	<?php } ?>
 
 																	<?php if (($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $usuario['uss_tipo'] != TIPO_DEV) ||
@@ -1107,6 +1155,96 @@ if ($resultGeneros) {
 	</div>
 </div>
 
+<!-- Modal para Enviar Comunicado -->
+<div class="modal fade" id="modalEnviarComunicado" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<h4 class="modal-title text-white"><i class="fa fa-paper-plane"></i> Enviar Comunicado</h4>
+				<button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formEnviarComunicado">
+				<div class="modal-body">
+					<input type="hidden" id="comunicado_usuario_id" name="usuario_id">
+					<?php echo Csrf::campoHTML(); ?>
+					
+					<!-- Información del Usuario -->
+					<div class="alert alert-info">
+						<h5><i class="fa fa-user"></i> <span id="comunicado_nombre_usuario"></span></h5>
+						<div class="row mt-2">
+							<div class="col-md-6">
+								<strong>Email:</strong> <span id="comunicado_email_usuario" class="text-muted">No registrado</span>
+							</div>
+							<div class="col-md-6">
+								<strong>Teléfono:</strong> <span id="comunicado_telefono_usuario" class="text-muted">No registrado</span>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Mensaje -->
+					<div class="form-group">
+						<label>Mensaje <span class="text-danger">*</span></label>
+						<textarea id="comunicado_mensaje" name="mensaje" class="form-control" rows="5" placeholder="Escribe el mensaje que deseas enviar..." required></textarea>
+						<small class="form-text text-muted">Este mensaje se enviará por los canales seleccionados.</small>
+					</div>
+					
+					<!-- Canales de Envío -->
+					<div class="form-group">
+						<label>Selecciona los canales de envío <span class="text-danger">*</span></label>
+						<div class="row">
+							<div class="col-md-4">
+								<div class="checkbox">
+									<input type="checkbox" id="canal_email" name="canales[]" value="email">
+									<label for="canal_email" style="cursor: pointer;">
+										<i class="fa fa-envelope text-primary"></i> <strong>Email</strong>
+										<span id="email_disponible" class="badge badge-success ml-2" style="display:none;">Disponible</span>
+										<span id="email_no_disponible" class="badge badge-secondary ml-2" style="display:none;">No disponible</span>
+									</label>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="checkbox">
+									<input type="checkbox" id="canal_sms" name="canales[]" value="sms">
+									<label for="canal_sms" style="cursor: pointer;">
+										<i class="fa fa-comment text-info"></i> <strong>SMS</strong>
+										<span id="sms_disponible" class="badge badge-success ml-2" style="display:none;">Disponible</span>
+										<span id="sms_no_disponible" class="badge badge-secondary ml-2" style="display:none;">No disponible</span>
+									</label>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<div class="checkbox">
+									<input type="checkbox" id="canal_whatsapp" name="canales[]" value="whatsapp">
+									<label for="canal_whatsapp" style="cursor: pointer;">
+										<i class="fa fa-whatsapp text-success"></i> <strong>WhatsApp</strong>
+										<span id="whatsapp_disponible" class="badge badge-success ml-2" style="display:none;">Disponible</span>
+										<span id="whatsapp_no_disponible" class="badge badge-secondary ml-2" style="display:none;">No disponible</span>
+									</label>
+								</div>
+							</div>
+						</div>
+						<small class="form-text text-muted">Puedes seleccionar uno o más canales. El mensaje se enviará por todos los canales seleccionados.</small>
+					</div>
+					
+					<!-- Resumen de envío -->
+					<div id="resumen_envio" class="alert alert-warning" style="display:none;">
+						<strong>Resumen:</strong>
+						<ul id="lista_canales_seleccionados" class="mb-0"></ul>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-primary" id="btnEnviarComunicado">
+						<i class="fa fa-paper-plane"></i> Enviar Comunicado
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <script>
 $(document).ready(function() {
 	$(document).on('click', '.btn-editar-usuario-modal', function() {
@@ -1387,6 +1525,15 @@ $(document).ready(function() {
 	function actualizarContadorSeleccionados() {
 		var count = selectedUsuarios.length;
 		$('#lblCantSeleccionados').text(count > 0 ? '(' + count + ')' : '');
+		
+		// Mostrar/ocultar botón de enviar guía según la selección
+		var btnContainer = $('#btnEnviarGuiaSeleccionadosContainer');
+		if (count > 0) {
+			btnContainer.fadeIn(200);
+			$('#contadorGuiaSeleccionados').text(count);
+		} else {
+			btnContainer.fadeOut(200);
+		}
 	}
 	
 	// Función para obtener usuarios seleccionados (compatible con código existente)
@@ -1585,6 +1732,432 @@ $(document).ready(function() {
 			aplicarFiltrosUsuarios();
 		}, 500);
 	});
+	
+	// ========================================
+	// === FUNCIONES PARA ENVIAR GUÍAS ===
+	// ========================================
+	
+	// Función para obtener el nombre del tipo de usuario
+	function getNombreTipoUsuario(tipo) {
+		const nombres = {
+			1: 'Desarrolladores',
+			2: 'Docentes',
+			3: 'Acudientes',
+			4: 'Estudiantes',
+			5: 'Directivos'
+		};
+		return nombres[tipo] || 'Usuarios';
+	}
+	
+	// Función para enviar guía individual
+	window.enviarGuiaIndividual = function(usuarioId, tipoUsuario) {
+		Swal.fire({
+			title: '¿Enviar Guía?',
+			html: '¿Deseas enviar la guía de <strong>' + getNombreTipoUsuario(tipoUsuario) + '</strong> por correo electrónico a este usuario?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuario.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						usuario_id: usuarioId,
+						tipo_usuario: tipoUsuario,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guía enviada correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudo enviar la guía',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
+	
+	// Función para enviar guía masiva por tipo
+	window.enviarGuiaMasivo = function(tipoUsuario) {
+		const nombreTipo = getNombreTipoUsuario(tipoUsuario);
+		
+		Swal.fire({
+			title: '¿Enviar Guía Masiva?',
+			html: '¿Deseas enviar la guía de <strong>' + nombreTipo + '</strong> por correo electrónico a todos los usuarios de este tipo?<br><br><small class="text-muted">Se enviará solo a usuarios que tengan un email válido registrado.</small>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar a Todos',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuarios-masivo.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						tipo_usuario: tipoUsuario,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guías enviadas correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea',
+						width: '600px'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudieron enviar las guías',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
+	
+	// Función para abrir modal de enviar comunicado
+	window.abrirModalEnviarComunicado = function(usuarioId, nombreUsuario, email, telefono, tieneEmail, tieneTelefono) {
+		// Validar que el ID no esté vacío
+		if (!usuarioId || usuarioId === '0' || usuarioId === 0 || usuarioId === '') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario inválido. Por favor, recarga la página e intenta nuevamente.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Limpiar formulario
+		$('#formEnviarComunicado')[0].reset();
+		$('#resumen_envio').hide();
+		
+		// Llenar datos del usuario
+		$('#comunicado_usuario_id').val(usuarioId);
+		$('#comunicado_nombre_usuario').text(nombreUsuario);
+		$('#comunicado_email_usuario').text(email || 'No registrado');
+		$('#comunicado_telefono_usuario').text(telefono || 'No registrado');
+		
+		// Configurar checkboxes según disponibilidad
+		if (tieneEmail) {
+			$('#canal_email').prop('disabled', false).prop('checked', false);
+			$('#email_disponible').show();
+			$('#email_no_disponible').hide();
+		} else {
+			$('#canal_email').prop('disabled', true).prop('checked', false);
+			$('#email_disponible').hide();
+			$('#email_no_disponible').show();
+		}
+		
+		if (tieneTelefono) {
+			$('#canal_sms').prop('disabled', false).prop('checked', false);
+			$('#canal_whatsapp').prop('disabled', false).prop('checked', false);
+			$('#sms_disponible').show();
+			$('#sms_no_disponible').hide();
+			$('#whatsapp_disponible').show();
+			$('#whatsapp_no_disponible').hide();
+		} else {
+			$('#canal_sms').prop('disabled', true).prop('checked', false);
+			$('#canal_whatsapp').prop('disabled', true).prop('checked', false);
+			$('#sms_disponible').hide();
+			$('#sms_no_disponible').show();
+			$('#whatsapp_disponible').hide();
+			$('#whatsapp_no_disponible').show();
+		}
+		
+		// Mostrar modal
+		$('#modalEnviarComunicado').modal('show');
+		
+		// Actualizar resumen cuando cambien los checkboxes
+		$('input[name="canales[]"]').off('change').on('change', function() {
+			actualizarResumenEnvio();
+		});
+	};
+	
+	// Función para actualizar resumen de envío
+	window.actualizarResumenEnvio = function() {
+		const canalesSeleccionados = [];
+		$('input[name="canales[]"]:checked').each(function() {
+			const canal = $(this).val();
+			if (canal === 'email') canalesSeleccionados.push('Email');
+			if (canal === 'sms') canalesSeleccionados.push('SMS');
+			if (canal === 'whatsapp') canalesSeleccionados.push('WhatsApp');
+		});
+		
+		if (canalesSeleccionados.length > 0) {
+			$('#lista_canales_seleccionados').empty();
+			canalesSeleccionados.forEach(function(canal) {
+				$('#lista_canales_seleccionados').append('<li>' + canal + '</li>');
+			});
+			$('#resumen_envio').show();
+		} else {
+			$('#resumen_envio').hide();
+		}
+	};
+	
+	// Manejar envío del formulario
+	$('#formEnviarComunicado').on('submit', function(e) {
+		e.preventDefault();
+		
+		const usuarioId = $('#comunicado_usuario_id').val();
+		const mensaje = $('#comunicado_mensaje').val().trim();
+		const canales = [];
+		
+		$('input[name="canales[]"]:checked').each(function() {
+			canales.push($(this).val());
+		});
+		
+		// Validaciones
+		if (!mensaje) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debes escribir un mensaje.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		if (canales.length === 0) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debes seleccionar al menos un canal de envío.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Deshabilitar botón
+		$('#btnEnviarComunicado').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Enviando...');
+		
+		// Enviar AJAX
+		const csrfToken = $('input[name="csrf_token"]').val();
+		$.ajax({
+			url: 'ajax-enviar-comunicado.php',
+			type: 'POST',
+			data: {
+				usuario_id: usuarioId,
+				mensaje: mensaje,
+				canales: canales,
+				csrf_token: csrfToken
+			},
+			dataType: 'json',
+			success: function(response) {
+				$('#btnEnviarComunicado').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Enviar Comunicado');
+				
+				if (response.success) {
+					Swal.fire({
+						title: '¡Comunicado Enviado!',
+						html: response.message || 'El comunicado se ha enviado correctamente.',
+						icon: 'success',
+						confirmButtonColor: '#28a745'
+					}).then(() => {
+						$('#modalEnviarComunicado').modal('hide');
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: response.message || 'No se pudo enviar el comunicado.',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				$('#btnEnviarComunicado').prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Enviar Comunicado');
+				Swal.fire({
+					title: 'Error',
+					text: 'Error de conexión: ' + error,
+					icon: 'error',
+					confirmButtonColor: '#dc3545'
+				});
+			}
+		});
+	});
+	
+	// Función para enviar WhatsApp de prueba a un usuario
+	window.enviarWhatsAppUsuario = function(usuarioId, nombreUsuario) {
+		// Validar que el ID no esté vacío
+		if (!usuarioId || usuarioId === '0' || usuarioId === 0 || usuarioId === '') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario inválido. Por favor, recarga la página e intenta nuevamente.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			console.error('ID de usuario inválido:', usuarioId);
+			return;
+		}
+		
+		console.log('Enviando WhatsApp a usuario ID:', usuarioId, 'Nombre:', nombreUsuario);
+		
+		Swal.fire({
+			title: 'Enviar WhatsApp de Prueba',
+			html: '¿Deseas enviar un mensaje de WhatsApp de prueba a <strong>' + nombreUsuario + '</strong>?<br><br><div class="form-group"><label>Mensaje personalizado (opcional):</label><textarea id="mensajeWhatsApp" class="form-control" rows="3" placeholder="Deja vacío para usar mensaje predeterminado"></textarea></div>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-whatsapp"></i> Enviar WhatsApp',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#25D366',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const mensaje = document.getElementById('mensajeWhatsApp')?.value || '';
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				
+				// Asegurar que usuarioId sea un número válido
+				const idUsuario = String(usuarioId).trim();
+				if (!idUsuario || idUsuario === '0') {
+					Swal.showValidationMessage('ID de usuario inválido');
+					return false;
+				}
+				
+				console.log('Enviando request con usuario_id:', idUsuario);
+				
+				return fetch('ajax-enviar-whatsapp-usuario.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+					body: 'usuario_id=' + encodeURIComponent(idUsuario) + 
+					      '&mensaje=' + encodeURIComponent(mensaje) +
+					      '&csrf_token=' + encodeURIComponent(csrfToken)
+				})
+				.then(response => {
+					console.log('Response status:', response.status);
+					return response.json();
+				})
+				.catch(error => {
+					console.error('Error en fetch:', error);
+					Swal.showValidationMessage('Error de conexión: ' + error.message);
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡WhatsApp Enviado!',
+						html: result.value.message || 'WhatsApp enviado correctamente',
+						icon: 'success',
+						confirmButtonColor: '#25D366'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudo enviar el WhatsApp',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
+
+	// Función para enviar guía a usuarios seleccionados
+	window.enviarGuiaSeleccionados = function() {
+		let seleccionados = getSelecionados('example1', 'selecionado', 'lblCantSeleccionados');
+		
+		if (seleccionados.length === 0) {
+			Swal.fire({
+				title: 'No hay usuarios seleccionados',
+				text: 'Por favor selecciona al menos un usuario para enviar la guía',
+				icon: 'warning',
+				confirmButtonColor: '#667eea'
+			});
+			return;
+		}
+		
+		Swal.fire({
+			title: '¿Enviar Guías?',
+			html: '¿Deseas enviar las guías por correo electrónico a los <strong>' + seleccionados.length + ' usuarios seleccionados</strong>?<br><br><small class="text-muted">Se enviará solo a usuarios que tengan un email válido registrado.</small>',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-envelope"></i> Sí, Enviar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#667eea',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+				return fetch('ajax-enviar-guia-usuarios-masivo.php', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						usuarios_ids: seleccionados,
+						csrf_token: csrfToken
+					})
+				})
+				.then(response => response.json())
+				.catch(error => {
+					Swal.showValidationMessage('Error de conexión');
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Éxito!',
+						html: result.value.message || 'Guías enviadas correctamente',
+						icon: 'success',
+						confirmButtonColor: '#667eea',
+						width: '600px'
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudieron enviar las guías',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	};
 });
 </script>
 

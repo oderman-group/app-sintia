@@ -3,6 +3,7 @@ include("session.php");
 require_once(ROOT_PATH."/main-app/class/Usuarios.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 
 header('Content-Type: application/json');
@@ -20,7 +21,7 @@ try {
         'us.uss_id', 'us.uss_usuario', 'us.uss_nombre', 'us.uss_nombre2', 
         'us.uss_apellido1', 'us.uss_apellido2', 'us.uss_email', 'us.uss_foto',
         'us.uss_tipo', 'us.uss_estado', 'us.uss_bloqueado', 'us.uss_ultimo_ingreso',
-        'us.uss_fecha_nacimiento', 'us.uss_telefono', 'us.uss_direccion', 'us.uss_ocupacion',
+        'us.uss_fecha_nacimiento', 'us.uss_telefono', 'us.uss_celular', 'us.uss_direccion', 'us.uss_ocupacion',
         'us.uss_genero', 'us.uss_fecha_registro', 'us.uss_documento', 'us.uss_tipo_documento',
         'us.uss_lugar_expedicion', 'us.uss_intentos_fallidos', 'us.uss_permiso1',
         'pes.pes_nombre', 
