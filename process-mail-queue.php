@@ -36,6 +36,16 @@ if (!isset($_SERVER['DOCUMENT_ROOT']) || empty($_SERVER['DOCUMENT_ROOT'])) {
         $_SERVER['DOCUMENT_ROOT'] = str_replace('/', '\\', $_SERVER['DOCUMENT_ROOT']);
     }
 }
+
+// Cambiar al directorio del script para asegurar rutas relativas correctas
+chdir(__DIR__);
+
+// Crear carpeta de logs si no existe
+$logsDir = __DIR__ . '/config-general/logs';
+if (!is_dir($logsDir)) {
+    mkdir($logsDir, 0755, true);
+}
+
 if (!isset($_SERVER['HTTP_HOST'])) {
     $_SERVER['HTTP_HOST'] = 'localhost';
 }

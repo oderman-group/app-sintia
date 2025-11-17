@@ -147,6 +147,12 @@ function obtenerRutaArchivo($archivo) {
         case 'error_log_compartido':
             return ROOT_PATH . '/main-app/compartido/error_log';
             
+        // Logs de cola de correos
+        case 'mail_queue_prod':
+            return ROOT_PATH . '/config-general/logs/mail_queue_job.log';
+        case 'mail_queue_dev':
+            return ROOT_PATH . '/config-general/logs/mail_queue_job_dev.log';
+            
         default:
             throw new Exception('Tipo de log no reconocido');
     }
