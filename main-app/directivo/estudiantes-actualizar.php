@@ -56,7 +56,7 @@ if($config['conf_mostrar_pasos_matricula'] == 1){
 	";
 }
 
-if ($config['conf_id_institucion'] == ICOLVEN) {//TODO: Esto debe aplicarsele el módulo
+if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
 	require_once("apis-sion-modify-student.php");
 }
 

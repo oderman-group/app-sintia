@@ -12,6 +12,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 $idMatricula="";
 if(!empty($_GET["id"])){
@@ -353,7 +354,7 @@ try {
 									<ul class="dropdown-menu" role="menu" id="Acciones_<?= $datosEstudianteActual['mat_id']; ?>">
 										<?php if (Modulos::validarPermisoEdicion()) { ?>
 											
-											<?php if ($config['conf_id_institucion'] == ICOLVEN && $permisoCrearSion) { ?>
+											<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && $permisoCrearSion) { ?>
 												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea transferir este estudiante a SION?','question','estudiantes-crear-sion.php?id=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Transferir a SION</a></li>
 											<?php } ?>
 
@@ -406,7 +407,7 @@ try {
 											<li><a href="../compartido/matriculas-formato3.php?ref=<?= base64_encode($datosEstudianteActual["mat_matricula"]); ?>" target="_blank">Hoja de matrícula</a></li>
 										<?php } ?>
 
-										<?php if ($config['conf_id_institucion'] == ICOLVEN && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
+										<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
 											<li><a href="http://sion.icolven.edu.co/Services/ServiceIcolven.svc/GenerarEstadoCuenta/<?= $datosEstudianteActual['mat_codigo_tesoreria']; ?>/<?= date('Y'); ?>" target="_blank">SION - Estado de cuenta</a></li>
 										<?php } ?>
 

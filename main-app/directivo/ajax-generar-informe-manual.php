@@ -205,7 +205,7 @@ try {
         }
         
         // Procesar notas por indicador si es ICOLVEN
-        if ($informacion_inst["info_institucion"] == ICOLVEN) {
+        if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RECUPERAR_INDICADOR)) {
             $notasPorIndicador = Calificaciones::traerNotasPorIndicador($config, $carga, $resultado['mat_id'], $periodo);
             $sumaNotaIndicador = 0; 
             

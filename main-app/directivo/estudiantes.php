@@ -7,6 +7,7 @@ require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php"); 
 require_once(ROOT_PATH."/main-app/class/Grupos.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 // Validar solo parámetros GET que no sean arrays (para evitar error con filtros)
 $parametrosSimples = array_filter($_GET, function($value) {
