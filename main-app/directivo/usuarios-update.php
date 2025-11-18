@@ -70,6 +70,14 @@ $update = [
     "uss_nombre2" => mysqli_real_escape_string($conexion, $_POST["nombre2"]),
     "uss_documento" => $_POST["documento"]
 ];
+
+// Manejar desbloqueo de usuario
+// Si el campo hidden bloqueado tiene valor '0', significa que se desbloqueó
+if (isset($_POST["bloqueado"]) && $_POST["bloqueado"] == '0') {
+    $update["uss_bloqueado"] = 0;
+    $update["uss_intentos_fallidos"] = 0; // Resetear intentos fallidos al desbloquear
+}
+
 UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
 // Registrar auditoría si cambió el email

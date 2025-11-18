@@ -111,7 +111,7 @@ define('PERMISO_EDICION_PERIODOS_DIFERENTES', true); //Diferentes al actual
 define('CUALITATIVA', 'CUALITATIVA');
 define('CUANTITATIVA', 'CUANTITATIVA');
 
-define('CLAVE_SUGERIDA', 'sherman1298');
+define('CLAVE_SUGERIDA', 'S1nt1a'.date("Y").'$');
 
 /* TIPO DE VALIDACION*/
 define('IDENTIFICAION', 'Identificacion');

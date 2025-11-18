@@ -168,6 +168,14 @@ try {
                     break;
                     
                 case 'sms':
+                    // Validar que la institución tenga el módulo SMS activo
+                    if (!Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS)) {
+                        $errorMsg = 'El módulo SMS no está activo para esta institución';
+                        $errores[] = 'SMS: ' . $errorMsg;
+                        $guardarRegistro('sms', $celularRaw ?: 'N/A', 'error', $errorMsg);
+                        break;
+                    }
+                    
                     if (empty($numeroCelular) || strlen($numeroCelular) < 10) {
                         $errorMsg = 'No hay número de teléfono válido registrado';
                         $errores[] = 'SMS: ' . $errorMsg;

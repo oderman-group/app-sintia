@@ -29,7 +29,7 @@ class botonesGuardar
         }      
         if ($permiso) {
             $botnoesHtml .= "
-            <button type='submit' class='btn  btn-info' style='text-transform:uppercase'>
+            <button type='submit' id='btnGuardarFormulario' class='btn  btn-info' style='text-transform:uppercase'>
                 {$btnGuardar}
             </button>";
         }

@@ -198,8 +198,10 @@ $objetoEnviar = htmlspecialchars(json_encode([
             // Verificar si tiene email o teléfono para mostrar opción de comunicado
             // Solo mostrar si la institución tiene el módulo de comunicados activo
             $moduloComunicadosActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_COMUNICADOS);
+            $moduloSmsActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS);
             $tieneEmail = !empty($usuario['uss_email']) && $enviarEmailDisponible && EnviarEmail::validarEmail($usuario['uss_email']);
-            $tieneTelefono = !empty($numeroCelular);
+            // Solo considerar teléfono si el módulo SMS está activo
+            $tieneTelefono = !empty($numeroCelular) && $moduloSmsActivo;
             
             if ($moduloComunicadosActivo && ($tieneEmail || $tieneTelefono)) { ?>
                 <li class="divider"></li>
