@@ -632,6 +632,110 @@ if($config['conf_doble_buscador'] == 1) {
 		button[disabled]:hover, button:disabled:hover {
 			opacity: 0.6;
 		}
+		
+		/* ========================================
+		   SKELETON LOADER
+		   ======================================== */
+		.skeleton-loader {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #f5f5f5;
+			z-index: 99999;
+			overflow-y: auto;
+		}
+		
+		.skeleton-content {
+			padding: 20px;
+			max-width: 100%;
+		}
+		
+		.skeleton-page-bar {
+			height: 60px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-description {
+			height: 20px;
+			width: 70%;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-buttons {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+		}
+		
+		.skeleton-button {
+			height: 38px;
+			width: 150px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-card {
+			background: white;
+			border-radius: 4px;
+			padding: 20px;
+			margin-bottom: 20px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		
+		.skeleton-table-header {
+			height: 40px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 15px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-table-row {
+			height: 50px;
+			background: linear-gradient(90deg, #f8f8f8 25%, #f0f0f0 50%, #f8f8f8 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 10px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		@keyframes skeleton-loading {
+			0% {
+				background-position: 200% 0;
+			}
+			100% {
+				background-position: -200% 0;
+			}
+		}
+		
+		.skeleton-loader.hidden {
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+		}
+		
+		.page-content-wrapper {
+			opacity: 0;
+			transition: opacity 0.5s ease-in;
+		}
+		
+		.page-content-wrapper.loaded {
+			opacity: 1;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
@@ -639,6 +743,37 @@ if($config['conf_doble_buscador'] == 1) {
 	include("../compartido/body.php");
 	include("usuarios-bloquear-modal.php");
 ?>
+	<!-- Skeleton Loader -->
+	<div class="skeleton-loader" id="skeletonLoader">
+		<div class="skeleton-content">
+			<!-- Page Bar Skeleton -->
+			<div class="skeleton-page-bar"></div>
+			
+			<!-- Description Skeleton -->
+			<div class="skeleton-description"></div>
+			
+			<!-- Buttons Skeleton -->
+			<div class="skeleton-buttons">
+				<div class="skeleton-button"></div>
+				<div class="skeleton-button" style="width: 180px;"></div>
+				<div class="skeleton-button" style="width: 200px;"></div>
+				<div class="skeleton-button" style="width: 160px;"></div>
+			</div>
+			
+			<!-- Card Skeleton -->
+			<div class="skeleton-card">
+				<div class="skeleton-table-header"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+			</div>
+		</div>
+	</div>
+	
     <div class="page-wrapper">
         <?php include("../compartido/encabezado.php"); //1 por otimizar, parece estar repetida ?>
 		
@@ -647,7 +782,7 @@ if($config['conf_doble_buscador'] == 1) {
         <div class="page-container">
  			<?php include("../compartido/menu.php");?>
 			<!-- start page content -->
-            <div class="page-content-wrapper">
+            <div class="page-content-wrapper" id="pageContentWrapper">
                 <div class="page-content">
                     <!-- Token CSRF para operaciones de eliminación -->
                     <?php echo Csrf::campoHTML(); ?>
@@ -1084,6 +1219,64 @@ if($config['conf_doble_buscador'] == 1) {
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- end js include path -->
 	<script>
+		// ========================================
+		// SKELETON LOADER - Ocultar cuando la página esté cargada
+		// ========================================
+		function ocultarSkeletonLoader() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			const pageContentWrapper = document.getElementById('pageContentWrapper');
+			
+			if (skeletonLoader && pageContentWrapper) {
+				// Agregar clase para mostrar el contenido
+				pageContentWrapper.classList.add('loaded');
+				
+				// Ocultar skeleton con transición suave
+				setTimeout(function() {
+					skeletonLoader.classList.add('hidden');
+					
+					// Remover del DOM después de la transición
+					setTimeout(function() {
+						skeletonLoader.style.display = 'none';
+					}, 500);
+				}, 100);
+			}
+		}
+		
+		// Prevenir interacciones mientras el skeleton está visible
+		document.addEventListener('DOMContentLoaded', function() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			
+			if (skeletonLoader) {
+				skeletonLoader.addEventListener('click', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				});
+				
+				skeletonLoader.addEventListener('keydown', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				});
+				
+				skeletonLoader.style.userSelect = 'none';
+				skeletonLoader.style.pointerEvents = 'auto';
+			}
+		});
+		
+		// Ocultar skeleton cuando todo esté cargado
+		window.addEventListener('load', function() {
+			setTimeout(ocultarSkeletonLoader, 300);
+		});
+		
+		// Fallback: Si window.load no se dispara, ocultar después de un tiempo razonable
+		setTimeout(function() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			if (skeletonLoader && !skeletonLoader.classList.contains('hidden')) {
+				ocultarSkeletonLoader();
+			}
+		}, 3000);
+		
 		console.log('==========================================');
 		console.log('INICIO DE SCRIPTS DE ESTUDIANTES.PHP - EDICIÓN MASIVA');
 		console.log('jQuery disponible:', typeof $ !== 'undefined');

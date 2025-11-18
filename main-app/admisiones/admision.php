@@ -567,11 +567,196 @@ function limpiarUTF8($texto) {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Skeleton Loader */
+        .skeleton-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .skeleton-content {
+            max-width: 1000px;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .skeleton-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .skeleton-hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .skeleton-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-line {
+            height: 20px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-line.short {
+            width: 60%;
+            margin: 0 auto 16px;
+        }
+        
+        .skeleton-line.medium {
+            width: 80%;
+            margin: 0 auto 16px;
+        }
+        
+        .skeleton-line.long {
+            width: 100%;
+        }
+        
+        .skeleton-form-group {
+            margin-bottom: 24px;
+        }
+        
+        .skeleton-label {
+            height: 14px;
+            width: 40%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-input {
+            height: 48px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 12px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-button {
+            height: 56px;
+            width: 300px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 16px;
+            margin: 30px auto;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        
+        .skeleton-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+        
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+        
+        .page-content.loaded {
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body>
-    <div class="admision-container">
+    <!-- Skeleton Loader -->
+    <div class="skeleton-loader" id="skeletonLoader">
+        <div class="skeleton-content">
+            <!-- Hero Skeleton -->
+            <div class="skeleton-card skeleton-hero">
+                <div class="skeleton-icon"></div>
+                <div class="skeleton-line short" style="height: 32px; margin-bottom: 16px;"></div>
+                <div class="skeleton-line medium" style="height: 18px; margin-bottom: 24px;"></div>
+                <div class="skeleton-line" style="width: 200px; height: 80px; margin: 0 auto; border-radius: 16px;"></div>
+            </div>
+            
+            <!-- Form Skeleton -->
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="width: 60%; height: 24px; margin-bottom: 30px;"></div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skeleton-button"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="admision-container page-content" id="pageContent">
         <?php include("menu.php"); ?>
         
         <!-- Hero Section -->
@@ -901,6 +1086,65 @@ function limpiarUTF8($texto) {
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
     <script>
+        // Función para ocultar el skeleton loader cuando la página esté completamente cargada
+        function ocultarSkeletonLoader() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            const pageContent = document.getElementById('pageContent');
+            
+            if (skeletonLoader && pageContent) {
+                // Agregar clase para mostrar el contenido
+                pageContent.classList.add('loaded');
+                
+                // Ocultar skeleton con transición suave
+                setTimeout(function() {
+                    skeletonLoader.classList.add('hidden');
+                    
+                    // Remover del DOM después de la transición para mejorar rendimiento
+                    setTimeout(function() {
+                        skeletonLoader.style.display = 'none';
+                    }, 500);
+                }, 100);
+            }
+        }
+        
+        // Prevenir interacciones mientras el skeleton está visible
+        document.addEventListener('DOMContentLoaded', function() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            
+            // Prevenir clicks y otras interacciones en el skeleton
+            if (skeletonLoader) {
+                skeletonLoader.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+                
+                skeletonLoader.addEventListener('keydown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+                
+                // Prevenir selección de texto
+                skeletonLoader.style.userSelect = 'none';
+                skeletonLoader.style.pointerEvents = 'auto';
+            }
+        });
+        
+        // Ocultar skeleton cuando todo esté cargado
+        window.addEventListener('load', function() {
+            // Esperar un momento para asegurar que todo esté renderizado
+            setTimeout(ocultarSkeletonLoader, 300);
+        });
+        
+        // Fallback: Si window.load no se dispara, ocultar después de un tiempo razonable
+        setTimeout(function() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            if (skeletonLoader && !skeletonLoader.classList.contains('hidden')) {
+                ocultarSkeletonLoader();
+            }
+        }, 3000);
+        
         function mostrarPoliticas(){
             $("#exampleModal").modal("show");
         }
