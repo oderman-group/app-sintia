@@ -100,6 +100,7 @@ class Modulos extends BDT_Tablas implements BDT_JoinImplements{
     public const MODULO_USUARIOS                            = 73; 
     public const MODULO_AI_GENERAR_DESCRIPCION_MT           = 74; //Genera imagenes para los cursos de media técnica
     public const MODULO_COMUNICADOS                         = 75; //Permite enviar comunicados a usuarios por Email, SMS y WhatsApp
+    public const MODULO_GRBAR_VIDEO_CLASE                   = 76; //Permite GRABAR un video para adjuntar a la clase
 
     //TODO: Esto es un workaround para los 9 clientes actuales para mantener la retrocompatibilidad.
     public const MODULOS_GLOBALES_PERMITIDOS_ACTUALMENTE = [
