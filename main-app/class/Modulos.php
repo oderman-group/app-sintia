@@ -67,7 +67,7 @@ class Modulos extends BDT_Tablas implements BDT_JoinImplements{
     public const MODULO_AYUDA_AVANZADA                      = 43; 
     public const MODULO_CALIFICACIONES                      = 44; 
     public const MODULO_CARGAS_ACADEMICAS                   = 45; 
-    public const MODULO_SMS                                 = 46; // todo: Puede ser reemplazado porque no tiene paginas asociadas.
+    public const MODULO_SMS                                 = 46;
     public const MODULO_COMPORTAMIENTO                      = 47; 
     public const MODULO_CONFIGURACION                       = 48; 
     public const MODULO_CORREO_INTERNO                      = 49;

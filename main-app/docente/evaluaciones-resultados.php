@@ -34,6 +34,30 @@ $idE="";
 	
 	//Cantidad de preguntas de la evaluación
 	$cantPreguntas = Evaluaciones::numeroPreguntasEvaluacion($conexion, $config, $idE);
+	
+	// Verificar si hay notas disponibles ANTES de renderizar el botón
+	// Pre-cargar los mapas de datos para verificar rápidamente
+	$tiemposMapa = Evaluaciones::traerTiemposEvaluacionMapa($conexion, $config, $idE);
+	$conteosMapa = Evaluaciones::traerConteosPreguntasMapa($conexion, $config, $idE);
+	
+	// Inicializar variable para rastrear si hay notas disponibles
+	$hayNotasDisponibles = false;
+	
+	// Verificar rápidamente si hay al menos un estudiante con nota disponible
+	$consultaEstudiantes = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+	while($estudiante = mysqli_fetch_array($consultaEstudiantes, MYSQLI_BOTH)){
+		$datos2 = $conteosMapa[$estudiante['mat_id']] ?? null;
+		if(!empty($datos2) && !empty($datos2[1]) && $datos2[0] > 0){
+			$porcentaje = round(($datos2[1]/$datos2[0])*100, $config['conf_decimales_notas']);
+			$nota = round(($config['conf_nota_hasta']*($porcentaje/100)), $config['conf_decimales_notas']);
+			if($nota > 0){
+				$hayNotasDisponibles = true;
+				break; // Ya encontramos al menos uno, no necesitamos seguir
+			}
+		}
+	}
+	// Liberar el resultado para que pueda ser usado de nuevo más abajo
+	mysqli_data_seek($consultaEstudiantes, 0);
 ?>
 <script src="../../config-general/assets/plugins/chart-js/Chart.bundle.js"></script>
 <!-- data tables -->
@@ -137,7 +161,7 @@ $idE="";
 									<div class="col-sm-12">
 										<a href="evaluaciones.php" class="btn btn-secondary"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 										
-										<a href="#" id="btnExportar" <?=$ocultarExportacion?> class="btn btn-info" onClick="document.getElementById('exportarNotas').style.display='block';"><i class="fas fa-file-export"></i>Exportar Notas</a>
+										<a href="#" id="btnExportar" <?=$ocultarExportacion?> <?=!$hayNotasDisponibles ? 'style="pointer-events: none; opacity: 0.5; cursor: not-allowed;"' : '';?> class="btn btn-info" onClick="document.getElementById('exportarNotas').style.display='block';"><i class="fas fa-file-export"></i>Exportar Notas</a>
 										
 									</div>
 								</div>
@@ -190,7 +214,7 @@ $idE="";
                                             </div>
                                         </div>
                                         <div class="card-body">
-											<p id="pExportada" <?=empty($ocultarExportacion)?"hidden":"" ?> >Esta evaluacion fue exportada a la actividad: <?= $actividad["act_descripcion"]?>.</p>
+											<p id="pExportada" <?=empty($ocultarExportacion)?"hidden":"" ?> >Esta evaluacion fue exportada a la actividad: <?= !empty($actividad["act_descripcion"]) ? $actividad["act_descripcion"] : '';?>.</p>
 											<p><mark>Recuerde que las preguntas abiertas no se están teniendo en cuenta. Esas deben ser calificadas manualmente.</mark></p>
 											
                                         <div class="table-scrollable">
@@ -211,19 +235,38 @@ $idE="";
                                                 </thead>
                                                 <tbody>
 													<?php
-													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+													// PRE-CARGAR TODOS LOS DATOS EN UNA SOLA CONSULTA
+													// PARA EVITAR N+1 QUERIES
+													// ============================================
+													// Nota: $tiemposMapa y $conteosMapa ya fueron cargados arriba para verificar notas disponibles
+													// Solo los reutilizamos aquí para el bucle
+													
+													// Pre-cargar tipos de nota para modo cualitativo
+													$listaDesemp = [];
+													if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+														$tablaNotasRes = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
+														while ($filaDes = mysqli_fetch_array($tablaNotasRes, MYSQLI_BOTH)) {
+															$listaDesemp[] = $filaDes;
+														}
+														mysqli_free_result($tablaNotasRes);
+													}
+													
+													// Reutilizar la consulta que ya se ejecutó arriba para verificar notas disponibles
+													$consulta = $consultaEstudiantes;
 													 $contReg = 1;
-													 $registroNotas = 0; 
+													 $registroNotas = 0;
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-														 $datos1 = Evaluaciones::consultarTiempoEvaluacion($conexion, $config, $idE, $resultado['mat_id']);
+														 // Obtener datos del mapa pre-cargado
+														 $datos1 = $tiemposMapa[$resultado['mat_id']] ?? null;
+														 $datos2 = $conteosMapa[$resultado['mat_id']] ?? null;
 														 
-														 $datos2 = Evaluaciones::traerConteoPreguntas($conexion, $config, $idE, $resultado['mat_id']);
+														 $porcentaje = 0;
+														 $nota = 0;
 														 
-														 if($datos2[0] > 0){
+														 if($datos2 && $datos2[0] > 0){
 															$porcentaje = round(($datos2[1]/$datos2[0])*100,$config['conf_decimales_notas']);
+															$nota = round(($config['conf_nota_hasta']*($porcentaje/100)),$config['conf_decimales_notas']);
 														 }
-														 
-														 $nota = round(($config['conf_nota_hasta']*($porcentaje/100)),$config['conf_decimales_notas']);
 														 
 														 if($nota<$config[5])$color = $config[6]; elseif($nota>=$config[5]) $color = $config[7];
 														 
@@ -251,25 +294,36 @@ $idE="";
 
 														$notaFinal="";
 														$title='';
-														if(!empty($datos2[1]) && $config['conf_forma_mostrar_notas'] == CUALITATIVA){
+														if(!empty($datos2[1]) && $config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($listaDesemp)){
 															$notaFinal=$nota;
 															$title='title="Nota Cuantitativa: '.$nota.'"';
-															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota);
+															$estiloNota = Boletin::obtenerDatosTipoDeNotasCargadas($listaDesemp, $nota);
 															$notaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+														}
+														
+														// Verificar si hay nota disponible para este estudiante
+														// Una nota está disponible si hay respuestas correctas (datos2[1]) y la nota calculada es mayor a 0
+														if(!empty($datos2) && !empty($datos2[1]) && $nota > 0){
+															$hayNotasDisponibles = true;
+														}
+														
+														// Si no hay notaFinal pero hay nota numérica, también considerar como disponible
+														if(empty($notaFinal) && $nota > 0 && !empty($datos2) && !empty($datos2[1])){
+															$hayNotasDisponibles = true;
 														}
 													 ?>
 													<tr>
                                                         <td align="center"><?=$contReg;?></td>
 														<td><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
-														<td><?php if(!empty($datos1['epe_inicio'])){ echo $datos1['epe_inicio'];}?></td>
-														<td><?php if(!empty($datos1['epe_fin'])){ echo $datos1['epe_fin'];}?></td>
-														<td><?php if(!empty($datos2[2]) && $datos1[2]>0){echo $datos1[2]." Min. y ";} if(!empty($datos2[3]) && $datos1[3]>0){echo $datos1[3]." Seg.";}?></td>
-														<td><?php if(!empty($datos2[1])){echo $datos2[2]."/".$cantPreguntas;}?></td>
-														<td align="center"><?php if(!empty($datos2[1])){echo $datos2[1]."/".$datos2[0];}?></td>
-														<td align="center"><?php if(!empty($datos2[1])){echo $porcentaje."%";}?></td>
+														<td><?php if(!empty($datos1) && !empty($datos1['epe_inicio'])){ echo $datos1['epe_inicio'];}?></td>
+														<td><?php if(!empty($datos1) && !empty($datos1['epe_fin'])){ echo $datos1['epe_fin'];}?></td>
+														<td><?php if(!empty($datos1) && isset($datos1[2]) && $datos1[2]>0){echo $datos1[2]." Min. y ";} if(!empty($datos1) && isset($datos1[3]) && $datos1[3]>0){echo $datos1[3]." Seg.";}?></td>
+														<td><?php if(!empty($datos2) && !empty($datos2[1])){echo $datos2[2]."/".$cantPreguntas;}?></td>
+														<td align="center"><?php if(!empty($datos2) && !empty($datos2[1])){echo $datos2[1]."/".$datos2[0];}?></td>
+														<td align="center"><?php if(!empty($datos2) && !empty($datos2[1])){echo $porcentaje."%";}?></td>
 														<td style="color: <?=$color;?>;" <?=$title;?> align="center"><?=$notaFinal;?></td>
 														<td align="center">
-														<?php if(!empty($datos2[1]) or !empty($datos1['epe_inicio'])){?>
+														<?php if((!empty($datos2) && !empty($datos2[1])) or (!empty($datos1) && !empty($datos1['epe_inicio']))){?>
 															
 															<a href="evaluaciones-ver.php?idE=<?=$_GET["idE"];?>&usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>" title="Ver resultados."><i class="fa fa-search-plus"></i></a>
 															<?php 

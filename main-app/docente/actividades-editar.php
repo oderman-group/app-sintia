@@ -148,12 +148,39 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
 												</div>
 											 </div>
 
-											 <div class="form-group row">
+											<div class="form-group row">
 												<label class="col-sm-2 control-label">Estudiantes</label>
 												<div class="col-sm-10">
 													<select id="multiple" style="width: 100%" class="form-control select2-multiple" multiple name="estudiantes[]">
 														<option value="">Seleccione una opción</option>
 														<?php
+															// PRE-CARGAR TODAS LAS ASIGNACIONES DE ESTUDIANTES
+															// PARA ESTA ACTIVIDAD EN UNA SOLA CONSULTA
+															// ============================================
+															$asignacionesMapa = [];
+															if (!empty($idR)) {
+																$sqlAsignaciones = "SELECT asgest_id_estudiante 
+																					FROM " . BD_ACADEMICA . ".academico_asignaciones_estudiantes 
+																					WHERE asgest_id_asignacion = ? 
+																					AND asgest_tipo = ?";
+																
+																$stmt = mysqli_prepare($conexion, $sqlAsignaciones);
+																if ($stmt) {
+																	$tipoTarea = BDT_AcademicoAsignacionesEstudiantes::TIPO_TAREA;
+																	
+																	mysqli_stmt_bind_param($stmt, "ss", $idR, $tipoTarea);
+																	mysqli_stmt_execute($stmt);
+																	$consultaAsignaciones = mysqli_stmt_get_result($stmt);
+																	
+																	if ($consultaAsignaciones) {
+																		while ($filaAsig = mysqli_fetch_array($consultaAsignaciones, MYSQLI_BOTH)) {
+																			$asignacionesMapa[$filaAsig['asgest_id_estudiante']] = true;
+																		}
+																	}
+																	mysqli_stmt_close($stmt);
+																}
+															}
+															
 															try {
 																$opcionesConsulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
 															} catch (Exception $e) {
@@ -161,12 +188,8 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
 															}
 
 															while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-																$predicado = [
-																	'asgest_id_estudiante' => $opcionesDatos['mat_id'],
-																	'asgest_id_asignacion' => $idR,
-																	'asgest_tipo'          => BDT_AcademicoAsignacionesEstudiantes::TIPO_TAREA,
-																];
-																$existe = BDT_AcademicoAsignacionesEstudiantes::numRows($predicado);
+																// Usar el mapa pre-cargado en lugar de hacer consulta individual
+																$existe = isset($asignacionesMapa[$opcionesDatos['mat_id']]) ? 1 : 0;
 														?>
 															<option value="<?=$opcionesDatos['mat_id'];?>" <?php if ($existe > 0) {echo "selected";}?>><?=Estudiantes::NombreCompletoDelEstudiante($opcionesDatos);?></option>
 														<?php }?>

@@ -14,6 +14,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Validar que el estudiante no esté en estado "En inscripción"
+if (!empty($_POST["id"])) {
+	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"]);
+	if (!empty($datosEstudianteActual) && $datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_18&message='.urlencode('No se pueden realizar modificaciones a estudiantes en estado "En inscripción"').'";</script>';
+		exit();
+	}
+}
+
 require_once("../class/servicios/MediaTecnicaServicios.php");
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 if(trim($_POST["nDoc"])=="" or trim($_POST["apellido1"])=="" or trim($_POST["nombres"])==""){
@@ -47,7 +56,7 @@ if($config['conf_mostrar_pasos_matricula'] == 1){
 	";
 }
 
-if ($config['conf_id_institucion'] == ICOLVEN) {//TODO: Esto debe aplicarsele el módulo
+if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
 	require_once("apis-sion-modify-student.php");
 }
 
@@ -117,16 +126,22 @@ if (!empty($_FILES['fotoMat']['name'])) {
 
 Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
 
+// Sincronizar campos compartidos con la tabla usuarios
 $update = [
 	'uss_fecha_nacimiento'	=> !empty($_POST["fNac"]) ? $_POST["fNac"] : NULL,
 	'uss_usuario'			=> $_POST["nDoc"],
     "uss_documento"			=> $_POST["nDoc"],
     "uss_nombre"			=> mysqli_real_escape_string($conexion, $_POST["nombres"]),
-    "uss_nombre2"			=> mysqli_real_escape_string($conexion, $_POST["nombre2"]),
+    "uss_nombre2"			=> mysqli_real_escape_string($conexion, $_POST["nombre2"] ?? ''),
     "uss_apellido1"			=> mysqli_real_escape_string($conexion, $_POST["apellido1"]),
-    "uss_apellido2"			=> mysqli_real_escape_string($conexion, $_POST["apellido2"]),
-    "uss_email"				=> strtolower($_POST["email"]),
-    "uss_tipo_documento"	=> $_POST["tipoD"]
+    "uss_apellido2"			=> mysqli_real_escape_string($conexion, $_POST["apellido2"] ?? ''),
+    "uss_email"				=> strtolower($_POST["email"] ?? ''),
+    "uss_tipo_documento"	=> $_POST["tipoD"],
+    "uss_celular"			=> $_POST["celular"] ?? '',
+    "uss_telefono"			=> $_POST["telefono"] ?? '',
+    "uss_direccion"			=> $_POST["direccion"] ?? '',
+    "uss_lugar_expedicion"	=> $_POST["lugarD"] ?? '',
+    "uss_genero"			=> $_POST["genero"] ?? ''
 ];
 
 UsuariosPadre::actualizarUsuarios($config, $_POST["idU"], $update);

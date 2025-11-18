@@ -137,6 +137,110 @@ if ($resultGeneros) {
 	border-radius: 6px;
 	margin-bottom: 0;
 }
+
+/* ========================================
+   SKELETON LOADER
+   ======================================== */
+.skeleton-loader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #f5f5f5;
+	z-index: 99999;
+	overflow-y: auto;
+}
+
+.skeleton-content {
+	padding: 20px;
+	max-width: 100%;
+}
+
+.skeleton-page-bar {
+	height: 60px;
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-description {
+	height: 20px;
+	width: 70%;
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-buttons {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+
+.skeleton-button {
+	height: 38px;
+	width: 150px;
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	border-radius: 4px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-card {
+	background: white;
+	border-radius: 4px;
+	padding: 20px;
+	margin-bottom: 20px;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.skeleton-table-header {
+	height: 40px;
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	border-radius: 4px;
+	margin-bottom: 15px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-table-row {
+	height: 50px;
+	background: linear-gradient(90deg, #f8f8f8 25%, #f0f0f0 50%, #f8f8f8 75%);
+	background-size: 200% 100%;
+	border-radius: 4px;
+	margin-bottom: 10px;
+	animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.skeleton-loader.hidden {
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+.page-content-wrapper {
+	opacity: 0;
+	transition: opacity 0.5s ease-in;
+}
+
+.page-content-wrapper.loaded {
+	opacity: 1;
+}
 </style>
 </head>
 <!-- END HEAD -->
@@ -144,6 +248,35 @@ if ($resultGeneros) {
 	include("../compartido/body.php");
 	include("usuarios-bloquear-modal.php");
 ?>
+	<!-- Skeleton Loader -->
+	<div class="skeleton-loader" id="skeletonLoader">
+		<div class="skeleton-content">
+			<!-- Page Bar Skeleton -->
+			<div class="skeleton-page-bar"></div>
+			
+			<!-- Description Skeleton -->
+			<div class="skeleton-description"></div>
+			
+			<!-- Buttons Skeleton -->
+			<div class="skeleton-buttons">
+				<div class="skeleton-button"></div>
+				<div class="skeleton-button" style="width: 180px;"></div>
+			</div>
+			
+			<!-- Card Skeleton -->
+			<div class="skeleton-card">
+				<div class="skeleton-table-header"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+			</div>
+		</div>
+	</div>
+	
 <div class="page-wrapper">
 	<?php include("../compartido/encabezado.php"); ?>
 
@@ -152,7 +285,7 @@ if ($resultGeneros) {
 	<div class="page-container">
 		<?php include("../compartido/menu.php"); ?>
 		<!-- start page content -->
-		<div class="page-content-wrapper">
+		<div class="page-content-wrapper" id="pageContentWrapper">
 			<div class="page-content">
 				<!-- Token CSRF para operaciones de eliminación -->
 				<?php echo Csrf::campoHTML(); ?>
@@ -564,8 +697,10 @@ if ($resultGeneros) {
 																	// Verificar si tiene email o teléfono para mostrar opción de comunicado
 																	// Solo mostrar si la institución tiene el módulo de comunicados activo
 																	$moduloComunicadosActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_COMUNICADOS);
+																	$moduloSmsActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS);
 																	$tieneEmailComunicado = !empty($usuario['uss_email']) && EnviarEmail::validarEmail($usuario['uss_email']);
-																	$tieneTelefonoComunicado = !empty($numeroCelular);
+																	// Solo considerar teléfono si el módulo SMS está activo
+																	$tieneTelefonoComunicado = !empty($numeroCelular) && $moduloSmsActivo;
 																	
 																	if ($moduloComunicadosActivo && ($tieneEmailComunicado || $tieneTelefonoComunicado)) { ?>
 																		<li class="divider"></li>
@@ -642,6 +777,63 @@ if ($resultGeneros) {
 
   </style>
 <script>
+	// ========================================
+	// SKELETON LOADER - Ocultar cuando la página esté cargada
+	// ========================================
+	function ocultarSkeletonLoader() {
+		const skeletonLoader = document.getElementById('skeletonLoader');
+		const pageContentWrapper = document.getElementById('pageContentWrapper');
+		
+		if (skeletonLoader && pageContentWrapper) {
+			// Agregar clase para mostrar el contenido
+			pageContentWrapper.classList.add('loaded');
+			
+			// Ocultar skeleton con transición suave
+			setTimeout(function() {
+				skeletonLoader.classList.add('hidden');
+				
+				// Remover del DOM después de la transición
+				setTimeout(function() {
+					skeletonLoader.style.display = 'none';
+				}, 500);
+			}, 100);
+		}
+	}
+	
+	// Prevenir interacciones mientras el skeleton está visible
+	document.addEventListener('DOMContentLoaded', function() {
+		const skeletonLoader = document.getElementById('skeletonLoader');
+		
+		if (skeletonLoader) {
+			skeletonLoader.addEventListener('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			});
+			
+			skeletonLoader.addEventListener('keydown', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			});
+			
+			skeletonLoader.style.userSelect = 'none';
+			skeletonLoader.style.pointerEvents = 'auto';
+		}
+	});
+	
+	// Ocultar skeleton cuando todo esté cargado
+	window.addEventListener('load', function() {
+		setTimeout(ocultarSkeletonLoader, 300);
+	});
+	
+	// Fallback: Si window.load no se dispara, ocultar después de un tiempo razonable
+	setTimeout(function() {
+		const skeletonLoader = document.getElementById('skeletonLoader');
+		if (skeletonLoader && !skeletonLoader.classList.contains('hidden')) {
+			ocultarSkeletonLoader();
+		}
+	}, 3000);
 
 	$(function () {
 		$('[data-toggle="popover"]').popover();
@@ -1032,6 +1224,11 @@ if ($resultGeneros) {
 								<label>Usuario de Acceso <span class="text-danger">*</span></label>
 								<input type="text" class="form-control" name="usuario" id="modal_usuario" pattern="[A-Za-z0-9]+" required>
 								<small id="modal_validacion_usuario" class="form-text"></small>
+								<div id="alerta_usuario_existente" class="alert alert-danger mt-2" style="display: none;">
+									<i class="fa fa-exclamation-triangle"></i> 
+									<strong>Usuario duplicado:</strong> Este usuario de acceso ya está registrado para otro usuario. 
+									Por favor, elige un nombre de usuario diferente.
+								</div>
 							</div>
 						</div>
 					</div>
@@ -1069,6 +1266,11 @@ if ($resultGeneros) {
 								<label>Número de Documento</label>
 								<input type="text" class="form-control" name="documento" id="modal_documento">
 								<small id="modal_validacion_documento" class="form-text"></small>
+								<div id="alerta_documento_existente" class="alert alert-danger mt-2" style="display: none;">
+									<i class="fa fa-exclamation-triangle"></i> 
+									<strong>Documento duplicado:</strong> Este documento ya está registrado para otro usuario. 
+									Por favor, verifica el número de documento o contacta al administrador.
+								</div>
 							</div>
 						</div>
 					</div>
@@ -1196,16 +1398,21 @@ if ($resultGeneros) {
 									</label>
 								</div>
 							</div>
-							<div class="col-md-4">
-								<div class="checkbox">
-									<input type="checkbox" id="canal_sms" name="canales[]" value="sms">
-									<label for="canal_sms" style="cursor: pointer;">
-										<i class="fa fa-comment text-info"></i> <strong>SMS</strong>
-										<span id="sms_disponible" class="badge badge-success ml-2" style="display:none;">Disponible</span>
-										<span id="sms_no_disponible" class="badge badge-secondary ml-2" style="display:none;">No disponible</span>
-									</label>
-								</div>
-							</div>
+									<?php 
+									// Validar si la institución tiene el módulo SMS activo
+									$moduloSmsActivo = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS);
+									if ($moduloSmsActivo) { ?>
+									<div class="col-md-4">
+										<div class="checkbox">
+											<input type="checkbox" id="canal_sms" name="canales[]" value="sms">
+											<label for="canal_sms" style="cursor: pointer;">
+												<i class="fa fa-comment text-info"></i> <strong>SMS</strong>
+												<span id="sms_disponible" class="badge badge-success ml-2" style="display:none;">Disponible</span>
+												<span id="sms_no_disponible" class="badge badge-secondary ml-2" style="display:none;">No disponible</span>
+											</label>
+										</div>
+									</div>
+									<?php } ?>
 							<div class="col-md-4">
 								<div class="checkbox">
 									<input type="checkbox" id="canal_whatsapp" name="canales[]" value="whatsapp">
@@ -1331,17 +1538,26 @@ $(document).ready(function() {
 		
 		if (usuario.length === 0) {
 			$('#modal_validacion_usuario').html('').removeClass('text-success text-danger');
+			$('#alerta_usuario_existente').slideUp(300);
+			// Habilitar campos si el usuario está vacío
+			habilitarCamposFormulario(true);
 			return;
 		}
 		
 		if (usuario.length < 3) {
 			$('#modal_validacion_usuario').html('<small>Mínimo 3 caracteres</small>').removeClass('text-success').addClass('text-danger');
+			$('#alerta_usuario_existente').slideUp(300);
+			// Habilitar campos si el usuario es muy corto
+			habilitarCamposFormulario(true);
 			return;
 		}
 		
 		// Validar caracteres permitidos
 		if (!/^[A-Za-z0-9]+$/.test(usuario)) {
 			$('#modal_validacion_usuario').html('<small>Solo letras y números</small>').removeClass('text-success').addClass('text-danger');
+			$('#alerta_usuario_existente').slideUp(300);
+			// Habilitar campos si el formato es inválido
+			habilitarCamposFormulario(true);
 			return;
 		}
 		
@@ -1355,19 +1571,34 @@ $(document).ready(function() {
 				dataType: 'json',
 				success: function(response) {
 					console.log('Respuesta validación usuario:', response);
+					console.log('response.existe:', response.existe);
+					
 					if (response.error) {
 						console.error('Error de validación:', response.error);
 						if (response.debug) {
 							console.error('Debug:', response.debug);
 						}
 						$('#modal_validacion_usuario').html('<small><i class="fa fa-exclamation-triangle"></i> Error al validar</small>').removeClass('text-success text-danger').addClass('text-warning');
+						$('#alerta_usuario_existente').slideUp(300);
 						usuarioValidado = true; // Permitir continuar con advertencia
-					} else if (response.existe) {
-						$('#modal_validacion_usuario').html('<small><i class="fa fa-times"></i> ' + response.mensaje + '</small>').removeClass('text-success text-warning').addClass('text-danger');
+						// Habilitar campos en caso de error
+						habilitarCamposFormulario(true);
+					} else if (response.existe === true || response.existe === 'true' || response.existe === 1) {
+						console.log('Usuario existe - deshabilitando campos...');
+						$('#modal_validacion_usuario').html('<small><i class="fa fa-times"></i> ' + (response.mensaje || 'Este usuario ya existe') + '</small>').removeClass('text-success text-warning').addClass('text-danger');
+						$('#alerta_usuario_existente').slideDown(300);
 						usuarioValidado = false;
+						// Deshabilitar todos los campos excepto el usuario
+						habilitarCamposFormulario(false, 'usuario');
 					} else {
+						console.log('Usuario disponible - habilitando campos...');
 						$('#modal_validacion_usuario').html('<small><i class="fa fa-check"></i> Usuario disponible</small>').removeClass('text-danger text-warning').addClass('text-success');
+						$('#alerta_usuario_existente').slideUp(300);
 						usuarioValidado = true;
+						// Habilitar todos los campos (solo si el documento también está válido)
+						if (documentoValidado) {
+							habilitarCamposFormulario(true);
+						}
 					}
 				},
 				error: function(xhr, status, error) {
@@ -1376,11 +1607,68 @@ $(document).ready(function() {
 					console.error('Error:', error);
 					console.error('Response:', xhr.responseText);
 					$('#modal_validacion_usuario').html('<small><i class="fa fa-exclamation-triangle"></i> Error de conexión</small>').removeClass('text-danger text-success').addClass('text-warning');
+					$('#alerta_usuario_existente').slideUp(300);
 					usuarioValidado = true; // Permitir continuar si hay error de conexión
+					// Habilitar campos en caso de error
+					habilitarCamposFormulario(true);
 				}
 			});
 		}, 500);
 	});
+	
+	// Función para habilitar/deshabilitar campos del formulario
+	// excluirCampo: campo que NO se debe deshabilitar (ej: 'documento' o 'usuario')
+	function habilitarCamposFormulario(habilitar, excluirCampo = null) {
+		console.log('habilitarCamposFormulario llamado con:', habilitar, 'excluir:', excluirCampo);
+		
+		// Campos a habilitar/deshabilitar
+		const campos = [
+			{ selector: '#modal_tipoUsuario', nombre: 'tipoUsuario' },
+			{ selector: '#modal_usuario', nombre: 'usuario' },
+			{ selector: 'input[name="clave"]', nombre: 'clave' },
+			{ selector: 'input[name="nombre"]', nombre: 'nombre' },
+			{ selector: 'input[name="nombre2"]', nombre: 'nombre2' },
+			{ selector: 'input[name="apellido1"]', nombre: 'apellido1' },
+			{ selector: 'input[name="apellido2"]', nombre: 'apellido2' },
+			{ selector: 'input[name="email"]', nombre: 'email' },
+			{ selector: 'input[name="celular"]', nombre: 'celular' },
+			{ selector: 'select[name="tipoD"]', nombre: 'tipoD' },
+			{ selector: '#modal_documento', nombre: 'documento' },
+			{ selector: 'select[name="genero"]', nombre: 'genero' }
+		];
+		
+		// Buscar dentro del modal para asegurar que encontramos los elementos
+		const $modal = $('#modalAgregarUsuario');
+		
+		campos.forEach(function(campo) {
+			// Si este campo está en la lista de exclusión, no lo deshabilitamos
+			if (excluirCampo && campo.nombre === excluirCampo) {
+				return;
+			}
+			
+			const $campoElement = $modal.find(campo.selector);
+			if ($campoElement.length > 0) {
+				$campoElement.prop('disabled', !habilitar);
+				console.log('Campo ' + campo.nombre + ' ' + (habilitar ? 'habilitado' : 'deshabilitado'));
+			} else {
+				console.warn('Campo no encontrado: ' + campo.selector);
+			}
+		});
+		
+		// Habilitar/deshabilitar botón de guardar
+		const $btnGuardar = $modal.find('#btnModalGuardarUsuario');
+		if ($btnGuardar.length > 0) {
+			$btnGuardar.prop('disabled', !habilitar);
+			console.log('Botón guardar ' + (habilitar ? 'habilitado' : 'deshabilitado'));
+		}
+		
+		// Agregar clase visual para indicar estado deshabilitado
+		if (habilitar) {
+			$modal.find('.form-control, select').removeClass('bg-light');
+		} else {
+			$modal.find('.form-control:disabled, select:disabled').addClass('bg-light');
+		}
+	}
 	
 	// Validar documento en tiempo real
 	let timeoutValidacionDocumento;
@@ -1391,11 +1679,17 @@ $(document).ready(function() {
 		
 		if (documento.length === 0) {
 			$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+			$('#alerta_documento_existente').slideUp(300);
+			// Habilitar campos si el documento está vacío
+			habilitarCamposFormulario(true);
 			return;
 		}
 		
 		if (documento.length < 5) {
 			$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+			$('#alerta_documento_existente').slideUp(300);
+			// Habilitar campos si el documento es muy corto
+			habilitarCamposFormulario(true);
 			return;
 		}
 		
@@ -1409,18 +1703,32 @@ $(document).ready(function() {
 				dataType: 'json',
 				success: function(response) {
 					console.log('Respuesta validación documento:', response);
-					if (response.existe) {
-						$('#modal_validacion_documento').html('<small><i class="fa fa-times"></i> Este documento ya existe</small>').removeClass('text-success').addClass('text-danger');
+					console.log('response.existe:', response.existe);
+					
+					if (response.existe === true || response.existe === 'true' || response.existe === 1) {
+						console.log('Documento existe - deshabilitando campos...');
+						$('#modal_validacion_documento').html('<small><i class="fa fa-times"></i> ' + (response.mensaje || 'Este documento ya existe para otro usuario') + '</small>').removeClass('text-success').addClass('text-danger');
+						$('#alerta_documento_existente').slideDown(300);
 						documentoValidado = false;
+						// Deshabilitar todos los campos excepto el documento
+						habilitarCamposFormulario(false, 'documento');
 					} else {
+						console.log('Documento disponible - habilitando campos...');
 						$('#modal_validacion_documento').html('<small><i class="fa fa-check"></i> Documento disponible</small>').removeClass('text-danger').addClass('text-success');
+						$('#alerta_documento_existente').slideUp(300);
 						documentoValidado = true;
+						// Habilitar todos los campos (solo si el usuario también está válido)
+						if (usuarioValidado) {
+							habilitarCamposFormulario(true);
+						}
 					}
 				},
 				error: function(xhr, status, error) {
 					console.error('Error en validación documento:', status, error);
 					$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
 					documentoValidado = true; // Permitir continuar si hay error de conexión
+					// Habilitar campos en caso de error
+					habilitarCamposFormulario(true);
 				}
 			});
 		}, 500);
@@ -1431,8 +1739,17 @@ $(document).ready(function() {
 		$('#formAgregarUsuario')[0].reset();
 		$('#modal_validacion_usuario').html('').removeClass('text-success text-danger text-warning');
 		$('#modal_validacion_documento').html('').removeClass('text-success text-danger');
+		$('#alerta_documento_existente').hide();
+		$('#alerta_usuario_existente').hide();
 		usuarioValidado = false;
 		documentoValidado = true;
+		// Asegurar que todos los campos estén habilitados al cerrar
+		habilitarCamposFormulario(true);
+	});
+	
+	// También habilitar campos cuando se abre el modal
+	$('#modalAgregarUsuario').on('show.bs.modal', function() {
+		habilitarCamposFormulario(true);
 	});
 	
 	// Guardar usuario
@@ -1872,6 +2189,9 @@ $(document).ready(function() {
 		$('#comunicado_email_usuario').text(email || 'No registrado');
 		$('#comunicado_telefono_usuario').text(telefono || 'No registrado');
 		
+		// Verificar si el checkbox de SMS existe (solo si el módulo está activo)
+		var checkboxSmsExiste = $('#canal_sms').length > 0;
+		
 		// Configurar checkboxes según disponibilidad
 		if (tieneEmail) {
 			$('#canal_email').prop('disabled', false).prop('checked', false);
@@ -1884,17 +2204,23 @@ $(document).ready(function() {
 		}
 		
 		if (tieneTelefono) {
-			$('#canal_sms').prop('disabled', false).prop('checked', false);
+			// Solo configurar SMS si el checkbox existe (módulo activo)
+			if (checkboxSmsExiste) {
+				$('#canal_sms').prop('disabled', false).prop('checked', false);
+				$('#sms_disponible').show();
+				$('#sms_no_disponible').hide();
+			}
 			$('#canal_whatsapp').prop('disabled', false).prop('checked', false);
-			$('#sms_disponible').show();
-			$('#sms_no_disponible').hide();
 			$('#whatsapp_disponible').show();
 			$('#whatsapp_no_disponible').hide();
 		} else {
-			$('#canal_sms').prop('disabled', true).prop('checked', false);
+			// Solo configurar SMS si el checkbox existe (módulo activo)
+			if (checkboxSmsExiste) {
+				$('#canal_sms').prop('disabled', true).prop('checked', false);
+				$('#sms_disponible').hide();
+				$('#sms_no_disponible').show();
+			}
 			$('#canal_whatsapp').prop('disabled', true).prop('checked', false);
-			$('#sms_disponible').hide();
-			$('#sms_no_disponible').show();
 			$('#whatsapp_disponible').hide();
 			$('#whatsapp_no_disponible').show();
 		}

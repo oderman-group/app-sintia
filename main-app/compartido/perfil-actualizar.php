@@ -32,29 +32,35 @@ if (empty($_POST["tipoNegocio"])) $_POST["tipoNegocio"] = '0';
 
 //Si es estudiante
 if ($_POST["tipoUsuario"] == TIPO_ESTUDIANTE) {
+    // Sincronizar campos compartidos: actualizar usuario primero
     $update = [
         "uss_nombre" => strtoupper($_POST["nombre"]),
-        "uss_nombre2" => strtoupper($_POST["nombre2"]),
+        "uss_nombre2" => strtoupper($_POST["nombre2"] ?? ''),
         "uss_apellido1" => strtoupper($_POST["apellido1"]),
-        "uss_apellido2" => strtoupper($_POST["apellido2"]),
-        "uss_email" => strtolower($_POST["email"]),
-        "uss_celular" => $_POST["celular"],
-        "uss_lugar_nacimiento" => $_POST["lNacimiento"],
-        "uss_telefono" => $_POST["telefono"],
+        "uss_apellido2" => strtoupper($_POST["apellido2"] ?? ''),
+        "uss_email" => strtolower($_POST["email"] ?? ''),
+        "uss_celular" => $_POST["celular"] ?? '',
+        "uss_lugar_nacimiento" => $_POST["lNacimiento"] ?? '',
+        "uss_telefono" => $_POST["telefono"] ?? '',
         "uss_notificacion" => $notificaciones,
         "uss_mostrar_edad" => $mostrarEdad
     ];
     UsuariosPadre::actualizarUsuarios($config, $_SESSION["id"], $update);
 
-    //Actualizar matricula a los estudiantes
-    $update = [
-        "mat_genero" => $_POST["genero"],
-        "mat_fecha_nacimiento" => $_POST["fechaN"],
-        "mat_celular" => $_POST["celular"],
-        "mat_lugar_nacimiento" => $_POST["lNacimiento"],
-        "mat_telefono" => $_POST["telefono"]
+    // Sincronizar campos compartidos: actualizar matrícula
+    $updateMatricula = [
+        "mat_nombres" => strtoupper($_POST["nombre"]),
+        "mat_nombre2" => strtoupper($_POST["nombre2"] ?? ''),
+        "mat_primer_apellido" => strtoupper($_POST["apellido1"]),
+        "mat_segundo_apellido" => strtoupper($_POST["apellido2"] ?? ''),
+        "mat_email" => strtolower($_POST["email"] ?? ''),
+        "mat_genero" => $_POST["genero"] ?? '',
+        "mat_fecha_nacimiento" => $_POST["fechaN"] ?? '',
+        "mat_celular" => $_POST["celular"] ?? '',
+        "mat_lugar_nacimiento" => $_POST["lNacimiento"] ?? '',
+        "mat_telefono" => $_POST["telefono"] ?? ''
     ];
-    Estudiantes::actualizarMatriculasPorIdUsuario($config, $_SESSION["id"], $update);
+    Estudiantes::actualizarMatriculasPorIdUsuario($config, $_SESSION["id"], $updateMatricula);
 } else {
     $documento = $_POST["documento"] ?? null;
 

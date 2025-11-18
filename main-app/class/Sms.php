@@ -12,6 +12,42 @@ class Sms {
     private const TWILIO_AUTH_TOKEN  = TWILIO_AUTH_TOKEN;
 
     public const PREFIX_COL = "+57";
+    
+    /**
+     * Obtiene el número de teléfono de Twilio según el environment
+     * @return string Número de teléfono para SMS
+     */
+    private static function getTwilioFromNumber(): string {
+        // Verificar si ENVIROMENT está definido
+        if (defined('ENVIROMENT')) {
+            if (ENVIROMENT === 'PROD') {
+                return defined('TWILIO_FROM_PHONE_NUMBER_PROD') ? TWILIO_FROM_PHONE_NUMBER_PROD : TWILIO_FROM_PHONE_NUMBER;
+            } else {
+                // LOCAL o TEST - usar número de prueba
+                return defined('TWILIO_FROM_PHONE_NUMBER_TEST') ? TWILIO_FROM_PHONE_NUMBER_TEST : '+15005550006';
+            }
+        }
+        // Si no está definido, usar número de prueba por defecto
+        return defined('TWILIO_FROM_PHONE_NUMBER_TEST') ? TWILIO_FROM_PHONE_NUMBER_TEST : '+15005550006';
+    }
+    
+    /**
+     * Obtiene el número de WhatsApp de Twilio según el environment
+     * @return string Número de WhatsApp
+     */
+    private static function getTwilioWhatsAppFromNumber(): string {
+        // Verificar si ENVIROMENT está definido
+        if (defined('ENVIROMENT')) {
+            if (ENVIROMENT === 'PROD') {
+                return defined('TWILIO_WHATSAPP_FROM_NUMBER_PROD') ? TWILIO_WHATSAPP_FROM_NUMBER_PROD : TWILIO_WHATSAPP_FROM_NUMBER;
+            } else {
+                // LOCAL o TEST - usar Sandbox
+                return defined('TWILIO_WHATSAPP_FROM_NUMBER_TEST') ? TWILIO_WHATSAPP_FROM_NUMBER_TEST : 'whatsapp:+14155238886';
+            }
+        }
+        // Si no está definido, usar Sandbox por defecto
+        return defined('TWILIO_WHATSAPP_FROM_NUMBER_TEST') ? TWILIO_WHATSAPP_FROM_NUMBER_TEST : 'whatsapp:+14155238886';
+    }
 
     /**
      * Sends a WhatsApp message using the Twilio API.
@@ -30,8 +66,10 @@ class Sms {
                 throw new Exception("Las credenciales de Twilio no están configuradas correctamente.");
             }
 
-            // Validar que el número de WhatsApp esté configurado
-            if (empty(TWILIO_WHATSAPP_FROM_NUMBER)) {
+            // Obtener el número de WhatsApp según el environment
+            $whatsappFromNumber = self::getTwilioWhatsAppFromNumber();
+            
+            if (empty($whatsappFromNumber)) {
                 throw new Exception("El número de WhatsApp de Twilio no está configurado. Verifica TWILIO_WHATSAPP_FROM_NUMBER en sensitive.php");
             }
 
@@ -42,7 +80,7 @@ class Sms {
 
             // Preparar opciones del mensaje
             $opcionesMensaje = [
-                "from" => TWILIO_WHATSAPP_FROM_NUMBER,
+                "from" => $whatsappFromNumber,
             ];
 
             // Si hay un template configurado, usarlo (para mensajes iniciados por el negocio en producción)
@@ -105,7 +143,7 @@ class Sms {
      *                    - 'mensaje': The message to be sent.
      *
      * @throws Exception Si hay un error al enviar el SMS
-     * @return void
+     * @return object Retorna el objeto message de Twilio
      */
     public function enviarSms(array $data) {
         try {
@@ -115,12 +153,29 @@ class Sms {
             }
 
             $twilio = new Client(self::TWILIO_ACCOUNT_SID, self::TWILIO_AUTH_TOKEN);
+            
+            // Obtener el número de teléfono según el environment
+            $smsFromNumber = self::getTwilioFromNumber();
+            
+            // Determinar el número de destino y el mensaje
+            $numeroDestino = $data['telefono'];
+            $mensajeOriginal = $data['mensaje'];
+            $numeroRealDestino = $numeroDestino; // Guardar el número real para el mensaje
+            
+            // Si no es PROD, redirigir a número de prueba
+            if (defined('ENVIROMENT') && ENVIROMENT !== 'PROD') {
+                if (defined('TWILIO_SMS_TEST_DESTINATION') && !empty(TWILIO_SMS_TEST_DESTINATION)) {
+                    $numeroDestino = TWILIO_SMS_TEST_DESTINATION;
+                    // Agregar nota al mensaje indicando el destinatario original
+                    $mensajeOriginal = $data['mensaje'] . "\n\n[PRUEBA - Mensaje desviado. Destinatario original: +57" . $numeroRealDestino . "]";
+                }
+            }
 
             $message = $twilio->messages->create(
-                self::PREFIX_COL.$data['telefono'],
+                self::PREFIX_COL.$numeroDestino,
                 [
-                    "body" => $data['mensaje'],
-                    "from" => TWILIO_FROM_PHONE_NUMBER,
+                    "body" => $mensajeOriginal,
+                    "from" => $smsFromNumber,
                 ]
             );
 

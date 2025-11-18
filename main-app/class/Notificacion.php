@@ -65,6 +65,11 @@ class Notificacion {
 
         switch ($canal) {
             case self::CANAL_SMS:
+                // Validar que la institución tenga el módulo SMS activo
+                require_once(ROOT_PATH . "/main-app/class/Modulos.php");
+                if (!Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS)) {
+                    throw new Exception("El módulo SMS no está activo para esta institución");
+                }
                 $sms = new Sms();
                 $data['mensaje'] = $mensaje;
                 $sms->enviarSms($data);

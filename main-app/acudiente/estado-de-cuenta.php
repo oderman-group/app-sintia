@@ -4,6 +4,7 @@
 <?php 
 require_once(ROOT_PATH."/main-app/class/Movimientos.php"); 
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 // Obtener información del estudiante para código de tesorería (ICOLVEN)
 $codigoTesoreria = '';
@@ -453,8 +454,8 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                         </div>
                     </div>
 
-                    <!-- Acciones Especiales ICOLVEN -->
-                    <?php if($config['conf_id_institucion'] == ICOLVEN) {?>
+                    <!-- Acciones Especiales -->
+                    <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {?>
                     <div class="acciones-especiales">
                         <h4>
                             <i class="fa fa-info-circle"></i>

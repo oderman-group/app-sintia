@@ -1507,20 +1507,26 @@ class Estudiantes {
 
         if (!empty($selectConsulta)) {
             $stringSelect = implode(", ", $selectConsulta);
-        };
+            // Si gra_nombre no está explícitamente en el SELECT, agregarlo
+            if (strpos($stringSelect, 'gra_nombre') === false && strpos($stringSelect, 'gra.gra_nombre') === false) {
+                $stringSelect .= ", gra.gra_nombre as gra_nombre";
+            }
+        } else {
+            // Si no hay selectConsulta, agregar gra_nombre al SELECT *
+            $stringSelect .= ", gra.gra_nombre as gra_nombre";
+        }
 
         $sql = " SELECT 
-                 $stringSelect  
+                 $stringSelect
                  FROM ".BD_ACADEMICA.".academico_matriculas mat
 
                  INNER JOIN ".BD_ADMISIONES.".aspirantes asp
-                 ON asp_id = mat.mat_solicitud_inscripcion
-                 AND asp_institucion = ?
+                 ON asp.asp_id = mat.mat_solicitud_inscripcion
+                 AND asp.asp_institucion = ?
                  
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
-                 ON gra_id = asp_grado 
-                 AND gra.institucion = mat.institucion 
-                 AND gra.year = mat.year
+                 ON gra.gra_id = asp.asp_grado 
+                 AND gra.institucion = mat.institucion
 
                  WHERE mat.mat_estado_matricula = ".EN_INSCRIPCION." 
                  AND mat.institucion = ? 

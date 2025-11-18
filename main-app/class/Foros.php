@@ -232,6 +232,68 @@ class Foros{
 
         return $resultado;
     }
+
+    /**
+     * Este metodo trae todas las respuestas de todos los comentarios de un foro
+     * en una sola consulta, organizadas en un mapa [id_comentario] => [array de respuestas]
+     * 
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idForo
+     * 
+     * @return array $mapa Mapa [id_comentario] => [array de respuestas]
+     */
+    public static function traerRespuestasForoMapa(mysqli $conexion, array $config, string $idForo): array {
+        // Primero obtener todos los IDs de comentarios del foro
+        $sqlComentarios = "SELECT com_id 
+                          FROM " . BD_ACADEMICA . ".academico_actividad_foro_comentarios 
+                          WHERE com_id_foro = ? 
+                          AND institucion = ? 
+                          AND year = ?";
+        
+        $parametrosComentarios = [$idForo, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $resultadoComentarios = BindSQL::prepararSQL($sqlComentarios, $parametrosComentarios);
+        
+        $idsComentarios = [];
+        while ($fila = mysqli_fetch_array($resultadoComentarios, MYSQLI_BOTH)) {
+            $idsComentarios[] = $fila['com_id'];
+        }
+        
+        $mapa = [];
+        if (empty($idsComentarios)) {
+            return $mapa;
+        }
+        
+        // Ahora obtener todas las respuestas de todos los comentarios
+        $idsComentariosEsc = array_map(function($id) use ($conexion) {
+            return "'" . mysqli_real_escape_string($conexion, $id) . "'";
+        }, $idsComentarios);
+        $inComentarios = implode(',', $idsComentariosEsc);
+        
+        $sql = "SELECT fore.*, uss.uss_nombre 
+                FROM " . BD_ACADEMICA . ".academico_actividad_foro_respuestas fore
+                INNER JOIN " . BD_GENERAL . ".usuarios uss 
+                    ON uss.uss_id = fore.fore_id_estudiante 
+                    AND uss.institucion = fore.institucion 
+                    AND uss.year = fore.year
+                WHERE fore.fore_id_comentario IN ({$inComentarios})
+                AND fore.institucion = ?
+                AND fore.year = ?
+                ORDER BY fore.fore_id_comentario, fore.fore_id ASC";
+        
+        $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idComentario = $fila['fore_id_comentario'];
+            if (!isset($mapa[$idComentario])) {
+                $mapa[$idComentario] = [];
+            }
+            $mapa[$idComentario][] = $fila;
+        }
+        
+        return $mapa;
+    }
     
     /**
      * Este metodo me elimina las respuesta de un comentario
@@ -298,7 +360,7 @@ class Foros{
         global $conexionPDO;
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_actividad_foro_respuestas');
 
-        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividad_foro_respuestas(fore_id, fore_id_estudiante, fore_id_comentario, fore_fecha, fore_respuesta, institucion, year)VALUES(?, ?', ?, now(), ?, ?, ?)";
+        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_actividad_foro_respuestas(fore_id, fore_id_estudiante, fore_id_comentario, fore_fecha, fore_respuesta, institucion, year)VALUES(?, ?, ?, now(), ?, ?, ?)";
         
         $parametros = [$codigo, $_SESSION["id"], $POST["comentario"], mysqli_real_escape_string($conexion,$POST["contenido"]), $config['conf_id_institucion'], $_SESSION["bd"]];
 

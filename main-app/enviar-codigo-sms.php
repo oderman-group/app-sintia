@@ -5,6 +5,7 @@ try {
     require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
     require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
     require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
+    require_once(ROOT_PATH . "/main-app/class/Modulos.php");
 
     if (empty($_REQUEST['usuarioId'])) {
         echo json_encode([
@@ -21,6 +22,15 @@ try {
         echo json_encode([
             "success" => false, 
             "message" => "Usuario no encontrado"
+        ]);
+        exit;
+    }
+    
+    // Validar que la institución tenga el módulo SMS activo
+    if (!Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS)) {
+        echo json_encode([
+            "success" => false, 
+            "message" => "El módulo SMS no está activo para esta institución"
         ]);
         exit;
     }

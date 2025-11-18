@@ -11,6 +11,37 @@ AND year={$config["conf_agno"]}
 $grados = $pdoI->prepare($gradosConsulta);
 $grados->execute();
 $num = $grados->rowCount();
+
+// Función para limpiar solo caracteres UTF-8 realmente inválidos (no elimina tildes válidas)
+function limpiarUTF8($texto) {
+    if (empty($texto) || !is_string($texto)) {
+        return '';
+    }
+    
+    // Verificar si el texto ya es UTF-8 válido
+    if (mb_check_encoding($texto, 'UTF-8')) {
+        // Si es válido, solo limpiar caracteres de control invisibles pero mantener tildes
+        $texto = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $texto);
+        return $texto;
+    }
+    
+    // Si no es UTF-8 válido, intentar convertir
+    $textoOriginal = $texto;
+    
+    // Intentar con mb_convert_encoding primero (más conservador)
+    $texto = mb_convert_encoding($textoOriginal, 'UTF-8', 'UTF-8');
+    
+    // Si aún no es válido, usar iconv como último recurso
+    if (!mb_check_encoding($texto, 'UTF-8')) {
+        $texto = @iconv('UTF-8', 'UTF-8//IGNORE', $textoOriginal);
+        if ($texto === false) {
+            // Si todo falla, devolver el texto original limpio de caracteres de control
+            $texto = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $textoOriginal);
+        }
+    }
+    
+    return $texto;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -217,6 +248,16 @@ $num = $grados->rowCount();
         
         .form-control.is-invalid {
             border-color: #d93025;
+        }
+        
+        .form-control.bg-light {
+            background-color: #e9ecef !important;
+            cursor: not-allowed;
+        }
+        
+        select.form-control.bg-light {
+            background-color: #e9ecef !important;
+            cursor: not-allowed;
         }
         
         select.form-control {
@@ -526,11 +567,196 @@ $num = $grados->rowCount();
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* Skeleton Loader */
+        .skeleton-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .skeleton-content {
+            max-width: 1000px;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        .skeleton-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .skeleton-hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .skeleton-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-line {
+            height: 20px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-line.short {
+            width: 60%;
+            margin: 0 auto 16px;
+        }
+        
+        .skeleton-line.medium {
+            width: 80%;
+            margin: 0 auto 16px;
+        }
+        
+        .skeleton-line.long {
+            width: 100%;
+        }
+        
+        .skeleton-form-group {
+            margin-bottom: 24px;
+        }
+        
+        .skeleton-label {
+            height: 14px;
+            width: 40%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-input {
+            height: 48px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 12px;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        .skeleton-button {
+            height: 56px;
+            width: 300px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            border-radius: 16px;
+            margin: 30px auto;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        
+        .skeleton-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+        
+        .page-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+        }
+        
+        .page-content.loaded {
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body>
-    <div class="admision-container">
+    <!-- Skeleton Loader -->
+    <div class="skeleton-loader" id="skeletonLoader">
+        <div class="skeleton-content">
+            <!-- Hero Skeleton -->
+            <div class="skeleton-card skeleton-hero">
+                <div class="skeleton-icon"></div>
+                <div class="skeleton-line short" style="height: 32px; margin-bottom: 16px;"></div>
+                <div class="skeleton-line medium" style="height: 18px; margin-bottom: 24px;"></div>
+                <div class="skeleton-line" style="width: 200px; height: 80px; margin: 0 auto; border-radius: 16px;"></div>
+            </div>
+            
+            <!-- Form Skeleton -->
+            <div class="skeleton-card">
+                <div class="skeleton-line" style="width: 60%; height: 24px; margin-bottom: 30px;"></div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="skeleton-form-group">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skeleton-button"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="admision-container page-content" id="pageContent">
         <?php include("menu.php"); ?>
         
         <!-- Hero Section -->
@@ -582,7 +808,7 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tipo de documento <span class="required">*</span></label>
-                                <select name="tipoDocumento" class="form-control" required>
+                                <select name="tipoDocumento" id="tipoDocumentoEstudiante" class="form-control" required>
                                     <option value="">Seleccionar...</option>
                                     <option value="105">Cédula de ciudadanía</option>
                                     <option value="106">NUIP</option>
@@ -598,14 +824,19 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="documento" required>
+                                <input type="text" class="form-control" name="documento" id="documentoEstudiante" required>
+                                <small id="validacionDocumentoEstudiante" class="form-text"></small>
+                                <div id="alertaDocumentoEstudiante" class="alert alert-info mt-2" style="display: none;">
+                                    <i class="fa fa-info-circle"></i> 
+                                    <strong>Estudiante encontrado:</strong> <span id="mensajeDocumentoEstudiante"></span>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer apellido <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="apellido1" required>
+                                <input type="text" class="form-control" name="apellido1" id="apellido1Estudiante" required>
                             </div>
                         </div>
                     </div>
@@ -614,24 +845,28 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo apellido</label>
-                                <input type="text" class="form-control" name="apellido2">
+                                <input type="text" class="form-control" name="apellido2" id="apellido2Estudiante">
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer nombre <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="nombreEstudiante" required>
+                                <input type="text" class="form-control" name="nombreEstudiante" id="nombreEstudiante" required>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo nombre</label>
-                                <input type="text" class="form-control" name="nombreEstudiante2">
+                                <input type="text" class="form-control" name="nombreEstudiante2" id="nombreEstudiante2">
                             </div>
                         </div>
                     </div>
+                    
+                    <input type="hidden" name="estudianteIdExistente" id="estudianteIdExistente" value="">
+                    <input type="hidden" name="estudianteMatIdExistente" id="estudianteMatIdExistente" value="">
+                    <input type="hidden" name="estudianteExisteEnYear" id="estudianteExisteEnYear" value="">
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -643,7 +878,7 @@ $num = $grados->rowCount();
                                     $grados->execute(); // Reejecutar query
                                     while ($datosGrado = $grados->fetch()) {
                                     ?>
-                                        <option value="<?= $datosGrado['gra_id']; ?>"><?= $datosGrado['gra_nombre']; ?></option>
+                                        <option value="<?= $datosGrado['gra_id']; ?>"><?= htmlspecialchars(limpiarUTF8($datosGrado['gra_nombre'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
@@ -673,7 +908,7 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Tipo de documento <span class="required">*</span></label>
-                                <select name="tipoDocumentoAcudiente" class="form-control" required>
+                                <select name="tipoDocumentoAcudiente" id="tipoDocumentoAcudiente" class="form-control" required>
                                     <option value="">Seleccionar...</option>
                                     <option value="105">Cédula de ciudadanía</option>
                                     <option value="106">NUIP</option>
@@ -689,14 +924,19 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="documentoAcudiente" required>
+                                <input type="text" class="form-control" name="documentoAcudiente" id="documentoAcudiente" required>
+                                <small id="validacionDocumentoAcudiente" class="form-text"></small>
+                                <div id="alertaDocumentoAcudiente" class="alert alert-info mt-2" style="display: none;">
+                                    <i class="fa fa-info-circle"></i> 
+                                    <strong>Acudiente encontrado:</strong> <span id="mensajeDocumentoAcudiente"></span>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer apellido <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="apellido1Acudiente" required>
+                                <input type="text" class="form-control" name="apellido1Acudiente" id="apellido1Acudiente" required>
                             </div>
                         </div>
                     </div>
@@ -705,21 +945,21 @@ $num = $grados->rowCount();
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo apellido</label>
-                                <input type="text" class="form-control" name="apellido2Acudiente">
+                                <input type="text" class="form-control" name="apellido2Acudiente" id="apellido2Acudiente">
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer nombre <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="nombre1Acudiente" required>
+                                <input type="text" class="form-control" name="nombre1Acudiente" id="nombre1Acudiente" required>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo nombre</label>
-                                <input type="text" class="form-control" name="nombre2Acudiente">
+                                <input type="text" class="form-control" name="nombre2Acudiente" id="nombre2Acudiente">
                             </div>
                         </div>
                     </div>
@@ -728,17 +968,19 @@ $num = $grados->rowCount();
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Email <span class="required">*</span></label>
-                                <input type="email" class="form-control" name="email" required>
+                                <input type="email" class="form-control" name="email" id="emailAcudiente" required>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Celular <span class="required">*</span></label>
-                                <input type="tel" class="form-control" name="celular" required>
+                                <input type="tel" class="form-control" name="celular" id="celularAcudiente" required>
                             </div>
                         </div>
                     </div>
+                    
+                    <input type="hidden" name="acudienteIdExistente" id="acudienteIdExistente" value="">
                 </div>
                 
                 <!-- Sección 3: Políticas y Confirmación -->
@@ -844,23 +1086,410 @@ $num = $grados->rowCount();
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
     <script>
+        // Función para ocultar el skeleton loader cuando la página esté completamente cargada
+        function ocultarSkeletonLoader() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            const pageContent = document.getElementById('pageContent');
+            
+            if (skeletonLoader && pageContent) {
+                // Agregar clase para mostrar el contenido
+                pageContent.classList.add('loaded');
+                
+                // Ocultar skeleton con transición suave
+                setTimeout(function() {
+                    skeletonLoader.classList.add('hidden');
+                    
+                    // Remover del DOM después de la transición para mejorar rendimiento
+                    setTimeout(function() {
+                        skeletonLoader.style.display = 'none';
+                    }, 500);
+                }, 100);
+            }
+        }
+        
+        // Prevenir interacciones mientras el skeleton está visible
+        document.addEventListener('DOMContentLoaded', function() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            
+            // Prevenir clicks y otras interacciones en el skeleton
+            if (skeletonLoader) {
+                skeletonLoader.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+                
+                skeletonLoader.addEventListener('keydown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                });
+                
+                // Prevenir selección de texto
+                skeletonLoader.style.userSelect = 'none';
+                skeletonLoader.style.pointerEvents = 'auto';
+            }
+        });
+        
+        // Ocultar skeleton cuando todo esté cargado
+        window.addEventListener('load', function() {
+            // Esperar un momento para asegurar que todo esté renderizado
+            setTimeout(ocultarSkeletonLoader, 300);
+        });
+        
+        // Fallback: Si window.load no se dispara, ocultar después de un tiempo razonable
+        setTimeout(function() {
+            const skeletonLoader = document.getElementById('skeletonLoader');
+            if (skeletonLoader && !skeletonLoader.classList.contains('hidden')) {
+                ocultarSkeletonLoader();
+            }
+        }, 3000);
+        
         function mostrarPoliticas(){
             $("#exampleModal").modal("show");
         }
+        
+        // Variables globales para validación
+        var documentoEstudianteValidado = false;
+        var documentoAcudienteValidado = false;
+        var acudienteExiste = false;
         
         // Validación en tiempo real y progreso
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('formAdmision');
             const inputs = form.querySelectorAll('input[required], select[required]');
             
+            // Validar documento del estudiante
+            var timeoutValidacionEstudiante;
+            $('#documentoEstudiante').on('keyup', function() {
+                clearTimeout(timeoutValidacionEstudiante);
+                const documento = $(this).val().trim();
+                documentoEstudianteValidado = false;
+                
+                if (documento.length === 0) {
+                    $('#validacionDocumentoEstudiante').html('').removeClass('text-success text-danger');
+                    $('#alertaDocumentoEstudiante').slideUp(300);
+                    return;
+                }
+                
+                if (documento.length < 5) {
+                    $('#validacionDocumentoEstudiante').html('<small>Mínimo 5 caracteres</small>').removeClass('text-success').addClass('text-danger');
+                    $('#alertaDocumentoEstudiante').slideUp(300);
+                    return;
+                }
+                
+                $('#validacionDocumentoEstudiante').html('<small><i class="fa fa-spinner fa-spin"></i> Validando...</small>').removeClass('text-success text-danger');
+                
+                timeoutValidacionEstudiante = setTimeout(function() {
+                    $.ajax({
+                        url: 'ajax-validar-documentos.php',
+                        type: 'POST',
+                        data: {
+                            tipo: 'estudiante',
+                            documento: documento,
+                            idInst: '<?= $_REQUEST['idInst']; ?>',
+                            year: '<?= $config["cfgi_year_inscripcion"]; ?>'
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success && response.existe === true) {
+                                // Si existe en aspirantes para este año, bloquear todo
+                                if (response.mensaje && response.mensaje.includes('solicitud de admisión registrada para este año')) {
+                                    $('#validacionDocumentoEstudiante').html('<small><i class="fa fa-times"></i> ' + (response.mensaje || 'Este documento ya existe') + '</small>').removeClass('text-success').addClass('text-danger');
+                                    $('#mensajeDocumentoEstudiante').text(response.mensaje || 'Este documento ya está registrado');
+                                    $('#alertaDocumentoEstudiante').removeClass('alert-info').addClass('alert-danger').slideDown(300);
+                                    documentoEstudianteValidado = false;
+                                    $('#documentoEstudiante').addClass('is-invalid').removeClass('is-valid');
+                                    habilitarCamposFormulario(false);
+                                } else {
+                                    // Si existe en matrículas/usuarios, cargar datos
+                                    $('#validacionDocumentoEstudiante').html('<small><i class="fa fa-info-circle"></i> ' + (response.mensaje || 'Estudiante encontrado') + '</small>').removeClass('text-danger').addClass('text-info');
+                                    $('#mensajeDocumentoEstudiante').text(response.mensaje || 'Estudiante encontrado');
+                                    $('#alertaDocumentoEstudiante').removeClass('alert-danger').addClass('alert-info').slideDown(300);
+                                    documentoEstudianteValidado = true;
+                                    $('#documentoEstudiante').addClass('is-valid').removeClass('is-invalid');
+                                    
+                                    // Cargar datos si están disponibles
+                                    if (response.datos) {
+                                        if (response.datos.tipo_documento) {
+                                            $('#tipoDocumentoEstudiante').val(response.datos.tipo_documento).trigger('change');
+                                        }
+                                        if (response.datos.nombre1) {
+                                            $('#nombreEstudiante').val(response.datos.nombre1);
+                                        }
+                                        if (response.datos.nombre2) {
+                                            $('#nombreEstudiante2').val(response.datos.nombre2);
+                                        }
+                                        if (response.datos.apellido1) {
+                                            $('#apellido1Estudiante').val(response.datos.apellido1);
+                                        }
+                                        if (response.datos.apellido2) {
+                                            $('#apellido2Estudiante').val(response.datos.apellido2);
+                                        }
+                                        
+                                        // Guardar IDs para el guardado
+                                        if (response.datos.uss_id) {
+                                            $('#estudianteIdExistente').val(response.datos.uss_id);
+                                        }
+                                        if (response.datos.mat_id) {
+                                            $('#estudianteMatIdExistente').val(response.datos.mat_id);
+                                        }
+                                        if (response.existe_en_year !== undefined) {
+                                            $('#estudianteExisteEnYear').val(response.existe_en_year ? '1' : '0');
+                                        }
+                                        
+                                        // Si existe en el año, hacer readonly los campos básicos
+                                        if (response.existe_en_year === true) {
+                                            $('#tipoDocumentoEstudiante').prop('readonly', true).addClass('bg-light');
+                                            $('#documentoEstudiante').prop('readonly', true).addClass('bg-light');
+                                            $('#nombreEstudiante').prop('readonly', true).addClass('bg-light');
+                                            $('#nombreEstudiante2').prop('readonly', true).addClass('bg-light');
+                                            $('#apellido1Estudiante').prop('readonly', true).addClass('bg-light');
+                                            $('#apellido2Estudiante').prop('readonly', true).addClass('bg-light');
+                                        }
+                                    }
+                                    
+                                    // Habilitar campos si el acudiente también está validado
+                                    if (documentoAcudienteValidado) {
+                                        habilitarCamposFormulario(true);
+                                    }
+                                }
+                            } else {
+                                $('#validacionDocumentoEstudiante').html('<small><i class="fa fa-check"></i> Documento disponible</small>').removeClass('text-danger text-info').addClass('text-success');
+                                $('#alertaDocumentoEstudiante').slideUp(300);
+                                documentoEstudianteValidado = true;
+                                $('#documentoEstudiante').addClass('is-valid').removeClass('is-invalid');
+                                
+                                // Limpiar campos ocultos
+                                $('#estudianteIdExistente').val('');
+                                $('#estudianteMatIdExistente').val('');
+                                $('#estudianteExisteEnYear').val('');
+                                
+                                // Habilitar todos los campos si el documento del acudiente también está validado
+                                if (documentoAcudienteValidado) {
+                                    habilitarCamposFormulario(true);
+                                }
+                            }
+                            actualizarProgreso();
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error en validación estudiante:', error);
+                            $('#validacionDocumentoEstudiante').html('').removeClass('text-success text-danger');
+                            documentoEstudianteValidado = true; // Permitir continuar en caso de error
+                        }
+                    });
+                }, 500);
+            });
+            
+            // Validar documento del acudiente
+            var timeoutValidacionAcudiente;
+            $('#documentoAcudiente').on('keyup', function() {
+                clearTimeout(timeoutValidacionAcudiente);
+                const documento = $(this).val().trim();
+                documentoAcudienteValidado = false;
+                acudienteExiste = false;
+                
+                if (documento.length === 0) {
+                    $('#validacionDocumentoAcudiente').html('').removeClass('text-success text-danger');
+                    $('#alertaDocumentoAcudiente').slideUp(300);
+                    // Habilitar campos si se borra el documento
+                    habilitarCamposAcudiente(true);
+                    return;
+                }
+                
+                if (documento.length < 5) {
+                    $('#validacionDocumentoAcudiente').html('<small>Mínimo 5 caracteres</small>').removeClass('text-success').addClass('text-danger');
+                    $('#alertaDocumentoAcudiente').slideUp(300);
+                    habilitarCamposAcudiente(true);
+                    return;
+                }
+                
+                $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-spinner fa-spin"></i> Validando...</small>').removeClass('text-success text-danger');
+                
+                timeoutValidacionAcudiente = setTimeout(function() {
+                    $.ajax({
+                        url: 'ajax-validar-documentos.php',
+                        type: 'POST',
+                        data: {
+                            tipo: 'acudiente',
+                            documento: documento,
+                            idInst: '<?= $_REQUEST['idInst']; ?>',
+                            year: '<?= $config["cfgi_year_inscripcion"]; ?>'
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Respuesta AJAX acudiente:', response);
+                            
+                            // Verificar que la respuesta sea válida
+                            if (!response || typeof response !== 'object') {
+                                console.error('Respuesta inválida:', response);
+                                $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-exclamation-triangle"></i> Error en la validación</small>').removeClass('text-success').addClass('text-danger');
+                                documentoAcudienteValidado = false;
+                                actualizarProgreso();
+                                return;
+                            }
+                            
+                            // Verificar si existe
+                            if (response.existe === true) {
+                                // Verificar que tenga datos
+                                if (response.datos && response.datos.uss_id) {
+                                    // Acudiente existe, cargar datos
+                                    acudienteExiste = true;
+                                    $('#acudienteIdExistente').val(response.datos.uss_id);
+                                    $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-check"></i> ' + (response.mensaje || 'Acudiente encontrado') + '</small>').removeClass('text-danger').addClass('text-success');
+                                    $('#mensajeDocumentoAcudiente').text(response.mensaje || 'Se cargarán los datos del acudiente registrado');
+                                    $('#alertaDocumentoAcudiente').removeClass('alert-danger').addClass('alert-info').slideDown(300);
+                                    
+                                    // Cargar datos del acudiente
+                                    if (response.datos.tipo_documento) {
+                                        $('#tipoDocumentoAcudiente').val(response.datos.tipo_documento).prop('disabled', true);
+                                    }
+                                    $('#apellido1Acudiente').val(response.datos.apellido1 || '');
+                                    $('#apellido2Acudiente').val(response.datos.apellido2 || '');
+                                    $('#nombre1Acudiente').val(response.datos.nombre1 || '');
+                                    $('#nombre2Acudiente').val(response.datos.nombre2 || '');
+                                    $('#emailAcudiente').val(response.datos.email || '');
+                                    $('#celularAcudiente').val(response.datos.celular || '');
+                                    
+                                    // Deshabilitar campos de documento y tipo de documento
+                                    $('#documentoAcudiente').prop('readonly', true).addClass('bg-light');
+                                    $('#tipoDocumentoAcudiente').prop('disabled', true).addClass('bg-light');
+                                    
+                                    documentoAcudienteValidado = true;
+                                    
+                                    // Si el documento del estudiante también está validado, habilitar campos
+                                    if (documentoEstudianteValidado) {
+                                        habilitarCamposFormulario(true);
+                                    }
+                                } else {
+                                    // Existe pero no tiene datos completos
+                                    console.warn('Documento existe pero sin datos completos:', response);
+                                    $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-exclamation-triangle"></i> ' + (response.mensaje || 'Documento encontrado pero sin datos completos') + '</small>').removeClass('text-success').addClass('text-warning');
+                                    documentoAcudienteValidado = false;
+                                }
+                            } else {
+                                // Acudiente no existe
+                                acudienteExiste = false;
+                                $('#acudienteIdExistente').val('');
+                                $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-check"></i> ' + (response.mensaje || 'Documento disponible') + '</small>').removeClass('text-danger').addClass('text-success');
+                                $('#alertaDocumentoAcudiente').slideUp(300);
+                                
+                                // Habilitar todos los campos
+                                habilitarCamposAcudiente(true);
+                                
+                                documentoAcudienteValidado = true;
+                                
+                                // Si el documento del estudiante también está validado, habilitar campos
+                                if (documentoEstudianteValidado) {
+                                    habilitarCamposFormulario(true);
+                                }
+                            }
+                            actualizarProgreso();
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error en validación acudiente:', error);
+                            console.error('Status:', status);
+                            console.error('Response:', xhr.responseText);
+                            
+                            // Intentar parsear la respuesta aunque haya error
+                            try {
+                                var errorResponse = JSON.parse(xhr.responseText);
+                                if (errorResponse.mensaje) {
+                                    $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-exclamation-triangle"></i> ' + errorResponse.mensaje + '</small>').removeClass('text-success').addClass('text-danger');
+                                }
+                            } catch(e) {
+                                $('#validacionDocumentoAcudiente').html('<small><i class="fa fa-exclamation-triangle"></i> Error en la validación. Intente nuevamente.</small>').removeClass('text-success').addClass('text-danger');
+                            }
+                            
+                            documentoAcudienteValidado = false;
+                            habilitarCamposAcudiente(true);
+                            actualizarProgreso();
+                        }
+                    });
+                }, 500);
+            });
+            
+            // Función para habilitar/deshabilitar todos los campos del formulario
+            function habilitarCamposFormulario(habilitar) {
+                const $formulario = $('#formAdmision');
+                
+                // Deshabilitar/habilitar todos los inputs y selects excepto el documento del estudiante
+                $formulario.find('input:not(#documentoEstudiante)').each(function() {
+                    const $input = $(this);
+                    // No deshabilitar campos que ya están en readonly por el acudiente
+                    if (!$input.prop('readonly')) {
+                        $input.prop('disabled', !habilitar);
+                        if (!habilitar) {
+                            $input.addClass('bg-light');
+                        } else {
+                            $input.removeClass('bg-light');
+                        }
+                    }
+                });
+                
+                $formulario.find('select').each(function() {
+                    const $select = $(this);
+                    // No deshabilitar el tipo de documento del acudiente si ya está deshabilitado por existir
+                    if ($select.attr('id') === 'tipoDocumentoAcudiente' && acudienteExiste) {
+                        return; // Mantener deshabilitado si el acudiente existe
+                    }
+                    $select.prop('disabled', !habilitar);
+                    if (!habilitar) {
+                        $select.addClass('bg-light');
+                    } else {
+                        $select.removeClass('bg-light');
+                    }
+                });
+                
+                // Deshabilitar/habilitar el botón submit
+                const $btnSubmit = $formulario.find('button[type="submit"]');
+                $btnSubmit.prop('disabled', !habilitar);
+                if (!habilitar) {
+                    $btnSubmit.css({
+                        'opacity': '0.5',
+                        'cursor': 'not-allowed',
+                        'pointer-events': 'none'
+                    });
+                } else {
+                    $btnSubmit.css({
+                        'opacity': '1',
+                        'cursor': 'pointer',
+                        'pointer-events': 'auto'
+                    });
+                }
+                
+                // Deshabilitar/habilitar el checkbox de políticas
+                $('#gridCheck').prop('disabled', !habilitar);
+            }
+            
+            // Función para habilitar/deshabilitar campos del acudiente
+            function habilitarCamposAcudiente(habilitar) {
+                if (!habilitar || !acudienteExiste) {
+                    $('#documentoAcudiente').prop('readonly', false).removeClass('bg-light');
+                    $('#tipoDocumentoAcudiente').prop('disabled', false).removeClass('bg-light');
+                }
+            }
+            
             // Actualizar progreso
             function actualizarProgreso() {
-                const seccion1Inputs = document.querySelectorAll('#seccion-1 input[required], #seccion-1 select[required]');
-                const seccion2Inputs = document.querySelectorAll('#seccion-2 input[required], #seccion-2 select[required]');
+                const seccion1Inputs = document.querySelectorAll('#seccion-1 input[required]:not(:disabled), #seccion-1 select[required]:not(:disabled)');
+                const seccion2Inputs = document.querySelectorAll('#seccion-2 input[required]:not(:disabled), #seccion-2 select[required]:not(:disabled)');
                 const politicasCheck = document.getElementById('gridCheck');
                 
-                let seccion1Completa = Array.from(seccion1Inputs).every(input => input.value.trim() !== '');
-                let seccion2Completa = Array.from(seccion2Inputs).every(input => input.value.trim() !== '');
+                let seccion1Completa = Array.from(seccion1Inputs).every(input => {
+                    if (input.id === 'documentoEstudiante') {
+                        return input.value.trim() !== '' && documentoEstudianteValidado;
+                    }
+                    return input.value.trim() !== '';
+                });
+                
+                let seccion2Completa = Array.from(seccion2Inputs).every(input => {
+                    if (input.id === 'documentoAcudiente') {
+                        return input.value.trim() !== '' && documentoAcudienteValidado;
+                    }
+                    return input.value.trim() !== '';
+                });
+                
                 let seccion3Completa = politicasCheck.checked;
                 
                 document.getElementById('progress-1').classList.toggle('active', seccion1Completa);
@@ -887,8 +1516,22 @@ $num = $grados->rowCount();
             
             document.getElementById('gridCheck').addEventListener('change', actualizarProgreso);
             
-            // Mostrar loading al enviar
+            // Validar antes de enviar
             form.addEventListener('submit', function(e) {
+                if (!documentoEstudianteValidado) {
+                    e.preventDefault();
+                    alert('El documento del estudiante ya está registrado. No se puede continuar con el proceso.');
+                    $('#documentoEstudiante').focus();
+                    return false;
+                }
+                
+                if (!documentoAcudienteValidado) {
+                    e.preventDefault();
+                    alert('Por favor, valide el documento del acudiente antes de continuar.');
+                    $('#documentoAcudiente').focus();
+                    return false;
+                }
+                
                 if (form.checkValidity()) {
                     document.getElementById('loadingOverlay').style.display = 'flex';
                 }

@@ -12,6 +12,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 $idMatricula="";
 if(!empty($_GET["id"])){
@@ -30,6 +31,13 @@ if( empty($datosEstudianteActual) ){
 
 $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
+	$disabledPermiso = "disabled";
+}
+
+// Verificar si el estudiante está en estado "En inscripción"
+$estadoEnInscripcion = ($datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION);
+if ($estadoEnInscripcion) {
+	// Si está en estado de inscripción, deshabilitar todos los campos
 	$disabledPermiso = "disabled";
 }
 
@@ -331,16 +339,22 @@ try {
 								<?php }?>
 								
 								<!-- Botón de acciones del estudiante -->
-								<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
-									<i class="fa fa-ellipsis-v"></i> Acciones
-								</button>
+								<?php if ($estadoEnInscripcion) { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" disabled style="opacity: 0.5; cursor: not-allowed;" title="Estudiante en proceso de inscripción - Solo lectura">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } else { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } ?>
 								
 								<!-- Dropdown oculto con las opciones (para que el JS lo use) -->
 								<div style="display: none;">
 									<ul class="dropdown-menu" role="menu" id="Acciones_<?= $datosEstudianteActual['mat_id']; ?>">
 										<?php if (Modulos::validarPermisoEdicion()) { ?>
 											
-											<?php if ($config['conf_id_institucion'] == ICOLVEN && $permisoCrearSion) { ?>
+											<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && $permisoCrearSion) { ?>
 												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea transferir este estudiante a SION?','question','estudiantes-crear-sion.php?id=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Transferir a SION</a></li>
 											<?php } ?>
 
@@ -393,7 +407,7 @@ try {
 											<li><a href="../compartido/matriculas-formato3.php?ref=<?= base64_encode($datosEstudianteActual["mat_matricula"]); ?>" target="_blank">Hoja de matrícula</a></li>
 										<?php } ?>
 
-										<?php if ($config['conf_id_institucion'] == ICOLVEN && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
+										<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
 											<li><a href="http://sion.icolven.edu.co/Services/ServiceIcolven.svc/GenerarEstadoCuenta/<?= $datosEstudianteActual['mat_codigo_tesoreria']; ?>/<?= date('Y'); ?>" target="_blank">SION - Estado de cuenta</a></li>
 										<?php } ?>
 
@@ -457,6 +471,27 @@ try {
         <?php } ?>
        </div>
        <?php }?>
+
+                    <!-- Alerta para estudiantes en estado de inscripción -->
+                    <?php if ($estadoEnInscripcion) { ?>
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Estudiante en Proceso de Inscripción</h4>
+                        <p class="mb-2">
+                            <strong>Este estudiante se encuentra en estado "En inscripción".</strong>
+                        </p>
+                        <p class="mb-2">
+                            Los campos del formulario están deshabilitados y no se pueden realizar modificaciones hasta que el estudiante cambie a otro estado.
+                        </p>
+                        <hr>
+                        <p class="mb-0">
+                            <i class="fa fa-info-circle"></i> 
+                            Para gestionar el estado de inscripción, dirígete al módulo de <a href="inscripciones.php" class="alert-link font-weight-bold">Inscripciones</a>.
+                        </p>
+                    </div>
+                    <?php } ?>
 
                              <!-- Nav tabs -->
                              <ul class="nav nav-tabs" id="estudianteTabs" role="tablist">
@@ -718,6 +753,111 @@ try {
 				$hidden.on('change', validateDate);
 				$picker.on('changeDate', validateDate);
 			}
+			
+			// ========================================
+			// LOADING/BARRA DE PROGRESO AL GUARDAR
+			// ========================================
+			
+			var $form = $('#example-advanced-form');
+			var $loadingOverlay = null;
+			var $progressBar = null;
+			
+			// Crear overlay de loading
+			function crearLoadingOverlay() {
+				if ($loadingOverlay) {
+					return; // Ya existe
+				}
+				
+				$loadingOverlay = $('<div id="loading-overlay-estudiante" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 99999; display: none; align-items: center; justify-content: center; flex-direction: column; flex-wrap: nowrap;">' +
+					'<div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; margin: auto;">' +
+					'<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin: 0 auto 20px auto;">' +
+					'<span class="sr-only">Cargando...</span>' +
+					'</div>' +
+					'<h4 style="color: #333; margin-bottom: 15px;">Actualizando matrícula...</h4>' +
+					'<p style="color: #666; margin-bottom: 20px;">Por favor espere mientras se procesan los datos.</p>' +
+					'<div class="progress" style="height: 25px; border-radius: 5px; overflow: hidden;">' +
+					'<div id="progress-bar-estudiante" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">' +
+					'<span id="progress-text-estudiante" style="line-height: 25px; font-weight: bold; color: white;">0%</span>' +
+					'</div>' +
+					'</div>' +
+					'</div>' +
+					'</div>');
+				
+				$('body').append($loadingOverlay);
+				$progressBar = $('#progress-bar-estudiante');
+			}
+			
+			// Función para simular progreso
+			function simularProgreso() {
+				var progreso = 0;
+				var intervalo = setInterval(function() {
+					progreso += Math.random() * 15;
+					if (progreso > 90) {
+						progreso = 90; // No llegar al 100% hasta que termine realmente
+					}
+					$progressBar.css('width', progreso + '%').attr('aria-valuenow', progreso);
+					$('#progress-text-estudiante').text(Math.round(progreso) + '%');
+				}, 200);
+				
+				return intervalo;
+			}
+			
+			// Interceptar submit del formulario
+			$form.on('submit', function(e) {
+				// Prevenir submit si el estudiante está en estado de inscripción
+				<?php if ($estadoEnInscripcion) { ?>
+				e.preventDefault();
+				e.stopPropagation();
+				$.toast({
+					heading: 'Acción no permitida',
+					text: 'No se pueden realizar modificaciones a estudiantes en estado "En inscripción".',
+					showHideTransition: 'slide',
+					icon: 'warning',
+					position: 'top-right',
+					hideAfter: 5000
+				});
+				return false;
+				<?php } ?>
+				
+				// Crear overlay si no existe
+				crearLoadingOverlay();
+				
+				// Establecer estilos de flexbox antes de mostrar
+				$loadingOverlay.css({
+					'display': 'flex',
+					'align-items': 'center',
+					'justify-content': 'center',
+					'flex-direction': 'column',
+					'opacity': '0'
+				});
+				
+				// Mostrar el overlay con animación de opacidad
+				$loadingOverlay.show().animate({
+					'opacity': '1'
+				}, 300);
+				
+				// Iniciar simulación de progreso
+				var intervaloProgreso = simularProgreso();
+				
+				// Guardar intervalo para poder limpiarlo si es necesario
+				$form.data('intervalo-progreso', intervaloProgreso);
+				
+				// Completar al 100% cuando la página se recargue (después del submit)
+				// Esto se manejará en el servidor, pero por si acaso dejamos un timeout
+				setTimeout(function() {
+					if ($progressBar) {
+						$progressBar.css('width', '100%').attr('aria-valuenow', 100);
+						$('#progress-text-estudiante').text('100%');
+					}
+				}, 1000);
+			});
+			
+			// Si hay un error y se recarga la página, ocultar el loading
+			$(window).on('beforeunload', function() {
+				if ($loadingOverlay) {
+					$loadingOverlay.fadeOut(100);
+				}
+			});
 });
 
 	// ========================================
