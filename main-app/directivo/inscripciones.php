@@ -400,7 +400,7 @@ if (empty($catalogoGrados)) {
                                                     $filtro = ' AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)';
                                                     
                                                     include("includes/consulta-paginacion-inscripciones.php");
-                                                    $selectSql = ["mat_id","mat_documento","gra_nombre",
+                                                    $selectSql = ["mat_id","mat_documento","gra.gra_nombre",
 																  "asp_observacion","asp_nombre_acudiente","asp_celular_acudiente",
 																  "asp_documento_acudiente","asp_id","asp_fecha","asp_comprobante","mat_nombres",
 																  "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2", "mat_primer_apellido", "mat_segundo_apellido",
@@ -475,6 +475,7 @@ if (empty($catalogoGrados)) {
                                                         
                                                         $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
                                                                       "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
+                                                                      "gra.gra_nombre",
                                                                       "mat.*", "asp.*"];
 
                                                         $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);

@@ -142,10 +142,16 @@ foreach ($data["data"] as $resultado) {
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	}
 
+	// Verificar si el estudiante está en estado de inscripción
+	$estadoEnInscripcion = ($resultado['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION);
+	$disabledCheckbox = $estadoEnInscripcion ? 'disabled' : '';
+	$disabledAcciones = $estadoEnInscripcion ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+	$titleAcciones = $estadoEnInscripcion ? 'Estudiante en proceso de inscripción - Solo lectura' : $frases[54][$datosUsuarioActual['uss_idioma']];
+
 ?>
 	<tr id="EST<?= $resultado['mat_id']; ?>" <?= $bgColor; ?>>
 		<td><button class="btn btn-sm btn-link text-secondary expand-btn" data-id="<?= $resultado['mat_id']; ?>" title="Ver detalles"><i class="fa fa-chevron-right"></i></button></td>
-		<td><input type="checkbox" class="estudiante-checkbox" value="<?=$resultado['mat_id'];?>"></td>
+		<td><input type="checkbox" class="estudiante-checkbox" value="<?=$resultado['mat_id'];?>" <?= $disabledCheckbox; ?>></td>
 		<td>
 			<?php if ($resultado["mat_compromiso"] == 1) { ?>
 				<a href="javascript:void(0);" title="Activar para la matricula" onClick="sweetConfirmacion('Alerta!','Deseas ejecutar esta accion?','question','estudiantes-activar.php?id=<?= base64_encode($resultado["mat_id"]); ?>')"><img src="../files/iconos/agt_action_success.png" height="20" width="20"></a>
@@ -168,9 +174,12 @@ foreach ($data["data"] as $resultado) {
 			<?php
 			$cambiarEstado = '';
 			$cursorStyle = '';
-			if ($permisoCambiarEstado) {
+			// No permitir cambiar estado si está en "En inscripción" o si no tiene permiso
+			if ($permisoCambiarEstado && !$estadoEnInscripcion) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
 				$cursorStyle = "cursor: pointer;";
+			} elseif ($estadoEnInscripcion) {
+				$cursorStyle = "cursor: not-allowed;";
 			}
 			
 			// Mapear estados a clases de badge
@@ -184,11 +193,13 @@ foreach ($data["data"] as $resultado) {
 			
 			if(!empty($resultado['mat_estado_matricula'])){
 				$badgeClass = $badgeClasses[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary';
+				$titleEstado = $estadoEnInscripcion ? 'Estudiante en proceso de inscripción - No se puede cambiar el estado' : '';
 			?>
 			<span class="<?= $badgeClass; ?>" 
 				  id="estadoMatricula<?= $resultado['mat_id']; ?>" 
 				  style="<?= $cursorStyle; ?>" 
-				  <?= $cambiarEstado; ?>>
+				  <?= $cambiarEstado; ?>
+				  <?= $estadoEnInscripcion ? 'title="' . htmlspecialchars($titleEstado, ENT_QUOTES) . '"' : ''; ?>>
 				<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
 			</span>
 			<?php } ?>
@@ -203,9 +214,15 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $resultado['uss_usuario']; ?></td>
 		<td>
 			<!-- Botón de tres puntos verticales -->
-			<button type="button" class="btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $resultado['mat_id']; ?>')" title="<?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?>">
-				<i class="fa fa-ellipsis-v"></i>
-			</button>
+			<?php if ($estadoEnInscripcion) { ?>
+				<button type="button" class="btn-acciones-menu" <?= $disabledAcciones; ?> title="<?= $titleAcciones; ?>">
+					<i class="fa fa-ellipsis-v"></i>
+				</button>
+			<?php } else { ?>
+				<button type="button" class="btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $resultado['mat_id']; ?>')" title="<?= $titleAcciones; ?>">
+					<i class="fa fa-ellipsis-v"></i>
+				</button>
+			<?php } ?>
 			
 			<!-- Dropdown oculto (solo para almacenar las opciones) -->
 			<div style="display: none;">

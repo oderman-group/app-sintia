@@ -1107,10 +1107,11 @@ if($config['conf_doble_buscador'] == 1) {
 		try {
 			console.log('Inicializando funcionalidad de edición masiva de estudiantes...');
 			
-			// Manejar selección de todos los estudiantes
+			// Manejar selección de todos los estudiantes (excluyendo los deshabilitados)
 			$('#selectAllEstudiantes').on('change', function() {
 				var isChecked = $(this).is(':checked');
-				$('.estudiante-checkbox').prop('checked', isChecked).trigger('change');
+				// Solo seleccionar checkboxes que no estén deshabilitados
+				$('.estudiante-checkbox:not(:disabled)').prop('checked', isChecked).trigger('change');
 			});
 			
 			// Manejar selección individual de estudiantes
@@ -1128,7 +1129,10 @@ if($config['conf_doble_buscador'] == 1) {
 					selectedEstudiantes = selectedEstudiantes.filter(id => id !== estudianteId);
 				}
 				
-				$('#selectAllEstudiantes').prop('checked', $('.estudiante-checkbox:checked').length === $('.estudiante-checkbox').length);
+				// Actualizar checkbox "Seleccionar todos" solo considerando los checkboxes habilitados
+				var totalHabilitados = $('.estudiante-checkbox:not(:disabled)').length;
+				var totalSeleccionados = $('.estudiante-checkbox:checked:not(:disabled)').length;
+				$('#selectAllEstudiantes').prop('checked', totalHabilitados > 0 && totalSeleccionados === totalHabilitados);
 				toggleActionButtons();
 			});
 			

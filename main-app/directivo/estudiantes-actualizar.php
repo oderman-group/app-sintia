@@ -14,6 +14,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Validar que el estudiante no esté en estado "En inscripción"
+if (!empty($_POST["id"])) {
+	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"]);
+	if (!empty($datosEstudianteActual) && $datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_18&message='.urlencode('No se pueden realizar modificaciones a estudiantes en estado "En inscripción"').'";</script>';
+		exit();
+	}
+}
+
 require_once("../class/servicios/MediaTecnicaServicios.php");
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 if(trim($_POST["nDoc"])=="" or trim($_POST["apellido1"])=="" or trim($_POST["nombres"])==""){

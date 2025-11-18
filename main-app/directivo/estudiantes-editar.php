@@ -33,6 +33,13 @@ if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
 
+// Verificar si el estudiante está en estado "En inscripción"
+$estadoEnInscripcion = ($datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION);
+if ($estadoEnInscripcion) {
+	// Si está en estado de inscripción, deshabilitar todos los campos
+	$disabledPermiso = "disabled";
+}
+
 /**
  * Catálogos reutilizables para reducir consultas repetidas.
  */
@@ -331,9 +338,15 @@ try {
 								<?php }?>
 								
 								<!-- Botón de acciones del estudiante -->
-								<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
-									<i class="fa fa-ellipsis-v"></i> Acciones
-								</button>
+								<?php if ($estadoEnInscripcion) { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" disabled style="opacity: 0.5; cursor: not-allowed;" title="Estudiante en proceso de inscripción - Solo lectura">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } else { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } ?>
 								
 								<!-- Dropdown oculto con las opciones (para que el JS lo use) -->
 								<div style="display: none;">
@@ -457,6 +470,27 @@ try {
         <?php } ?>
        </div>
        <?php }?>
+
+                    <!-- Alerta para estudiantes en estado de inscripción -->
+                    <?php if ($estadoEnInscripcion) { ?>
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Estudiante en Proceso de Inscripción</h4>
+                        <p class="mb-2">
+                            <strong>Este estudiante se encuentra en estado "En inscripción".</strong>
+                        </p>
+                        <p class="mb-2">
+                            Los campos del formulario están deshabilitados y no se pueden realizar modificaciones hasta que el estudiante cambie a otro estado.
+                        </p>
+                        <hr>
+                        <p class="mb-0">
+                            <i class="fa fa-info-circle"></i> 
+                            Para gestionar el estado de inscripción, dirígete al módulo de <a href="inscripciones.php" class="alert-link font-weight-bold">Inscripciones</a>.
+                        </p>
+                    </div>
+                    <?php } ?>
 
                              <!-- Nav tabs -->
                              <ul class="nav nav-tabs" id="estudianteTabs" role="tablist">
@@ -769,6 +803,21 @@ try {
 			
 			// Interceptar submit del formulario
 			$form.on('submit', function(e) {
+				// Prevenir submit si el estudiante está en estado de inscripción
+				<?php if ($estadoEnInscripcion) { ?>
+				e.preventDefault();
+				e.stopPropagation();
+				$.toast({
+					heading: 'Acción no permitida',
+					text: 'No se pueden realizar modificaciones a estudiantes en estado "En inscripción".',
+					showHideTransition: 'slide',
+					icon: 'warning',
+					position: 'top-right',
+					hideAfter: 5000
+				});
+				return false;
+				<?php } ?>
+				
 				// Crear overlay si no existe
 				crearLoadingOverlay();
 				
