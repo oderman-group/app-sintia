@@ -38,7 +38,7 @@
 										</div>
 									</div>
 
-									<?php if($config['conf_id_institucion'] == ICOLVEN) {?>
+									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {?>
 										<div align="center">
 											<p><mark><?=$frases[316][$datosUsuarioActual['uss_idioma']];?>: <b><?php if(!empty($datosEstudianteActual['mat_codigo_tesoreria'])){ echo $datosEstudianteActual['mat_codigo_tesoreria'];}?></b>  (cuatro dígitos, sin el 0 a la izquierda).</mark></p>
 

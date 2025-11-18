@@ -211,36 +211,78 @@ if(typeof formulario !== 'undefined' && formulario !== null) {
 
 <script>
 // Métrica de tiempo de carga en el navegador (cliente)
-window.addEventListener('load', function () {
-    try {
-        var segundos = null;
+(function() {
+    function calcularTiempoCarga() {
+        try {
+            var segundos = null;
 
-        if (performance && performance.getEntriesByType) {
-            var navEntries = performance.getEntriesByType('navigation');
-            if (navEntries && navEntries.length > 0 && typeof navEntries[0].duration === 'number') {
-                segundos = navEntries[0].duration / 1000;
+            // Método 1: Performance Navigation Timing API (moderno)
+            if (performance && performance.getEntriesByType) {
+                try {
+                    var navEntries = performance.getEntriesByType('navigation');
+                    if (navEntries && navEntries.length > 0) {
+                        var nav = navEntries[0];
+                        // Usar loadEventEnd si está disponible, sino domContentLoadedEventEnd
+                        if (nav.loadEventEnd && nav.loadEventEnd > 0) {
+                            segundos = (nav.loadEventEnd - nav.fetchStart) / 1000;
+                        } else if (nav.domContentLoadedEventEnd && nav.domContentLoadedEventEnd > 0) {
+                            segundos = (nav.domContentLoadedEventEnd - nav.fetchStart) / 1000;
+                        } else if (nav.duration && nav.duration > 0) {
+                            segundos = nav.duration / 1000;
+                        }
+                    }
+                } catch (e) {
+                    // Continuar con otros métodos
+                }
             }
-        }
 
-        // Fallback para navegadores antiguos
-        if (segundos === null && performance && performance.timing) {
-            var t = performance.timing;
-            if (t.loadEventEnd && t.navigationStart) {
-                segundos = (t.loadEventEnd - t.navigationStart) / 1000;
+            // Método 2: Performance Timing API (clásico)
+            if ((segundos === null || segundos === 0) && performance && performance.timing) {
+                var t = performance.timing;
+                if (t.loadEventEnd && t.navigationStart && t.loadEventEnd > 0 && t.navigationStart > 0) {
+                    var tiempoTotal = t.loadEventEnd - t.navigationStart;
+                    if (tiempoTotal > 0) {
+                        segundos = tiempoTotal / 1000;
+                    }
+                }
             }
-        }
 
-        if (segundos !== null) {
-            var span = document.getElementById('tiempo-carga-navegador');
-            if (span) {
-                span.textContent = segundos.toFixed(2);
+            // Método 3: Si aún no tenemos valor, usar domContentLoaded
+            if ((segundos === null || segundos === 0) && performance && performance.timing) {
+                var t = performance.timing;
+                if (t.domContentLoadedEventEnd && t.navigationStart && t.domContentLoadedEventEnd > 0) {
+                    var tiempoTotal = t.domContentLoadedEventEnd - t.navigationStart;
+                    if (tiempoTotal > 0) {
+                        segundos = tiempoTotal / 1000;
+                    }
+                }
             }
+
+            // Actualizar el span si tenemos un valor válido
+            if (segundos !== null && segundos > 0) {
+                var span = document.getElementById('tiempo-carga-navegador');
+                if (span) {
+                    span.textContent = segundos.toFixed(2);
+                }
+            } else {
+                // Si aún no hay valor, intentar de nuevo después de un pequeño delay
+                setTimeout(calcularTiempoCarga, 100);
+            }
+        } catch (e) {
+            // Silenciar errores para no afectar al usuario final
+            console && console.warn && console.warn('No se pudo calcular el tiempo de carga del navegador', e);
         }
-    } catch (e) {
-        // Silenciar errores para no afectar al usuario final
-        console && console.warn && console.warn('No se pudo calcular el tiempo de carga del navegador', e);
     }
-});
+
+    // Intentar calcular cuando el DOM esté listo
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // Si ya está cargado, calcular inmediatamente
+        setTimeout(calcularTiempoCarga, 0);
+    } else {
+        // Si aún no está cargado, esperar al evento load
+        window.addEventListener('load', calcularTiempoCarga);
+    }
+})();
 </script>
 <?php 
 error_log("El usuario llega hasta el footer antes de cerrar la conexión: ". $_SESSION["id"]. " - ". $_SERVER["PHP_SELF"]);

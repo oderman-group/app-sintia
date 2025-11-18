@@ -94,10 +94,21 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 				<div class="col-sm-9">
 					<select class="form-control" name="matestM" <?= $disabledPermiso; ?>>
 						<option value="">Seleccione una opción</option>
-						<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { ?>
-							<option value="<?= $clave; ?>" <?php if ($datosEstudianteActual["mat_estado_matricula"] == $clave) echo 'selected'; else echo $disabledCamposAcademicos ?>><?= $valor; ?></option>
+						<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
+							// Estados EN_INSCRIPCION (5) y CANCELADO (3) solo lectura - se gestionan desde otros lugares
+							$esEstadoRestringido = ($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO);
+							$disabledEstado = ($esEstadoRestringido && $datosEstudianteActual["mat_estado_matricula"] != $clave) ? 'disabled' : '';
+							$selected = ($datosEstudianteActual["mat_estado_matricula"] == $clave) ? 'selected' : '';
+							$disabledFinal = ($esEstadoRestringido && $datosEstudianteActual["mat_estado_matricula"] == $clave) ? $disabledCamposAcademicos : $disabledEstado;
+						?>
+							<option value="<?= $clave; ?>" <?= $selected; ?> <?= $disabledFinal; ?>><?= $valor; ?></option>
 						<?php } ?>
 					</select>
+					<?php if (($datosEstudianteActual["mat_estado_matricula"] == Estudiantes::ESTADO_EN_INSCRIPCION || $datosEstudianteActual["mat_estado_matricula"] == Estudiantes::ESTADO_CANCELADO) && empty($disabledPermiso)) { ?>
+						<small class="form-text text-muted">
+							<i class="fa fa-info-circle"></i> Este estado se gestiona desde otros módulos del sistema y no puede ser modificado desde aquí.
+						</small>
+					<?php } ?>
 				</div>
 			</div>
 

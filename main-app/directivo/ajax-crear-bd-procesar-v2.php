@@ -119,8 +119,11 @@ try {
             throw new Exception('No se pudo obtener el ID de la institución');
         }
         
-        // PASO 2: ASIGNAR TODOS LOS MÓDULOS ACTIVOS
-        $consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos WHERE mod_estado = 1");
+        // PASO 2: ASIGNAR MÓDULOS (solo visibles, activos y con mod_default_install = 1)
+        $consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos 
+            WHERE mod_estado = 1 
+            AND mod_visible = 1 
+            AND mod_default_install = 1");
         if ($consultaModulos && mysqli_num_rows($consultaModulos) > 0) {
             $valoresModulos = [];
             while ($modulo = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {

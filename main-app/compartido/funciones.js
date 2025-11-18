@@ -39,7 +39,7 @@ function hayInternet() {
 
 		if(localStorage.getItem("internet") == 1 || localStorage.getItem("internet") == null) {
             Swal.fire({
-                title: 'AVISPATE que se ha perdido la conexión!', 
+                title: 'Se ha perdido la conexión!', 
                 text: 'Se ha perdido tu conexión a internet. Por favor verifica antes de continuar trabajando en la plataforma.', 
                 icon: 'error',
                 backdrop: `

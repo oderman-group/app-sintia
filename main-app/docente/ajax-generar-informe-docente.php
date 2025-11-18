@@ -19,6 +19,7 @@ require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_academico_cargas.php");
 require_once(ROOT_PATH."/main-app/modelo/conexion.php");
 require_once(ROOT_PATH."/main-app/class/Conexion.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 // Configurar respuesta JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -214,9 +215,9 @@ try {
             }
             
             // ============================================
-            // LÓGICA ESPECIAL PARA ICOLVEN (Notas por indicador)
+            // (Notas por indicador)
             // ============================================
-            if ($informacion_inst["info_institucion"] == ICOLVEN) {
+            if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RECUPERAR_INDICADOR)) {
                 //Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
                 $notasPorIndicador = Calificaciones::traerNotasPorIndicador($config, $carga, $idEstudiante, $periodo);
                 $sumaNotaIndicador = 0; 

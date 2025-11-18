@@ -289,6 +289,16 @@ $Plataforma = new Plataforma;
                                     <i class="fas fa-user-graduate"></i> Estudiante
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tab_mail_prod" data-archivo="mail_queue_prod">
+                                    <i class="fas fa-envelope"></i> Mail Queue PROD
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tab_mail_dev" data-archivo="mail_queue_dev">
+                                    <i class="fas fa-envelope-open"></i> Mail Queue DEV
+                                </a>
+                            </li>
                         </ul>
 
                         <div class="tab-content" style="padding: 30px;">
@@ -301,6 +311,8 @@ $Plataforma = new Plataforma;
                                 ['id' => 'directivo', 'archivo' => 'error_log_directivo', 'active' => false],
                                 ['id' => 'docente', 'archivo' => 'error_log_docente', 'active' => false],
                                 ['id' => 'estudiante', 'archivo' => 'error_log_estudiante', 'active' => false],
+                                ['id' => 'mail_prod', 'archivo' => 'mail_queue_prod', 'active' => false],
+                                ['id' => 'mail_dev', 'archivo' => 'mail_queue_dev', 'active' => false],
                             ];
                             
                             foreach ($tabs as $tab):

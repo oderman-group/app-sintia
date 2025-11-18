@@ -1855,6 +1855,108 @@ class CargaAcademica {
         return $resultado;
     }
 
+    /**
+     * Este metodo trae todas las cargas de todos los estudiantes de un grupo
+     * en una sola consulta, organizadas en un mapa [id_estudiante] => [array de cargas]
+     * 
+     * @param array   $config           Configuración del sistema.
+     * @param array   $idsEstudiantes   Array de IDs de estudiantes.
+     * @param string  $idCurso          Identificador del curso.
+     * @param string  $idGrupo          Identificador del grupo.
+     * @param string  $periodo          Período académico.
+     * @param string  $filtroOR         Filtro adicional opcional (solo si es común para todos).
+     * @param string  $yearBd           Año académico (opcional).
+     * 
+     * @return array $mapa Mapa [id_estudiante] => [array de cargas]
+     */
+    public static function traerInformeParcialTodasMapa(
+        array   $config,
+        array   $idsEstudiantes,
+        string  $idCurso,
+        string  $idGrupo,
+        string  $periodo = "",
+        string  $filtroOR = "",
+        string  $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $periodoActual = !empty($periodo) ? $periodo : $config['conf_periodo'];
+        
+        if (empty($idsEstudiantes)) {
+            return [];
+        }
+        
+        // Escapar IDs de estudiantes para la consulta usando BindSQL
+        // Construir la lista de placeholders para la consulta
+        $placeholders = array_fill(0, count($idsEstudiantes), '?');
+        $inEstudiantes = implode(',', $placeholders);
+        
+        $sql = "SELECT 
+                    ac.cal_id_estudiante,
+                    car.car_id, 
+                    am.mat_id, 
+                    am.mat_nombre, 
+                    am.mat_sumar_promedio, 
+                    SUM(aa.act_valor) AS porcentaje, 
+                    ROUND(SUM(ac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), 2) AS nota, 
+                    uss.uss_nombre, 
+                    uss.uss_nombre2, 
+                    uss.uss_apellido1, 
+                    uss.uss_apellido2 
+                FROM " . BD_ACADEMICA . ".academico_cargas car 
+                INNER JOIN " . BD_ACADEMICA . ".academico_materias am 
+                    ON am.mat_id = car.car_materia 
+                    AND am.institucion = car.institucion 
+                    AND am.year = car.year
+                INNER JOIN " . BD_ACADEMICA . ".academico_grados gra 
+                    ON gra.gra_id = car.car_curso 
+                    AND gra.institucion = car.institucion 
+                    AND gra.year = car.year
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividades aa 
+                    ON aa.act_id_carga = car.car_id 
+                    AND aa.act_registrada = 1 
+                    AND aa.act_estado = 1 
+                    AND aa.act_periodo = ?
+                    AND aa.institucion = car.institucion 
+                    AND aa.year = car.year
+                INNER JOIN " . BD_ACADEMICA . ".academico_calificaciones ac 
+                    ON ac.cal_id_actividad = aa.act_id 
+                    AND ac.cal_id_estudiante IN ({$inEstudiantes})
+                    AND ac.institucion = car.institucion 
+                    AND ac.year = car.year
+                INNER JOIN " . BD_GENERAL . ".usuarios uss 
+                    ON uss.uss_id = car.car_docente 
+                    AND uss.institucion = car.institucion 
+                    AND uss.year = car.year
+                WHERE car.car_curso = ? 
+                AND car.car_grupo = ? 
+                AND car.institucion = ? 
+                AND car.year = ? 
+                {$filtroOR}
+                GROUP BY ac.cal_id_estudiante, car.car_id
+                HAVING porcentaje > 0
+                ORDER BY ac.cal_id_estudiante, car.car_id";
+        
+        // Combinar parámetros: periodo, luego IDs de estudiantes, luego curso, grupo, institucion, year
+        $parametros = array_merge(
+            [$periodoActual],
+            $idsEstudiantes,
+            [$idCurso, $idGrupo, $config['conf_id_institucion'], $year]
+        );
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idEstudiante = $fila['cal_id_estudiante'];
+            if (!isset($mapa[$idEstudiante])) {
+                $mapa[$idEstudiante] = [];
+            }
+            $mapa[$idEstudiante][] = $fila;
+        }
+        
+        return $mapa;
+    }
+
     public static function consultaInformeSabanas (
         string  $idEstudiante,
         int     $periodo,

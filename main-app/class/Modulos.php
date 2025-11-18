@@ -67,7 +67,7 @@ class Modulos extends BDT_Tablas implements BDT_JoinImplements{
     public const MODULO_AYUDA_AVANZADA                      = 43; 
     public const MODULO_CALIFICACIONES                      = 44; 
     public const MODULO_CARGAS_ACADEMICAS                   = 45; 
-    public const MODULO_SMS                                 = 46; // todo: Puede ser reemplazado porque no tiene paginas asociadas.
+    public const MODULO_SMS                                 = 46;
     public const MODULO_COMPORTAMIENTO                      = 47; 
     public const MODULO_CONFIGURACION                       = 48; 
     public const MODULO_CORREO_INTERNO                      = 49;
@@ -99,6 +99,7 @@ class Modulos extends BDT_Tablas implements BDT_JoinImplements{
     public const MODULO_USO_SINTIA                          = 72; 
     public const MODULO_USUARIOS                            = 73; 
     public const MODULO_AI_GENERAR_DESCRIPCION_MT           = 74; //Genera imagenes para los cursos de media técnica
+    public const MODULO_COMUNICADOS                         = 75; //Permite enviar comunicados a usuarios por Email, SMS y WhatsApp
 
     //TODO: Esto es un workaround para los 9 clientes actuales para mantener la retrocompatibilidad.
     public const MODULOS_GLOBALES_PERMITIDOS_ACTUALMENTE = [

@@ -340,6 +340,60 @@
                         </div>
                     </div>
 
+                    <!-- Sección: Configuración de Generación -->
+                    <h4 style="color: #667eea; font-weight: 700; margin: 25px 0 20px 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa fa-cog"></i>
+                        Configuración de Generación
+                    </h4>
+
+                    <div class="form-group-modern">
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label">
+                                <i class="fa fa-cog"></i>
+                                Generación de informes 
+                                <span class="required-indicator">*</span>
+                                <button type="button" class="info-tooltip" data-toggle="tooltip" data-placement="right" title="Esta opción define el comportamiento a la hora de generar los informes por parte de los docentes o directivos. Escoja la configuración deseada. Esto aplica para todas las cargas académicas.">
+                                    <i class="fa fa-info"></i>
+                                </button>
+                            </label>
+                            <div class="col-sm-9">
+                                <select 
+                                    class="form-control" 
+                                    name="generarInforme" 
+                                    <?php 
+                                    if(!empty($disabledPermiso)) 
+                                        echo $disabledPermiso; 
+                                    else 
+                                        echo $disabledCamposConfiguracion;
+                                    ?>
+                                >
+                                    <option value="1" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==1){ echo "selected";} ?>>✓ Requiere 100% de notas registradas</option>
+                                    <option value="2" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==2){ echo "selected";} ?>>⊘ Omitir estudiantes sin 100% de notas</option>
+                                    <option value="3" <?php if($datosConfiguracion['conf_porcentaje_completo_generar_informe']==3){ echo "selected";} ?>>≈ Usar porcentaje actual disponible</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label">
+                                <i class="fa fa-comments-o"></i>
+                                Observaciones múltiples 
+                                <span class="required-indicator">*</span>
+                                <button type="button" class="info-tooltip" data-toggle="tooltip" data-placement="right" title="Permitirá a los docentes colocar o escoger solo una observación para los estudiantes que aparecerá en los boletines, o seleccionar múltiples de ellas.">
+                                    <i class="fa fa-info"></i>
+                                </button>
+                            </label>
+                            <div class="col-sm-9">
+                                <select class="form-control" name="observacionesMultiples" <?=$disabledPermiso;?>>
+                                    <option value="1" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento']==1){ echo "selected";} ?>>✓ SÍ, permitir múltiples observaciones</option>
+                                    <option value="0" <?php if($datosConfiguracion['conf_observaciones_multiples_comportamiento'] == 0 || $datosConfiguracion['conf_observaciones_multiples_comportamiento'] == null){ echo "selected";} ?>>✗ NO, solo una observación</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Sección: Informes Parciales -->
                     <h4 style="color: #667eea; font-weight: 700; margin: 25px 0 20px 0; display: flex; align-items: center; gap: 10px;">
                         <i class="fa fa-file-o"></i>

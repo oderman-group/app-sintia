@@ -374,6 +374,16 @@ if ($mensajesNoLeidosConsulta) {
                                     </div>
                                     <?php }?>
                                     
+                                    <!-- Envío de Mensajes - Quinta opción -->
+                                    <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_COMUNICADOS) && Modulos::validarSubRol(['DT0127'])) {?>
+                                    <div class="app-item" onclick="window.open('<?=BASE_URL;?>/main-app/directivo/comunicados-enviados.php', '_blank');">
+                                        <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="fa fa-paper-plane"></i>
+                                        </div>
+                                        <span class="app-name">Envío de Mensajes</span>
+                                    </div>
+                                    <?php }?>
+                                    
                                     <!-- Fila 1 -->
                                     <!-- <div class="app-item" onclick="navigateToApp('directivo')">
                                         <div class="app-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">

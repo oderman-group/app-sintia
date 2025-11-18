@@ -176,6 +176,12 @@ if(!Modulos::validarPermisoEdicion()){
 
 											
 											
+											<?php
+											// Inicializar contador de registro si no está definido
+											if (!isset($contReg)) {
+												$contReg = 1;
+											}
+											?>
 											<div class="form-group row">
 												<label class="col-sm-2 control-label">Número de documento <span style="color: red;">(*)</span></label>
 												<div class="col-sm-4">

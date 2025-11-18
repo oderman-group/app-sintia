@@ -64,6 +64,20 @@ while ($row = $cosnultaTiposNotas->fetch_assoc()) {
 	$tiposNotas[] = $row;
 }
 
+// OPTIMIZACIÓN: Pre-cargar cache de notas cualitativas para evitar búsquedas repetidas
+$notasCualitativasCache = [];
+if ($config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($tiposNotas)) {
+	foreach ($tiposNotas as $notaTipo) {
+		// Crear cache para todos los valores posibles en el rango
+		for ($i = $notaTipo['notip_desde']; $i <= $notaTipo['notip_hasta']; $i += 0.1) {
+			$key = number_format((float)$i, 1, '.', '');
+			if (!isset($notasCualitativasCache[$key])) {
+				$notasCualitativasCache[$key] = $notaTipo['notip_nombre'];
+			}
+		}
+	}
+}
+
 $listaDatos = [];
 $estudiantes = [];
 if (!empty($curso) && !empty($grupo) && !empty($year)) {
@@ -370,14 +384,22 @@ if (!empty($materias1)) {
 									$defini = $carga["periodos"][$periodoActual]['bol_nota'];
 								}
 								$title = '';
+								$notaMostrar = !empty($carga["periodos"][$periodoActual]['bol_nota']) ? $carga["periodos"][$periodoActual]['bol_nota'] : 0;
 								if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-									$title = 'title="Nota Cuantitativa: ' . $defini . '"';
+									$title = 'title="Nota Cuantitativa: ' . $notaMostrar . '"';
+									// OPTIMIZACIÓN: Usar cache en lugar de buscar en el array cada vez
+									$notaRedondeada = number_format((float)$notaMostrar, 1, '.', '');
+									$notaFormateada = isset($notasCualitativasCache[$notaRedondeada]) 
+										? $notasCualitativasCache[$notaRedondeada] 
+										: Boletin::formatoNota($notaMostrar, $tiposNotas);
+								} else {
+									$notaFormateada = Boletin::notaDecimales($notaMostrar);
 								}
 								$sumaDefini += $defini;
 								$color = ($defini < $config[5]) ? '#dc3545' : '#28a745';
 								?>
 								<td class="nota-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
-									<?= Boletin::formatoNota(!empty($carga["periodos"][$periodoActual]['bol_nota']) ? $carga["periodos"][$periodoActual]['bol_nota'] : 0, $tiposNotas); ?>
+									<?= htmlspecialchars($notaFormateada, ENT_QUOTES, 'UTF-8'); ?>
 								</td>
 							<?php 
 							}
@@ -392,12 +414,20 @@ if (!empty($materias1)) {
 				
 				$colorPromedio = ($promedio < $config[5]) ? '#dc3545' : '#28a745';
 				$titlePromedio = '';
+				$promedioFormateado = '';
 				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 					$titlePromedio = 'title="Nota Cuantitativa: ' . $promedio . '"';
+					// OPTIMIZACIÓN: Usar cache en lugar de buscar en el array cada vez
+					$promedioRedondeado = number_format((float)$promedio, 1, '.', '');
+					$promedioFormateado = isset($notasCualitativasCache[$promedioRedondeado]) 
+						? $notasCualitativasCache[$promedioRedondeado] 
+						: Boletin::formatoNota($promedio, $tiposNotas);
+				} else {
+					$promedioFormateado = Boletin::notaDecimales($promedio);
 				}
 				?>
 				<td class="promedio-cell" style="color:<?= $colorPromedio; ?>;" <?= $titlePromedio; ?>>
-					<?= Boletin::formatoNota($promedio, $tiposNotas); ?>
+					<?= htmlspecialchars($promedioFormateado, ENT_QUOTES, 'UTF-8'); ?>
 				</td>
 			</tr>
 		<?php 
@@ -453,14 +483,19 @@ if (!empty($materias1)) {
 				$title = '';
 				if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 					$title = 'title="Nota Cuantitativa: ' . $val . '"';
-					$estiloNota = Boletin::determinarRango($val, $tiposNotas);
-					$valTotal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+					// OPTIMIZACIÓN: Usar cache en lugar de buscar en el array cada vez
+					$valRedondeado = number_format((float)$val, 1, '.', '');
+					$valTotal = isset($notasCualitativasCache[$valRedondeado]) 
+						? $notasCualitativasCache[$valRedondeado] 
+						: (($estiloNota = Boletin::determinarRango($val, $tiposNotas)) && !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "");
+				} else {
+					$valTotal = Boletin::notaDecimales($val);
 				}
 		?>
 				<tr class="<?= $classPuesto; ?>">
 					<td align="center"><?= $j; ?></td>
 					<td><?= htmlspecialchars($grupo1[$key]); ?></td>
-					<td align="center" <?= $title; ?>><?= Boletin::formatoNota($valTotal, $tiposNotas); ?></td>
+					<td align="center" <?= $title; ?>><?= htmlspecialchars($valTotal, ENT_QUOTES, 'UTF-8'); ?></td>
 					<td align="center"><?= $puesto; ?></td>
 				</tr>
 		<?php

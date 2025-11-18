@@ -545,12 +545,12 @@ $fechaHoy = date("d") . " de " . $meses[date("n")-1] . " de " . date("Y");
   
   <div class="informe-container">
     <div class="informe-header">
-      <h1><?= htmlspecialchars($informacion_inst["info_nombre"], ENT_QUOTES, 'UTF-8'); ?></h1>
+      <h1><?= htmlspecialchars($informacion_inst["info_nombre"] ?? '', ENT_QUOTES, 'UTF-8'); ?></h1>
       <div class="subtitulo">INFORME PARCIAL - PERÍODO <?= $cPeriodo; ?></div>
       <div class="fecha">Fecha del informe: <?= $config["conf_fecha_parcial"]; ?></div>
       
       <div class="logo-container <?= ($config['conf_id_institucion'] == ICOLVEN) ? 'logo-container-full' : ''; ?>">
-        <img src="../files/images/logo/<?= htmlspecialchars($informacion_inst["info_logo"], ENT_QUOTES, 'UTF-8'); ?>" 
+        <img src="../files/images/logo/<?= htmlspecialchars($informacion_inst["info_logo"] ?? '', ENT_QUOTES, 'UTF-8'); ?>" 
              alt="Logo de la institución"
              onerror="this.style.display='none'">
       </div>
@@ -634,7 +634,7 @@ $fechaHoy = date("d") . " de " . $meses[date("n")-1] . " de " . date("Y");
         Yo _______________________________________________________________
       </p>
       <p>
-        Doy constancia de haber recibido del <strong><?= htmlspecialchars($informacion_inst["info_nombre"], ENT_QUOTES, 'UTF-8'); ?></strong> el
+        Doy constancia de haber recibido del <strong><?= htmlspecialchars($informacion_inst["info_nombre"] ?? '', ENT_QUOTES, 'UTF-8'); ?></strong> el
         informe académico parcial de mi acudido y a la vez la citación
         respectiva para la reunión en donde se me informará las causas y
         recomendaciones del bajo desempeño, establecidas por la comisión de

@@ -43,6 +43,11 @@
                 <label class="col-sm-2 control-label">Usuario</label>
                 <div class="col-sm-4">
                     <input type="text" name="usuario" id="usuario" class="form-control" data-id-usuario="<?=$datosEditar['id_nuevo'];?>" oninput="validarUsuario(this)" value="<?=$datosEditar['uss_usuario'];?>" <?=$readonlyUsuario;?> <?=$disabledPermiso;?>>
+                    <div id="alerta_usuario_existente_editar" class="alert alert-danger mt-2" style="display: none;">
+                        <i class="fa fa-exclamation-triangle"></i> 
+                        <strong>Usuario duplicado:</strong> Este usuario de acceso ya está registrado para otro usuario. 
+                        Por favor, elige un nombre de usuario diferente.
+                    </div>
                 </div>
             </div>
 
@@ -56,7 +61,7 @@
                         include("../compartido/error-catch-to-report.php");
                     }
                     ?>
-                    <select id="tipoUsuario" class="form-control  select2" name="tipoUsuario" onchange="validarCantidadUsuarios(this)" required <?=$disabledPermiso;?>>
+                    <select id="tipoUsuario" class="form-control  select2" onchange="validarCantidadUsuarios(this)" required readonly disabled style="background-color: #e9ecef; cursor: not-allowed;">
                         <option value="">Seleccione una opción</option>
                         <?php
                         while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
@@ -69,6 +74,7 @@
                             <option value="<?=$opcionesDatos[0];?>" <?=$select;?> ><?=$opcionesDatos['pes_nombre'];?></option>
                         <?php }?>
                     </select>
+                    <input type="hidden" name="tipoUsuario" value="<?=$datosEditar['uss_tipo'];?>">
                 </div>
             </div>
             <?php if ( array_key_exists(16, $arregloModulos) ) { ?>
@@ -143,7 +149,7 @@
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Nombre</label>
                 <div class="col-sm-4">
-                    <input type="text" name="nombre" class="form-control" value="<?=$datosEditar['uss_nombre'];?>" <?=$readOnly;?> pattern="^[A-Za-zñÑ]+$" <?=$disabledPermiso;?>>
+                    <input type="text" name="nombre" class="form-control" value="<?=$datosEditar['uss_nombre'];?>" <?=$readOnly;?> <?=$disabledPermiso;?>>
                 <span style="color: tomato;"><?=$leyenda;?></span>
                 </div>
                 
@@ -159,7 +165,7 @@
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Primer Apellido</label>
                 <div class="col-sm-4">
-                    <input type="text" name="apellido1" class="form-control" value="<?=$datosEditar['uss_apellido1'];?>" <?=$readOnly;?> pattern="^[A-Za-zñÑ]+$" <?=$disabledPermiso;?>>
+                    <input type="text" name="apellido1" class="form-control" value="<?=$datosEditar['uss_apellido1'];?>" <?=$readOnly;?> <?=$disabledPermiso;?>>
                 </div>
             </div>
 
@@ -197,6 +203,11 @@
                 <label class="col-sm-2 control-label">Documento</label>
                 <div class="col-sm-4">
                     <input type="text" name="documento" id="documento" class="form-control" data-id-usuario="<?=$datosEditar['id_nuevo'];?>" oninput="validarDocumento(this)" value="<?=$datosEditar['uss_documento'];?>" <?=$readOnly;?> <?=$disabledPermiso;?>>
+                    <div id="alerta_documento_existente_editar" class="alert alert-danger mt-2" style="display: none;">
+                        <i class="fa fa-exclamation-triangle"></i> 
+                        <strong>Documento duplicado:</strong> Este documento ya está registrado para otro usuario. 
+                        Por favor, verifica el número de documento o contacta al administrador.
+                    </div>
                 </div>
             </div>
             
@@ -207,17 +218,40 @@
                 </div>
             </div>
             
+            <?php
+            // Limpiar formato de celular y teléfono (solo números)
+            $celularLimpio = !empty($datosEditar['uss_celular']) ? preg_replace('/[^0-9]/', '', $datosEditar['uss_celular']) : '';
+            $telefonoLimpio = !empty($datosEditar['uss_telefono']) ? preg_replace('/[^0-9]/', '', $datosEditar['uss_telefono']) : '';
+            ?>
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Celular</label>
                 <div class="col-sm-4">
-                    <input type="text" name="celular" class="form-control" data-mask="(999) 999-9999" value="<?=$datosEditar['uss_celular'];?>" <?=$disabledPermiso;?>>
+                    <input type="text" name="celular" id="celular" class="form-control" 
+                           pattern="[0-9]{10}" 
+                           maxlength="10"
+                           oninput="validarNumeroCelular(this)"
+                           placeholder="Ej: 3001234567"
+                           value="<?=$celularLimpio;?>" <?=$disabledPermiso;?>>
+                    <small class="form-text text-muted">
+                        <i class="fa fa-info-circle"></i> Ingrese solo números (10 dígitos)
+                    </small>
+                    <small id="validacion_celular" class="form-text"></small>
                 </div>
             </div>
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Teléfono</label>
                 <div class="col-sm-4">
-                    <input type="text" name="telefono" class="form-control"  data-mask="999-9999"value="<?=$datosEditar['uss_telefono'];?>" <?=$disabledPermiso;?>>
+                    <input type="text" name="telefono" id="telefono" class="form-control" 
+                           pattern="[0-9]{7}" 
+                           maxlength="7"
+                           oninput="validarNumeroTelefono(this)"
+                           placeholder="Ej: 1234567"
+                           value="<?=$telefonoLimpio;?>" <?=$disabledPermiso;?>>
+                    <small class="form-text text-muted">
+                        <i class="fa fa-info-circle"></i> Ingrese solo números (7 dígitos)
+                    </small>
+                    <small id="validacion_telefono" class="form-text"></small>
                 </div>
             </div>
 
@@ -290,8 +324,31 @@
 
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Usuario bloqueado</label>
-                <div class="col-sm-1">
-                    <input type="number" name="bloqueado" class="form-control" value="<?=$datosEditar['uss_bloqueado'];?>" readonly>
+                <div class="col-sm-4">
+                    <?php if(Modulos::validarPermisoEdicion()){?>
+                        <div class="input-group spinner col-sm-10">
+                            <label class="switchToggle">
+                                <input type="checkbox" name="desbloquearUsuario" id="desbloquearUsuario" value="1" 
+                                    <?=($datosEditar['uss_bloqueado'] == 1) ? 'checked' : '';?> 
+                                    <?=($datosEditar['uss_bloqueado'] == 0) ? 'disabled' : '';?>
+                                    onchange="manejarDesbloqueo(this)">
+                                <span class="slider <?=($datosEditar['uss_bloqueado'] == 1) ? 'red' : 'green';?> round"></span>
+                            </label>
+                            <label class="col-sm-2 control-label">
+                                <?=($datosEditar['uss_bloqueado'] == 1) ? 'Desbloquear Usuario' : 'Usuario Desbloqueado';?>
+                            </label>
+                        </div>
+                        <input type="hidden" name="bloqueado" id="bloqueado" value="<?=$datosEditar['uss_bloqueado'];?>">
+                        <small class="form-text text-muted">
+                            <?php if($datosEditar['uss_bloqueado'] == 1): ?>
+                                <i class="fa fa-info-circle"></i> El usuario está bloqueado. Desactiva el switch para desbloquearlo.
+                            <?php else: ?>
+                                <i class="fa fa-info-circle"></i> El usuario está desbloqueado. No se puede bloquear desde aquí.
+                            <?php endif; ?>
+                        </small>
+                    <?php } else { ?>
+                        <input type="text" class="form-control" value="<?=($datosEditar['uss_bloqueado'] == 1) ? 'Bloqueado' : 'Desbloqueado';?>" readonly>
+                    <?php } ?>
                 </div>
             </div>
 
@@ -313,6 +370,62 @@
                 <label class="col-sm-2 control-label">Última salida</label>
                 <div class="col-sm-4">
                     <input type="text"  class="form-control" value="<?=$datosEditar['uss_ultima_salida'];?>" readonly>
+                </div>
+            </div>
+            
+            <hr>
+            <h5 class="mb-3" style="color: #6017dc;"><i class="fa fa-info-circle"></i> Datos Adicionales del Usuario</h5>
+            
+            <?php
+            // Obtener nombre del responsable del registro si existe
+            $nombreResponsable = 'No registrado';
+            if (!empty($datosEditar['uss_responsable_registro'])) {
+                try {
+                    $idResponsable = mysqli_real_escape_string($conexion, $datosEditar['uss_responsable_registro']);
+                    $idInstitucion = mysqli_real_escape_string($conexion, $config['conf_id_institucion']);
+                    $year = mysqli_real_escape_string($conexion, $_SESSION["bd"]);
+                    
+                    $consultaResponsable = mysqli_query($conexion, 
+                        "SELECT uss_nombre, uss_apellido1, uss_apellido2, uss_usuario 
+                         FROM ".BD_GENERAL.".usuarios 
+                         WHERE uss_id = '".$idResponsable."' 
+                         AND institucion = '".$idInstitucion."' 
+                         AND year = '".$year."' 
+                         LIMIT 1");
+                    if ($consultaResponsable && mysqli_num_rows($consultaResponsable) > 0) {
+                        $datosResponsable = mysqli_fetch_array($consultaResponsable, MYSQLI_BOTH);
+                        $nombreResponsable = trim(($datosResponsable['uss_nombre'] ?? '') . ' ' . 
+                                                 ($datosResponsable['uss_apellido1'] ?? '') . ' ' . 
+                                                 ($datosResponsable['uss_apellido2'] ?? ''));
+                        if (empty(trim($nombreResponsable))) {
+                            $nombreResponsable = $datosResponsable['uss_usuario'] ?? 'Usuario ID: ' . $datosEditar['uss_responsable_registro'];
+                        } else {
+                            $nombreResponsable .= ' (' . ($datosResponsable['uss_usuario'] ?? '') . ')';
+                        }
+                    }
+                } catch (Exception $e) {
+                    $nombreResponsable = 'Usuario ID: ' . $datosEditar['uss_responsable_registro'];
+                }
+            }
+            
+            // Formatear fecha de registro
+            $fechaRegistroFormateada = 'No registrada';
+            if (!empty($datosEditar['uss_fecha_registro'])) {
+                $fechaRegistroFormateada = date('d/m/Y H:i:s', strtotime($datosEditar['uss_fecha_registro']));
+            }
+            ?>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 control-label">Fecha de Registro</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" value="<?=$fechaRegistroFormateada;?>" readonly>
+                </div>
+            </div>
+            
+            <div class="form-group row">
+                <label class="col-sm-2 control-label">Responsable del Registro</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" value="<?=$nombreResponsable;?>" readonly>
                 </div>
             </div>
 

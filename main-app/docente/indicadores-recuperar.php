@@ -11,6 +11,7 @@ require_once("../class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
@@ -148,10 +149,10 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 													$colorNota = "black";
 
 													// ============================================
-													// PRE-CARGAR NOTAS POR INDICADOR (ICOLVEN)
+													// PRE-CARGAR NOTAS POR INDICADOR
 													// ============================================
 													$notasIndicadoresMapa = [];
-													if ($informacion_inst["info_institucion"] == ICOLVEN) {
+													if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RECUPERAR_INDICADOR)) {
 														// Para este indicador específico ($idR) en toda la carga y periodo
 														$notasIndicadoresMapa = Calificaciones::traerDefinitivasIndicadorParaCarga(
 															$config,
@@ -215,7 +216,7 @@ $calificacion = Indicadores::traerDatosIndicadorRelacion($idR);
 															if (
 																empty($notas['rind_id']) && 
 																$datosCargaActual['car_periodo'] > $periodoConsultaActual && 
-																$informacion_inst["info_institucion"] == ICOLVEN
+																$Modulos::verificarModulosDeInstitucion(Modulos::MODULO_RECUPERAR_INDICADOR)
 															) {
 																//Vamos a obtener las definitivas por cada indicador y la definitiva general de la asignatura
 																$notasPorIndicador = Calificaciones::traerNotasPorIndicador(

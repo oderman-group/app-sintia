@@ -111,7 +111,7 @@ define('PERMISO_EDICION_PERIODOS_DIFERENTES', true); //Diferentes al actual
 define('CUALITATIVA', 'CUALITATIVA');
 define('CUANTITATIVA', 'CUANTITATIVA');
 
-define('CLAVE_SUGERIDA', 'sherman1298');
+define('CLAVE_SUGERIDA', 'S1nt1a'.date("Y").'$');
 
 /* TIPO DE VALIDACION*/
 define('IDENTIFICAION', 'Identificacion');
@@ -226,6 +226,14 @@ if (php_sapi_name() === 'cli') {
     $_ENV = $argv[1] ?? 'PROD';
 
     switch ($_ENV) {
+        case 'LOCAL':
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+            define('REDIRECT_ROUTE', 'http://localhost/app-sintia/main-app');
+            define('ENVIROMENT', 'LOCAL');
+            error_reporting (E_ALL);
+        break;
+
         case 'TEST':
             ini_set('display_errors', 1);
             ini_set('display_startup_errors', 1);

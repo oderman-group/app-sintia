@@ -53,10 +53,19 @@ if (empty($datosUsuario)) {
     echo "</div>";
 }
 
+require_once(ROOT_PATH . "/main-app/class/Modulos.php");
+require_once(ROOT_PATH . "/main-app/class/Usuarios.php");
+
 $numeroCelular = !empty($datosUsuario['telefono']) ? preg_replace('/[()\s-]/', '', $datosUsuario['telefono']) : '';
 $ultimos4Digitos = !empty($numeroCelular) ? substr($numeroCelular, -4) : '****';
 $usuarioEmail = !empty($datosUsuario['usuarioEmail']) ? $datosUsuario['usuarioEmail'] : (!empty($datosUsuario['usuario_email']) ? $datosUsuario['usuario_email'] : 'tu correo');
-$tieneCelular = !empty($numeroCelular) && strlen($numeroCelular) >= 7; // Validar que tenga al menos 7 dígitos
+
+// Validar que tenga celular
+$tieneCelular = !empty($numeroCelular) && strlen($numeroCelular) >= 7;
+
+// Validar módulo SMS: La validación completa se hará en el endpoint enviar-codigo-sms.php
+// Por ahora, solo verificamos si tiene celular. El endpoint validará el módulo.
+// Esto evita problemas si no hay sesión activa en recuperación de contraseña
 
 // Buscar idRegistro en todas las variantes posibles
 $idRegistro = '';

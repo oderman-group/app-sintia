@@ -188,13 +188,17 @@ try {
 	error_log("INSTITUCIÓN CREADA CON ID: " . $idInsti);
 	error_log("Procediendo a relacionar módulos...");
 
-	//RELACIONAR TODOS LOS MÓDULOS ACTIVOS AUTOMÁTICAMENTE
+	//RELACIONAR MÓDULOS (solo visibles, activos y con mod_default_install = 1)
 	try{
 		require_once(ROOT_PATH."/main-app/class/Conexion.php");
 		
 		error_log("Auto-registro - Iniciando relación de módulos para institución: " . $idInsti);
 		
-		$consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos WHERE mod_estado = 1");
+		// Solo instalar módulos que estén visibles, activos y con mod_default_install = 1
+		$consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos 
+			WHERE mod_estado = 1 
+			AND mod_visible = 1 
+			AND mod_default_install = 1");
 		
 		if (!$consultaModulos) {
 			error_log("Auto-registro - Error en query de módulos: " . mysqli_error($conexion));
@@ -202,7 +206,7 @@ try {
 		}
 		
 		$numModulos = mysqli_num_rows($consultaModulos);
-		error_log("Auto-registro - Módulos activos encontrados: " . $numModulos);
+		error_log("Auto-registro - Módulos encontrados (visibles, activos y con mod_default_install=1): " . $numModulos);
 		
 		if ($consultaModulos && $numModulos > 0) {
 			$valoresModulos = [];

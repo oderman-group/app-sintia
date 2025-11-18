@@ -127,31 +127,25 @@ try {
     
     // Preparar datos para el email
     $dataEmail = [
-        'nombre_completo' => $nombre . ' ' . $apellidos,
+        'usuario_nombre' => $nombre . ' ' . $apellidos,
+        'usuario_email' => $email,
         'codigo' => $codigo,
-        'email' => $email,
         'tiempo_expiracion' => '10 minutos'
     ];
     
     $asunto = 'Código de verificación - Plataforma SINTIA';
     $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-codigo-verificacion.php';
     
-    // Enviar email
-    $emailEnviado = EnviarEmail::enviar($dataEmail, $asunto, $bodyTemplateRoute, null, null);
+    // Enviar email inmediatamente (código expira en 10 minutos)
+    EnviarEmail::enviar($dataEmail, $asunto, $bodyTemplateRoute, null, null, true);
     
-    if ($emailEnviado) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'Código enviado exitosamente',
-            'idRegistro' => $idRegistro,
-            'attempt' => $attempt
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error al enviar el email. Por favor intenta de nuevo.'
-        ]);
-    }
+    // Si llegamos aquí, el email se envió exitosamente
+    echo json_encode([
+        'success' => true,
+        'message' => 'Código enviado exitosamente',
+        'idRegistro' => $idRegistro,
+        'attempt' => $attempt
+    ]);
     
 } catch (Exception $e) {
     echo json_encode([
