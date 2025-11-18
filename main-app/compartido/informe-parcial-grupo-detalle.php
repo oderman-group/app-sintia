@@ -29,6 +29,46 @@ $filtroAdicional = "AND mat_grado='" . $_REQUEST["curso"] . "' AND mat_grupo='" 
 $cursoActual = GradoServicios::consultarCurso($_REQUEST["curso"]);
 $matriculadosPorCurso = Estudiantes::listarEstudiantesEnGrados($filtroAdicional, "", $cursoActual, $_REQUEST["grupo"]);
 
+// Pre-cargar todos los estudiantes en un array y obtener sus IDs
+$listaEstudiantes = [];
+$idsEstudiantes = [];
+$filtroORComun = '';
+$esGradoIndividual = ($cursoActual["gra_tipo"] == GRADO_INDIVIDUAL);
+
+// Guardar estudiantes y determinar si todos tienen el mismo filtro OR
+while ($est = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
+  $listaEstudiantes[] = $est;
+  $idsEstudiantes[] = $est['mat_id'];
+  
+  // Si es grado individual, construir filtro OR para este estudiante
+  if ($esGradoIndividual) {
+    $filtroOREst = " OR (car_curso='" . $est['matcur_id_curso'] . "' AND car_grupo='" . $est['matcur_id_grupo'] . "')";
+    // Si es el primer estudiante, guardar el filtro como común
+    if (empty($filtroORComun)) {
+      $filtroORComun = $filtroOREst;
+    } elseif ($filtroORComun != $filtroOREst) {
+      // Si el filtro es diferente, marcar que no se puede optimizar
+      $filtroORComun = null;
+      break; // No podemos optimizar si los filtros son diferentes
+    }
+  }
+}
+
+// Pre-cargar todas las cargas de todos los estudiantes en una sola consulta
+// Solo si todos tienen el mismo filtro OR (o no es grado individual)
+$cargasMapa = [];
+if (!empty($idsEstudiantes) && ($filtroORComun !== null || !$esGradoIndividual)) {
+  $cargasMapa = CargaAcademica::traerInformeParcialTodasMapa(
+    $config,
+    $idsEstudiantes,
+    $_REQUEST["curso"],
+    $_REQUEST["grupo"],
+    $cPeriodo,
+    $filtroORComun ?? '',
+    ""
+  );
+}
+
 // Pre-cargar notas cualitativas si están habilitadas
 $notasCualitativasCache = [];
 if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
@@ -70,8 +110,9 @@ function obtenerNotaCualitativa($nota, $cache, $config, $conexion) {
     return $cache[$notaRedondeada];
   }
   
-  $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota);
-  return !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : $nota;
+  // Si no está en el cache, devolver la nota numérica
+  // (el cache debería tener todos los valores posibles)
+  return $nota;
 }
 ?>
 
@@ -89,32 +130,43 @@ function obtenerNotaCualitativa($nota, $cache, $config, $conexion) {
 
   <?php
   $hayEstudiantes = false;
-  while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
+  foreach ($listaEstudiantes as $matriculadosDatos) {
     $hayEstudiantes = true;
     
-    $filtroOR = '';
-    if ($cursoActual["gra_tipo"] == GRADO_INDIVIDUAL) {
-      $filtroOR = " OR (car_curso='" . $matriculadosDatos['matcur_id_curso'] . "' AND car_grupo='" . $matriculadosDatos['matcur_id_grupo'] . "')";
+    // Obtener cargas del mapa pre-cargado o hacer consulta individual si no se pudo optimizar
+    $cargasEstudiante = [];
+    if (!empty($cargasMapa) && isset($cargasMapa[$matriculadosDatos['mat_id']])) {
+      // Usar datos del mapa optimizado
+      $cargasEstudiante = $cargasMapa[$matriculadosDatos['mat_id']];
+    } else {
+      // Fallback: consulta individual (para grados individuales con filtros diferentes)
+      $filtroOR = '';
+      if ($esGradoIndividual) {
+        $filtroOR = " OR (car_curso='" . $matriculadosDatos['matcur_id_curso'] . "' AND car_grupo='" . $matriculadosDatos['matcur_id_grupo'] . "')";
+      }
+      
+      $cCargas = CargaAcademica::consultaInformeParcialTodas(
+        $config, 
+        $matriculadosDatos['mat_id'], 
+        $matriculadosDatos['mat_grado'], 
+        $matriculadosDatos['mat_grupo'], 
+        $cPeriodo,
+        $filtroOR
+      );
+      
+      while ($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)) {
+        $cargasEstudiante[] = $rCargas;
+      }
     }
     
-    // Usar consultaInformeParcialTodas en lugar de consultaInformeParcialPerdidas para mostrar todas las materias
-    $cCargas = CargaAcademica::consultaInformeParcialTodas(
-      $config, 
-      $matriculadosDatos['mat_id'], 
-      $matriculadosDatos['mat_grado'], 
-      $matriculadosDatos['mat_grupo'], 
-      $cPeriodo,
-      $filtroOR
-    );
-    
-    if (mysqli_num_rows($cCargas) > 0) {
+    if (!empty($cargasEstudiante)) {
       // Inicializar variables para este estudiante
       $materiasDividir = 0;
       $promedioG = 0;
       $todasLasCargas = [];
       
       // Procesar todas las cargas del estudiante
-      while ($rCargas = mysqli_fetch_array($cCargas, MYSQLI_BOTH)) {
+      foreach ($cargasEstudiante as $rCargas) {
         $colorDefinitiva = obtenerColorNota($rCargas['nota'], $config['conf_nota_minima_aprobar']);
         $definitivaFinal = obtenerNotaCualitativa($rCargas['nota'], $notasCualitativasCache, $config, $conexion);
         

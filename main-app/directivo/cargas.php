@@ -786,6 +786,10 @@ if($config['conf_doble_buscador'] == 1) {
 										'<span class="badge badge-secondary ml-2">' + codigo + '</span>' +
 									'</div>' +
 									'<div class="info-item mb-2">' +
+										'<strong class="text-muted">ID Carga:</strong>' +
+										'<span class="badge badge-primary ml-2">' + cargaId + '</span>' +
+									'</div>' +
+									'<div class="info-item mb-2">' +
 										'<strong class="text-muted">Docente:</strong>' +
 										'<span class="text-dark">' + docente + '</span>' +
 									'</div>' +

@@ -58,6 +58,27 @@ while ($row = $cosnultaTiposNotas->fetch_assoc()) {
 	$tiposNotas[] = $row;
 }
 
+// OPTIMIZACIÓN: Pre-cargar cache de notas cualitativas para evitar búsquedas repetidas
+$notasCualitativasCache = [];
+if ($config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($tiposNotas)) {
+	foreach ($tiposNotas as $notaTipo) {
+		// Crear cache para todos los valores posibles en el rango
+		for ($i = $notaTipo['notip_desde']; $i <= $notaTipo['notip_hasta']; $i += 0.1) {
+			$key = number_format((float)$i, 1, '.', '');
+			if (!isset($notasCualitativasCache[$key])) {
+				$notasCualitativasCache[$key] = $notaTipo['notip_nombre'];
+			}
+		}
+	}
+}
+
+// OPTIMIZACIÓN: Pre-cargar colores de notas para evitar cálculos repetidos
+$colorCache = [
+	'perdida' => $config['conf_color_perdida'] ?? '#dc3545',
+	'ganada' => $config['conf_color_ganada'] ?? '#28a745'
+];
+$notaMinima = $config['conf_nota_minima_aprobar'] ?? $config[5] ?? 3.0;
+
 $listaDatos = [];
 $estudiantes = [];
 if (!empty($cursoV) && !empty($grupoV) && !empty($year)) {
@@ -307,19 +328,26 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 									foreach ($periodosArray as $periodo) {
 										$boletin = isset($buscarCarga["periodos"][$periodo]) ? $buscarCarga["periodos"][$periodo] : "";
 										if (!empty($boletin["bol_nota"])) {
-											$color = '';
+											$notaValor = $boletin["bol_nota"];
+											$defPorMateria += ($notaValor * $porcPeriodo[$periodo]);
+											
+											// OPTIMIZACIÓN: Calcular color directamente
+											$color = ($notaValor < $notaMinima) ? $colorCache['perdida'] : $colorCache['ganada'];
+											
+											// OPTIMIZACIÓN: Formatear nota usando cache
 											$title = '';
-											$notaFormat = Boletin::formatoNota($boletin["bol_nota"], $tiposNotas);
-											$color = Boletin::colorNota($boletin['bol_nota']);
-
-											$defPorMateria += ($boletin["bol_nota"] * $porcPeriodo[$periodo]);
-
 											if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-												$title = 'title="Nota Cuantitativa: ' . $boletin['bol_nota'] . '"';
+												$title = 'title="Nota Cuantitativa: ' . $notaValor . '"';
+												$notaRedondeada = number_format((float)$notaValor, 1, '.', '');
+												$notaFormat = isset($notasCualitativasCache[$notaRedondeada]) 
+													? $notasCualitativasCache[$notaRedondeada] 
+													: Boletin::formatoNota($notaValor, $tiposNotas);
+											} else {
+												$notaFormat = Boletin::notaDecimales($notaValor);
 											}
 											?>
 											<td class="nota-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
-												<?= $notaFormat; ?>
+												<?= htmlspecialchars($notaFormat, ENT_QUOTES, 'UTF-8'); ?>
 											</td>
 											<?php
 											continue;
@@ -327,15 +355,23 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 											<td class="nota-cell"> </td>
 										<?php }
 									}
-									$color = Boletin::colorNota($defPorMateria);
+									// OPTIMIZACIÓN: Calcular color directamente
+									$color = ($defPorMateria < $notaMinima) ? $colorCache['perdida'] : $colorCache['ganada'];
+									
+									// OPTIMIZACIÓN: Formatear nota usando cache
 									$title = '';
 									if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 										$title = 'title="Nota Cuantitativa: ' . $defPorMateria . '"';
+										$defPorMateriaRedondeada = number_format((float)$defPorMateria, 1, '.', '');
+										$defPorMateriaFormat = isset($notasCualitativasCache[$defPorMateriaRedondeada]) 
+											? $notasCualitativasCache[$defPorMateriaRedondeada] 
+											: Boletin::formatoNota($defPorMateria, $tiposNotas);
+									} else {
+										$defPorMateriaFormat = Boletin::notaDecimales($defPorMateria);
 									}
-									$defPorMateriaFormat = Boletin::formatoNota($defPorMateria, $tiposNotas);
 									?>
 									<td class="definitiva-cell" style="color:<?= $color; ?>;" <?= $title; ?>>
-										<?= $defPorMateriaFormat; ?>
+										<?= htmlspecialchars($defPorMateriaFormat, ENT_QUOTES, 'UTF-8'); ?>
 									</td>
 									<?php
 									$defPorEstudiante += $defPorMateria;
@@ -348,11 +384,12 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 					if ($numCargasPorCurso > 0) {
 						$prom = ($defPorEstudiante / $numCargasPorCurso);
 					}
-					$color = Boletin::colorNota($prom);
+					// OPTIMIZACIÓN: Calcular color directamente
+					$color = ($prom < $notaMinima) ? $colorCache['perdida'] : $colorCache['ganada'];
 					$prom = round($prom, $config['conf_decimales_notas']);
 					$prom = number_format($prom, $config['conf_decimales_notas']);
 					?>
-					<td class="promedio-cell" style="color:<?= $color; ?>;"><?= $prom; ?></td>
+					<td class="promedio-cell" style="color:<?= $color; ?>;"><?= htmlspecialchars($prom, ENT_QUOTES, 'UTF-8'); ?></td>
 				</tr>
 			<?php 
 			} // Cierre foreach estudiantes
