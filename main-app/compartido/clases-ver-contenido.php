@@ -78,17 +78,52 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 							$filtroAdicional = "AND mat_grado='" . $datosCargaActual['car_curso'] . "' AND mat_grupo='" . $datosCargaActual['car_grupo'] . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
 							$cursoActual = GradoServicios::consultarCurso($datosCargaActual['car_curso']);
 							$consulta = Estudiantes::listarEstudiantesEnGrados($filtroAdicional, "", $cursoActual, $datosCargaActual['car_grupo']);
+							
+							// PRE-CARGAR TODOS LOS INGRESOS A LA CLASE DE TODOS LOS ESTUDIANTES
+							// EN UNA SOLA CONSULTA PARA EVITAR N+1 QUERIES
+							// ============================================
+							$ingresosMapa = [];
+							$idsUsuarios = [];
+							$listaEstudiantes = [];
+							
+							// Guardar estudiantes en array para reutilizar
+							while ($est = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+								$listaEstudiantes[] = $est;
+								$idsUsuarios[] = $est['uss_id'];
+							}
+							
+							if (!empty($idsUsuarios)) {
+								$idsUsuariosEsc = array_map(function($id) use ($conexion) {
+									return "'" . mysqli_real_escape_string($conexion, $id) . "'";
+								}, $idsUsuarios);
+								$inUsuarios = implode(',', $idsUsuariosEsc);
+								$urlClaseEsc = mysqli_real_escape_string($conexion, $urlClase);
+								$yearEsc = mysqli_real_escape_string($conexion, $_SESSION["bd"]);
+								$institucion = (int)$config['conf_id_institucion'];
+								
+								$sqlIngresos = "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
+												FROM " . $baseDatosServicios . ".seguridad_historial_acciones 
+												WHERE hil_url LIKE '%" . $urlClaseEsc . "%' 
+												AND hil_usuario IN ({$inUsuarios}) 
+												AND (hil_fecha LIKE '%" . $yearEsc . "%' OR hil_institucion=" . $institucion . ")
+												ORDER BY hil_fecha DESC";
+								
+								$consultaIngresos = mysqli_query($conexion, $sqlIngresos);
+								if ($consultaIngresos) {
+									while($ingreso = mysqli_fetch_array($consultaIngresos, MYSQLI_BOTH)){
+										$idUsuario = $ingreso['hil_usuario'];
+										// Guardar solo el primer ingreso (más reciente) por usuario
+										if (!isset($ingresosMapa[$idUsuario])) {
+											$ingresosMapa[$idUsuario] = $ingreso;
+										}
+									}
+								}
+							}
+							
 							$contReg = 1;
-							while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+							foreach($listaEstudiantes as $resultado){
 								$nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($resultado);
-								$consultaIngresoClase = mysqli_query($conexion, "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
-												FROM " . $baseDatosServicios . ".seguridad_historial_acciones 
-												WHERE hil_url LIKE '%" . $urlClase . "%' AND hil_usuario='" . $resultado['uss_id'] . "' AND hil_fecha LIKE '%" . $_SESSION["bd"] . "%'
-												UNION 
-												SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha 
-												FROM " . $baseDatosServicios . ".seguridad_historial_acciones 
-												WHERE hil_url LIKE '%" . $urlClase . "%' AND hil_usuario='" . $resultado['uss_id'] . "' AND hil_institucion='" . $config['conf_id_institucion'] . "' AND hil_fecha LIKE '%" . $_SESSION["bd"] . "%'");
-								$ingresoClase = mysqli_fetch_array($consultaIngresoClase, MYSQLI_BOTH);
+								$ingresoClase = $ingresosMapa[$resultado['uss_id']] ?? null;
 
 								if (empty($ingresoClase['hil_id'])) {
 									continue;

@@ -36,20 +36,54 @@ $datosConsultaBD = Foros::consultarDatosForos($conexion, $config, $idR);
 													$filtroAdicional= "AND mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
 													$cursoActual=GradoServicios::consultarCurso($datosCargaActual['car_curso']);
 													$consulta =Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"",$cursoActual,$datosCargaActual['car_grupo']);
+													
+													// PRE-CARGAR TODOS LOS INGRESOS AL FORO DE TODOS LOS ESTUDIANTES
+													// EN UNA SOLA CONSULTA PARA EVITAR N+1 QUERIES
+													// ============================================
+													$ingresosMapa = [];
+													$idsUsuarios = [];
+													$listaEstudiantes = [];
+													
+													// Guardar estudiantes en array para reutilizar
+													while($est = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														$listaEstudiantes[] = $est;
+														$idsUsuarios[] = $est['uss_id'];
+													}
+													
+													if (!empty($idsUsuarios)) {
+														$idsUsuariosEsc = array_map(function($id) use ($conexion) {
+															return "'" . mysqli_real_escape_string($conexion, $id) . "'";
+														}, $idsUsuarios);
+														$inUsuarios = implode(',', $idsUsuariosEsc);
+														$urlRecursoEsc = mysqli_real_escape_string($conexion, $urlRecurso);
+														$yearEsc = mysqli_real_escape_string($conexion, $_SESSION["bd"]);
+														$institucion = (int)$config['conf_id_institucion'];
+														
+														$sqlIngresos = "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
+																		FROM ".$baseDatosServicios.".seguridad_historial_acciones 
+																		WHERE hil_url LIKE '%".$urlRecursoEsc."%' 
+																		AND hil_usuario IN ({$inUsuarios}) 
+																		AND (hil_fecha LIKE '%".$yearEsc."%' OR hil_institucion=".$institucion.")
+																		ORDER BY hil_fecha DESC";
+														
+														$consultaIngresos = mysqli_query($conexion, $sqlIngresos);
+														if ($consultaIngresos) {
+															while($ingreso = mysqli_fetch_array($consultaIngresos, MYSQLI_BOTH)){
+																$idUsuario = $ingreso['hil_usuario'];
+																// Guardar solo el primer ingreso (más reciente) por usuario
+																if (!isset($ingresosMapa[$idUsuario])) {
+																	$ingresosMapa[$idUsuario] = $ingreso;
+																}
+															}
+														}
+													}
+													
 													$contReg = 1;
-													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+													foreach($listaEstudiantes as $resultado){
 														$nombreCompleto =Estudiantes::NombreCompletoDelEstudiante($resultado);
-														$consultaIngresoClase=mysqli_query($conexion, "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
-														FROM ".$baseDatosServicios.".seguridad_historial_acciones 
-														WHERE hil_url LIKE '%".$urlRecurso."%' AND hil_usuario='".$resultado['uss_id']."' AND hil_fecha LIKE '%".$_SESSION["bd"]."%'
-														UNION 
-														SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha 
-														FROM ".$baseDatosServicios.".seguridad_historial_acciones 
-														WHERE hil_url LIKE '%".$urlRecurso."%' AND hil_usuario='".$resultado['uss_id']."' AND hil_institucion='".$config['conf_id_institucion']."' AND hil_fecha LIKE '%".$_SESSION["bd"]."%'");
-														$numIngreso=mysqli_num_rows($consultaIngresoClase);
-														if($numIngreso>0){
-															$ingresoClase = mysqli_fetch_array($consultaIngresoClase, MYSQLI_BOTH);
-
+														$ingresoClase = $ingresosMapa[$resultado['uss_id']] ?? null;
+														
+														if($ingresoClase){
 													?>
 													<li class="list-group-item">
 														<a href="foros-detalles.php?idR=<?=$_GET["idR"];?>&usuario=<?=base64_encode($resultado['mat_id_usuario']);?>"><?=$nombreCompleto?></a> 
@@ -107,11 +141,17 @@ $datosConsultaBD = Foros::consultarDatosForos($conexion, $config, $idR);
 											$filtro = '';
 											if(is_numeric($usuario)){$filtro .= " AND com_id_estudiante='".$usuario."'";}
 											
+											// PRE-CARGAR TODAS LAS RESPUESTAS DE TODOS LOS COMENTARIOS
+											// EN UNA SOLA CONSULTA PARA EVITAR N+1 QUERIES
+											// ============================================
+											$respuestasMapa = Foros::traerRespuestasForoMapa($conexion, $config, $idR);
+											
 											$consulta = Foros::traerComentariosForos($conexion, $config, $idR, $filtro);
 											$contReg = 1;
 											while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-												$consultaReacciones = Foros::consultarRespuestas($conexion, $config, $resultado['com_id']);
-												$numReacciones = mysqli_num_rows($consultaReacciones);
+												// Obtener respuestas del mapa pre-cargado
+												$respuestasComentario = $respuestasMapa[$resultado['com_id']] ?? [];
+												$numReacciones = count($respuestasComentario);
 	
 											?>
 												<div id="PUB<?=$resultado['com_id'];?>" class="row">
@@ -188,7 +228,8 @@ $datosConsultaBD = Foros::consultarDatosForos($conexion, $config, $idR);
 																</form>
 																
 																<?php
-																while($datoReacciones = mysqli_fetch_array($consultaReacciones, MYSQLI_BOTH)){
+																// Iterar sobre el array pre-cargado en lugar de hacer consulta
+																foreach($respuestasComentario as $datoReacciones){
 																?>
 																	<p>
 																		<?php if($_SESSION["id"]==$datoReacciones['fore_id_estudiante']){?>

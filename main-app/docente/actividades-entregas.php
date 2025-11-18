@@ -143,29 +143,36 @@ $datosConsulta = Actividades::traerDatosActividades($conexion, $config, $idR);
                                                         <td><?=$contReg;?></td>
 														<td><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
 														<td><?=$datos1['ent_fecha'];?></td>
-														<td><?php if($datos1[1]>0){echo $datos1[1]." Min. y ";} if($datos1[2]>0){echo $datos1[2]." Seg.";}?></td>
+														<td><?php if(isset($datos1[1]) && $datos1[1]>0){echo $datos1[1]." Min. y ";} if(isset($datos1[2]) && $datos1[2]>0){echo $datos1[2]." Seg.";}?></td>
 														<td>
 														<?php 
-														$url= $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo"])->signedUrl(new DateTime('tomorrow')); 
-														$existe=$storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo"])->exists();
-														$url2= $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo2"])->signedUrl(new DateTime('tomorrow')); 
-														$existe2=$storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo2"])->exists();
-														$url3= $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo3"])->signedUrl(new DateTime('tomorrow')); 
-														$existe3=$storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo3"])->exists();
-														if(!empty($datos1['ent_archivo']) and $existe){?>
-															<a href="<?=$url?>" target="_blank">Archivo 1</a><br>
-														<?php }?>
-															
-														<?php if(!empty($datos1['ent_archivo2']) and $existe2){?>
-															<a href="<?=$url2?>" target="_blank">Archivo 2</a><br>
-														<?php }?>
-															
-														<?php if(!empty($datos1['ent_archivo3']) and $existe3){?>
-															<a href="<?=$url3?>" target="_blank">Archivo 3</a><br>
-														<?php }?>	
+														// Optimizar: solo hacer llamadas a storage si el archivo no está vacío
+														if(!empty($datos1['ent_archivo'])){
+															$obj1 = $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo"]);
+															if($obj1->exists()){
+																$url = $obj1->signedUrl(new DateTime('tomorrow'));
+																?><a href="<?=$url?>" target="_blank">Archivo 1</a><br><?php
+															}
+														}
 														
+														if(!empty($datos1['ent_archivo2'])){
+															$obj2 = $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo2"]);
+															if($obj2->exists()){
+																$url2 = $obj2->signedUrl(new DateTime('tomorrow'));
+																?><a href="<?=$url2?>" target="_blank">Archivo 2</a><br><?php
+															}
+														}
+														
+														if(!empty($datos1['ent_archivo3'])){
+															$obj3 = $storage->getBucket()->object(FILE_TAREAS_ENTREGADAS.$datos1["ent_archivo3"]);
+															if($obj3->exists()){
+																$url3 = $obj3->signedUrl(new DateTime('tomorrow'));
+																?><a href="<?=$url3?>" target="_blank">Archivo 3</a><br><?php
+															}
+														}
+														?>
 														</td>
-														<td style="font-size: 11px;"><?=$datos1['ent_comentario'];?></td>
+														<td style="font-size: 11px;"><?=!empty($datos1['ent_comentario']) ? htmlspecialchars($datos1['ent_comentario']) : '';?></td>
                                                     </tr>
 													<?php 
 														 $contReg++;
