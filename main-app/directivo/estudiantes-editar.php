@@ -718,6 +718,96 @@ try {
 				$hidden.on('change', validateDate);
 				$picker.on('changeDate', validateDate);
 			}
+			
+			// ========================================
+			// LOADING/BARRA DE PROGRESO AL GUARDAR
+			// ========================================
+			
+			var $form = $('#example-advanced-form');
+			var $loadingOverlay = null;
+			var $progressBar = null;
+			
+			// Crear overlay de loading
+			function crearLoadingOverlay() {
+				if ($loadingOverlay) {
+					return; // Ya existe
+				}
+				
+				$loadingOverlay = $('<div id="loading-overlay-estudiante" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 99999; display: none; align-items: center; justify-content: center; flex-direction: column; flex-wrap: nowrap;">' +
+					'<div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; margin: auto;">' +
+					'<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin: 0 auto 20px auto;">' +
+					'<span class="sr-only">Cargando...</span>' +
+					'</div>' +
+					'<h4 style="color: #333; margin-bottom: 15px;">Actualizando matrícula...</h4>' +
+					'<p style="color: #666; margin-bottom: 20px;">Por favor espere mientras se procesan los datos.</p>' +
+					'<div class="progress" style="height: 25px; border-radius: 5px; overflow: hidden;">' +
+					'<div id="progress-bar-estudiante" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">' +
+					'<span id="progress-text-estudiante" style="line-height: 25px; font-weight: bold; color: white;">0%</span>' +
+					'</div>' +
+					'</div>' +
+					'</div>' +
+					'</div>');
+				
+				$('body').append($loadingOverlay);
+				$progressBar = $('#progress-bar-estudiante');
+			}
+			
+			// Función para simular progreso
+			function simularProgreso() {
+				var progreso = 0;
+				var intervalo = setInterval(function() {
+					progreso += Math.random() * 15;
+					if (progreso > 90) {
+						progreso = 90; // No llegar al 100% hasta que termine realmente
+					}
+					$progressBar.css('width', progreso + '%').attr('aria-valuenow', progreso);
+					$('#progress-text-estudiante').text(Math.round(progreso) + '%');
+				}, 200);
+				
+				return intervalo;
+			}
+			
+			// Interceptar submit del formulario
+			$form.on('submit', function(e) {
+				// Crear overlay si no existe
+				crearLoadingOverlay();
+				
+				// Establecer estilos de flexbox antes de mostrar
+				$loadingOverlay.css({
+					'display': 'flex',
+					'align-items': 'center',
+					'justify-content': 'center',
+					'flex-direction': 'column',
+					'opacity': '0'
+				});
+				
+				// Mostrar el overlay con animación de opacidad
+				$loadingOverlay.show().animate({
+					'opacity': '1'
+				}, 300);
+				
+				// Iniciar simulación de progreso
+				var intervaloProgreso = simularProgreso();
+				
+				// Guardar intervalo para poder limpiarlo si es necesario
+				$form.data('intervalo-progreso', intervaloProgreso);
+				
+				// Completar al 100% cuando la página se recargue (después del submit)
+				// Esto se manejará en el servidor, pero por si acaso dejamos un timeout
+				setTimeout(function() {
+					if ($progressBar) {
+						$progressBar.css('width', '100%').attr('aria-valuenow', 100);
+						$('#progress-text-estudiante').text('100%');
+					}
+				}, 1000);
+			});
+			
+			// Si hay un error y se recarga la página, ocultar el loading
+			$(window).on('beforeunload', function() {
+				if ($loadingOverlay) {
+					$loadingOverlay.fadeOut(100);
+				}
+			});
 });
 
 	// ========================================

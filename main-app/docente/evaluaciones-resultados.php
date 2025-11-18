@@ -34,6 +34,30 @@ $idE="";
 	
 	//Cantidad de preguntas de la evaluación
 	$cantPreguntas = Evaluaciones::numeroPreguntasEvaluacion($conexion, $config, $idE);
+	
+	// Verificar si hay notas disponibles ANTES de renderizar el botón
+	// Pre-cargar los mapas de datos para verificar rápidamente
+	$tiemposMapa = Evaluaciones::traerTiemposEvaluacionMapa($conexion, $config, $idE);
+	$conteosMapa = Evaluaciones::traerConteosPreguntasMapa($conexion, $config, $idE);
+	
+	// Inicializar variable para rastrear si hay notas disponibles
+	$hayNotasDisponibles = false;
+	
+	// Verificar rápidamente si hay al menos un estudiante con nota disponible
+	$consultaEstudiantes = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+	while($estudiante = mysqli_fetch_array($consultaEstudiantes, MYSQLI_BOTH)){
+		$datos2 = $conteosMapa[$estudiante['mat_id']] ?? null;
+		if(!empty($datos2) && !empty($datos2[1]) && $datos2[0] > 0){
+			$porcentaje = round(($datos2[1]/$datos2[0])*100, $config['conf_decimales_notas']);
+			$nota = round(($config['conf_nota_hasta']*($porcentaje/100)), $config['conf_decimales_notas']);
+			if($nota > 0){
+				$hayNotasDisponibles = true;
+				break; // Ya encontramos al menos uno, no necesitamos seguir
+			}
+		}
+	}
+	// Liberar el resultado para que pueda ser usado de nuevo más abajo
+	mysqli_data_seek($consultaEstudiantes, 0);
 ?>
 <script src="../../config-general/assets/plugins/chart-js/Chart.bundle.js"></script>
 <!-- data tables -->
@@ -137,7 +161,7 @@ $idE="";
 									<div class="col-sm-12">
 										<a href="evaluaciones.php" class="btn btn-secondary"><i class="fa fa-long-arrow-left"></i>Regresar</a>
 										
-										<a href="#" id="btnExportar" <?=$ocultarExportacion?> class="btn btn-info" onClick="document.getElementById('exportarNotas').style.display='block';"><i class="fas fa-file-export"></i>Exportar Notas</a>
+										<a href="#" id="btnExportar" <?=$ocultarExportacion?> <?=!$hayNotasDisponibles ? 'style="pointer-events: none; opacity: 0.5; cursor: not-allowed;"' : '';?> class="btn btn-info" onClick="document.getElementById('exportarNotas').style.display='block';"><i class="fas fa-file-export"></i>Exportar Notas</a>
 										
 									</div>
 								</div>
@@ -214,8 +238,8 @@ $idE="";
 													// PRE-CARGAR TODOS LOS DATOS EN UNA SOLA CONSULTA
 													// PARA EVITAR N+1 QUERIES
 													// ============================================
-													$tiemposMapa = Evaluaciones::traerTiemposEvaluacionMapa($conexion, $config, $idE);
-													$conteosMapa = Evaluaciones::traerConteosPreguntasMapa($conexion, $config, $idE);
+													// Nota: $tiemposMapa y $conteosMapa ya fueron cargados arriba para verificar notas disponibles
+													// Solo los reutilizamos aquí para el bucle
 													
 													// Pre-cargar tipos de nota para modo cualitativo
 													$listaDesemp = [];
@@ -227,10 +251,10 @@ $idE="";
 														mysqli_free_result($tablaNotasRes);
 													}
 													
-													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+													// Reutilizar la consulta que ya se ejecutó arriba para verificar notas disponibles
+													$consulta = $consultaEstudiantes;
 													 $contReg = 1;
 													 $registroNotas = 0;
-													 $hayNotasDisponibles = false; // Variable para rastrear si hay al menos una nota disponible
 													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														 // Obtener datos del mapa pre-cargado
 														 $datos1 = $tiemposMapa[$resultado['mat_id']] ?? null;
