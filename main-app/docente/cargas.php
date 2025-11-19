@@ -1126,13 +1126,13 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                     }
                                                     
                                                     if ($generarInforme) { 
-                                                        $parametros = '?carga='.base64_encode($carga["car_id"]).
-                                                        '&periodo='.base64_encode($carga["car_periodo"]).
-                                                        '&grado='.base64_encode($carga["car_curso"]).
-                                                        '&grupo='.base64_encode($carga["car_grupo"]).
-                                                        '&tipoGrado='.base64_encode($carga["gra_tipo"]).
-                                                        '&area='.base64_encode($carga["mat_area"]).
-                                                        '&valorAsignatura='.base64_encode($carga["mat_valor"]);
+                                                        $parametros = '?carga='.base64_encode($carga["car_id"] ?? '').
+                                                        '&periodo='.base64_encode($carga["car_periodo"] ?? '').
+                                                        '&grado='.base64_encode($carga["car_curso"] ?? '').
+                                                        '&grupo='.base64_encode($carga["car_grupo"] ?? '').
+                                                        '&tipoGrado='.base64_encode($carga["gra_tipo"] ?? '').
+                                                        '&area='.base64_encode($carga["mat_area"] ?? '').
+                                                        '&valorAsignatura='.base64_encode($carga["mat_valor"] ?? '');
                                                     ?>
                                                         <div class="btn-group" style="width: 100%;">
                                                             <button type="button" class="btn-modern btn-generate" style="border-radius: 10px 0 0 10px;">
@@ -1165,7 +1165,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                                             <div>
                                                                 <?php if ($calificarFaltantes) { ?>
                                                                     <a target="_blank" 
-                                                                       href="calificaciones-faltantes.php?carga=<?=base64_encode($carga["car_id"])?>&periodo=<?=base64_encode($carga["car_periodo"])?>&get=<?=base64_encode(100)?>"
+                                                                       href="calificaciones-faltantes.php?carga=<?=base64_encode($carga["car_id"] ?? '')?>&periodo=<?=base64_encode($carga["car_periodo"] ?? '')?>&get=<?=base64_encode(100)?>"
                                                                        style="color: inherit; text-decoration: underline;">
                                                                         <?=$msj?>
                                                                     </a>
