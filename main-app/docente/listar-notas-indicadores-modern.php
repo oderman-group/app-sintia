@@ -30,8 +30,20 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 
                     // Pintar encabezados de indicadores
                     foreach ($indicadores as $rA) {
-                        echo '<th class="indicador-header-cell">
-                            ' . $rA['ind_nombre'] . '
+                        $nombreCompleto = $rA['ind_nombre'];
+                        $nombreIndicador = mb_strlen($nombreCompleto) > 80 
+                            ? mb_substr($nombreCompleto, 0, 80) . '...' 
+                            : $nombreCompleto;
+                        
+                        $nombreIndicadorEscapado = htmlspecialchars($nombreIndicador, ENT_QUOTES, 'UTF-8');
+                        $nombreCompletoEscapado = htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8');
+                        
+                        echo '<th class="indicador-header-cell" 
+                                  data-toggle="tooltip" 
+                                  data-placement="top" 
+                                  data-html="true"
+                                  title="' . $nombreCompletoEscapado . '">
+                            <span class="indicador-nombre-truncado">' . $nombreIndicadorEscapado . '</span>
                             <small>ID: ' . $rA['ai_ind_id'] . ' (' . $rA['ipc_valor'] . '%)</small>
                         </th>';
                     }
@@ -205,6 +217,13 @@ $(document).ready(function() {
     $('[data-toggle="popover"]').popover({
         html: true,
         trigger: 'hover'
+    });
+    
+    // Inicializar tooltips para los encabezados de indicadores
+    $('.indicador-header-cell[data-toggle="tooltip"]').tooltip({
+        html: true,
+        placement: 'top',
+        container: 'body'
     });
 });
 
