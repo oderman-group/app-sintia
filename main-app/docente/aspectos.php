@@ -87,28 +87,50 @@ include("../compartido/head.php");
 													// PRE-CARGAR NOTAS / ASPECTOS DISCIPLINARIOS
 													// PARA EVITAR UNA CONSULTA POR ESTUDIANTE
 													// ============================================
+													// OPTIMIZACIÓN: Cachear valores de configuración
+													$notaMinimaAprobar = $config[5] ?? 3.0;
+													$colorPerdida = $config[6] ?? '#dc3545';
+													$colorGanada = $config[7] ?? '#28a745';
+													
+													// OPTIMIZACIÓN: Usar prepared statements para seguridad y rendimiento
 													$aspectosMapa = [];
-													$consultaNotasTodos = mysqli_query(
-														$conexion,
-														"SELECT * FROM " . BD_DISCIPLINA . ".disiplina_nota 
-                                                         WHERE dn_id_carga='" . $cargaConsultaActual . "' 
-                                                           AND dn_periodo='" . $periodoConsultaActual . "' 
-                                                           AND institucion={$config['conf_id_institucion']} 
-                                                           AND year={$_SESSION['bd']}"
-													);
-													while ($filaNota = mysqli_fetch_array($consultaNotasTodos, MYSQLI_BOTH)) {
-														$aspectosMapa[$filaNota['dn_cod_estudiante']] = $filaNota;
+													$sqlAspectos = "SELECT * FROM " . BD_DISCIPLINA . ".disiplina_nota 
+														WHERE dn_id_carga = ? 
+														AND dn_periodo = ? 
+														AND institucion = ? 
+														AND year = ?";
+													
+													$stmtAspectos = mysqli_prepare($conexion, $sqlAspectos);
+													if ($stmtAspectos) {
+														mysqli_stmt_bind_param(
+															$stmtAspectos, 
+															"ssis", 
+															$cargaConsultaActual, 
+															$periodoConsultaActual, 
+															$config['conf_id_institucion'], 
+															$_SESSION['bd']
+														);
+														mysqli_stmt_execute($stmtAspectos);
+														$consultaNotasTodos = mysqli_stmt_get_result($stmtAspectos);
+														
+														if ($consultaNotasTodos) {
+															while ($filaNota = mysqli_fetch_array($consultaNotasTodos, MYSQLI_BOTH)) {
+																$aspectosMapa[$filaNota['dn_cod_estudiante']] = $filaNota;
+															}
+														}
+														mysqli_stmt_close($stmtAspectos);
 													}
 
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 														$colorNota = "black";
 														$notas     = $aspectosMapa[$resultado['mat_id']] ?? null;
 														
+														// OPTIMIZACIÓN: Usar valores cacheados
 														if (!empty($notas['dn_nota'])) {
-															if ($notas['dn_nota'] < $config[5]) {
-																$colorNota = $config[6];
-															} elseif ($notas['dn_nota'] >= $config[5]) {
-																$colorNota = $config[7];
+															if ($notas['dn_nota'] < $notaMinimaAprobar) {
+																$colorNota = $colorPerdida;
+															} elseif ($notas['dn_nota'] >= $notaMinimaAprobar) {
+																$colorNota = $colorGanada;
 															}
 														}
 													 ?>

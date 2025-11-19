@@ -861,7 +861,9 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
     }
 
     .indicador-header-cell {
-        max-width: 120px;
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
         word-wrap: break-word;
         line-height: 1.3;
     }
@@ -871,6 +873,16 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
         font-size: 10px;
         opacity: 0.8;
         margin-top: 4px;
+    }
+
+    .indicador-nombre-truncado {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        line-height: 1.3;
+        max-width: 100%;
     }
 </style>
 <!-- END HEAD -->
@@ -1591,6 +1603,15 @@ $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
                         // Inicializar popovers si existen
                         if (typeof $('[data-toggle="popover"]').popover === 'function') {
                             $('[data-toggle="popover"]').popover();
+                        }
+                        
+                        // Inicializar tooltips para los encabezados de indicadores
+                        if (typeof $('.indicador-header-cell[data-toggle="tooltip"]').tooltip === 'function') {
+                            $('.indicador-header-cell[data-toggle="tooltip"]').tooltip({
+                                html: true,
+                                placement: 'top',
+                                container: 'body'
+                            });
                         }
                     }, 300);
                 },
