@@ -118,7 +118,7 @@
             <div class="form-group row">
                 <label class="col-sm-2 control-label">Contraseña</label>
                 <div class="col-sm-4">
-                    <input type="password" name="clave" id="clave" class="form-control" disabled <?=$disabledPermiso;?>>
+                    <input type="password" name="clave" id="clave" class="form-control bg-light" disabled readonly placeholder="Active el switch para cambiar la contraseña" <?=$disabledPermiso;?>>
                 </div>
                 <?php if(Modulos::validarPermisoEdicion()){?>
                     <div class="col-sm-2">
