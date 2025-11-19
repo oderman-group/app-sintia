@@ -157,6 +157,21 @@ if(!Modulos::validarPermisoEdicion()){
             documentoValidadoEditar = true;
             habilitarCamposFormularioEditar(true);
         }
+        
+        // Asegurar que el campo de contraseña esté deshabilitado al cargar la página
+        const campoClave = document.getElementById('clave');
+        const checkbox = document.getElementById('cambiarClave');
+        
+        if (campoClave) {
+            campoClave.disabled = true;
+            campoClave.setAttribute('readonly', 'readonly');
+            campoClave.classList.add('bg-light');
+        }
+        
+        // Si el checkbox existe, asegurar que esté desmarcado inicialmente
+        if (checkbox) {
+            checkbox.checked = false;
+        }
     });
     
     // Función para manejar el desbloqueo de usuario
@@ -179,6 +194,28 @@ if(!Modulos::validarPermisoEdicion()){
             checkbox.checked = false;
             checkbox.disabled = true;
             alert('No se puede bloquear un usuario desde esta página. El bloqueo debe realizarse desde la lista de usuarios.');
+        }
+    }
+    
+    // Función para habilitar/deshabilitar el campo de contraseña
+    function habilitarClave() {
+        const checkbox = document.getElementById('cambiarClave');
+        const campoClave = document.getElementById('clave');
+        
+        if (checkbox && campoClave) {
+            if (checkbox.checked) {
+                // Si el switch está activado, habilitar el campo
+                campoClave.disabled = false;
+                campoClave.removeAttribute('readonly');
+                campoClave.classList.remove('bg-light');
+                campoClave.focus();
+            } else {
+                // Si el switch está desactivado, deshabilitar el campo y limpiar su valor
+                campoClave.disabled = true;
+                campoClave.setAttribute('readonly', 'readonly');
+                campoClave.classList.add('bg-light');
+                campoClave.value = '';
+            }
         }
     }
     
