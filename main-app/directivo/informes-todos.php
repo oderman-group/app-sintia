@@ -71,45 +71,14 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         <div class="card-body informe-card-body">
                                             <div class="row">
                                                 <!-- Subcategoría: Informes con calificaciones -->
-                                                <?php if(Modulos::validarSubRol(['DT0100','DT0082','DT0135','DT0101','DT0143','DT0140','DT0346'])){?>
+                                                <?php if(Modulos::validarSubRol(['DT0100','DT0082','DT0135','DT0101','DT0143','DT0140','DT0346','DT0134'])){?>
                                                 <div class="col-md-6">
                                                     <div class="informe-subcategory">
                                                         <h5 class="informe-subcategory-title">
                                                             <i class="fas fa-chart-line"></i> Informes con calificaciones
                                                         </h5>
                                                         <ul class="informe-list">
-                                                            <?php if(Modulos::validarSubRol(['DT0100'])){
-                                                                $modalBoletin = new ComponenteModal('boletines','Boletines','../directivo/informes-boletines-modal.php');
-                                                            ?>
-                                                            <li class="informe-item">
-                                                                <a href="#" onclick="event.preventDefault(); event.stopImmediatePropagation(); if(event.isTrusted && event.type==='click'){<?=$modalBoletin->getMetodoAbrirModal()?>} return false;" class="informe-link informe-link-boletines">
-                                                                    <i class="fas fa-file-pdf"></i> Boletines
-                                                                    <span class="badge badge-info">Importante</span>
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Reporte académico detallado con calificaciones por períodos y áreas</div>
-                                                            </li>
-                                                            <?php } 
-                                                            if(Modulos::validarSubRol(['DT0082'])){
-                                                            ?>
-                                                            <li class="informe-item">
-                                                                <a href="javascript:void(0);" onclick="abrirModal('Certificados','estudiantes-certificados-modal.php')" class="informe-link">
-                                                                    <i class="fas fa-certificate"></i> Certificados
-                                                                    <span class="badge badge-info">Importante</span>
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Documentos oficiales de certificación académica de estudiantes</div>
-                                                            </li>
-                                                            <?php } 
-                                                            if(Modulos::validarSubRol(['DT0135'])){
-                                                            ?>
-                                                            <li class="informe-item">
-                                                                <a href="javascript:void(0);" onclick="abrirModal('Libro final','informe-libro-cursos-modal.php')" class="informe-link">
-                                                                    <i class="fas fa-book"></i> Libro final
-                                                                    <span class="badge badge-info">Importante</span>
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Consolidado final de calificaciones y desempeños por curso y grupo</div>
-                                                            </li>
-                                                            <?php } 
-                                                            if(Modulos::validarSubRol(['DT0101'])){
+                                                            <?php if(Modulos::validarSubRol(['DT0101'])){
                                                             ?>
                                                             <li class="informe-item">
                                                                 <a href="javascript:void(0);" onclick="abrirModal('Informe parcial','informe-parcial-grupo-modal.php')" class="informe-link">
@@ -117,15 +86,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     <span class="badge badge-info">Importante</span>
                                                                 </a>
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Reporte de calificaciones y desempeños por período académico</div>
-                                                            </li>
-                                                            <?php } 
-                                                            if(Modulos::validarSubRol(['DT0143'])){
-                                                            ?>
-                                                            <li class="informe-item">
-                                                                <a href="javascript:void(0);" onclick="abrirModal('Informe de consolidado final','consolidado-final-filtro-modal.php')" class="informe-link">
-                                                                    <i class="fas fa-file-contract"></i> Informe de consolidado final
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Resumen consolidado de calificaciones finales y promedios generales</div>
                                                             </li>
                                                             <?php }
                                                             if(Modulos::validarSubRol(['DT0140'])){
@@ -138,6 +98,47 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Planilla detallada de calificaciones por indicadores y actividades</div>
                                                             </li>
                                                             <?php }
+                                                            if(Modulos::validarSubRol(['DT0100'])){
+                                                                $modalBoletin = new ComponenteModal('boletines','Boletines','../directivo/informes-boletines-modal.php');
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="#" onclick="event.preventDefault(); event.stopImmediatePropagation(); if(event.isTrusted && event.type==='click'){<?=$modalBoletin->getMetodoAbrirModal()?>} return false;" class="informe-link informe-link-boletines">
+                                                                    <i class="fas fa-file-pdf"></i> Boletines
+                                                                    <span class="badge badge-info">Importante</span>
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Reporte académico detallado con calificaciones por períodos y áreas</div>
+                                                            </li>
+                                                            <?php } 
+                                                            if(Modulos::validarSubRol(['DT0143'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="javascript:void(0);" onclick="abrirModal('Informe de consolidado final','consolidado-final-filtro-modal.php')" class="informe-link">
+                                                                    <i class="fas fa-file-contract"></i> Informe de consolidado final
+                                                                    <span class="badge badge-info">Importante</span>
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Resumen consolidado de calificaciones finales y promedios generales</div>
+                                                            </li>
+                                                            <?php } 
+                                                            if(Modulos::validarSubRol(['DT0135'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="javascript:void(0);" onclick="abrirModal('Libro final','informe-libro-cursos-modal.php')" class="informe-link">
+                                                                    <i class="fas fa-book"></i> Libro final
+                                                                    <span class="badge badge-info">Importante</span>
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Consolidado final de calificaciones y desempeños por curso y grupo</div>
+                                                            </li>
+                                                            <?php } 
+                                                            if(Modulos::validarSubRol(['DT0082'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="javascript:void(0);" onclick="abrirModal('Certificados','estudiantes-certificados-modal.php')" class="informe-link">
+                                                                    <i class="fas fa-certificate"></i> Certificados
+                                                                    <span class="badge badge-info">Importante</span>
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Documentos oficiales de certificación académica de estudiantes</div>
+                                                            </li>
+                                                            <?php }
                                                             if(Modulos::validarSubRol(['DT0346'])){
                                                             ?>
                                                             <li class="informe-item">
@@ -145,6 +146,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     <i class="fas fa-history"></i> Historicos de notas
                                                                 </a>
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Consulta del historial completo de calificaciones por estudiante</div>
+                                                            </li>
+                                                            <?php }
+                                                            if(Modulos::validarSubRol(['DT0134'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="javascript:void(0);" onclick="abrirModal('Consolidado de asignaturas perdidas','consolidado-perdidos-modal.php')" class="informe-link">
+                                                                    <i class="fas fa-exclamation-triangle"></i> Consolidado de asignaturas perdidas
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Listado de estudiantes con asignaturas reprobadas por período</div>
                                                             </li>
                                                             <?php }?>
                                                         </ul>
@@ -210,22 +220,14 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 <?php }?>
 
                                                 <!-- Subcategoría: Planillas e información general -->
-                                                <?php if(Modulos::validarSubRol(['DT0134','DT0133','DT0221','DT0136','DT0120','DT0147', 'DT0307', 'DT0222', 'DT0223', 'DT0249','DT0251'])){?>
+                                                <?php if(Modulos::validarSubRol(['DT0133','DT0221','DT0136','DT0120','DT0147', 'DT0307', 'DT0222', 'DT0223', 'DT0249','DT0251'])){?>
                                                 <div class="col-md-6">
                                                     <div class="informe-subcategory">
                                                         <h5 class="informe-subcategory-title">
                                                             <i class="fas fa-clipboard-list"></i> Planillas e información general
                                                         </h5>
                                                         <ul class="informe-list">
-                                                            <?php if(Modulos::validarSubRol(['DT0134'])){?>
-                                                            <li class="informe-item">
-                                                                <a href="javascript:void(0);" onclick="abrirModal('Consolidado de asignaturas perdidas','consolidado-perdidos-modal.php')" class="informe-link">
-                                                                    <i class="fas fa-exclamation-triangle"></i> Consolidado de asignaturas perdidas
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Listado de estudiantes con asignaturas reprobadas por período</div>
-                                                            </li>
-                                                            <?php } 
-                                                            if(Modulos::validarSubRol(['DT0133'])){
+                                                            <?php if(Modulos::validarSubRol(['DT0133'])){
                                                             ?>
                                                             <li class="informe-item">
                                                                 <a href="javascript:void(0);" onclick="abrirModal('Listado de estudiantes','informe-estudiantes-modal.php')" class="informe-link">
