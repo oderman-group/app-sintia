@@ -98,6 +98,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Planilla detallada de calificaciones por indicadores y actividades</div>
                                                             </li>
                                                             <?php }
+                                                            if(Modulos::validarSubRol(['DT0134'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="javascript:void(0);" onclick="abrirModal('Consolidado de asignaturas perdidas','consolidado-perdidos-modal.php')" class="informe-link">
+                                                                    <i class="fas fa-exclamation-triangle"></i> Consolidado de asignaturas perdidas
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Listado de estudiantes con asignaturas reprobadas por período</div>
+                                                            </li>
+                                                            <?php } 
                                                             if(Modulos::validarSubRol(['DT0100'])){
                                                                 $modalBoletin = new ComponenteModal('boletines','Boletines','../directivo/informes-boletines-modal.php');
                                                             ?>
@@ -146,15 +155,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     <i class="fas fa-history"></i> Historicos de notas
                                                                 </a>
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Consulta del historial completo de calificaciones por estudiante</div>
-                                                            </li>
-                                                            <?php }
-                                                            if(Modulos::validarSubRol(['DT0134'])){
-                                                            ?>
-                                                            <li class="informe-item">
-                                                                <a href="javascript:void(0);" onclick="abrirModal('Consolidado de asignaturas perdidas','consolidado-perdidos-modal.php')" class="informe-link">
-                                                                    <i class="fas fa-exclamation-triangle"></i> Consolidado de asignaturas perdidas
-                                                                </a>
-                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Listado de estudiantes con asignaturas reprobadas por período</div>
                                                             </li>
                                                             <?php }?>
                                                         </ul>
