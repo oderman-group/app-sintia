@@ -188,6 +188,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 																<i class="fa fa-magic"></i> Generar Cursos
 															</button>
 														<?php }?>
+														
+														<?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0062'])){?>
+															<a href="cursos-informe-estudiantes-estados.php" target="_blank" class="btn btn-info">
+																<i class="fa fa-file-text"></i> Informe Estudiantes por Estados
+															</a>
+														<?php }?>
 													</div>
 													
 													<?php
@@ -211,8 +217,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<th><?=$frases[5][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=__('cursos.formato_boletin');?></th>
 														<th><?=__('cursos.matricula');?></th>
-														<th><?=__('cursos.pension');?></th>														
-														<th>#P</th>
+														<th><?=__('cursos.pension');?></th>
 														<?php if(array_key_exists(10,$arregloModulos) ){?>
 															<th><?=$frases[53][$datosUsuarioActual['uss_idioma']];?></th>
 														<?php }?>
@@ -230,6 +235,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													$consulta = Grados::listarGrados(1,$tipo);
 													$contReg = 1;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+														// Verificar si hay registros académicos para este curso específico
+														$hayRegistrosAcademicosCurso = Grados::hayRegistrosAcademicos($config, "", $resultado['gra_id']);
 													?>
 													<tr>
 														<td style="text-align:center;">
@@ -247,8 +254,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<td><?=$resultado['gra_nombre'];?></td>
 														<td><?=$resultado['gra_formato_boletin'];?></td>
 														<td>$<?=number_format($resultado['gra_valor_matricula']);?></td>
-														<td>$<?=number_format($resultado['gra_valor_pension']);?></td>														
-														<td><?=$resultado['gra_periodos'];?></td>
+														<td>$<?=number_format($resultado['gra_valor_pension']);?></td>
 														<?php if(array_key_exists(10,$arregloModulos) ){?>
 															<td><?=strtoupper($resultado['gra_tipo']);?></td>
 														<?php }?>
@@ -264,7 +270,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 																		<li><a href="javascript:void(0);" class="btn-editar-curso-modal" data-curso-id="<?=$resultado['gra_id'];?>"><i class="fa fa-edit"></i> Edición rápida</a></li>
 																		<li><a href="cursos-editar.php?id=<?=base64_encode($resultado['gra_id']);?>"><i class="fa fa-pencil"></i> <?=$frases[165][$datosUsuarioActual['uss_idioma']];?> completa</a></li>
 																		<?php } if(Modulos::validarSubRol(['DT0158'])){?>
+																		<?php if (!$hayRegistrosAcademicosCurso) { ?>
 																		<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','¿Deseas eliminar este curso?','question','cursos-eliminar.php?id=<?=base64_encode($resultado['gra_id']);?>')">Eliminar</a></li>
+																		<?php } else { ?>
+																		<li class="disabled"><a href="javascript:void(0);" style="color: #999; cursor: not-allowed;" title="No se puede eliminar porque hay datos académicos asociados"><i class="fa fa-ban"></i> Eliminar <small>(bloqueado)</small></a></li>
+																		<?php } ?>
 																	<?php }}?>
 																	<?php if(Modulos::validarSubRol(['DT0224'])){?>
 																	<li><a href="../compartido/matricula-boletin-curso-<?=$resultado['gra_formato_boletin'];?>.php?curso=<?=base64_encode($resultado['gra_id']);?>&periodo=<?=base64_encode($config[2]);?>" title="Imprimir boletin por curso" target="_blank">Boletin por curso</a></li>
@@ -617,7 +627,7 @@ $(document).ready(function() {
 			dataType: 'json',
 			success: function(response) {
 				if (response.success) {
-					renderizarDetallesCurso(response.stats, contenedor);
+					renderizarDetallesCurso(response.stats, response.cursoInfo, contenedor);
 				} else {
 					contenedor.html('<p class="text-danger text-center"><i class="fa fa-exclamation-triangle"></i> ' + (response.message || 'Error al cargar detalles.') + '</p>');
 				}
@@ -629,12 +639,54 @@ $(document).ready(function() {
 		});
 	}
 
-	function renderizarDetallesCurso(stats, contenedor) {
+	function renderizarDetallesCurso(stats, cursoInfo, contenedor) {
 		var total = stats.total || 0;
 		var html  = '';
 
+		// Información del curso
+		html += '<div class="row mb-3">';
+		html += '  <div class="col-md-12">';
+		html += '    <div class="card" style="border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">';
+		html += '      <div class="card-body p-3">';
+		html += '        <h6 style="font-weight: 700; color: #2c3e50; margin-bottom: 15px; font-size: 14px;"><i class="fa fa-info-circle"></i> Información del Curso</h6>';
+		html += '        <div class="row">';
+		
+		// Nivel educativo
+		html += '          <div class="col-md-4 mb-2">';
+		html += '            <div style="font-size: 11px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">Nivel Educativo</div>';
+		html += '            <div style="font-size: 14px; font-weight: 600; color: #2c3e50;">' + (cursoInfo.nivel_educativo || 'No definido') + '</div>';
+		html += '          </div>';
+		
+		// Curso anterior
+		html += '          <div class="col-md-4 mb-2">';
+		html += '            <div style="font-size: 11px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">Curso Anterior</div>';
+		html += '            <div style="font-size: 14px; font-weight: 600; color: #2980b9;">' + (cursoInfo.curso_anterior_nombre || 'No definido') + '</div>';
+		html += '          </div>';
+		
+		// Curso siguiente
+		html += '          <div class="col-md-4 mb-2">';
+		html += '            <div style="font-size: 11px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">Curso Siguiente</div>';
+		html += '            <div style="font-size: 14px; font-weight: 600; color: #16a085;">' + (cursoInfo.curso_siguiente_nombre || 'No definido') + '</div>';
+		html += '          </div>';
+		
+		html += '        </div>';
+		html += '        <div class="row mt-2">';
+		
+		// Número de períodos
+		html += '          <div class="col-md-4 mb-2">';
+		html += '            <div style="font-size: 11px; text-transform: uppercase; color: #7f8c8d; font-weight: 600;">Número de Períodos</div>';
+		html += '            <div style="font-size: 14px; font-weight: 600; color: #e67e22;">' + (cursoInfo.numero_periodos || 0) + '</div>';
+		html += '          </div>';
+		
+		html += '        </div>';
+		html += '      </div>';
+		html += '    </div>';
+		html += '  </div>';
+		html += '</div>';
+
+		// Estadísticas de estudiantes
 		if (total === 0) {
-			html = '<p class="text-muted text-center mb-0"><em>No hay estudiantes asociados a este curso en el año actual.</em></p>';
+			html += '<p class="text-muted text-center mb-0"><em>No hay estudiantes asociados a este curso en el año actual.</em></p>';
 		} else {
 			var porcentaje = function(valor) {
 				if (!total || valor === 0) return '0%';
@@ -830,9 +882,40 @@ $(document).ready(function() {
 					console.log('Datos del curso:', curso);
 					console.log('Estado del curso:', curso.gra_estado);
 					
+					// Verificar si hay notas registradas
+					var hayNotasRegistradas = response.hayNotasRegistradas || false;
+					
 					$('#edit_id_curso').val(curso.gra_id);
 					$('#edit_codigoC').val(curso.gra_codigo || curso.gra_id);
 					$('#edit_nombreC').val(curso.gra_nombre);
+					
+					// Deshabilitar campos si hay notas registradas
+					if (hayNotasRegistradas) {
+						$('#edit_nombreC').prop('readonly', true).addClass('bg-light');
+						$('#edit_notaMin').prop('readonly', true).addClass('bg-light');
+						$('#edit_periodosC').prop('readonly', true).addClass('bg-light');
+						$('#edit_nivel').prop('disabled', true).addClass('bg-light');
+						$('#edit_estado').prop('disabled', true).addClass('bg-light');
+						
+						// Mostrar mensaje de advertencia
+						if ($('#alertaNotasRegistradas').length === 0) {
+							$('#cursoFormulario').prepend(
+								'<div id="alertaNotasRegistradas" class="alert alert-warning alert-dismissible fade show" role="alert">' +
+								'<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+								'<span aria-hidden="true">&times;</span></button>' +
+								'<h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Notas Registradas</h4>' +
+								'<p>Los campos <strong>Nombre Curso</strong>, <strong>Nota Mínima</strong>, <strong>Periodos</strong>, <strong>Nivel Educativo</strong> y <strong>Estado</strong> no pueden ser modificados porque ya existen registros en las tablas <strong>academico_boletin</strong> o <strong>academico_actividades</strong>.</p>' +
+								'</div>'
+							);
+						}
+					} else {
+						$('#edit_nombreC').prop('readonly', false).removeClass('bg-light');
+						$('#edit_notaMin').prop('readonly', false).removeClass('bg-light');
+						$('#edit_periodosC').prop('readonly', false).removeClass('bg-light');
+						$('#edit_nivel').prop('disabled', false).removeClass('bg-light');
+						$('#edit_estado').prop('disabled', false).removeClass('bg-light');
+						$('#alertaNotasRegistradas').remove();
+					}
 					
 					// Forzar el valor del estado como string
 					var estadoActual = (curso.gra_estado !== undefined && curso.gra_estado !== null) ? String(curso.gra_estado) : '1';
