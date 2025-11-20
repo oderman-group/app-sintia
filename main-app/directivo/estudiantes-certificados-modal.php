@@ -143,6 +143,21 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                 <?php } ?>
 
                 <div class="form-group row">
+                    <label class="col-sm-3 control-label">
+                        <i class="fas fa-heading"></i> Formato de impresión
+                    </label>
+                    <div class="col-sm-9">
+                        <select class="form-control select2" name="sin_encabezado">
+                            <option value="0" selected>Con encabezado</option>
+                            <option value="1">Sin encabezado (Papel membrete)</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Seleccione "Sin encabezado" si va a imprimir en papel membrete
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
                     <div class="col-sm-12 text-right">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-certificate"></i> Generar Certificado
