@@ -274,8 +274,8 @@ $infoInstitucion = isset($_SESSION["informacionInstConsulta"]) ? $_SESSION["info
         </div>
         
         <div class="info-box">
-            <p><strong>Descripción:</strong> Este informe muestra la cantidad de estudiantes por cada estado de matrícula agrupados por curso.</p>
-            <p><strong>Total de cursos:</strong> <?= count($cursos); ?> | <strong>Total de estudiantes:</strong> <?= number_format($totalGeneral); ?></p>
+            <p><strong>Descripción:</strong> Este informe muestra la cantidad de estudiantes por cada estado de matrícula agrupados por curso. <em>Nota: Los estudiantes eliminados no se incluyen en el conteo.</em></p>
+            <p><strong>Total de cursos:</strong> <?= count($cursos); ?> | <strong>Total de estudiantes (sin eliminados):</strong> <?= number_format($totalGeneral); ?></p>
         </div>
         
         <div class="btn-print">
@@ -293,16 +293,21 @@ $infoInstitucion = isset($_SESSION["informacionInstConsulta"]) ? $_SESSION["info
                         <th><?= htmlspecialchars($estadoNombre); ?></th>
                     <?php } ?>
                     <th style="background: #27ae60;">Total</th>
+                    <th style="background: #e67e22;">% del Total</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($estadisticas as $estadistica) { ?>
+                <?php foreach ($estadisticas as $estadistica) { 
+                    // Calcular porcentaje del total general
+                    $porcentaje = $totalGeneral > 0 ? ($estadistica['total'] / $totalGeneral) * 100 : 0;
+                ?>
                     <tr>
                         <td class="curso-nombre"><?= htmlspecialchars($estadistica['curso_nombre']); ?></td>
                         <?php foreach ($estadosMatriculas as $estadoId => $estadoNombre) { ?>
                             <td><?= number_format($estadistica['contadores'][$estadoId]); ?></td>
                         <?php } ?>
                         <td style="font-weight: bold; background: #d5f4e6;"><?= number_format($estadistica['total']); ?></td>
+                        <td style="font-weight: bold; background: #fdebd0;"><?= number_format($porcentaje, 2); ?>%</td>
                     </tr>
                 <?php } ?>
                 <tr class="total-row">
@@ -311,6 +316,7 @@ $infoInstitucion = isset($_SESSION["informacionInstConsulta"]) ? $_SESSION["info
                         <td><strong><?= number_format($totalesGenerales[$estadoId]); ?></strong></td>
                     <?php } ?>
                     <td><strong><?= number_format($totalGeneral); ?></strong></td>
+                    <td><strong>100.00%</strong></td>
                 </tr>
             </tbody>
         </table>
