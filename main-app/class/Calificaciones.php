@@ -1324,6 +1324,9 @@ class Calificaciones {
 
         if (empty($resultadoBoletin['bol_id'])) {
 
+            $data['tipoNota'] = Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA;
+            $data['observaciones'] = 'Se ingresó como definitiva directamente.';
+            
             Boletin::guardarNotaBoletin($conexionPDO, 
             "
                 bol_carga, 
@@ -1344,7 +1347,7 @@ class Calificaciones {
                 $data['periodo'],
                 $data['nota'], 
                 $data['tipoNota'], 
-                $data['observaciones'] ?? 'Recuperación del periodo.', 
+                $data['observaciones'] ?? 'Se ingresó como definitiva directamente.', 
                 $config['conf_id_institucion'], 
                 $_SESSION["bd"],
                 0,
@@ -1353,10 +1356,15 @@ class Calificaciones {
             );
 
         } else {
+            if ($resultadoBoletin['bol_tipo'] == Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA) {
+                $data['tipoNota'] = Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA;
+                $data['observaciones'] = 'Se modificó como definitiva directamente.';
+            }
+
             $update = [
                 "bol_nota_anterior" => $data['notaAnterior'], 
                 "bol_nota"          => $data['nota'], 
-                "bol_observaciones" => $data['observaciones'] ?? 'Recuperación del periodo.', 
+                "bol_observaciones" => $data['observaciones'] ?? 'Recuperación del periodo. RP', 
                 "bol_tipo"          => $data['tipoNota']
             ];
 
