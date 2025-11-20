@@ -130,6 +130,7 @@ if (!empty($curso) && !empty($periodoFinal) && !empty($year)) {
 			'nombre' => $nombreCompleto,
 			'gra_id' => isset($est['mat_grado']) ? $est['mat_grado'] : '',
 			'gra_nombre' => isset($est['gra_nombre']) ? $est['gra_nombre'] : '',
+			'gra_nivel' => isset($est['gra_nivel']) ? $est['gra_nivel'] : null,
 			'gru_nombre' => isset($est['gru_nombre']) ? $est['gru_nombre'] : '',
 			'mat_estado_matricula' => isset($est['mat_estado_matricula']) ? $est['mat_estado_matricula'] : '',
 			'periodos' => $periodoFinal,
@@ -230,7 +231,9 @@ foreach ($estudiantes as $estudiante) {
 		$sheet->setCellValue('A' . $fila, $area["ar_nombre"]);
 		
 		$notaArea = $area["nota_area_acumulada"];
-		if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+		// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+		$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+		if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 			$notaFA = ceil($notaArea);
 			$notaAreaTexto = "";
 			switch ($notaFA) {
@@ -242,7 +245,7 @@ foreach ($estudiantes as $estudiante) {
 			}
 			$sheet->setCellValue('C' . $fila, $notaAreaTexto);
 		} else {
-			$sheet->setCellValue('C' . $fila, Boletin::formatoNota($notaArea));
+			$sheet->setCellValue('C' . $fila, Boletin::formatoNota($notaArea, $tiposNotas));
 		}
 		
 		$sheet->getStyle('A'.$fila.':F'.$fila)->getFill()
@@ -263,8 +266,11 @@ foreach ($estudiantes as $estudiante) {
 			Utilidades::valordefecto($notaCargaDeseno["notip_desde"],0);
 			Utilidades::valordefecto($notaCargaDeseno["notip_hasta"],1);
 			
+			// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+			$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+			
 			if ($notaCarga >= $notaCargaDeseno["notip_desde"] && $notaCarga <= $notaCargaDeseno["notip_hasta"]) {
-				if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+				if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 					$notaFD = ceil($notaCarga);
 					switch ($notaFD) {
 						case 1: $notaCarga = "D"; $notaCargaDeseno["notip_nombre"] = "BAJO"; break;
@@ -279,12 +285,12 @@ foreach ($estudiantes as $estudiante) {
 			$notaCargaFinal = $carga["nota_carga_acumulada"];
 			
 			// Formatear la nota según configuración
-			if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
-				// Para grados superiores con sistema D/I/A/S/E
-				$notaCargaFormateada = $notaCarga;
+			if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+				// Para preescolar con sistema D/I/A/S/E
+				$notaCargaFormateada = is_string($notaCarga) ? $notaCarga : Boletin::formatoNota($notaCargaFinal, $tiposNotas);
 			} else {
 				// Para otros grados, usar formato numérico
-				$notaCargaFormateada = Boletin::formatoNota($notaCargaFinal);
+				$notaCargaFormateada = Boletin::formatoNota($notaCargaFinal, $tiposNotas);
 			}
 			
 			$sheet->setCellValue('A' . $fila, '  ' . (!empty($carga["mat_nombre"]) ? $carga["mat_nombre"] : ''));

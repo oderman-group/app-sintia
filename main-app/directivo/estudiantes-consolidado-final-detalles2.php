@@ -12,9 +12,10 @@ require_once(ROOT_PATH."/main-app/class/Plataforma.php");
 $year = $agnoBD;
 $Plataforma = new Plataforma;
 
-// Obtener curso y grupo (desde POST o GET para permitir cambios)
+// Obtener curso, grupo y estudiante (desde POST o GET para permitir cambios)
 $cursoId = isset($_POST["curso"]) ? $_POST["curso"] : (isset($_GET["curso"]) ? base64_decode($_GET["curso"]) : '');
 $grupoId = isset($_POST["grupo"]) ? $_POST["grupo"] : (isset($_GET["grupo"]) ? base64_decode($_GET["grupo"]) : '');
+$estudianteId = isset($_POST["estudiante"]) ? $_POST["estudiante"] : (isset($_GET["estudiante"]) ? base64_decode($_GET["estudiante"]) : '');
 
 $consultaCurso = null;
 $curso = null;
@@ -380,9 +381,20 @@ if (!Modulos::validarPermisoEdicion()) {
 	/* Columna fija - Promedio */
 	.css_prom {
 		position: sticky;
-		right: 0;
+		right: 100px;
 		z-index: 11;
 		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
+		font-weight: 700 !important;
+		font-size: 13px !important;
+	}
+	
+	/* Columna fija - Promedio 2 (basado en periodos con nota) */
+	.css_prom2 {
+		position: sticky;
+		right: 0;
+		z-index: 11;
+		background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
 		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 		font-weight: 700 !important;
 		font-size: 13px !important;
@@ -418,14 +430,27 @@ if (!Modulos::validarPermisoEdicion()) {
 	}
 	
 	/* Celdas del cuerpo - Promedio */
-	.scrollable-table tbody td:last-child {
+	.scrollable-table tbody td:nth-last-child(2) {
 		position: sticky;
-		right: 0;
+		right: 100px;
 		z-index: 5;
 		background-color: #fffbeb;
 		font-weight: 700;
 		font-size: 16px;
 		border-left: 3px solid #f59e0b;
+		box-shadow: -3px 0 5px rgba(0,0,0,0.08);
+		transition: all 0.3s ease;
+	}
+	
+	/* Celdas del cuerpo - Promedio 2 (basado en periodos con nota) */
+	.scrollable-table tbody td:last-child {
+		position: sticky;
+		right: 0;
+		z-index: 5;
+		background-color: #e0f2fe;
+		font-weight: 700;
+		font-size: 16px;
+		border-left: 3px solid #0369a1;
 		box-shadow: -3px 0 5px rgba(0,0,0,0.08);
 		transition: all 0.3s ease;
 	}
@@ -460,6 +485,60 @@ if (!Modulos::validarPermisoEdicion()) {
 		text-align: center;
 		border: 1px solid #e2e8f0;
 		vertical-align: middle;
+	}
+	
+	/* ==================== FOOTER DE LA TABLA ==================== */
+	.scrollable-table tfoot {
+		position: -webkit-sticky;
+		position: sticky;
+		bottom: 0;
+		z-index: 10;
+		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+	}
+	
+	.scrollable-table tfoot td {
+		font-weight: 700;
+		font-size: 13px;
+		padding: 12px 8px;
+		text-align: center;
+		border: 1px solid #cbd5e0;
+		vertical-align: middle;
+	}
+	
+	/* Columnas fijas en footer - Documento */
+	.scrollable-table tfoot td:nth-child(1) {
+		position: sticky;
+		left: 0;
+		z-index: 11;
+		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+		box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+	}
+	
+	/* Columnas fijas en footer - Estudiante */
+	.scrollable-table tfoot td:nth-child(2) {
+		position: sticky;
+		left: 100px;
+		z-index: 11;
+		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+		box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+	}
+	
+	/* Columna fija en footer - Promedio */
+	.scrollable-table tfoot td:nth-last-child(2) {
+		position: sticky;
+		right: 100px;
+		z-index: 11;
+		background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
+	}
+	
+	/* Columna fija en footer - Promedio 2 */
+	.scrollable-table tfoot td:last-child {
+		position: sticky;
+		right: 0;
+		z-index: 11;
+		background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%) !important;
+		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 	}
 	
 	/* ==================== INPUTS DE NOTAS ==================== */
@@ -722,6 +801,10 @@ if (!Modulos::validarPermisoEdicion()) {
 		var carga = enviada.name;
 		var per = enviada.alt;
 		
+		// CAPTURAR NOTA ANTERIOR antes de modificar el valor
+		// Si el input tiene un atributo data-nota-anterior, usarlo; si no, usar el valor actual
+		var notaAnterior = $(enviada).attr('data-nota-anterior') || $(enviada).val() || '';
+		
 		if (alertValidarNota(nota)) {
 			return false;
 		}
@@ -740,7 +823,8 @@ if (!Modulos::validarPermisoEdicion()) {
 		datos = "nota=" + (nota) +
 			"&carga=" + (carga) +
 			"&codEst=" + (codEst) +
-			"&per=" + (per);
+			"&per=" + (per) +
+			"&notaAnterior=" + encodeURIComponent(notaAnterior);
 			
 		$.ajax({
 			type: "POST",
@@ -758,6 +842,10 @@ if (!Modulos::validarPermisoEdicion()) {
 				
 				// Mostrar respuesta original
 				$('#resp').empty().hide().html(data).show(1);
+				
+				// ACTUALIZAR data-nota-anterior con el valor que se acaba de guardar
+				// Esto permite capturar la nota anterior en la próxima edición sin recargar
+				$(enviada).attr('data-nota-anterior', nota);
 				
 				// Toast de éxito
 				var materiaName = $(enviada).attr('title').split(' - ')[0];
@@ -827,17 +915,26 @@ if (!Modulos::validarPermisoEdicion()) {
 		
 		console.log('Suma de notas:', sumaNotas, 'Notas contadas:', notasContadas);
 		
-		// Calcular la definitiva de la materia (promedio de periodos)
+		// Calcular la definitiva de la materia (promedio de periodos totales)
 		var definitivaMateria = 0;
 		if (notasContadas > 0) {
 			definitivaMateria = Math.round((sumaNotas / numPeriodos) * 100) / 100;
 		}
 		
-		console.log('Definitiva calculada:', definitivaMateria);
+		// Calcular la definitiva de la materia (promedio solo de periodos con nota)
+		var definitivaMateriaConNotas = 0;
+		if (notasContadas > 0) {
+			definitivaMateriaConNotas = Math.round((sumaNotas / notasContadas) * 100) / 100;
+		}
 		
-		// Buscar el input de definitiva de esta materia
-		var inputDefinitiva = inputsPeriodos.first().closest('td').nextAll('td').find('.input-definitiva').first();
+		console.log('Definitiva calculada (total periodos):', definitivaMateria);
+		console.log('Definitiva calculada (periodos con nota):', definitivaMateriaConNotas);
 		
+		// Buscar los inputs de definitiva de esta materia (hay dos: una basada en total periodos, otra en periodos con nota)
+		var inputsDefinitivas = inputsPeriodos.first().closest('td').nextAll('td').find('.input-definitiva');
+		
+		// Primera definitiva (basada en total de periodos)
+		var inputDefinitiva = inputsDefinitivas.first();
 		if (inputDefinitiva.length > 0) {
 			// Agregar clase de animación
 			inputDefinitiva.addClass('recalculando');
@@ -862,6 +959,32 @@ if (!Modulos::validarPermisoEdicion()) {
 			}, 100);
 		}
 		
+		// Segunda definitiva (basada solo en periodos con nota)
+		var inputDefinitivaConNotas = inputsDefinitivas.eq(1);
+		if (inputDefinitivaConNotas.length > 0) {
+			// Agregar clase de animación
+			inputDefinitivaConNotas.addClass('recalculando');
+			
+			// Actualizar valor y color
+			setTimeout(function() {
+				inputDefinitivaConNotas.val(definitivaMateriaConNotas);
+				
+				// Actualizar color según aprobación
+				if (definitivaMateriaConNotas >= notaMinAprobar) {
+					inputDefinitivaConNotas.css('color', colorAprobado);
+				} else if (definitivaMateriaConNotas > 0) {
+					inputDefinitivaConNotas.css('color', colorReprobado);
+				} else {
+					inputDefinitivaConNotas.css('color', '#718096');
+				}
+				
+				// Quitar clase de animación después de completar
+				setTimeout(function() {
+					inputDefinitivaConNotas.removeClass('recalculando');
+				}, 600);
+			}, 100);
+		}
+		
 		// RECALCULAR PROMEDIO GENERAL DEL ESTUDIANTE
 		setTimeout(function() {
 			recalcularPromedioGeneral(fila, notaMinAprobar, colorAprobado, colorReprobado);
@@ -875,52 +998,85 @@ if (!Modulos::validarPermisoEdicion()) {
 		console.log('Recalculando promedio general...');
 		
 		// Buscar TODAS las definitivas de TODAS las materias para este estudiante
-		var inputsDefinitivas = fila.find('.input-definitiva');
+		// Usar el atributo data-def-tipo para identificar cada tipo
+		var inputsDefinitivas1 = fila.find('.input-definitiva[data-def-tipo="1"]');
+		var inputsDefinitivas2 = fila.find('.input-definitiva[data-def-tipo="2"]');
 		
-		var sumaDefinitivas = 0;
-		var definitivasContadas = 0;
+		// Calcular primer promedio (basado en primera DEF - total periodos)
+		var sumaDefinitivas1 = 0;
+		var definitivasContadas1 = 0;
 		
-		inputsDefinitivas.each(function() {
+		inputsDefinitivas1.each(function() {
 			var valorDef = parseFloat($(this).val());
 			if (!isNaN(valorDef) && valorDef !== '') {
-				sumaDefinitivas += valorDef;
-				definitivasContadas++;
+				sumaDefinitivas1 += valorDef;
+				definitivasContadas1++;
 			}
 		});
 		
-		console.log('Suma definitivas:', sumaDefinitivas, 'Definitivas contadas:', definitivasContadas);
+		// Calcular segundo promedio (basado en segunda DEF - solo periodos con nota)
+		var sumaDefinitivas2 = 0;
+		var definitivasContadas2 = 0;
 		
-		// Calcular promedio general
-		var promedioGeneral = 0;
-		if (definitivasContadas > 0) {
-			promedioGeneral = Math.round((sumaDefinitivas / definitivasContadas) * 100) / 100;
+		inputsDefinitivas2.each(function() {
+			var valorDef = parseFloat($(this).val());
+			if (!isNaN(valorDef) && valorDef > 0) { // Solo contar si es mayor a cero
+				sumaDefinitivas2 += valorDef;
+				definitivasContadas2++;
+			}
+		});
+		
+		// Calcular primer promedio (basado en primera DEF - total periodos)
+		var promedioGeneral1 = 0;
+		if (definitivasContadas1 > 0) {
+			promedioGeneral1 = Math.round((sumaDefinitivas1 / definitivasContadas1) * 100) / 100;
 		}
 		
-		console.log('Promedio general calculado:', promedioGeneral);
+		// Calcular segundo promedio (basado en segunda DEF - solo periodos con nota)
+		var promedioGeneral2 = 0;
+		if (definitivasContadas2 > 0) {
+			promedioGeneral2 = Math.round((sumaDefinitivas2 / definitivasContadas2) * 100) / 100;
+		}
 		
-		// Buscar la celda de promedio (última columna)
-		var celdaPromedio = fila.find('td:last-child');
+		console.log('Promedio general 1 calculado:', promedioGeneral1);
+		console.log('Promedio general 2 calculado:', promedioGeneral2);
 		
-		if (celdaPromedio.length > 0) {
-			// Agregar clase de animación
-			celdaPromedio.addClass('recalculando');
-			
-			// Actualizar valor y color
+		// Buscar las celdas de promedio (penúltima y última columna)
+		var celdaPromedio1 = fila.find('td:nth-last-child(2)');
+		var celdaPromedio2 = fila.find('td:last-child');
+		
+		// Actualizar primer promedio (penúltima columna)
+		if (celdaPromedio1.length > 0) {
+			celdaPromedio1.addClass('recalculando');
 			setTimeout(function() {
-				celdaPromedio.text(promedioGeneral);
-				
-				// Actualizar color según aprobación
-				if (promedioGeneral >= notaMinAprobar) {
-					celdaPromedio.css('color', colorAprobado);
-				} else if (promedioGeneral > 0) {
-					celdaPromedio.css('color', colorReprobado);
+				celdaPromedio1.text(promedioGeneral1);
+				if (promedioGeneral1 >= notaMinAprobar) {
+					celdaPromedio1.css('color', colorAprobado);
+				} else if (promedioGeneral1 > 0) {
+					celdaPromedio1.css('color', colorReprobado);
 				} else {
-					celdaPromedio.css('color', '#718096');
+					celdaPromedio1.css('color', '#718096');
 				}
-				
-				// Quitar clase de animación después de completar
 				setTimeout(function() {
-					celdaPromedio.removeClass('recalculando');
+					celdaPromedio1.removeClass('recalculando');
+				}, 600);
+			}, 100);
+		}
+		
+		// Actualizar segundo promedio (última columna)
+		if (celdaPromedio2.length > 0) {
+			celdaPromedio2.addClass('recalculando');
+			setTimeout(function() {
+				celdaPromedio2.text(promedioGeneral2 > 0 ? promedioGeneral2 : '-');
+				if (promedioGeneral2 >= notaMinAprobar) {
+					celdaPromedio2.css('color', colorAprobado);
+				} else if (promedioGeneral2 > 0) {
+					celdaPromedio2.css('color', colorReprobado);
+				} else {
+					celdaPromedio2.css('color', '#718096');
+				}
+				setTimeout(function() {
+					celdaPromedio2.removeClass('recalculando');
 				}, 600);
 			}, 100);
 		}
@@ -1001,6 +1157,23 @@ if (!Modulos::validarPermisoEdicion()) {
 		</div>
 		
 		<?php if (!empty($cursoId) && !empty($grupoId)) { ?>
+		<div class="row mt-3" id="selector-estudiante-container" style="display: none;">
+			<div class="col-md-12">
+				<div class="selector-group">
+					<label>
+						<i class="fa fa-user" style="color: #10b981;"></i>
+						Seleccionar Estudiante (Opcional)
+					</label>
+					<select class="form-control" id="selector_estudiante">
+						<option value="">Todos los estudiantes</option>
+					</select>
+					<small class="text-muted" style="display: block; margin-top: 5px;">
+						<i class="fa fa-info-circle"></i> Deje en "Todos los estudiantes" para ver el consolidado completo, o seleccione uno para ver solo su información.
+					</small>
+				</div>
+			</div>
+		</div>
+		
 		<div class="row mt-3">
 			<div class="col-md-12">
 				<div style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); padding: 15px 20px; border-radius: 12px; border: 2px solid #667eea;">
@@ -1009,6 +1182,19 @@ if (!Modulos::validarPermisoEdicion()) {
 					</strong>
 					<span class="badge-info-curso">📚 <?=$curso['gra_nombre']?></span>
 					<span class="badge-info-grupo">👥 <?=$grupo['gru_nombre']?></span>
+					<?php if (!empty($estudianteId)) { 
+						$estudianteSeleccionado = null;
+						$filtroTemp = " AND mat_grado='" . $cursoId . "' AND mat_grupo='" . $grupoId . "' AND mat_id='" . $estudianteId . "'";
+						$consultaTemp = Estudiantes::listarEstudiantesEnGrados($filtroTemp, "", $curso, $grupoId);
+						if ($consultaTemp !== null && $consultaTemp !== false) {
+							$estudianteSeleccionado = mysqli_fetch_array($consultaTemp, MYSQLI_BOTH);
+						}
+						if ($estudianteSeleccionado) {
+					?>
+						<span class="badge-info-estudiante" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 15px; border-radius: 8px; font-weight: 600; margin-left: 10px;">
+							👤 <?=$estudianteSeleccionado['mat_primer_apellido'] . ' ' . $estudianteSeleccionado['mat_segundo_apellido'] . ' ' . $estudianteSeleccionado['mat_nombres']?>
+						</span>
+					<?php } } ?>
 				</div>
 			</div>
 		</div>
@@ -1019,10 +1205,10 @@ if (!Modulos::validarPermisoEdicion()) {
 	
 	<!-- Botones de acción -->
 	<div class="acciones-container">
-		<a href="../compartido/informe-consolidad-final.php?curso=<?= base64_encode($cursoId); ?>&grupo=<?= base64_encode($grupoId); ?>" 
+		<a href="../compartido/informe-consolidad-final.php?curso=<?= base64_encode($cursoId); ?>&grupo=<?= base64_encode($grupoId); ?><?= !empty($estudianteId) ? '&estudiante=' . base64_encode($estudianteId) : ''; ?>" 
 		   class="btn-action btn-informe" 
 		   target="_blank">
-			<i class="fa fa-file-pdf-o"></i> Descargar Informe PDF
+			<i class="fa fa-print"></i> Imprimir Consolidado
 		</a>
 		
 		<button class="btn-action btn-info-toggle" 
@@ -1045,9 +1231,78 @@ if (!Modulos::validarPermisoEdicion()) {
 			<p style="font-weight: 600; color: #92400e;">
 				⚠️ Importante: Después de digitar una nota, espere a ver la notificación de confirmación antes de continuar con la siguiente.
 			</p>
-			<p>
-				<strong>2)</strong> La definitiva de cada materia se calcula automáticamente del promedio de los periodos. Para que sea correcta, deben estar todas las notas de los periodos registradas.
+			
+			<hr style="border-color: #d1d5db; margin: 20px 0;">
+			
+			<h5 style="color: #92400e; font-weight: 700; margin-top: 20px; margin-bottom: 15px;">
+				<i class="fa fa-calculator"></i> Explicación de las Columnas DEF y PROM
+			</h5>
+			
+			<p style="margin-bottom: 15px;">
+				<strong style="color: #92400e;">Columnas DEF (Definitivas por Materia):</strong>
 			</p>
+			<ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+				<li>
+					<strong style="color: #92400e;">Primera DEF</strong> (fondo amarillo): 
+					Calcula la definitiva dividiendo la suma de notas entre el <strong>total de periodos</strong> configurados en la institución (<?= $config[19]; ?> periodos). 
+					Si un estudiante no tiene nota en algún periodo, ese periodo cuenta como cero en el cálculo.
+				</li>
+				<li>
+					<strong style="color: #0369a1;">Segunda DEF</strong> (fondo azul claro): 
+					Calcula la definitiva dividiendo la suma de notas solo entre los <strong>periodos que tienen nota registrada</strong>. 
+					Esta columna solo muestra valores cuando hay al menos un periodo con nota mayor a cero.
+				</li>
+			</ul>
+			
+			<p style="margin-bottom: 15px;">
+				<strong style="color: #92400e;">Columnas PROM (Promedio General del Estudiante):</strong>
+			</p>
+			<ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+				<li>
+					<strong style="color: #d97706;">Primera PROM</strong> (fondo naranja): 
+					Promedio general del estudiante calculado con base en la <strong>primera DEF</strong> de todas sus materias. 
+					Divide la suma de todas las primeras definitivas entre el número total de materias.
+				</li>
+				<li>
+					<strong style="color: #0369a1;">Segunda PROM</strong> (fondo azul claro): 
+					Promedio general del estudiante calculado con base en la <strong>segunda DEF</strong> de todas sus materias. 
+					Solo considera las materias que tienen definitiva mayor a cero. 
+					Divide la suma de las segundas definitivas entre el número de materias con definitiva mayor a cero.
+				</li>
+			</ul>
+			
+			<p style="margin-bottom: 15px;">
+				<strong style="color: #92400e;">Fila de Promedios (Footer):</strong>
+			</p>
+			<ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+				<li>
+					<strong>Promedio por Período:</strong> 
+					Muestra el promedio de todos los estudiantes en cada período de cada materia. 
+					Se calcula sumando las notas de todos los estudiantes en ese período y dividiendo entre el número de estudiantes que tienen nota.
+				</li>
+				<li>
+					<strong>Promedio de Primera DEF:</strong> 
+					Muestra el promedio de todas las primeras definitivas de todos los estudiantes en cada materia. 
+					Se calcula sumando todas las primeras definitivas y dividiendo entre el número total de estudiantes.
+				</li>
+				<li>
+					<strong>Promedio de Segunda DEF:</strong> 
+					Muestra el promedio de todas las segundas definitivas de todos los estudiantes en cada materia. 
+					Solo considera estudiantes con definitiva mayor a cero. 
+					Se calcula sumando las segundas definitivas mayores a cero y dividiendo entre el número de estudiantes con definitiva mayor a cero.
+				</li>
+				<li>
+					<strong>Promedio de Primera PROM:</strong> 
+					Muestra el promedio de todas las primeras PROM de todos los estudiantes. 
+					Se calcula sumando todas las primeras PROM y dividiendo entre el número total de estudiantes.
+				</li>
+				<li>
+					<strong>Promedio de Segunda PROM:</strong> 
+					Muestra el promedio de todas las segundas PROM de todos los estudiantes. 
+					Solo considera estudiantes con segunda PROM mayor a cero. 
+					Se calcula sumando las segundas PROM mayores a cero y dividiendo entre el número de estudiantes con segunda PROM mayor a cero.
+				</li>
+			</ul>
 		</div>
 	</div>
 	
@@ -1076,6 +1331,12 @@ if (!Modulos::validarPermisoEdicion()) {
 		// 2. CARGAR ESTUDIANTES
 		// ==========================================
 		$filtro = " AND mat_grado='" . $cursoId . "' AND mat_grupo='" . $grupoId . "' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
+		
+		// Si hay un estudiante seleccionado, agregar filtro
+		if (!empty($estudianteId)) {
+			$filtro .= " AND mat_id='" . $estudianteId . "'";
+		}
+		
 		$consultaEstudiantes = Estudiantes::listarEstudiantesEnGrados($filtro, "", $curso, $grupoId);
 		
 		$estudiantes = [];
@@ -1161,6 +1422,19 @@ if (!Modulos::validarPermisoEdicion()) {
 			}
 			
 			$contEstudiantes = count($estudiantes);
+			
+			// Arrays para acumular promedios por materia y período
+			$promediosPorPeriodo = []; // [carga_id][periodo] => [suma, contador]
+			$promediosDefinitivas = []; // [carga_id] => [suma_def1, suma_def2, contador_def1, contador_def2]
+			$promediosGenerales = ['prom1' => 0, 'prom2' => 0, 'contador_prom1' => 0, 'contador_prom2' => 0]; // Para promedios generales
+			
+			// Inicializar arrays
+			foreach ($materias as $carga) {
+				$promediosDefinitivas[$carga['car_id']] = ['def1' => 0, 'def2' => 0, 'contador_def1' => 0, 'contador_def2' => 0];
+				for ($p = 1; $p <= $config[19]; $p++) {
+					$promediosPorPeriodo[$carga['car_id']][$p] = ['suma' => 0, 'contador' => 0];
+				}
+			}
 		?>
 			<table id="tabla-consolidado" class="scrollable-table display nowrap" style="width:100%">
 				<thead>
@@ -1168,11 +1442,12 @@ if (!Modulos::validarPermisoEdicion()) {
 						<th rowspan="2" class="css_doc">DOC</th>
 						<th rowspan="2" class="css_nombre">ESTUDIANTE</th>
 						<?php foreach ($materias as $carga) { ?>
-							<th colspan="<?= $config[19] + 1; ?>">
+							<th colspan="<?= $config[19] + 2; ?>">
 								<?= strtoupper($carga['mat_nombre']); ?>
 							</th>
 						<?php } ?>
 						<th rowspan="2" class="css_prom">PROM</th>
+						<th rowspan="2" class="css_prom2">PROM</th>
 					</tr>
 					<tr>
 						<?php foreach ($materias as $carga) { ?>
@@ -1180,6 +1455,7 @@ if (!Modulos::validarPermisoEdicion()) {
 								<th>P<?= $p ?></th>
 							<?php } ?>
 							<th style="background:#fffbeb; color:#92400e; font-weight:700;">DEF</th>
+							<th style="background:#e0f2fe; color:#0369a1; font-weight:700;">DEF</th>
 						<?php } ?>
 					</tr>
 				</thead>
@@ -1187,6 +1463,8 @@ if (!Modulos::validarPermisoEdicion()) {
 					<?php
 					foreach ($estudiantes as $resultado) {
 						$defPorEstudiante = 0;
+						$defPorEstudianteConNotas = 0;
+						$materiasConNota = 0; // Contador de materias con definitiva mayor a cero
 					?>
 						<tr>
 							<td><?= $resultado['mat_documento']; ?></td>
@@ -1195,6 +1473,8 @@ if (!Modulos::validarPermisoEdicion()) {
 							foreach ($materias as $carga) {
 								$p = 1;
 								$defPorMateria = 0;
+								$defPorMateriaConNotas = 0;
+								$periodosConNota = 0; // Contador de periodos que tienen nota
 								
 								// PERIODOS DE CADA MATERIA
 								while ($p <= $config[19]) {
@@ -1212,6 +1492,12 @@ if (!Modulos::validarPermisoEdicion()) {
 									
 									if (isset($boletin['bol_nota'])) {
 										$defPorMateria += $boletin['bol_nota'];
+										$defPorMateriaConNotas += $boletin['bol_nota'];
+										$periodosConNota++; // Incrementar contador solo si hay nota
+										
+										// Acumular para promedio por período
+										$promediosPorPeriodo[$carga['car_id']][$p]['suma'] += $boletin['bol_nota'];
+										$promediosPorPeriodo[$carga['car_id']][$p]['contador']++;
 									}
 									
 									// Tipo de nota
@@ -1242,6 +1528,7 @@ if (!Modulos::validarPermisoEdicion()) {
 											class="input-nota <?=$claseNota?>" 
 											style="color:<?= $color; ?>" 
 											value="<?php if (isset($boletin['bol_nota'])) {echo $boletin['bol_nota'];} ?>" 
+											data-nota-anterior="<?php if (isset($boletin['bol_nota'])) {echo htmlspecialchars($boletin['bol_nota'], ENT_QUOTES);} ?>" 
 											name="<?= $carga['car_id']; ?>" 
 											id="<?= $resultado['mat_id']; ?>" 
 											onChange="def(this)" 
@@ -1260,14 +1547,27 @@ if (!Modulos::validarPermisoEdicion()) {
 									$p++;
 								}
 								
-								// DEFINITIVA DE CADA MATERIA
+								// DEFINITIVA DE CADA MATERIA (basada en total de periodos)
 								$defPorMateria = round($defPorMateria / $config[19], 2);
+								
+								// DEFINITIVA DE CADA MATERIA (basada solo en periodos con nota)
+								$defPorMateriaConNotasCalculada = 0;
+								if ($periodosConNota > 0) {
+									$defPorMateriaConNotasCalculada = round($defPorMateriaConNotas / $periodosConNota, 2);
+								}
 								
 								$color = '#718096';
 								if ($defPorMateria < $config[5] and $defPorMateria != "") {
 									$color = $config[6];
 								} elseif ($defPorMateria >= $config[5]) {
 									$color = $config[7];
+								}
+								
+								$colorConNotas = '#718096';
+								if ($defPorMateriaConNotasCalculada < $config[5] and $defPorMateriaConNotasCalculada != "") {
+									$colorConNotas = $config[6];
+								} elseif ($defPorMateriaConNotasCalculada >= $config[5]) {
+									$colorConNotas = $config[7];
 								}
 								
 							// CONSULTAR NIVELACIONES (desde el mapa optimizado)
@@ -1283,14 +1583,48 @@ if (!Modulos::validarPermisoEdicion()) {
 								$msj = '';
 								$msjDetalle = '';
 							}
+							
+							// Aplicar nivelación también a la definitiva con notas si aplica
+							if (isset($cNiv['niv_definitiva']) and $cNiv['niv_definitiva'] > $defPorMateriaConNotasCalculada) {
+								$defPorMateriaConNotasCalculada = $cNiv['niv_definitiva'];
+							}
+							
+							// Acumular definitivas para promedio
+							$promediosDefinitivas[$carga['car_id']]['def1'] += $defPorMateria;
+							$promediosDefinitivas[$carga['car_id']]['contador_def1']++;
+							
+							// Para la segunda definitiva, solo acumular si es mayor a cero
+							if ($defPorMateriaConNotasCalculada > 0) {
+								$promediosDefinitivas[$carga['car_id']]['def2'] += $defPorMateriaConNotasCalculada;
+								$promediosDefinitivas[$carga['car_id']]['contador_def2']++;
+							}
 								?>
 								<td style="background:#fffbeb;">
 									<input 
 										class="input-nota input-definitiva" 
+										data-def-tipo="1"
 										style="color:<?= $color; ?>" 
 										value="<?php if (isset($defPorMateria)) {echo $defPorMateria;} ?>"
 										disabled
-										title="Definitiva de <?= $carga['mat_nombre']; ?>"
+										title="Definitiva de <?= $carga['mat_nombre']; ?> (basada en <?= $config[19]; ?> periodos)"
+									/>
+									<?php if ($msj != '') { ?>
+									<span class="tipo-nota tipo-directivo">
+										<?= $msj; ?>
+										<?php if ($msjDetalle != '') { ?>
+										<br><span style="font-size: 8px;"><?= $msjDetalle; ?></span>
+										<?php } ?>
+									</span>
+									<?php } ?>
+								</td>
+								<td style="background:#e0f2fe;">
+									<input 
+										class="input-nota input-definitiva" 
+										data-def-tipo="2"
+										style="color:<?= $colorConNotas; ?>" 
+										value="<?php if (isset($defPorMateriaConNotasCalculada)) {echo $defPorMateriaConNotasCalculada;} ?>"
+										disabled
+										title="Definitiva de <?= $carga['mat_nombre']; ?> (basada en <?= $periodosConNota; ?> periodos con nota)"
 									/>
 									<?php if ($msj != '') { ?>
 									<span class="tipo-nota tipo-directivo">
@@ -1302,10 +1636,17 @@ if (!Modulos::validarPermisoEdicion()) {
 									<?php } ?>
 								</td>
 							<?php
-								//DEFINITIVA POR CADA ESTUDIANTE
+								//DEFINITIVA POR CADA ESTUDIANTE (basada en primera DEF - total periodos)
 								$defPorEstudiante += $defPorMateria;
+								
+								//DEFINITIVA POR CADA ESTUDIANTE (basada en segunda DEF - periodos con nota)
+								if ($defPorMateriaConNotasCalculada > 0) {
+									$defPorEstudianteConNotas += $defPorMateriaConNotasCalculada;
+									$materiasConNota++;
+								}
 							}
 							
+							// Promedio basado en primera DEF (total periodos)
 							$defPorEstudiante = round($defPorEstudiante / $numCargasPorCurso, 2);
 							$color = '#718096';
 							if ($defPorEstudiante < $config[5] and $defPorEstudiante != "") {
@@ -1313,13 +1654,138 @@ if (!Modulos::validarPermisoEdicion()) {
 							} elseif ($defPorEstudiante >= $config[5]) {
 								$color = $config[7];
 							}
+							
+							// Promedio basado en segunda DEF (solo periodos con nota)
+							$defPorEstudianteConNotasCalculada = 0;
+							if ($materiasConNota > 0) {
+								$defPorEstudianteConNotasCalculada = round($defPorEstudianteConNotas / $materiasConNota, 2);
+							}
+							$colorConNotas = '#718096';
+							if ($defPorEstudianteConNotasCalculada < $config[5] and $defPorEstudianteConNotasCalculada != "") {
+								$colorConNotas = $config[6];
+							} elseif ($defPorEstudianteConNotasCalculada >= $config[5]) {
+								$colorConNotas = $config[7];
+							}
+							
+							// Acumular promedios generales para el footer
+							$promediosGenerales['prom1'] += $defPorEstudiante;
+							$promediosGenerales['contador_prom1']++;
+							if ($defPorEstudianteConNotasCalculada > 0) {
+								$promediosGenerales['prom2'] += $defPorEstudianteConNotasCalculada;
+								$promediosGenerales['contador_prom2']++;
+							}
 							?>
 							<td style="color:<?= $color; ?>;">
 								<?= $defPorEstudiante; ?>
 							</td>
+							<td style="color:<?= $colorConNotas; ?>; background:#e0f2fe;">
+								<?= $defPorEstudianteConNotasCalculada > 0 ? $defPorEstudianteConNotasCalculada : '-'; ?>
+							</td>
 						</tr>
 					<?php } ?>
 				</tbody>
+				<tfoot>
+					<tr style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-weight: 700;">
+						<td colspan="2" style="text-align: center; border: 2px solid #667eea;">
+							<strong>PROMEDIO</strong>
+						</td>
+						<?php foreach ($materias as $carga) { ?>
+							<?php for ($p = 1; $p <= $config[19]; $p++) { 
+								$promedioPeriodo = 0;
+								if ($promediosPorPeriodo[$carga['car_id']][$p]['contador'] > 0) {
+									$promedioPeriodo = round($promediosPorPeriodo[$carga['car_id']][$p]['suma'] / $promediosPorPeriodo[$carga['car_id']][$p]['contador'], 2);
+								}
+								
+								$colorPromedio = '#718096';
+								if ($promedioPeriodo > 0) {
+									if ($promedioPeriodo < $config[5]) {
+										$colorPromedio = $config[6];
+									} elseif ($promedioPeriodo >= $config[5]) {
+										$colorPromedio = $config[7];
+									}
+								}
+							?>
+								<td style="text-align: center; color: <?= $colorPromedio; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
+									<?= $promedioPeriodo > 0 ? $promedioPeriodo : '-'; ?>
+								</td>
+							<?php } ?>
+							<?php 
+							// Promedio de primera definitiva
+							$promedioDef1 = 0;
+							if ($promediosDefinitivas[$carga['car_id']]['contador_def1'] > 0) {
+								$promedioDef1 = round($promediosDefinitivas[$carga['car_id']]['def1'] / $promediosDefinitivas[$carga['car_id']]['contador_def1'], 2);
+							}
+							
+							$colorDef1 = '#718096';
+							if ($promedioDef1 > 0) {
+								if ($promedioDef1 < $config[5]) {
+									$colorDef1 = $config[6];
+								} elseif ($promedioDef1 >= $config[5]) {
+									$colorDef1 = $config[7];
+								}
+							}
+							
+							// Promedio de segunda definitiva (solo basado en definitivas mayores a cero)
+							$promedioDef2 = 0;
+							if ($promediosDefinitivas[$carga['car_id']]['contador_def2'] > 0) {
+								$promedioDef2 = round($promediosDefinitivas[$carga['car_id']]['def2'] / $promediosDefinitivas[$carga['car_id']]['contador_def2'], 2);
+							}
+							
+							$colorDef2 = '#718096';
+							if ($promedioDef2 > 0) {
+								if ($promedioDef2 < $config[5]) {
+									$colorDef2 = $config[6];
+								} elseif ($promedioDef2 >= $config[5]) {
+									$colorDef2 = $config[7];
+								}
+							}
+							?>
+							<td style="text-align: center; background:#fffbeb; color: <?= $colorDef1; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
+								<?= $promedioDef1 > 0 ? $promedioDef1 : '-'; ?>
+							</td>
+							<td style="text-align: center; background:#e0f2fe; color: <?= $colorDef2; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
+								<?= $promedioDef2 > 0 ? $promedioDef2 : '-'; ?>
+							</td>
+						<?php } ?>
+						<?php 
+						// Promedio de primera columna PROM
+						$promedioProm1 = 0;
+						if ($promediosGenerales['contador_prom1'] > 0) {
+							$promedioProm1 = round($promediosGenerales['prom1'] / $promediosGenerales['contador_prom1'], 2);
+						}
+						
+						$colorProm1 = '#718096';
+						if ($promedioProm1 > 0) {
+							if ($promedioProm1 < $config[5]) {
+								$colorProm1 = $config[6];
+							} elseif ($promedioProm1 >= $config[5]) {
+								$colorProm1 = $config[7];
+							}
+						}
+						
+						// Promedio de segunda columna PROM (basado en periodos con nota)
+						$promedioProm2 = 0;
+						if ($promediosGenerales['contador_prom2'] > 0) {
+							$promedioProm2 = round($promediosGenerales['prom2'] / $promediosGenerales['contador_prom2'], 2);
+						}
+						
+						$colorProm2 = '#718096';
+						if ($promedioProm2 > 0) {
+							if ($promedioProm2 < $config[5]) {
+								$colorProm2 = $config[6];
+							} elseif ($promedioProm2 >= $config[5]) {
+								$colorProm2 = $config[7];
+							}
+						}
+						?>
+						<td style="text-align: center; font-weight: 700; border: 2px solid #f59e0b; color: <?= $colorProm1; ?>;">
+							<?= $promedioProm1 > 0 ? $promedioProm1 : '-'; ?>
+						</td>
+						<td style="text-align: center; font-weight: 700; border: 2px solid #0369a1; background:#e0f2fe; color: <?= $colorProm2; ?>;">
+							<?= $promedioProm2 > 0 ? $promedioProm2 : '-'; ?>
+						</td>
+					</tr>
+				</tfoot>
 			</table>
 		<?php
 		} catch (Exception $e) {
@@ -1361,6 +1827,9 @@ $(document).ready(function() {
 	
 	$('#selector_curso, #selector_grupo').on('change', function() {
 		validarSeleccion();
+		// Limpiar selector de estudiantes cuando cambian curso o grupo
+		$('#selector_estudiante').html('<option value="">Todos los estudiantes</option>');
+		$('#selector-estudiante-container').hide();
 	});
 	
 	// ==========================================
@@ -1386,13 +1855,113 @@ $(document).ready(function() {
 		var btnHtml = $(this).html();
 		$(this).html('<i class="fa fa-spinner fa-spin"></i> Cargando...').prop('disabled', true);
 		
-		// Recargar con POST
+		// Cargar estudiantes antes de recargar la página
+		cargarEstudiantes(curso, grupo, function() {
+			// Recargar con POST
+			var estudiante = $('#selector_estudiante').val();
+			var form = $('<form method="POST" action="estudiantes-consolidado-final-detalles2.php"></form>');
+			form.append('<input type="hidden" name="curso" value="' + curso + '">');
+			form.append('<input type="hidden" name="grupo" value="' + grupo + '">');
+			if (estudiante) {
+				form.append('<input type="hidden" name="estudiante" value="' + estudiante + '">');
+			}
+			$('body').append(form);
+			form.submit();
+		});
+	});
+	
+	// ==========================================
+	// CARGAR ESTUDIANTES DINÁMICAMENTE
+	// ==========================================
+	function cargarEstudiantes(cursoId, grupoId, callback) {
+		$.ajax({
+			url: 'ajax-obtener-estudiantes-consolidado.php',
+			type: 'POST',
+			data: {
+				curso_id: cursoId,
+				grupo_id: grupoId
+			},
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var selectEstudiante = $('#selector_estudiante');
+					selectEstudiante.html('<option value="">Todos los estudiantes</option>');
+					
+					response.estudiantes.forEach(function(estudiante) {
+						var option = $('<option></option>')
+							.attr('value', estudiante.mat_id)
+							.text(estudiante.nombre_completo + (estudiante.mat_matricula ? ' (' + estudiante.mat_matricula + ')' : ''));
+						selectEstudiante.append(option);
+					});
+					
+					// Mostrar selector de estudiantes
+					$('#selector-estudiante-container').slideDown();
+					
+					// Establecer estudiante seleccionado si existe en la URL
+					<?php if (!empty($estudianteId)) { ?>
+					selectEstudiante.val('<?=$estudianteId?>');
+					<?php } ?>
+					
+					if (callback) callback();
+				} else {
+					$.toast({
+						heading: 'Error',
+						text: response.message || 'No se pudieron cargar los estudiantes',
+						position: 'top-right',
+						loaderBg: '#ef4444',
+						icon: 'error',
+						hideAfter: 3000
+					});
+					if (callback) callback();
+				}
+			},
+			error: function() {
+				$.toast({
+					heading: 'Error',
+					text: 'Error al cargar los estudiantes',
+					position: 'top-right',
+					loaderBg: '#ef4444',
+					icon: 'error',
+					hideAfter: 3000
+				});
+				if (callback) callback();
+			}
+		});
+	}
+	
+	// ==========================================
+	// MANEJAR CAMBIO DE ESTUDIANTE
+	// ==========================================
+	$('#selector_estudiante').on('change', function() {
+		var curso = $('#selector_curso').val();
+		var grupo = $('#selector_grupo').val();
+		var estudiante = $(this).val();
+		
+		if (!curso || !grupo) {
+			return;
+		}
+		
+		// Recargar página con el estudiante seleccionado
 		var form = $('<form method="POST" action="estudiantes-consolidado-final-detalles2.php"></form>');
 		form.append('<input type="hidden" name="curso" value="' + curso + '">');
 		form.append('<input type="hidden" name="grupo" value="' + grupo + '">');
+		if (estudiante) {
+			form.append('<input type="hidden" name="estudiante" value="' + estudiante + '">');
+		}
 		$('body').append(form);
 		form.submit();
 	});
+	
+	<?php if (!empty($cursoId) && !empty($grupoId)) { ?>
+	// Cargar estudiantes al cargar la página si ya hay curso y grupo seleccionados
+	setTimeout(function() {
+		cargarEstudiantes('<?=$cursoId?>', '<?=$grupoId?>', function() {
+			<?php if (!empty($estudianteId)) { ?>
+			$('#selector_estudiante').val('<?=$estudianteId?>');
+			<?php } ?>
+		});
+	}, 500);
+	<?php } ?>
 	
 	<?php if (!empty($cursoId) && !empty($grupoId)) { ?>
 	// ==========================================
@@ -1447,6 +2016,24 @@ $(document).ready(function() {
 				inputs.eq(index + 1).focus().select();
 			}
 		}
+	});
+	
+	// ==========================================
+	// CAPTURAR NOTA ANTERIOR AL MODIFICAR INPUT
+	// ==========================================
+	// Cuando el input recibe el foco, guardar el valor actual como nota anterior
+	// Esto permite capturar la nota que había antes de que el usuario la modifique
+	$(document).on('focus', '.input-nota:not(:disabled)', function() {
+		var valorActual = $(this).val() || '';
+		var notaAnteriorGuardada = $(this).attr('data-nota-anterior');
+		
+		// Si no hay nota anterior guardada o está vacía, guardar el valor actual
+		// Esto captura el valor original cuando el usuario empieza a editar
+		if (!notaAnteriorGuardada || notaAnteriorGuardada === '') {
+			$(this).attr('data-nota-anterior', valorActual);
+		}
+		// Si el valor actual es diferente al guardado, significa que el usuario ya editó
+		// pero no guardó. En ese caso, mantener la nota anterior original.
 	});
 	<?php } ?>
 	

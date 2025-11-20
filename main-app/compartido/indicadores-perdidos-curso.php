@@ -24,12 +24,28 @@ if (empty($_REQUEST["periodo"])) {
 if ($periodoActual == 1) { $periodoActuales = "Primero"; $condicion = "1"; $condicion2 = "1";}
 if ($periodoActual == 2) { $periodoActuales = "Segundo"; $condicion = "1,2"; $condicion2 = "2";}
 if ($periodoActual == 3) { $periodoActuales = "Tercero"; $condicion = "1,2,3"; $condicion2 = "3";}
-if ($periodoActual == 4) { $periodoActuales = "Cuarto"; $condicion = "1,2,3,4"; $condicion2 = "4";}
+if ($periodoActual >= 4 && $periodoActual < $config['conf_periodos_maximos']) { 
+    $periodoActuales = "Periodo ".$periodoActual; 
+    $condicionArray = [];
+    for($p = 1; $p <= $periodoActual; $p++){
+        $condicionArray[] = $p;
+    }
+    $condicion = implode(",", $condicionArray);
+    $condicion2 = (string)$periodoActual;
+}
+if ($periodoActual == $config['conf_periodos_maximos']) { 
+    $periodoActuales = "Final"; 
+    $condicionArray = [];
+    for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){
+        $condicionArray[] = $p;
+    }
+    $condicion = implode(",", $condicionArray);
+    $condicion2 = (string)$config['conf_periodos_maximos'];
+}
 ?>
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(1)?>">Periodo 1</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(2)?>">Periodo 2</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(3)?>">Periodo 3</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(4)?>">Periodo 4</a>&nbsp;&nbsp;
+    <?php for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){ ?>
+    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode($p)?>">Periodo <?=$p?></a>&nbsp;&nbsp;
+    <?php } ?>
 <?php
 
 $filtroAdicional = " AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";

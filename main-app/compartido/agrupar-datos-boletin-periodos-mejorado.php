@@ -54,6 +54,7 @@ foreach ($listaDatos  as $registro) {
             "mat_tipo_matricula"                => $registro["mat_tipo_matricula"],
             "gra_id"                            => $registro["mat_grado"],
             "gra_nombre"                        => $registro["gra_nombre"],
+            "gra_nivel"                         => !empty($registro["gra_nivel"]) ? $registro["gra_nivel"] : null,
             "genero"                        => $registro["mat_genero"],
             "gru_id"                            => $registro["mat_grupo"],
             "gru_nombre"                        => $registro["gru_nombre"],
@@ -251,6 +252,7 @@ foreach ($estudiantes as $estudiante) {
     foreach ($estudiante["areas"] as $area) {
         $nota_area      = [];        
         $suma_nota_area = 0;
+        $suma_porcentajes_area = []; // Para calcular promedio ponderado correcto
         foreach ($area["cargas"] as $carga) {
             $nota_carga_acumulada = 0;
             $cantidad_materias++;
@@ -263,14 +265,24 @@ foreach ($estudiantes as $estudiante) {
                 Utilidades::valordefecto( $suma_notas_materias_periodo[$periodo["bol_periodo"]],0);
                 Utilidades::valordefecto( $suma_notas_areas_periodo[$periodo["bol_periodo"]],0);
                 Utilidades::valordefecto( $nota_area[$periodo["bol_periodo"]],0);
+                Utilidades::valordefecto( $suma_porcentajes_area[$periodo["bol_periodo"]],0);
                 $suma_notas_materias_periodo[$periodo["bol_periodo"]]                                                       += $periodo["bol_nota"];
-                $nota_area[$periodo["bol_periodo"]]                                                                         += $periodo["bol_nota"] * ($porcentaje_materia/100);
+                // Acumular nota ponderada (nota * porcentaje) y suma de porcentajes para calcular promedio ponderado después
+                $nota_area[$periodo["bol_periodo"]]                                                                         += $periodo["bol_nota"] * ($porcentaje_materia);
+                $suma_porcentajes_area[$periodo["bol_periodo"]]                                                              += $porcentaje_materia;
                 $suma_notas_areas_periodo[$periodo["bol_periodo"]]                                                          += $periodo["bol_nota"] * ($porcentaje_materia/100);
                 $estudiantes[$estudiante["mat_id"]]["areas"][$area["ar_id"]]["cargas"][$carga["car_id"]]["suma_nota_carga"] += $periodo["bol_nota"] ;
                 $nota_carga_acumulada                                 += $periodo["bol_nota"] * ($periodo["porcentaje_periodo"]/100);         
             }
             $estudiantes[$estudiante["mat_id"]]["areas"][$area["ar_id"]]["cargas"][$carga["car_id"]]["nota_carga_acumulada"]=$nota_carga_acumulada;
             
+        }
+        // Calcular promedio ponderado del área por período
+        foreach ($nota_area as $periodoKey => $sumaNotasPonderadas) {
+            if (!empty($suma_porcentajes_area[$periodoKey]) && $suma_porcentajes_area[$periodoKey] > 0) {
+                // Promedio ponderado = suma de (nota * porcentaje) / suma de porcentajes
+                $nota_area[$periodoKey] = $sumaNotasPonderadas / $suma_porcentajes_area[$periodoKey];
+            }
         }
         $nota_area_acumulada = 0;
         foreach ($area["periodos"] as $periodo) {
@@ -306,7 +318,22 @@ foreach ($estudiantes as $estudiante) {
 // listar daots de media tecnica
 $individuales = [];
 if(!empty($estudiantesMediatecnica)){
-        $datos = Boletin::datosBoletinMediaTecnica($periodosArray, $year, $estudiantesMediatecnica,$traerIndicadores);
+        // Asegurar que $periodosArray esté inicializado como array
+        if(empty($periodosArray) || !is_array($periodosArray)){
+            $periodosArray = [];
+        }
+
+        // Asegurar que $year esté inicializado
+        if(empty($year)){
+            $year = $_SESSION["bd"] ?? '';
+        }
+
+        // Asegurar que $traerIndicadores esté inicializado como bool
+        if(!isset($traerIndicadores) || !is_bool($traerIndicadores)){
+            $traerIndicadores = false;
+        }
+
+        $datos = Boletin::datosBoletinMediaTecnica($periodosArray, $year, $estudiantesMediatecnica, $traerIndicadores);
      if($datos && is_object($datos)){
          while ($row = $datos->fetch_assoc()) {
              $individuales[] = $row;

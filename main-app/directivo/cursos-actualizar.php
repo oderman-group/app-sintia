@@ -15,6 +15,47 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Validar si hay registros académicos en general (no por curso específico)
+$hayNotasRegistradas = Grados::hayRegistrosAcademicos($config);
+
+if ($hayNotasRegistradas) {
+	// Obtener valores actuales del curso
+	$resultadoCurso = GradoServicios::consultarCurso($cursoId);
+	
+	// Validar que los campos protegidos no hayan cambiado
+	if (isset($_POST["nombreC"]) && trim($_POST["nombreC"]) != $resultadoCurso['gra_nombre']) {
+		echo '<script type="text/javascript">alert("No se puede modificar el Nombre del Curso porque ya existen notas registradas."); window.location.href="cursos-editar.php?id=' . base64_encode($_POST["id_curso"]) . '";</script>';
+		exit();
+	}
+	
+	if (isset($_POST["notaMin"]) && $_POST["notaMin"] != $resultadoCurso['gra_nota_minima']) {
+		echo '<script type="text/javascript">alert("No se puede modificar la Nota Mínima porque ya existen notas registradas."); window.location.href="cursos-editar.php?id=' . base64_encode($_POST["id_curso"]) . '";</script>';
+		exit();
+	}
+	
+	if (isset($_POST["periodosC"]) && $_POST["periodosC"] != $resultadoCurso['gra_periodos']) {
+		echo '<script type="text/javascript">alert("No se puede modificar el número de Periodos porque ya existen notas registradas."); window.location.href="cursos-editar.php?id=' . base64_encode($_POST["id_curso"]) . '";</script>';
+		exit();
+	}
+	
+	if (isset($_POST["nivel"]) && $_POST["nivel"] != $resultadoCurso['gra_nivel']) {
+		echo '<script type="text/javascript">alert("No se puede modificar el Nivel Educativo porque ya existen notas registradas."); window.location.href="cursos-editar.php?id=' . base64_encode($_POST["id_curso"]) . '";</script>';
+		exit();
+	}
+	
+	if (isset($_POST["estado"]) && $_POST["estado"] != $resultadoCurso['gra_estado']) {
+		echo '<script type="text/javascript">alert("No se puede modificar el Estado porque ya existen notas registradas."); window.location.href="cursos-editar.php?id=' . base64_encode($_POST["id_curso"]) . '";</script>';
+		exit();
+	}
+	
+	// Si hay notas, usar los valores originales del curso para estos campos
+	$_POST["nombreC"] = $resultadoCurso['gra_nombre'];
+	$_POST["notaMin"] = $resultadoCurso['gra_nota_minima'];
+	$_POST["periodosC"] = $resultadoCurso['gra_periodos'];
+	$_POST["nivel"] = $resultadoCurso['gra_nivel'];
+	$_POST["estado"] = $resultadoCurso['gra_estado'];
+}
+
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 if (trim($_POST["nombreC"]) == "" or trim($_POST["formatoB"]) == "" or trim($_POST["valorM"]) == "" or trim($_POST["valorP"]) == "") {
 	echo '<script type="text/javascript">window.location.href="cursos-editar.php?error=ER_DT_4&id=' . base64_encode($_POST["id_curso"]) . '";</script>';

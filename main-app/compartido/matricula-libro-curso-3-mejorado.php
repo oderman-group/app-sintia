@@ -140,6 +140,7 @@ if (!empty($curso) && !empty($periodoFinal) && !empty($year)) {
 				'nombre' => $nombreCompleto,
 				'gra_id' => !empty($est['mat_grado']) ? $est['mat_grado'] : '',
 				'gra_nombre' => !empty($est['gra_nombre']) ? $est['gra_nombre'] : '',
+				'gra_nivel' => !empty($est['gra_nivel']) ? $est['gra_nivel'] : null,
 				'gru_nombre' => !empty($est['gru_nombre']) ? $est['gru_nombre'] : '',
 				'mat_estado_matricula' => !empty($est['mat_estado_matricula']) ? $est['mat_estado_matricula'] : MATRICULADO,
 				'periodos' => $periodoFinal,
@@ -402,30 +403,33 @@ $debugInfo = [
 								<td><?= strtoupper($area["ar_nombre"]); ?></td>
 								<td></td>
 								<td>
-									<?php
-									$notaArea = $area["nota_area_acumulada"];
-									$notaAreaClase = '';
-									
-									if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
-										$notaFA = ceil($notaArea);
-										switch ($notaFA) {
-											case 1: echo "D"; $notaAreaClase = 'nota-bajo'; break;
-											case 2: echo "I"; $notaAreaClase = 'nota-bajo'; break;
-											case 3: echo "A"; $notaAreaClase = 'nota-basico'; break;
-											case 4: echo "S"; $notaAreaClase = 'nota-alto'; break;
-											case 5: echo "E"; $notaAreaClase = 'nota-superior'; break;
-										}
-									} else {
-										$notaAreaFormateada = Boletin::formatoNota($notaArea);
-										echo $notaAreaFormateada;
-										
-										// Determinar clase según la nota
-										if ($notaArea >= 4.5) $notaAreaClase = 'nota-superior';
-										elseif ($notaArea >= 4.0) $notaAreaClase = 'nota-alto';
-										elseif ($notaArea >= 3.0) $notaAreaClase = 'nota-basico';
-										else $notaAreaClase = 'nota-bajo';
+								<?php
+								$notaArea = (float)($area["nota_area_acumulada"] ?? 0);
+								$notaAreaClase = '';
+								
+								// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+								$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+								
+								if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS && false) {
+									$notaFA = ceil($notaArea);
+									switch ($notaFA) {
+										case 1: echo "D"; $notaAreaClase = 'nota-bajo'; break;
+										case 2: echo "I"; $notaAreaClase = 'nota-bajo'; break;
+										case 3: echo "A"; $notaAreaClase = 'nota-basico'; break;
+										case 4: echo "S"; $notaAreaClase = 'nota-alto'; break;
+										case 5: echo "E"; $notaAreaClase = 'nota-superior'; break;
 									}
-									?>
+								} else {
+									$notaAreaFormateada = Boletin::formatoNota($notaArea, $tiposNotas);
+									echo $notaAreaFormateada;
+									
+									// Determinar clase según la nota
+									if ($notaArea >= 4.5) $notaAreaClase = 'nota-superior';
+									elseif ($notaArea >= 4.0) $notaAreaClase = 'nota-alto';
+									elseif ($notaArea >= 3.0) $notaAreaClase = 'nota-basico';
+									else $notaAreaClase = 'nota-bajo';
+								}
+								?>
 								</td>
 								<td></td>
 								<td></td>
@@ -434,7 +438,7 @@ $debugInfo = [
 
 							<!-- Filas de Materias -->
 							<?php foreach ($area["cargas"] as $carga) {
-								$notaCarga = $carga["nota_carga_acumulada"];
+								$notaCarga = (float)($carga["nota_carga_acumulada"] ?? 0);
 								
 								if ($notaCarga < $config['conf_nota_minima_aprobar']) {
 									$materiasPerdidas++;
@@ -444,34 +448,38 @@ $debugInfo = [
 								Utilidades::valordefecto($notaCargaDeseno["notip_desde"],0);
 								Utilidades::valordefecto($notaCargaDeseno["notip_hasta"],1);
 								
-								$notaCargaClase = '';
-								
-								if ($notaCarga >= $notaCargaDeseno["notip_desde"] && $notaCarga <= $notaCargaDeseno["notip_hasta"]) {
-									if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
-										$notaFD = ceil($notaCarga);
-										switch ($notaFD) {
-											case 1:
-												$notaCarga = "D";
-												$notaCargaDeseno["notip_nombre"] = "BAJO";
-												$notaCargaClase = 'nota-bajo';
-												break;
-											case 2:
-												$notaCarga = "I";
-												$notaCargaDeseno["notip_nombre"] = "BAJO";
-												$notaCargaClase = 'nota-bajo';
-												break;
-											case 3:
-												$notaCarga = "A";
-												$notaCargaDeseno["notip_nombre"] = "BÁSICO";
-												$notaCargaClase = 'nota-basico';
-												break;
-											case 4:
-												$notaCarga = "S";
-												$notaCargaDeseno["notip_nombre"] = "ALTO";
-												$notaCargaClase = 'nota-alto';
-												break;
-											case 5:
-												$notaCarga = "E";
+							$notaCargaClase = '';
+							$notaCargaMostrar = '';
+							
+							// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+							$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+							
+							if ($notaCarga >= $notaCargaDeseno["notip_desde"] && $notaCarga <= $notaCargaDeseno["notip_hasta"]) {
+								if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS && false) {
+									$notaFD = ceil($notaCarga);
+									switch ($notaFD) {
+										case 1:
+											$notaCargaMostrar = "D";
+											$notaCargaDeseno["notip_nombre"] = "BAJO";
+											$notaCargaClase = 'nota-bajo';
+											break;
+										case 2:
+											$notaCargaMostrar = "I";
+											$notaCargaDeseno["notip_nombre"] = "BAJO";
+											$notaCargaClase = 'nota-bajo';
+											break;
+										case 3:
+											$notaCargaMostrar = "A";
+											$notaCargaDeseno["notip_nombre"] = "BÁSICO";
+											$notaCargaClase = 'nota-basico';
+											break;
+										case 4:
+											$notaCargaMostrar = "S";
+											$notaCargaDeseno["notip_nombre"] = "ALTO";
+											$notaCargaClase = 'nota-alto';
+											break;
+										case 5:
+												$notaCargaMostrar = "E";
 												$notaCargaDeseno["notip_nombre"] = "SUPERIOR";
 												$notaCargaClase = 'nota-superior';
 												break;
@@ -482,13 +490,16 @@ $debugInfo = [
 										elseif ($notaCarga >= 4.0) $notaCargaClase = 'nota-alto';
 										elseif ($notaCarga >= 3.0) $notaCargaClase = 'nota-basico';
 										else $notaCargaClase = 'nota-bajo';
+										
+										// Formatear la nota numérica
+										$notaCargaMostrar = Boletin::formatoNota($notaCarga, $tiposNotas);
 									}
 								}
 							?>
 							<tr class="fila-materia">
 								<td class="col-asignatura"><?= $carga["mat_nombre"]; ?></td>
 								<td class="col-ih"><?= $carga["car_ih"] ?></td>
-								<td class="col-definitiva <?= $notaCargaClase ?>"><?= Boletin::formatoNota(3); ?></td>
+								<td class="col-definitiva <?= $notaCargaClase ?>"><?= $notaCargaMostrar; ?></td>
 								<td class="col-desempeno"><?= $notaCargaDeseno["notip_nombre"] ?></td>
 								<td class="col-ausencias"><?= $carga["fallas"] ?></td>
 								<td class="col-observaciones"></td>

@@ -51,8 +51,7 @@ elseif($asg['car_curso']>9 and $asg['car_curso']<=11)
 if($periodoActual==1) $periodoActuales = "Primero";
 if($periodoActual==2) $periodoActuales = "Segundo";
 if($periodoActual==3) $periodoActuales = "Tercero";
-if($periodoActual==4) $periodoActuales = "Final";
-//if($periodoActual==5) $periodoActuales = "Final";
+if($periodoActual==$config['conf_periodos_maximos']) $periodoActuales = "Final";
 ?>
 
 <div align="center" style="margin-bottom:20px;">
@@ -77,7 +76,9 @@ if($periodoActual==4) $periodoActuales = "Final";
 <td width="3%" align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?id=<?=$_GET["id"];?>&periodo=1" style="color:#0000FF; text-decoration:underline;">1P</a></td>
 <td width="4%" align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?id=<?=$_GET["id"];?>&periodo=2" style="color:#0000FF; text-decoration:underline;">2P</a></td>
 <td width="4%" align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?id=<?=$_GET["id"];?>&periodo=3" style="color:#0000FF; text-decoration:underline;">3P</a></td>
+<?php if($config['conf_periodos_maximos'] >= 4) { ?>
 <td width="4%" align="center"><a href="<?=$_SERVER['PHP_SELF'];?>?id=<?=$_GET["id"];?>&periodo=4" style="color:#0000FF; text-decoration:underline;">4P</a></td>
+<?php } ?>
 <td width="4%" align="center">PRO</td>
 <!--<td width="5%" align="center">PER</td>-->
 <td width="8%" align="center">DESEMPE&Ntilde;O</td>   
@@ -118,7 +119,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 		$defini = 0;
 		$prom=0;
 		$per=1;
-		while($per<=4){
+		while($per<=$config['conf_periodos_maximos']){
 			
 			//============================ NOTA DE CADA UNO DE LOS PERIODOS  POR SEPARADO =====================================================
 			$notas=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_boletin WHERE bol_carga='".$fila[3]."' AND bol_estudiante='".$_GET["id"]."' AND bol_periodo='".$per."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
@@ -145,7 +146,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 				$promedioArea4 = $promedioAre4 + $prome;
 			}
 			$per++;
-		}//FIN MIENTRAS QUE DE PERIODOS (1-4)
+		}//FIN MIENTRAS QUE DE PERIODOS (1-conf_periodos_maximos)
 		$defini = ($defini/$periodoActual);
 		$defini = round($defini,1);
 		$nivelaciones = Calificaciones::nivelacionEstudianteCarga($conexion, $config, $_GET["id"], $fila_mat['car_id']);
@@ -160,7 +161,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 		if($defini<3){$materiasPerdidas++;}	
 		$totalDefini = $totalDefini+$defini;
 		if($defini==1)	$defini="1.0";	if($defini==2)	$defini="2.0";		if($defini==3)	$defini="3.0";	if($defini==4)	$defini="4.0";	if($defini==5)	$defini="5.0";
-		$defini = $defini/4;
+		$defini = $defini/$config['conf_periodos_maximos'];
 ?>
     	<td align="center" style="font-weight:bold; font-size:11px; border:groove;"><?php echo $defini." ".$msjH;?></td>	
 <?php 
@@ -169,7 +170,7 @@ if($ii%2==0)$bgC = '#FFF'; else $bgC = '#E0E0E0';
 ?>
 		<td align="center" style="font-weight:bold; font-size:11px; border:groove;">
 <?php
-			if($periodoActual==4){
+			if($periodoActual==$config['conf_periodos_maximos']){
 			if($defini>=$cde[1] and $defini<=$cde[2]) echo "SUPERIOR"; elseif($defini>=$cde[3] and $defini<=$cde[4]) echo "ALTO"; elseif($defini>=3 and $defini<=$cde[6]) echo "B&Aacute;SICO"; elseif($defini>=$cde[7] and $defini<=$cde[8]) echo "<span style='background:#FFFF00;'>BAJO</span>"; else echo "-";
 			}else{
 				if($final>=$cde[1] and $final<=$cde[2]) echo "SUPERIOR"; elseif($final>=$cde[3] and $final<=$cde[4]) echo "ALTO"; elseif($final>=3 and $final<=$cde[6]) echo "B&Aacute;SICO"; elseif($final>=$cde[7] and $final<=$cde[8]) echo "BAJO"; else echo "-";
@@ -267,7 +268,7 @@ if($periodoActual==3){?>
     </script>
 <?php
 }
-if($periodoActual==4){?>
+if($periodoActual==$config['conf_periodos_maximos']){?>
 	<script>
     $('.newClass').prev().children().next().next().html(espacios+"");
     $('.newClass').prev().children().next().next().next().html(espacios+"");
@@ -295,7 +296,9 @@ $ii++;
         <td><?php if(1<=$periodoActual) echo round($prom1/$num_mat,1); else echo "-";?></td>
         <td><?php if(2<=$periodoActual) echo round($prom2/$num_mat,1); else echo "-";?></td>
         <td><?php if(3<=$periodoActual) echo round($prom3/$num_mat,1); else echo "-";?></td>
+        <?php if($config['conf_periodos_maximos'] >= 4) { ?>
         <td><?php if(4<=$periodoActual) echo round($prom4/$num_mat,1); else echo "-";?></td>
+        <?php } ?>
         <td><?=round($totalDefini/$num_mat,1);?></td>
         <td colspan="2">&nbsp;</td>
     </tr>
@@ -325,7 +328,7 @@ $ii++;
 
 <p align="center">
 <?php 
-if($periodoActual==4){
+if($periodoActual==$config['conf_periodos_maximos']){
 	if($materiasPerdidas>=3)
 		$msj = "<center>EL (LA) ESTUDIANTE ".strtoupper($datosUsr['mat_segundo_apellido'])." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";
 	elseif($materiasPerdidas<3 and $materiasPerdidas>0)
@@ -363,6 +366,36 @@ if($periodoActual==3){
 if($periodoActual==4){
 	$title = "'1 Periodo', '2 Periodo', '3 Periodo', '4 Periodo'";
 	$data =  $periodo1 .",". $periodo2 .",". $periodo3 .",". $periodo4;
+} elseif($periodoActual==$config['conf_periodos_maximos']){
+	$title = "";
+	for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){
+		if($p > 1) $title .= ", ";
+		$title .= "'".$p." Periodo'";
+	}
+	$data =  $periodo1 .",". $periodo2 .",". $periodo3 .",". $periodo4;
+	if($config['conf_periodos_maximos'] > 4){
+		for($p = 5; $p <= $config['conf_periodos_maximos']; $p++){
+			$varName = "prom".$p;
+			if(isset($$varName)){
+				$data .= ",".$$varName;
+			}
+		}
+	}
+} elseif($periodoActual > 4 && $periodoActual < $config['conf_periodos_maximos']){
+	$title = "";
+	for($p = 1; $p <= $periodoActual; $p++){
+		if($p > 1) $title .= ", ";
+		$title .= "'".$p." Periodo'";
+	}
+	$data =  $periodo1 .",". $periodo2 .",". $periodo3 .",". $periodo4;
+	if($periodoActual > 4){
+		for($p = 5; $p <= $periodoActual; $p++){
+			$varName = "prom".$p;
+			if(isset($$varName)){
+				$data .= ",".$$varName;
+			}
+		}
+	}
 }
 ?> 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>

@@ -127,6 +127,11 @@ function obtenerNotaCualitativa($nota, $cache, $config, $conexion) {
   $nombreInforme = "INFORME PARCIAL " . "<br>" . " PERIODO:" . Utilidades::getToString($cPeriodo) . "<br>" . Utilidades::getToString($config["conf_fecha_parcial"]);
   include("../compartido/head-informes.php") 
   ?>
+  
+  <!-- Aclaración sobre las notas -->
+  <div align="center" style="margin:20px 0; padding:12px 15px; background:#fff3cd; border-left:4px solid #ffc107; border-radius:4px; font-size:11px; font-style:italic; color:#555; max-width:900px; margin-left:auto; margin-right:auto;">
+    <strong style="color:#856404; font-style:normal;">⚠️ Importante:</strong> Las notas mostradas en este informe están basadas únicamente en las actividades calificadas por el docente que lleva actualmente el estudiante. <strong style="color:#856404; font-style:normal;">No se consideran recuperaciones de períodos ni nivelaciones de asignaturas.</strong>
+  </div>
 
   <?php
   $hayEstudiantes = false;
