@@ -244,6 +244,28 @@ $fechaHoy = date("d") . " de " . $meses[date("n")-1] . " de " . date("Y");
       border-radius: 4px;
     }
     
+    .aclaracion-notas {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.6;
+      margin: 15px 0;
+      padding: 12px 15px;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 4px;
+      font-style: italic;
+    }
+    
+    .aclaracion-notas strong {
+      color: #856404;
+      font-style: normal;
+    }
+    
+    .aclaracion-notas i {
+      color: #ffc107;
+      margin-right: 8px;
+    }
+    
     .estudiante-info {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
@@ -563,6 +585,12 @@ $fechaHoy = date("d") . " de " . $meses[date("n")-1] . " de " . date("Y");
       
       <div class="estudiante-info">
         <i class="fa fa-user"></i> ESTUDIANTE: <?= htmlspecialchars(Estudiantes::NombreCompletoDelEstudiante($datosEstudianteActual), ENT_QUOTES, 'UTF-8'); ?>
+      </div>
+      
+      <div class="aclaracion-notas">
+        <i class="fa fa-info-circle"></i>
+        <strong>Importante:</strong> Las notas mostradas en este informe están basadas únicamente en las actividades calificadas por el docente que lleva actualmente el estudiante. 
+        <strong>No se consideran recuperaciones de períodos ni nivelaciones de asignaturas.</strong>
       </div>
     </div>
 

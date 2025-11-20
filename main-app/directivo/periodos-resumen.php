@@ -28,7 +28,7 @@ if(!Modulos::validarPermisoEdicion()){
   var codEst = enviada.id;
   var per = enviada.name;
   var notaAnterior = enviada.alt;
-  var carga = <?=$cargaConsultaActual;?>;
+  var carga = <?=json_encode($cargaConsultaActual);?>;
   
   var casilla = document.getElementById(codEst);
   
@@ -60,7 +60,7 @@ function niv(enviada){
   var nota = enviada.value;
   var codEst = enviada.id;
   var per = enviada.name;
-  var carga = <?=$cargaConsultaActual;?>;
+  var carga = <?=json_encode($cargaConsultaActual);?>;
   if (alertValidarNota(nota)) {
 		return false;
 	}

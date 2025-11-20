@@ -189,8 +189,10 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 					<td align="center"></td>
 					<td align="center">
 						<?php
-						$notaArea = $area["nota_area_acumulada"] ;
-						if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+						$notaArea = !empty($area["nota_area_acumulada"]) ? (float)$area["nota_area_acumulada"] : 0;
+						// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+						$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+						if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 							$notaFA = ceil($notaArea);
 							switch ($notaFA) {
 								case 1:
@@ -210,7 +212,7 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 									break;
 							}
 						} else {
-							echo Boletin::formatoNota($notaArea);
+							echo Boletin::formatoNota($notaArea, $tiposNotas);
 						}
 
 						?></td>
@@ -222,7 +224,8 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 				<?php foreach ($area["cargas"]  as  $carga) {
 					$cantidadAreas = count($area["cargas"]);
 
-					$notaCarga = $carga["nota_carga_acumulada"] ;
+					$notaCarga = !empty($carga["nota_carga_acumulada"]) ? (float)$carga["nota_carga_acumulada"] : 0;
+					$notaCargaOriginal = $notaCarga; // Guardar valor numérico original
 
 					if ($notaCarga < $config['conf_nota_minima_aprobar']) {
 						$materiasPerdidas++;
@@ -230,38 +233,47 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 					$notaCargaDeseno = Boletin::determinarRango($notaCarga, $tiposNotas);
 					Utilidades::valordefecto($notaCargaDeseno["notip_desde"],0);
 					Utilidades::valordefecto($notaCargaDeseno["notip_hasta"],1);
+					
+					$notaCargaFormateada = $notaCarga; // Para mostrar, usar el valor numérico o la letra
+					
+					// Verificar si es preescolar (gra_nivel = 1 según academico_niveles donde gniv_id = 1)
+					$esPreescolar = !empty($estudiante["gra_nivel"]) && $estudiante["gra_nivel"] == 1;
+					
 					if ($notaCarga >= $notaCargaDeseno["notip_desde"] && $notaCarga <= $notaCargaDeseno["notip_hasta"]) {
-						if ($estudiante["gra_id"] > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS) {
+						if ($esPreescolar && $config['conf_id_institucion'] != EOA_CIRUELOS) {
 							$notaFD = ceil($notaCarga);
 							switch ($notaFD) {
 								case 1:
-									$notaCarga                       = "D";
+									$notaCargaFormateada           = "D";
 									$notaCargaDeseno["notip_nombre"] = "BAJO";
 									break;
 								case 2:
-									$notaCarga                       = "I";
+									$notaCargaFormateada           = "I";
 									$notaCargaDeseno["notip_nombre"] = "BAJO";
 									break;
 								case 3:
-									$notaCarga                       = "A";
+									$notaCargaFormateada           = "A";
 									$notaCargaDeseno["notip_nombre"] = "B&Aacute;SICO";
 									break;
 								case 4:
-									$notaCarga                       = "S";
+									$notaCargaFormateada           = "S";
 									$notaCargaDeseno["notip_nombre"] = "ALTO";
 									break;
 								case 5:
-									$notaCarga                       = "E";
+									$notaCargaFormateada           = "E";
 									$notaCargaDeseno["notip_nombre"] = "SUPERIOR";
 									break;
 							}
 						}
 					}
+					
+					// Si es string (D/I/A/S/E), mostrarlo directamente; si es numérico, formatearlo
+					$notaCargaMostrar = is_string($notaCargaFormateada) ? $notaCargaFormateada : Boletin::formatoNota($notaCargaOriginal, $tiposNotas);
 				?>
 					<tr style="font-size:10px; font-weight:normal;">
 						<td style="font-size:10px;"><?php echo $carga["mat_nombre"]; ?></td>
 						<td align="center" style="font-size:10px;"><?= $carga["car_ih"] ?></td>
-						<td align="center" style="font-size:10px;"><?= Boletin::formatoNota($notaCarga);  ?></td>
+						<td align="center" style="font-size:10px;"><?= $notaCargaMostrar ?></td>
 						<td align="center" style="font-size:10px;"><?= $notaCargaDeseno["notip_nombre"] ?></td>
 						<td align="center" style="font-size:10px;"><?= $carga["fallas"] ?></td>
 						<td align="center"></td>
@@ -276,7 +288,8 @@ if (!empty($curso) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 
 		<?php
 		$msj = "";
-		if ($estudiante["periodos"] == $config["conf_periodos_maximos"]) {
+		// Verificar si estamos en el periodo final para determinar promoción
+		if ($periodoActual == 4 || $periodoActual == $config["conf_periodos_maximos"]) {
 			if ($materiasPerdidas >= $config["conf_num_materias_perder_agno"]) {
 				$msj = "EL (LA) ESTUDIANTE " . $estudiante["nombre"] . " NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
 			} elseif ($materiasPerdidas < $config["conf_num_materias_perder_agno"] and $materiasPerdidas > 0) {

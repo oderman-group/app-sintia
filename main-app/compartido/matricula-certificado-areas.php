@@ -517,8 +517,15 @@ $notasCualitativasCache = [];
 								$j++;
 							}
 
-							// Promedio del área
-							$consultaBoletin = mysqli_query($conexion, "SELECT avg(bol_nota) FROM ".BD_ACADEMICA.".academico_boletin 
+						// Promedio del área (usando método centralizado)
+						$periodosArray = [];
+						$periodosMaximos = !empty($configAA['conf_periodos_maximos']) ? $configAA['conf_periodos_maximos'] : 4;
+						for($p = 1; $p <= $periodosMaximos; $p++){
+							$periodosArray[] = $p;
+						}
+						$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArray, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+						$notaArea = $promedioAreaCompleto['acumulado'];
+						$consultaBoletin = mysqli_query($conexion, "SELECT '".$notaArea."' AS avg FROM ".BD_ACADEMICA.".academico_boletin
 								WHERE bol_estudiante='" . $id . "' 
 								AND bol_carga IN(" . $mate . ") 
 								AND institucion={$config['conf_id_institucion']} 

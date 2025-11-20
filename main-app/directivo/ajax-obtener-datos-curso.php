@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'Curso no encontrado.']);
         }
         
+        // Validar si hay registros académicos en general (no por curso específico)
+        $hayNotasRegistradas = Grados::hayRegistrosAcademicos($config);
+        
         // Obtener formatos de boletín
         $formatos = [];
         $consultaFormatos = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".opciones_generales WHERE ogen_grupo=15");
@@ -61,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'success' => true, 
             'curso' => $datosCurso,
             'formatos' => $formatos,
-            'grados' => $grados
+            'grados' => $grados,
+            'hayNotasRegistradas' => $hayNotasRegistradas
         ]);
         
     } catch (Exception $e) {

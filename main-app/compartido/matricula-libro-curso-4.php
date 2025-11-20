@@ -118,16 +118,23 @@ $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
 
 
 
+// Inicializar educación con valor por defecto
+$educacion = "BÁSICA";
 
-
-if ($grado >= 12 && $grado <= 15) {
-    $educacion = "PREESCOLAR";
-} elseif ($grado >= 1 && $grado <= 5) {
-    $educacion = "PRIMARIA";
-} elseif ($grado >= 6 && $grado <= 9) {
-    $educacion = "SECUNDARIA";
-} elseif ($grado >= 10 && $grado <= 11) {
-    $educacion = "MEDIA";
+// Intentar determinar el nivel educativo basándose en el grado
+// Nota: $grado puede ser un ID alfanumérico, por lo que esta lógica puede no ser precisa
+// Se recomienda usar gra_nivel del estudiante cuando esté disponible
+if (!empty($grado) && is_numeric($grado)) {
+    $gradoNum = (int)$grado;
+    if ($gradoNum >= 12 && $gradoNum <= 15) {
+        $educacion = "PREESCOLAR";
+    } elseif ($gradoNum >= 1 && $gradoNum <= 5) {
+        $educacion = "PRIMARIA";
+    } elseif ($gradoNum >= 6 && $gradoNum <= 9) {
+        $educacion = "SECUNDARIA";
+    } elseif ($gradoNum >= 10 && $gradoNum <= 11) {
+        $educacion = "MEDIA";
+    }
 }
 
 ?>
@@ -165,8 +172,8 @@ if ($grado >= 12 && $grado <= 15) {
                         <tr>
                             <td>Jornada:<br> <b
                                     style="color: #00adefad;"><?= strtoupper($informacion_inst["info_jornada"]) ?></b></td>
-                            <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN BÁSICA
-                                    <?= strtoupper($educacion) ?></b></td>
+                            <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN 
+                                    <?= !empty($educacion) ? strtoupper($educacion) : 'BÁSICA' ?></b></td>
                         </tr>
                     </table>
                     <p>&nbsp;</p>
@@ -230,7 +237,9 @@ if ($grado >= 12 && $grado <= 15) {
                         foreach ($estudiante["areas"] as $area) {
                             $cantidadAreas++;
                             $ihArea = 0;
-                            $notaAre = [];
+                            // Arrays para calcular promedio ponderado por período
+                            $notaAre = []; // Suma de (nota * porcentaje) por período
+                            $sumaPorcentajesArea = []; // Suma de porcentajes por período
                             $desenpenioAre;
                             ?>
 
@@ -261,12 +270,16 @@ if ($grado >= 12 && $grado <= 15) {
                                         $nota = Boletin::agregarDecimales($nota);
                                         $desempeno = Boletin::determinarRango($nota, $tiposNotas);
                                         $promedioMateria += $nota;
-                                        $porcentajeMateria = !empty($carga['mat_valor']) ? $carga['mat_valor'] : 100;
-                                        if (isset($notaAre[$j])) {
-                                            $notaAre[$j] += $nota * ($porcentajeMateria / 100);
-                                        } else {
-                                            $notaAre[$j] = $nota * ($porcentajeMateria / 100);
+                                        $porcentajeMateria = !empty($carga['mat_valor']) ? (float)$carga['mat_valor'] : 100;
+                                        
+                                        // Acumular para promedio ponderado del área por período
+                                        if (!isset($notaAre[$j])) {
+                                            $notaAre[$j] = 0;
+                                            $sumaPorcentajesArea[$j] = 0;
                                         }
+                                        // Sumar (nota * porcentaje) y suma de porcentajes
+                                        $notaAre[$j] += $nota * ($porcentajeMateria / 100);
+                                        $sumaPorcentajesArea[$j] += ($porcentajeMateria / 100);
 
                                         if (isset($totalNotasPeriodo[$j])) {
                                             $totalNotasPeriodo[$j] += $nota * ($porcentajeMateria / 100);
@@ -301,22 +314,40 @@ if ($grado >= 12 && $grado <= 15) {
                                     <td <?= $style ?>><?= $area["ar_nombre"] ?></td>
                                     <td align="center" <?= $style ?>><?= $ihArea ?></td>
                                     <?php
+                                    // Calcular promedio ponderado del área por período
+                                    $notaAreaPorPeriodo = [];
+                                    for ($j = 1; $j <= $periodoFinal; $j++) {
+                                        // Calcular promedio ponderado: suma(nota * porcentaje) / suma(porcentajes)
+                                        if (!empty($sumaPorcentajesArea[$j]) && $sumaPorcentajesArea[$j] > 0) {
+                                            $notaAreaPorPeriodo[$j] = $notaAre[$j] / $sumaPorcentajesArea[$j];
+                                        } else {
+                                            $notaAreaPorPeriodo[$j] = 0;
+                                        }
+                                    }
+                                    
+                                    // Calcular definitiva del área (promedio de períodos)
                                     $notaAreAcumulada = 0;
                                     $periodoAreaCalcular = $config["conf_periodos_maximos"];
                                     for ($j = 1; $j <= $periodoFinal; $j++) {
-                                        $notaAreAcumulada += $notaAre[$j]; ?>
+                                        $notaAreAcumulada += $notaAreaPorPeriodo[$j];
+                                        ?>
                                         <td align="center" <?= $style ?>>
-                                            <?= $notaAre[$j] <= 0 ? '' : number_format($notaAre[$j], $config['conf_decimales_notas']); ?>
+                                            <?= $notaAreaPorPeriodo[$j] <= 0 ? '' : number_format($notaAreaPorPeriodo[$j], $config['conf_decimales_notas']); ?>
                                         </td>
 
                                         <?php
-                                        if ($notaAre[$j] <= 0) {
+                                        if ($notaAreaPorPeriodo[$j] <= 0) {
                                             $periodoAreaCalcular -= 1;
                                         }
                                     }
 
                                     $periodoAreaCalcular = $estudiante['mat_estado_matricula'] == CANCELADO && $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $periodoAreaCalcular : $config["conf_periodos_maximos"];
-                                    $notaAreAcumulada = number_format($notaAreAcumulada / $periodoAreaCalcular, $config['conf_decimales_notas']);
+                                    if ($periodoAreaCalcular > 0) {
+                                        $notaAreAcumulada = $notaAreAcumulada / $periodoAreaCalcular;
+                                    } else {
+                                        $notaAreAcumulada = 0;
+                                    }
+                                    $notaAreAcumulada = round($notaAreAcumulada, $config['conf_decimales_notas']);
                                     $desenpenioAreAcumulado = Boletin::determinarRango($notaAreAcumulada, $tiposNotas);
 
                                     ?>

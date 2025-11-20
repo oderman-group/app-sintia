@@ -783,9 +783,9 @@ class Estudiantes {
         $resultado = [];
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas am
+        $sql = "SELECT am.*, gru.*, gra.*, gra.gra_nivel FROM ".BD_ACADEMICA.".academico_matriculas am
         INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON am.mat_grupo=gru.gru_id AND gru.institucion=am.institucion AND gru.year=am.year
-        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON am.mat_grado=gra_id AND gra.institucion=am.institucion AND gra.year=am.year 
+        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON am.mat_grado=gra.gra_id AND gra.institucion=am.institucion AND gra.year=am.year 
         WHERE am.mat_id=? AND am.institucion=? AND am.year=?";
 
         $parametros = [$estudiante, $config['conf_id_institucion'], $year];
