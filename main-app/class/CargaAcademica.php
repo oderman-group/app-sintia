@@ -1561,7 +1561,11 @@ class CargaAcademica {
 
         $sql = "SELECT mat_valor,
         bol_estudiante, bol_periodo, bol_nota,
-        SUM(bol_nota * (mat_valor/100)) AS notaArea
+        CASE 
+            WHEN SUM(mat_valor/100) > 0 THEN 
+                SUM(bol_nota * (mat_valor/100)) / SUM(mat_valor/100)
+            ELSE 0
+        END AS notaArea
         FROM ".BD_ACADEMICA.".academico_cargas car
         INNER JOIN ".BD_ACADEMICA.".academico_materias am 
             ON am.mat_id = car_materia 

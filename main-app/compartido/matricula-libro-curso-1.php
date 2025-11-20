@@ -16,6 +16,7 @@ require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/Boletin.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 $Plataforma = new Plataforma;
 
 $year=$_SESSION["bd"];
@@ -26,32 +27,10 @@ if(isset($_GET["year"])){
 	$year=base64_decode($_GET["year"]);
 }
 
-$periodoActual = 4;
-if(isset($_POST["periodo"])){
-	$periodoActual=$_POST["periodo"];
-}
-if(isset($_GET["periodo"])){
-	$periodoActual=base64_decode($_GET["periodo"]);
-}
-
-switch($periodoActual){
-	case 1:
-		$periodoActuales = "Primero";
-		break;
-	case 2:
-		$periodoActuales = "Segundo";
-		break;
-	case 3:
-		$periodoActuales = "Tercero";
-		break;
-	case 4:
-		$periodoActuales = "Final";
-		break;
-	case 5:
-		$periodoActual = 4;
-		$periodoActuales = "Final";
-		break;
-}
+// IMPORTANTE: Este informe siempre muestra el período final, independientemente del parámetro GET/POST
+// No se considera el parámetro "periodo" porque este es un informe de libro final
+$periodoActual = $config['conf_periodos_maximos'];
+$periodoActuales = "Final";
 
 //CONSULTA ESTUDIANTES MATRICULADOS
 $curso='';
@@ -97,10 +76,10 @@ foreach($tiposNotasCache as $desempeno){
 }
 
 // Función auxiliar para obtener desempeño desde cache optimizado
-function obtenerDesempeno($nota, $desempenosCache, $grado, $config){
+function obtenerDesempeno($nota, $desempenosCache, $graNivel, $config){
 	$notaRedondeada = number_format((float)$nota, 1, '.', '');
 	
-	if($grado > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS && false){
+	if(isset($graNivel) && $graNivel == PREESCOLAR && $config['conf_id_institucion'] != EOA_CIRUELOS && false){
 		$notaFD = ceil($nota);
 		switch($notaFD){
 			case 1: return "BAJO";
@@ -114,26 +93,19 @@ function obtenerDesempeno($nota, $desempenosCache, $grado, $config){
 	}
 }
 
-// Función auxiliar para formatear nota según configuración
-function formatearNota($nota, $grado, $config){
-	$nota = round($nota, 1);
-	if($nota == 1) return "1.0";
-	if($nota == 2) return "2.0";
-	if($nota == 3) return "3.0";
-	if($nota == 4) return "4.0";
-	if($nota == 5) return "5.0";
+// Función auxiliar para formatear nota según configuración (usa Boletin::formatoNota para consistencia)
+function formatearNota($nota, $graNivel, $config){
+	global $tiposNotasCache;
+	// Usar Boletin::formatoNota para mantener consistencia con otros formatos
+	$notaFormateada = Boletin::formatoNota((float)$nota, $tiposNotasCache);
 	
-	if($grado > 11 && $config['conf_id_institucion'] != EOA_CIRUELOS && false){
-		$notaRedondeada = ceil($nota);
-		switch($notaRedondeada){
-			case 1: return "D";
-			case 2: return "I";
-			case 3: return "A";
-			case 4: return "S";
-			case 5: return "E";
-		}
+	// Si es string (desempeño cualitativo), retornarlo tal cual
+	if(is_string($notaFormateada)){
+		return $notaFormateada;
 	}
-	return (string)$nota;
+	
+	// Si es numérico, asegurar que sea string formateado correctamente
+	return (string)$notaFormateada;
 }
 
 // Función auxiliar para procesar materias de un área (OPTIMIZADA)
@@ -148,38 +120,85 @@ function procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDato
 			if (!isset($notasPeriodosMapa[$keyNota])) {
 				$notasPeriodosMapa[$keyNota] = [];
 			}
-			$notaBoletin = !empty($fila3["bol_nota"]) ? $fila3["bol_nota"] : 0;
-			$notaPeriodo = round($notaBoletin, 1);
-			$notasPeriodosMapa[$keyNota][] = formatearNota($notaPeriodo, $datosUsr["mat_grado"], $config);
+			$notaBoletin = !empty($fila3["bol_nota"]) ? (float)$fila3["bol_nota"] : 0;
+			// No redondear aquí, formatearNota lo hará con la configuración correcta
+			$notasPeriodosMapa[$keyNota][] = formatearNota($notaBoletin, isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config);
 		}
 		
 		while($fila2 = mysqli_fetch_array($consultaAMat, MYSQLI_BOTH)){
 			$notasPeriodos = [];
-			// OPTIMIZACIÓN: Obtener notas del mapa pre-cargado
-			for($j = 1; $j <= $periodoActual; $j++){
-				$keyNota = $fila2["mat_id"] . '_' . $j;
-				if(isset($notasPeriodosMapa[$keyNota])){
-					$notasPeriodos = array_merge($notasPeriodos, $notasPeriodosMapa[$keyNota]);
+			// Calcular definitiva como promedio ponderado SOLO con períodos que tienen notas
+			$notaCargaAcumulada = 0;
+			$porcentajePeriodoDefault = 100 / $config['conf_periodos_maximos'];
+			
+			// Obtener mat_valor de la consulta de materias
+			$matValor = !empty($fila2["mat_valor"]) ? (float)$fila2["mat_valor"] : 100;
+			
+			// Obtener porcentaje de período desde la base de datos
+			global $conexion;
+			$idGrado = $datosUsr["mat_grado"];
+			
+			// Obtener todas las notas de esta materia desde consultaAMatPer
+			$notasMateriaPorPeriodo = [];
+			mysqli_data_seek($consultaAMatPer, 0);
+			while($fila3 = mysqli_fetch_array($consultaAMatPer, MYSQLI_BOTH)){
+				if($fila3["mat_id"] == $fila2["mat_id"]){
+					$periodo = (int)$fila3["bol_periodo"];
+					$notaBoletin = !empty($fila3["bol_nota"]) ? (float)$fila3["bol_nota"] : 0;
+					
+					// Obtener porcentaje de período desde la base de datos
+					$porcentajePeriodo = $porcentajePeriodoDefault;
+					if(!empty($conexion)){
+						$periodoValor = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $idGrado, $periodo);
+						if(!empty($periodoValor['gvp_valor'])){
+							$porcentajePeriodo = (float)$periodoValor['gvp_valor'];
+						}
+					}
+					
+					$notasMateriaPorPeriodo[$periodo] = [
+						'nota' => $notaBoletin,
+						'porcentaje' => $porcentajePeriodo
+					];
+					
+					$keyNota = $fila2["mat_id"] . '_' . $periodo;
+					if(isset($notasPeriodosMapa[$keyNota])){
+						$notasPeriodos = array_merge($notasPeriodos, $notasPeriodosMapa[$keyNota]);
+					}
 				}
 			}
 			
-			$totalPromedio2 = round($fila2["suma"], 1);
-			$totalPromedio2Formatted = formatearNota($totalPromedio2, $datosUsr["mat_grado"], $config);
+			// Calcular promedio ponderado solo con períodos que tienen notas
+			foreach($notasMateriaPorPeriodo as $periodo => $datosPeriodo){
+				$notaCargaAcumulada += $datosPeriodo['nota'] * ($datosPeriodo['porcentaje'] / 100);
+			}
+			
+			// Si no se pudo calcular con porcentajes, usar el promedio simple como fallback
+			if($notaCargaAcumulada == 0){
+				$totalPromedio2 = !empty($fila2["suma"]) ? (float)$fila2["suma"] : 0;
+			} else {
+				$totalPromedio2 = (float)$notaCargaAcumulada;
+			}
+			// No redondear aquí, formatearNota lo hará con la configuración correcta de decimales
+			$totalPromedio2Formatted = formatearNota($totalPromedio2, isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config);
 			
 			// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
 			// Sumar ausencias de todos los períodos hasta el actual (igual que el código original)
+			// IMPORTANTE: Sumar TODAS las ausencias acumuladas de TODOS los períodos hasta el actual
 			$sumAusencias = 0;
+			// IMPORTANTE: Asegurar que los valores sean strings y sin espacios para que coincidan con la clave del mapa
+			$estudianteId = trim((string)$datosUsr['mat_id']);
+			$materiaId = trim((string)$fila2['mat_id']);
 			for($j = 1; $j <= $periodoActual; $j++){
 				// Clave: estudiante_materia_periodo (igual que en el mapa)
-				$keyAusencias = $datosUsr['mat_id'] . '_' . $fila2['mat_id'] . '_' . $j;
+				$keyAusencias = $estudianteId . '_' . $materiaId . '_' . $j;
 				if(isset($ausenciasMapa[$keyAusencias])){
-					$sumAusencias += $ausenciasMapa[$keyAusencias];
+					$sumAusencias += (float)$ausenciasMapa[$keyAusencias];
 				}
 			}
 			
 			// OPTIMIZACIÓN: Obtener nivelaciones del mapa pre-cargado
 			$msj = '';
-			$notaOriginal = round($fila2["suma"], 1);
+			$notaOriginal = !empty($fila2["suma"]) ? (float)$fila2["suma"] : 0;
 			if($notaOriginal < $config[5]){
 				$keyNivelacion = $matriculadosDatos['mat_id'] . '_' . $fila2['car_id'];
 				if(isset($nivelacionesMapa[$keyNivelacion])){
@@ -187,7 +206,7 @@ function procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDato
 					if($nivelacion['niv_definitiva'] < $config[5]){
 						$materiasPerdidas++;
 					} else {
-						$totalPromedio2Formatted = formatearNota($nivelacion['niv_definitiva'], $datosUsr["mat_grado"], $config);
+						$totalPromedio2Formatted = formatearNota($nivelacion['niv_definitiva'], isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config);
 						$msj = 'Niv';
 					}
 				}
@@ -197,7 +216,7 @@ function procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDato
 				'mat_nombre' => $fila2["mat_nombre"],
 				'car_ih' => $fila2["car_ih"],
 				'definitiva' => $totalPromedio2Formatted,
-				'desempeno' => obtenerDesempeno($notaOriginal, $desempenosCache, $datosUsr["mat_grado"], $config),
+				'desempeno' => obtenerDesempeno($notaOriginal, $desempenosCache, isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config),
 				'ausencias' => !empty($fila2["matmaxaus"]) ? $fila2["matmaxaus"] : 0,
 				'rAusencias' => $sumAusencias,
 				'msj' => $msj
@@ -218,51 +237,54 @@ while($est = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)){
 	$idsEstudiantes[] = $est['mat_id'];
 }
 
-// OPTIMIZACIÓN: Pre-cargar todas las ausencias de todos los estudiantes en una sola consulta
-require_once(ROOT_PATH."/main-app/class/Ausencias.php");
+// OPTIMIZACIÓN: Pre-cargar todas las ausencias directamente desde academico_ausencias
+// Relación: academico_ausencias -> academico_clases -> academico_cargas -> car_materia (mat_id de la materia)
+// IMPORTANTE: Este informe siempre muestra el período final, por lo que traemos todas las ausencias hasta el período máximo
+// En procesarMateriasArea sumamos todas las ausencias acumuladas de todos los períodos
 $ausenciasMapa = [];
-if(!empty($idsEstudiantes) && $periodoActual > 0){
+if(!empty($idsEstudiantes)){
 	$idsEstudiantesEsc = array_map(function($id) use ($conexion) {
 		return "'" . mysqli_real_escape_string($conexion, $id) . "'";
 	}, $idsEstudiantes);
 	$inEstudiantes = implode(',', $idsEstudiantesEsc);
 	$yearEsc = mysqli_real_escape_string($conexion, $year);
 	$institucion = (int)$config['conf_id_institucion'];
+	$periodoMaximo = (int)$config['conf_periodos_maximos'];
 	
-	// CORRECCIÓN: La consulta debe agrupar por estudiante, materia (mat_id) y período
-	// para coincidir con cómo se llama el método original (que también filtra por grado)
-	// Incluimos el grado del estudiante desde la tabla de matrículas
+	// Consulta directa: academico_ausencias -> academico_clases -> academico_cargas
+	// IMPORTANTE: Traemos TODAS las ausencias hasta el período máximo
+	// Este informe siempre muestra el período final, por lo que necesitamos todas las ausencias acumuladas
 	$sqlAusencias = "SELECT 
 						aus.aus_id_estudiante,
 						car.car_materia as mat_id,
 						cls.cls_periodo,
-						mat.mat_grado as gra_id,
 						SUM(aus.aus_ausencias) as sumAus
 					FROM " . BD_ACADEMICA . ".academico_ausencias aus
 					INNER JOIN " . BD_ACADEMICA . ".academico_clases cls 
 						ON cls.cls_id = aus.aus_id_clase 
-						AND cls.cls_periodo <= " . (int)$periodoActual . "
+						AND cls.cls_periodo <= " . $periodoMaximo . "
 						AND cls.institucion = aus.institucion 
 						AND cls.year = aus.year
 					INNER JOIN " . BD_ACADEMICA . ".academico_cargas car 
 						ON car.car_id = cls.cls_id_carga 
 						AND car.institucion = aus.institucion 
 						AND car.year = aus.year
-					INNER JOIN " . BD_ACADEMICA . ".academico_matriculas mat
-						ON mat.mat_id = aus.aus_id_estudiante
-						AND mat.institucion = aus.institucion
-						AND mat.year = aus.year
 					WHERE aus.aus_id_estudiante IN ({$inEstudiantes})
 					AND aus.institucion = {$institucion}
 					AND aus.year = '{$yearEsc}'
-					AND car.car_curso = mat.mat_grado
-					GROUP BY aus.aus_id_estudiante, car.car_materia, cls.cls_periodo, mat.mat_grado";
+					AND aus.aus_ausencias > 0
+					GROUP BY aus.aus_id_estudiante, car.car_materia, cls.cls_periodo";
 	
 	$consultaAusencias = mysqli_query($conexion, $sqlAusencias);
 	if($consultaAusencias){
 		while($aus = mysqli_fetch_array($consultaAusencias, MYSQLI_BOTH)){
-			// Clave: estudiante_materia_periodo (igual que el método original)
-			$key = $aus['aus_id_estudiante'] . '_' . $aus['mat_id'] . '_' . $aus['cls_periodo'];
+			// Clave: estudiante_materia_periodo (debe coincidir con procesarMateriasArea que usa $fila2['mat_id'])
+			// car.car_materia es el mat_id de la materia, igual que $fila2['mat_id'] de obtenerDefinitivaYnombrePorMateria
+			// IMPORTANTE: Asegurar que los valores sean strings y sin espacios
+			$estudianteId = trim((string)$aus['aus_id_estudiante']);
+			$materiaId = trim((string)$aus['mat_id']);
+			$periodo = (int)$aus['cls_periodo'];
+			$key = $estudianteId . '_' . $materiaId . '_' . $periodo;
 			$ausenciasMapa[$key] = (float)($aus['sumAus'] ?? 0);
 		}
 	}
@@ -329,30 +351,40 @@ foreach($listaEstudiantes as $matriculadosDatos){
 	$areasData = [];
 	if(!empty($consultaMatAreaEst)){
 		while($fila = mysqli_fetch_array($consultaMatAreaEst, MYSQLI_BOTH)){
-			$condicion = "1,2,3,4";
+			// Generar array de períodos dinámicamente
+			$condicionArray = [];
+			for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){
+				$condicionArray[] = $p;
+			}
+			$condicion = implode(",", $condicionArray);
 			
-			$consultaNotdefArea = Boletin::obtenerDatosDelArea($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
+			// Usar método centralizado para calcular promedio del área
+			$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($config, $matriculadosDatos['mat_id'], $fila["ar_id"], $condicionArray, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
+			
+			// Mantener compatibilidad con código existente
 			$consultaAMat = Boletin::obtenerDefinitivaYnombrePorMateria($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
 			$consultaAMatPer = Boletin::obtenerDefinitivaPorPeriodo($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
 			
-			$resultadoNotArea = mysqli_fetch_array($consultaNotdefArea, MYSQLI_BOTH);
-			$numfilasNotArea = mysqli_num_rows($consultaNotdefArea);
+			// Obtener nombre del área
+			$consultaAreaNombre = mysqli_query($conexion, "SELECT ar_nombre FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id='".$fila["ar_id"]."' AND institucion={$config['conf_id_institucion']} AND year={$year} LIMIT 1");
+			$resultadoNotArea = mysqli_fetch_array($consultaAreaNombre, MYSQLI_BOTH);
+			$numfilasNotArea = mysqli_num_rows($consultaAreaNombre);
 			
 			if($numfilasNotArea > 0){
-				$totalPromedio = 0;
-				if(!empty($resultadoNotArea["suma"])){
-					$totalPromedio = round($resultadoNotArea["suma"], 1);
-				}
+				// Calcular promedio ponderado del área
+				$materias = procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDatos, $datosUsr, $config, $year, $conexion, $desempenosCache, $materiasPerdidas, $periodoActual, $ausenciasMapa, $nivelacionesMapa);
+				
+				// Usar promedio acumulado del método centralizado
+				$totalPromedio = (float)$promedioAreaCompleto['acumulado'];
 				
 				if (!empty($resultadoNotArea['periodo']) && $resultadoNotArea['periodo'] < $config['conf_periodos_maximos']){
 					$ultimoPeriodoAreas = $resultadoNotArea['periodo'];
 				}
 				
-				$materias = procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDatos, $datosUsr, $config, $year, $conexion, $desempenosCache, $materiasPerdidas, $periodoActual, $ausenciasMapa, $nivelacionesMapa);
-				
+				// No redondear aquí, formatearNota lo hará con la configuración correcta de decimales
 				$areasData[] = [
 					'ar_nombre' => $resultadoNotArea["ar_nombre"],
-					'total_promedio' => formatearNota($totalPromedio, $datosUsr["mat_grado"], $config),
+					'total_promedio' => formatearNota($totalPromedio, isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config),
 					'materias' => $materias
 				];
 			}
@@ -368,26 +400,34 @@ foreach($listaEstudiantes as $matriculadosDatos){
 				$consultaMatAreaEstMT = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $year);
 				
 				while($fila = mysqli_fetch_array($consultaMatAreaEstMT, MYSQLI_BOTH)){
-					$condicion = "1,2,3,4";
+					// Generar array de períodos dinámicamente
+					$condicionArray = [];
+					for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){
+						$condicionArray[] = $p;
+					}
+					$condicion = implode(",", $condicionArray);
 					
-					$consultaNotdefArea = Boletin::obtenerDatosDelArea($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
+					// Usar método centralizado para calcular promedio del área
+					$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($config, $matriculadosDatos['mat_id'], $fila["ar_id"], $condicionArray, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $year);
+					
+					// Mantener compatibilidad con código existente
 					$consultaAMat = Boletin::obtenerDefinitivaYnombrePorMateria($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
 					$consultaAMatPer = Boletin::obtenerDefinitivaPorPeriodo($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
 					
-					$resultadoNotArea = mysqli_fetch_array($consultaNotdefArea, MYSQLI_BOTH);
-					$numfilasNotAreaMT = mysqli_num_rows($consultaNotdefArea);
+					// Obtener nombre del área
+					$consultaAreaNombre = mysqli_query($conexion, "SELECT ar_nombre FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id='".$fila["ar_id"]."' AND institucion={$config['conf_id_institucion']} AND year={$year} LIMIT 1");
+					$resultadoNotArea = mysqli_fetch_array($consultaAreaNombre, MYSQLI_BOTH);
+					$numfilasNotAreaMT = mysqli_num_rows($consultaAreaNombre);
 					
 					if($numfilasNotAreaMT > 0){
-						$totalPromedio = 0;
-						if(!empty($resultadoNotArea["suma"])){
-							$totalPromedio = round($resultadoNotArea["suma"], 1);
-						}
+						// Usar promedio acumulado del método centralizado
+						$totalPromedio = (float)$promedioAreaCompleto['acumulado'];
 						
 						$materias = procesarMateriasArea($consultaAMat, $consultaAMatPer, $matriculadosDatos, $datosUsr, $config, $year, $conexion, $desempenosCache, $materiasPerdidas, $periodoActual, $ausenciasMapa, $nivelacionesMapa);
 						
 						$areasData[] = [
 							'ar_nombre' => $resultadoNotArea["ar_nombre"],
-							'total_promedio' => formatearNota($totalPromedio, $datosUsr["mat_grado"], $config),
+							'total_promedio' => formatearNota($totalPromedio, isset($datosUsr["gra_nivel"]) ? $datosUsr["gra_nivel"] : null, $config),
 							'materias' => $materias
 						];
 					}
@@ -401,7 +441,7 @@ foreach($listaEstudiantes as $matriculadosDatos){
 	
 	// Generar mensaje de promoción
 	$msj = "";
-	if($periodoActual == 4 && $numfilasNotArea > 0){
+	if($periodoActual == $config['conf_periodos_maximos'] && $numfilasNotArea > 0){
 		if($materiasPerdidas >= $config["conf_num_materias_perder_agno"]){
 			$msj = "EL (LA) ESTUDIANTE ".$nombre." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
 		} elseif($materiasPerdidas < $config["conf_num_materias_perder_agno"] && $materiasPerdidas > 0){

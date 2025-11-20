@@ -26,7 +26,7 @@ if(empty($_GET["periodo"])){
 if($periodoActual==1) $periodoActuales = "Primero";
 if($periodoActual==2) $periodoActuales = "Segundo";
 if($periodoActual==3) $periodoActuales = "Tercero";
-if($periodoActual==4) $periodoActuales = "Final";?>
+if($periodoActual==$config['conf_periodos_maximos']) $periodoActuales = "Final";?>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 <?php
 //CONSULTA ESTUDIANTES MATRICULADOS
@@ -227,25 +227,18 @@ include("head-informes.php");
         <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
         <?php while($fila = mysqli_fetch_array($consultaMatAreaEst, MYSQLI_BOTH)){
 		
-		if($periodoActual==1){
-			$condicion="1";
-			$condicion2="1";
-			}
-		if($periodoActual==2){
-			$condicion="1,2";
-			$condicion2="2";
+		$condicionArray = [];
+		for($p = 1; $p <= $periodoActual; $p++){
+			$condicionArray[] = $p;
 		}
-		if($periodoActual==3){
-			$condicion="1,2,3";
-			$condicion2="3";
-		}
-		if($periodoActual==4){
-			$condicion="1,2,3,4";
-			$condicion2="4";
-		}
+		$condicion = implode(",", $condicionArray);
+		$condicion2 = (string)$periodoActual;
 		
-//CONSULTA QUE ME TRAE EL NOMBRE Y EL PROMEDIO DEL AREA
-$consultaNotdefArea = Boletin::obtenerDatosDelArea($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
+//CONSULTA QUE ME TRAE EL NOMBRE Y EL PROMEDIO DEL AREA (usando método centralizado)
+$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($config, $matriculadosDatos['mat_id'], $fila["ar_id"], $condicionArray, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
+// Mantener compatibilidad con código existente - obtener nombre del área y crear resultado compatible
+$consultaAreaNombre = mysqli_query($conexion, "SELECT ar_nombre, '".$promedioAreaCompleto['acumulado']."' AS suma FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id='".$fila["ar_id"]."' AND institucion={$config['conf_id_institucion']} AND year={$year} LIMIT 1");
+$consultaNotdefArea = $consultaAreaNombre;
 
 //CONSULTA QUE ME TRAE LA DEFINITIVA POR MATERIA Y NOMBRE DE LA MATERIA
 $consultaMat = Boletin::obtenerDefinitivaYnombrePorMateria($matriculadosDatos['mat_id'], $fila["ar_id"], $condicion, $year);
@@ -291,7 +284,7 @@ if($totalPromedio==1)	$totalPromedio="1.0";	if($totalPromedio==2)	$totalPromedio
             <?php }?>
         <td align="center" style="font-weight:bold;"><?php 
 		
-		if($datosUsr["mat_grado"]>11){
+		if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				$notaFA = ceil($totalPromedio);
 				switch($notaFA){
 					case 1: echo "D"; break;
@@ -336,7 +329,7 @@ $contadorPeriodos=0;
 <?php for($l=1;$l<=$numeroPeriodos;$l++){ ?>
 			<td class=""  align="center" style="font-weight:bold; background:#EAEAEA; font-size:16px;">
 			<?php 
-			if($datosUsr["mat_grado"]>11){
+			if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				if(isset($notas[$l]) && $notas[$l] !== null && $notas[$l] !== ''){
 					$notaF = ceil((float)$notas[$l]);
 					switch($notaF){
@@ -387,7 +380,7 @@ $contadorPeriodos=0;
        
         <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php 
 		
-					if($datosUsr["mat_grado"]>11){
+					if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				$notaFI = ceil($totalPromedio2);
 				switch($notaFI){
 					case 1: echo "D"; break;
@@ -413,7 +406,7 @@ $contadorPeriodos=0;
 		// OPTIMIZACIÓN: Usar cache de desempeños
 		$rDesempeno = Boletin::obtenerDatosTipoDeNotasCargadas($desempenosCache, $totalPromedio2);
 		if($rDesempeno){
-			if($datosUsr["mat_grado"]>11){
+			if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				$notaFD = ceil($totalPromedio2);
 				switch($notaFD){
 					case 1: echo "BAJO"; break;
@@ -453,7 +446,7 @@ if($numIndicadores>0){
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
             <?php for($m=1;$m<=$numeroPeriodos;$m++){ ?>
 			<td class=""  align="center" style="font-weight:bold;"><?php if($periodoActual==$m){
-				if($datosUsr["mat_grado"]>11){
+				if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				$notaFII = ceil($notaIndicador);
 				switch($notaFII){
 					case 1: echo "D"; break;
@@ -498,7 +491,7 @@ if($numIndicadores>0){
 		<?php for($n=1;$n<=$numeroPeriodos;$n++){ ?>
         <td style="font-size:16px;"><?php 
 		if($promedios[$n]!=0){
-			if($datosUsr["mat_grado"]>11){
+			if(isset($datosUsr["gra_nivel"]) && $datosUsr["gra_nivel"] == PREESCOLAR){
 				$notaFF = ceil(round(($promedios[$n]/$contpromedios[$n]),1));
 				switch($notaFF){
 					case 1: echo "D"; break;

@@ -112,7 +112,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
         <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">Documento</td>
         <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px; width: 200px;" rowspan="2">Estudiante</td>
       <?php
-        for($i=1;$i<=4;$i++){
+        for($i=1;$i<=$config['conf_periodos_maximos'];$i++){
       ?>
         <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;"><?= $i.". ".$materiaSiglas; ?></td>
       <?php
@@ -179,7 +179,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
         <td style="width: 20%;"><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
       <?php
         $acomuladoNota=0;
-        for($i=1;$i<=4;$i++){
+        for($i=1;$i<=$config['conf_periodos_maximos'];$i++){
           // Usar notas precargadas en lugar de consultar por cada actividad
           $notaFila = $mapaNotas[$e['mat_id']][$i] ?? null;
 
