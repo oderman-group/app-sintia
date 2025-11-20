@@ -109,7 +109,7 @@ if ($consulta) {
 	}
 }
 
-$totalPendienteFormateado = '$' . number_format($totalPendiente, 0, ",", ".");
+$totalPendienteFormateado = '$' . number_format($totalPendiente ?? 0, 0, ",", ".");
 ?>
 <!doctype html>
 <html lang="es">
@@ -224,10 +224,10 @@ $totalPendienteFormateado = '$' . number_format($totalPendiente, 0, ",", ".");
 						<td><?= htmlspecialchars($dato['documento']); ?></td>
 						<td><?= htmlspecialchars($dato['telefono']); ?></td>
 						<td><?= htmlspecialchars($dato['correo']); ?></td>
-						<td><?= htmlspecialchars($dato['detalle']); ?></td>
-						<td>$<?= number_format($dato['total'], 0, ",", "."); ?></td>
-						<td>$<?= number_format($dato['abonos'], 0, ",", "."); ?></td>
-						<td>$<?= number_format($dato['saldo'], 0, ",", "."); ?></td>
+					<td><?= htmlspecialchars($dato['detalle']); ?></td>
+					<td>$<?= number_format($dato['total'] ?? 0, 0, ",", "."); ?></td>
+					<td>$<?= number_format($dato['abonos'] ?? 0, 0, ",", "."); ?></td>
+					<td>$<?= number_format($dato['saldo'] ?? 0, 0, ",", "."); ?></td>
 					</tr>
 				<?php } ?>
 			<?php } ?>

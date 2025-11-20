@@ -1816,23 +1816,40 @@ class Boletin {
         global $conexion, $config;
 
         $year = empty($year) ?  $_SESSION["bd"] : $year;
-        $in_periodos = implode(', ', $periodos);
-        $in_estudiantes = implode(', ', $estudinates);
+        
+        // Validar que los arrays no estén vacíos
+        if(empty($periodos) || empty($estudinates)){
+            // Retornar un resultado vacío si no hay datos
+            $sql = "SELECT * FROM " . BD_ACADEMICA . ".vista_matriculas_cursos_individual WHERE 1=0";
+            $parametros = [];
+            $resultado = BindSQL::prepararSQL($sql, $parametros);
+            return $resultado;
+        }
+        
+        // Construir placeholders para IN clauses
+        $placeholders_periodos = implode(', ', array_fill(0, count($periodos), '?'));
+        $placeholders_estudiantes = implode(', ', array_fill(0, count($estudinates), '?'));
+        
         if(!$traerIndicadores){
             $sql ="SELECT * FROM  " . BD_ACADEMICA . ".vista_matriculas_cursos_individual 
 								WHERE  matcur_id_institucion       = ?
 								AND    matcur_years                = ?
-								AND    matcur_id_matricula         IN ($in_estudiantes)
-								AND    bol_periodo                 IN ($in_periodos)";
+								AND    matcur_id_matricula         IN ($placeholders_estudiantes)
+								AND    bol_periodo                 IN ($placeholders_periodos)";
         }else{
             $sql = "
             SELECT * FROM  " . BD_ACADEMICA . ".vista_matriculas_cursos_individual_indicadores 
 								WHERE  matcur_id_institucion       = ?
 								AND    matcur_years                = ?
-								AND    matcur_id_matricula         IN ($in_estudiantes)
-								AND    ipc_periodo           IN ($in_periodos)";
+								AND    matcur_id_matricula         IN ($placeholders_estudiantes)
+								AND    ipc_periodo           IN ($placeholders_periodos)";
         }
+        
+        // Construir parámetros: institución, year, estudiantes, periodos
         $parametros = [(int)$config['conf_id_institucion'], $year];
+        $parametros = array_merge($parametros, $estudinates);
+        $parametros = array_merge($parametros, $periodos);
+        
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
