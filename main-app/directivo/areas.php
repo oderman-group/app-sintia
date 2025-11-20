@@ -66,6 +66,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															<i class="fa fa-list"></i> Agregar Masivo
 														</button>
 														<?php } ?>
+														
+														<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0179'])) { ?>
+														<button type="button" class="btn btn-success" id="btnGenerarAreasLey115">
+															<i class="fa fa-magic"></i> Generar Áreas y Asignaturas según Ley 115
+														</button>
+														<?php } ?>
 													</div>
 													
 													<?php
@@ -606,8 +612,116 @@ $(document).ready(function() {
 			}
 		});
 	});
+	
+	// ========================================
+	// SISTEMA DE GENERAR ÁREAS Y ASIGNATURAS SEGÚN LEY 115
+	// ========================================
+	
+	// Abrir modal de confirmación
+	$('#btnGenerarAreasLey115').on('click', function() {
+		Swal.fire({
+			title: '¿Generar Áreas y Asignaturas según Ley 115?',
+			html: `Se crearán automáticamente las <strong>12 áreas fundamentales</strong> y sus asignaturas correspondientes según la Ley General de Educación (Ley 115 de 1994).<br><br>
+			<strong>Áreas que se crearán:</strong><br>
+			• Ciencias Naturales y Educación Ambiental<br>
+			• Ciencias Sociales, Historia, Geografía, Constitución Política y Democracia<br>
+			• Educación Artística<br>
+			• Educación Ética y en Valores Humanos<br>
+			• Educación Física, Recreación y Deportes<br>
+			• Educación Religiosa<br>
+			• Humanidades (Lengua Castellana e Idiomas Extranjeros)<br>
+			• Matemáticas<br>
+			• Tecnología e Informática<br>
+			• Estudios Afrocolombianos<br>
+			• Ciencias Económicas y Políticas<br>
+			• Filosofía<br><br>
+			¿Deseas continuar?`,
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonColor: '#28a745',
+			cancelButtonColor: '#6c757d',
+			confirmButtonText: '<i class="fa fa-check"></i> Sí, generar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			width: '600px'
+		}).then((result) => {
+			if (result.isConfirmed) {
+				generarAreasLey115();
+			}
+		});
+	});
+	
+	function generarAreasLey115() {
+		// Deshabilitar botón y mostrar loader
+		var btnOriginal = $('#btnGenerarAreasLey115').html();
+		$('#btnGenerarAreasLey115').html('<i class="fa fa-spinner fa-spin"></i> Generando...').prop('disabled', true);
+		
+		// Mostrar toast de procesamiento
+		$.toast({
+			heading: 'Generando áreas y asignaturas',
+			text: 'Por favor espera mientras se crean las áreas y asignaturas según Ley 115...',
+			showHideTransition: 'slide',
+			icon: 'info',
+			position: 'top-right',
+			hideAfter: false,
+			loader: true,
+			loaderBg: '#28a745'
+		});
+		
+		// Enviar datos por AJAX
+		$.ajax({
+			url: 'areas-generar-ley115.php',
+			type: 'POST',
+			dataType: 'json',
+			success: function(response) {
+				$('#btnGenerarAreasLey115').html(btnOriginal).prop('disabled', false);
+				
+				// Cerrar toast de procesamiento
+				$('.jq-toast-wrap').remove();
+				
+				if (response.success) {
+					// Mostrar mensaje de éxito con SweetAlert
+					Swal.fire({
+						title: '¡Áreas y Asignaturas Generadas!',
+						html: response.message,
+						icon: 'success',
+						confirmButtonColor: '#28a745',
+						confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+					}).then(() => {
+						// Recargar la página
+						location.reload();
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						text: response.message || 'No se pudieron generar las áreas y asignaturas.',
+						icon: 'error',
+						confirmButtonColor: '#dc3545',
+						confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				$('#btnGenerarAreasLey115').html(btnOriginal).prop('disabled', false);
+				$('.jq-toast-wrap').remove();
+				
+				console.error('Error AJAX:', error);
+				console.error('Response:', xhr.responseText);
+				
+				Swal.fire({
+					title: 'Error',
+					text: 'Error de conexión al servidor. Por favor, intenta nuevamente.',
+					icon: 'error',
+					confirmButtonColor: '#dc3545',
+					confirmButtonText: '<i class="fa fa-check"></i> Aceptar'
+				});
+			}
+		});
+	}
 });
 </script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </body>
 
