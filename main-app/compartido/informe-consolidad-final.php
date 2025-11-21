@@ -463,7 +463,35 @@ if (empty($porcentajesPeriodos)) {
 			if($defPorEstudianteConNotasCalculada<$notaMinimaAprobar and $defPorEstudianteConNotasCalculada!="")$colorConNotas = $colorPerdida; 
 			elseif($defPorEstudianteConNotasCalculada>=$notaMinimaAprobar) $colorConNotas = $colorGanada;
 			
-			// Acumular promedios generales
+			// Formatear PROM según configuración de notas
+			$defPorEstudianteFinal = $defPorEstudiante;
+			$defPorEstudianteConNotasFinal = $defPorEstudianteConNotasCalculada;
+			$titleProm1 = '';
+			$titleProm2 = '';
+			
+			if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+				$titleProm1 = 'title="Nota Cuantitativa: '.$defPorEstudiante.'"';
+				$notaRedondeadaProm1 = number_format((float)$defPorEstudiante, 1, '.', '');
+				$defPorEstudianteFinal = isset($notasCualitativasCache[$notaRedondeadaProm1]) 
+					? $notasCualitativasCache[$notaRedondeadaProm1] 
+					: "";
+				
+				if ($defPorEstudianteConNotasCalculada > 0) {
+					$titleProm2 = 'title="Nota Cuantitativa: '.$defPorEstudianteConNotasCalculada.'"';
+					$notaRedondeadaProm2 = number_format((float)$defPorEstudianteConNotasCalculada, 1, '.', '');
+					$defPorEstudianteConNotasFinal = isset($notasCualitativasCache[$notaRedondeadaProm2]) 
+						? $notasCualitativasCache[$notaRedondeadaProm2] 
+						: "";
+				}
+			} else {
+				// Formato cuantitativo: usar notaDecimales para respetar decimales configurados
+				$defPorEstudianteFinal = Boletin::notaDecimales($defPorEstudiante);
+				if ($defPorEstudianteConNotasCalculada > 0) {
+					$defPorEstudianteConNotasFinal = Boletin::notaDecimales($defPorEstudianteConNotasCalculada);
+				}
+			}
+			
+			// Acumular promedios generales (usar valores numéricos para cálculos)
 			$promediosGenerales['prom1'] += $defPorEstudiante;
 			$promediosGenerales['contador_prom1']++;
 			if ($defPorEstudianteConNotasCalculada > 0) {
@@ -472,9 +500,9 @@ if (empty($porcentajesPeriodos)) {
 			}
 			?>
 			<!-- Primera PROM -->
-			<td style="text-align:center; width:40px; font-weight:bold; color:<?=$color;?>"><?=$defPorEstudiante;?></td>
+			<td style="text-align:center; width:40px; font-weight:bold; color:<?=$color;?>" <?=$titleProm1;?>><?=$defPorEstudianteFinal;?></td>
 			<!-- Segunda PROM -->
-			<td style="text-align:center; width:40px; font-weight:bold; background:#e0f2fe; color:<?=$colorConNotas;?>"><?=$defPorEstudianteConNotasCalculada > 0 ? $defPorEstudianteConNotasCalculada : '-';?></td>
+			<td style="text-align:center; width:40px; font-weight:bold; background:#e0f2fe; color:<?=$colorConNotas;?>" <?=$titleProm2;?>><?=$defPorEstudianteConNotasCalculada > 0 ? $defPorEstudianteConNotasFinal : '-';?></td>
 		</tr>
 	<?php } ?>
 	
@@ -501,9 +529,23 @@ if (empty($porcentajesPeriodos)) {
 							$colorPromedio = $colorGanada;
 						}
 					}
+				// Formatear promedio por período según configuración
+				$promedioPeriodoFinal = $promedioPeriodo;
+				$titlePromedioPeriodo = '';
+				if ($promedioPeriodo > 0) {
+					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+						$titlePromedioPeriodo = 'title="Nota Cuantitativa: '.$promedioPeriodo.'"';
+						$notaRedondeadaPromedio = number_format((float)$promedioPeriodo, 1, '.', '');
+						$promedioPeriodoFinal = isset($notasCualitativasCache[$notaRedondeadaPromedio]) 
+							? $notasCualitativasCache[$notaRedondeadaPromedio] 
+							: "";
+					} else {
+						$promedioPeriodoFinal = Boletin::notaDecimales($promedioPeriodo);
+					}
+				}
 				?>
-					<td style="text-align: center; color: <?= $colorPromedio; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
-						<?= $promedioPeriodo > 0 ? $promedioPeriodo : '-'; ?>
+					<td style="text-align: center; color: <?= $colorPromedio; ?>; font-weight: 700; border: 1px solid #e2e8f0;" <?=$titlePromedioPeriodo;?>>
+						<?= $promedioPeriodo > 0 ? $promedioPeriodoFinal : '-'; ?>
 					</td>
 				<?php } ?>
 				
@@ -523,6 +565,21 @@ if (empty($porcentajesPeriodos)) {
 					}
 				}
 				
+				// Formatear promedio de primera definitiva
+				$promedioDef1Final = $promedioDef1;
+				$titleDef1 = '';
+				if ($promedioDef1 > 0) {
+					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+						$titleDef1 = 'title="Nota Cuantitativa: '.$promedioDef1.'"';
+						$notaRedondeadaDef1 = number_format((float)$promedioDef1, 1, '.', '');
+						$promedioDef1Final = isset($notasCualitativasCache[$notaRedondeadaDef1]) 
+							? $notasCualitativasCache[$notaRedondeadaDef1] 
+							: "";
+					} else {
+						$promedioDef1Final = Boletin::notaDecimales($promedioDef1);
+					}
+				}
+				
 				// Promedio de segunda definitiva
 				$promedioDef2 = 0;
 				if ($promediosDefinitivas[$carga['car_id']]['contador_def2'] > 0) {
@@ -537,12 +594,27 @@ if (empty($porcentajesPeriodos)) {
 						$colorDef2 = $colorGanada;
 					}
 				}
+				
+				// Formatear promedio de segunda definitiva
+				$promedioDef2Final = $promedioDef2;
+				$titleDef2 = '';
+				if ($promedioDef2 > 0) {
+					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+						$titleDef2 = 'title="Nota Cuantitativa: '.$promedioDef2.'"';
+						$notaRedondeadaDef2 = number_format((float)$promedioDef2, 1, '.', '');
+						$promedioDef2Final = isset($notasCualitativasCache[$notaRedondeadaDef2]) 
+							? $notasCualitativasCache[$notaRedondeadaDef2] 
+							: "";
+					} else {
+						$promedioDef2Final = Boletin::notaDecimales($promedioDef2);
+					}
+				}
 				?>
-				<td style="text-align: center; background:#fffbeb; color: <?= $colorDef1; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
-					<?= $promedioDef1 > 0 ? $promedioDef1 : '-'; ?>
+				<td style="text-align: center; background:#fffbeb; color: <?= $colorDef1; ?>; font-weight: 700; border: 1px solid #e2e8f0;" <?=$titleDef1;?>>
+					<?= $promedioDef1 > 0 ? $promedioDef1Final : '-'; ?>
 				</td>
-				<td style="text-align: center; background:#e0f2fe; color: <?= $colorDef2; ?>; font-weight: 700; border: 1px solid #e2e8f0;">
-					<?= $promedioDef2 > 0 ? $promedioDef2 : '-'; ?>
+				<td style="text-align: center; background:#e0f2fe; color: <?= $colorDef2; ?>; font-weight: 700; border: 1px solid #e2e8f0;" <?=$titleDef2;?>>
+					<?= $promedioDef2 > 0 ? $promedioDef2Final : '-'; ?>
 				</td>
 			<?php } ?>
 			
@@ -562,6 +634,21 @@ if (empty($porcentajesPeriodos)) {
 				}
 			}
 			
+			// Formatear promedio de primera PROM
+			$promedioProm1Final = $promedioProm1;
+			$titleProm1 = '';
+			if ($promedioProm1 > 0) {
+				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+					$titleProm1 = 'title="Nota Cuantitativa: '.$promedioProm1.'"';
+					$notaRedondeadaProm1 = number_format((float)$promedioProm1, 1, '.', '');
+					$promedioProm1Final = isset($notasCualitativasCache[$notaRedondeadaProm1]) 
+						? $notasCualitativasCache[$notaRedondeadaProm1] 
+						: "";
+				} else {
+					$promedioProm1Final = Boletin::notaDecimales($promedioProm1);
+				}
+			}
+			
 			// Promedio de segunda columna PROM
 			$promedioProm2 = 0;
 			if ($promediosGenerales['contador_prom2'] > 0) {
@@ -576,12 +663,27 @@ if (empty($porcentajesPeriodos)) {
 					$colorProm2 = $colorGanada;
 				}
 			}
+			
+			// Formatear promedio de segunda PROM
+			$promedioProm2Final = $promedioProm2;
+			$titleProm2 = '';
+			if ($promedioProm2 > 0) {
+				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+					$titleProm2 = 'title="Nota Cuantitativa: '.$promedioProm2.'"';
+					$notaRedondeadaProm2 = number_format((float)$promedioProm2, 1, '.', '');
+					$promedioProm2Final = isset($notasCualitativasCache[$notaRedondeadaProm2]) 
+						? $notasCualitativasCache[$notaRedondeadaProm2] 
+						: "";
+				} else {
+					$promedioProm2Final = Boletin::notaDecimales($promedioProm2);
+				}
+			}
 			?>
-			<td style="text-align: center; font-weight: 700; border: 2px solid #f59e0b; color: <?= $colorProm1; ?>;">
-				<?= $promedioProm1 > 0 ? $promedioProm1 : '-'; ?>
+			<td style="text-align: center; font-weight: 700; border: 2px solid #f59e0b; color: <?= $colorProm1; ?>;" <?=$titleProm1;?>>
+				<?= $promedioProm1 > 0 ? $promedioProm1Final : '-'; ?>
 			</td>
-			<td style="text-align: center; font-weight: 700; border: 2px solid #0369a1; background:#e0f2fe; color: <?= $colorProm2; ?>;">
-				<?= $promedioProm2 > 0 ? $promedioProm2 : '-'; ?>
+			<td style="text-align: center; font-weight: 700; border: 2px solid #0369a1; background:#e0f2fe; color: <?= $colorProm2; ?>;" <?=$titleProm2;?>>
+				<?= $promedioProm2 > 0 ? $promedioProm2Final : '-'; ?>
 			</td>
 		</tr>
 	</tfoot>
