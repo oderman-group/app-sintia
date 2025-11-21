@@ -389,9 +389,7 @@ class Estudiantes {
             $parametros = [$estudiante, $doctSinPuntos, $doctConPuntos, $estudiante, $config['conf_id_institucion'], $year];
             $consulta = BindSQL::prepararSQL($sql, $parametros);
             $num = mysqli_num_rows($consulta);
-            if($num == 0){
-                echo "Estás intentando obtener datos de un estudiante que no existe: ".$estudiante."<br>";
-            }
+            // Removido el mensaje de error - el código que llama a esta función debe validar si el estudiante existe
             $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
         } catch (Exception $e) {
             echo "Excepción catpurada: ".$e->getMessage();

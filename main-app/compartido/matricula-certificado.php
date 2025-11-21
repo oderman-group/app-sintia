@@ -310,11 +310,6 @@ $notasCualitativasCache = [];
 	
 	// Validar que el estudiante exista en este año
 	if (empty($estudiante) || !is_array($estudiante)) {
-		?>
-		<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-			<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
-		</div>
-		<?php
 		$inicio++;
 		$i++;
 		continue;
@@ -354,14 +349,11 @@ $notasCualitativasCache = [];
     while ($i <= $restaAgnos) {
 	$matricula = Estudiantes::obtenerDatosEstudiante($_POST["id"],$inicio);
 	
-	// Validar que el estudiante exista
-	if (empty($matricula)) {
-	    echo '<div style="text-align: center; padding: 50px; font-family: Arial;">
-	        <h2>Error: Estudiante no encontrado</h2>
-	        <p>No se encontró la matrícula del estudiante con el ID especificado en el año '.$inicio.'</p>
-	        <button onclick="window.close()">Cerrar</button>
-	    </div>';
-	    exit();
+	// Validar que el estudiante exista en este año
+	if (empty($matricula) || !is_array($matricula)) {
+		$inicio++;
+		$i++;
+		continue;
 	}
 
     ?>

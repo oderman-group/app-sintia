@@ -451,11 +451,6 @@ $tiposNotas = [];
 			
 			// Validar que el estudiante exista
 			if (empty($matricula) || !is_array($matricula)) {
-				?>
-				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
-				</div>
-				<?php
 				$i++;
 				$inicio++;
 				continue;
