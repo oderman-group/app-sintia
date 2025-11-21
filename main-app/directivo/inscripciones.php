@@ -802,34 +802,11 @@ if (empty($catalogoGrados)) {
 						// Insertar el HTML en el tab activo
 						$(targetId).html(response.html);
 						
-						// Ocultar filas expandibles antes de reinicializar DataTables
-						$('.expandable-row').hide();
-						
-						// Reinicializar DataTables si es necesario
+						// Reinicializar DataTables usando la función centralizada
 						var tableId = tabActivo === 'ocultos' ? '#example2' : '#example1';
-						if ($.fn.DataTable.isDataTable(tableId)) {
-							// Destruir la instancia existente
-							$(tableId).DataTable().destroy();
-						}
-						
-						// Inicializar DataTables con configuración para excluir filas expandibles
-						$(tableId).DataTable({
-							"language": {
-								"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-							},
-							"order": [[1, 'desc']],
-							"createdRow": function(row, data, dataIndex) {
-								// Excluir filas expandibles del procesamiento de DataTables
-								if ($(row).hasClass('expandable-row')) {
-									$(row).css('display', 'none');
-									return;
-								}
-							},
-							"drawCallback": function(settings) {
-								// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
-								$('.expandable-row').hide();
-							}
-						});
+						setTimeout(function() {
+							inicializarDataTableInscripciones(tableId);
+						}, 100);
 						
 						// Mensaje dinámico
 						let mensaje = 'Se encontraron ' + response.total + ' inscripción/inscripciones';
@@ -973,58 +950,55 @@ if (empty($catalogoGrados)) {
 		// SISTEMA DE TABS PARA VISIBLES/OCULTOS
 		// ========================================
 		
-		// Inicializar DataTable para la tabla de ocultos
-		$(document).ready(function() {
-			// Ocultar filas expandibles antes de inicializar DataTables
-			$('.expandable-row').hide();
+		// Obtener configuración de registros por página
+		var registrosPorPagina = <?= !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20; ?>;
+		
+		// Función para inicializar DataTable con configuración completa
+		function inicializarDataTableInscripciones(tableId) {
+			// Ocultar todas las filas expandibles antes de inicializar
+			$(tableId + ' .expandable-row').hide();
 			
 			// Verificar si ya existe la instancia de DataTable
-			if (!$.fn.DataTable.isDataTable('#example2')) {
-				$('#example2').DataTable({
-					"language": {
-						"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-					},
-					"order": [[1, 'desc']],
-					"createdRow": function(row, data, dataIndex) {
-						// Excluir filas expandibles del procesamiento de DataTables
-						if ($(row).hasClass('expandable-row')) {
-							$(row).css('display', 'none');
-							return;
-						}
-					},
-					"drawCallback": function(settings) {
-						// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
-						$('.expandable-row').hide();
-					}
-				});
+			if ($.fn.DataTable.isDataTable(tableId)) {
+				$(tableId).DataTable().destroy();
 			}
+			
+			// Inicializar DataTable con paginación
+			$(tableId).DataTable({
+				"language": {
+					"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+				},
+				"order": [[1, 'desc']],
+				"pageLength": registrosPorPagina,
+				"lengthMenu": [[10, 20, 30, 50, 100, -1], [10, 20, 30, 50, 100, "Todos"]],
+				"createdRow": function(row, data, dataIndex) {
+					// Excluir filas expandibles del procesamiento de DataTables
+					if ($(row).hasClass('expandable-row')) {
+						$(row).remove();
+						return;
+					}
+				},
+				"drawCallback": function(settings) {
+					// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
+					$(tableId + ' .expandable-row').hide();
+				}
+			});
+		}
+		
+		// Inicializar DataTable para la tabla de ocultos
+		$(document).ready(function() {
+			// Esperar un momento para asegurar que el DOM esté completamente cargado
+			setTimeout(function() {
+				inicializarDataTableInscripciones('#example2');
+			}, 100);
 		});
 		
 		// Inicializar DataTable para la tabla de visibles (example1)
 		$(document).ready(function() {
-			// Ocultar filas expandibles antes de inicializar DataTables
-			$('.expandable-row').hide();
-			
-			// Verificar si ya existe la instancia de DataTable
-			if (!$.fn.DataTable.isDataTable('#example1')) {
-				$('#example1').DataTable({
-					"language": {
-						"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-					},
-					"order": [[1, 'desc']],
-					"createdRow": function(row, data, dataIndex) {
-						// Excluir filas expandibles del procesamiento de DataTables
-						if ($(row).hasClass('expandable-row')) {
-							$(row).css('display', 'none');
-							return;
-						}
-					},
-					"drawCallback": function(settings) {
-						// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
-						$('.expandable-row').hide();
-					}
-				});
-			}
+			// Esperar un momento para asegurar que el DOM esté completamente cargado
+			setTimeout(function() {
+				inicializarDataTableInscripciones('#example1');
+			}, 100);
 		});
 		
 		// Función para cambiar entre tabs con carga asíncrona
@@ -1054,34 +1028,11 @@ if (empty($catalogoGrados)) {
 						// Insertar el HTML
 						$(targetId).html(response.html);
 						
-						// Ocultar filas expandibles antes de reinicializar DataTables
-						$('.expandable-row').hide();
-						
-						// Reinicializar DataTables si es necesario
+						// Reinicializar DataTables usando la función centralizada
 						var tableId = tab === 'ocultos' ? '#example2' : '#example1';
-						if ($.fn.DataTable.isDataTable(tableId)) {
-							// Destruir la instancia existente
-							$(tableId).DataTable().destroy();
-						}
-						
-						// Inicializar DataTables con configuración para excluir filas expandibles
-						$(tableId).DataTable({
-							"language": {
-								"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-							},
-							"order": [[1, 'desc']],
-							"createdRow": function(row, data, dataIndex) {
-								// Excluir filas expandibles del procesamiento de DataTables
-								if ($(row).hasClass('expandable-row')) {
-									$(row).css('display', 'none');
-									return;
-								}
-							},
-							"drawCallback": function(settings) {
-								// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
-								$('.expandable-row').hide();
-							}
-						});
+						setTimeout(function() {
+							inicializarDataTableInscripciones(tableId);
+						}, 100);
 						
 						// Actualizar el contador del badge
 						if (tab === 'visibles') {
