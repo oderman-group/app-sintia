@@ -1701,8 +1701,95 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 			});
 			
+			// Función para deshabilitar controles de filtro
+			function deshabilitarControlesFiltro() {
+				// Deshabilitar campos de entrada
+				$('#filtro_busqueda').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#filtro_fecha_desde').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#filtro_fecha_hasta').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				
+				// Deshabilitar select2 (usando métodos específicos de select2)
+				if ($('#filtro_cursos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_cursos').prop('disabled', true);
+					$('#filtro_cursos').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_cursos').prop('disabled', true);
+				}
+				
+				if ($('#filtro_grupos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_grupos').prop('disabled', true);
+					$('#filtro_grupos').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_grupos').prop('disabled', true);
+				}
+				
+				if ($('#filtro_estados').hasClass('select2-hidden-accessible')) {
+					$('#filtro_estados').prop('disabled', true);
+					$('#filtro_estados').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_estados').prop('disabled', true);
+				}
+				
+				// Deshabilitar botones
+				$('#btnBuscar').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#btnLimpiarFiltros').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				
+				// Verificar si existe el botón de aplicar filtros
+				if ($('#btnAplicarFiltros').length) {
+					$('#btnAplicarFiltros').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				}
+				
+				// Agregar indicador visual
+				$('#btnBuscar').html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+			}
+			
+			// Función para habilitar controles de filtro
+			function habilitarControlesFiltro() {
+				// Habilitar campos de entrada
+				$('#filtro_busqueda').prop('disabled', false).css('opacity', '1').css('cursor', 'text');
+				$('#filtro_fecha_desde').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#filtro_fecha_hasta').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				
+				// Habilitar select2 (usando métodos específicos de select2)
+				if ($('#filtro_cursos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_cursos').prop('disabled', false);
+					$('#filtro_cursos').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_cursos').prop('disabled', false);
+				}
+				
+				if ($('#filtro_grupos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_grupos').prop('disabled', false);
+					$('#filtro_grupos').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_grupos').prop('disabled', false);
+				}
+				
+				if ($('#filtro_estados').hasClass('select2-hidden-accessible')) {
+					$('#filtro_estados').prop('disabled', false);
+					$('#filtro_estados').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_estados').prop('disabled', false);
+				}
+				
+				// Habilitar botones
+				$('#btnBuscar').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#btnLimpiarFiltros').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				
+				// Verificar si existe el botón de aplicar filtros
+				if ($('#btnAplicarFiltros').length) {
+					$('#btnAplicarFiltros').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				}
+				
+				// Restaurar texto del botón
+				$('#btnBuscar').html('<i class="fa fa-search"></i> Buscar');
+			}
+			
 			// Función para aplicar filtros
 			function aplicarFiltros() {
+				// Deshabilitar controles al inicio
+				deshabilitarControlesFiltro();
+				
 				const cursos = $('#filtro_cursos').val() || [];
 				const grupos = $('#filtro_grupos').val() || [];
 				const estados = $('#filtro_estados').val() || [];
@@ -1733,6 +1820,9 @@ if($config['conf_doble_buscador'] == 1) {
 						console.log('Respuesta del filtro:', response);
 						
 						$('#gifCarga').hide();
+						
+						// Habilitar controles al finalizar (éxito o error)
+						habilitarControlesFiltro();
 						
 						if (response.success) {
 							// Insertar el HTML
@@ -1785,6 +1875,9 @@ if($config['conf_doble_buscador'] == 1) {
 						
 						$('#gifCarga').hide();
 						
+						// Habilitar controles al finalizar (error)
+						habilitarControlesFiltro();
+						
 						$.toast({
 							heading: 'Error de Conexión',
 							text: 'No se pudo conectar con el servidor',
@@ -1806,6 +1899,9 @@ if($config['conf_doble_buscador'] == 1) {
 			
 			// Limpiar filtros
 			$('#btnLimpiarFiltros').on('click', function() {
+				// Deshabilitar controles mientras se limpia
+				deshabilitarControlesFiltro();
+				
 				$('#filtro_cursos').val(null).trigger('change');
 				$('#filtro_grupos').val(null).trigger('change');
 				$('#filtro_estados').val(null).trigger('change');
@@ -1814,6 +1910,7 @@ if($config['conf_doble_buscador'] == 1) {
 				$('#filtro_fecha_hasta').val('');
 				
 				// Recargar la página para mostrar todos los estudiantes
+				// Los controles se habilitarán automáticamente al recargar la página
 				location.reload();
 			});
 			
