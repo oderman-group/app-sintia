@@ -679,25 +679,27 @@ $tiposNotas = [];
 								}
 								echo implode(" / ", $estilosTexto);
 								
-								echo "<br>";
-
-								// Porcentajes de áreas
-								$consultaMaterias = CargaAcademica::consultaMateriasAreas($config, $gradoActual, $grupoActual, $inicio);
-								$numMaterias = mysqli_num_rows($consultaMaterias);
-								$areaAnterior = null;
-								$valorAreas = "PORCENTAJES ÁREAS:";
-								
-								while($datosArea = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
-									$diagonal = " ";
+								// Porcentajes de áreas (solo si está configurado el porcentaje de materias)
+								if ($config['conf_agregar_porcentaje_asignaturas'] == SI) {
+									echo "<br>";
 									
-									if(!is_null($areaAnterior) && $areaAnterior != $datosArea['mat_area']){
-										$diagonal = " // ";
+									$consultaMaterias = CargaAcademica::consultaMateriasAreas($config, $gradoActual, $grupoActual, $inicio);
+									$numMaterias = mysqli_num_rows($consultaMaterias);
+									$areaAnterior = null;
+									$valorAreas = "PORCENTAJES ÁREAS:";
+									
+									while($datosArea = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
+										$diagonal = " ";
+										
+										if(!is_null($areaAnterior) && $areaAnterior != $datosArea['mat_area']){
+											$diagonal = " // ";
+										}
+										
+										$areaAnterior = $datosArea['mat_area'];
+										$valorAreas .= $diagonal . strtoupper($datosArea['mat_nombre']) . " (" . $datosArea['mat_valor'] . ")";
 									}
-									
-									$areaAnterior = $datosArea['mat_area'];
-									$valorAreas .= $diagonal . strtoupper($datosArea['mat_nombre']) . " (" . $datosArea['mat_valor'] . ")";
+									echo $valorAreas;
 								}
-								echo $valorAreas;
 								?>
 							</mark>
 						</td>

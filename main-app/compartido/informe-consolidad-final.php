@@ -174,7 +174,86 @@ if (empty($porcentajesPeriodos)) {
 			}
 		}
 	}
-	include("../compartido/head-informes.php") ?>
+	include("../compartido/head-informes.php");
+	
+	// ============================================
+	// OPTIMIZACIONES: PRE-CARGAR DATOS
+	// ============================================
+	
+	// OPTIMIZACIÓN 1: Cachear valores de configuración
+	$notaMinimaAprobar = $config[5] ?? 3.0;
+	$colorPerdida = $config[6] ?? '#dc3545';
+	$colorGanada = $config[7] ?? '#28a745';
+	$numeroPeriodos = $config[19] ?? 4;
+	
+	// OPTIMIZACIÓN 2: Cachear consulta de cargas (se usa 4 veces)
+	$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
+	$numCargasPorCurso = mysqli_num_rows($cargas);
+	$materias = [];
+	$idsCargas = [];
+	mysqli_data_seek($cargas, 0);
+	while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
+		$materias[$carga['car_id']] = $carga;
+		$idsCargas[] = $carga['car_id'];
+	}
+	
+	// OPTIMIZACIÓN 3: Pre-cargar todas las notas del boletín en un mapa
+	// [estudiante][carga][periodo] => datos_nota
+	$notasBoletinMapa = [];
+	if(!empty($idsCargas)){
+		$idsCargasEsc = array_map(function($id) use ($conexion) {
+			return "'" . mysqli_real_escape_string($conexion, $id) . "'";
+		}, $idsCargas);
+		$inCargas = implode(',', $idsCargasEsc);
+		$institucion = (int)$config['conf_id_institucion'];
+		$yearEsc = mysqli_real_escape_string($conexion, $year);
+		
+		$sqlNotas = "SELECT bol_estudiante, bol_carga, bol_periodo, bol_nota
+					 FROM " . BD_ACADEMICA . ".academico_boletin
+					 WHERE bol_carga IN ({$inCargas})
+					 AND institucion = {$institucion}
+					 AND year = '{$yearEsc}'";
+		
+		$consultaNotas = mysqli_query($conexion, $sqlNotas);
+		if($consultaNotas){
+			while($nota = mysqli_fetch_array($consultaNotas, MYSQLI_BOTH)){
+				$idEst = $nota['bol_estudiante'];
+				$idCarga = $nota['bol_carga'];
+				$periodo = (int)$nota['bol_periodo'];
+				if(!isset($notasBoletinMapa[$idEst])){
+					$notasBoletinMapa[$idEst] = [];
+				}
+				if(!isset($notasBoletinMapa[$idEst][$idCarga])){
+					$notasBoletinMapa[$idEst][$idCarga] = [];
+				}
+				$notasBoletinMapa[$idEst][$idCarga][$periodo] = $nota;
+			}
+		}
+	}
+	
+	// OPTIMIZACIÓN 4: Pre-cargar cache de notas cualitativas
+	$notasCualitativasCache = [];
+	if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+		$consultaNotasTipo = mysqli_query($conexion, 
+			"SELECT notip_desde, notip_hasta, notip_nombre 
+			 FROM ".BD_ACADEMICA.".academico_notas_tipos 
+			 WHERE notip_categoria='".mysqli_real_escape_string($conexion, $config['conf_notas_categoria'])."' 
+			 AND institucion=".(int)$config['conf_id_institucion']." 
+			 AND year='".mysqli_real_escape_string($conexion, $year)."'
+			 ORDER BY notip_desde ASC");
+		
+		if($consultaNotasTipo){
+			while ($notaTipo = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)) {
+				for ($i = $notaTipo['notip_desde']; $i <= $notaTipo['notip_hasta']; $i += 0.1) {
+					$key = number_format((float)$i, 1, '.', '');
+					if (!isset($notasCualitativasCache[$key])) {
+						$notasCualitativasCache[$key] = $notaTipo['notip_nombre'];
+					}
+				}
+			}
+		}
+	}
+	?>
 
 	<table width="100%" cellspacing="5" cellpadding="5" rules="all" 
 	  style="
@@ -187,13 +266,10 @@ if (empty($porcentajesPeriodos)) {
 		<th rowspan="2" style="font-size:9px;">Mat</th>
 		<th rowspan="2" style="font-size:9px;">Estudiante</th>
 		<?php
-		$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
-		$numCargasPorCurso = mysqli_num_rows($cargas);
-		$materias = [];
-		while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
-			$materias[$carga['car_id']] = $carga;
+		// OPTIMIZACIÓN: Usar cargas cacheadas
+		foreach($materias as $carga){
 		?>
-			<th style="font-size:9px; text-align:center; border:groove;" colspan="<?=$config[19]+2;?>" width="5%"><?php if(!empty($carga['mat_nombre'])){echo $carga['mat_nombre'];}?></th>
+			<th style="font-size:9px; text-align:center; border:groove;" colspan="<?=$numeroPeriodos+2;?>" width="5%"><?php if(!empty($carga['mat_nombre'])){echo $carga['mat_nombre'];}?></th>
 		<?php
 		}
 		?>
@@ -203,11 +279,11 @@ if (empty($porcentajesPeriodos)) {
 	
 	<tr>
 		<?php
-		$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
-		while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
+		// OPTIMIZACIÓN: Usar cargas cacheadas
+		foreach($materias as $carga){
 			$p = 1;
 			//PERIODOS DE CADA MATERIA
-			while($p<=$config[19]){
+			while($p<=$numeroPeriodos){
 				echo '<th style="text-align:center;">'.$p.'</th>';
 				$p++;
 			}
@@ -240,7 +316,7 @@ if (empty($porcentajesPeriodos)) {
 	// Inicializar arrays
 	foreach ($materias as $carga) {
 		$promediosDefinitivas[$carga['car_id']] = ['def1' => 0, 'def2' => 0, 'contador_def1' => 0, 'contador_def2' => 0];
-		for ($p = 1; $p <= $config[19]; $p++) {
+		for ($p = 1; $p <= $numeroPeriodos; $p++) {
 			$promediosPorPeriodo[$carga['car_id']][$p] = ['suma' => 0, 'contador' => 0];
 		}
 	}
@@ -254,8 +330,8 @@ if (empty($porcentajesPeriodos)) {
 			<td style="font-size:9px;"><?=$resultado['mat_matricula'];?></td>
 			<td style="font-size:9px;"><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
 			<?php
-			$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
-			while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)){
+			// OPTIMIZACIÓN: Usar cargas cacheadas
+			foreach($materias as $carga){
 				$p = 1;
 				$defPorMateria = 0;
 				$defPorMateriaConNotas = 0;
@@ -263,13 +339,15 @@ if (empty($porcentajesPeriodos)) {
 				$sumaPorcentajesConNota = 0;
 				
 				//PERIODOS DE CADA MATERIA
-				while($p<=$config[19]){
+				while($p<=$numeroPeriodos){
 					// Inicializar color por defecto
 					$color = '#000000';
 					
-					$boletin = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $resultado['mat_id'], $carga['car_id'], $year);
-					if(!empty($boletin['bol_nota']) and $boletin['bol_nota']<$config[5] and $boletin['bol_nota']!="")$color = $config[6]; 
-					elseif(!empty($boletin['bol_nota']) and $boletin['bol_nota']>=$config[5]) $color = $config[7];
+					// OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
+					$boletin = $notasBoletinMapa[$resultado['mat_id']][$carga['car_id']][$p] ?? null;
+					
+					if(!empty($boletin['bol_nota']) and $boletin['bol_nota']<$notaMinimaAprobar and $boletin['bol_nota']!="")$color = $colorPerdida; 
+					elseif(!empty($boletin['bol_nota']) and $boletin['bol_nota']>=$notaMinimaAprobar) $color = $colorGanada;
 					
 					$notaBoletinFinal="";
 					$title='';
@@ -277,12 +355,15 @@ if (empty($porcentajesPeriodos)) {
 						$notaBoletinFinal=$boletin['bol_nota'];
 						if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 							$title='title="Nota Cuantitativa: '.$boletin['bol_nota'].'"';
-							$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $boletin['bol_nota'],$year);
-							$notaBoletinFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+							// OPTIMIZACIÓN: Usar cache de notas cualitativas
+							$notaRedondeada = number_format((float)$boletin['bol_nota'], 1, '.', '');
+							$notaBoletinFinal = isset($notasCualitativasCache[$notaRedondeada]) 
+								? $notasCualitativasCache[$notaRedondeada] 
+								: "";
 						}
 						
 						// Primera definitiva: suma ponderada usando porcentajes configurados
-						$porcentaje = isset($porcentajesPeriodos[$p]) ? $porcentajesPeriodos[$p] : (1 / $config[19]);
+						$porcentaje = isset($porcentajesPeriodos[$p]) ? $porcentajesPeriodos[$p] : (1 / $numeroPeriodos);
 						$defPorMateria += ($boletin['bol_nota'] * $porcentaje);
 						
 						// Segunda definitiva: solo periodos con nota
@@ -313,24 +394,29 @@ if (empty($porcentajesPeriodos)) {
 				//DEFINITIVA DE CADA MATERIA
 				// Inicializar color por defecto
 				$color = '#000000';
-				if($defPorMateria<$config[5] and $defPorMateria!="")$color = $config[6]; 
-				elseif($defPorMateria>=$config[5]) $color = $config[7];
+				if($defPorMateria<$notaMinimaAprobar and $defPorMateria!="")$color = $colorPerdida; 
+				elseif($defPorMateria>=$notaMinimaAprobar) $color = $colorGanada;
 				
 				$colorConNotas = '#000000';
-				if($defPorMateriaConNotasCalculada<$config[5] and $defPorMateriaConNotasCalculada!="")$colorConNotas = $config[6]; 
-				elseif($defPorMateriaConNotasCalculada>=$config[5]) $colorConNotas = $config[7];
+				if($defPorMateriaConNotasCalculada<$notaMinimaAprobar and $defPorMateriaConNotasCalculada!="")$colorConNotas = $colorPerdida; 
+				elseif($defPorMateriaConNotasCalculada>=$notaMinimaAprobar) $colorConNotas = $colorGanada;
 				
 				$defPorMateriaFinal=$defPorMateria;
 				$defPorMateriaConNotasFinal=$defPorMateriaConNotasCalculada;
 				$title='';
 				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 					$title='title="Nota Cuantitativa: '.$defPorMateria.'"';
-					$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $defPorMateria,$year);
-					$defPorMateriaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+					// OPTIMIZACIÓN: Usar cache de notas cualitativas
+					$notaRedondeada = number_format((float)$defPorMateria, 1, '.', '');
+					$defPorMateriaFinal = isset($notasCualitativasCache[$notaRedondeada]) 
+						? $notasCualitativasCache[$notaRedondeada] 
+						: "";
 					
 					$titleConNotas='title="Nota Cuantitativa: '.$defPorMateriaConNotasCalculada.'"';
-					$estiloNotaConNotas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $defPorMateriaConNotasCalculada,$year);
-					$defPorMateriaConNotasFinal= !empty($estiloNotaConNotas['notip_nombre']) ? $estiloNotaConNotas['notip_nombre'] : "";
+					$notaRedondeadaConNotas = number_format((float)$defPorMateriaConNotasCalculada, 1, '.', '');
+					$defPorMateriaConNotasFinal = isset($notasCualitativasCache[$notaRedondeadaConNotas]) 
+						? $notasCualitativasCache[$notaRedondeadaConNotas] 
+						: "";
 				}
 			?>
 				<!-- Primera DEF -->
@@ -370,12 +456,12 @@ if (empty($porcentajesPeriodos)) {
 			
 			// Inicializar color por defecto
 			$color = '#000000';
-			if($defPorEstudiante<$config[5] and $defPorEstudiante!="")$color = $config[6]; 
-			elseif($defPorEstudiante>=$config[5]) $color = $config[7];
+			if($defPorEstudiante<$notaMinimaAprobar and $defPorEstudiante!="")$color = $colorPerdida; 
+			elseif($defPorEstudiante>=$notaMinimaAprobar) $color = $colorGanada;
 			
 			$colorConNotas = '#000000';
-			if($defPorEstudianteConNotasCalculada<$config[5] and $defPorEstudianteConNotasCalculada!="")$colorConNotas = $config[6]; 
-			elseif($defPorEstudianteConNotasCalculada>=$config[5]) $colorConNotas = $config[7];
+			if($defPorEstudianteConNotasCalculada<$notaMinimaAprobar and $defPorEstudianteConNotasCalculada!="")$colorConNotas = $colorPerdida; 
+			elseif($defPorEstudianteConNotasCalculada>=$notaMinimaAprobar) $colorConNotas = $colorGanada;
 			
 			// Acumular promedios generales
 			$promediosGenerales['prom1'] += $defPorEstudiante;
@@ -399,9 +485,9 @@ if (empty($porcentajesPeriodos)) {
 				<strong>PROMEDIO</strong>
 			</td>
 			<?php 
-			$cargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $cursoV, $grupoV, $year);
-			while($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)) {
-				for ($p = 1; $p <= $config[19]; $p++) {
+			// OPTIMIZACIÓN: Usar cargas cacheadas
+			foreach($materias as $carga) {
+				for ($p = 1; $p <= $numeroPeriodos; $p++) {
 					$promedioPeriodo = 0;
 					if ($promediosPorPeriodo[$carga['car_id']][$p]['contador'] > 0) {
 						$promedioPeriodo = round($promediosPorPeriodo[$carga['car_id']][$p]['suma'] / $promediosPorPeriodo[$carga['car_id']][$p]['contador'], 2);
@@ -409,10 +495,10 @@ if (empty($porcentajesPeriodos)) {
 					
 					$colorPromedio = '#000000';
 					if ($promedioPeriodo > 0) {
-						if ($promedioPeriodo < $config[5]) {
-							$colorPromedio = $config[6];
-						} elseif ($promedioPeriodo >= $config[5]) {
-							$colorPromedio = $config[7];
+						if ($promedioPeriodo < $notaMinimaAprobar) {
+							$colorPromedio = $colorPerdida;
+						} elseif ($promedioPeriodo >= $notaMinimaAprobar) {
+							$colorPromedio = $colorGanada;
 						}
 					}
 				?>
@@ -430,10 +516,10 @@ if (empty($porcentajesPeriodos)) {
 				
 				$colorDef1 = '#000000';
 				if ($promedioDef1 > 0) {
-					if ($promedioDef1 < $config[5]) {
-						$colorDef1 = $config[6];
-					} elseif ($promedioDef1 >= $config[5]) {
-						$colorDef1 = $config[7];
+					if ($promedioDef1 < $notaMinimaAprobar) {
+						$colorDef1 = $colorPerdida;
+					} elseif ($promedioDef1 >= $notaMinimaAprobar) {
+						$colorDef1 = $colorGanada;
 					}
 				}
 				
@@ -445,10 +531,10 @@ if (empty($porcentajesPeriodos)) {
 				
 				$colorDef2 = '#000000';
 				if ($promedioDef2 > 0) {
-					if ($promedioDef2 < $config[5]) {
-						$colorDef2 = $config[6];
-					} elseif ($promedioDef2 >= $config[5]) {
-						$colorDef2 = $config[7];
+					if ($promedioDef2 < $notaMinimaAprobar) {
+						$colorDef2 = $colorPerdida;
+					} elseif ($promedioDef2 >= $notaMinimaAprobar) {
+						$colorDef2 = $colorGanada;
 					}
 				}
 				?>
@@ -469,10 +555,10 @@ if (empty($porcentajesPeriodos)) {
 			
 			$colorProm1 = '#000000';
 			if ($promedioProm1 > 0) {
-				if ($promedioProm1 < $config[5]) {
-					$colorProm1 = $config[6];
-				} elseif ($promedioProm1 >= $config[5]) {
-					$colorProm1 = $config[7];
+				if ($promedioProm1 < $notaMinimaAprobar) {
+					$colorProm1 = $colorPerdida;
+				} elseif ($promedioProm1 >= $notaMinimaAprobar) {
+					$colorProm1 = $colorGanada;
 				}
 			}
 			
@@ -484,10 +570,10 @@ if (empty($porcentajesPeriodos)) {
 			
 			$colorProm2 = '#000000';
 			if ($promedioProm2 > 0) {
-				if ($promedioProm2 < $config[5]) {
-					$colorProm2 = $config[6];
-				} elseif ($promedioProm2 >= $config[5]) {
-					$colorProm2 = $config[7];
+				if ($promedioProm2 < $notaMinimaAprobar) {
+					$colorProm2 = $colorPerdida;
+				} elseif ($promedioProm2 >= $notaMinimaAprobar) {
+					$colorProm2 = $colorGanada;
 				}
 			}
 			?>
