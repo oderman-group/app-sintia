@@ -533,68 +533,71 @@ $notasCualitativasCache = [];
 						$materiasPerdidas = 0;
 
 						while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
-							// Obtener materias del área
-							$materias = mysqli_query($conexion, "SELECT car_id FROM ".BD_ACADEMICA.".academico_materias am, ".BD_ACADEMICA.".academico_cargas car 
-								WHERE am.mat_area='" . $cargas["ar_id"] . "' 
-								AND am.mat_id=car_materia 
-								AND car_curso='" . $matricula["gra_id"] . "' 
-								AND car_grupo='" . $matricula["gru_id"] . "' 
-								AND am.institucion={$config['conf_id_institucion']} 
-								AND am.year={$inicio} 
-								AND car.institucion={$config['conf_id_institucion']} 
-								AND car.year={$inicio}");
-
-							$numMat = mysqli_num_rows($materias);
-							$mate = "";
-							$j = 1;
-
-							while ($mat = mysqli_fetch_array($materias, MYSQLI_BOTH)) {
-								if ($j < $numMat) $mate .= "'" . $mat[0] . "',";
-								else $mate .= "'" . $mat[0] . "'";
-								$j++;
+							// Obtener todas las materias del área usando consultaMaterias (incluye todas, no solo las con intensidad)
+							$consultaMaterias = CargaAcademica::consultaMaterias($config, $configAA['conf_periodos_maximos'], $id, $matricula["mat_grado"], $matricula["mat_grupo"], $cargas["ar_id"], $inicio);
+							
+							// Promedio del área (usando método centralizado)
+							$periodosArray = [];
+							$periodosMaximos = !empty($configAA['conf_periodos_maximos']) ? $configAA['conf_periodos_maximos'] : 4;
+							for($p = 1; $p <= $periodosMaximos; $p++){
+								$periodosArray[] = $p;
 							}
-
-						// Promedio del área (usando método centralizado)
-						$periodosArray = [];
-						$periodosMaximos = !empty($configAA['conf_periodos_maximos']) ? $configAA['conf_periodos_maximos'] : 4;
-						for($p = 1; $p <= $periodosMaximos; $p++){
-							$periodosArray[] = $p;
-						}
-						$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArray, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
-						$notaArea = $promedioAreaCompleto['acumulado'];
-						$consultaBoletin = mysqli_query($conexion, "SELECT '".$notaArea."' AS avg FROM ".BD_ACADEMICA.".academico_boletin
-								WHERE bol_estudiante='" . $id . "' 
-								AND bol_carga IN(" . $mate . ") 
-								AND institucion={$config['conf_id_institucion']} 
-								AND year={$inicio}");
-							$boletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH);
-
-							$nota = !empty($boletin[0]) ? round($boletin[0], 1) : 0;
-							for ($n = 0; $n <= 5; $n++) {
-								if ($nota == $n) $nota = $nota . ".0";
-							}
+							$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArray, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+							$notaArea = $promedioAreaCompleto['acumulado'];
+							
+							// Usar directamente el valor calculado (ya considera ponderado/simple según configuración)
+							$nota = (float)$notaArea;
+							$notaFormateada = Boletin::notaDecimales($nota);
 							
 							// Optimización: Usar cache para tipos de notas
-							$cacheKey = $config['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
+							$cacheKey = $configAA['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
 							if (!isset($notasCualitativasCache[$cacheKey])) {
-								$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota, $inicio);
+								$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $nota, $inicio);
 							}
 							$desempenoA = $notasCualitativasCache[$cacheKey];
 							
 							// Calcular I.H del área como suma de I.H de las asignaturas
-							$materiasDA = Asignaturas::consultarAsignaturaDefinitivaIntensidad($conexion, $config, $matricula["gra_id"], $matricula["mat_grado"], $matricula["gru_id"], $cargas["ar_id"], $inicio);
+							// Obtener todas las materias con su intensidad horaria (usando LEFT JOIN para no excluir materias sin intensidad)
 							$ihArea = 0;
 							$materiasTemp = [];
-							// Primero calcular la suma de I.H y guardar las materias
-							while ($mdaTemp = mysqli_fetch_array($materiasDA, MYSQLI_BOTH)) {
+							
+							// Consulta para obtener todas las materias del área con su intensidad horaria
+							$consultaMateriasCompleta = mysqli_query($conexion, "SELECT car.car_id, am.mat_nombre, 
+								COALESCE(ipc.ipc_intensidad, car.car_ih, 0) AS ipc_intensidad
+								FROM ".BD_ACADEMICA.".academico_cargas car
+								INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car.car_materia 
+									AND am.institucion = car.institucion 
+									AND am.year = car.year
+								LEFT JOIN ".BD_ACADEMICA.".academico_intensidad_curso ipc ON ipc.ipc_curso = car.car_curso 
+									AND ipc.ipc_materia = am.mat_id 
+									AND ipc.institucion = car.institucion 
+									AND ipc.year = car.year
+								WHERE car.car_curso = '" . $matricula["mat_grado"] . "' 
+									AND car.car_grupo = '" . $matricula["mat_grupo"] . "' 
+									AND am.mat_area = '" . $cargas["ar_id"] . "'
+									AND car.institucion = {$config['conf_id_institucion']} 
+									AND car.year = {$inicio}
+									AND am.institucion = {$config['conf_id_institucion']} 
+									AND am.year = {$inicio}
+								ORDER BY am.mat_nombre");
+							
+							// Calcular suma de I.H y guardar las materias
+							while ($mdaTemp = mysqli_fetch_array($consultaMateriasCompleta, MYSQLI_BOTH)) {
 								$ihMateria = !empty($mdaTemp["ipc_intensidad"]) ? (int)$mdaTemp["ipc_intensidad"] : 0;
 								$ihArea += $ihMateria;
-								$materiasTemp[] = $mdaTemp; // Guardar para usar después
+								
+								// Guardar datos de la materia para mostrar después
+								$materiaData = [
+									'car_id' => $mdaTemp["car_id"],
+									'mat_nombre' => $mdaTemp["mat_nombre"],
+									'ipc_intensidad' => $ihMateria
+								];
+								$materiasTemp[] = $materiaData;
 							}
 						?>
 							<tr class="fila-area">
 								<td><?= strtoupper($cargas["ar_nombre"]); ?></td>
-								<td style="text-align: center;"><?= $nota; ?> (<?php if(!empty($desempenoA['notip_nombre'])) echo strtoupper($desempenoA['notip_nombre']); ?>)</td>
+								<td style="text-align: center;"><?= $notaFormateada; ?> (<?php if(!empty($desempenoA['notip_nombre'])) echo strtoupper($desempenoA['notip_nombre']); ?>)</td>
 								<td style="text-align: center;"><?= $ihArea . " (" . (!empty($horas[$ihArea]) ? $horas[$ihArea] : 'N/A') . ")"; ?></td>
 							</tr>
 
@@ -604,42 +607,39 @@ $notasCualitativasCache = [];
 							// Materias del área (usar el array guardado)
 							foreach ($materiasTemp as $mda) {
 								$notaDefMateria = Boletin::traerDefinitivaBoletinCarga($config, $mda["car_id"], $id, $inicio);
-								$notaDefMateria = !empty($notaDefMateria['promedio']) ? round($notaDefMateria['promedio'], 1) : 0;
+								$notaDefMateriaNum = !empty($notaDefMateria['promedio']) ? (float)$notaDefMateria['promedio'] : 0;
+								$notaDefMateriaFormateada = Boletin::notaDecimales($notaDefMateriaNum);
 								
-								for ($n = 0; $n <= 5; $n++) {
-									if ($notaDefMateria == $n) $notaDefMateria = $notaDefMateria . ".0";
-								}
-								
-								if ($notaDefMateria < $config[5]) {
+								if ($notaDefMateriaNum < $config[5]) {
 									$materiasPerdidas++;
 								}
 								
 								// Optimización: Usar cache para tipos de notas
-								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaDefMateria . '_' . $inicio;
+								$cacheKey = $configAA['conf_notas_categoria'] . '_' . $notaDefMateriaNum . '_' . $inicio;
 								if (!isset($notasCualitativasCache[$cacheKey])) {
-									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaDefMateria, $inicio);
+									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $notaDefMateriaNum, $inicio);
 								}
 								$desempeno = $notasCualitativasCache[$cacheKey];
 								
 								// Para preescolares
-								if ($matricula["gra_id"] >= 12 and $matricula["gra_id"] <= 15) {
+								if (!empty($matricula["gra_nivel"]) && $matricula["gra_nivel"] == PREESCOLAR) {
 									$nota = ceil($nota);
-									if ($notaDefMateria == 1) $notaDefMateria = 'DEFICIENTE';
-									if ($notaDefMateria == 2) $notaDefMateria = 'INSUFICIENTE';
-									if ($notaDefMateria == 3) $notaDefMateria = 'ACEPTABLE';
-									if ($notaDefMateria == 4) $notaDefMateria = 'SOBRESALIENTE';
-									if ($notaDefMateria == 5) $notaDefMateria = 'EXCELENTE';
+									if ($notaDefMateriaNum == 1) $notaDefMateriaFormateada = 'DEFICIENTE';
+									if ($notaDefMateriaNum == 2) $notaDefMateriaFormateada = 'INSUFICIENTE';
+									if ($notaDefMateriaNum == 3) $notaDefMateriaFormateada = 'ACEPTABLE';
+									if ($notaDefMateriaNum == 4) $notaDefMateriaFormateada = 'SOBRESALIENTE';
+									if ($notaDefMateriaNum == 5) $notaDefMateriaFormateada = 'EXCELENTE';
 								}
 							?>
 								<tr class="fila-materia">
 									<td style="padding-left: 25px;"><?= $mda["mat_nombre"]; ?></td>
 									<td style="text-align: center;">
-										<?= $notaDefMateria; ?> 
-										<?php if ($matricula["gra_id"] < 12 && !empty($desempeno['notip_nombre'])) { ?> 
+										<?= $notaDefMateriaFormateada; ?> 
+										<?php if (!empty($matricula["gra_nivel"]) && $matricula["gra_nivel"] != PREESCOLAR && !empty($desempeno['notip_nombre'])) { ?> 
 											(<?= strtoupper($desempeno['notip_nombre']); ?>) 
 										<?php } ?>
 									</td>
-									<td style="text-align: center;"><?= $mda["ipc_intensidad"] . " (" . $horas[$mda["ipc_intensidad"]] . ")"; ?></td>
+									<td style="text-align: center;"><?= $mda["ipc_intensidad"] . " (" . (!empty($horas[$mda["ipc_intensidad"]]) ? $horas[$mda["ipc_intensidad"]] : 'N/A') . ")"; ?></td>
 								</tr>
 							<?php } ?>
 						<?php
@@ -653,46 +653,69 @@ $notasCualitativasCache = [];
 									$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $inicio);
 									
 									while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
-										$materias = Asignaturas::consultarAsignaturasArea($conexion, $config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $cargas["ar_id"], $inicio);
-										$numMat = mysqli_num_rows($materias);
-										$mate = "";
-										$j = 1;
-
-										while ($mat = mysqli_fetch_array($materias, MYSQLI_BOTH)) {
-											if ($j < $numMat) $mate .= "'" . $mat[0] . "',";
-											else $mate .= "'" . $mat[0] . "'";
-											$j++;
+										// Calcular promedio del área usando calcularPromedioAreaCompleto (considera ponderado/simple)
+										$periodosArrayMT = [];
+										$periodosMaximosMT = !empty($configAA['conf_periodos_maximos']) ? (int)$configAA['conf_periodos_maximos'] : 4;
+										for($p = 1; $p <= $periodosMaximosMT; $p++){
+											$periodosArrayMT[] = $p;
 										}
-
-										$boletin = Boletin::obtenerPromedioDiferentesCargas($config, $id, $mate, $inicio);
-										$nota = !empty($boletin[0]) ? round($boletin[0], 1) : 0;
+										$promedioAreaCompletoMT = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArrayMT, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $inicio);
+										$notaAreaMT = $promedioAreaCompletoMT['acumulado'];
 										
-										for ($n = 0; $n <= 5; $n++) {
-											if ($nota == $n) $nota = $nota . ".0";
-										}
+										// Usar directamente el valor calculado (ya considera ponderado/simple según configuración)
+										$nota = (float)$notaAreaMT;
+										$notaFormateada = Boletin::notaDecimales($nota);
 										
-										$cacheKey = $config['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
+										$cacheKey = $configAA['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
 										if (!isset($notasCualitativasCache[$cacheKey])) {
-											$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota, $inicio);
+											$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $nota, $inicio);
 										}
 										$desempenoA = $notasCualitativasCache[$cacheKey];
 										$desempenoA['notip_nombre'] = $nota == 0 ? "Bajo" : $desempenoA['notip_nombre'];
 									?>
 										<?php
 										// Calcular I.H del área como suma de I.H de las asignaturas (Media Técnica)
-										$materiasDA = Asignaturas::consultarAsignaturaDefinitivaIntensidad($conexion, $config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $cargas["ar_id"], $inicio);
+										// Obtener todas las materias del área con su intensidad horaria (usando LEFT JOIN para no excluir materias sin intensidad)
 										$ihAreaMT = 0;
 										$materiasTempMT = [];
-										// Primero calcular la suma de I.H y guardar las materias
-										while ($mdaTemp = mysqli_fetch_array($materiasDA, MYSQLI_BOTH)) {
+										
+										// Consulta para obtener todas las materias del área con su intensidad horaria
+										$consultaMateriasCompletaMT = mysqli_query($conexion, "SELECT car.car_id, am.mat_nombre, 
+											COALESCE(ipc.ipc_intensidad, car.car_ih, 0) AS ipc_intensidad
+											FROM ".BD_ACADEMICA.".academico_cargas car
+											INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id = car.car_materia 
+												AND am.institucion = car.institucion 
+												AND am.year = car.year
+											LEFT JOIN ".BD_ACADEMICA.".academico_intensidad_curso ipc ON ipc.ipc_curso = car.car_curso 
+												AND ipc.ipc_materia = am.mat_id 
+												AND ipc.institucion = car.institucion 
+												AND ipc.year = car.year
+											WHERE car.car_curso = '" . $datosEstudianteActualMT["matcur_id_curso"] . "' 
+												AND car.car_grupo = '" . $datosEstudianteActualMT["matcur_id_grupo"] . "' 
+												AND am.mat_area = '" . $cargas["ar_id"] . "'
+												AND car.institucion = {$config['conf_id_institucion']} 
+												AND car.year = {$inicio}
+												AND am.institucion = {$config['conf_id_institucion']} 
+												AND am.year = {$inicio}
+											ORDER BY am.mat_nombre");
+										
+										// Calcular suma de I.H y guardar las materias
+										while ($mdaTemp = mysqli_fetch_array($consultaMateriasCompletaMT, MYSQLI_BOTH)) {
 											$ihMateria = !empty($mdaTemp["ipc_intensidad"]) ? (int)$mdaTemp["ipc_intensidad"] : 0;
 											$ihAreaMT += $ihMateria;
-											$materiasTempMT[] = $mdaTemp; // Guardar para usar después
+											
+											// Guardar datos de la materia para mostrar después
+											$materiaData = [
+												'car_id' => $mdaTemp["car_id"],
+												'mat_nombre' => $mdaTemp["mat_nombre"],
+												'ipc_intensidad' => $ihMateria
+											];
+											$materiasTempMT[] = $materiaData;
 										}
 										?>
 										<tr class="fila-area">
 											<td><?= strtoupper($cargas["ar_nombre"]); ?></td>
-											<td style="text-align: center;"><?= $nota; ?> (<?= strtoupper($desempenoA['notip_nombre']); ?>)</td>
+											<td style="text-align: center;"><?= $notaFormateada; ?> (<?= strtoupper($desempenoA['notip_nombre']); ?>)</td>
 											<td style="text-align: center;"><?= $ihAreaMT . " (" . (!empty($horas[$ihAreaMT]) ? $horas[$ihAreaMT] : 'N/A') . ")"; ?></td>
 										</tr>
 									<?php
@@ -701,31 +724,32 @@ $notasCualitativasCache = [];
 										// Materias del área (usar el array guardado)
 										foreach ($materiasTempMT as $mda) {
 											$notaDefMateria = Boletin::traerDefinitivaBoletinCarga($config, $mda["car_id"], $id, $inicio);
-											$notaDefMateria = !empty($notaDefMateria['promedio']) ? round($notaDefMateria['promedio'], 1) : 0;
+											$notaDefMateriaNum = !empty($notaDefMateria['promedio']) ? (float)$notaDefMateria['promedio'] : 0;
+											$notaDefMateriaFormateada = Boletin::notaDecimales($notaDefMateriaNum);
 											
-											for ($n = 0; $n <= 5; $n++) {
-												if ($notaDefMateria == $n) $notaDefMateria = $notaDefMateria . ".0";
-											}
-											
-											$cacheKey = $config['conf_notas_categoria'] . '_' . $notaDefMateria . '_' . $inicio;
+											$cacheKey = $config['conf_notas_categoria'] . '_' . $notaDefMateriaNum . '_' . $inicio;
 											if (!isset($notasCualitativasCache[$cacheKey])) {
-												$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaDefMateria, $inicio);
+												$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaDefMateriaNum, $inicio);
 											}
 											$desempeno = $notasCualitativasCache[$cacheKey];
 											
-											if ($datosEstudianteActualMT["matcur_id_curso"] >= 12 and $datosEstudianteActualMT["matcur_id_curso"] <= 15) {
+											// Obtener nivel educativo del curso para Media Técnica
+											$consultaNivelMT = mysqli_query($conexion, "SELECT gra_nivel FROM ".BD_ACADEMICA.".academico_grados WHERE gra_id='" . $datosEstudianteActualMT["matcur_id_curso"] . "' AND institucion='" . $config['conf_id_institucion'] . "' AND year='" . $inicio . "'");
+											$nivelMT = mysqli_fetch_array($consultaNivelMT, MYSQLI_BOTH);
+											
+											if (!empty($nivelMT["gra_nivel"]) && $nivelMT["gra_nivel"] == PREESCOLAR) {
 												$nota = ceil($nota);
-												if ($notaDefMateria == 1) $notaDefMateria = 'DEFICIENTE';
-												if ($notaDefMateria == 2) $notaDefMateria = 'INSUFICIENTE';
-												if ($notaDefMateria == 3) $notaDefMateria = 'ACEPTABLE';
-												if ($notaDefMateria == 4) $notaDefMateria = 'SOBRESALIENTE';
-												if ($notaDefMateria == 5) $notaDefMateria = 'EXCELENTE';
+												if ($notaDefMateriaNum == 1) $notaDefMateriaFormateada = 'DEFICIENTE';
+												if ($notaDefMateriaNum == 2) $notaDefMateriaFormateada = 'INSUFICIENTE';
+												if ($notaDefMateriaNum == 3) $notaDefMateriaFormateada = 'ACEPTABLE';
+												if ($notaDefMateriaNum == 4) $notaDefMateriaFormateada = 'SOBRESALIENTE';
+												if ($notaDefMateriaNum == 5) $notaDefMateriaFormateada = 'EXCELENTE';
 											}
 										?>
 											<tr class="fila-materia">
 												<td style="padding-left: 25px;"><?= $mda["mat_nombre"]; ?></td>
-												<td style="text-align: center;"><?= $notaDefMateria; ?> (<?= strtoupper($desempeno['notip_nombre']); ?>)</td>
-												<td style="text-align: center;"><?= $mda["ipc_intensidad"] . " (" . $horas[$mda["ipc_intensidad"]] . ")"; ?></td>
+												<td style="text-align: center;"><?= $notaDefMateriaFormateada; ?> <?php if (!empty($nivelMT["gra_nivel"]) && $nivelMT["gra_nivel"] != PREESCOLAR && !empty($desempeno['notip_nombre'])) { ?>(<?= strtoupper($desempeno['notip_nombre']); ?>)<?php } ?></td>
+												<td style="text-align: center;"><?= $mda["ipc_intensidad"] . " (" . (!empty($horas[$mda["ipc_intensidad"]]) ? $horas[$mda["ipc_intensidad"]] : 'N/A') . ")"; ?></td>
 											</tr>
 										<?php } ?>
 									<?php
@@ -764,7 +788,7 @@ $notasCualitativasCache = [];
 				
 				while ($cargasC = mysqli_fetch_array($cargasAcademicasC, MYSQLI_BOTH)) {
 					$boletinC = Boletin::traerDefinitivaBoletinCarga($config, $cargasC["car_id"], $id, $inicio);
-					$notaC = !empty($boletinC['promedio']) ? round($boletinC['promedio'], 1) : 0;
+					$notaC = !empty($boletinC['promedio']) ? (float)$boletinC['promedio'] : 0;
 					
 					if ($notaC < $config[5]) {
 						$vectorMP[$materiasPerdidas] = $cargasC["car_id"];
@@ -822,13 +846,15 @@ $notasCualitativasCache = [];
 					</thead>
 					<tbody>
 						<?php
-						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+						// Obtener todas las materias (sin agrupar por área) para mostrar todas las asignaturas
+						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio, "");
 						$materiasPerdidas = 0;
 						$periodoFinal = $config['conf_periodos_maximos'];
 
 						while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
 							$boletin = Boletin::traerDefinitivaBoletinCarga($config, $cargas["car_id"], $id, $inicio);
-							$nota = !empty($boletin['promedio']) ? round($boletin['promedio'], 1) : 0;
+							$nota = !empty($boletin['promedio']) ? (float)$boletin['promedio'] : 0;
+							$notaFormateada = Boletin::notaDecimales($nota);
 
 							if ($nota < $config[5]) {
 								$materiasPerdidas++;
@@ -838,33 +864,45 @@ $notasCualitativasCache = [];
 								$periodoFinal = $boletin['periodo'];
 							}
 
-							$cacheKey = $config['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
+							$cacheKey = $configAA['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
 							if (!isset($notasCualitativasCache[$cacheKey])) {
-								$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota, $inicio);
+								$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $nota, $inicio);
 							}
 							$desempeno = !empty($notasCualitativasCache[$cacheKey]) ? $notasCualitativasCache[$cacheKey] : ['notip_nombre' => 'N/A'];
+							
+							// Obtener intensidad horaria (intentar de academico_intensidad_curso, si no usar car_ih)
+							$consultaIntensidad = mysqli_query($conexion, "SELECT ipc_intensidad FROM ".BD_ACADEMICA.".academico_intensidad_curso 
+								WHERE ipc_curso='" . $matricula["mat_grado"] . "' 
+								AND ipc_materia='" . $cargas["car_materia"] . "' 
+								AND institucion={$config['conf_id_institucion']} 
+								AND year={$inicio} 
+								LIMIT 1");
+							$intensidadData = mysqli_fetch_array($consultaIntensidad, MYSQLI_BOTH);
+							$ihMateria = !empty($intensidadData["ipc_intensidad"]) ? (int)$intensidadData["ipc_intensidad"] : (!empty($cargas["car_ih"]) ? (int)$cargas["car_ih"] : 0);
 						?>
 							<tr style="text-align: center;">
 								<td style="text-align: left; font-weight: bold;"><?= strtoupper($cargas["mat_nombre"]); ?></td>
-								<td><?= $cargas["car_ih"]; ?></td>
+								<td><?= $ihMateria; ?></td>
 								<?php
-								$horasT += $cargas["car_ih"];
+								$horasT += $ihMateria;
 
 								for ($p = 1; $p <= $config[19]; $p++) {
 									$notasPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $id, $cargas["car_id"], $inicio);
 									$notasPeriodoFinal = '';
 									
 									if(!empty($notasPeriodo['bol_nota'])){
-										$notasPeriodoFinal = $notasPeriodo['bol_nota'];
-										if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-											$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasPeriodo['bol_nota']);
+										$notaPeriodoNum = (float)$notasPeriodo['bol_nota'];
+										if($configAA['conf_forma_mostrar_notas'] == CUALITATIVA){
+											$estiloNota = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $notaPeriodoNum, $inicio);
 											$notasPeriodoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+										} else {
+											$notasPeriodoFinal = Boletin::notaDecimales($notaPeriodoNum);
 										}
 									}
 									echo '<td>' . $notasPeriodoFinal . '</td>';
 								}
 								?>
-								<td style="font-weight: bold;"><?= $nota; ?></td>
+								<td style="font-weight: bold;"><?= $notaFormateada; ?></td>
 								<td><?= $desempeno['notip_nombre']; ?></td>
 							</tr>
 						<?php
@@ -875,37 +913,51 @@ $notasCualitativasCache = [];
 							$consultaEstudianteActualMT = MediaTecnicaServicios::existeEstudianteMT($config, $inicio, $id);
 							while($datosEstudianteActualMT = mysqli_fetch_array($consultaEstudianteActualMT, MYSQLI_BOTH)){
 								if(!empty($datosEstudianteActualMT)){
-									$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $inicio);
+									// Obtener todas las materias (sin agrupar por área) para mostrar todas las asignaturas
+									$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosEstudianteActualMT["matcur_id_curso"], $datosEstudianteActualMT["matcur_id_grupo"], $inicio, "");
 									
 									while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
 										$boletin = Boletin::traerDefinitivaBoletinCarga($config, $cargas["car_id"], $id, $inicio);
-										$nota = !empty($boletin[0]) ? round($boletin[0], 1) : 0;
+										$nota = !empty($boletin['promedio']) ? (float)$boletin['promedio'] : 0;
+										$notaFormateada = Boletin::notaDecimales($nota);
 
-										$cacheKey = $config['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
+										$cacheKey = $configAA['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
 										if (!isset($notasCualitativasCache[$cacheKey])) {
-											$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota, $inicio);
+											$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $nota, $inicio);
 										}
 										$desempeno = !empty($notasCualitativasCache[$cacheKey]) ? $notasCualitativasCache[$cacheKey] : ['notip_nombre' => 'N/A'];
+										
+										// Obtener intensidad horaria (intentar de academico_intensidad_curso, si no usar car_ih)
+										$consultaIntensidad = mysqli_query($conexion, "SELECT ipc_intensidad FROM ".BD_ACADEMICA.".academico_intensidad_curso 
+											WHERE ipc_curso='" . $datosEstudianteActualMT["matcur_id_curso"] . "' 
+											AND ipc_materia='" . $cargas["car_materia"] . "' 
+											AND institucion={$config['conf_id_institucion']} 
+											AND year={$inicio} 
+											LIMIT 1");
+										$intensidadData = mysqli_fetch_array($consultaIntensidad, MYSQLI_BOTH);
+										$ihMateria = !empty($intensidadData["ipc_intensidad"]) ? (int)$intensidadData["ipc_intensidad"] : (!empty($cargas["car_ih"]) ? (int)$cargas["car_ih"] : 0);
 									?>
 										<tr style="text-align: center;">
 											<td style="text-align: left; font-weight: bold;"><?= strtoupper($cargas["mat_nombre"]); ?></td>
-											<td><?= $cargas["car_ih"]; ?></td>
+											<td><?= $ihMateria; ?></td>
 											<?php
 											for ($p = 1; $p <= $config[19]; $p++) {
 												$notasPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $id, $cargas["car_id"], $inicio);
 												$notasPeriodoFinal = '';
 												
 												if(!empty($notasPeriodo['bol_nota'])){
-													$notasPeriodoFinal = $notasPeriodo['bol_nota'];
-													if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-														$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasPeriodo['bol_nota']);
+													$notaPeriodoNum = (float)$notasPeriodo['bol_nota'];
+													if($configAA['conf_forma_mostrar_notas'] == CUALITATIVA){
+														$estiloNota = Boletin::obtenerDatosTipoDeNotas($configAA['conf_notas_categoria'], $notaPeriodoNum, $inicio);
 														$notasPeriodoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+													} else {
+														$notasPeriodoFinal = Boletin::notaDecimales($notaPeriodoNum);
 													}
 												}
 												echo '<td>' . $notasPeriodoFinal . '</td>';
 											}
 											?>
-											<td style="font-weight: bold;"><?= $nota; ?></td>
+											<td style="font-weight: bold;"><?= $notaFormateada; ?></td>
 											<td><?= $desempeno['notip_nombre']; ?></td>
 										</tr>
 									<?php
