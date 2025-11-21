@@ -395,7 +395,7 @@ $notasCualitativasCache = [];
 
                 $nota = 0;
                 if(!empty($boletin['promedio'])){
-                    $nota = round($boletin['promedio'], 1);
+                    $nota = (float)$boletin['promedio'];
                 }
 
                 if ($nota < $config[5]) {
@@ -414,6 +414,8 @@ $notasCualitativasCache = [];
                     }
                     $estiloNota = $notasCualitativasCache[$cacheKey];
                     $notaFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                } else {
+                    $notaFinal = Boletin::notaDecimales($nota);
                 }
 
                 ?>
@@ -422,9 +424,9 @@ $notasCualitativasCache = [];
 
                         <td><?= strtoupper($cargas["mat_nombre"]); ?></td>
 
-                        <td><?= $notaFinal; ?></td>
+                        <td style="text-align: center;"><?= $notaFinal; ?></td>
 
-                        <td><?= $cargas["car_ih"] . " (" . $horas[$cargas["car_ih"]] . ")"; ?></td>
+                        <td style="text-align: center;"><?= $cargas["car_ih"] . " (" . $horas[$cargas["car_ih"]] . ")"; ?></td>
 
                     </tr>
 
@@ -447,7 +449,7 @@ $notasCualitativasCache = [];
 
                 $nota = 0;
                 if(!empty($boletin['promedio'])){
-                    $nota = round($boletin['promedio'], 1);
+                    $nota = (float)$boletin['promedio'];
                 }
 
                 $notaFinal = $nota;
@@ -458,6 +460,8 @@ $notasCualitativasCache = [];
                     }
                     $estiloNota = $notasCualitativasCache[$cacheKey];
                     $notaFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                } else {
+                    $notaFinal = Boletin::notaDecimales($nota);
                 }
 
                 ?>
@@ -466,9 +470,9 @@ $notasCualitativasCache = [];
 
                         <td><?= strtoupper($cargas["mat_nombre"]); ?></td>
 
-                        <td><?= $notaFinal; ?></td>
+                        <td style="text-align: center;"><?= $notaFinal; ?></td>
 
-                        <td><?= $cargas["car_ih"] . " (" . $horas[$cargas["car_ih"]] . ")"; ?></td>
+                        <td style="text-align: center;"><?= $cargas["car_ih"] . " (" . $horas[$cargas["car_ih"]] . ")"; ?></td>
 
                     </tr>
 
@@ -532,7 +536,7 @@ $notasCualitativasCache = [];
 
                     <td>ÁREAS/ASIGNATURAS</td>
 
-                    <td>HS</td>
+                    <td style="text-align: center;">HS</td>
 
                     <?php
 
@@ -542,14 +546,14 @@ $notasCualitativasCache = [];
 
                     while ($p <= $config[19]) {
 
-                        echo '<td>' . $p . 'P</td>';
+                        echo '<td style="text-align: center;">' . $p . 'P</td>';
 
                         $p++;
                     }
 
                     ?>
 
-                    <td>DEF</td>
+                    <td style="text-align: center;">DEF</td>
 
                     <td>DESEMPEÑO</td>
 
@@ -569,8 +573,9 @@ $notasCualitativasCache = [];
 
                 $nota = 0;
                 if(!empty($boletin['promedio'])){
-                    $nota = round($boletin['promedio'], 1);
+                    $nota = (float)$boletin['promedio'];
                 }
+                $notaFormateada = Boletin::notaDecimales($nota);
                 
 				if ($nota < $config[5]) {
 					$materiasPerdidas++;
@@ -592,7 +597,7 @@ $notasCualitativasCache = [];
 
                         <td style="text-align:left;"><?= strtoupper($cargas["mat_nombre"]); ?></td>
 
-                        <td><?= $cargas["car_ih"]; ?></td>
+                        <td style="text-align: center;"><?= $cargas["car_ih"]; ?></td>
 
                         <?php
 
@@ -606,26 +611,27 @@ $notasCualitativasCache = [];
 
                             $notasPeriodoFinal = '';
                             if(!empty($notasPeriodo['bol_nota'])){
-                                $notasPeriodoFinal = $notasPeriodo['bol_nota'];
+                                $notaPeriodoNum = (float)$notasPeriodo['bol_nota'];
                                 if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                    $notaPeriodo = round($notasPeriodo['bol_nota'], 1);
-                                    $cacheKey = $config['conf_notas_categoria'] . '_' . $notaPeriodo . '_' . $inicio;
+                                    $cacheKey = $config['conf_notas_categoria'] . '_' . $notaPeriodoNum . '_' . $inicio;
                                     if (!isset($notasCualitativasCache[$cacheKey])) {
-                                        $notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodo, $inicio);
+                                        $notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodoNum, $inicio);
                                     }
                                     $estiloNota = $notasCualitativasCache[$cacheKey];
                                     $notasPeriodoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                } else {
+                                    $notasPeriodoFinal = Boletin::notaDecimales($notaPeriodoNum);
                                 }
                             }
 
-                            echo '<td>' . htmlspecialchars($notasPeriodoFinal) . '</td>';
+                            echo '<td style="text-align: center;">' . htmlspecialchars($notasPeriodoFinal) . '</td>';
 
                             $p++;
                         }
 
                         ?>
 
-                        <td><?= $nota; ?></td>
+                        <td style="text-align: center;"><?= $notaFormateada; ?></td>
 
                         <td><?= !empty($desempeno['notip_nombre']) ? htmlspecialchars($desempeno['notip_nombre']) : 'N/A'; ?></td>
 
@@ -650,8 +656,9 @@ $notasCualitativasCache = [];
 
                 $nota = 0;
                 if(!empty($boletin['promedio'])){
-                    $nota = round($boletin['promedio'], 1);
+                    $nota = (float)$boletin['promedio'];
                 }
+                $notaFormateada = Boletin::notaDecimales($nota);
 
                 $cacheKey = $config['conf_notas_categoria'] . '_' . $nota . '_' . $inicio;
                 if (!isset($notasCualitativasCache[$cacheKey])) {
@@ -665,7 +672,7 @@ $notasCualitativasCache = [];
 
                         <td style="text-align:left;"><?= strtoupper($cargas["mat_nombre"]); ?></td>
 
-                        <td><?= $cargas["car_ih"]; ?></td>
+                        <td style="text-align: center;"><?= $cargas["car_ih"]; ?></td>
 
                         <?php
 
@@ -678,26 +685,27 @@ $notasCualitativasCache = [];
 
                             $notasPeriodoFinal = '';
                             if(!empty($notasPeriodo['bol_nota'])){
-                                $notasPeriodoFinal = $notasPeriodo['bol_nota'];
+                                $notaPeriodoNum = (float)$notasPeriodo['bol_nota'];
                                 if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                    $notaPeriodo = round($notasPeriodo['bol_nota'], 1);
-                                    $cacheKey = $config['conf_notas_categoria'] . '_' . $notaPeriodo . '_' . $inicio;
+                                    $cacheKey = $config['conf_notas_categoria'] . '_' . $notaPeriodoNum . '_' . $inicio;
                                     if (!isset($notasCualitativasCache[$cacheKey])) {
-                                        $notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodo, $inicio);
+                                        $notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodoNum, $inicio);
                                     }
                                     $estiloNota = $notasCualitativasCache[$cacheKey];
                                     $notasPeriodoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                } else {
+                                    $notasPeriodoFinal = Boletin::notaDecimales($notaPeriodoNum);
                                 }
                             }
 
-                            echo '<td>' . htmlspecialchars($notasPeriodoFinal) . '</td>';
+                            echo '<td style="text-align: center;">' . htmlspecialchars($notasPeriodoFinal) . '</td>';
 
                             $p++;
                         }
 
                         ?>
 
-                        <td><?= $nota; ?></td>
+                        <td style="text-align: center;"><?= $notaFormateada; ?></td>
 
                         <td><?= !empty($desempeno['notip_nombre']) ? htmlspecialchars($desempeno['notip_nombre']) : 'N/A'; ?></td>
 

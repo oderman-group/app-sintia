@@ -378,24 +378,16 @@ if (!Modulos::validarPermisoEdicion()) {
 		min-width: 250px;
 	}
 	
-	/* Columna fija - Promedio */
+	/* Columna - Promedio (sin posición fija, al final del scroll) */
 	.css_prom {
-		position: sticky;
-		right: 100px;
-		z-index: 11;
 		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 		font-weight: 700 !important;
 		font-size: 13px !important;
 	}
 	
-	/* Columna fija - Promedio 2 (basado en periodos con nota) */
+	/* Columna - Promedio 2 (basado en periodos con nota, sin posición fija, al final del scroll) */
 	.css_prom2 {
-		position: sticky;
-		right: 0;
-		z-index: 11;
 		background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
-		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 		font-weight: 700 !important;
 		font-size: 13px !important;
 	}
@@ -429,29 +421,21 @@ if (!Modulos::validarPermisoEdicion()) {
 		min-width: 250px;
 	}
 	
-	/* Celdas del cuerpo - Promedio */
+	/* Celdas del cuerpo - Promedio (sin posición fija, al final del scroll) */
 	.scrollable-table tbody td:nth-last-child(2) {
-		position: sticky;
-		right: 100px;
-		z-index: 5;
 		background-color: #fffbeb;
 		font-weight: 700;
 		font-size: 16px;
 		border-left: 3px solid #f59e0b;
-		box-shadow: -3px 0 5px rgba(0,0,0,0.08);
 		transition: all 0.3s ease;
 	}
 	
-	/* Celdas del cuerpo - Promedio 2 (basado en periodos con nota) */
+	/* Celdas del cuerpo - Promedio 2 (basado en periodos con nota, sin posición fija, al final del scroll) */
 	.scrollable-table tbody td:last-child {
-		position: sticky;
-		right: 0;
-		z-index: 5;
 		background-color: #e0f2fe;
 		font-weight: 700;
 		font-size: 16px;
 		border-left: 3px solid #0369a1;
-		box-shadow: -3px 0 5px rgba(0,0,0,0.08);
 		transition: all 0.3s ease;
 	}
 	
@@ -505,40 +489,58 @@ if (!Modulos::validarPermisoEdicion()) {
 		vertical-align: middle;
 	}
 	
-	/* Columnas fijas en footer - Documento */
-	.scrollable-table tfoot td:nth-child(1) {
+	/* Celda combinada del footer (DOC + ESTUDIANTE) con "PROMEDIO" */
+	.scrollable-table tfoot td[colspan="2"] {
 		position: sticky;
 		left: 0;
-		z-index: 11;
+		z-index: 12;
+		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+		box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+		min-width: 350px;
+		width: 350px;
+	}
+	
+	/* Columnas fijas en footer - Documento (si no hay colspan) */
+	.scrollable-table tfoot td:nth-child(1):not([colspan]) {
+		position: sticky;
+		left: 0;
+		z-index: 12;
 		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
 		box-shadow: 3px 0 8px rgba(0,0,0,0.15);
 	}
 	
-	/* Columnas fijas en footer - Estudiante */
-	.scrollable-table tfoot td:nth-child(2) {
+	/* Columnas fijas en footer - Estudiante (si no hay colspan) */
+	.scrollable-table tfoot td:nth-child(2):not([colspan]) {
 		position: sticky;
 		left: 100px;
-		z-index: 11;
+		z-index: 12;
 		background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
 		box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+		min-width: 250px;
+		width: 250px;
+	}
+	
+	/* Primera celda de datos del footer (después de colspan) - evitar solapamiento */
+	.scrollable-table tfoot tr td:not([colspan]):nth-child(1),
+	.scrollable-table tfoot tr td:not([colspan]):nth-child(2) {
+		/* Estas ya están cubiertas arriba */
+	}
+	
+	/* Primera celda de datos del footer (tercera columna) - evitar solapamiento con columnas fijas */
+	.scrollable-table tfoot td:not([colspan]):nth-of-type(3) {
+		position: relative;
+		z-index: 1;
+		min-width: 80px;
 	}
 	
 	/* Columna fija en footer - Promedio */
 	.scrollable-table tfoot td:nth-last-child(2) {
-		position: sticky;
-		right: 100px;
-		z-index: 11;
 		background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
-		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 	}
 	
-	/* Columna fija en footer - Promedio 2 */
+	/* Columna en footer - Promedio 2 (sin posición fija, al final del scroll) */
 	.scrollable-table tfoot td:last-child {
-		position: sticky;
-		right: 0;
-		z-index: 11;
 		background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%) !important;
-		box-shadow: -3px 0 8px rgba(0,0,0,0.15);
 	}
 	
 	/* ==================== INPUTS DE NOTAS ==================== */

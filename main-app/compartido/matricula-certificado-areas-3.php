@@ -30,8 +30,20 @@ if(isset($_REQUEST["hasta"])){$hasta=base64_decode($_REQUEST["hasta"]);}
 $estampilla="";
 if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 
+// Opción para mostrar encabezado (por defecto true, para papel membrete usar false)
+$mostrarEncabezado = true;
+if(isset($_REQUEST["sin_encabezado"])){
+    $sinEncabezadoDecoded = base64_decode($_REQUEST["sin_encabezado"]);
+    if($sinEncabezadoDecoded == "1"){
+        $mostrarEncabezado = false;
+    }
+}
+
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
 $notasCualitativasCache = [];
+
+// Cargar tipos de notas para usar en determinarRango
+$tiposNotas = [];
 ?>
 <!doctype html>
 <html class="no-js" lang="es">
@@ -401,14 +413,16 @@ $notasCualitativasCache = [];
 	</div>
 
 	<div class="container-certificado">
-		<!-- Encabezado institucional -->
-		<div class="header-institucional">
-			EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
-			RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
-			DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
-		</div>
+		<?php if($mostrarEncabezado) { ?>
+			<!-- Encabezado institucional -->
+			<div class="header-institucional">
+				EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
+				RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
+				DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
+			</div>
+		<?php } ?>
 
-		<p class="texto-centrado"><b>C E R T I F I C A</b></p>
+		<p class="texto-centrado" <?= !$mostrarEncabezado ? 'style="margin-top: 40px;"' : ''; ?>><b>C E R T I F I C A</b></p>
 
 		<?php
 		$meses = array(" ", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
@@ -421,6 +435,29 @@ $notasCualitativasCache = [];
 		while ($i <= $restaAgnos) {
 			// Optimización: Obtener datos del estudiante
 			$matricula = Estudiantes::obtenerDatosEstudiante($id, $inicio);
+			
+			// Validar que el estudiante exista
+			if (empty($matricula) || !is_array($matricula)) {
+				?>
+				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
+				</div>
+				<?php
+				$i++;
+				$inicio++;
+				continue;
+			}
+			
+			// Cargar tipos de notas para este año si aún no se han cargado
+			if(empty($tiposNotas)){
+				$cosnultaTiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $inicio);
+				if($cosnultaTiposNotas){
+					while ($row = $cosnultaTiposNotas->fetch_assoc()) {
+						$tiposNotas[] = $row;
+					}
+				}
+			}
+			
 			$nombre = Estudiantes::NombreCompletoDelEstudiante($matricula);
 			$gradoActual = $matricula['mat_grado'];
 			$grupoActual = $matricula['mat_grupo'];
@@ -473,6 +510,16 @@ $notasCualitativasCache = [];
 					while($datosAreas = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)){
 						// Consultar materias del área
 						$consultaMaterias = CargaAcademica::consultaMaterias($config, $config["conf_periodos_maximos"], $matricula['mat_id'], $datosAreas['car_curso'], $datosAreas['car_grupo'], $datosAreas['ar_id'], $inicio);
+						
+						// Calcular promedio del área usando calcularPromedioAreaCompleto (considera ponderado/simple)
+						$periodosArray = [];
+						$periodosMaximos = !empty($config['conf_periodos_maximos']) ? (int)$config['conf_periodos_maximos'] : 4;
+						for($p = 1; $p <= $periodosMaximos; $p++){
+							$periodosArray[] = $p;
+						}
+						$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($config, $matricula['mat_id'], $datosAreas['ar_id'], $periodosArray, $datosAreas['car_curso'], $datosAreas['car_grupo'], $inicio);
+						$notaAreaAcumulada = $promedioAreaCompleto['acumulado'];
+						
 						$notaArea = 0;
 						$notaAreasPeriodos = 0;
 
@@ -505,32 +552,44 @@ $notasCualitativasCache = [];
 								$notaAcomuladoMateria = 0;
 								if ($ultimoPeriodo > 0) {
 									$notaAcomuladoMateria = $notaMateriasPeriodosTotal / $ultimoPeriodo;
-									$notaAcomuladoMateria = round($notaAcomuladoMateria, 1);
 								}
 								
-								if(strlen($notaAcomuladoMateria) === 1 || $notaAcomuladoMateria == 10){
-									$notaAcomuladoMateria = $notaAcomuladoMateria . ".0";
-								}
-								
-								// Optimización: Usar cache para tipos de notas
-								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoMateria . '_' . $inicio;
+								// Obtener desempeño correcto usando obtenerDatosTipoDeNotas (usar valor numérico)
+								$notaAcomuladoMateriaNum = (float)$notaAcomuladoMateria;
+								$notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateriaNum);
+								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoMateriaNum . '_' . $inicio;
 								if (!isset($notasCualitativasCache[$cacheKey])) {
-									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria, $inicio);
+									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateriaNum, $inicio);
 								}
 								$estiloNotaAcomuladoMaterias = $notasCualitativasCache[$cacheKey];
 								
-								if($notaAcomuladoMateria < 10){
-									$estiloNotaAcomuladoMaterias['notip_nombre'] = "Bajo";
+								// Validar que no sea null y tenga el campo notip_nombre
+								if(empty($estiloNotaAcomuladoMaterias) || !is_array($estiloNotaAcomuladoMaterias)){
+									$estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
 								}
-								if($notaAcomuladoMateria > 50){
-									$estiloNotaAcomuladoMaterias['notip_nombre'] = "Superior";
+								if(empty($estiloNotaAcomuladoMaterias['notip_nombre'])){
+									// Si no hay desempeño, usar determinarRango como fallback
+									if(!empty($tiposNotas)){
+										$estiloNotaAcomuladoMaterias = Boletin::determinarRango($notaAcomuladoMateriaNum, $tiposNotas);
+									} else {
+										$estiloNotaAcomuladoMaterias = ['notip_nombre' => 'N/A'];
+									}
 								}
+								
 							?>
 								<tr class="fila-materia">
-									<td style="padding-left: 25px;"><?=$datosMaterias['mat_nombre']?></td>
+									<td style="padding-left: 25px;">
+										<?=$datosMaterias['mat_nombre']?>
+										<?php 
+										// Mostrar porcentaje solo si el usuario es DEVELOPER
+										if($datosUsuarioActual['uss_tipo'] == TIPO_DEV && !empty($datosMaterias['mat_valor'])){
+											echo ' (' . $datosMaterias['mat_valor'] . '%)';
+										}
+										?>
+									</td>
 									<td style="text-align: center;"><?=$datosMaterias['car_ih']?></td>
-									<td style="text-align: center;"><?=$notaAcomuladoMateria?></td>
-									<td style="text-align: center;"><?=$estiloNotaAcomuladoMaterias['notip_nombre']?></td>
+									<td style="text-align: center;"><?=$notaAcomuladoMateriaFormateada?></td>
+									<td style="text-align: center;"><?=!empty($estiloNotaAcomuladoMaterias['notip_nombre']) ? strtoupper($estiloNotaAcomuladoMaterias['notip_nombre']) : 'N/A'?></td>
 								</tr>
 							<?php
 								$ih = "";
@@ -549,55 +608,37 @@ $notasCualitativasCache = [];
 							<td><?=$datosAreas['ar_nombre']?></td>
 							<td style="text-align: center;"><?=$ih?></td>
 							<?php
-								$notaAreasPeriodosTotal = 0;
-								$ultimoPeriodoAreas = $config["conf_periodos_maximos"];
+								// Usar el promedio calculado con calcularPromedioAreaCompleto (ya considera ponderado/simple)
+								$notaAcomuladoArea = $notaAreaAcumulada;
 								
-								for($p = 1; $p <= $config["conf_periodos_maximos"]; $p++){
-									$consultaAreasPeriodos = CargaAcademica::consultaAreasPeriodos($config, $p, $matricula['mat_id'], $datosAreas['ar_id'], $inicio);
-									$datosAreasPeriodos = mysqli_fetch_array($consultaAreasPeriodos, MYSQLI_BOTH);
-									$notaAreasPeriodos = 0;
-									
-									if(!empty($datosAreasPeriodos['notaArea'])) {
-										$notaAreasPeriodos = round($datosAreasPeriodos['notaArea'], 1);
-									}
-									$notaAreasPeriodosTotal += $notaAreasPeriodos;
-
-									if (empty($datosAreasPeriodos['bol_periodo'])){
-										$ultimoPeriodoAreas -= 1;
-									}
-								}
-						
-								// Promedio acumulado del área
-								$notaAcomuladoArea = 0;
-								if ($ultimoPeriodoAreas > 0) {
-									$notaAcomuladoArea = $notaAreasPeriodosTotal / $ultimoPeriodoAreas;
-									$notaAcomuladoArea = round($notaAcomuladoArea, 1);
-								}
-								
-								if(strlen($notaAcomuladoArea) === 1 || $notaAcomuladoArea == 10){
-									$notaAcomuladoArea = $notaAcomuladoArea . ".0";
-								}
-								
-								// Optimización: Usar cache para tipos de notas
-								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoArea . '_' . $inicio;
+								// Obtener desempeño correcto usando obtenerDatosTipoDeNotas (usar valor numérico)
+								$notaAcomuladoAreaNum = (float)$notaAcomuladoArea;
+								$notaAcomuladoAreaFormateada = Boletin::notaDecimales($notaAcomuladoAreaNum);
+								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoAreaNum . '_' . $inicio;
 								if (!isset($notasCualitativasCache[$cacheKey])) {
-									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea, $inicio);
+									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoAreaNum, $inicio);
 								}
 								$estiloNotaAcomuladoAreas = $notasCualitativasCache[$cacheKey];
 								
-								if($notaAcomuladoArea < 10){
-									$estiloNotaAcomuladoAreas['notip_nombre'] = "Bajo";
+								// Validar que no sea null y tenga el campo notip_nombre
+								if(empty($estiloNotaAcomuladoAreas) || !is_array($estiloNotaAcomuladoAreas)){
+									$estiloNotaAcomuladoAreas = ['notip_nombre' => ''];
 								}
-								if($notaAcomuladoArea > 50){
-									$estiloNotaAcomuladoAreas['notip_nombre'] = "Superior";
+								if(empty($estiloNotaAcomuladoAreas['notip_nombre'])){
+									// Si no hay desempeño, usar determinarRango como fallback
+									if(!empty($tiposNotas)){
+										$estiloNotaAcomuladoAreas = Boletin::determinarRango($notaAcomuladoAreaNum, $tiposNotas);
+									} else {
+										$estiloNotaAcomuladoAreas = ['notip_nombre' => 'N/A'];
+									}
 								}
 
-								if($notaAcomuladoArea < $config['conf_nota_minima_aprobar']){
+								if($notaAcomuladoAreaNum < $config['conf_nota_minima_aprobar']){
 									$materiasPerdidas++;
 								}
 							?>
-							<td style="text-align: center;"><?=$notaAcomuladoArea?></td>
-							<td style="text-align: center;"><?=$estiloNotaAcomuladoAreas['notip_nombre']?></td>
+							<td style="text-align: center;"><?=$notaAcomuladoAreaFormateada?></td>
+							<td style="text-align: center;"><?=!empty($estiloNotaAcomuladoAreas['notip_nombre']) ? strtoupper($estiloNotaAcomuladoAreas['notip_nombre']) : 'N/A'?></td>
 						</tr>
 					<?php
 					}
