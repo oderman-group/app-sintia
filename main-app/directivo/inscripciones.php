@@ -805,8 +805,81 @@ if (empty($catalogoGrados)) {
 			}
 		});
 		
+		// Función para deshabilitar controles de filtro
+		function deshabilitarControlesFiltro() {
+			// Deshabilitar campos de entrada
+			$('#filtro_inscripciones_busqueda').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			
+			// Deshabilitar select2 (usando métodos específicos de select2)
+			if ($('#filtro_inscripciones_grado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_grado').prop('disabled', true);
+				$('#filtro_inscripciones_grado').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_grado').prop('disabled', true);
+			}
+			
+			if ($('#filtro_inscripciones_estado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_estado').prop('disabled', true);
+				$('#filtro_inscripciones_estado').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_estado').prop('disabled', true);
+			}
+			
+			if ($('#filtro_inscripciones_anio').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_anio').prop('disabled', true);
+				$('#filtro_inscripciones_anio').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_anio').prop('disabled', true);
+			}
+			
+			// Deshabilitar botones
+			$('#btnBuscarInscripciones').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			$('#btnLimpiarFiltrosInscripciones').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			
+			// Agregar indicador visual
+			$('#btnBuscarInscripciones').html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+		}
+		
+		// Función para habilitar controles de filtro
+		function habilitarControlesFiltro() {
+			// Habilitar campos de entrada
+			$('#filtro_inscripciones_busqueda').prop('disabled', false).css('opacity', '1').css('cursor', 'text');
+			
+			// Habilitar select2 (usando métodos específicos de select2)
+			if ($('#filtro_inscripciones_grado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_grado').prop('disabled', false);
+				$('#filtro_inscripciones_grado').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_grado').prop('disabled', false);
+			}
+			
+			if ($('#filtro_inscripciones_estado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_estado').prop('disabled', false);
+				$('#filtro_inscripciones_estado').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_estado').prop('disabled', false);
+			}
+			
+			if ($('#filtro_inscripciones_anio').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_anio').prop('disabled', false);
+				$('#filtro_inscripciones_anio').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_anio').prop('disabled', false);
+			}
+			
+			// Habilitar botones
+			$('#btnBuscarInscripciones').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+			$('#btnLimpiarFiltrosInscripciones').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+			
+			// Restaurar texto del botón
+			$('#btnBuscarInscripciones').html('<i class="fa fa-search"></i> Buscar');
+		}
+		
 		// Función para aplicar filtros de inscripciones
 		function aplicarFiltrosInscripciones() {
+			// Deshabilitar controles al inicio
+			deshabilitarControlesFiltro();
+			
 			const grados = $('#filtro_inscripciones_grado').val() || [];
 			const estados = $('#filtro_inscripciones_estado').val() || [];
 			const anios = $('#filtro_inscripciones_anio').val() || [];
@@ -835,6 +908,9 @@ if (empty($catalogoGrados)) {
 				dataType: 'json',
 				success: function(response) {
 					console.log('Respuesta del filtro inscripciones:', response);
+					
+					// Habilitar controles al finalizar (éxito o error)
+					habilitarControlesFiltro();
 					
 					if (response.success) {
 						// Insertar el HTML en el tab activo
@@ -876,6 +952,9 @@ if (empty($catalogoGrados)) {
 					console.error('Error AJAX inscripciones:', status, error);
 					console.error('Response:', xhr.responseText);
 					
+					// Habilitar controles al finalizar (error)
+					habilitarControlesFiltro();
+					
 					$.toast({
 						heading: 'Error de Conexión',
 						text: 'No se pudo conectar con el servidor',
@@ -905,12 +984,16 @@ if (empty($catalogoGrados)) {
 		
 		// Limpiar filtros de inscripciones
 		$('#btnLimpiarFiltrosInscripciones').on('click', function() {
+			// Deshabilitar controles mientras se limpia
+			deshabilitarControlesFiltro();
+			
 			$('#filtro_inscripciones_grado').val(null).trigger('change');
 			$('#filtro_inscripciones_estado').val(null).trigger('change');
 			$('#filtro_inscripciones_anio').val(null).trigger('change');
 			$('#filtro_inscripciones_busqueda').val('');
 			
 			// Recargar la página para mostrar todas las inscripciones
+			// Los controles se habilitarán automáticamente al recargar la página
 			location.reload();
 		});
 		
