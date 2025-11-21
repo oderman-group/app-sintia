@@ -27,6 +27,20 @@ $Plataforma = new Plataforma();
 
 // Cache para notas cualitativas (optimización)
 $notasCualitativasCache = [];
+
+// Obtener nombre de la ciudad desde el código (info_ciudad ahora guarda el código)
+if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["info_ciudad"])) {
+	$consultaCiudad = mysqli_query($conexion, "SELECT ciu_nombre, dep_nombre 
+		FROM ".BD_ADMIN.".localidad_ciudades 
+		INNER JOIN ".BD_ADMIN.".localidad_departamentos ON dep_id = ciu_departamento 
+		WHERE ciu_id = " . intval($informacion_inst["info_ciudad"]) . " 
+		LIMIT 1");
+	if ($consultaCiudad && mysqli_num_rows($consultaCiudad) > 0) {
+		$datosCiudad = mysqli_fetch_array($consultaCiudad, MYSQLI_BOTH);
+		$informacion_inst["ciu_nombre"] = $datosCiudad["ciu_nombre"];
+		$informacion_inst["dep_nombre"] = $datosCiudad["dep_nombre"];
+	}
+}
 ?>
 
 <!doctype html>
