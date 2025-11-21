@@ -528,6 +528,17 @@ if($config['conf_doble_buscador'] == 1) {
 			height: 36px;
 		}
 		
+		/* Estilos para Select2 deshabilitado */
+		#editarMasivoEstudiantesModal .select2-container-disabled .select2-selection--single {
+			background-color: #e9ecef !important;
+			cursor: not-allowed !important;
+			opacity: 0.6 !important;
+		}
+		
+		#editarMasivoEstudiantesModal .select2-container-disabled .select2-selection--single .select2-selection__rendered {
+			color: #6c757d !important;
+		}
+		
 		#editarMasivoEstudiantesModal input[type="number"] {
 			height: 38px;
 			padding: 6px 12px;
@@ -1419,7 +1430,98 @@ if($config['conf_doble_buscador'] == 1) {
 						}
 					}
 				});
+				
+				// Validar si alguno de los estudiantes seleccionados tiene notas
+				validarNotasEstudiantes();
 			});
+			
+			// Función para validar si los estudiantes tienen notas
+			function validarNotasEstudiantes() {
+				if (selectedEstudiantes.length === 0) {
+					return;
+				}
+				
+				// Mostrar indicador de carga
+				$('#grado').prop('disabled', true).css('opacity', '0.6');
+				$('#grupo').prop('disabled', true).css('opacity', '0.6');
+				$('#mensajeGradoGrupo').html('<i class="fa fa-spinner fa-spin"></i> Validando registros académicos...').show();
+				
+				$.ajax({
+					url: 'ajax-validar-notas-estudiantes.php',
+					type: 'POST',
+					data: {
+						estudiantes: selectedEstudiantes
+					},
+					dataType: 'json',
+					success: function(response) {
+						if (response.success) {
+							if (response.tieneNotas && !response.puedeModificarGradoGrupo) {
+								// Deshabilitar campos de grado y grupo
+								$('#grado').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+								$('#grupo').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+								
+								// Deshabilitar también el contenedor de Select2
+								$('#grado').next('.select2-container').addClass('select2-container-disabled');
+								$('#grupo').next('.select2-container').addClass('select2-container-disabled');
+								
+								// Forzar actualización de Select2
+								$('#grado').trigger('change.select2');
+								$('#grupo').trigger('change.select2');
+								
+								// Mostrar mensaje informativo
+								var mensaje = '<div class="alert alert-warning mt-2">';
+								mensaje += '<i class="fa fa-exclamation-triangle"></i> ';
+								mensaje += '<strong>Importante:</strong> ';
+								if (response.cantidadConNotas === selectedEstudiantes.length) {
+									mensaje += 'Todos los estudiantes seleccionados tienen notas registradas. ';
+								} else {
+									mensaje += response.cantidadConNotas + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados tienen notas registradas. ';
+								}
+								mensaje += 'Los campos de Grado y Grupo están deshabilitados para proteger los registros académicos existentes.';
+								mensaje += '</div>';
+								$('#mensajeGradoGrupo').html(mensaje).show();
+							} else {
+								// Habilitar campos de grado y grupo
+								$('#grado').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+								$('#grupo').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+								
+								// Habilitar también el contenedor de Select2
+								$('#grado').next('.select2-container').removeClass('select2-container-disabled');
+								$('#grupo').next('.select2-container').removeClass('select2-container-disabled');
+								
+								// Forzar actualización de Select2
+								$('#grado').trigger('change.select2');
+								$('#grupo').trigger('change.select2');
+								
+								// Ocultar o mostrar mensaje según configuración
+								if (response.tieneNotas && response.puedeModificarGradoGrupo) {
+									var mensaje = '<div class="alert alert-warning mt-2">';
+									mensaje += '<i class="fa fa-exclamation-triangle"></i> ';
+									mensaje += '<strong>Advertencia:</strong> Algunos estudiantes tienen notas registradas. ';
+									mensaje += 'Tenga en cuenta que al cambiar de grado o grupo, estas notas podrían perderse.';
+									mensaje += '</div>';
+									$('#mensajeGradoGrupo').html(mensaje).show();
+								} else {
+									$('#mensajeGradoGrupo').hide();
+								}
+							}
+						} else {
+							console.error('Error al validar notas:', response.error);
+							// En caso de error, habilitar los campos por seguridad
+							$('#grado').prop('disabled', false).css('opacity', '1');
+							$('#grupo').prop('disabled', false).css('opacity', '1');
+							$('#mensajeGradoGrupo').hide();
+						}
+					},
+					error: function(xhr, status, error) {
+						console.error('Error AJAX al validar notas:', status, error);
+						// En caso de error, habilitar los campos por seguridad
+						$('#grado').prop('disabled', false).css('opacity', '1');
+						$('#grupo').prop('disabled', false).css('opacity', '1');
+						$('#mensajeGradoGrupo').hide();
+					}
+				});
+			}
 			
 			// Manejar clic del botón de aplicar cambios masivos
 			console.log('Enlazando evento click al botón de aplicar cambios...');
@@ -1655,6 +1757,11 @@ if($config['conf_doble_buscador'] == 1) {
 			// Limpiar selección al cerrar el modal
 			$('#editarMasivoEstudiantesModal').on('hidden.bs.modal', function () {
 				$('.select2-modal').select2('destroy');
+				
+				// Resetear campos de grado y grupo
+				$('#grado').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#grupo').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#mensajeGradoGrupo').hide().html('');
 			});
 			
 		} catch(error) {
@@ -2097,9 +2204,9 @@ if($config['conf_doble_buscador'] == 1) {
 				panel.append(lista);
 				
 				// Posicionar el panel cerca del botón
-				var btnOffset = $(btn).offset();
-				var btnHeight = $(btn).outerHeight();
-				var btnWidth = $(btn).outerWidth();
+				// Usar getBoundingClientRect() para obtener posición relativa al viewport (considera scroll)
+				var btnElement = btn instanceof jQuery ? btn[0] : btn;
+				var btnRect = btnElement.getBoundingClientRect();
 				
 				// Agregar el panel al body temporalmente para obtener sus dimensiones
 				$('body').append(panel);
@@ -2109,28 +2216,35 @@ if($config['conf_doble_buscador'] == 1) {
 				var windowWidth = $(window).width();
 				var windowHeight = $(window).height();
 				
-				// Calcular posición óptima (alineado a la derecha del botón)
-				var topPos = btnOffset.top;
-				var leftPos = btnOffset.left - panelWidth - 5;
+				// Con position: fixed, las coordenadas son relativas al viewport (no al documento)
+				// Por lo tanto, NO sumamos scrollTop/scrollLeft
+				// Calcular posición óptima (alineado a la derecha del botón por defecto)
+				var topPos = btnRect.top;
+				var leftPos = btnRect.right - panelWidth - 5; // A la izquierda del botón
 				
 				// Si se sale por la izquierda, mostrar a la derecha del botón
-				if (leftPos < 20) {
-					leftPos = btnOffset.left + btnWidth + 5;
+				if (btnRect.right - panelWidth < 20) {
+					leftPos = btnRect.right + 5; // A la derecha del botón
 				}
 				
-				// Si se sale por la derecha, alinearlo al borde derecho
+				// Si se sale por la derecha, ajustar al borde derecho con margen
 				if (leftPos + panelWidth > windowWidth - 20) {
 					leftPos = windowWidth - panelWidth - 20;
 				}
 				
 				// Ajustar verticalmente si se sale por abajo
-				if (topPos + panelHeight > windowHeight - 20) {
-					topPos = windowHeight - panelHeight - 20;
+				if (btnRect.bottom + panelHeight > windowHeight - 20) {
+					topPos = btnRect.top - panelHeight; // Mostrar arriba del botón
 				}
 				
 				// Ajustar verticalmente si se sale por arriba
 				if (topPos < 20) {
 					topPos = 20;
+				}
+				
+				// Asegurar que el panel esté alineado verticalmente con el botón si hay espacio
+				if (btnRect.top + panelHeight <= windowHeight - 20) {
+					topPos = btnRect.top;
 				}
 				
 				// Aplicar posición
@@ -2144,6 +2258,11 @@ if($config['conf_doble_buscador'] == 1) {
 				
 				// Cerrar al hacer clic en el overlay
 				overlay.on('click', cerrarPanelAcciones);
+				
+				// Prevenir que el scroll dentro del panel lo cierre
+				panel.on('scroll', function(e) {
+					e.stopPropagation();
+				});
 			};
 			
 			// Función para cerrar el panel
@@ -2155,10 +2274,39 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 			};
 			
-			// Cerrar al hacer scroll
-			$('.table-estudiantes-wrapper, window').on('scroll', function() {
+			// Cerrar al hacer scroll en cualquier contenedor (EXCEPTO dentro del panel)
+			function handleScrollClose(e) {
+				// Verificar si el scroll ocurrió dentro del panel de acciones
+				var target = e.target || e.currentTarget;
+				var $target = $(target);
+				
+				// Si el scroll es dentro del panel o sus elementos hijos, no cerrar
+				if ($target.closest('.acciones-panel').length > 0) {
+					return;
+				}
+				
+				// Si el scroll es en cualquier otro lugar, cerrar el panel
 				if (window.currentAccionesPanel) {
 					cerrarPanelAcciones();
+				}
+			}
+			
+			// Agregar listeners de scroll en múltiples contenedores
+			var scrollContainers = [
+				window,
+				document.body,
+				'.table-estudiantes-wrapper',
+				'.table-responsive',
+				'.dataTables_scrollBody',
+				'#matriculas_result',
+				'.main-content'
+			];
+			
+			scrollContainers.forEach(function(container) {
+				if (typeof container === 'string') {
+					$(container).on('scroll', handleScrollClose);
+				} else {
+					$(container).on('scroll', handleScrollClose);
 				}
 			});
 			
@@ -2304,10 +2452,17 @@ if($config['conf_doble_buscador'] == 1) {
 							<label for="estadoMatricula">Estado de Matrícula</label>
 							<select class="form-control select2-modal" id="estadoMatricula" name="estadoMatricula">
 								<option value="">-- No modificar --</option>
-								<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { ?>
-									<option value="<?= $clave; ?>"><?= $valor; ?></option>
+								<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
+									// Estados EN_INSCRIPCION (5) y CANCELADO (3) no se pueden seleccionar - se gestionan desde otros lugares
+									$esEstadoRestringido = ($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO);
+									$disabledEstado = $esEstadoRestringido ? 'disabled' : '';
+								?>
+									<option value="<?= $clave; ?>" <?= $disabledEstado; ?>><?= $valor; ?></option>
 								<?php } ?>
 							</select>
+							<small class="form-text text-muted">
+								<i class="fa fa-info-circle"></i> Los estados "En inscripción" y "Cancelado" no pueden ser modificados desde la edición masiva. Se gestionan desde otros módulos del sistema.
+							</small>
 						</div>
 						
 						<!-- Estrato -->
@@ -2327,10 +2482,9 @@ if($config['conf_doble_buscador'] == 1) {
 						<hr>
 						
 						<h5><i class="fa fa-graduation-cap"></i> Cambios Académicos</h5>
-						<div class="alert alert-warning">
-							<i class="fa fa-exclamation-triangle"></i>
-							<strong>Importante:</strong> Los cambios de grado y grupo solo se aplicarán a estudiantes que NO tengan notas registradas.
-						</div>
+						
+						<!-- Mensaje dinámico para grado y grupo -->
+						<div id="mensajeGradoGrupo" style="display: none;"></div>
 						
 						<!-- Grado -->
 						<div class="form-group">
