@@ -264,7 +264,7 @@ if (empty($porcentajesPeriodos)) {
 
 	<tr style="font-weight:bold; height:30px; background:<?=$Plataforma->colorUno;?>; color:#FFF;">
 		<th rowspan="2" style="font-size:9px;">Mat</th>
-		<th rowspan="2" style="font-size:9px;">Estudiante</th>
+		<th rowspan="2" style="font-size:9px; min-width: 200px; width: 200px; white-space: nowrap;">Estudiante</th>
 		<?php
 		// OPTIMIZACIÓN: Usar cargas cacheadas
 		foreach($materias as $carga){
@@ -328,7 +328,7 @@ if (empty($porcentajesPeriodos)) {
 	?>
 		<tr style="border-color:<?=$Plataforma->colorDos;?>;">
 			<td style="font-size:9px;"><?=$resultado['mat_matricula'];?></td>
-			<td style="font-size:9px;"><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
+			<td style="font-size:9px; min-width: 200px; width: 200px; white-space: nowrap;"><?=Estudiantes::NombreCompletoDelEstudiante($resultado);?></td>
 			<?php
 			// OPTIMIZACIÓN: Usar cargas cacheadas
 			foreach($materias as $carga){
@@ -509,7 +509,8 @@ if (empty($porcentajesPeriodos)) {
 	<!-- Footer con promedios -->
 	<tfoot>
 		<tr style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-weight: 700;">
-			<td colspan="2" style="text-align: center; border: 2px solid #667eea;">
+			<td style="min-width: 60px; width: 60px;"></td>
+			<td style="text-align: center; border: 2px solid #667eea; min-width: 200px; width: 200px;">
 				<strong>PROMEDIO</strong>
 			</td>
 			<?php 
