@@ -482,41 +482,52 @@ $notasCualitativasCache = [];
 		$i = 1;
 		$inicio = $desde;
 
-		// Optimización: Obtener información del nombre y grados de una sola vez
-		$grados = "";
+		// Obtener datos del estudiante del año actual (donde sabemos que existe)
+		$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $config['conf_agno']);
+		if (empty($estudianteActual) || !is_array($estudianteActual)) {
+			// Si no existe en el año actual, intentar obtener del último año disponible
+			$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $hasta);
+		}
+		
+		// Obtener información del nombre y tipo de educación desde el año actual
 		$nombreEstudiante = "";
 		$educacion = "BÁSICA";
+		if (!empty($estudianteActual) && is_array($estudianteActual)) {
+			$nombreEstudiante = Estudiantes::NombreCompletoDelEstudiante($estudianteActual);
+			
+			// Determinar tipo de educación
+			switch (!empty($estudianteActual["gra_nivel"]) ? $estudianteActual["gra_nivel"] : '') {
+				case PREESCOLAR: 
+					$educacion = "PREESCOLAR"; 
+				break;
+				case BASICA_PRIMARIA: 
+					$educacion = "BÁSICA PRIMARIA"; 
+				break;
+				case BASICA_SECUNDARIA: 
+					$educacion = "BÁSICA SECUNDARIA"; 
+				break;
+				case MEDIA: 
+					$educacion = "MEDIA"; 
+				break;
+				default: 
+					$educacion = "BÁSICA"; 
+				break;
+			}
+		}
 		
+		// Obtener grados de todos los años donde el estudiante existe
+		$grados = "";
+		$i = 1;
+		$inicio = $desde;
 		while ($i <= $restaAgnos) {
 			$estudiante = Estudiantes::obtenerDatosEstudiante($id, $inicio);
 			
-			if ($i == 1) {
-				$nombreEstudiante = Estudiantes::NombreCompletoDelEstudiante($estudiante);
-				
-				// Determinar tipo de educación
-				switch ($estudiante["gra_nivel"]) {
-					case PREESCOLAR: 
-						$educacion = "PREESCOLAR"; 
-					break;
-					case BASICA_PRIMARIA: 
-						$educacion = "BÁSICA PRIMARIA"; 
-					break;
-					case BASICA_SECUNDARIA: 
-						$educacion = "BÁSICA SECUNDARIA"; 
-					break;
-					case MEDIA: 
-						$educacion = "MEDIA"; 
-					break;
-					default: 
-						$educacion = "BÁSICA"; 
-					break;
+			// Solo agregar grados si el estudiante existe en ese año
+			if (!empty($estudiante) && is_array($estudiante)) {
+				if (!empty($grados)) {
+					$grados .= ", ";
 				}
-			}
-
-			if ($i < $restaAgnos) {
-				$grados .= $estudiante["gra_nombre"] . ", ";
-			} else {
-				$grados .= $estudiante["gra_nombre"];
+				$grados .= !empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '';
 			}
 
 			$inicio++;
@@ -537,6 +548,18 @@ $notasCualitativasCache = [];
 		while ($i <= $restaAgnos) {
 			// Obtener datos del estudiante para este año
 			$matricula = Estudiantes::obtenerDatosEstudiante($id, $inicio);
+			
+			// Validar que el estudiante exista en este año
+			if (empty($matricula) || !is_array($matricula)) {
+				?>
+				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
+				</div>
+				<?php
+				$inicio++;
+				$i++;
+				continue;
+			}
 			
 			// Optimización: Obtener configuración del año una sola vez
 			$consultaConfig = mysqli_query($conexion, "SELECT * FROM " . BD_ADMIN . ".configuracion WHERE conf_id_institucion='" . $_SESSION["idInstitucion"] . "' AND conf_agno='" . $inicio . "'");
@@ -848,22 +871,36 @@ $notasCualitativasCache = [];
 					}
 				}
 
-				// Mensaje de promoción
-				$claseMensaje = 'mensaje-promocion';
-				if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-promovido';
-				} else {
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-no-promovido';
+				// Verificar si hay notas en el último periodo configurado
+				$tieneNotasUltimoPeriodo = false;
+				$ultimoPeriodo = $config["conf_periodos_maximos"];
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
+					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
+					if (!empty($notaUltimoPeriodo['bol_nota'])) {
+						$tieneNotasUltimoPeriodo = true;
+						break;
+					}
 				}
 
-				if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
-					$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
-					$claseMensaje = 'mensaje-promocion mensaje-retirado';
-				}
-				?>
-				<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				// Mensaje de promoción (solo si hay notas en el último periodo)
+				if ($tieneNotasUltimoPeriodo) {
+					$claseMensaje = 'mensaje-promocion';
+					if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-promovido';
+					} else {
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-no-promovido';
+					}
+
+					if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
+						$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
+						$claseMensaje = 'mensaje-promocion mensaje-retirado';
+					}
+					?>
+					<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				<?php } ?>
 
 			<?php } else { ?>
 				<!-- AÑO EN CURSO: Mostrar por periodos -->
@@ -1007,22 +1044,36 @@ $notasCualitativasCache = [];
 				</table>
 
 				<?php
-				// Mensaje de promoción para año en curso
-				$claseMensaje = 'mensaje-promocion';
-				if($materiasPerdidas == 0){
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-promovido';
-				} else {
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-no-promovido';
+				// Verificar si hay notas en el último periodo configurado
+				$tieneNotasUltimoPeriodo = false;
+				$ultimoPeriodo = $config["conf_periodos_maximos"];
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
+					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
+					if (!empty($notaUltimoPeriodo['bol_nota'])) {
+						$tieneNotasUltimoPeriodo = true;
+						break;
+					}
 				}
 
-				if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
-					$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
-					$claseMensaje = 'mensaje-promocion mensaje-retirado';
-				}
-				?>
-				<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				// Mensaje de promoción para año en curso (solo si hay notas en el último periodo)
+				if ($tieneNotasUltimoPeriodo) {
+					$claseMensaje = 'mensaje-promocion';
+					if($materiasPerdidas == 0){
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-promovido';
+					} else {
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-no-promovido';
+					}
+
+					if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
+						$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
+						$claseMensaje = 'mensaje-promocion mensaje-retirado';
+					}
+					?>
+					<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				<?php } ?>
 
 			<?php } ?>
 

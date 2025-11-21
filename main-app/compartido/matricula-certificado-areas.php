@@ -485,6 +485,39 @@ $notasCualitativasCache = [];
 		</p>
 
 		<?php
+		// Obtener datos del estudiante del año actual (donde sabemos que existe) para información general
+		$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $config['conf_agno']);
+		if (empty($estudianteActual) || !is_array($estudianteActual)) {
+			// Si no existe en el año actual, intentar obtener del último año disponible
+			$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $hasta);
+		}
+		
+		// Obtener nombre y tipo de educación desde el año actual
+		$nombreEstudiante = "";
+		$educacion = "BÁSICA";
+		if (!empty($estudianteActual) && is_array($estudianteActual)) {
+			$nombreEstudiante = Estudiantes::NombreCompletoDelEstudiante($estudianteActual);
+			
+			// Determinar tipo de educación
+			switch (!empty($estudianteActual["gra_nivel"]) ? $estudianteActual["gra_nivel"] : '') {
+				case PREESCOLAR: 
+					$educacion = "PREESCOLAR"; 
+				break;
+				case BASICA_PRIMARIA: 
+					$educacion = "BÁSICA PRIMARIA"; 
+				break;
+				case BASICA_SECUNDARIA: 
+					$educacion = "BÁSICA SECUNDARIA"; 
+				break;
+				case MEDIA: 
+					$educacion = "MEDIA"; 
+				break;
+				default: 
+					$educacion = "BÁSICA"; 
+				break;
+			}
+		}
+		
 		$restaAgnos = ($hasta - $desde) + 1;
 		$i = 1;
 		$inicio = $desde;
@@ -811,22 +844,36 @@ $notasCualitativasCache = [];
 					}
 				}
 
-				// Mensaje de promoción
-				$claseMensaje = 'mensaje-promocion';
-				if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-promovido';
-				} else {
-					$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
-					$claseMensaje .= ' mensaje-no-promovido';
+				// Verificar si hay notas en el último periodo configurado
+				$tieneNotasUltimoPeriodo = false;
+				$ultimoPeriodo = $config["conf_periodos_maximos"];
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
+					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
+					if (!empty($notaUltimoPeriodo['bol_nota'])) {
+						$tieneNotasUltimoPeriodo = true;
+						break;
+					}
 				}
 
-				if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
-					$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
-					$claseMensaje .= ' mensaje-retirado';
-				}
-				?>
-				<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				// Mensaje de promoción (solo si hay notas en el último periodo)
+				if ($tieneNotasUltimoPeriodo) {
+					$claseMensaje = 'mensaje-promocion';
+					if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-promovido';
+					} else {
+						$msj = "EL (LA) ESTUDIANTE ".$nombreEstudiante." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensaje .= ' mensaje-no-promovido';
+					}
+
+					if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
+						$msj = "EL(LA) ESTUDIANTE ".$nombreEstudiante." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
+						$claseMensaje .= ' mensaje-retirado';
+					}
+					?>
+					<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
+				<?php } ?>
 
 			<?php } else { ?>
 				<!-- AÑO EN CURSO: Mostrar por periodos -->
