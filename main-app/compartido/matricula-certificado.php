@@ -273,42 +273,54 @@ $notasCualitativasCache = [];
 
     $grados = "";
 
+	// Obtener datos del estudiante del año actual (donde sabemos que existe) para información general
+	$estudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"], $config['conf_agno']);
+	if (empty($estudianteActual) || !is_array($estudianteActual)) {
+		// Si no existe en el año actual, intentar obtener del último año disponible
+		$estudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"], $_POST["hasta"]);
+	}
+	
+	// Obtener nombre y tipo de educación desde el año actual
+	$nombre = "";
+	$educacion = "básica";
+	if (!empty($estudianteActual) && is_array($estudianteActual)) {
+		$nombre = Estudiantes::NombreCompletoDelEstudiante($estudianteActual);
+		
+		switch (!empty($estudianteActual["gra_nivel"]) ? $estudianteActual["gra_nivel"] : '') {
+			case PREESCOLAR: 
+				$educacion = "preescolar"; 
+			break;
+			case BASICA_PRIMARIA: 
+				$educacion = "básica primaria"; 
+			break;
+			case BASICA_SECUNDARIA: 
+				$educacion = "básica secundaria"; 
+			break;
+			case MEDIA: 
+				$educacion = "media"; 
+			break;
+			default: 
+				$educacion = "básica"; 
+			break;
+		}
+	}
+
     while ($i <= $restaAgnos) {
 	$estudiante = Estudiantes::obtenerDatosEstudiante($_POST["id"],$inicio);
 	
-	// Validar que el estudiante exista
-	if (empty($estudiante)) {
-	    echo '<div style="text-align: center; padding: 50px; font-family: Arial;">
-	        <h2>Error: Estudiante no encontrado</h2>
-	        <p>No se encontró el estudiante con el ID especificado en el año '.$inicio.'</p>
-	        <button onclick="window.close()">Cerrar</button>
-	    </div>';
-	    exit();
+	// Validar que el estudiante exista en este año
+	if (empty($estudiante) || !is_array($estudiante)) {
+		?>
+		<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+			<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
+		</div>
+		<?php
+		$inicio++;
+		$i++;
+		continue;
 	}
-	
-	$nombre = Estudiantes::NombreCompletoDelEstudiante($estudiante);
 
-	switch (!empty($estudiante["gra_nivel"]) ? $estudiante["gra_nivel"] : '') {
-		case PREESCOLAR: 
-			$educacion = "preescolar"; 
-		break;
-
-		case BASICA_PRIMARIA: 
-			$educacion = "básica primaria"; 
-		break;
-
-		case BASICA_SECUNDARIA: 
-			$educacion = "básica secundaria"; 
-		break;
-
-		case MEDIA: 
-			$educacion = "media"; 
-		break;
-		
-		default: 
-			$educacion = "básica"; 
-		break;
-	}
+	// El tipo de educación ya se obtuvo del año actual, no es necesario recalcularlo
 
         if ($i < $restaAgnos)
 
@@ -509,20 +521,35 @@ $notasCualitativasCache = [];
 
 
             <?php
-                if($materiasPerdidas == 0 || $numNiv >= $materiasPerdidas){
-                    $msj = "<center>EL (LA) ESTUDIANTE ".$nombre." FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>"; 
-                } else {
-                    $msj = "<center>EL (LA) ESTUDIANTE ".$nombre." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";	
-                }
+				// Verificar si hay notas en el último periodo configurado
+				$tieneNotasUltimoPeriodo = false;
+				$ultimoPeriodo = $config["conf_periodos_maximos"];
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
+					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $_POST["id"], $cargaVerificar["car_id"], $inicio);
+					if (!empty($notaUltimoPeriodo['bol_nota'])) {
+						$tieneNotasUltimoPeriodo = true;
+						break;
+					}
+				}
 
-                if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
-                    $msj = "<center>EL(LA) ESTUDIANTE ".$nombre." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO</center>";
-                }
+				// Mensaje de promoción (solo si hay notas en el último periodo)
+				if ($tieneNotasUltimoPeriodo) {
+					if($materiasPerdidas == 0 || $numNiv >= $materiasPerdidas){
+						$msj = "<center>EL (LA) ESTUDIANTE ".$nombre." FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>"; 
+					} else {
+						$msj = "<center>EL (LA) ESTUDIANTE ".$nombre." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";	
+					}
+
+					if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
+						$msj = "<center>EL(LA) ESTUDIANTE ".$nombre." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO</center>";
+					}
+					
+					if ($numNiv == 0) { 
+						?><div align="left" style="font-weight:bold; font-style:italic; font-size:12px; margin-bottom:20px;"><?= $msj; ?></div><?php 
+					}
+				}
             ?>
-
-
-
-            <?php if ($numNiv == 0) { ?><div align="left" style="font-weight:bold; font-style:italic; font-size:12px; margin-bottom:20px;"><?= $msj; ?></div><?php } ?>
 
 
 
@@ -721,18 +748,33 @@ $notasCualitativasCache = [];
 
             </table>
             <?php
-            $msj='';
-            if($materiasPerdidas == 0){
-                $msj = "<center>EL (LA) ESTUDIANTE ".$nombre." FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>"; 
-            } else {
-                $msj = "<center>EL (LA) ESTUDIANTE ".$nombre." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";	
-            }
-    
-            if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
-                $msj = "<center>EL(LA) ESTUDIANTE ".$nombre." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO</center>";
-            }
-            ?>
-            <div align="left" style="font-weight:bold; font-style:italic; font-size:12px; margin-bottom:20px;"><?= $msj; ?></div>
+			// Verificar si hay notas en el último periodo configurado
+			$tieneNotasUltimoPeriodo = false;
+			$ultimoPeriodo = $config["conf_periodos_maximos"];
+			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+			while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
+				$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $_POST["id"], $cargaVerificar["car_id"], $inicio);
+				if (!empty($notaUltimoPeriodo['bol_nota'])) {
+					$tieneNotasUltimoPeriodo = true;
+					break;
+				}
+			}
+
+			// Mensaje de promoción (solo si hay notas en el último periodo)
+			if ($tieneNotasUltimoPeriodo) {
+				$msj='';
+				if($materiasPerdidas == 0){
+					$msj = "<center>EL (LA) ESTUDIANTE ".$nombre." FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>"; 
+				} else {
+					$msj = "<center>EL (LA) ESTUDIANTE ".$nombre." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";	
+				}
+		
+				if ($periodoFinal < $config["conf_periodos_maximos"] && $matricula["mat_estado_matricula"] == CANCELADO) {
+					$msj = "<center>EL(LA) ESTUDIANTE ".$nombre." FUE RETIRADO SIN FINALIZAR AÑO LECTIVO</center>";
+				}
+				?>
+				<div align="left" style="font-weight:bold; font-style:italic; font-size:12px; margin-bottom:20px;"><?= $msj; ?></div>
+			<?php } ?>
 
 
 
