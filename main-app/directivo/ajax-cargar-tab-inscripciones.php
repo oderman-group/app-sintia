@@ -8,12 +8,25 @@ header('Content-Type: application/json');
 
 try {
     $tab = isset($_POST['tab']) ? $_POST['tab'] : 'visibles';
+    $pagina = isset($_POST['pagina']) ? (int)$_POST['pagina'] : 1;
     
     // Construir filtro según el tab
     if ($tab === 'ocultos') {
         $filtro = " AND (asp.asp_oculto=1)";
     } else {
         $filtro = " AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)";
+    }
+    
+    // Calcular paginación
+    $registros = !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20;
+    $inicio = (($pagina - 1) * $registros);
+    $filtroLimite = 'LIMIT '.$inicio.','.$registros;
+    
+    // Contar total de registros (sin LIMIT)
+    $consultaTotal = Estudiantes::listarMatriculasAspirantes($config, $filtro, '', '', []);
+    $numRegistros = mysqli_num_rows($consultaTotal);
+    if ($consultaTotal) {
+        mysqli_free_result($consultaTotal);
     }
     
     // Campos a seleccionar
@@ -25,8 +38,8 @@ try {
         "mat.*", "asp.*"
     ];
     
-    // Consultar inscripciones
-    $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, '', '', $selectSql);
+    // Consultar inscripciones con LIMIT
+    $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, $filtroLimite, '', $selectSql);
     
     $listaInscripciones = [];
     if (!empty($consulta)) {
@@ -75,11 +88,21 @@ try {
     $html = str_replace('style="display: table-row;"', 'style="display: none !important;"', $html);
     $html = str_replace('class="expandable-row"', 'class="expandable-row" style="display: none !important;"', $html);
     
+    // Calcular información de paginación
+    $totalPaginas = ceil($numRegistros / $registros);
+    $fin = ($inicio + $registros);
+    if ($pagina == $totalPaginas) {
+        $fin = $numRegistros;
+    }
+    
     echo json_encode([
         'success' => true,
         'html' => $html,
-        'total' => count($listaInscripciones),
-        'tab' => $tab
+        'total' => $numRegistros,
+        'tab' => $tab,
+        'pagina' => $pagina,
+        'totalPaginas' => $totalPaginas,
+        'mostrando' => ($inicio + 1) . ' a ' . $fin . ' de ' . $numRegistros
     ]);
     
 } catch (Exception $e) {

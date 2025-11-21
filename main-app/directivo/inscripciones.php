@@ -492,13 +492,16 @@ if (empty($catalogoGrados)) {
                                         ?>
                                         
                                         <!-- Tabs para visibles/ocultos -->
+                                        <?php 
+                                        $tabActivo = isset($_GET['tab']) ? $_GET['tab'] : 'visibles';
+                                        ?>
                                         <div class="tabs-inscripciones">
-                                            <button class="tab-inscripcion active" onclick="cambiarTabInscripciones('visibles')" id="tab-visibles">
+                                            <button class="tab-inscripcion <?= $tabActivo === 'visibles' ? 'active' : ''; ?>" onclick="cambiarTabInscripciones('visibles')" id="tab-visibles">
                                                 <i class="fa fa-eye"></i> 
                                                 <span>Visibles</span>
                                                 <span class="badge badge-primary" id="badge-visibles"><?= $totalVisibles; ?></span>
                                             </button>
-                                            <button class="tab-inscripcion" onclick="cambiarTabInscripciones('ocultos')" id="tab-ocultos">
+                                            <button class="tab-inscripcion <?= $tabActivo === 'ocultos' ? 'active' : ''; ?>" onclick="cambiarTabInscripciones('ocultos')" id="tab-ocultos">
                                                 <i class="fa fa-eye-slash"></i> 
                                                 <span>Ocultos</span>
                                                 <span class="badge badge-secondary" id="badge-ocultos"><?= $totalOcultos; ?></span>
@@ -506,9 +509,10 @@ if (empty($catalogoGrados)) {
                                         </div>
                                         
                                         <!-- Contenido tab VISIBLES -->
-                                        <div id="content-visibles" class="tab-content-inscripcion active">
+                                        <div id="content-visibles" class="tab-content-inscripcion <?= $tabActivo === 'visibles' ? 'active' : ''; ?>">
+                                        <?php if ($tabActivo === 'visibles') { ?>
                                         <div class="table">
-                                    		<table  id="example1" class="display" style="width:100%;">
+                                    		<table id="example1" class="table table-striped table-bordered" style="width:100%;">
                                             <div id="gifCarga" class="gif-carga">
 										        <img   alt="Cargando...">
 									        </div>
@@ -531,7 +535,7 @@ if (empty($catalogoGrados)) {
                                                 <tbody id="inscripciones_result">
                                                 <?php
                                                 try {
-                                                    // Filtro por defecto para mostrar solo visibles
+                                                    // Filtro para mostrar solo visibles
                                                     $filtro = ' AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)';
                                                     
                                                     include("includes/consulta-paginacion-inscripciones.php");
@@ -540,9 +544,8 @@ if (empty($catalogoGrados)) {
 																  "asp_documento_acudiente","asp_id","asp_fecha","asp_comprobante","mat_nombres",
 																  "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2", "mat_primer_apellido", "mat_segundo_apellido",
 																  "mat.*", "asp.*"];
-
-                                                    $filtroLimite = '';
                                                     
+                                                    // $filtroLimite ya está definido en consulta-paginacion-inscripciones.php
                                                     $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, $filtroLimite,"",$selectSql);
                                                     
                                                     // Construir array de datos manualmente
@@ -576,13 +579,22 @@ if (empty($catalogoGrados)) {
                                                 </tbody>
                                             </table>
                                             </div>
+                                            
+                                            <!-- Paginación para visibles -->
+                                            <?php 
+                                            if (!empty($numRegistros) && $numRegistros > 0) {
+                                                include("enlaces-paginacion.php");
+                                            }
+                                            ?>
                                         </div>
+                                        <?php } ?>
                                         </div><!-- Cierre content-visibles -->
                                         
                                         <!-- Contenido tab OCULTOS -->
-                                        <div id="content-ocultos" class="tab-content-inscripcion">
+                                        <div id="content-ocultos" class="tab-content-inscripcion <?= $tabActivo === 'ocultos' ? 'active' : ''; ?>">
+                                        <?php if ($tabActivo === 'ocultos') { ?>
                                         <div class="table">
-                                    		<table  id="example2" class="display" style="width:100%;">
+                                    		<table id="example2" class="table table-striped table-bordered" style="width:100%;">
                                             <div id="gifCarga2" class="gif-carga">
 										        <img   alt="Cargando...">
 									        </div>
@@ -605,37 +617,56 @@ if (empty($catalogoGrados)) {
                                                 <tbody id="inscripciones_ocultos_result">
 													<?php
 													try {
-                                                        // Consulta para estudiantes ocultos
-                                                        $filtroOcultos = ' AND (asp.asp_oculto=1)';
-                                                        
-                                                        $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
-                                                                      "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
-                                                                      "gra.gra_nombre",
-                                                                      "mat.*", "asp.*"];
-
-                                                        $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
-                                                        
-                                                        // Construir array de datos para ocultos
-                                                        $dataOcultos = ["data" => []];
-                                                        if (!empty($consultaOcultos)) {
-                                                            while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
-                                                                $dataOcultos["data"][] = $fila;
+                                                            $filtroOcultos = ' AND (asp.asp_oculto=1)';
+                                                            
+                                                            // Aplicar paginación también para ocultos
+                                                            include("includes/consulta-paginacion-inscripciones.php");
+                                                            // Recalcular con el filtro de ocultos
+                                                            $consultaTotalOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos);
+                                                            $numRegistrosOcultos = mysqli_num_rows($consultaTotalOcultos);
+                                                            if ($consultaTotalOcultos) {
+                                                                mysqli_free_result($consultaTotalOcultos);
                                                             }
-                                                        }
-                                                        
-                                                        $contReg = 1;
-                                                        $mostrarOcultos = true; // Contexto de ocultos
-                                                        $data = $dataOcultos; // Usar los datos de ocultos
-                                                        
-                                                        // Verificar si hay datos para mostrar
-                                                        if (empty($data["data"])) {
-                                                            echo '<tr><td colspan="12" class="text-center">
-                                                                <i class="fa fa-info-circle fa-2x text-info"></i><br>
-                                                                <strong>No hay inscripciones ocultas en este momento.</strong>
-                                                            </td></tr>';
-                                                        } else {
-                                                            include(ROOT_PATH."/main-app/class/componentes/result/inscripciones-tbody.php");
-                                                        }
+                                                            // Recalcular inicio y límite
+                                                            $registros = !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20;
+                                                            $pagina = base64_decode($_REQUEST["nume"]);
+                                                            if (is_numeric($pagina) && $pagina > 0){
+                                                                $inicio = (($pagina-1)*$registros);
+                                                            } else {
+                                                                $inicio = 0;
+                                                                $pagina = 1;
+                                                            }
+                                                            $filtroLimite = 'LIMIT '.$inicio.','.$registros;
+                                                            $numRegistros = $numRegistrosOcultos; // Para la paginación
+                                                            
+                                                            $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
+                                                                          "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
+                                                                          "gra.gra_nombre",
+                                                                          "mat.*", "asp.*"];
+
+                                                            $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
+                                                            
+                                                            // Construir array de datos para ocultos
+                                                            $dataOcultos = ["data" => []];
+                                                            if (!empty($consultaOcultos)) {
+                                                                while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
+                                                                    $dataOcultos["data"][] = $fila;
+                                                                }
+                                                            }
+                                                            
+                                                            $contReg = 1;
+                                                            $mostrarOcultos = true; // Contexto de ocultos
+                                                            $data = $dataOcultos; // Usar los datos de ocultos
+                                                            
+                                                            // Verificar si hay datos para mostrar
+                                                            if (empty($data["data"])) {
+                                                                echo '<tr><td colspan="12" class="text-center">
+                                                                    <i class="fa fa-info-circle fa-2x text-info"></i><br>
+                                                                    <strong>No hay inscripciones ocultas en este momento.</strong>
+                                                                </td></tr>';
+                                                            } else {
+                                                                include(ROOT_PATH."/main-app/class/componentes/result/inscripciones-tbody.php");
+                                                            }
                                                     } catch (Exception $e) {
                                                         echo '<tr><td colspan="12" class="text-center text-warning">
                                                             <i class="fa fa-exclamation-triangle fa-2x"></i><br>
@@ -648,9 +679,16 @@ if (empty($catalogoGrados)) {
                                                 </tbody>
                                             </table>
                                             </div>
+                                            
+                                            <!-- Paginación para ocultos -->
+                                            <?php 
+                                            if (!empty($numRegistros) && $numRegistros > 0) {
+                                                include("enlaces-paginacion.php");
+                                            }
+                                            ?>
                                         </div>
+                                        <?php } ?>
                                         </div><!-- Cierre content-ocultos -->
-                      				    <!-- <?php include("enlaces-paginacion.php");?> -->
                                     </div>
                                 </div>
                             </div>
@@ -802,11 +840,7 @@ if (empty($catalogoGrados)) {
 						// Insertar el HTML en el tab activo
 						$(targetId).html(response.html);
 						
-						// Reinicializar DataTables usando la función centralizada
-						var tableId = tabActivo === 'ocultos' ? '#example2' : '#example1';
-						setTimeout(function() {
-							inicializarDataTableInscripciones(tableId);
-						}, 100);
+						// No necesitamos DataTables - la paginación se maneja del lado del servidor
 						
 						// Mensaje dinámico
 						let mensaje = 'Se encontraron ' + response.total + ' inscripción/inscripciones';
@@ -950,138 +984,35 @@ if (empty($catalogoGrados)) {
 		// SISTEMA DE TABS PARA VISIBLES/OCULTOS
 		// ========================================
 		
-		// Obtener configuración de registros por página
-		var registrosPorPagina = <?= !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20; ?>;
+		// NO usar DataTables - Usamos paginación del lado del servidor con PHP
 		
-		// Función para inicializar DataTable con configuración completa
-		function inicializarDataTableInscripciones(tableId) {
-			// Ocultar todas las filas expandibles antes de inicializar
-			$(tableId + ' .expandable-row').hide();
+		// Función para cambiar entre tabs - recarga la página con el tab seleccionado
+		window.cambiarTabInscripciones = function(tab) {
+			// Obtener parámetros actuales de la URL
+			var urlParams = new URLSearchParams(window.location.search);
+			var nuevaUrl = 'inscripciones.php?tab=' + tab;
 			
-			// Verificar si ya existe la instancia de DataTable
-			if ($.fn.DataTable.isDataTable(tableId)) {
-				$(tableId).DataTable().destroy();
+			// Mantener el parámetro de página si existe
+			if (urlParams.has('nume')) {
+				nuevaUrl += '&nume=' + urlParams.get('nume');
 			}
 			
-			// Inicializar DataTable con paginación
-			$(tableId).DataTable({
-				"language": {
-					"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-				},
-				"order": [[1, 'desc']],
-				"pageLength": registrosPorPagina,
-				"lengthMenu": [[10, 20, 30, 50, 100, -1], [10, 20, 30, 50, 100, "Todos"]],
-				"createdRow": function(row, data, dataIndex) {
-					// Excluir filas expandibles del procesamiento de DataTables
-					if ($(row).hasClass('expandable-row')) {
-						$(row).remove();
-						return;
-					}
-				},
-				"drawCallback": function(settings) {
-					// Asegurar que las filas expandibles permanezcan ocultas después de cada redibujado
-					$(tableId + ' .expandable-row').hide();
-				}
-			});
-		}
-		
-		// Inicializar DataTable para la tabla de ocultos
-		$(document).ready(function() {
-			// Esperar un momento para asegurar que el DOM esté completamente cargado
-			setTimeout(function() {
-				inicializarDataTableInscripciones('#example2');
-			}, 100);
-		});
-		
-		// Inicializar DataTable para la tabla de visibles (example1)
-		$(document).ready(function() {
-			// Esperar un momento para asegurar que el DOM esté completamente cargado
-			setTimeout(function() {
-				inicializarDataTableInscripciones('#example1');
-			}, 100);
-		});
-		
-		// Función para cambiar entre tabs con carga asíncrona
-		window.cambiarTabInscripciones = function(tab) {
-			// Remover clase active de todos los tabs
-			$('.tab-inscripcion').removeClass('active');
-			$('.tab-content-inscripcion').removeClass('active');
+			// Mantener otros parámetros de filtros si existen
+			if (urlParams.has('filtro_grado')) {
+				nuevaUrl += '&filtro_grado=' + urlParams.get('filtro_grado');
+			}
+			if (urlParams.has('filtro_estado')) {
+				nuevaUrl += '&filtro_estado=' + urlParams.get('filtro_estado');
+			}
+			if (urlParams.has('filtro_anio')) {
+				nuevaUrl += '&filtro_anio=' + urlParams.get('filtro_anio');
+			}
+			if (urlParams.has('busqueda')) {
+				nuevaUrl += '&busqueda=' + encodeURIComponent(urlParams.get('busqueda'));
+			}
 			
-			// Activar el tab seleccionado
-			$('#tab-' + tab).addClass('active');
-			$('#content-' + tab).addClass('active');
-			
-			// Determinar qué tbody actualizar
-			const targetId = tab === 'ocultos' ? '#inscripciones_ocultos_result' : '#inscripciones_result';
-			
-			// Mostrar loader
-			$(targetId).html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
-			
-			// Cargar datos del tab vía AJAX
-			$.ajax({
-				url: 'ajax-cargar-tab-inscripciones.php',
-				type: 'POST',
-				data: { tab: tab },
-				dataType: 'json',
-				success: function(response) {
-					if (response.success) {
-						// Insertar el HTML
-						$(targetId).html(response.html);
-						
-						// Reinicializar DataTables usando la función centralizada
-						var tableId = tab === 'ocultos' ? '#example2' : '#example1';
-						setTimeout(function() {
-							inicializarDataTableInscripciones(tableId);
-						}, 100);
-						
-						// Actualizar el contador del badge
-						if (tab === 'visibles') {
-							$('#badge-visibles').text(response.total);
-						} else {
-							$('#badge-ocultos').text(response.total);
-						}
-						
-						// Toast informativo
-						var mensaje = tab === 'visibles' 
-							? 'Mostrando ' + response.total + ' inscripción(es) visible(s)' 
-							: 'Mostrando ' + response.total + ' inscripción(es) oculta(s)';
-						
-						$.toast({
-							heading: 'Tab Cargado',
-							text: mensaje,
-							position: 'top-right',
-							loaderBg: '#667eea',
-							icon: 'info',
-							hideAfter: 2000
-						});
-					} else {
-						console.error('Error al cargar tab:', response.error);
-						$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error al cargar los datos</td></tr>');
-						
-						$.toast({
-							heading: 'Error',
-							text: 'No se pudieron cargar los datos',
-							position: 'top-right',
-							loaderBg: '#bf441d',
-							icon: 'error',
-							hideAfter: 3000
-						});
-					}
-				},
-				error: function(xhr, status, error) {
-					console.error('Error AJAX al cambiar tab:', status, error);
-					$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error de conexión</td></tr>');
-					
-					$.toast({
-						heading: 'Error de Conexión',
-						text: 'No se pudo conectar con el servidor',
-						position: 'top-right',
-						loaderBg: '#bf441d',
-						icon: 'error',
-						hideAfter: 3000
-					});
-				}
-			});
+			// Recargar la página con el nuevo tab
+			window.location.href = nuevaUrl;
 		};
 		
 		// Función para desocultar inscripción

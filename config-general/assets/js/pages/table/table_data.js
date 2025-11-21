@@ -13,10 +13,8 @@ $(document).ready(function() {
         $('#example1').DataTable();
     }
     
-    // No inicializar #example2 si está en la página de inscripciones (se inicializa manualmente)
-    if (isInscripcionesPage && $.fn.DataTable.isDataTable('#example2')) {
-        // Ya está inicializado manualmente, no hacer nada
-    } else if (!isInscripcionesPage && !$.fn.DataTable.isDataTable('#example2')) {
+    // No inicializar #example2 si está en la página de inscripciones
+    if (!isInscripcionesPage && !$.fn.DataTable.isDataTable('#example2')) {
         // Solo inicializar #example2 si NO está en inscripciones
         var table = $('#example2').DataTable( {
             "scrollY": "200px",
@@ -27,11 +25,6 @@ $(document).ready(function() {
     if (!$.fn.DataTable.isDataTable('#tablaItems')) {
         $('#tablaItems').DataTable();
     }
-    
-    var table = $('#example2').DataTable( {
-        "scrollY": "200px",
-        "paging": false
-    } );
  
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();
