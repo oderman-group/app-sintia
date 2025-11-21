@@ -548,11 +548,17 @@ if (empty($catalogoGrados)) {
                                                     // $filtroLimite ya está definido en consulta-paginacion-inscripciones.php
                                                     $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, $filtroLimite,"",$selectSql);
                                                     
-                                                    // Construir array de datos manualmente
+                                                    // Construir array de datos manualmente, eliminando duplicados por asp_id
                                                     $data = ["data" => []];
+                                                    $aspIdsVistos = []; // Para evitar duplicados
                                                     if (!empty($consulta)) {
                                                         while ($fila = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-                                                            $data["data"][] = $fila;
+                                                            $aspId = $fila['asp_id'] ?? null;
+                                                            // Solo agregar si no hemos visto este asp_id antes
+                                                            if ($aspId && !in_array($aspId, $aspIdsVistos)) {
+                                                                $aspIdsVistos[] = $aspId;
+                                                                $data["data"][] = $fila;
+                                                            }
                                                         }
                                                     }
 													
@@ -646,11 +652,17 @@ if (empty($catalogoGrados)) {
 
                                                             $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
                                                             
-                                                            // Construir array de datos para ocultos
+                                                            // Construir array de datos para ocultos, eliminando duplicados por asp_id
                                                             $dataOcultos = ["data" => []];
+                                                            $aspIdsVistosOcultos = []; // Para evitar duplicados
                                                             if (!empty($consultaOcultos)) {
                                                                 while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
-                                                                    $dataOcultos["data"][] = $fila;
+                                                                    $aspId = $fila['asp_id'] ?? null;
+                                                                    // Solo agregar si no hemos visto este asp_id antes
+                                                                    if ($aspId && !in_array($aspId, $aspIdsVistosOcultos)) {
+                                                                        $aspIdsVistosOcultos[] = $aspId;
+                                                                        $dataOcultos["data"][] = $fila;
+                                                                    }
                                                                 }
                                                             }
                                                             

@@ -42,9 +42,15 @@ try {
     $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, $filtroLimite, '', $selectSql);
     
     $listaInscripciones = [];
+    $aspIdsVistos = []; // Para evitar duplicados
     if (!empty($consulta)) {
         while ($fila = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-            $listaInscripciones[] = $fila;
+            $aspId = $fila['asp_id'] ?? null;
+            // Solo agregar si no hemos visto este asp_id antes
+            if ($aspId && !in_array($aspId, $aspIdsVistos)) {
+                $aspIdsVistos[] = $aspId;
+                $listaInscripciones[] = $fila;
+            }
         }
     }
     

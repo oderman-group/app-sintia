@@ -1514,7 +1514,7 @@ class Estudiantes {
             $stringSelect .= ", gra.gra_nombre as gra_nombre";
         }
 
-        $sql = " SELECT 
+        $sql = " SELECT DISTINCT
                  $stringSelect
                  FROM ".BD_ACADEMICA.".academico_matriculas mat
 
@@ -1525,6 +1525,7 @@ class Estudiantes {
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
                  ON gra.gra_id = asp.asp_grado 
                  AND gra.institucion = mat.institucion
+                 AND gra.year = mat.year
 
                  WHERE mat.mat_estado_matricula = ".EN_INSCRIPCION." 
                  AND mat.institucion = ? 
