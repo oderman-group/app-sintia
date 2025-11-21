@@ -233,37 +233,63 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                         <?php
                         }
                         $promedioMateria = round($promedioMateria / ($j - 1), 1);
-                        $promedioMateriaFinal = $promedioMateria;
+                        $promedioMateriaFinal = $promedioMateria; // Mantener la definitiva normal del año
+                        
+                        // Consultar nivelación/habilitación
                         $consultaNivelacion = Calificaciones::nivelacionEstudianteCarga($conexion, $config, $datosUsr['mat_id'], $datosCargas['car_id'], $year);
                         $nivelacion = mysqli_fetch_array($consultaNivelacion, MYSQLI_BOTH);
 
-                        // SI PERDIÓ LA MATERIA A FIN DE AÑO
+                        // Contar materias perdidas (sin considerar habilitación)
                         if ($promedioMateria < $config["conf_nota_minima_aprobar"]) {
-                            if (!empty($nivelacion['niv_definitiva']) && $nivelacion['niv_definitiva'] >= $config["conf_nota_minima_aprobar"]) {
-                                $promedioMateriaFinal = $nivelacion['niv_definitiva'];
-                            } else {
+                            if (empty($nivelacion['niv_definitiva']) || $nivelacion['niv_definitiva'] < $config["conf_nota_minima_aprobar"]) {
                                 $materiasPerdidas++;
                             }
                         }
 
+                        // Formatear la definitiva normal (sin habilitación)
                         $promediosMateriaEstiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioMateriaFinal, $year);
 
-                            if($promedioMateriaFinal == '0'){$promedioMateriaFinal='0.0';}
-                            if($promedioMateriaFinal == 1){$promedioMateriaFinal='1.0';}
-                            if($promedioMateriaFinal == 2){$promedioMateriaFinal='2.0';}
-                            if($promedioMateriaFinal == 3){$promedioMateriaFinal='3.0';}
-                            if($promedioMateriaFinal == 4){$promedioMateriaFinal='4.0';}
-                            if($promedioMateriaFinal == 5){$promedioMateriaFinal='5.0';}
+                        if($promedioMateriaFinal == '0'){$promedioMateriaFinal='0.0';}
+                        if($promedioMateriaFinal == 1){$promedioMateriaFinal='1.0';}
+                        if($promedioMateriaFinal == 2){$promedioMateriaFinal='2.0';}
+                        if($promedioMateriaFinal == 3){$promedioMateriaFinal='3.0';}
+                        if($promedioMateriaFinal == 4){$promedioMateriaFinal='4.0';}
+                        if($promedioMateriaFinal == 5){$promedioMateriaFinal='5.0';}
 
-                            $promedioMateriaTotal=$promedioMateriaFinal;
+                        $promedioMateriaTotal=$promedioMateriaFinal;
+                        if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+                            $promedioMateriaTotal= !empty($promediosMateriaEstiloNota['notip_nombre']) ? $promediosMateriaEstiloNota['notip_nombre'] : "";
+                        }
+
+                        // Preparar nota de habilitación para la columna HAB
+                        $notaHabilitacion = "";
+                        $notaHabilitacionFormateada = "";
+                        if (!empty($nivelacion['niv_definitiva'])) {
+                            $notaHabilitacion = (float)$nivelacion['niv_definitiva'];
+                            
+                            // Formatear según el mismo estilo que se usa en el archivo
+                            $notaHabilitacionRedondeada = round($notaHabilitacion, 1);
+                            
+                            if($notaHabilitacionRedondeada == '0'){$notaHabilitacionRedondeada='0.0';}
+                            if($notaHabilitacionRedondeada == 1){$notaHabilitacionRedondeada='1.0';}
+                            if($notaHabilitacionRedondeada == 2){$notaHabilitacionRedondeada='2.0';}
+                            if($notaHabilitacionRedondeada == 3){$notaHabilitacionRedondeada='3.0';}
+                            if($notaHabilitacionRedondeada == 4){$notaHabilitacionRedondeada='4.0';}
+                            if($notaHabilitacionRedondeada == 5){$notaHabilitacionRedondeada='5.0';}
+                            
+                            $notaHabilitacionFormateada = $notaHabilitacionRedondeada;
+                            
+                            // Si es cualitativa, obtener el desempeño
                             if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                              $promedioMateriaTotal= !empty($promediosMateriaEstiloNota['notip_nombre']) ? $promediosMateriaEstiloNota['notip_nombre'] : "";
+                                $habilitacionEstiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaHabilitacion, $year);
+                                $notaHabilitacionFormateada = !empty($habilitacionEstiloNota['notip_nombre']) ? $habilitacionEstiloNota['notip_nombre'] : "";
                             }
+                        }
 
                         ?>
                         <td align="center"><?= $promedioMateriaTotal; ?></td>
                         <td align="center"><img src="../files/iconos/<?= $promediosMateriaEstiloNota['notip_imagen']; ?>" width="15" height="15"></td>
-                        <td align="center">&nbsp;</td>
+                        <td align="center"><?= !empty($notaHabilitacionFormateada) ? $notaHabilitacionFormateada : "&nbsp;"; ?></td>
                     </tr>
                 </tbody>
             <?php
