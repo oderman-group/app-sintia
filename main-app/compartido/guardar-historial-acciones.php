@@ -1,6 +1,6 @@
 <?php
 $ip=$_SERVER["REMOTE_ADDR"];
-error_log("Entrando al inicio de la pagina que guarda el historial de acciones IP: ".$ip);
+
 //$paisIP=getCountryFromIP($ip);
 $tiempo_final = microtime(true);
 $tiempo = $tiempo_final - $tiempo_inicial;
@@ -64,7 +64,6 @@ try {
         '".$tiempoMostrar."', 
         '".$idLogin."'
     )");
-    error_log("Guardó el registro de historial en la base de datos: ".$_SESSION['id']." - ".$_SERVER['PHP_SELF'] . " - ".$idPaginaInterna);
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }
