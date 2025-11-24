@@ -112,7 +112,6 @@ if (!empty($grado) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
     }
     include("../compartido/agrupar-datos-boletin-periodos-mejorado.php");
 }
-$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
 
 
 
@@ -387,11 +386,25 @@ if ($grado >= 12 && $grado <= 15) {
                     <tr>
                         <td align="center">
                             <?php
+                            // Obtener datos del rector
                             $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
                             $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-                            if (!empty($rector["uss_firma"]) && file_exists(ROOT_PATH . '/main-app/files/fotos/' . $rector['uss_firma'])) {
-                                echo '<img src="../files/fotos/' . $rector["uss_firma"] . '" width="100"><br>';
+                            
+                            // Verificar y mostrar la firma
+                            if (!empty($rector["uss_firma"])) {
+                                $rutaArchivo = ROOT_PATH . '/main-app/files/fotos/' . $rector['uss_firma'];
+                                // Verificar que el archivo existe físicamente
+                                if (file_exists($rutaArchivo)) {
+                                    // Usar ruta relativa como el logo (debe funcionar igual)
+                                    echo '<img src="../files/fotos/' . htmlspecialchars($rector["uss_firma"], ENT_QUOTES) . '" width="100" style="max-height: 80px; object-fit: contain;"><br>';
+                                } else {
+                                    // Si el archivo no existe, mostrar espacios
+                                    echo '<p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>';
+                                }
                             } else {
+                                // Si no hay firma, mostrar espacios
                                 echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
                                 <p>&nbsp;</p>';
