@@ -385,19 +385,20 @@ if ($grado >= 12 && $grado <= 15) {
                 <!--******FIRMAS******-->
                 <table style="text-align:center; font-size:10px;">
                     <tr>
-                        <td align="left">
+                        <td align="center">
                             <?php
                             $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
                             $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
                             if (!empty($rector["uss_firma"]) && file_exists(ROOT_PATH . '/main-app/files/fotos/' . $rector['uss_firma'])) {
-                                echo '<div align="center"> <img src="../files/fotos/' . $rector["uss_firma"] . '" width="100"> </div> ';
+                                echo '<img src="../files/fotos/' . $rector["uss_firma"] . '" width="100"><br>';
                             } else {
                                 echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
                                 <p>&nbsp;</p>';
                             }
                             ?>
-                            </p>_________________________________<br>                           
+                            _________________________________<br>
+                            <p>&nbsp;</p>
                             <?= $nombreRector ?><br>
                             Rector(a)
                         </td>
