@@ -218,6 +218,9 @@ if (!empty($_GET["id"])) {
     $id = base64_decode($_GET["id"]);
 }
 
+// Definir ID único para el modal
+$idModal = !empty($id) ? 'retirar-estudiante-' . md5($id) : 'retirar-estudiante-default';
+
 $e = Estudiantes::traerDatosEstudiantesretirados($conexion, $config, $id);
 
 $nombreBoton = 'Restaurar Matrícula';

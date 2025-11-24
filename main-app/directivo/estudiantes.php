@@ -1417,6 +1417,9 @@ if($config['conf_doble_buscador'] == 1) {
 			
 			// Inicializar Select2 DESPUÉS de que el modal esté completamente visible
 			$('#editarMasivoEstudiantesModal').on('shown.bs.modal', function () {
+				// Primero, asegurar que "No matriculado" esté habilitado inicialmente
+				$('#estadoMatricula option[value="4"]').prop('disabled', false);
+				
 				$('.select2-modal').select2({
 					width: '100%',
 					placeholder: 'Seleccionar...',
@@ -1431,11 +1434,11 @@ if($config['conf_doble_buscador'] == 1) {
 					}
 				});
 				
-				// Validar si alguno de los estudiantes seleccionados tiene notas
+				// Validar si alguno de los estudiantes seleccionados tiene notas y estados
 				validarNotasEstudiantes();
 			});
 			
-			// Función para validar si los estudiantes tienen notas
+			// Función para validar si los estudiantes tienen notas y estados
 			function validarNotasEstudiantes() {
 				if (selectedEstudiantes.length === 0) {
 					return;
@@ -1455,6 +1458,7 @@ if($config['conf_doble_buscador'] == 1) {
 					dataType: 'json',
 					success: function(response) {
 						if (response.success) {
+							// Validar grado y grupo
 							if (response.tieneNotas && !response.puedeModificarGradoGrupo) {
 								// Deshabilitar campos de grado y grupo
 								$('#grado').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
@@ -1504,6 +1508,145 @@ if($config['conf_doble_buscador'] == 1) {
 								} else {
 									$('#mensajeGradoGrupo').hide();
 								}
+							}
+							
+							// Validar estados de matrícula según las reglas centralizadas
+							// Reglas:
+							// - En Inscripción (5): No puede modificarse
+							// - Asistente (2): Solo puede cambiar a Matriculado (1)
+							// - No matriculado (4): Solo puede cambiar a Matriculado (1)
+							// - Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2)
+							// - Cancelado (3): Se gestiona automáticamente
+							
+							// Obtener estados únicos de los estudiantes seleccionados
+							var estadosUnicos = {};
+							if (response.estadosEstudiantes) {
+								Object.keys(response.estadosEstudiantes).forEach(function(idEst) {
+									var estado = response.estadosEstudiantes[idEst];
+									if (!estadosUnicos[estado]) {
+										estadosUnicos[estado] = 0;
+									}
+									estadosUnicos[estado]++;
+								});
+							}
+							
+							// Determinar qué opciones deshabilitar
+							var opcionesDeshabilitar = [];
+							var mensajesValidacion = [];
+							
+							// Si hay estudiantes en "En inscripción" (5), no se puede cambiar ningún estado
+							if (estadosUnicos[5]) {
+								// Deshabilitar todos los estados excepto "En inscripción" para esos estudiantes
+								opcionesDeshabilitar = [1, 2, 3, 4]; // Todos excepto 5
+								mensajesValidacion.push('Algunos estudiantes están en estado "En inscripción" y no pueden cambiar de estado.');
+							} else {
+								// Si hay estudiantes "Matriculados" (1), deshabilitar "No matriculado" (4) y "Asistente" (2)
+								if (response.tieneMatriculados) {
+									opcionesDeshabilitar.push(2, 4); // Asistente y No matriculado
+								}
+								
+								// Si hay estudiantes "Asistentes" (2), solo permitir "Matriculado" (1)
+								if (response.tieneAsistentes) {
+									// Agregar todos los estados excepto Matriculado (1) si no están ya en la lista
+									var estadosParaAsistentes = [2, 3, 4, 5];
+									estadosParaAsistentes.forEach(function(estado) {
+										if (opcionesDeshabilitar.indexOf(estado) === -1) {
+											opcionesDeshabilitar.push(estado);
+										}
+									});
+									mensajesValidacion.push('Estudiantes en estado "Asistente" solo pueden cambiar a "Matriculado".');
+								}
+								
+								// Si hay estudiantes "No matriculados" (4), solo permitir "Matriculado" (1)
+								if (response.tieneNoMatriculados) {
+									// Agregar todos los estados excepto Matriculado (1) si no están ya en la lista
+									var estadosParaNoMatriculados = [2, 3, 4, 5];
+									estadosParaNoMatriculados.forEach(function(estado) {
+										if (opcionesDeshabilitar.indexOf(estado) === -1) {
+											opcionesDeshabilitar.push(estado);
+										}
+									});
+									if (!response.tieneAsistentes) { // Solo agregar mensaje si no se agregó ya por Asistentes
+										mensajesValidacion.push('Estudiantes en estado "No matriculado" solo pueden cambiar a "Matriculado".');
+									}
+								}
+							}
+							
+							// Eliminar duplicados
+							opcionesDeshabilitar = [...new Set(opcionesDeshabilitar)];
+							
+							// Aplicar deshabilitación a las opciones
+							var currentVal = $('#estadoMatricula').val();
+							$('#estadoMatricula option').each(function() {
+								var optionVal = parseInt($(this).val());
+								if (optionVal && opcionesDeshabilitar.indexOf(optionVal) !== -1) {
+									$(this).prop('disabled', true);
+									// Si estaba seleccionado, limpiarlo
+									if (currentVal == optionVal) {
+										currentVal = '';
+									}
+								} else if (optionVal) {
+									// Habilitar las opciones que no están en la lista de deshabilitadas
+									$(this).prop('disabled', false);
+								}
+							});
+							
+							// Actualizar Select2
+							$('#estadoMatricula').select2('destroy');
+							$('#estadoMatricula').select2({
+								width: '100%',
+								placeholder: 'Seleccionar...',
+								allowClear: true,
+								language: {
+									noResults: function() {
+										return "No se encontraron resultados";
+									},
+									searching: function() {
+										return "Buscando...";
+									}
+								}
+							});
+							
+							// Restaurar valor si es válido
+							if (currentVal && opcionesDeshabilitar.indexOf(parseInt(currentVal)) === -1) {
+								$('#estadoMatricula').val(currentVal).trigger('change');
+							} else {
+								$('#estadoMatricula').val('').trigger('change');
+							}
+							
+							// Mostrar mensajes informativos
+							if (mensajesValidacion.length > 0 || response.tieneMatriculados) {
+								var mensajeEstado = '<div class="alert alert-info mt-2" id="mensajeEstadoMatricula">';
+								mensajeEstado += '<i class="fa fa-info-circle"></i> ';
+								mensajeEstado += '<strong>Nota:</strong> ';
+								
+								if (mensajesValidacion.length > 0) {
+									mensajeEstado += mensajesValidacion.join(' ');
+								}
+								
+								if (response.tieneMatriculados) {
+									if (mensajesValidacion.length > 0) {
+										mensajeEstado += '<br>';
+									}
+									if (response.cantidadMatriculados === selectedEstudiantes.length) {
+										mensajeEstado += 'Todos los estudiantes seleccionados están en estado "Matriculado". ';
+									} else {
+										mensajeEstado += response.cantidadMatriculados + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados están en estado "Matriculado". ';
+									}
+									mensajeEstado += 'Las opciones "Asistente" y "No matriculado" aparecen deshabilitadas (solo lectura) para estudiantes que ya están matriculados.';
+								}
+								
+								mensajeEstado += '</div>';
+								
+								// Agregar o actualizar mensaje
+								if ($('#mensajeEstadoMatricula').length) {
+									$('#mensajeEstadoMatricula').replaceWith(mensajeEstado);
+								} else {
+									$('#estadoMatricula').closest('.form-group').after(mensajeEstado);
+								}
+							} else {
+								// Ocultar mensaje si no hay restricciones
+								$('#mensajeEstadoMatricula').remove();
 							}
 						} else {
 							console.error('Error al validar notas:', response.error);
@@ -1762,6 +1905,11 @@ if($config['conf_doble_buscador'] == 1) {
 				$('#grado').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
 				$('#grupo').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
 				$('#mensajeGradoGrupo').hide().html('');
+				
+				// Resetear estado de matrícula: habilitar "No matriculado" y limpiar selección
+				$('#estadoMatricula').val('');
+				$('#estadoMatricula option[value="4"]').prop('disabled', false);
+				$('#mensajeEstadoMatricula').remove();
 			});
 			
 		} catch(error) {
@@ -2461,7 +2609,7 @@ if($config['conf_doble_buscador'] == 1) {
 								<?php } ?>
 							</select>
 							<small class="form-text text-muted">
-								<i class="fa fa-info-circle"></i> Los estados "En inscripción" y "Cancelado" no pueden ser modificados desde la edición masiva. Se gestionan desde otros módulos del sistema.
+								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".
 							</small>
 						</div>
 						
