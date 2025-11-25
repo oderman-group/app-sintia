@@ -80,7 +80,7 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
         }
     }
     
-    // Obtener cada parte del nombre para búsqueda individual
+    // Obtener cada parte del nombre para búsqueda individual (en minúsculas para búsqueda)
     $primerNombre = !empty($estudiante['mat_nombres']) ? strtolower(trim($estudiante['mat_nombres'])) : '';
     $segundoNombre = !empty($estudiante['mat_nombre2']) ? strtolower(trim($estudiante['mat_nombre2'])) : '';
     $primerApellido = !empty($estudiante['mat_primer_apellido']) ? strtolower(trim($estudiante['mat_primer_apellido'])) : '';
@@ -337,12 +337,12 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                     <?php foreach($estudiantesConDatos as $est): ?>
                                         <div class="estudiante-card <?= $est['asociado'] ? 'asociado' : '' ?>" 
                                              data-estudiante-id="<?= $est['mat_id'] ?>"
-                                             data-nombre="<?= strtolower($est['nombre']) ?>"
+                                             data-nombre="<?= htmlspecialchars(strtolower($est['nombre']), ENT_QUOTES, 'UTF-8') ?>"
                                              data-primer-nombre="<?= htmlspecialchars($est['primer_nombre'], ENT_QUOTES, 'UTF-8') ?>"
                                              data-segundo-nombre="<?= htmlspecialchars($est['segundo_nombre'], ENT_QUOTES, 'UTF-8') ?>"
                                              data-primer-apellido="<?= htmlspecialchars($est['primer_apellido'], ENT_QUOTES, 'UTF-8') ?>"
                                              data-segundo-apellido="<?= htmlspecialchars($est['segundo_apellido'], ENT_QUOTES, 'UTF-8') ?>"
-                                             data-documento="<?= strtolower($est['documento']) ?>"
+                                             data-documento="<?= htmlspecialchars(strtolower($est['documento']), ENT_QUOTES, 'UTF-8') ?>"
                                              data-grado="<?= $est['grado'] ?>"
                                              data-grupo="<?= $est['grupo'] ?>"
                                              style="<?= !$est['asociado'] ? 'display: none;' : '' ?>">
@@ -574,15 +574,50 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                         mostrar = true;
                                         
                                         // Filtro de búsqueda - buscar en todas las partes del nombre
+                                        // Dividir la búsqueda en palabras individuales
                                         if (busqueda) {
-                                            const coincideNombre = nombre.includes(busqueda) ||
-                                                                   primerNombre.includes(busqueda) ||
-                                                                   segundoNombre.includes(busqueda) ||
-                                                                   primerApellido.includes(busqueda) ||
-                                                                   segundoApellido.includes(busqueda) ||
-                                                                   documento.includes(busqueda);
+                                            const palabrasBusqueda = busqueda.split(/\s+/).filter(p => p.length > 0);
                                             
-                                            if (!coincideNombre) {
+                                            // Crear un array con todas las partes del nombre para buscar
+                                            const todasLasPartes = [
+                                                nombre,
+                                                primerNombre,
+                                                segundoNombre,
+                                                primerApellido,
+                                                segundoApellido,
+                                                documento
+                                            ].filter(p => p && p.length > 0);
+                                            
+                                            // Crear un string con todas las partes combinadas para búsqueda rápida
+                                            const textoCompleto = todasLasPartes.join(' ');
+                                            
+                                            // Verificar que todas las palabras de búsqueda estén presentes en alguna parte
+                                            let todasLasPalabrasCoinciden = true;
+                                            
+                                            for (let i = 0; i < palabrasBusqueda.length; i++) {
+                                                const palabra = palabrasBusqueda[i];
+                                                let palabraEncontrada = false;
+                                                
+                                                // Buscar la palabra en el texto completo o en cada parte individual
+                                                if (textoCompleto.includes(palabra)) {
+                                                    palabraEncontrada = true;
+                                                } else {
+                                                    // Buscar en cada parte individual
+                                                    for (let j = 0; j < todasLasPartes.length; j++) {
+                                                        if (todasLasPartes[j].includes(palabra)) {
+                                                            palabraEncontrada = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                if (!palabraEncontrada) {
+                                                    todasLasPalabrasCoinciden = false;
+                                                    break;
+                                                }
+                                            }
+                                            
+                                            if (!todasLasPalabrasCoinciden) {
                                                 mostrar = false;
                                             }
                                         }
