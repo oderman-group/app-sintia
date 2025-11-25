@@ -87,23 +87,102 @@ async function generatePDFPart(start, end,title) {
 
 
 async function generatePDFUnico(contenido,title) {
-    const element = document.getElementById(contenido);
-    const options = {
-        margin: [8, 15, 8, 8],
-        filename:title,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-   esperar = await html2pdf().set(options).from(element).save();  
-    Swal.fire({
+    const paginas = [...document.querySelectorAll('.page')];
+    const cantidad = paginas.length;
+    
+    if (cantidad === 0) {
+        Swal.fire({
+            position: "bottom-end",
+            title: 'Error',
+            text: 'No hay contenido para generar PDF',
+            icon: 'error',
+            timer: 3000
+        });
+        document.getElementById("overlay").style.display = "none";
+        return;
+    }
+    
+    // Si hay una sola página, generar directamente
+    if (cantidad === 1) {
+        const element = document.getElementById(contenido);
+        const options = {
+            margin: [8, 15, 8, 8],
+            filename: title + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                logging: false
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait'
+            },
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy'],
+                before: '.page',
+                after: '.page',
+                avoid: ['tr', 'td']
+            }
+        };
+        await html2pdf().set(options).from(element).save();
+        Swal.fire({
             position: "bottom-end",
             title: 'Generando PDF',
-            text: 'Sé generó archivo '+title,
+            text: 'Se generó archivo ' + title,
             icon: 'success',
             showCancelButton: false,
             confirmButtonText: 'Si!',
-            cancelButtonText: 'No!',
             timer: 3500
-        });    
+        });
+        return;
+    }
+    
+    // Si hay múltiples páginas, procesarlas todas juntas pero con mejor manejo de saltos
+    const element = document.getElementById(contenido);
+    const options = {
+        margin: [8, 15, 8, 8],
+        filename: title + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 1200
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait'
+        },
+        pagebreak: { 
+            mode: ['avoid-all', 'css', 'legacy'],
+            before: '.page',
+            after: '.page',
+            avoid: ['tr', 'td', 'table']
+        }
+    };
+    
+    try {
+        await html2pdf().set(options).from(element).save();
+        Swal.fire({
+            position: "bottom-end",
+            title: 'Generando PDF',
+            text: 'Se generó archivo ' + title + ' con ' + cantidad + ' estudiantes',
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonText: 'Si!',
+            timer: 3500
+        });
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        Swal.fire({
+            position: "bottom-end",
+            title: 'Error',
+            text: 'Hubo un problema al generar el PDF. Intente usar la opción de Imprimir.',
+            icon: 'error',
+            timer: 5000
+        });
+    }
 }
