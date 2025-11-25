@@ -14,9 +14,33 @@ async function generatePDF(contenido, title, max) {
     
     let cantidad = paginas.length; // Determina la cantidad de páginas en el documento.
 
-    // Si no se especifica max o es undefined, generar un solo PDF sin límite
+    // Si no se especifica max o es undefined, dividir en archivos de 15 estudiantes
     if (max === undefined || max === null) {
-        await generatePDFUnico(contenido, title);
+        const maxPorArchivo = 15; // Número de estudiantes por archivo
+        
+        if (cantidad <= maxPorArchivo) {
+            // Si hay 15 o menos estudiantes, generar un solo archivo
+            await generatePDFUnico(contenido, title);
+        } else {
+            // Si hay más de 15 estudiantes, dividir en múltiples archivos
+            let start = 0;
+            let end = 0;
+            let count = 0;
+            let archivoNum = 1;
+
+            for (let i = 0; i < cantidad; i++) {
+                count++;
+                end = i;
+                
+                // Generar un archivo cuando se alcance el límite o sea el último estudiante
+                if (count === maxPorArchivo || i === cantidad - 1) {
+                    await generatePDFPart(start, end, `${title}_Parte${archivoNum}`, cantidad);
+                    start = end + 1;
+                    count = 0;
+                    archivoNum++;
+                }
+            }
+        }
         document.getElementById("overlay").style.display = "none";
         return;
     }
@@ -33,7 +57,7 @@ async function generatePDF(contenido, title, max) {
             end = i;
             // Genera un PDF parcial si se alcanza el límite máximo de páginas.
             if (count === max) {
-                await generatePDFPart(start, end, `${title}_${start}-${end}`);
+                await generatePDFPart(start, end, `${title}_${start}-${end}`, cantidad);
                 console.log(`${start} hasta ${end}`);
                 start = end + 1;  // Ajusta el índice inicial para el siguiente bloque.
                 count = 0;        // Reinicia el contador de páginas del bloque.
@@ -42,7 +66,7 @@ async function generatePDF(contenido, title, max) {
 
         // Genera un PDF parcial para las páginas restantes si las hay.
         if (start <= end) {
-            await generatePDFPart(start, end, `${title}_${start}-${end}`);
+            await generatePDFPart(start, end, `${title}_${start}-${end}`, cantidad);
         }
     } 
     // Caso: hay exactamente una página en el documento.
@@ -55,38 +79,146 @@ async function generatePDF(contenido, title, max) {
 }
 
 
-async function generatePDFPart(start, end,title) {
-    
-
+async function generatePDFPart(start, end, title, totalEstudiantes = null) {
     const paginas = [...document.querySelectorAll('.page')];
-    const paginasVisibles = paginas.slice(start, end);
+    const contenido = document.getElementById('contenido');
+    
+    if (!totalEstudiantes) {
+        totalEstudiantes = paginas.length;
+    }
 
-    // Crear un contenedor temporal con los elementos visibles
+    if (paginas.length === 0) {
+        console.error('No hay páginas para generar PDF');
+        return;
+    }
+    
+    console.log(`Generando PDF parte: estudiantes ${start + 1} a ${end + 1} de ${totalEstudiantes}`);
+
+    // Ocultar botones flotantes antes de generar PDF
+    const botones = document.querySelectorAll('.btn-flotante');
+    botones.forEach(btn => btn.style.display = 'none');
+
+    // Crear un contenedor temporal con solo las páginas que necesitamos
     const tempContainer = document.createElement('div');
-    paginasVisibles.forEach(estudiante => tempContainer.appendChild(estudiante.cloneNode(true)));
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.top = '0';
+    tempContainer.style.left = '0';
+    tempContainer.style.width = '210mm';
+    tempContainer.style.backgroundColor = 'white';
+    tempContainer.style.zIndex = '999999';
+    tempContainer.style.overflow = 'visible';
+    
+    // Clonar profundamente solo las páginas del rango
+    for (let i = start; i <= end && i < paginas.length; i++) {
+        const pagina = paginas[i];
+        const clone = pagina.cloneNode(true);
+        clone.style.display = 'block';
+        clone.style.visibility = 'visible';
+        clone.style.pageBreakAfter = 'always';
+        clone.style.margin = '0';
+        clone.style.padding = '0';
+        tempContainer.appendChild(clone);
+    }
+    
+    // Agregar temporalmente al body
+    document.body.appendChild(tempContainer);
+    
+    // Hacer scroll para que esté en la vista
+    tempContainer.scrollIntoView({ behavior: 'instant', block: 'start' });
 
     const options = {
-        margin: [8, 15, 8, 8], // top: 8, right: 15, bottom: 8, left: 8
-        filename: title+'.pdf',
+        margin: [8, 15, 8, 8],
+        filename: title + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            logging: true,
+            width: tempContainer.scrollWidth,
+            height: tempContainer.scrollHeight,
+            windowWidth: tempContainer.scrollWidth || 1200,
+            windowHeight: tempContainer.scrollHeight || window.innerHeight,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            compress: true
+        },
+        pagebreak: { 
+            mode: ['avoid-all', 'css', 'legacy'],
+            before: '.page',
+            after: '.page',
+            avoid: ['tr', 'td', 'table']
+        }
     };
-    espera = await html2pdf().set(options).from(tempContainer).save();
-    Swal.fire({
+    
+    try {
+        // Esperar a que el contenedor se renderice completamente
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('Iniciando generación de PDF para:', title);
+        console.log('Páginas en contenedor:', tempContainer.children.length);
+        console.log('Contenedor height:', tempContainer.scrollHeight);
+        console.log('Contenedor width:', tempContainer.scrollWidth);
+        
+        // Verificar que hay contenido
+        if (tempContainer.children.length === 0) {
+            throw new Error('No hay páginas en el contenedor temporal');
+        }
+        
+        // Generar PDF desde el contenedor temporal
+        await html2pdf().set(options).from(tempContainer).save();
+        
+        console.log('PDF generado exitosamente');
+        
+        // Limpiar contenedor temporal
+        if (document.body.contains(tempContainer)) {
+            document.body.removeChild(tempContainer);
+        }
+        
+        // Restaurar botones
+        botones.forEach(btn => btn.style.display = '');
+        
+        Swal.fire({
             position: "bottom-end",
             title: 'Generando PDF',
-            text: 'Sé generó archivo desde la pagina '+start+ ' hasta la '+end,
+            text: 'Se generó archivo ' + title + ' (Estudiantes ' + (start + 1) + '-' + (end + 1) + ' de ' + totalEstudiantes + ')',
             icon: 'success',
             showCancelButton: false,
             confirmButtonText: 'Si!',
-            cancelButtonText: 'No!',
             timer: 3500
         });
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        console.error('Stack:', error.stack);
+        
+        // Limpiar contenedor temporal en caso de error
+        if (document.body.contains(tempContainer)) {
+            document.body.removeChild(tempContainer);
+        }
+        
+        // Restaurar botones
+        botones.forEach(btn => btn.style.display = '');
+        
+        Swal.fire({
+            position: "bottom-end",
+            title: 'Error',
+            text: 'Hubo un problema al generar el archivo ' + title + '. Error: ' + error.message,
+            icon: 'error',
+            timer: 5000
+        });
+    }
 }
 
 
-async function generatePDFUnico(contenido,title) {
+async function generatePDFUnico(contenido, title) {
     const paginas = [...document.querySelectorAll('.page')];
     const cantidad = paginas.length;
     
@@ -102,9 +234,18 @@ async function generatePDFUnico(contenido,title) {
         return;
     }
     
+    // Ocultar botones flotantes antes de generar PDF
+    const botones = document.querySelectorAll('.btn-flotante');
+    botones.forEach(btn => btn.style.display = 'none');
+    
     // Si hay una sola página, generar directamente
     if (cantidad === 1) {
         const element = document.getElementById(contenido);
+        
+        // Asegurar que el elemento sea visible
+        const originalDisplay = element.style.display;
+        element.style.display = 'block';
+        
         const options = {
             margin: [8, 15, 8, 8],
             filename: title + '.pdf',
@@ -112,12 +253,18 @@ async function generatePDFUnico(contenido,title) {
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
-                logging: false
+                logging: true,
+                windowWidth: 1200,
+                scrollX: 0,
+                scrollY: 0,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
             },
             jsPDF: { 
                 unit: 'mm', 
                 format: 'a4', 
-                orientation: 'portrait'
+                orientation: 'portrait',
+                compress: true
             },
             pagebreak: { 
                 mode: ['avoid-all', 'css', 'legacy'],
@@ -126,21 +273,55 @@ async function generatePDFUnico(contenido,title) {
                 avoid: ['tr', 'td']
             }
         };
-        await html2pdf().set(options).from(element).save();
-        Swal.fire({
-            position: "bottom-end",
-            title: 'Generando PDF',
-            text: 'Se generó archivo ' + title,
-            icon: 'success',
-            showCancelButton: false,
-            confirmButtonText: 'Si!',
-            timer: 3500
-        });
+        
+        try {
+            window.scrollTo(0, 0);
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            await html2pdf().set(options).from(element).save();
+            
+            // Restaurar display original
+            element.style.display = originalDisplay;
+            
+            // Restaurar botones
+            botones.forEach(btn => btn.style.display = '');
+            document.getElementById("overlay").style.display = "none";
+            
+            Swal.fire({
+                position: "bottom-end",
+                title: 'Generando PDF',
+                text: 'Se generó archivo ' + title,
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonText: 'Si!',
+                timer: 3500
+            });
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            
+            // Restaurar display original en caso de error
+            element.style.display = originalDisplay;
+            
+            botones.forEach(btn => btn.style.display = '');
+            document.getElementById("overlay").style.display = "none";
+            Swal.fire({
+                position: "bottom-end",
+                title: 'Error',
+                text: 'Hubo un problema al generar el PDF. Error: ' + error.message,
+                icon: 'error',
+                timer: 5000
+            });
+        }
         return;
     }
     
-    // Si hay múltiples páginas, procesarlas todas juntas pero con mejor manejo de saltos
+    // Si hay múltiples páginas, usar el elemento original directamente
     const element = document.getElementById(contenido);
+    
+    // Asegurar que el elemento sea visible
+    const originalDisplay = element.style.display;
+    element.style.display = 'block';
+    
     const options = {
         margin: [8, 15, 8, 8],
         filename: title + '.pdf',
@@ -148,13 +329,19 @@ async function generatePDFUnico(contenido,title) {
         html2canvas: { 
             scale: 2,
             useCORS: true,
-            logging: false,
-            windowWidth: 1200
+            logging: true,
+            windowWidth: element.scrollWidth || 1200,
+            windowHeight: element.scrollHeight || window.innerHeight,
+            scrollX: 0,
+            scrollY: 0,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
         },
         jsPDF: { 
             unit: 'mm', 
             format: 'a4', 
-            orientation: 'portrait'
+            orientation: 'portrait',
+            compress: true
         },
         pagebreak: { 
             mode: ['avoid-all', 'css', 'legacy'],
@@ -165,7 +352,21 @@ async function generatePDFUnico(contenido,title) {
     };
     
     try {
+        // Forzar scroll al inicio para capturar todo
+        window.scrollTo(0, 0);
+        
+        // Esperar un momento para que el scroll se complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         await html2pdf().set(options).from(element).save();
+        
+        // Restaurar display original
+        element.style.display = originalDisplay;
+        
+        // Restaurar botones
+        botones.forEach(btn => btn.style.display = '');
+        document.getElementById("overlay").style.display = "none";
+        
         Swal.fire({
             position: "bottom-end",
             title: 'Generando PDF',
@@ -177,10 +378,18 @@ async function generatePDFUnico(contenido,title) {
         });
     } catch (error) {
         console.error('Error al generar PDF:', error);
+        
+        // Restaurar display original en caso de error
+        element.style.display = originalDisplay;
+        
+        // Restaurar botones en caso de error
+        botones.forEach(btn => btn.style.display = '');
+        document.getElementById("overlay").style.display = "none";
+        
         Swal.fire({
             position: "bottom-end",
             title: 'Error',
-            text: 'Hubo un problema al generar el PDF. Intente usar la opción de Imprimir.',
+            text: 'Hubo un problema al generar el PDF. Error: ' + error.message,
             icon: 'error',
             timer: 5000
         });

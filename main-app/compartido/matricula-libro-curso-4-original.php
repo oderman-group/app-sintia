@@ -499,7 +499,7 @@ if ($grado >= 12 && $grado <= 15) {
         value="Descargar Excel">
     </input>
     <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF"
-        onclick="descargarPDF()" value="Descargar PDF">
+        value="Descargar PDF">
     </input>
     
     <script>
@@ -516,59 +516,23 @@ if ($grado >= 12 && $grado <= 15) {
         }
         ?>
         
-        // Función para descargar PDF desde el servidor
-        function descargarPDF() {
-            const curso = '<?= base64_encode($grado) ?>';
-            const grupo = '<?= base64_encode($grupo) ?>';
-            const year = '<?= base64_encode($year) ?>';
-            const idEstudiante = '<?= !empty($idEstudiante) ? base64_encode($idEstudiante) : "" ?>';
-            
-            // Mostrar overlay de carga
-            if (document.getElementById('overlay')) {
-                document.getElementById('overlay').style.display = 'flex';
-            }
-            
-            // Crear formulario temporal para enviar datos
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'matricula-libro-curso-4-pdf.php';
-            
-            const cursoInput = document.createElement('input');
-            cursoInput.type = 'hidden';
-            cursoInput.name = 'curso';
-            cursoInput.value = curso;
-            form.appendChild(cursoInput);
-            
-            const grupoInput = document.createElement('input');
-            grupoInput.type = 'hidden';
-            grupoInput.name = 'grupo';
-            grupoInput.value = grupo;
-            form.appendChild(grupoInput);
-            
-            const yearInput = document.createElement('input');
-            yearInput.type = 'hidden';
-            yearInput.name = 'year';
-            yearInput.value = year;
-            form.appendChild(yearInput);
-            
-            if (idEstudiante) {
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'id';
-                idInput.value = idEstudiante;
-                form.appendChild(idInput);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-            
-            // Ocultar overlay después de un tiempo
-            setTimeout(() => {
-                if (document.getElementById('overlay')) {
-                    document.getElementById('overlay').style.display = 'none';
+        // Asignar el event listener al botón después de que todo esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnPDF = document.getElementById('guardarPDF');
+            if (btnPDF && typeof generatePDF !== 'undefined') {
+                btnPDF.onclick = function() {
+                    generatePDF('contenido', 'LIBRO_FINAL_F2');
+                };
+                console.log('Botón PDF inicializado correctamente');
+            } else {
+                console.error('Error: No se pudo inicializar el botón PDF');
+                if (btnPDF) {
+                    btnPDF.onclick = function() {
+                        alert('Error: La función de generar PDF no está disponible. Por favor, recargue la página.');
+                    };
                 }
-            }, 2000);
-        }
+            }
+        });
         
         // Función para exportar a Excel
         function exportarExcel() {
