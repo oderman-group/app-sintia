@@ -4,6 +4,11 @@ $idPaginaInterna = 'DT0137';
 include("../compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
 require_once("../class/Estudiantes.php");
+require_once("../class/Grados.php");
+require_once("../class/Grupos.php");
+require_once("../class/Usuarios.php");
+require_once("../class/UsuariosPadre.php");
+require_once("../class/App/Administrativo/Usuarios_Por_Estudiantes.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -16,20 +21,222 @@ $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
+
+// Obtener datos del acudiente actual
+$acudienteActual = UsuarioServicios::consultar(base64_decode($_GET['id']));
+$acudienteId = $acudienteActual["uss_id"];
+
+// Obtener estudiantes asociados al acudiente actual
+$parametros = array(
+    "upe_id_usuario" => $acudienteId,
+    "institucion" => $config['conf_id_institucion'],
+    "year" => $_SESSION["bd"]
+);
+$listaAcudidos = UsuarioServicios::listarUsuariosEstudiante($parametros);
+$estudiantesAsociados = [];
+if (!empty($listaAcudidos)) {
+    foreach($listaAcudidos as $acudido){
+        $estudiantesAsociados[] = $acudido["upe_id_estudiante"];
+    }
+}
+
+// Obtener todos los estudiantes matriculados
+$listaTodosEstudiantes = Estudiantes::estudiantesMatriculados('', $_SESSION["bd"]);
+
+// Obtener grados para filtros
+$grados = Grados::traerGradosInstitucion($config);
+
+// Preparar datos de estudiantes con información de acudiente
+$estudiantesConDatos = [];
+while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
+    $estudianteId = $estudiante['mat_id'];
+    $estaAsociado = in_array($estudianteId, $estudiantesAsociados);
+    
+    // Obtener acudiente del estudiante (si no está asociado al acudiente actual)
+    $acudienteEstudiante = null;
+    $nombreAcudiente = "Sin acudiente";
+    if (!$estaAsociado && !empty($estudiante['mat_acudiente'])) {
+        $acudienteEstudiante = Usuarios::obtenerDatosUsuario($estudiante['mat_acudiente']);
+        if (!empty($acudienteEstudiante)) {
+            $nombreAcudiente = UsuariosPadre::nombreCompletoDelUsuario($acudienteEstudiante);
+        }
+    }
+    
+    // Obtener datos del grado
+    $gradoNombre = '';
+    if (!empty($estudiante['mat_grado'])) {
+        $gradoData = Grados::obtenerGrado($estudiante['mat_grado']);
+        if (!empty($gradoData)) {
+            $gradoNombre = $gradoData['gra_nombre'];
+        }
+    }
+    
+    // Obtener datos del grupo
+    $grupoNombre = '';
+    if (!empty($estudiante['mat_grupo'])) {
+        $grupoData = Grupos::obtenerGrupo($estudiante['mat_grupo']);
+        if (!empty($grupoData)) {
+            $grupoNombre = $grupoData['gru_nombre'];
+        }
+    }
+    
+    // Obtener cada parte del nombre para búsqueda individual
+    $primerNombre = !empty($estudiante['mat_nombres']) ? strtolower(trim($estudiante['mat_nombres'])) : '';
+    $segundoNombre = !empty($estudiante['mat_nombre2']) ? strtolower(trim($estudiante['mat_nombre2'])) : '';
+    $primerApellido = !empty($estudiante['mat_primer_apellido']) ? strtolower(trim($estudiante['mat_primer_apellido'])) : '';
+    $segundoApellido = !empty($estudiante['mat_segundo_apellido']) ? strtolower(trim($estudiante['mat_segundo_apellido'])) : '';
+    
+    $estudiantesConDatos[] = [
+        'mat_id' => $estudianteId,
+        'nombre' => Estudiantes::NombreCompletoDelEstudiante($estudiante),
+        'primer_nombre' => $primerNombre,
+        'segundo_nombre' => $segundoNombre,
+        'primer_apellido' => $primerApellido,
+        'segundo_apellido' => $segundoApellido,
+        'documento' => $estudiante['mat_documento'],
+        'grado' => $estudiante['mat_grado'],
+        'grado_nombre' => $gradoNombre,
+        'grupo' => $estudiante['mat_grupo'],
+        'grupo_nombre' => $grupoNombre,
+        'asociado' => $estaAsociado,
+        'acudiente_nombre' => $nombreAcudiente
+    ];
+}
 ?>
 
-	<!--bootstrap -->
-    <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
-    <link href="../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
-	<!-- Theme Styles -->
-    <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
-	<!-- dropzone -->
-    <link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
-    <!--tagsinput-->
-    <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
-    <!--select2-->
-    <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
-    <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+<!--bootstrap -->
+<link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+<link href="../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
+<!-- Theme Styles -->
+<link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
+<!-- dropzone -->
+<link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
+<!--tagsinput-->
+<link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
+<!--select2-->
+<link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+<link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+    .estudiante-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #fff;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .estudiante-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .estudiante-card.asociado {
+        border-color: #28a745;
+        background: #f0f9f4;
+    }
+    
+    .estudiante-datos {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .estudiante-datos .icono-check {
+        color: #28a745;
+        font-size: 20px;
+    }
+    
+    .estudiante-info {
+        flex: 1;
+    }
+    
+    .estudiante-nombre {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+    
+    .estudiante-detalles {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 3px;
+    }
+    
+    .estudiante-acudiente {
+        font-size: 12px;
+        color: #999;
+        font-style: italic;
+        margin-top: 5px;
+    }
+    
+    .btn-accion {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-agregar {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-agregar:hover {
+        background: #218838;
+    }
+    
+    .btn-quitar {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-quitar:hover {
+        background: #c82333;
+    }
+    
+    .contador-estudiantes {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .contador-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .contador-item strong {
+        color: #495057;
+    }
+    
+    .filtros-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .filtros-row {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .filtro-item {
+        flex: 1;
+        min-width: 200px;
+    }
+</style>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -59,7 +266,6 @@ if(!Modulos::validarPermisoEdicion()){
                     <div class="col-12">
                         <?php include("../../config-general/mensajes-informativos.php"); ?>
                     </div>
-                    <?php $acudienteActual = UsuarioServicios::consultar(base64_decode($_GET['id'])); ?>
                     <div class="col-sm-3">
                         <div class="panel">
                             <header class="panel-heading panel-heading-purple"><b>Datos del acudiente</b></header>
@@ -80,61 +286,337 @@ if(!Modulos::validarPermisoEdicion()){
                         <div class="panel">
                             <header class="panel-heading panel-heading-purple"><b>Acudidos</b></header>
                             <div class="panel-body">
-                                <form name="formularioGuardar" action="usuarios-acudidos-actualizar.php" method="post">
-                                    <input type="hidden" value="<?=base64_decode($_GET['id']);?>" name="id">
-                                    <div class="form-group row">
-                                        <label class="col-sm-2 control-label"><b>Estudiantes: </b></label>
-                                        <div class="col-sm-10">
-                                            <?php
-                                            $parametros = array("upe_id_usuario"=>$acudienteActual["uss_id"],"institucion"=>$config['conf_id_institucion'],"year"=>$_SESSION["bd"]);
-                                            $listaAcudidos = UsuarioServicios::listarUsuariosEstudiante($parametros);
-                                            ?>
-                                            <select id="select_estudiante" class="form-control  select2-multiple" name="acudidos[]" multiple <?=$disabledPermiso;?>>
-                                                <option value="">Seleccione una opción</option>
+                                <!-- Contador -->
+                                <div class="contador-estudiantes">
+                                    <div class="contador-item">
+                                        <strong>Visibles:</strong> <span id="contador-visibles">0</span>
+                                    </div>
+                                    <div class="contador-item">
+                                        <strong>Total:</strong> <span id="contador-total"><?= count($estudiantesConDatos) ?></span>
+                                    </div>
+                                    <div class="contador-item">
+                                        <strong>Asociados:</strong> <span id="contador-asociados"><?= count($estudiantesAsociados) ?></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Filtros y búsqueda -->
+                                <div class="filtros-container">
+                                    <div class="filtros-row">
+                                        <div class="filtro-item">
+                                            <label><b>Buscar:</b></label>
+                                            <input type="text" id="busqueda-estudiantes" class="form-control" placeholder="Nombre o documento...">
+                                        </div>
+                                        <div class="filtro-item">
+                                            <label><b>Grado:</b></label>
+                                            <select id="filtro-grado" class="form-control">
+                                                <option value="">Todos los grados</option>
                                                 <?php
-                                                    if (!empty($listaAcudidos)) {
-                                                        foreach($listaAcudidos as $idEstudiante){
-                                                            $matricualaEstudiante=MatriculaServicios::consultar($idEstudiante["upe_id_estudiante"]);
-                                                            if(!is_null($matricualaEstudiante)){
-                                                            $nombre = Estudiantes::NombreCompletoDelEstudiante($matricualaEstudiante);
-                                                 ?>
-                                                 <option value="<?= $matricualaEstudiante['mat_id']; ?>" selected><?= $nombre; ?></option>
-                                                 <?php }}} ?>
-                                               
+                                                mysqli_data_seek($grados, 0);
+                                                while($grado = mysqli_fetch_array($grados, MYSQLI_BOTH)){
+                                                    echo '<option value="'.$grado['gra_id'].'">'.$grado['gra_nombre'].'</option>';
+                                                }
+                                                ?>
                                             </select>
                                         </div>
+                                        <div class="filtro-item">
+                                            <label><b>Grupo:</b></label>
+                                            <select id="filtro-grupo" class="form-control">
+                                                <option value="">Todos los grupos</option>
+                                            </select>
+                                        </div>
+                                        <div class="filtro-item">
+                                            <button type="button" class="btn btn-secondary" id="btn-limpiar-filtros">
+                                                <i class="fa fa-times"></i> Limpiar
+                                            </button>
+                                        </div>
                                     </div>
-                                    
-                                    <?php $botones = new botonesGuardar("usuarios.php",Modulos::validarPermisoEdicion()); ?>
+                                </div>
+                                
+                                <!-- Lista de estudiantes -->
+                                <div id="lista-estudiantes">
+                                    <?php foreach($estudiantesConDatos as $est): ?>
+                                        <div class="estudiante-card <?= $est['asociado'] ? 'asociado' : '' ?>" 
+                                             data-estudiante-id="<?= $est['mat_id'] ?>"
+                                             data-nombre="<?= strtolower($est['nombre']) ?>"
+                                             data-primer-nombre="<?= htmlspecialchars($est['primer_nombre'], ENT_QUOTES, 'UTF-8') ?>"
+                                             data-segundo-nombre="<?= htmlspecialchars($est['segundo_nombre'], ENT_QUOTES, 'UTF-8') ?>"
+                                             data-primer-apellido="<?= htmlspecialchars($est['primer_apellido'], ENT_QUOTES, 'UTF-8') ?>"
+                                             data-segundo-apellido="<?= htmlspecialchars($est['segundo_apellido'], ENT_QUOTES, 'UTF-8') ?>"
+                                             data-documento="<?= strtolower($est['documento']) ?>"
+                                             data-grado="<?= $est['grado'] ?>"
+                                             data-grupo="<?= $est['grupo'] ?>"
+                                             style="<?= !$est['asociado'] ? 'display: none;' : '' ?>">
+                                            <div class="estudiante-datos">
+                                                <?php if($est['asociado']): ?>
+                                                    <i class="fa fa-check-circle icono-check"></i>
+                                                <?php endif; ?>
+                                                <div class="estudiante-info">
+                                                    <div class="estudiante-nombre"><?= htmlspecialchars($est['nombre']) ?></div>
+                                                    <div class="estudiante-detalles">
+                                                        <i class="fa fa-id-card"></i> Documento: <?= is_numeric($est['documento']) ? number_format((float)$est['documento'], 0, '.', '.') : htmlspecialchars($est['documento']) ?>
+                                                    </div>
+                                                    <div class="estudiante-detalles">
+                                                        <i class="fa fa-graduation-cap"></i> <?= htmlspecialchars($est['grado_nombre']) ?> - <?= htmlspecialchars($est['grupo_nombre']) ?>
+                                                    </div>
+                                                    <?php if(!$est['asociado']): ?>
+                                                        <div class="estudiante-acudiente">
+                                                            <i class="fa fa-user"></i> Acudiente: <?= htmlspecialchars($est['acudiente_nombre']) ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div>
+                                                    <?php if($est['asociado']): ?>
+                                                        <button type="button" class="btn-accion btn-quitar" data-estudiante-id="<?= $est['mat_id'] ?>">
+                                                            <i class="fa fa-times"></i> Quitar
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn-accion btn-agregar" data-estudiante-id="<?= $est['mat_id'] ?>">
+                                                            <i class="fa fa-plus"></i> Asociar
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <!-- Formulario oculto para guardar -->
+                                <form name="formularioGuardar" action="usuarios-acudidos-actualizar.php" method="post" id="form-guardar">
+                                    <input type="hidden" value="<?= base64_decode($_GET['id']) ?>" name="id">
+                                    <div id="inputs-acudidos"></div>
                                 </form>
+                                
+                                <!-- Botón de guardar -->
+                                <div class="row" style="margin-top: 20px;">
+                                    <div class="col-12 text-right">
+                                        <button type="button" class="btn btn-primary" id="btn-guardar-cambios" <?= $disabledPermiso ?>>
+                                            <i class="fa fa-save"></i> Guardar Cambios
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <script>          
-                    $(document).ready(function() {
-          		        $('#select_estudiante').select2({
-					    placeholder: 'Seleccione el estudiante...',
-					    theme: "bootstrap",
-                        multiple: true,
-                            ajax: {
-                                type: 'GET',
-                                url: 'ajax-listar-estudiantes.php',
-                                processResults: function(data) {
-                                    data = JSON.parse(data);
-                                    return {
-                                        results: $.map(data, function(item) {                                  
-                                            return {
-                                                id: item.value,
-                                                text: item.label
-                                            }
-                                        })
-                                    };
+
+                <script>
+                    (function() {
+                        'use strict';
+                        
+                        // Esperar a que jQuery esté disponible
+                        if (typeof jQuery === 'undefined') {
+                            console.error('jQuery no está disponible');
+                            return;
+                        }
+                        
+                        jQuery(document).ready(function($) {
+                            let estudiantesAsociados = <?= json_encode($estudiantesAsociados) ?>;
+                            const totalEstudiantes = <?= count($estudiantesConDatos) ?>;
+                            let hayFiltrosActivos = false;
+                            
+                            // Función para actualizar contador
+                            function actualizarContador() {
+                                const visibles = $('.estudiante-card:visible').length;
+                                const contadorVisibles = $('#contador-visibles');
+                                const contadorTotal = $('#contador-total');
+                                const contadorAsociados = $('#contador-asociados');
+                                
+                                if (contadorVisibles.length) contadorVisibles.text(visibles);
+                                if (contadorTotal.length) contadorTotal.text(totalEstudiantes);
+                                if (contadorAsociados.length) contadorAsociados.text(estudiantesAsociados.length);
+                            }
+                            
+                            // Función para actualizar inputs del formulario
+                            function actualizarInputsFormulario() {
+                                const container = $('#inputs-acudidos');
+                                if (!container.length) return;
+                                
+                                container.empty();
+                                estudiantesAsociados.forEach(function(id) {
+                                    container.append('<input type="hidden" name="acudidos[]" value="' + id + '">');
+                                });
+                            }
+                            
+                            // Función para guardar cambios
+                            function guardarCambios() {
+                                actualizarInputsFormulario();
+                                const form = $('#form-guardar');
+                                if (form.length) {
+                                    form.submit();
                                 }
                             }
-				        });
-			        });
-              </script>
+                            
+                            // Agregar estudiante
+                            $(document).on('click', '.btn-agregar', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                const $btn = $(this);
+                                const estudianteId = $btn.data('estudiante-id');
+                                
+                                if (!estudianteId) {
+                                    console.error('No se encontró el ID del estudiante');
+                                    return;
+                                }
+                                
+                                if (!estudiantesAsociados.includes(estudianteId)) {
+                                    estudiantesAsociados.push(estudianteId);
+                                    const card = $btn.closest('.estudiante-card');
+                                    
+                                    card.addClass('asociado');
+                                    $btn.removeClass('btn-agregar').addClass('btn-quitar')
+                                        .html('<i class="fa fa-times"></i> Quitar');
+                                    
+                                    const datosDiv = card.find('.estudiante-info');
+                                    if (datosDiv.length && !datosDiv.find('.icono-check').length) {
+                                        datosDiv.prepend('<i class="fa fa-check-circle icono-check"></i>');
+                                    }
+                                    
+                                    // Remover información de acudiente
+                                    card.find('.estudiante-acudiente').remove();
+                                    
+                                    actualizarContador();
+                                    actualizarInputsFormulario();
+                                }
+                            });
+                            
+                            // Quitar estudiante
+                            $(document).on('click', '.btn-quitar', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                const $btn = $(this);
+                                const estudianteId = $btn.data('estudiante-id');
+                                
+                                if (!estudianteId) {
+                                    console.error('No se encontró el ID del estudiante');
+                                    return;
+                                }
+                                
+                                estudiantesAsociados = estudiantesAsociados.filter(function(id) {
+                                    return id !== estudianteId;
+                                });
+                                
+                                const card = $btn.closest('.estudiante-card');
+                                card.removeClass('asociado');
+                                $btn.removeClass('btn-quitar').addClass('btn-agregar')
+                                    .html('<i class="fa fa-plus"></i> Asociar');
+                                card.find('.icono-check').remove();
+                                
+                                // Si no hay filtros activos, ocultar la tarjeta
+                                if (!hayFiltrosActivos) {
+                                    card.hide();
+                                }
+                                
+                                actualizarContador();
+                                actualizarInputsFormulario();
+                            });
+                            
+                            // Botón guardar cambios
+                            const btnGuardar = $('#btn-guardar-cambios');
+                            if (btnGuardar.length) {
+                                btnGuardar.on('click', function(e) {
+                                    e.preventDefault();
+                                    guardarCambios();
+                                });
+                            }
+                            
+                            // Búsqueda
+                            const busquedaInput = $('#busqueda-estudiantes');
+                            if (busquedaInput.length) {
+                                busquedaInput.on('keyup', function() {
+                                    filtrarEstudiantes();
+                                });
+                            }
+                            
+                            // Filtros
+                            $('#filtro-grado, #filtro-grupo').on('change', function() {
+                                filtrarEstudiantes();
+                            });
+                            
+                            // Limpiar filtros
+                            const btnLimpiar = $('#btn-limpiar-filtros');
+                            if (btnLimpiar.length) {
+                                btnLimpiar.on('click', function(e) {
+                                    e.preventDefault();
+                                    $('#busqueda-estudiantes').val('');
+                                    $('#filtro-grado, #filtro-grupo').val('');
+                                    hayFiltrosActivos = false;
+                                    filtrarEstudiantes();
+                                });
+                            }
+                            
+                            // Función de filtrado
+                            function filtrarEstudiantes() {
+                                const busqueda = busquedaInput.length ? busquedaInput.val().toLowerCase().trim() : '';
+                                const filtroGrado = $('#filtro-grado').val();
+                                const filtroGrupo = $('#filtro-grupo').val();
+                                
+                                // Determinar si hay filtros activos
+                                hayFiltrosActivos = !!(busqueda || filtroGrado || filtroGrupo);
+                                
+                                $('.estudiante-card').each(function() {
+                                    const card = $(this);
+                                    const nombre = card.data('nombre') || '';
+                                    const primerNombre = card.data('primer-nombre') || '';
+                                    const segundoNombre = card.data('segundo-nombre') || '';
+                                    const primerApellido = card.data('primer-apellido') || '';
+                                    const segundoApellido = card.data('segundo-apellido') || '';
+                                    const documento = card.data('documento') || '';
+                                    const grado = card.data('grado');
+                                    const grupo = card.data('grupo');
+                                    const estaAsociado = card.hasClass('asociado');
+                                    
+                                    let mostrar = false;
+                                    
+                                    // Si hay filtros activos, mostrar según filtros
+                                    if (hayFiltrosActivos) {
+                                        mostrar = true;
+                                        
+                                        // Filtro de búsqueda - buscar en todas las partes del nombre
+                                        if (busqueda) {
+                                            const coincideNombre = nombre.includes(busqueda) ||
+                                                                   primerNombre.includes(busqueda) ||
+                                                                   segundoNombre.includes(busqueda) ||
+                                                                   primerApellido.includes(busqueda) ||
+                                                                   segundoApellido.includes(busqueda) ||
+                                                                   documento.includes(busqueda);
+                                            
+                                            if (!coincideNombre) {
+                                                mostrar = false;
+                                            }
+                                        }
+                                        
+                                        // Filtro de grado
+                                        if (filtroGrado && grado != filtroGrado) {
+                                            mostrar = false;
+                                        }
+                                        
+                                        // Filtro de grupo
+                                        if (filtroGrupo && grupo != filtroGrupo) {
+                                            mostrar = false;
+                                        }
+                                    } else {
+                                        // Sin filtros: solo mostrar asociados
+                                        mostrar = estaAsociado;
+                                    }
+                                    
+                                    if (mostrar) {
+                                        card.show();
+                                    } else {
+                                        card.hide();
+                                    }
+                                });
+                                
+                                actualizarContador();
+                            }
+                            
+                            // Inicializar
+                            actualizarContador();
+                            actualizarInputsFormulario();
+                        });
+                    })();
+                </script>
                 </div>
                 <!-- end page content -->
              <?php // include("../compartido/panel-configuracion.php");?>
