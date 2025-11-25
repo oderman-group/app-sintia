@@ -17,6 +17,7 @@ require_once(ROOT_PATH . "/main-app/class/Indicadores.php");
 require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
 require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH . "/main-app/class/Tables/BDT_configuracion.php");
+require_once(ROOT_PATH . "/main-app/class/Instituciones.php");
 
 $year = $_SESSION["bd"];
 
@@ -87,6 +88,20 @@ if (!empty($idEstudiante)) {
         #guardarPDF {
             cursor: pointer;
         }
+        
+        #guardarExcel {
+            cursor: pointer;
+            right: auto;
+            left: 40px;
+        }
+        
+        /* Limitar ancho de casilla Documento para evitar desbordamiento */
+        .codigo-estudiante {
+            max-width: 120px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
 
        
     </style>
@@ -138,7 +153,7 @@ if ($grado >= 12 && $grado <= 15) {
         <?php foreach ($estudiantes as $estudiante) {
             $totalNotasPeriodo = [];
             ?>
-            <div class="page" style="margin-left: 50px;margin-right: 50px;">
+            <div class="page" style="margin-left: 50px;margin-right: 50px; page-break-after: always; page-break-inside: avoid;">
                  <!-- <h1>Página <?= $estudiante["nro"]?></h1> -->
                 <div style="margin: 15px 0;">
                     <table width="100%" cellspacing="5" cellpadding="5" border="1" rules="all" style="font-size: 13px;">
@@ -152,7 +167,7 @@ if ($grado >= 12 && $grado <= 15) {
                                 <?= $informacion_inst["info_direccion"] ?><br>
                                 Informes: <?= $informacion_inst["info_telefono"] ?>
                             </td>
-                            <td>Código:<br> <b style="color: #00adefad;"><?= $estudiante["mat_id"]; ?></b></td>
+                            <td class="codigo-estudiante">Código:<br> <b style="color: #00adefad;"><?= strpos($estudiante["mat_documento"], '.') !== true && is_numeric($estudiante["mat_documento"]) ? number_format($estudiante["mat_documento"], 0, ",", ".") : $estudiante["mat_documento"]; ?></b></td>
                             <td>Nombre:<br> <b style="color: #00adefad;"><?= $estudiante["nombre"] ?></b></td>
                         </tr>
                         <tr>
@@ -386,12 +401,25 @@ if ($grado >= 12 && $grado <= 15) {
                     <tr>
                         <td align="center">
                             <?php
-                            // Obtener datos del rector
-                            $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
-                            $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+                            // Obtener información de la institución para el año consultado
+                            try {
+                                $informacionInstYear = Instituciones::getGeneralInformationFromInstitution($config['conf_id_institucion'], $year);
+                                $idRector = !empty($informacionInstYear["info_rector"]) ? $informacionInstYear["info_rector"] : null;
+                            } catch (Exception $e) {
+                                $idRector = null;
+                            }
+                            
+                            // Obtener datos del rector del año consultado
+                            $rector = null;
+                            $nombreRector = '';
+                            
+                            if (!empty($idRector)) {
+                                $rector = Usuarios::obtenerDatosUsuario($idRector);
+                                $nombreRector = !empty($rector) ? UsuariosPadre::nombreCompletoDelUsuario($rector) : '';
+                            }
                             
                             // Verificar y mostrar la firma
-                            if (!empty($rector["uss_firma"])) {
+                            if (!empty($rector) && !empty($rector["uss_firma"])) {
                                 $rutaArchivo = ROOT_PATH . '/main-app/files/fotos/' . $rector['uss_firma'];
                                 // Verificar que el archivo existe físicamente
                                 if (file_exists($rutaArchivo)) {
@@ -422,9 +450,65 @@ if ($grado >= 12 && $grado <= 15) {
              <div id="saltoPagina"></div>
         <?php } ?>
     </div>
-    <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF" onclick="generatePDF('contenido','LIBRO_FINAL_F2',20)"
+    <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF" onclick="generatePDF('contenido','LIBRO_FINAL_F2')"
         value="Descargar PDF">
     </input>
+    <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarExcel" onclick="exportarExcel()"
+        value="Descargar Excel" style="margin-left: 10px;">
+    </input>
+    
+    <script>
+        // Función para exportar a Excel
+        function exportarExcel() {
+            const curso = '<?= base64_encode($grado) ?>';
+            const grupo = '<?= base64_encode($grupo) ?>';
+            const year = '<?= base64_encode($year) ?>';
+            const idEstudiante = '<?= !empty($idEstudiante) ? base64_encode($idEstudiante) : "" ?>';
+            
+            // Mostrar overlay de carga
+            document.getElementById('overlay').style.display = 'flex';
+            
+            // Crear formulario temporal para enviar datos
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'matricula-libro-curso-4-excel.php';
+            
+            const cursoInput = document.createElement('input');
+            cursoInput.type = 'hidden';
+            cursoInput.name = 'curso';
+            cursoInput.value = curso;
+            form.appendChild(cursoInput);
+            
+            const grupoInput = document.createElement('input');
+            grupoInput.type = 'hidden';
+            grupoInput.name = 'grupo';
+            grupoInput.value = grupo;
+            form.appendChild(grupoInput);
+            
+            const yearInput = document.createElement('input');
+            yearInput.type = 'hidden';
+            yearInput.name = 'year';
+            yearInput.value = year;
+            form.appendChild(yearInput);
+            
+            if (idEstudiante) {
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'id';
+                idInput.value = idEstudiante;
+                form.appendChild(idInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+            
+            // Ocultar overlay después de un tiempo
+            setTimeout(() => {
+                document.getElementById('overlay').style.display = 'none';
+            }, 2000);
+        }
+    </script>
 </body>
 
 
