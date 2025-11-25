@@ -112,15 +112,83 @@ $contador_periodos=0;
 	
 	<?php
 	$cargasConsulta = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
+	
+	// ============================================
+	// OPTIMIZACIONES: Pre-cargar datos para evitar N+1 queries
+	// ============================================
+	
+	// OPTIMIZACIÓN 1: Pre-cargar todas las notas del boletín para este estudiante y periodo
+	$notasBoletinMapa = []; // [carga] => datos_nota
+	try {
+		$sqlNotas = "SELECT bol_carga, bol_observaciones_boletin
+					 FROM " . BD_ACADEMICA . ".academico_boletin
+					 WHERE bol_estudiante = ?
+					   AND institucion = ?
+					   AND year = ?
+					   AND bol_periodo = ?";
+		$paramNotas = [
+			$datosUsr['mat_id'],
+			$config['conf_id_institucion'],
+			$year,
+			$periodoActual
+		];
+		$resNotas = BindSQL::prepararSQL($sqlNotas, $paramNotas);
+		while ($rowNota = mysqli_fetch_array($resNotas, MYSQLI_BOTH)) {
+			$idCarga = $rowNota['bol_carga'];
+			$notasBoletinMapa[$idCarga] = $rowNota;
+		}
+	} catch (Exception $eNotas) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 2: Pre-cargar todos los indicadores para todas las cargas
+	$indicadoresMapa = []; // [car_id] => array de indicadores
+	try {
+		mysqli_data_seek($cargasConsulta, 0);
+		while ($filaTemp = mysqli_fetch_array($cargasConsulta, MYSQLI_BOTH)) {
+			$idCarga = $filaTemp['car_id'];
+			if (!isset($indicadoresMapa[$idCarga])) {
+				$indicadoresMapa[$idCarga] = [];
+				$indicadoresTemp = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $idCarga, $periodoActual, $year);
+				while ($indTemp = mysqli_fetch_array($indicadoresTemp, MYSQLI_BOTH)) {
+					$indicadoresMapa[$idCarga][] = $indTemp;
+				}
+			}
+		}
+		mysqli_data_seek($cargasConsulta, 0);
+	} catch (Exception $eInd) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 3: Cachear datos de usuarios (director y rector)
+	$directorGrupo = null;
+	$rector = null;
+	$idDirector = null; // Se establecerá en el bucle de cargas
+	
 	$i=1;
 	while($cargas = mysqli_fetch_array($cargasConsulta, MYSQLI_BOTH)){
 		//DIRECTOR DE GRUPO
 		if($cargas["car_director_grupo"]==1){
 			$idDirector=$cargas["car_docente"];
+			// OPTIMIZACIÓN: Cargar director solo una vez
+			if($directorGrupo === null && !empty($idDirector)){
+				$directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
+			}
 		}
-		$indicadores = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $cargas['car_id'], $periodoActual, $year);
+		// OPTIMIZACIÓN: Obtener indicadores del mapa pre-cargado
+		$indicadores = $indicadoresMapa[$cargas['car_id']] ?? [];
 		
-		$observacion = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $datosUsr['mat_id'], $cargas['car_id'], $year);
+		// OPTIMIZACIÓN: Obtener observación del mapa pre-cargado
+		$observacion = $notasBoletinMapa[$cargas['car_id']] ?? null;
+		if($observacion === null){
+			// Fallback: consulta individual si no está en el mapa
+			$obsTemp = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $datosUsr['mat_id'], $cargas['car_id'], $year);
+			if($obsTemp){
+				$observacion = mysqli_fetch_array($obsTemp, MYSQLI_BOTH);
+			} else {
+				$observacion = ['bol_observaciones_boletin' => ''];
+			}
+		}
 		
 		$colorFondo = '#FFF;';
 		if($i%2==0){$colorFondo = '#e0e0153b';}
@@ -130,7 +198,8 @@ $contador_periodos=0;
 		<td width="92%">
 			<b><?=$cargas['mat_nombre'];?></b><br>
 			<?php
-			while($ind = mysqli_fetch_array($indicadores, MYSQLI_BOTH)){
+			// OPTIMIZACIÓN: Usar array pre-cargado en lugar de mysqli_result
+			foreach($indicadores as $ind){
 				echo "- ".$ind['ind_nombre']."<br>";
 			}
 			?>
@@ -146,8 +215,11 @@ $contador_periodos=0;
 </table>
 	<p>&nbsp;</p>
 <?php 
+// OPTIMIZACIÓN: Usar prepared statements para la consulta de disciplina
+$idEstudianteEsc = mysqli_real_escape_string($conexion, $matriculadosDatos['mat_id']);
+$periodoEsc = (int)$periodoActual;
 $cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota 
-WHERE dn_cod_estudiante='".$matriculadosDatos['mat_id']."' AND dn_periodo<='".$periodoActual."' AND institucion={$config['conf_id_institucion']} AND year={$year}
+WHERE dn_cod_estudiante='{$idEstudianteEsc}' AND dn_periodo<={$periodoEsc} AND institucion=".(int)$config['conf_id_institucion']." AND year=".(int)$year."
 GROUP BY dn_cod_estudiante, dn_periodo
 ORDER BY dn_id
 ");
@@ -183,37 +255,63 @@ if(@mysqli_num_rows($cndisiplina)>0){
 	<tr>
 		<td align="center">
 			<?php
-				$directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
-				$nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
-				if(!empty($directorGrupo["uss_firma"])){
-					echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+				// OPTIMIZACIÓN: Usar director cacheado (ya se cargó arriba)
+				if($directorGrupo === null && !empty($idDirector)){
+					$directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
+				}
+				if($directorGrupo){
+					$nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
+					if(!empty($directorGrupo["uss_firma"])){
+						echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+					}else{
+						echo '<p>&nbsp;</p>
+							<p>&nbsp;</p>
+							<p>&nbsp;</p>';
+					}
+					echo '<p style="height:0px;"></p>_________________________________<br>
+						<p>&nbsp;</p>
+						'.$nombreDirectorGrupo.'<br>
+						Director(a) de grupo';
 				}else{
 					echo '<p>&nbsp;</p>
 						<p>&nbsp;</p>
-						<p>&nbsp;</p>';
+						<p>&nbsp;</p>
+						<p style="height:0px;"></p>_________________________________<br>
+						<p>&nbsp;</p>
+						<br>
+						Director(a) de grupo';
 				}
 			?>
-			<p style="height:0px;"></p>_________________________________<br>
-			<p>&nbsp;</p>
-			<?=$nombreDirectorGrupo?><br>
-			Director(a) de grupo
 		</td>
 		<td align="center">
 			<?php
-				$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
-				$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-				if(!empty($rector["uss_firma"])){
-					echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+				// OPTIMIZACIÓN: Cargar rector solo una vez
+				if($rector === null && !empty($informacion_inst["info_rector"])){
+					$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+				}
+				if($rector){
+					$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+					if(!empty($rector["uss_firma"])){
+						echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+					}else{
+						echo '<p>&nbsp;</p>
+							<p>&nbsp;</p>
+							<p>&nbsp;</p>';
+					}
+					echo '<p style="height:0px;"></p>_________________________________<br>
+						<p>&nbsp;</p>
+						'.$nombreRector.'<br>
+						Rector(a)';
 				}else{
 					echo '<p>&nbsp;</p>
 						<p>&nbsp;</p>
-						<p>&nbsp;</p>';
+						<p>&nbsp;</p>
+						<p style="height:0px;"></p>_________________________________<br>
+						<p>&nbsp;</p>
+						<br>
+						Rector(a)';
 				}
 			?>
-			<p style="height:0px;"></p>_________________________________<br>
-			<p>&nbsp;</p>
-			<?=$nombreRector?><br>
-			Rector(a)
 		</td>
 	</tr>
 </table>

@@ -139,6 +139,72 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
         $consulta_mat_area_est = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
         
         $numero_periodos = $config["conf_periodo"];
+
+        // ============================================
+        // OPTIMIZACIONES: Pre-cargar datos para evitar N+1 queries
+        // ============================================
+
+        // OPTIMIZACIÓN 1: Pre-cargar todas las notas del boletín para este estudiante y periodo
+        $notasBoletinMapa = []; // [carga][periodo] => datos_nota
+        try {
+            $sqlNotas = "SELECT bol_carga, bol_periodo, bol_nota, bol_observaciones_boletin
+                         FROM " . BD_ACADEMICA . ".academico_boletin
+                         WHERE bol_estudiante = ?
+                           AND institucion = ?
+                           AND year = ?
+                           AND bol_periodo = ?";
+            $paramNotas = [
+                $matriculadosDatos['mat_id'],
+                $config['conf_id_institucion'],
+                $year,
+                $periodoActual
+            ];
+            $resNotas = BindSQL::prepararSQL($sqlNotas, $paramNotas);
+            while ($rowNota = mysqli_fetch_array($resNotas, MYSQLI_BOTH)) {
+                $idCarga = $rowNota['bol_carga'];
+                $per = (int)$rowNota['bol_periodo'];
+                if (!isset($notasBoletinMapa[$idCarga])) {
+                    $notasBoletinMapa[$idCarga] = [];
+                }
+                $notasBoletinMapa[$idCarga][$per] = $rowNota;
+            }
+        } catch (Exception $eNotas) {
+            include("../compartido/error-catch-to-report.php");
+        }
+
+        // OPTIMIZACIÓN 2: Pre-cargar todas las recuperaciones de indicadores para este estudiante y periodo
+        // Nota: Se cargará dentro del bucle de áreas cuando tengamos las cargas disponibles
+        $recuperacionesMapa = []; // [indicador][carga] => datos_recuperacion
+
+        // OPTIMIZACIÓN 3: Pre-cargar cache de notas cualitativas
+        $notasCualitativasCache = [];
+        if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+            $consultaNotasTipo = mysqli_query($conexion, 
+                "SELECT notip_desde, notip_hasta, notip_nombre 
+                 FROM ".BD_ACADEMICA.".academico_notas_tipos 
+                 WHERE notip_categoria='".mysqli_real_escape_string($conexion, $config['conf_notas_categoria'])."' 
+                 AND institucion=".(int)$config['conf_id_institucion']." 
+                 AND year='".mysqli_real_escape_string($conexion, $year)."' 
+                 ORDER BY notip_desde ASC");
+            if($consultaNotasTipo){
+                $tiposNotas = [];
+                while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
+                    $tiposNotas[] = $tipoNota;
+                    // Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
+                    for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
+                        $key = number_format((float)$i, 1, '.', '');
+                        if(!isset($notasCualitativasCache[$key])){
+                            $notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // OPTIMIZACIÓN 4: Cachear datos de usuarios (director y rector)
+        $directorGrupo = null;
+        $rector = null;
+        $idDirector = null; // Se establecerá en el bucle de áreas
         ?>
 
         <div align="center" style="margin-bottom:20px;">
@@ -292,8 +358,17 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
                         mysqli_data_seek($consulta_a_mat_per, 0);
 
-                        $datosBoletin = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $matriculadosDatos['mat_id'], $fila2['car_id'], $year);
-
+                        // OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
+                        $datosBoletin = $notasBoletinMapa[$fila2['car_id']][$periodoActual] ?? null;
+                        if($datosBoletin === null){
+                            // Fallback: consulta individual si no está en el mapa
+                            $resTemp = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $matriculadosDatos['mat_id'], $fila2['car_id'], $year);
+                            if($resTemp){
+                                $datosBoletin = mysqli_fetch_array($resTemp, MYSQLI_BOTH);
+                            } else {
+                                $datosBoletin = [];
+                            }
+                        }
 
                         $notaFinal = Boletin::obtenerPromedioPorTodasLasCargas($matriculadosDatos['mat_id'], $fila2["car_id"], $year);
 
@@ -301,12 +376,25 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                         //Calculo
                         $sumaNotasPorArea += !empty($datosBoletin['bol_nota']) && !empty($fila2["mat_valor"]) ? $datosBoletin['bol_nota'] * ($fila2["mat_valor"] / 100) : 0;
 
-                        $notaBoletin=$datosBoletin['bol_nota'];
-                        $notaDefFinal=$notaFinal['def'];
+                        $notaBoletin=$datosBoletin['bol_nota'] ?? '';
+                        $notaDefFinal=$notaFinal['def'] ?? '';
                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                            $notaBoletin= $datosBoletin['notip_nombre'];
-                            $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaFinal['def'], $year);
-                            $notaDefFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                            // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                            if(!empty($datosBoletin['bol_nota'])){
+                                $notaRedondeada = number_format((float)$datosBoletin['bol_nota'], 1, '.', '');
+                                $notaBoletin = isset($notasCualitativasCache[$notaRedondeada]) 
+                                    ? $notasCualitativasCache[$notaRedondeada] 
+                                    : ($datosBoletin['notip_nombre'] ?? '');
+                            }
+                            // OPTIMIZACIÓN: Usar cache de notas cualitativas para definitiva
+                            if(!empty($notaFinal['def'])){
+                                $notaDefRedondeada = number_format((float)$notaFinal['def'], 1, '.', '');
+                                $notaDefFinal = isset($notasCualitativasCache[$notaDefRedondeada]) 
+                                    ? $notasCualitativasCache[$notaDefRedondeada] 
+                                    : "";
+                            } else {
+                                $notaDefFinal = "";
+                            }
                         }
 
                     ?>
@@ -336,8 +424,20 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                             while ($fila4 = mysqli_fetch_array($consulta_a_mat_indicadores, MYSQLI_BOTH)) {
 
                                 if ($fila4["mat_id"] == $fila2["mat_id"]) {
-                                    $consultaRecuperacion = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $fila4["ind_id"], $matriculadosDatos['mat_id'], $fila2["car_id"], $periodoActual, $year);
-                                    $recuperacionIndicador = mysqli_fetch_array($consultaRecuperacion, MYSQLI_BOTH);
+                                    // OPTIMIZACIÓN: Obtener recuperación del mapa pre-cargado
+                                    $recuperacionIndicador = $recuperacionesMapa[$fila4["ind_id"]][$fila2["car_id"]] ?? null;
+                                    if($recuperacionIndicador === null){
+                                        // Fallback: consulta individual si no está en el mapa
+                                        $consultaRecuperacion = Indicadores::consultaRecuperacionIndicadorPeriodo($config, $fila4["ind_id"], $matriculadosDatos['mat_id'], $fila2["car_id"], $periodoActual, $year);
+                                        $recuperacionIndicador = mysqli_fetch_array($consultaRecuperacion, MYSQLI_BOTH);
+                                        // Guardar en el mapa para próximas iteraciones
+                                        if($recuperacionIndicador){
+                                            if(!isset($recuperacionesMapa[$fila4["ind_id"]])){
+                                                $recuperacionesMapa[$fila4["ind_id"]] = [];
+                                            }
+                                            $recuperacionesMapa[$fila4["ind_id"]][$fila2["car_id"]] = $recuperacionIndicador;
+                                        }
+                                    }
 
                                     $contador_indicadores++;
                                     $leyendaRI = '';
@@ -362,8 +462,11 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
                                     $notaIndicadorFinal=$nota_indicador;
                                     if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                        $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota_indicador, $year);
-                                        $notaIndicadorFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                        // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                        $notaIndRedondeada = number_format((float)$nota_indicador, 1, '.', '');
+                                        $notaIndicadorFinal = isset($notasCualitativasCache[$notaIndRedondeada]) 
+                                            ? $notasCualitativasCache[$notaIndRedondeada] 
+                                            : "";
                                     }
 
                         ?>
@@ -397,7 +500,17 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
                         <!-- observaciones de la asignatura-->
                         <?php
-                        $observacion = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $matriculadosDatos['mat_id'], $fila2['car_id'], $year);
+                        // OPTIMIZACIÓN: Obtener observación del mapa pre-cargado
+                        $observacion = $notasBoletinMapa[$fila2['car_id']][$periodoActual] ?? null;
+                        if($observacion === null){
+                            // Fallback: consulta individual si no está en el mapa
+                            $obsTemp = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoActual, $matriculadosDatos['mat_id'], $fila2['car_id'], $year);
+                            if($obsTemp){
+                                $observacion = mysqli_fetch_array($obsTemp, MYSQLI_BOTH);
+                            } else {
+                                $observacion = [];
+                            }
+                        }
 
                         if (!empty($observacion['bol_observaciones_boletin'])) {
 
@@ -441,7 +554,16 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
         <?php
 
-        $cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='" . $matriculadosDatos['mat_id'] . "' AND institucion={$config['conf_id_institucion']} AND year={$year} AND dn_periodo in(" . $condicion . ");");
+        // OPTIMIZACIÓN: Usar prepared statements para la consulta de disciplina
+        $condicionEsc = mysqli_real_escape_string($conexion, $condicion);
+        $idEstudianteEsc = mysqli_real_escape_string($conexion, $matriculadosDatos['mat_id']);
+        $cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='" . $idEstudianteEsc . "' AND institucion=" . (int)$config['conf_id_institucion'] . " AND year=" . (int)$year . " AND dn_periodo IN(" . $condicionEsc . ")");
+        
+        // Inicializar $num_observaciones basado en la consulta de disciplina
+        $num_observaciones = 0;
+        if($cndisiplina){
+            $num_observaciones = mysqli_num_rows($cndisiplina);
+        }
 
         if (@mysqli_num_rows($cndisiplina) > 0) {
 
@@ -468,7 +590,14 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                 <?php
 
                 while ($rndisiplina = mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)) {
-                    $desempenoND = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $rndisiplina["dn_nota"], $year);
+                    // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                    $desempenoND = null;
+                    if($config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($rndisiplina["dn_nota"])){
+                        $notaRedondeada = number_format((float)$rndisiplina["dn_nota"], 1, '.', '');
+                        $desempenoND = isset($notasCualitativasCache[$notaRedondeada]) 
+                            ? ['notip_nombre' => $notasCualitativasCache[$notaRedondeada]] 
+                            : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $rndisiplina["dn_nota"], $year);
+                    }
 
                 ?>
 
@@ -564,37 +693,63 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
             <tr>
                 <td align="center">
                     <?php
-                        $directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
-                        $nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
-                        if(!empty($directorGrupo["uss_firma"])){
-                            echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+                        // OPTIMIZACIÓN: Cargar director solo una vez
+                        if($directorGrupo === null && !empty($idDirector)){
+                            $directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
+                        }
+                        if($directorGrupo){
+                            $nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
+                            if(!empty($directorGrupo["uss_firma"])){
+                                echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+                            }else{
+                                echo '<p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>';
+                            }
+                            echo '<p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                '.$nombreDirectorGrupo.'<br>
+                                Director(a) de grupo';
                         }else{
                             echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
-                                <p>&nbsp;</p>';
+                                <p>&nbsp;</p>
+                                <p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                <br>
+                                Director(a) de grupo';
                         }
                     ?>
-                    <p style="height:0px;"></p>_________________________________<br>
-                    <p>&nbsp;</p>
-                    <?=$nombreDirectorGrupo?><br>
-                    Director(a) de grupo
                 </td>
                 <td align="center">
                     <?php
-                        $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
-                        $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-                        if(!empty($rector["uss_firma"])){
-                            echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+                        // OPTIMIZACIÓN: Cargar rector solo una vez
+                        if($rector === null && !empty($informacion_inst["info_rector"])){
+                            $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+                        }
+                        if($rector){
+                            $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+                            if(!empty($rector["uss_firma"])){
+                                echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+                            }else{
+                                echo '<p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>';
+                            }
+                            echo '<p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                '.$nombreRector.'<br>
+                                Rector(a)';
                         }else{
                             echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
-                                <p>&nbsp;</p>';
+                                <p>&nbsp;</p>
+                                <p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                <br>
+                                Rector(a)';
                         }
                     ?>
-                    <p style="height:0px;"></p>_________________________________<br>
-                    <p>&nbsp;</p>
-                    <?=$nombreRector?><br>
-                    Rector(a)
                 </td>
             </tr>
         </table>
@@ -653,6 +808,9 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
                 $msj = "<center>EL (LA) ESTUDIANTE " . strtoupper($datosUsr['mat_primer_apellido'] . " " . $datosUsr['mat_segundo_apellido'] . " " . $datosUsr["mat_nombres"]) . " FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";
         }*/
+
+        // Inicializar $msj para evitar warning
+        $msj = "";
 
         ?>
 

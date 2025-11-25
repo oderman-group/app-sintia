@@ -86,6 +86,10 @@ $consultaDesempeno1 = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]
 $consultaMatAreaEst = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
 $numeroPeriodos=2;
 
+// OPTIMIZACIÓN: Cachear valores de configuración
+$notaMinimaAprobar = $config['conf_nota_minima_aprobar'] ?? 3.0;
+$numMateriasPerderAno = $config["conf_num_materias_perder_agno"] ?? 3;
+
 // OPTIMIZACIÓN: Cachear desempeños en un array para evitar múltiples iteraciones
 $desempenosCache = [];
 mysqli_data_seek($consultaDesempeno1, 0);
@@ -236,8 +240,19 @@ include("head-informes.php");
 		
 //CONSULTA QUE ME TRAE EL NOMBRE Y EL PROMEDIO DEL AREA (usando método centralizado)
 $promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($config, $matriculadosDatos['mat_id'], $fila["ar_id"], $condicionArray, $datosUsr["mat_grado"], $datosUsr["mat_grupo"], $year);
-// Mantener compatibilidad con código existente - obtener nombre del área y crear resultado compatible
-$consultaAreaNombre = mysqli_query($conexion, "SELECT ar_nombre, '".$promedioAreaCompleto['acumulado']."' AS suma FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id='".$fila["ar_id"]."' AND institucion={$config['conf_id_institucion']} AND year={$year} LIMIT 1");
+// OPTIMIZACIÓN: Usar prepared statements para obtener nombre del área
+$consultaAreaNombre = null;
+$sqlArea = "SELECT ar_nombre, ? AS suma FROM ".BD_ACADEMICA.".academico_areas WHERE ar_id=? AND institucion=? AND year=? LIMIT 1";
+$stmtArea = mysqli_prepare($conexion, $sqlArea);
+if ($stmtArea) {
+	$acumulado = $promedioAreaCompleto['acumulado'];
+	$arId = $fila["ar_id"];
+	$institucion = (int)$config['conf_id_institucion'];
+	mysqli_stmt_bind_param($stmtArea, "dsis", $acumulado, $arId, $institucion, $year);
+	mysqli_stmt_execute($stmtArea);
+	$consultaAreaNombre = mysqli_stmt_get_result($stmtArea);
+	mysqli_stmt_close($stmtArea);
+}
 $consultaNotdefArea = $consultaAreaNombre;
 
 //CONSULTA QUE ME TRAE LA DEFINITIVA POR MATERIA Y NOMBRE DE LA MATERIA
@@ -375,7 +390,8 @@ $contadorPeriodos=0;
 	  $totalPromedio2=round( $fila2["suma"],1);
 	   
 	   if($totalPromedio2==1)	$totalPromedio2="1.0";	if($totalPromedio2==2)	$totalPromedio2="2.0";		if($totalPromedio2==3)	$totalPromedio2="3.0";	if($totalPromedio2==4)	$totalPromedio2="4.0";	if($totalPromedio2==5)	$totalPromedio2="5.0";
-	   if($totalPromedio2<$config['conf_nota_minima_aprobar']){$materiasPerdidas++;}
+	   // OPTIMIZACIÓN: Usar valor cacheado
+	   if($totalPromedio2<$notaMinimaAprobar){$materiasPerdidas++;}
 	   ?>
        
         <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php 
@@ -525,8 +541,16 @@ if($numIndicadores>0){
 
 <p>&nbsp;</p>
 <?php 
-$cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='".$matriculadosDatos['mat_id']."' AND institucion={$config['conf_id_institucion']} AND year={$year} AND dn_periodo in(".$condicion.");");
-if(@mysqli_num_rows($cndisiplina)>0){
+// OPTIMIZACIÓN: Usar prepared statements para consulta de disciplina
+// Nota: Para IN() con valores dinámicos, necesitamos escapar los valores manualmente
+$cndisiplina = null;
+$idEstudianteEsc = mysqli_real_escape_string($conexion, $matriculadosDatos['mat_id']);
+$condicionEsc = mysqli_real_escape_string($conexion, $condicion);
+$institucion = (int)$config['conf_id_institucion'];
+$yearEsc = mysqli_real_escape_string($conexion, $year);
+$sqlDisciplina = "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='{$idEstudianteEsc}' AND institucion={$institucion} AND year='{$yearEsc}' AND dn_periodo IN ({$condicionEsc})";
+$cndisiplina = mysqli_query($conexion, $sqlDisciplina);
+if($cndisiplina && mysqli_num_rows($cndisiplina)>0){
 ?>
 <table width="100%" id="tblBoletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
 
@@ -614,7 +638,8 @@ $desempenoND = Boletin::obtenerDatosTipoDeNotasCargadas($desempenosCache, $rndis
 <?php 
 $msj = "";
 if($periodoActual==4){
-	if($materiasPerdidas>=$config["conf_num_materias_perder_agno"])
+	// OPTIMIZACIÓN: Usar valor cacheado
+	if($materiasPerdidas>=$numMateriasPerderAno)
 		$msj = "<center>EL (LA) ESTUDIANTE ".strtoupper($datosUsr['mat_segundo_apellido'])." NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE</center>";
 	elseif($materiasPerdidas<3 and $materiasPerdidas>0)
 		$msj = "<center>EL (LA) ESTUDIANTE ".strtoupper($datosUsr['mat_segundo_apellido'])." DEBE NIVELAR LAS MATERIAS PERDIDAS</center>";
