@@ -4,9 +4,9 @@
  *
  * @param {string} contenido - El contenido que será incluido en el PDF. Puede ser un un texto con el id de contenido de donde estan los div page.
  * @param {string} title - El título base para el archivo PDF generado.
- * @param {number} [max=20] - Número máximo de páginas por PDF parcial. Por defecto, es 20.
+ * @param {number} [max] - Número máximo de páginas por PDF parcial. Si no se especifica o es undefined, genera un solo archivo.
  */
-async function generatePDF(contenido, title, max = 20) {
+async function generatePDF(contenido, title, max) {
     
     const paginas = [...document.querySelectorAll('.page')];// Obtiene una lista de las páginas que se encuentran en el documento. 
    
@@ -14,8 +14,15 @@ async function generatePDF(contenido, title, max = 20) {
     
     let cantidad = paginas.length; // Determina la cantidad de páginas en el documento.
 
-    // Caso: hay más de una página en el documento.
-    if (cantidad > 1) {
+    // Si no se especifica max o es undefined, generar un solo PDF sin límite
+    if (max === undefined || max === null) {
+        await generatePDFUnico(contenido, title);
+        document.getElementById("overlay").style.display = "none";
+        return;
+    }
+
+    // Caso: hay más de una página en el documento y se especificó un límite.
+    if (cantidad > 1 && max > 0) {
         let start = 0;  // Índice inicial de un bloque de páginas.
         let end = 0;    // Índice final de un bloque de páginas.
         let count = 0;  // Contador de páginas procesadas en el bloque actual.
@@ -34,7 +41,9 @@ async function generatePDF(contenido, title, max = 20) {
         }
 
         // Genera un PDF parcial para las páginas restantes si las hay.
-        await generatePDFPart(start, end, `${title}_${start}-${end}`);
+        if (start <= end) {
+            await generatePDFPart(start, end, `${title}_${start}-${end}`);
+        }
     } 
     // Caso: hay exactamente una página en el documento.
     else if (cantidad === 1) {
