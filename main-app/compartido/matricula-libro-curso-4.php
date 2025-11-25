@@ -80,19 +80,62 @@ if (!empty($idEstudiante)) {
     <!-- favicon -->
     <link rel="shortcut icon" href="<?= $Plataforma->logo; ?>" />
     <style>
-       
-
-        #saltoPagina {
-            PAGE-BREAK-AFTER: always;
+        /* Estilos para impresión */
+        @media print {
+            .page {
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            .btn-flotante {
+                display: none !important;
+            }
         }
-        #guardarPDF {
-            cursor: pointer;
+        
+        /* Estilos para PDF generado con html2pdf */
+        .page {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            box-sizing: border-box;
+            break-inside: avoid;
+            overflow: visible;
+        }
+        
+        .page:last-child {
+            margin-bottom: 0;
+        }
+        
+        #guardarPDF, #guardarExcel, #imprimir {
+            cursor: pointer !important;
+            position: fixed !important;
+            bottom: 40px !important;
+            right: 40px !important;
+            font-size: 12px !important;
+            padding: 10px 20px !important;
+            width: 140px !important;
+            z-index: 99 !important;
+            text-transform: uppercase !important;
+            font-weight: bold !important;
+            color: #ffffff !important;
+            border-radius: 5px !important;
+            letter-spacing: 1px !important;
+            background-color: #E91E63 !important;
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1) !important;
+            transition: all 300ms ease 0ms !important;
+            border: none !important;
+        }
+        
+        #guardarPDF:hover, #guardarExcel:hover, #imprimir:hover {
+            background-color: #2c2fa5 !important;
+            box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-7px) !important;
         }
         
         #guardarExcel {
-            cursor: pointer;
-            right: auto;
-            left: 40px;
+            bottom: 100px !important;
+        }
+        
+        #imprimir {
+            bottom: 160px !important;
         }
         
         /* Limitar ancho de casilla Documento para evitar desbordamiento */
@@ -153,7 +196,7 @@ if ($grado >= 12 && $grado <= 15) {
         <?php foreach ($estudiantes as $estudiante) {
             $totalNotasPeriodo = [];
             ?>
-            <div class="page" style="margin-left: 50px;margin-right: 50px; page-break-after: always; page-break-inside: avoid;">
+            <div class="page" style="margin-left: 50px;margin-right: 50px;">
                  <!-- <h1>Página <?= $estudiante["nro"]?></h1> -->
                 <div style="margin: 15px 0;">
                     <table width="100%" cellspacing="5" cellpadding="5" border="1" rules="all" style="font-size: 13px;">
@@ -447,14 +490,16 @@ if ($grado >= 12 && $grado <= 15) {
                 </table>
                 <p>&nbsp;</p>
             </div>
-             <div id="saltoPagina"></div>
         <?php } ?>
     </div>
-    <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF" onclick="generatePDF('contenido','LIBRO_FINAL_F2')"
-        value="Descargar PDF">
+    <input type="button" class="btn  btn-flotante btn-with-icon" id="imprimir" onclick="window.print()"
+        value="Imprimir">
     </input>
     <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarExcel" onclick="exportarExcel()"
-        value="Descargar Excel" style="margin-left: 10px;">
+        value="Descargar Excel">
+    </input>
+    <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF" onclick="generatePDF('contenido','LIBRO_FINAL_F2')"
+        value="Descargar PDF">
     </input>
     
     <script>
