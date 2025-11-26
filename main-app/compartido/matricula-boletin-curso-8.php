@@ -479,7 +479,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
                         // Contar materias perdidas (sin considerar habilitación)
                         if ($promedioMateria < $config["conf_nota_minima_aprobar"]) {
-                            if (empty($nivelacion['niv_definitiva']) || $nivelacion['niv_definitiva'] < $config["conf_nota_minima_aprobar"]) {
+                            if (empty($nivelacion) || !is_array($nivelacion) || empty($nivelacion['niv_definitiva']) || $nivelacion['niv_definitiva'] < $config["conf_nota_minima_aprobar"]) {
                                 $materiasPerdidas++;
                             }
                         }
@@ -508,7 +508,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                         // Preparar nota de habilitación para la columna HAB
                         $notaHabilitacion = "";
                         $notaHabilitacionFormateada = "";
-                        if (!empty($nivelacion['niv_definitiva'])) {
+                        if (!empty($nivelacion) && is_array($nivelacion) && !empty($nivelacion['niv_definitiva'])) {
                             $notaHabilitacion = (float)$nivelacion['niv_definitiva'];
                             
                             // Formatear según el mismo estilo que se usa en el archivo
