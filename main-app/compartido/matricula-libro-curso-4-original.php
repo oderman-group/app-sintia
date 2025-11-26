@@ -175,23 +175,16 @@ if (!empty($grado) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) 
 
 
 
-// Inicializar educación con valor por defecto
-$educacion = "BÁSICA";
 
-// Intentar determinar el nivel educativo basándose en el grado
-// Nota: $grado puede ser un ID alfanumérico, por lo que esta lógica puede no ser precisa
-// Se recomienda usar gra_nivel del estudiante cuando esté disponible
-if (!empty($grado) && is_numeric($grado)) {
-    $gradoNum = (int)$grado;
-    if ($gradoNum >= 12 && $gradoNum <= 15) {
-        $educacion = "PREESCOLAR";
-    } elseif ($gradoNum >= 1 && $gradoNum <= 5) {
-        $educacion = "PRIMARIA";
-    } elseif ($gradoNum >= 6 && $gradoNum <= 9) {
-        $educacion = "SECUNDARIA";
-    } elseif ($gradoNum >= 10 && $gradoNum <= 11) {
-        $educacion = "MEDIA";
-    }
+
+if ($grado >= 12 && $grado <= 15) {
+    $educacion = "PREESCOLAR";
+} elseif ($grado >= 1 && $grado <= 5) {
+    $educacion = "PRIMARIA";
+} elseif ($grado >= 6 && $grado <= 9) {
+    $educacion = "SECUNDARIA";
+} elseif ($grado >= 10 && $grado <= 11) {
+    $educacion = "MEDIA";
 }
 
 ?>
@@ -229,8 +222,8 @@ if (!empty($grado) && is_numeric($grado)) {
                         <tr>
                             <td>Jornada:<br> <b
                                     style="color: #00adefad;"><?= strtoupper($informacion_inst["info_jornada"]) ?></b></td>
-                            <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN 
-                                    <?= !empty($educacion) ? strtoupper($educacion) : 'BÁSICA' ?></b></td>
+                            <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN BÁSICA
+                                    <?= strtoupper($educacion) ?></b></td>
                         </tr>
                     </table>
                     <p>&nbsp;</p>
@@ -294,9 +287,7 @@ if (!empty($grado) && is_numeric($grado)) {
                         foreach ($estudiante["areas"] as $area) {
                             $cantidadAreas++;
                             $ihArea = 0;
-                            // Arrays para calcular promedio ponderado por período
-                            $notaAre = []; // Suma de (nota * porcentaje) por período
-                            $sumaPorcentajesArea = []; // Suma de porcentajes por período
+                            $notaAre = [];
                             $desenpenioAre;
                             ?>
 
@@ -327,16 +318,12 @@ if (!empty($grado) && is_numeric($grado)) {
                                         $nota = Boletin::agregarDecimales($nota);
                                         $desempeno = Boletin::determinarRango($nota, $tiposNotas);
                                         $promedioMateria += $nota;
-                                        $porcentajeMateria = !empty($carga['mat_valor']) ? (float)$carga['mat_valor'] : 100;
-                                        
-                                        // Acumular para promedio ponderado del área por período
-                                        if (!isset($notaAre[$j])) {
-                                            $notaAre[$j] = 0;
-                                            $sumaPorcentajesArea[$j] = 0;
+                                        $porcentajeMateria = !empty($carga['mat_valor']) ? $carga['mat_valor'] : 100;
+                                        if (isset($notaAre[$j])) {
+                                            $notaAre[$j] += $nota * ($porcentajeMateria / 100);
+                                        } else {
+                                            $notaAre[$j] = $nota * ($porcentajeMateria / 100);
                                         }
-                                        // Sumar (nota * porcentaje) y suma de porcentajes
-                                        $notaAre[$j] += $nota * ($porcentajeMateria / 100);
-                                        $sumaPorcentajesArea[$j] += ($porcentajeMateria / 100);
 
                                         if (isset($totalNotasPeriodo[$j])) {
                                             $totalNotasPeriodo[$j] += $nota * ($porcentajeMateria / 100);
@@ -371,40 +358,22 @@ if (!empty($grado) && is_numeric($grado)) {
                                     <td <?= $style ?>><?= $area["ar_nombre"] ?></td>
                                     <td align="center" <?= $style ?>><?= $ihArea ?></td>
                                     <?php
-                                    // Calcular promedio ponderado del área por período
-                                    $notaAreaPorPeriodo = [];
-                                    for ($j = 1; $j <= $periodoFinal; $j++) {
-                                        // Calcular promedio ponderado: suma(nota * porcentaje) / suma(porcentajes)
-                                        if (!empty($sumaPorcentajesArea[$j]) && $sumaPorcentajesArea[$j] > 0) {
-                                            $notaAreaPorPeriodo[$j] = $notaAre[$j] / $sumaPorcentajesArea[$j];
-                                        } else {
-                                            $notaAreaPorPeriodo[$j] = 0;
-                                        }
-                                    }
-                                    
-                                    // Calcular definitiva del área (promedio de períodos)
                                     $notaAreAcumulada = 0;
                                     $periodoAreaCalcular = $config["conf_periodos_maximos"];
                                     for ($j = 1; $j <= $periodoFinal; $j++) {
-                                        $notaAreAcumulada += $notaAreaPorPeriodo[$j];
-                                        ?>
+                                        $notaAreAcumulada += $notaAre[$j]; ?>
                                         <td align="center" <?= $style ?>>
-                                            <?= $notaAreaPorPeriodo[$j] <= 0 ? '' : number_format($notaAreaPorPeriodo[$j], $config['conf_decimales_notas']); ?>
+                                            <?= $notaAre[$j] <= 0 ? '' : number_format($notaAre[$j], $config['conf_decimales_notas']); ?>
                                         </td>
 
                                         <?php
-                                        if ($notaAreaPorPeriodo[$j] <= 0) {
+                                        if ($notaAre[$j] <= 0) {
                                             $periodoAreaCalcular -= 1;
                                         }
                                     }
 
                                     $periodoAreaCalcular = $estudiante['mat_estado_matricula'] == CANCELADO && $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $periodoAreaCalcular : $config["conf_periodos_maximos"];
-                                    if ($periodoAreaCalcular > 0) {
-                                        $notaAreAcumulada = $notaAreAcumulada / $periodoAreaCalcular;
-                                    } else {
-                                        $notaAreAcumulada = 0;
-                                    }
-                                    $notaAreAcumulada = round($notaAreAcumulada, $config['conf_decimales_notas']);
+                                    $notaAreAcumulada = number_format($notaAreAcumulada / $periodoAreaCalcular, $config['conf_decimales_notas']);
                                     $desenpenioAreAcumulado = Boletin::determinarRango($notaAreAcumulada, $tiposNotas);
 
                                     ?>
@@ -530,7 +499,7 @@ if (!empty($grado) && is_numeric($grado)) {
         value="Descargar Excel">
     </input>
     <input type="button" class="btn  btn-flotante btn-with-icon" id="guardarPDF"
-        onclick="descargarPDF()" value="Descargar PDF">
+        value="Descargar PDF">
     </input>
     
     <script>
@@ -547,59 +516,23 @@ if (!empty($grado) && is_numeric($grado)) {
         }
         ?>
         
-        // Función para descargar PDF desde el servidor
-        function descargarPDF() {
-            const curso = '<?= base64_encode($grado) ?>';
-            const grupo = '<?= base64_encode($grupo) ?>';
-            const year = '<?= base64_encode($year) ?>';
-            const idEstudiante = '<?= !empty($idEstudiante) ? base64_encode($idEstudiante) : "" ?>';
-            
-            // Mostrar overlay de carga
-            if (document.getElementById('overlay')) {
-                document.getElementById('overlay').style.display = 'flex';
-            }
-            
-            // Crear formulario temporal para enviar datos
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'matricula-libro-curso-4-pdf.php';
-            
-            const cursoInput = document.createElement('input');
-            cursoInput.type = 'hidden';
-            cursoInput.name = 'curso';
-            cursoInput.value = curso;
-            form.appendChild(cursoInput);
-            
-            const grupoInput = document.createElement('input');
-            grupoInput.type = 'hidden';
-            grupoInput.name = 'grupo';
-            grupoInput.value = grupo;
-            form.appendChild(grupoInput);
-            
-            const yearInput = document.createElement('input');
-            yearInput.type = 'hidden';
-            yearInput.name = 'year';
-            yearInput.value = year;
-            form.appendChild(yearInput);
-            
-            if (idEstudiante) {
-                const idInput = document.createElement('input');
-                idInput.type = 'hidden';
-                idInput.name = 'id';
-                idInput.value = idEstudiante;
-                form.appendChild(idInput);
-            }
-            
-            document.body.appendChild(form);
-            form.submit();
-            
-            // Ocultar overlay después de un tiempo
-            setTimeout(() => {
-                if (document.getElementById('overlay')) {
-                    document.getElementById('overlay').style.display = 'none';
+        // Asignar el event listener al botón después de que todo esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnPDF = document.getElementById('guardarPDF');
+            if (btnPDF && typeof generatePDF !== 'undefined') {
+                btnPDF.onclick = function() {
+                    generatePDF('contenido', 'LIBRO_FINAL_F2');
+                };
+                console.log('Botón PDF inicializado correctamente');
+            } else {
+                console.error('Error: No se pudo inicializar el botón PDF');
+                if (btnPDF) {
+                    btnPDF.onclick = function() {
+                        alert('Error: La función de generar PDF no está disponible. Por favor, recargue la página.');
+                    };
                 }
-            }, 2000);
-        }
+            }
+        });
         
         // Función para exportar a Excel
         function exportarExcel() {

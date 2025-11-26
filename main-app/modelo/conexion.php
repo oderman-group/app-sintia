@@ -9,7 +9,6 @@ require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.ph
 
 if(isset($_SESSION["id"]) and $_SESSION["id"]!=""){
 	$_SESSION["id"] = $_SESSION["id"];
-	error_log("Asignando sesion ID ".$_SESSION["id"]);
 }
 
 
@@ -107,8 +106,6 @@ if (empty($_SESSION["inst"])) {
     // Establecer el modo de error PDO a excepciones
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-	error_log("La conexión se estableción correctamente para el año ".$agnoBD." y la institución: ".$_SESSION["inst"] . " - ID: ".$_SESSION["id"]);
-
 	} catch(Exception $e) {
 
 		$bdSolicitada = $_POST["bd"] ?? ($_SESSION["inst"] ?? '');
@@ -142,5 +139,3 @@ if (empty($_SESSION["inst"])) {
     }
 
 }
-
-error_log("Saliendo del archivo de conexión ".$_SESSION["id"] . " - IP: ".$_SERVER["REMOTE_ADDR"] . " - URL: ".$_SERVER["PHP_SELF"]);
