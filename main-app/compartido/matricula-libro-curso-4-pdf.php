@@ -33,21 +33,66 @@ if (isset($_POST["year"])) {
 
 $periodoFinal = $config['conf_periodos_maximos'];
 
-$grado = 1;
+// Procesar cursos (puede ser array o valor único)
+$grados = [];
 if (!empty($_GET["curso"])) {
-    $grado = base64_decode($_GET["curso"]);
-}
-if (isset($_POST["curso"])) {
-    $grado = base64_decode($_POST["curso"]);
+    $cursoGet = base64_decode($_GET["curso"]);
+    $grados = is_array($cursoGet) ? $cursoGet : [$cursoGet];
+} elseif (isset($_POST["curso"])) {
+    // Si viene como array (curso[]), usar directamente
+    if (is_array($_POST["curso"])) {
+        foreach ($_POST["curso"] as $curso) {
+            // Si el valor ya es numérico, usarlo directamente; si no, intentar decodificar
+            $grados[] = is_numeric($curso) ? $curso : (strlen($curso) > 10 ? base64_decode($curso) : $curso);
+        }
+    } else {
+        // Si viene como valor único, convertirlo a array
+        $cursoVal = is_numeric($_POST["curso"]) ? $_POST["curso"] : base64_decode($_POST["curso"]);
+        $grados = [$cursoVal];
+    }
+} else {
+    $grados = [1]; // Valor por defecto
 }
 
-$grupo = 1;
+// Limpiar valores vacíos del array
+$grados = array_filter($grados, function($grado) {
+    return !empty($grado) && $grado != '';
+});
+
+// Si después de filtrar está vacío, usar valor por defecto
+if (empty($grados)) {
+    $grados = [1];
+}
+
+// Procesar grupos (puede ser array o valor único, opcional)
+$grupos = [];
 if (!empty($_GET["grupo"])) {
-    $grupo = base64_decode($_GET["grupo"]);
+    $grupoGet = base64_decode($_GET["grupo"]);
+    $grupos = is_array($grupoGet) ? $grupoGet : [$grupoGet];
+} elseif (!empty($_POST["grupo"])) {
+    // Si viene como array (grupo[]), usar directamente
+    if (is_array($_POST["grupo"])) {
+        foreach ($_POST["grupo"] as $grupo) {
+            // Si el valor ya es numérico, usarlo directamente; si no, intentar decodificar
+            $grupos[] = is_numeric($grupo) ? $grupo : (strlen($grupo) > 10 ? base64_decode($grupo) : $grupo);
+        }
+    } else {
+        // Si viene como valor único, convertirlo a array
+        $grupoVal = is_numeric($_POST["grupo"]) ? $_POST["grupo"] : base64_decode($_POST["grupo"]);
+        $grupos = [$grupoVal];
+    }
+} else {
+    $grupos = []; // Array vacío si no hay grupos (no usar valor por defecto)
 }
-if (!empty($_POST["grupo"])) {
-    $grupo = base64_decode($_POST["grupo"]);
-}
+
+// Limpiar valores vacíos del array
+$grupos = array_filter($grupos, function($grupo) {
+    return !empty($grupo) && $grupo != '' && $grupo != '1';
+});
+
+// Para compatibilidad con código existente, mantener variables individuales
+$grado = !empty($grados) ? $grados[0] : 1;
+$grupo = !empty($grupos) ? $grupos[0] : 1;
 
 $idEstudiante = '';
 if (isset($_POST["id"])) {
@@ -65,6 +110,8 @@ if (!empty($idEstudiante)) {
         $idEstudiante = $estudiante["mat_id"];
         $grado = $estudiante["mat_grado"];
         $grupo = $estudiante["mat_grupo"];
+        $grados = [$grado];
+        $grupos = [$grupo];
     }
 }
 
@@ -76,26 +123,73 @@ while ($row = $cosnultaTiposNotas->fetch_assoc()) {
     $tiposNotas[] = $row;
 }
 
-if (!empty($grado) && !empty($grupo) && !empty($periodoFinal) && !empty($year)) {
+// Procesar múltiples cursos y grupos
+if (!empty($grados) && !empty($periodoFinal) && !empty($year)) {
     $periodos = [];
     for ($i = 1; $i <= $periodoFinal; $i++) {
         $periodos[$i] = $i;
     }
-    $datos = Boletin::datosBoletin($grado, $grupo, $periodos, $year, $idEstudiante);
-    while ($row = $datos->fetch_assoc()) {
-        $listaDatos[] = $row;
+    
+    // Si hay múltiples cursos/grupos, procesar cada combinación
+    foreach ($grados as $gradoActual) {
+        if (empty($gradoActual) || $gradoActual == '1') continue;
+        
+        // Si hay grupos específicos seleccionados, usar solo esos
+        if (!empty($grupos) && count($grupos) > 0) {
+            foreach ($grupos as $grupoActual) {
+                if (empty($grupoActual) || $grupoActual == '1') continue;
+                
+                $datos = Boletin::datosBoletin($gradoActual, $grupoActual, $periodos, $year, $idEstudiante);
+                while ($row = $datos->fetch_assoc()) {
+                    $listaDatos[] = $row;
+                }
+            }
+        } else {
+            // Si no hay grupos específicos, obtener todos los grupos únicos del curso desde las matrículas
+            require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+            $sql = "SELECT DISTINCT mat_grupo FROM ".BD_ACADEMICA.".academico_matriculas 
+                    WHERE mat_grado = ? AND institucion = ? AND year = ? 
+                    AND mat_eliminado = 0 
+                    AND (mat_estado_matricula = " . MATRICULADO . " OR mat_estado_matricula = " . ASISTENTE . ")
+                    ORDER BY mat_grupo";
+            $parametros = [$gradoActual, $config['conf_id_institucion'], $year];
+            $resultadoGrupos = BindSQL::prepararSQL($sql, $parametros);
+            
+            while ($grupoRow = $resultadoGrupos->fetch_assoc()) {
+                $grupoActual = $grupoRow['mat_grupo'];
+                if (empty($grupoActual)) continue;
+                
+                $datos = Boletin::datosBoletin($gradoActual, $grupoActual, $periodos, $year, $idEstudiante);
+                while ($row = $datos->fetch_assoc()) {
+                    $listaDatos[] = $row;
+                }
+            }
+        }
     }
-    include("../compartido/agrupar-datos-boletin-periodos-mejorado.php");
+    
+    // Solo incluir el agrupador si hay datos
+    if (!empty($listaDatos)) {
+        include("../compartido/agrupar-datos-boletin-periodos-mejorado.php");
+    }
 }
 
-if ($grado >= 12 && $grado <= 15) {
-    $educacion = "PREESCOLAR";
-} elseif ($grado >= 1 && $grado <= 5) {
-    $educacion = "PRIMARIA";
-} elseif ($grado >= 6 && $grado <= 9) {
-    $educacion = "SECUNDARIA";
-} elseif ($grado >= 10 && $grado <= 11) {
-    $educacion = "MEDIA";
+// Inicializar educación con valor por defecto
+$educacion = "BÁSICA";
+
+// Intentar determinar el nivel educativo basándose en el grado
+// Nota: $grado puede ser un ID alfanumérico, por lo que esta lógica puede no ser precisa
+// Se recomienda usar gra_nivel del estudiante cuando esté disponible
+if (!empty($grado) && is_numeric($grado)) {
+    $gradoNum = (int)$grado;
+    if ($gradoNum >= 12 && $gradoNum <= 15) {
+        $educacion = "PREESCOLAR";
+    } elseif ($gradoNum >= 1 && $gradoNum <= 5) {
+        $educacion = "PRIMARIA";
+    } elseif ($gradoNum >= 6 && $gradoNum <= 9) {
+        $educacion = "SECUNDARIA";
+    } elseif ($gradoNum >= 10 && $gradoNum <= 11) {
+        $educacion = "MEDIA";
+    }
 }
 
 // Iniciar buffer de salida para capturar el HTML
@@ -108,7 +202,7 @@ ob_start();
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 8px;
+            font-size: 11px;
             margin: 0;
             padding: 0;
         }
@@ -140,7 +234,7 @@ ob_start();
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8px;
+            font-size: 11px;
         }
         .codigo-estudiante {
             max-width: 120px;
@@ -161,8 +255,8 @@ ob_start();
             margin-bottom: 3px;
         }
         .main-table td, .main-table th {
-            padding: 2px;
-            font-size: 7px;
+            padding: 3px;
+            font-size: 11px;
         }
         .firma-table {
             margin-top: 5px;
@@ -219,7 +313,7 @@ ob_start();
                     </tr>
                     <tr>
                         <td>Jornada:<br> <b style="color: #00adefad;"><?= strtoupper($informacion_inst["info_jornada"]) ?></b></td>
-                        <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN BÁSICA <?= strtoupper($educacion) ?></b></td>
+                        <td>Documento:<br> <b style="color: #00adefad;">BOLETÍN DEFINITIVO DE NOTAS - EDUCACIÓN <?= !empty($educacion) ? strtoupper($educacion) : 'BÁSICA' ?></b></td>
                     </tr>
                 </table>
             </div>
@@ -256,24 +350,24 @@ ob_start();
             </table>
             </div>
             <div class="main-table">
-            <table width="100%" rules="all" border="1" style="font-size: 8px;">
+            <table width="100%" rules="all" border="1" style="font-size: 12px;">
                 <thead>
-                    <tr style="font-weight:bold; text-align:center; font-size: 8px;">
-                        <td width="25%" rowspan="2">ASIGNATURAS</td>
-                        <td width="4%" rowspan="2">I.H</td>
-                        <td colspan="<?= $periodoFinal ?>" style="background-color: #00adefad; font-size: 7px;">Periodo Cursados</td>
-                        <td width="5%" colspan="2" style="font-size: 7px;">DEFINITIVA</td>
+                    <tr style="font-weight:bold; text-align:center; font-size: 12px;">
+                        <td width="25%" rowspan="2" style="font-size: 12px;">ASIGNATURAS</td>
+                        <td width="4%" rowspan="2" style="font-size: 12px;">I.H</td>
+                        <td colspan="<?= $periodoFinal ?>" style="background-color: #00adefad; font-size: 11px;">Periodo Cursados</td>
+                        <td width="5%" colspan="2" style="font-size: 11px;">DEFINITIVA</td>
                     </tr>
-                    <tr style="font-weight:bold; text-align:center; font-size: 7px;">
+                    <tr style="font-weight:bold; text-align:center; font-size: 11px;">
                         <?php
                         for ($i = 1; $i <= $periodoFinal; $i++) {
                             ?>
-                            <td style="background-color: #00adefad; font-size: 7px;"><?= $i ?></td>
+                            <td style="background-color: #00adefad; font-size: 11px;"><?= $i ?></td>
                             <?php
                         }
                         ?>
-                        <td style="font-size: 7px;">DEF</td>
-                        <td style="font-size: 7px;">Desempeño</td>
+                        <td style="font-size: 11px;">DEF</td>
+                        <td style="font-size: 11px;">Desempeño</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -304,8 +398,8 @@ ob_start();
                                 $cargaStyle = '';
                             } ?>
                             <tr style="<?= $styleborder ?>">
-                                <td style="<?= $cargaStyle ?> padding-left: 5px; font-size: 7px;"> <?= $nombre ?></td>
-                                <td style="<?= $cargaStyle ?> font-size: 7px;" align="center"><?= $carga['car_ih'] ?></td>
+                                <td style="<?= $cargaStyle ?> padding-left: 5px; font-size: 11px;"> <?= $nombre ?></td>
+                                <td style="<?= $cargaStyle ?> font-size: 11px;" align="center"><?= $carga['car_ih'] ?></td>
                                 <?php
                                 for ($j = 1; $j <= $periodoFinal; $j++) {
                                     $nota = isset($carga["periodos"][$j]["bol_nota"])
@@ -328,7 +422,7 @@ ob_start();
                                     }
                                     $background = 'background: #9ed8ed;';
                                     ?>
-                                    <td align="center" style="<?= $background ?>;<?= $cargaStyle ?> font-size: 7px; padding: 1px;">
+                                    <td align="center" style="<?= $background ?>;<?= $cargaStyle ?> font-size: 11px; padding: 2px;">
                                         <?= $nota == 0 ? '' : number_format($nota, $config['conf_decimales_notas']); ?>
                                     </td>
                                 <?php }
@@ -341,22 +435,22 @@ ob_start();
                                     $materiasPerdidas++;
                                 }
                                 ?>
-                                <td align="center" style="font-size: 7px; padding: 1px;"><?= $notaAcumulada <= 0 ? '' : $notaAcumulada ?></td>
-                                <td align="center" style="font-size: 7px; padding: 1px;">
+                                <td align="center" style="font-size: 11px; padding: 2px;"><?= $notaAcumulada <= 0 ? '' : $notaAcumulada ?></td>
+                                <td align="center" style="font-size: 11px; padding: 2px;">
                                     <?= $notaAcumulada <= 0 ? '' : $desempenoAcumulado["notip_nombre"] ?>
                                 </td>
                             </tr>
                         <?php }
                         if ($ihArea != $carga['car_ih']) { ?>
                             <tr>
-                                <td <?= $style ?> style="font-size: 7px; padding: 2px;"><?= $area["ar_nombre"] ?></td>
-                                <td align="center" <?= $style ?> style="font-size: 7px; padding: 2px;"><?= $ihArea ?></td>
+                                <td <?= $style ?> style="font-size: 11px; padding: 3px;"><?= $area["ar_nombre"] ?></td>
+                                <td align="center" <?= $style ?> style="font-size: 11px; padding: 3px;"><?= $ihArea ?></td>
                                 <?php
                                 $notaAreAcumulada = 0;
                                 $periodoAreaCalcular = $config["conf_periodos_maximos"];
                                 for ($j = 1; $j <= $periodoFinal; $j++) {
                                     $notaAreAcumulada += $notaAre[$j]; ?>
-                                    <td align="center" <?= $style ?> style="font-size: 7px; padding: 1px;">
+                                    <td align="center" <?= $style ?> style="font-size: 11px; padding: 2px;">
                                         <?= $notaAre[$j] <= 0 ? '' : number_format($notaAre[$j], $config['conf_decimales_notas']); ?>
                                     </td>
 
@@ -372,8 +466,8 @@ ob_start();
 
                                 ?>
 
-                                <td align="center" <?= $style ?> style="font-size: 7px; padding: 1px;"><?= $notaAreAcumulada <= 0 ? '' : $notaAreAcumulada ?></td>
-                                <td align="center" <?= $style ?> style="font-size: 7px; padding: 1px;">
+                                <td align="center" <?= $style ?> style="font-size: 11px; padding: 2px;"><?= $notaAreAcumulada <= 0 ? '' : $notaAreAcumulada ?></td>
+                                <td align="center" <?= $style ?> style="font-size: 11px; padding: 2px;">
                                     <?= $notaAreAcumulada <= 0 ? '' : $desenpenioAreAcumulado["notip_nombre"] ?>
                                 </td>
                             </tr>
@@ -381,8 +475,8 @@ ob_start();
                     } ?>
                 </tbody>
                 <tfoot>
-                    <tr style="font-weight:bold;background: #EAEAEA;font-size: 8px;">
-                        <td colspan="2" style="padding: 2px;">PROMEDIO GENERAL</td>
+                    <tr style="font-weight:bold;background: #EAEAEA;font-size: 12px;">
+                        <td colspan="2" style="padding: 3px; font-size: 12px;">PROMEDIO GENERAL</td>
                         <?php
                         $promedioFinal = 0;
                         $periodoCalcular = $config["conf_periodos_maximos"];
@@ -395,7 +489,7 @@ ob_start();
                                 $periodoCalcular -= 1;
                             }
                             ?>
-                            <td align="center" style="font-size: 7px; padding: 1px;"><?= $acumuladoPj <= 0 ? '' : $acumuladoPj ?> </td>
+                            <td align="center" style="font-size: 11px; padding: 2px;"><?= $acumuladoPj <= 0 ? '' : $acumuladoPj ?> </td>
                         <?php }
 
                         $periodoCalcularFinal = $estudiante['mat_estado_matricula'] == CANCELADO && $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $periodoCalcular : $config["conf_periodos_maximos"];
@@ -403,12 +497,12 @@ ob_start();
 
                         $desempenoAcumuladoTotal = Boletin::determinarRango($promedioFinal, $tiposNotas);
                         ?>
-                        <td align="center" style="font-size: 7px; padding: 1px;"><?= $promedioFinal <= 0 ? '' : $promedioFinal ?></td>
-                        <td align="center" style="font-size: 7px; padding: 1px;"><?= $desempenoAcumuladoTotal["notip_nombre"] ?></td>
+                        <td align="center" style="font-size: 11px; padding: 2px;"><?= $promedioFinal <= 0 ? '' : $promedioFinal ?></td>
+                        <td align="center" style="font-size: 11px; padding: 2px;"><?= $desempenoAcumuladoTotal["notip_nombre"] ?></td>
                     </tr>
                     <tr style="color:#000;">
-                        <td style="padding-left: 5px; padding-top: 2px; padding-bottom: 2px;" colspan="<?= $periodoFinal + 4 ?>">
-                            <h4 style="font-weight:bold; color: #00adefad; margin: 2px 0; font-size: 8px;"><b>Observación definitiva:</b></h4>
+                        <td style="padding-left: 5px; padding-top: 3px; padding-bottom: 3px;" colspan="<?= $periodoFinal + 4 ?>">
+                            <h4 style="font-weight:bold; color: #00adefad; margin: 3px 0; font-size: 10px;"><b>Observación definitiva:</b></h4>
                             <?php
                             if ($periodoFinal == $config["conf_periodos_maximos"]) {
 
@@ -424,7 +518,7 @@ ob_start();
                                     $msj = "EL(LA) ESTUDIANTE FUE RETIRADO SIN FINALIZAR AÑO LECTIVO.";
                                 }
                             }
-                            echo "<span style='padding-left: 5px; font-size: 7px;'>" . $msj . "</span>";
+                            echo "<span style='padding-left: 5px; font-size: 10px;'>" . $msj . "</span>";
                             ?>
                         </td>
                     </tr>
@@ -503,7 +597,11 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 // Generar nombre del archivo
-$nombreArchivo = 'LIBRO_FINAL_' . $grado . '_' . $grupo . '_' . $year . '.pdf';
+if (count($grados) > 1 || count($grupos) > 1) {
+    $nombreArchivo = 'LIBRO_FINAL_MULTIPLE_' . $year . '.pdf';
+} else {
+    $nombreArchivo = 'LIBRO_FINAL_' . $grado . '_' . $grupo . '_' . $year . '.pdf';
+}
 
 // Enviar PDF al navegador
 $dompdf->stream($nombreArchivo, array('Attachment' => 1));
