@@ -40,67 +40,59 @@ if (!empty($listaAcudidos)) {
     }
 }
 
-// Obtener todos los estudiantes matriculados
-$listaTodosEstudiantes = Estudiantes::estudiantesMatriculados('', $_SESSION["bd"]);
-
 // Obtener grados para filtros
 $grados = Grados::traerGradosInstitucion($config);
 
-// Preparar datos de estudiantes con información de acudiente
+// SOLO cargar inicialmente los estudiantes asociados al acudiente (optimización)
 $estudiantesConDatos = [];
-while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
-    $estudianteId = $estudiante['mat_id'];
-    $estaAsociado = in_array($estudianteId, $estudiantesAsociados);
+if (!empty($estudiantesAsociados)) {
+    // Construir filtro para obtener solo los estudiantes asociados
+    $filtroAsociados = " AND mat_id IN ('" . implode("','", $estudiantesAsociados) . "')";
+    $listaEstudiantesAsociados = Estudiantes::estudiantesMatriculados($filtroAsociados, $_SESSION["bd"]);
     
-    // Obtener acudiente del estudiante (si no está asociado al acudiente actual)
-    $acudienteEstudiante = null;
-    $nombreAcudiente = "Sin acudiente";
-    if (!$estaAsociado && !empty($estudiante['mat_acudiente'])) {
-        $acudienteEstudiante = Usuarios::obtenerDatosUsuario($estudiante['mat_acudiente']);
-        if (!empty($acudienteEstudiante)) {
-            $nombreAcudiente = UsuariosPadre::nombreCompletoDelUsuario($acudienteEstudiante);
+    while($estudiante = mysqli_fetch_array($listaEstudiantesAsociados, MYSQLI_BOTH)){
+        $estudianteId = $estudiante['mat_id'];
+        
+        // Obtener datos del grado
+        $gradoNombre = '';
+        if (!empty($estudiante['mat_grado'])) {
+            $gradoData = Grados::obtenerGrado($estudiante['mat_grado']);
+            if (!empty($gradoData)) {
+                $gradoNombre = $gradoData['gra_nombre'];
+            }
         }
-    }
-    
-    // Obtener datos del grado
-    $gradoNombre = '';
-    if (!empty($estudiante['mat_grado'])) {
-        $gradoData = Grados::obtenerGrado($estudiante['mat_grado']);
-        if (!empty($gradoData)) {
-            $gradoNombre = $gradoData['gra_nombre'];
+        
+        // Obtener datos del grupo
+        $grupoNombre = '';
+        if (!empty($estudiante['mat_grupo'])) {
+            $grupoData = Grupos::obtenerGrupo($estudiante['mat_grupo']);
+            if (!empty($grupoData)) {
+                $grupoNombre = $grupoData['gru_nombre'];
+            }
         }
+        
+        // Obtener cada parte del nombre para búsqueda individual (en minúsculas para búsqueda)
+        $primerNombre = !empty($estudiante['mat_nombres']) ? strtolower(trim($estudiante['mat_nombres'])) : '';
+        $segundoNombre = !empty($estudiante['mat_nombre2']) ? strtolower(trim($estudiante['mat_nombre2'])) : '';
+        $primerApellido = !empty($estudiante['mat_primer_apellido']) ? strtolower(trim($estudiante['mat_primer_apellido'])) : '';
+        $segundoApellido = !empty($estudiante['mat_segundo_apellido']) ? strtolower(trim($estudiante['mat_segundo_apellido'])) : '';
+        
+        $estudiantesConDatos[] = [
+            'mat_id' => $estudianteId,
+            'nombre' => Estudiantes::NombreCompletoDelEstudiante($estudiante),
+            'primer_nombre' => $primerNombre,
+            'segundo_nombre' => $segundoNombre,
+            'primer_apellido' => $primerApellido,
+            'segundo_apellido' => $segundoApellido,
+            'documento' => $estudiante['mat_documento'],
+            'grado' => $estudiante['mat_grado'],
+            'grado_nombre' => $gradoNombre,
+            'grupo' => $estudiante['mat_grupo'],
+            'grupo_nombre' => $grupoNombre,
+            'asociado' => true, // Todos estos están asociados
+            'acudiente_nombre' => ''
+        ];
     }
-    
-    // Obtener datos del grupo
-    $grupoNombre = '';
-    if (!empty($estudiante['mat_grupo'])) {
-        $grupoData = Grupos::obtenerGrupo($estudiante['mat_grupo']);
-        if (!empty($grupoData)) {
-            $grupoNombre = $grupoData['gru_nombre'];
-        }
-    }
-    
-    // Obtener cada parte del nombre para búsqueda individual (en minúsculas para búsqueda)
-    $primerNombre = !empty($estudiante['mat_nombres']) ? strtolower(trim($estudiante['mat_nombres'])) : '';
-    $segundoNombre = !empty($estudiante['mat_nombre2']) ? strtolower(trim($estudiante['mat_nombre2'])) : '';
-    $primerApellido = !empty($estudiante['mat_primer_apellido']) ? strtolower(trim($estudiante['mat_primer_apellido'])) : '';
-    $segundoApellido = !empty($estudiante['mat_segundo_apellido']) ? strtolower(trim($estudiante['mat_segundo_apellido'])) : '';
-    
-    $estudiantesConDatos[] = [
-        'mat_id' => $estudianteId,
-        'nombre' => Estudiantes::NombreCompletoDelEstudiante($estudiante),
-        'primer_nombre' => $primerNombre,
-        'segundo_nombre' => $segundoNombre,
-        'primer_apellido' => $primerApellido,
-        'segundo_apellido' => $segundoApellido,
-        'documento' => $estudiante['mat_documento'],
-        'grado' => $estudiante['mat_grado'],
-        'grado_nombre' => $gradoNombre,
-        'grupo' => $estudiante['mat_grupo'],
-        'grupo_nombre' => $grupoNombre,
-        'asociado' => $estaAsociado,
-        'acudiente_nombre' => $nombreAcudiente
-    ];
 }
 ?>
 
@@ -292,7 +284,7 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                         <strong>Visibles:</strong> <span id="contador-visibles">0</span>
                                     </div>
                                     <div class="contador-item">
-                                        <strong>Total:</strong> <span id="contador-total"><?= count($estudiantesConDatos) ?></span>
+                                        <strong>Total:</strong> <span id="contador-total"><?= count($estudiantesConDatos) ?></span> <small style="color:#999;">(cargados)</small>
                                     </div>
                                     <div class="contador-item">
                                         <strong>Asociados:</strong> <span id="contador-asociados"><?= count($estudiantesAsociados) ?></span>
@@ -335,7 +327,7 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                 <!-- Lista de estudiantes -->
                                 <div id="lista-estudiantes">
                                     <?php foreach($estudiantesConDatos as $est): ?>
-                                        <div class="estudiante-card <?= $est['asociado'] ? 'asociado' : '' ?>" 
+                                        <div class="estudiante-card asociado" 
                                              data-estudiante-id="<?= $est['mat_id'] ?>"
                                              data-nombre="<?= htmlspecialchars(strtolower($est['nombre']), ENT_QUOTES, 'UTF-8') ?>"
                                              data-primer-nombre="<?= htmlspecialchars($est['primer_nombre'], ENT_QUOTES, 'UTF-8') ?>"
@@ -344,12 +336,9 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                              data-segundo-apellido="<?= htmlspecialchars($est['segundo_apellido'], ENT_QUOTES, 'UTF-8') ?>"
                                              data-documento="<?= htmlspecialchars(strtolower($est['documento']), ENT_QUOTES, 'UTF-8') ?>"
                                              data-grado="<?= $est['grado'] ?>"
-                                             data-grupo="<?= $est['grupo'] ?>"
-                                             style="<?= !$est['asociado'] ? 'display: none;' : '' ?>">
+                                             data-grupo="<?= $est['grupo'] ?>">
                                             <div class="estudiante-datos">
-                                                <?php if($est['asociado']): ?>
-                                                    <i class="fa fa-check-circle icono-check"></i>
-                                                <?php endif; ?>
+                                                <i class="fa fa-check-circle icono-check"></i>
                                                 <div class="estudiante-info">
                                                     <div class="estudiante-nombre"><?= htmlspecialchars($est['nombre']) ?></div>
                                                     <div class="estudiante-detalles">
@@ -358,27 +347,23 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                                                     <div class="estudiante-detalles">
                                                         <i class="fa fa-graduation-cap"></i> <?= htmlspecialchars($est['grado_nombre']) ?> - <?= htmlspecialchars($est['grupo_nombre']) ?>
                                                     </div>
-                                                    <?php if(!$est['asociado']): ?>
-                                                        <div class="estudiante-acudiente">
-                                                            <i class="fa fa-user"></i> Acudiente: <?= htmlspecialchars($est['acudiente_nombre']) ?>
-                                                        </div>
-                                                    <?php endif; ?>
                                                 </div>
                                                 <div>
-                                                    <?php if($est['asociado']): ?>
-                                                        <button type="button" class="btn-accion btn-quitar" data-estudiante-id="<?= $est['mat_id'] ?>">
-                                                            <i class="fa fa-times"></i> Quitar
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <button type="button" class="btn-accion btn-agregar" data-estudiante-id="<?= $est['mat_id'] ?>">
-                                                            <i class="fa fa-plus"></i> Asociar
-                                                        </button>
-                                                    <?php endif; ?>
+                                                    <button type="button" class="btn-accion btn-quitar" data-estudiante-id="<?= $est['mat_id'] ?>">
+                                                        <i class="fa fa-times"></i> Quitar
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+                                
+                                <!-- Mensaje cuando no hay estudiantes asociados -->
+                                <?php if(empty($estudiantesConDatos)): ?>
+                                    <div class="alert alert-info">
+                                        <i class="fa fa-info-circle"></i> Este acudiente no tiene estudiantes asociados. Use los filtros para buscar y asociar estudiantes.
+                                    </div>
+                                <?php endif; ?>
 
                                 <!-- Formulario oculto para guardar -->
                                 <form name="formularioGuardar" action="usuarios-acudidos-actualizar.php" method="post" id="form-guardar">
@@ -409,20 +394,23 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                             return;
                         }
                         
-                        jQuery(document).ready(function($) {
+                            jQuery(document).ready(function($) {
                             let estudiantesAsociados = <?= json_encode($estudiantesAsociados) ?>;
-                            const totalEstudiantes = <?= count($estudiantesConDatos) ?>;
                             let hayFiltrosActivos = false;
+                            
+                            // Guardar el HTML inicial de los estudiantes asociados para restaurar después
+                            const htmlInicialEstudiantes = $('#lista-estudiantes').html();
                             
                             // Función para actualizar contador
                             function actualizarContador() {
                                 const visibles = $('.estudiante-card:visible').length;
+                                const totalCargados = $('.estudiante-card').length;
                                 const contadorVisibles = $('#contador-visibles');
                                 const contadorTotal = $('#contador-total');
                                 const contadorAsociados = $('#contador-asociados');
                                 
                                 if (contadorVisibles.length) contadorVisibles.text(visibles);
-                                if (contadorTotal.length) contadorTotal.text(totalEstudiantes);
+                                if (contadorTotal.length) contadorTotal.text(totalCargados);
                                 if (contadorAsociados.length) contadorAsociados.text(estudiantesAsociados.length);
                             }
                             
@@ -539,111 +527,135 @@ while($estudiante = mysqli_fetch_array($listaTodosEstudiantes, MYSQLI_BOTH)){
                             if (btnLimpiar.length) {
                                 btnLimpiar.on('click', function(e) {
                                     e.preventDefault();
+                                    
+                                    // Limpiar campos de filtro
                                     $('#busqueda-estudiantes').val('');
                                     $('#filtro-grado, #filtro-grupo').val('');
                                     hayFiltrosActivos = false;
-                                    filtrarEstudiantes();
+                                    
+                                    // Restaurar el HTML inicial (solo estudiantes asociados)
+                                    const listaEstudiantes = $('#lista-estudiantes');
+                                    listaEstudiantes.html(htmlInicialEstudiantes);
+                                    
+                                    // Actualizar contadores
+                                    actualizarContador();
+                                    actualizarInputsFormulario();
                                 });
                             }
                             
-                            // Función de filtrado
-                            function filtrarEstudiantes() {
-                                const busqueda = busquedaInput.length ? busquedaInput.val().toLowerCase().trim() : '';
+                            // Función para cargar estudiantes desde el servidor
+                            let cargandoEstudiantes = false;
+                            function cargarEstudiantesFiltrados() {
+                                if (cargandoEstudiantes) return;
+                                
+                                const busqueda = busquedaInput.length ? busquedaInput.val().trim() : '';
                                 const filtroGrado = $('#filtro-grado').val();
                                 const filtroGrupo = $('#filtro-grupo').val();
                                 
                                 // Determinar si hay filtros activos
                                 hayFiltrosActivos = !!(busqueda || filtroGrado || filtroGrupo);
                                 
-                                $('.estudiante-card').each(function() {
-                                    const card = $(this);
-                                    const nombre = card.data('nombre') || '';
-                                    const primerNombre = card.data('primer-nombre') || '';
-                                    const segundoNombre = card.data('segundo-nombre') || '';
-                                    const primerApellido = card.data('primer-apellido') || '';
-                                    const segundoApellido = card.data('segundo-apellido') || '';
-                                    const documento = card.data('documento') || '';
-                                    const grado = card.data('grado');
-                                    const grupo = card.data('grupo');
-                                    const estaAsociado = card.hasClass('asociado');
-                                    
-                                    let mostrar = false;
-                                    
-                                    // Si hay filtros activos, mostrar según filtros
-                                    if (hayFiltrosActivos) {
-                                        mostrar = true;
+                                // Si no hay filtros activos, solo mostrar los asociados que ya están cargados
+                                if (!hayFiltrosActivos) {
+                                    $('.estudiante-card').each(function() {
+                                        const card = $(this);
+                                        if (card.hasClass('asociado')) {
+                                            card.show();
+                                        } else {
+                                            card.hide();
+                                        }
+                                    });
+                                    actualizarContador();
+                                    return;
+                                }
+                                
+                                // Si hay filtros, hacer petición AJAX
+                                cargandoEstudiantes = true;
+                                const listaEstudiantes = $('#lista-estudiantes');
+                                
+                                // Mostrar indicador de carga
+                                listaEstudiantes.html('<div class="text-center" style="padding: 40px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br><br>Cargando estudiantes...</div>');
+                                
+                                $.ajax({
+                                    url: 'ajax-estudiantes-filtrados.php',
+                                    method: 'POST',
+                                    data: {
+                                        acudiente_id: '<?= $acudienteId ?>',
+                                        busqueda: busqueda,
+                                        grado: filtroGrado,
+                                        grupo: filtroGrupo
+                                    },
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        cargandoEstudiantes = false;
                                         
-                                        // Filtro de búsqueda - buscar en todas las partes del nombre
-                                        // Dividir la búsqueda en palabras individuales
-                                        if (busqueda) {
-                                            const palabrasBusqueda = busqueda.split(/\s+/).filter(p => p.length > 0);
-                                            
-                                            // Crear un array con todas las partes del nombre para buscar
-                                            const todasLasPartes = [
-                                                nombre,
-                                                primerNombre,
-                                                segundoNombre,
-                                                primerApellido,
-                                                segundoApellido,
-                                                documento
-                                            ].filter(p => p && p.length > 0);
-                                            
-                                            // Crear un string con todas las partes combinadas para búsqueda rápida
-                                            const textoCompleto = todasLasPartes.join(' ');
-                                            
-                                            // Verificar que todas las palabras de búsqueda estén presentes en alguna parte
-                                            let todasLasPalabrasCoinciden = true;
-                                            
-                                            for (let i = 0; i < palabrasBusqueda.length; i++) {
-                                                const palabra = palabrasBusqueda[i];
-                                                let palabraEncontrada = false;
-                                                
-                                                // Buscar la palabra en el texto completo o en cada parte individual
-                                                if (textoCompleto.includes(palabra)) {
-                                                    palabraEncontrada = true;
-                                                } else {
-                                                    // Buscar en cada parte individual
-                                                    for (let j = 0; j < todasLasPartes.length; j++) {
-                                                        if (todasLasPartes[j].includes(palabra)) {
-                                                            palabraEncontrada = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                if (!palabraEncontrada) {
-                                                    todasLasPalabrasCoinciden = false;
-                                                    break;
-                                                }
-                                            }
-                                            
-                                            if (!todasLasPalabrasCoinciden) {
-                                                mostrar = false;
-                                            }
+                                        if (response.error) {
+                                            listaEstudiantes.html('<div class="alert alert-danger">Error al cargar estudiantes: ' + response.error + '</div>');
+                                            return;
                                         }
                                         
-                                        // Filtro de grado
-                                        if (filtroGrado && grado != filtroGrado) {
-                                            mostrar = false;
+                                        // Limpiar lista actual
+                                        listaEstudiantes.empty();
+                                        
+                                        // Agregar estudiantes recibidos
+                                        if (response.estudiantes && response.estudiantes.length > 0) {
+                                            response.estudiantes.forEach(function(est) {
+                                                const estaAsociado = est.asociado || estudiantesAsociados.includes(est.mat_id);
+                                                const cardHtml = `
+                                                    <div class="estudiante-card ${estaAsociado ? 'asociado' : ''}" 
+                                                         data-estudiante-id="${est.mat_id}"
+                                                         data-nombre="${est.nombre.toLowerCase()}"
+                                                         data-primer-nombre="${est.primer_nombre}"
+                                                         data-segundo-nombre="${est.segundo_nombre}"
+                                                         data-primer-apellido="${est.primer_apellido}"
+                                                         data-segundo-apellido="${est.segundo_apellido}"
+                                                         data-documento="${est.documento ? est.documento.toLowerCase() : ''}"
+                                                         data-grado="${est.grado || ''}"
+                                                         data-grupo="${est.grupo || ''}">
+                                                        <div class="estudiante-datos">
+                                                            ${estaAsociado ? '<i class="fa fa-check-circle icono-check"></i>' : ''}
+                                                            <div class="estudiante-info">
+                                                                <div class="estudiante-nombre">${est.nombre}</div>
+                                                                <div class="estudiante-detalles">
+                                                                    <i class="fa fa-id-card"></i> Documento: ${est.documento && !isNaN(est.documento) ? parseFloat(est.documento).toLocaleString('es-ES') : est.documento}
+                                                                </div>
+                                                                <div class="estudiante-detalles">
+                                                                    <i class="fa fa-graduation-cap"></i> ${est.grado_nombre} - ${est.grupo_nombre}
+                                                                </div>
+                                                                ${!estaAsociado ? `<div class="estudiante-acudiente"><i class="fa fa-user"></i> Acudiente: ${est.acudiente_nombre}</div>` : ''}
+                                                            </div>
+                                                            <div>
+                                                                ${estaAsociado ? 
+                                                                    `<button type="button" class="btn-accion btn-quitar" data-estudiante-id="${est.mat_id}"><i class="fa fa-times"></i> Quitar</button>` :
+                                                                    `<button type="button" class="btn-accion btn-agregar" data-estudiante-id="${est.mat_id}"><i class="fa fa-plus"></i> Asociar</button>`
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                                listaEstudiantes.append(cardHtml);
+                                            });
+                                        } else {
+                                            listaEstudiantes.html('<div class="alert alert-info"><i class="fa fa-info-circle"></i> No se encontraron estudiantes con los filtros aplicados.</div>');
                                         }
                                         
-                                        // Filtro de grupo
-                                        if (filtroGrupo && grupo != filtroGrupo) {
-                                            mostrar = false;
-                                        }
-                                    } else {
-                                        // Sin filtros: solo mostrar asociados
-                                        mostrar = estaAsociado;
-                                    }
-                                    
-                                    if (mostrar) {
-                                        card.show();
-                                    } else {
-                                        card.hide();
+                                        actualizarContador();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        cargandoEstudiantes = false;
+                                        listaEstudiantes.html('<div class="alert alert-danger">Error al cargar estudiantes. Por favor, intente nuevamente.</div>');
+                                        console.error('Error AJAX:', error);
                                     }
                                 });
-                                
-                                actualizarContador();
+                            }
+                            
+                            // Función de filtrado (mantener para compatibilidad, pero ahora usa AJAX)
+                            function filtrarEstudiantes() {
+                                // Usar debounce para evitar múltiples peticiones
+                                clearTimeout(window.filtroTimeout);
+                                window.filtroTimeout = setTimeout(function() {
+                                    cargarEstudiantesFiltrados();
+                                }, 500); // Esperar 500ms después del último cambio
                             }
                             
                             // Inicializar
