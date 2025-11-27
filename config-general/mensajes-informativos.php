@@ -96,6 +96,11 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 $mensaje = 'Debe llenar todos los campos.';
             break;
 
+            case 'ER_DT_4_RES':
+                $tipo = 'success';
+                $mensaje = 'La actividad se restauró exitosamente. Los porcentajes han sido recalculados.';
+            break;
+
             case 'ER_DT_5':
                 $tipo = 'warning';
                 $mensaje = 'Este estudiante ya se ecuentra creado.';
@@ -242,6 +247,17 @@ if(isset($_GET['error']) || isset($_GET['success'])){
             case 'SC_DT_7':
                 $tipo = 'success';
                 $mensaje = 'Del curso <b>'.base64_decode($_GET["curso"]).'</b> se promovieron <b>'.base64_decode($_GET["numEstudiantesPromocionados"]).'</b> estudiantes al curso <b>'.base64_decode($_GET["siguiente"]).'</b> correctamente.';
+                
+                // Agregar botón de revertir si hay ID de promoción (decodificar de base64)
+                if(!empty($_GET["promocionId"])){
+                    $promocionIdDecodificado = base64_decode($_GET["promocionId"]);
+                    if(!empty($promocionIdDecodificado) && isset($_SESSION['historial_promociones'][$promocionIdDecodificado])){
+                        $promocionIdBase64 = htmlspecialchars($_GET["promocionId"]);
+                        $mensaje .= '<br><br><button type="button" class="btn btn-warning btn-sm" onclick="revertirPromocion(\''.$promocionIdBase64.'\')" style="margin-top: 10px;">
+                            <i class="fa fa-undo"></i> Revertir Promoción
+                        </button>';
+                    }
+                }
             break;
 
             case 'SC_DT_8':
@@ -334,6 +350,34 @@ if(isset($_GET['error']) || isset($_GET['success'])){
     <div class="alert alert-block alert-<?=$tipo;?> animate__animated animate__flash animate__delay-1s animate__repeat-2">
         <p><?=$mensaje;?></p>
     </div>
+    
+    <?php if(isset($_GET['success']) && $_GET['success'] == 'SC_DT_7' && !empty($_GET["promocionId"])): ?>
+    <script type="text/javascript">
+        function revertirPromocion(promocionIdBase64) {
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "warning",
+                    title: "¿Revertir Promoción?",
+                    html: "Esta acción revertirá la promoción y devolverá a los estudiantes a su curso anterior.<br><br><strong>¿Estás seguro de continuar?</strong>",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí, Revertir",
+                    cancelButtonText: "Cancelar",
+                    confirmButtonColor: "#ffc107",
+                    cancelButtonColor: "#6c757d"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirigir a la página de reversión (el ID ya viene en base64)
+                        window.location.href = "cursos-revertir-promocion.php?id=" + encodeURIComponent(promocionIdBase64);
+                    }
+                });
+            } else {
+                if (confirm("¿Estás seguro de revertir esta promoción?")) {
+                    window.location.href = "cursos-revertir-promocion.php?id=" + encodeURIComponent(promocionIdBase64);
+                }
+            }
+        }
+    </script>
+    <?php endif; ?>
 
 <?php    
 }

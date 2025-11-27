@@ -11,6 +11,8 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Actividad.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Carga.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Materia.php");
+require_once ROOT_PATH."/main-app/class/Modulos.php";
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 class AjaxCalificaciones {
 
@@ -32,6 +34,12 @@ class AjaxCalificaciones {
 
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_calificaciones');
 
+        // Validar y convertir nota: si está vacía o no es numérica, usar NULL
+        $nota = null;
+        if (isset($data['nota']) && $data['nota'] !== '' && is_numeric($data['nota'])) {
+            $nota = floatval($data['nota']);
+        }
+
         $sql = "INSERT INTO ".BD_ACADEMICA.".academico_calificaciones(cal_id, cal_id_estudiante, cal_nota, cal_id_actividad, cal_fecha_registrada, cal_cantidad_modificaciones, institucion, year)VALUES(?, ?,?, ?, now(), ?, ?, ?)";
 
         $conexionPDO = Conexion::newConnection('PDO');
@@ -43,7 +51,7 @@ class AjaxCalificaciones {
 
         $asp->bindParam(1, $codigo, PDO::PARAM_STR);
         $asp->bindParam(2, $data['codEst'], PDO::PARAM_STR);
-        $asp->bindParam(3, $data['nota'], PDO::PARAM_STR);
+        $asp->bindParam(3, $nota, is_null($nota) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $asp->bindParam(4, $data['codNota'], PDO::PARAM_STR);
         $asp->bindParam(5, $cantidadModificaciones, PDO::PARAM_STR);
         $asp->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
@@ -55,10 +63,10 @@ class AjaxCalificaciones {
 
         Actividades::marcarActividadRegistrada($config, $data['codNota'], $_SESSION["bd"]);
 
-        if ($data['nota'] < $config['conf_nota_minima_aprobar'] && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
+        if (!is_null($nota) && $nota < $config['conf_nota_minima_aprobar'] && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_NOTIFICACIONES_NOTAS_BAJAS)) {
 
             $predicadoActividad = [
-                'act_id'      => "'".$data['codNota']."'",
+                'act_id'      => $data['codNota'],
                 'institucion' => $config['conf_id_institucion'],
                 'year'        => $_SESSION["bd"]
             ];
@@ -84,26 +92,71 @@ class AjaxCalificaciones {
             $datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
 
             //INICIO ENVÍO DE MENSAJE
-            $tituloMsj    = 'Nota baja para ' .$nombre;
-            $contenidoMsj = '
-                <p style="color:navy;">
-                    Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado una nota baja en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
-                    Por favor ingresa a la plataforma y verifica. 
-                </p>
-            ';
+            // Solo intentar enviar si el acudiente tiene un correo válido
+            if (!empty($datosAcudiente) && !empty($datosAcudiente['uss_email'])) {
+                try {
+                    // Preparar datos para el template moderno
+                    $nombreCompleto = $datosAcudiente['uss_nombre'];
+                    if (!empty($datosAcudiente['uss_apellido1'])) {
+                        $nombreCompleto .= ' ' . $datosAcudiente['uss_apellido1'];
+                    }
+                    
+                    // Obtener nombre del docente
+                    $nombreDocente = 'No asignado';
+                    if (!empty($_SESSION["datosUsuario"]['uss_nombre'])) {
+                        $nombreDocente = trim($_SESSION["datosUsuario"]['uss_nombre'] . ' ' . 
+                                            ($_SESSION["datosUsuario"]['uss_apellido1'] ?? ''));
+                    }
+                    
+                    // Preparar datos para el template
+                    $dataCorreo = [
+                        'nombre_acudiente'  => $nombreCompleto,
+                        'nombre_estudiante' => $nombre,
+                        'nombre_materia'    => $datosActividad[0]["mat_nombre"] ?? 'la materia',
+                        'nota_obtenida'     => number_format($nota, 1),
+                        'nota_minima'       => number_format($config['conf_nota_minima_aprobar'], 1),
+                        'nombre_actividad'  => $datosActividad[0]["act_descripcion"] ?? 'Actividad',
+                        'fecha_registro'    => date('d/m/Y'),
+                        'nombre_docente'    => $nombreDocente,
+                        'curso'             => $datosActividad[0]["gra_nombre"] ?? '',
+                        'grupo'             => $datosActividad[0]["gru_nombre"] ?? '',
+                        'usuario_email'     => $datosAcudiente['uss_email'],
+                        'usuario_nombre'    => $datosAcudiente['uss_nombre'],
+                        'institucion_id'    => $config['conf_id_institucion'],
+                        'usuario_id'        => $datosAcudiente['uss_id']
+                    ];
 
-            $data = [
-                'contenido_msj'  => $contenidoMsj,
-                'usuario_email'  => $datosAcudiente['uss_email'],
-                'usuario_nombre' => $datosAcudiente['uss_nombre'],
-                'institucion_id' => $config['conf_id_institucion'],
-                'usuario_id'     => $datosAcudiente['uss_id']
-            ];
+                    $asunto = '⚠️ Alerta de Desempeño Bajo - ' . $nombre;
+                    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-nota-baja.php';
+                    
+                    EnviarEmail::enviar($dataCorreo, $asunto, $bodyTemplateRoute, null, null);
+                    
+                    error_log("✅ Email de nota baja enviado a: " . $datosAcudiente['uss_email'] . " | Estudiante: " . $nombre . " | Nota: " . $nota);
+                    
+                } catch (Exception $e) {
+                    // Si falla el envío de correo, solo registramos el error pero continuamos
+                    error_log("❌ Error al enviar correo de notificación de nota baja: " . $e->getMessage());
+                }
+            } else {
+                // Registrar que no se pudo enviar por falta de datos del acudiente
+                error_log("⚠️ No se pudo enviar notificación de nota baja para el estudiante {$data['codEst']}: acudiente sin correo electrónico");
+            }
+        }
 
-            $asunto            = $tituloMsj;
-            $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
-            
-            EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+        // Registrar auditoría de modificación de calificación
+        if (isset($_SESSION["id"])) {
+            AuditoriaLogger::registrarEdicion(
+                'CALIFICACIONES',
+                $codigo,
+                'Modificó calificación del estudiante: ' . strtoupper($data['nombreEst']) . ' - Nota: ' . ($nota ?? 'NULL'),
+                [
+                    'estudiante' => $data['nombreEst'],
+                    'id_estudiante' => $data['codEst'],
+                    'id_actividad' => $data['codNota'],
+                    'nota' => $nota,
+                    'docente' => $_SESSION["id"] ?? 'Sistema'
+                ]
+            );
         }
 
         $datosMensaje = [
@@ -227,6 +280,12 @@ class AjaxCalificaciones {
 
         $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_recuperaciones_notas');
 
+        // Validar y convertir notaAnterior: si está vacía o no es numérica, usar NULL
+        $notaAnterior = null;
+        if (isset($data['notaAnterior']) && $data['notaAnterior'] !== '' && is_numeric($data['notaAnterior'])) {
+            $notaAnterior = floatval($data['notaAnterior']);
+        }
+
         $sql = "INSERT INTO ".BD_ACADEMICA.".academico_recuperaciones_notas(rec_id, rec_cod_estudiante, rec_nota, rec_id_nota, rec_fecha, rec_nota_anterior, institucion, year)VALUES(:codigo, :codEst, :nota, :codNota, now(), :notaAnterior, :institucion, :year)";
         
         $asp         = $conexionPDO->prepare($sql);
@@ -235,7 +294,7 @@ class AjaxCalificaciones {
         $asp->bindParam(':codEst',       $data['codEst'], PDO::PARAM_STR);
         $asp->bindParam(':nota',         $data['nota'], PDO::PARAM_STR);
         $asp->bindParam(':codNota',      $data['codNota'], PDO::PARAM_STR);
-        $asp->bindParam(':notaAnterior', $data['notaAnterior'], PDO::PARAM_STR);
+        $asp->bindParam(':notaAnterior', $notaAnterior, is_null($notaAnterior) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $asp->bindParam(':institucion',  $config['conf_id_institucion'], PDO::PARAM_INT);
         $asp->bindParam(':year',         $_SESSION["bd"], PDO::PARAM_INT);
 
@@ -245,6 +304,24 @@ class AjaxCalificaciones {
 
         $data['target'] = Calificaciones::TIPO_ACTUALIZAR_NOTA;
         Calificaciones::direccionarCalificacion($data);
+
+        // Registrar auditoría de recuperación de nota
+        if (isset($_SESSION["id"])) {
+            AuditoriaLogger::registrarEdicion(
+                'CALIFICACIONES',
+                $codigo,
+                'Registró recuperación para estudiante: ' . strtoupper($data['nombreEst']) . ' - Nota anterior: ' . ($notaAnterior ?? 'NULL') . ' - Nota nueva: ' . $data['nota'],
+                [
+                    'tipo' => 'recuperacion',
+                    'estudiante' => $data['nombreEst'],
+                    'id_estudiante' => $data['codEst'],
+                    'id_nota' => $data['codNota'],
+                    'nota_anterior' => $notaAnterior,
+                    'nota_nueva' => $data['nota'],
+                    'docente' => $_SESSION["id"] ?? 'Sistema'
+                ]
+            );
+        }
 
         $datosMensaje = [
             'success'    => true,
@@ -515,6 +592,20 @@ class AjaxCalificaciones {
         }
 
         if($caso == 1){
+            // Validar y convertir nota: si está vacía o no es numérica, usar 0
+            if (!isset($nota) || $nota === '' || !is_numeric($nota)) {
+                $nota = 0;
+            } else {
+                $nota = floatval($nota);
+            }
+            
+            // Validar notaAnterior
+            if (!isset($notaAnterior) || $notaAnterior === '' || !is_numeric($notaAnterior)) {
+                $notaAnterior = 0;
+            } else {
+                $notaAnterior = floatval($notaAnterior);
+            }
+            
             try{
                 $consultaIndicador=mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".academico_indicadores_carga WHERE ipc_indicador='".$codNota."' AND ipc_carga='".$carga."' AND ipc_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
             } catch (Exception $e) {
@@ -536,8 +627,6 @@ class AjaxCalificaciones {
                 $parametros = [$codigo, $codEstudiante, $carga, $nota, $codNota, $periodo, 1, $rindNotaActual, $indicador['ipc_valor'], $config['conf_id_institucion'], $_SESSION["bd"]];
                 $resultado = BindSQL::prepararSQL($sql, $parametros);
             }else{
-                if($notaAnterior==""){$notaAnterior = "0.0";}
-                
                 $sql = "UPDATE ".BD_ACADEMICA.".academico_indicadores_recuperacion SET rind_nota=?, rind_nota_anterior=?, rind_actualizaciones=rind_actualizaciones+1, rind_ultima_actualizacion=now(), rind_nota_actual=?, rind_tipo_ultima_actualizacion=2, rind_valor_indicador_actualizacion=? WHERE rind_carga=? AND rind_estudiante=? AND rind_periodo=? AND rind_indicador=? AND institucion=? AND year=?";
                 $parametros = [$nota, $notaAnterior, $rindNotaActual, $indicador['ipc_valor'], $carga, $codEstudiante, $periodo, $codNota, $config['conf_id_institucion'], $_SESSION["bd"]];
                 $resultado = BindSQL::prepararSQL($sql, $parametros);

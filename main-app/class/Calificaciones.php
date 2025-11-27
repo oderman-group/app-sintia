@@ -480,6 +480,59 @@ class Calificaciones {
     }
 
     /**
+     * Trae todas las calificaciones de una carga y periodo en una sola consulta
+     * y las organiza en un mapa [idEstudiante][idActividad] => datosCalificacion.
+     *
+     * Esta función se usa para optimizar pantallas donde se muestran muchas
+     * notas simultáneamente (ej. calificaciones-todas-rapido) evitando
+     * consultas por cada estudiante/actividad.
+     */
+    public static function traerCalificacionesCargaPeriodo(
+        array $config,
+        string $idCarga,
+        int $periodo,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT aac.* 
+                FROM " . BD_ACADEMICA . ".academico_calificaciones aac
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividades aa 
+                    ON aa.act_id = aac.cal_id_actividad
+                    AND aa.act_id_carga = ?
+                    AND aa.act_periodo = ?
+                    AND aa.act_estado = 1
+                    AND aa.institucion = ?
+                    AND aa.year = ?
+                WHERE aac.institucion = ?
+                AND aac.year = ?";
+
+        $parametros = [
+            $idCarga,
+            $periodo,
+            $config['conf_id_institucion'],
+            $year,
+            $config['conf_id_institucion'],
+            $year
+        ];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idEst = $fila['cal_id_estudiante'];
+            $idAct = $fila['cal_id_actividad'];
+
+            if (!isset($mapa[$idEst])) {
+                $mapa[$idEst] = [];
+            }
+            $mapa[$idEst][$idAct] = $fila;
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo me trae las notas por indicador
      */
     public static function traerNotasPorIndicador(
@@ -640,6 +693,71 @@ class Calificaciones {
 
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $resultados;
+    }
+
+    /**
+     * Trae las definitivas de un indicador para todos los estudiantes de una carga y periodo.
+     *
+     * Devuelve un mapa indexado por idEstudiante con la misma lógica de cálculo que
+     * `definitivaIndicadorEstudiante`, pero en una sola consulta por indicador.
+     *
+     * @return array [idEstudiante => ['definitiva' => float, 'valorPorcentual' => float]]
+     */
+    public static function traerDefinitivasIndicadorParaCarga(
+        array  $config,
+        string $idCarga,
+        string $idIndicador,
+        int    $periodo,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $decimales = !empty($config['conf_decimales_notas']) ? (int)$config['conf_decimales_notas'] : 1;
+
+        $sql = "SELECT
+                    ac.cal_id_estudiante,
+                    SUM(aa.act_valor / 100)                           AS totalValorDecimal,
+                    SUM(ac.cal_nota * (aa.act_valor / 100))          AS totalEquivalenteCien,
+                    CASE 
+                        WHEN SUM(aa.act_valor / 100) <> 0 THEN 
+                            ROUND(SUM(ac.cal_nota * (aa.act_valor / 100)) / SUM(aa.act_valor / 100), {$decimales})
+                        ELSE 0 
+                    END                                              AS definitiva,
+                    ROUND(SUM(aa.act_valor / 100) * 100, 2)          AS valorPorcentual
+                FROM " . BD_ACADEMICA . ".academico_calificaciones ac
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividades aa
+                    ON aa.act_id = ac.cal_id_actividad
+                    AND aa.act_id_tipo   = ?
+                    AND aa.act_id_carga  = ?
+                    AND aa.act_periodo   = ?
+                    AND aa.act_estado    = 1
+                    AND aa.institucion   = ?
+                    AND aa.year          = ?
+                WHERE ac.institucion = ?
+                  AND ac.year        = ?
+                GROUP BY ac.cal_id_estudiante";
+
+        $parametros = [
+            $idIndicador,
+            $idCarga,
+            $periodo,
+            $config['conf_id_institucion'],
+            $year,
+            $config['conf_id_institucion'],
+            $year
+        ];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idEst = $fila['cal_id_estudiante'];
+            $mapa[$idEst] = [
+                'definitiva'      => isset($fila['definitiva']) ? (float)$fila['definitiva'] : 0.0,
+                'valorPorcentual' => isset($fila['valorPorcentual']) ? (float)$fila['valorPorcentual'] : 0.0,
+            ];
+        }
+
+        return $mapa;
     }
 
     /**
@@ -993,6 +1111,8 @@ class Calificaciones {
 
         if ($data['target'] == self::TIPO_GUARDAR_RECUPERACION_PERIODO) {
             if (
+                !empty($data['datosCargaActual']) &&
+                isset($data['datosCargaActual']['car_periodo']) &&
                 $data['periodo'] >= $data['datosCargaActual']['car_periodo'] && 
                 $_SESSION["datosUsuario"]['uss_tipo'] != TIPO_DIRECTIVO && 
                 $_SESSION["datosUsuario"]['uss_tipo'] != TIPO_DEV
@@ -1008,7 +1128,12 @@ class Calificaciones {
         }
 
         if ($data['target'] == self::TIPO_GUARDAR_NIVELACION_CARGA) {
-            if ($data['datosCargaActual']['car_periodo'] <= $data['datosCargaActual']['gra_periodos']) {
+            if (
+                !empty($data['datosCargaActual']) &&
+                isset($data['datosCargaActual']['car_periodo']) &&
+                isset($data['datosCargaActual']['gra_periodos']) &&
+                $data['datosCargaActual']['car_periodo'] <= $data['datosCargaActual']['gra_periodos']
+            ) {
                 return [
                     'success'   => false,
                     "heading"   => "El periodo escolar aún no termina",
@@ -1199,6 +1324,9 @@ class Calificaciones {
 
         if (empty($resultadoBoletin['bol_id'])) {
 
+            $data['tipoNota'] = Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA;
+            $data['observaciones'] = 'Se ingresó como definitiva directamente.';
+            
             Boletin::guardarNotaBoletin($conexionPDO, 
             "
                 bol_carga, 
@@ -1219,7 +1347,7 @@ class Calificaciones {
                 $data['periodo'],
                 $data['nota'], 
                 $data['tipoNota'], 
-                $data['observaciones'] ?? 'Recuperación del periodo.', 
+                $data['observaciones'] ?? 'Se ingresó como definitiva directamente.', 
                 $config['conf_id_institucion'], 
                 $_SESSION["bd"],
                 0,
@@ -1228,10 +1356,15 @@ class Calificaciones {
             );
 
         } else {
+            if ($resultadoBoletin['bol_tipo'] == Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA) {
+                $data['tipoNota'] = Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA;
+                $data['observaciones'] = 'Se modificó como definitiva directamente.';
+            }
+
             $update = [
                 "bol_nota_anterior" => $data['notaAnterior'], 
                 "bol_nota"          => $data['nota'], 
-                "bol_observaciones" => $data['observaciones'] ?? 'Recuperación del periodo.', 
+                "bol_observaciones" => $data['observaciones'] ?? 'Recuperación del periodo. RP', 
                 "bol_tipo"          => $data['tipoNota']
             ];
 

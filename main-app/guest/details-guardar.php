@@ -88,9 +88,9 @@ if (mysqli_num_rows($consultaExisteUsuario) == 0) {
 			'" . $_POST["apellido2"] . "', 
 			'" . $_POST["nombre2"] . "',
 			'" . $_POST["identificacion"] . "',
-			'cyan-sidebar-color',
-			'header-indigo',
-			'logo-indigo', {$_POST["institucion"]}, {$_POST["year"]}
+			'white-sidebar-color',
+			'header-white',
+			'logo-white', {$_POST["institucion"]}, {$_POST["year"]}
 			)");
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");

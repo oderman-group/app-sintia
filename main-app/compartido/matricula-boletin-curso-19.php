@@ -151,13 +151,21 @@ while ($row = $conCargasDos->fetch_assoc()) {
 $periodosCursados = $periodoSeleccionado - 1;
 $colspan = 7 + $periodosCursados;
 
-if ($grado >= 12 && $grado <= 15) {
+// Obtener gra_nivel del grado actual
+$consultaGradoNivel = mysqli_query($conexion, "SELECT gra_nivel FROM ".BD_ACADEMICA.".academico_grados WHERE gra_id='".mysqli_real_escape_string($conexion, $grado)."' AND institucion={$config['conf_id_institucion']} AND year='".mysqli_real_escape_string($conexion, $year)."'");
+$gradoNivel = null;
+if($consultaGradoNivel && mysqli_num_rows($consultaGradoNivel) > 0){
+    $rowGrado = mysqli_fetch_array($consultaGradoNivel, MYSQLI_BOTH);
+    $gradoNivel = isset($rowGrado['gra_nivel']) ? $rowGrado['gra_nivel'] : null;
+}
+
+if (isset($gradoNivel) && $gradoNivel == PREESCOLAR) {
     $educacion = "PREESCOLAR";
-} elseif ($grado >= 1 && $grado <= 5) {
+} elseif (isset($gradoNivel) && $gradoNivel == BASICA_PRIMARIA) {
     $educacion = "PRIMARIA";
-} elseif ($grado >= 6 && $grado <= 9) {
+} elseif (isset($gradoNivel) && $gradoNivel == BASICA_SECUNDARIA) {
     $educacion = "SECUNDARIA";
-} elseif ($grado >= 10 && $grado <= 11) {
+} elseif (isset($gradoNivel) && $gradoNivel == MEDIA) {
     $educacion = "MEDIA";
 }
 ?>

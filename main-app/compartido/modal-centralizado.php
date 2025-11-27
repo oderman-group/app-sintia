@@ -1,5 +1,8 @@
 <script type="application/javascript">
-	async function abrirModal(titulo, url, data, timeout,width = '1350px') {
+	// Variable para controlar si ya se inicializó el evento
+	var modalCentralizadoInitialized = false;
+	
+	async function abrirModal(titulo, url, data, timeout, width = '1350px') {
 		const contenido = document.getElementById('contenidoCentralizado');
 		var overlay = document.getElementById("overlay");
 
@@ -11,7 +14,6 @@
 		resultado = await metodoFetchAsync(url, data, 'html', false);
 		resultData = resultado["data"];
 
-
 		contenido.innerHTML = resultData;
 		ejecutarScriptsCargados(contenido);
 
@@ -21,16 +23,86 @@
 			document.getElementById("overlay").style.display = "none";
 		}
 		$('#ModalCentralizado .modal-dialog').css('width', width);
+		
+		// Mostrar el modal
 		$('#ModalCentralizado').modal('show');
+		
+		// Esperar un momento para que el DOM se actualice y luego inicializar select2
+		setTimeout(function() {
+			initializeSelect2InModal('ModalCentralizado');
+			
+			// Auto-cargar datos para modales específicos que usan ModalCentralizado
+			// Detectar qué modal es por el título o URL
+			if (url && url.includes('sabana')) {
+				if (typeof window.autoCargarSabana === 'function') {
+					window.autoCargarSabana();
+				}
+			}
+			if (url && url.includes('libro-cursos')) {
+				if (typeof window.autoCargarLibro === 'function') {
+					window.autoCargarLibro();
+				}
+			}
+		}, 100);
 
 		if (timeout) {
 			setTimeout(function() {
-				$('#ModalCentralizado').modal('hide'); // Cierra el modal
+				$('#ModalCentralizado').modal('hide');
 			}, timeout);
 		}
-
-
 	}
+	
+	// Función para inicializar select2 en modales
+	function initializeSelect2InModal(modalId) {
+		$('#' + modalId + ' select.select2').each(function() {
+			var $select = $(this);
+			
+			// Destruir instancia anterior si existe
+			if ($select.data('select2')) {
+				try {
+					$select.select2('destroy');
+				} catch(e) {
+					// Ignorar errores si ya fue destruido
+				}
+			}
+			
+			// Configuración de select2 optimizada para modales
+			$select.select2({
+				dropdownParent: $('#' + modalId + ' .modal-content'),
+				width: '100%',
+				minimumResultsForSearch: 0, // Siempre mostrar el buscador
+				language: {
+					noResults: function() {
+						return "No se encontraron resultados";
+					},
+					searching: function() {
+						return "Buscando...";
+					}
+				},
+				placeholder: "Seleccione una opción"
+			});
+		});
+	}
+	
+	// Inicializar evento de limpieza solo una vez
+	$(document).ready(function() {
+		if (!modalCentralizadoInitialized) {
+			$('#ModalCentralizado').on('hidden.bs.modal', function () {
+				$('#ModalCentralizado select.select2').each(function() {
+					if ($(this).data('select2')) {
+						try {
+							$(this).select2('destroy');
+						} catch(e) {
+							// Ignorar errores
+						}
+					}
+				});
+				// Limpiar el contenido
+				$('#contenidoCentralizado').html('');
+			});
+			modalCentralizadoInitialized = true;
+		}
+	});
 
 	//ejecutar los scripts del string
 	function ejecutarScriptsCargados(elemento) {
@@ -73,13 +145,13 @@
 		modal.style.setProperty('z-index', highestZIndex + 10, 'important'); 
 	}
 </script>
-<div class="modal fade" id="ModalCentralizado" tabindex="-1"   role="dialog" data-backdrop="static" aria-labelledby="basicModal" aria-hidden="true">
-	<div class="modal-dialog" style="max-width: 1350px">
-		<div class="modal-content" style="border-radius: 20px;max-width: 1350px!important; ">
+<div class="modal fade" id="ModalCentralizado" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="basicModal" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable">
+		<div class="modal-content">
 
 			<div class="modal-header panel-heading-purple">
-				<h4 class="modal-title " id="tituloModal">TITULO MODAL</h4>
-				<a href="#" data-dismiss="modal" data-bs-dismiss="modal" data-bs-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-compra-modulo"><i class="fa fa-window-close"></i></a>
+				<h4 class="modal-title" id="tituloModal">TITULO MODAL</h4>
+				<a href="#" data-dismiss="modal" class="btn btn-danger" aria-label="Close" id="boton-cerrar-compra-modulo"><i class="fa fa-window-close"></i></a>
 			</div>
 
 			<div class="modal-body">

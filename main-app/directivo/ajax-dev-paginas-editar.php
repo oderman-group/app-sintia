@@ -5,23 +5,37 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DV0022';
 include("../compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    $consultaPagina=mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad WHERE pagp_id!='".$_POST["idPagina"]."' AND pagp_ruta='".$_POST["dato"]."' AND pagp_tipo_usuario='".$_POST["tipoUss"]."'");
-} catch (Exception $e) {
-    include("../compartido/error-catch-to-report.php");
-}
-$numDotos=mysqli_num_rows($consultaPagina);
-if ($numDotos > 0) {
-    $datosPaginas=mysqli_fetch_array($consultaPagina, MYSQLI_BOTH);
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Verificar que la variable baseDatosServicios esté definida
+    if (!isset($baseDatosServicios) || empty($baseDatosServicios)) {
+        throw new Exception('Variable baseDatosServicios no está definida');
+    }
+    
+    $sql = "SELECT * FROM ".$baseDatosServicios.".paginas_publicidad 
+            WHERE pagp_id!=? AND pagp_ruta=? AND pagp_tipo_usuario=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["idPagina"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["dato"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_POST["tipoUss"], PDO::PARAM_STR);
+    $stmt->execute();
+    $numDotos = $stmt->rowCount();
+    
+    if ($numDotos > 0) {
+        $datosPaginas = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
     <script type="application/javascript">
-        document.getElementById('nombrePagina').disabled = 'disabled';
-        document.getElementById('tipoUsuario').disabled = 'disabled';
-        document.getElementById('modulo').disabled = 'disabled';
+        document.getElementById('nombrePagina').setAttribute('disabled', 'disabled');
+        document.getElementById('tipoUsuario').setAttribute('disabled', 'disabled');
+        document.getElementById('modulo').setAttribute('disabled', 'disabled');
         document.getElementById('rutaPagina').style.backgroundColor = "#f8d7da";
-        document.getElementById('navegable').disabled = 'disabled';
-        document.getElementById('crud').disabled = 'disabled';
-        document.getElementById('urlYoutube').disabled = 'disabled';
+        document.getElementById('navegable').setAttribute('disabled', 'disabled');
+        document.getElementById('crud').setAttribute('disabled', 'disabled');
+        document.getElementById('urlYoutube').setAttribute('disabled', 'disabled');
         document.getElementById('btnGuardar').style.display = 'none';
     </script>   
     
@@ -47,14 +61,17 @@ if ($numDotos > 0) {
 }else{
 ?>
     <script type="application/javascript">
-        document.getElementById('nombrePagina').disabled = '';
-        document.getElementById('tipoUsuario').disabled = '';
-        document.getElementById('modulo').disabled = '';
+        document.getElementById('nombrePagina').removeAttribute('disabled');
+        document.getElementById('tipoUsuario').removeAttribute('disabled');
+        document.getElementById('modulo').removeAttribute('disabled');
         document.getElementById('rutaPagina').style.backgroundColor = "";
-        document.getElementById('navegable').disabled = '';
-        document.getElementById('crud').disabled = '';
-        document.getElementById('urlYoutube').disabled = '';
+        document.getElementById('navegable').removeAttribute('disabled');
+        document.getElementById('crud').removeAttribute('disabled');
+        document.getElementById('urlYoutube').removeAttribute('disabled');
         document.getElementById('btnGuardar').style.display = 'block';
     </script> 
 <?php    
+}
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
 }

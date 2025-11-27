@@ -1,0 +1,298 @@
+/**
+ * ========================================
+ * 📝 FORMULARIO ESTUDIANTE - DISEÑO LEGIBLE
+ * Estilos para mejorar la experiencia de usuario
+ * ======================================== 
+ */
+
+:root {
+    --form-primary: #667eea;
+    --form-secondary: #764ba2;
+    --form-success: #10b981;
+    --form-danger: #ef4444;
+    --form-warning: #f59e0b;
+    --form-info: #3b82f6;
+    --form-gray-50: #f9fafb;
+    --form-gray-100: #f3f4f6;
+    --form-gray-200: #e5e7eb;
+    --form-gray-600: #4b5563;
+    --form-gray-700: #374151;
+}
+
+/* ========================================
+   CONTENEDOR PRINCIPAL DEL FORMULARIO
+   ======================================== */
+
+.modern-form-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+/* ========================================
+   SECCIONES COLAPSABLES MEJORADAS
+   ======================================== */
+
+.section-toggle {
+    background: linear-gradient(135deg, var(--form-gray-50) 0%, white 100%);
+    padding: 15px 20px !important;
+    margin: 25px 0 15px 0 !important;
+    border-radius: 8px;
+    border-left: 4px solid var(--form-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600 !important;
+    color: var(--form-gray-700) !important;
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-toggle:hover {
+    background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-secondary) 100%);
+    color: white !important;
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.section-toggle .toggle-indicator {
+    margin-left: auto;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.section-toggle.collapsed .toggle-indicator {
+    transform: rotate(-90deg);
+}
+
+.section-toggle i {
+    font-size: 18px;
+}
+
+/* Separador más sutil */
+.section-toggle + hr {
+    display: none;
+}
+
+/* ========================================
+   SECCIÓN CONDICIONAL (ICOLVEN, etc.)
+   ======================================== */
+
+.conditional-section {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 2px dashed var(--form-warning);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 25px 0;
+}
+
+.conditional-section-header {
+    background: linear-gradient(135deg, var(--form-warning) 0%, #f97316 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    transition: all 0.3s ease;
+}
+
+.conditional-section-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.conditional-section-header i {
+    font-size: 18px;
+}
+
+.conditional-section-header .toggle-indicator {
+    margin-left: auto;
+}
+
+.conditional-section-body {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+}
+
+.conditional-section-body.hidden {
+    display: none;
+}
+
+.conditional-badge {
+    background: var(--form-warning);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ========================================
+   FORM GROUPS MEJORADOS
+   ======================================== */
+
+.form-group.row {
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.form-group.row label.control-label {
+    font-weight: 600;
+    color: var(--form-gray-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group.row label.control-label i {
+    color: var(--form-primary);
+    font-size: 16px;
+}
+
+.form-control {
+    border: 2px solid var(--form-gray-200);
+    border-radius: 8px;
+    padding: 10px 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--form-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-control[required] {
+    border-left: 3px solid var(--form-danger);
+}
+
+/* Indicador de campo requerido */
+span[style*="color: red"] {
+    color: var(--form-danger) !important;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* ========================================
+   AYUDAS VISUALES
+   ======================================== */
+
+.help-block, .form-text.text-muted, small.form-text {
+    font-size: 12px;
+    color: var(--form-gray-600);
+    margin-top: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.help-block::before, .form-text.text-muted::before {
+    content: "ℹ️";
+    font-size: 12px;
+}
+
+/* ========================================
+   BOTONES PRINCIPALES
+   ======================================== */
+
+.btn-primary, .btn-success {
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btn-primary:hover, .btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .modern-form-container {
+        padding: 20px 15px;
+    }
+    
+    .section-toggle {
+        padding: 12px 15px !important;
+        font-size: 14px !important;
+    }
+    
+    .form-group.row {
+        margin-bottom: 15px;
+    }
+    
+    .conditional-section {
+        padding: 15px;
+    }
+}
+
+/* ========================================
+   MEJORAS VISUALES SUTILES
+   ======================================== */
+
+/* Separación visual entre secciones */
+.form-section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--form-gray-200) 50%, transparent 100%);
+    margin: 30px 0;
+}
+
+/* Resaltar campos importantes */
+input[name="nDoc"],
+input[name="apellido1"],
+input[name="nombres"],
+select[name="grado"] {
+    border-left-width: 4px;
+}
+
+/* ========================================
+   ANIMACIONES SUAVES PARA COLAPSAR/EXPANDIR
+   ======================================== */
+
+/* Transición suave para todas las secciones colapsables */
+.section-content {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+/* Transición para los cuerpos de secciones condicionales */
+.conditional-section-body {
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease, padding 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+    padding: 0 15px;
+}
+
+.conditional-section-body[style*="display: block"],
+.conditional-section-body:not([style*="display: none"]) {
+    max-height: 2000px;
+    opacity: 1;
+    padding: 15px;
+}
+
+/* Smooth rotation del indicador */
+.toggle-indicator {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+

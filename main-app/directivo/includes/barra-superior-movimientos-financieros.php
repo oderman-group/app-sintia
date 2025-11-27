@@ -63,7 +63,7 @@
 	$estiloResaltadoPorCobrar = '';
 	if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(POR_COBRAR)) $estiloResaltadoPorCobrar = 'style="color: '.$Plataforma->colorUno.';"';
 ?>
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
 	</button>

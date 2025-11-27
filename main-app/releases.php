@@ -20,7 +20,7 @@
     }
 
     .card-header, .badge-release-date {
-      background-color: #41c4c4;
+      background-color: #ffffff;
       color: white;
     }
 

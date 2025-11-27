@@ -5,12 +5,19 @@ include("../compartido/historial-acciones-guardar.php");
 Modulos::verificarPermisoDev();
 include("../compartido/head.php");
 
+// Migrado a PDO - Consulta preparada
 try {
-    $consulta = mysqli_query($conexion, "SELECT * FROM " . $baseDatosMarketPlace . ".categorias_productos WHERE catp_id='" . base64_decode($_GET["idR"]) . "'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idCategoria = base64_decode($_GET["idR"]);
+    $sql = "SELECT * FROM " . $baseDatosMarketPlace . ".categorias_productos WHERE catp_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idCategoria, PDO::PARAM_STR);
+    $stmt->execute();
+    $datosCategorias = $stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
-$datosCategorias = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 ?>
 
 <!--bootstrap -->

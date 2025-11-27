@@ -19,8 +19,15 @@ include("../compartido/historial-acciones-guardar.php");
         @unlink($destino . "/" . $portada);
         move_uploaded_file($_FILES['portada']['tmp_name'], $destino . "/" . $portada);
 
+        // Migrado a PDO - Consulta preparada para portada
         try {
-            mysqli_query($conexion, "UPDATE ".BD_ADMIN.".modulos SET mod_imagen='".$portada."' WHERE mod_id='".$_POST["id"]."'");
+            require_once(ROOT_PATH."/main-app/class/Conexion.php");
+            $conexionPDO = Conexion::newConnection('PDO');
+            $sql = "UPDATE ".BD_ADMIN.".modulos SET mod_imagen=? WHERE mod_id=?";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $portada, PDO::PARAM_STR);
+            $stmt->bindParam(2, $_POST["id"], PDO::PARAM_STR);
+            $stmt->execute();
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -31,17 +38,25 @@ include("../compartido/historial-acciones-guardar.php");
         $clientes = implode(",", $_POST["clientes"]);
     }
 
+    // Migrado a PDO - Consulta preparada principal
     try{
-        mysqli_query($conexion, "UPDATE ".BD_ADMIN.".modulos SET 
-        mod_nombre='".$_POST["nombreModulo"]."', 
-        mod_estado='".$_POST["moduloEstado"]."', 
-        mod_padre='".$_POST["moduloPadre"]."', 
-        mod_namespace='".$_POST["namespace"]."', 
-        mod_description='".$_POST["descripcion"]."', 
-        mod_precio='".$_POST["precio"]."', 
-        mod_order='".$_POST["order"]."', 
-        mod_types_customer='".$clientes."'
-        WHERE mod_id='".$_POST["id"]."'");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "UPDATE ".BD_ADMIN.".modulos SET 
+                mod_nombre=?, mod_estado=?, mod_padre=?, mod_namespace=?, 
+                mod_description=?, mod_precio=?, mod_order=?, mod_types_customer=?
+                WHERE mod_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombreModulo"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["moduloEstado"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["moduloPadre"], PDO::PARAM_STR);
+        $stmt->bindParam(4, $_POST["namespace"], PDO::PARAM_STR);
+        $stmt->bindParam(5, $_POST["descripcion"], PDO::PARAM_STR);
+        $stmt->bindParam(6, $_POST["precio"], PDO::PARAM_STR);
+        $stmt->bindParam(7, $_POST["order"], PDO::PARAM_STR);
+        $stmt->bindParam(8, $clientes, PDO::PARAM_STR);
+        $stmt->bindParam(9, $_POST["id"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
         include("../compartido/error-catch-to-report.php");
     }

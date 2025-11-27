@@ -15,29 +15,29 @@ $saldoEC = ($resumenEC[0] - $resumenEC[1]) * -1;
 <?=$datosUsuarioActual['uss_tipo_menu'];?> 
 "> <!-- chat-sidebar-open-->
 	
-<script src="../js/Mensajes.js?v=<?php echo getFileVersion('../js/Mensajes.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Mensajes.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Mensajes.js'); ?>" ></script>
 <div class="loader"></div>
  
-<?php include("../compartido/overlay.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/overlay.php");?>
 
-<?php include("../compartido/ComponenteModal.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/ComponenteModal.php");?>
 
-<?php include("../compartido/modal-centralizado.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-centralizado.php");?>
 
-<?php include("../compartido/modal-general.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-general.php");?>
 
-<?php include("../compartido/modal-licencia.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-licencia.php");?>
 
-<?php include("../compartido/modal-anuncios.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-anuncios.php");?>
 	
-<?php include("../compartido/modal-acciones.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-acciones.php");?>
 
-<?php include("../compartido/modal-terminos.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-terminos.php");?>
 
-<?php include("../compartido/modal-contrato.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-contrato.php");?>
 
-<?php include("../compartido/modal-asignaciones.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-asignaciones.php");?>
 
-<?php include("../compartido/modal-comprar-modulo.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-comprar-modulo.php");?>
 
-<?php include("../compartido/modal-comprar-paquete.php");?>
+<?php include_once(ROOT_PATH."/main-app/compartido/modal-comprar-paquete.php");?>

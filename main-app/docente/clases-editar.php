@@ -7,6 +7,7 @@ include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Clases.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
@@ -173,7 +174,7 @@ $datosConsulta = Clases::traerDatosClases($conexion, $config, $idR);
 												</div>
 											</div>
 
-											<?php if ($config['conf_id_institucion'] == DEVELOPER_PROD || $config['conf_id_institucion'] == DEVELOPER) {?>
+											<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_GRBAR_VIDEO_CLASE)) {?>
 											<div class="form-group row">
 												<?php $urlVideo = $storage->getBucket()->object(FILE_VIDEO_CLASES . $datosConsulta["cls_video_clase"])->signedUrl(new DateTime('tomorrow'));
 												$existe = $storage->getBucket()->object(FILE_VIDEO_CLASES . $datosConsulta["cls_video_clase"])->exists();

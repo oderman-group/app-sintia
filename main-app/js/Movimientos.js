@@ -549,6 +549,10 @@ function tipoAbono(tipo){
         .then(response => response.text())
         .then(data => {
             $('#mostrarFacturas').empty().hide().html(data).show(1);
+            // Llamar a totalizarAbonos después de cargar las facturas
+            setTimeout(function() {
+                totalizarAbonos();
+            }, 100);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -565,86 +569,67 @@ function tipoAbono(tipo){
 }
 
 /**
- * Actualiza o guarda lo abonado a una factura6
- * @param {array} datos
+ * Actualiza lo abonado a una factura (SOLO EN MEMORIA - SIN AJAX)
+ * Los datos se guardarán en BD cuando el usuario haga submit del formulario
+ * @param {HTMLElement} datos - Input element con el valor del abono
  */
 function actualizarAbonado(datos) {
-    var abono       = datos.value;
+    var abono = datos.value;
 
     if (abono.trim() !== '') {
-        var nuevoAbono  = parseFloat(datos.value);
-        var idAbono     = datos.getAttribute("data-id-abono");
-        var idFactura   = datos.getAttribute("data-id-factura");
-        var abonoAnterior   = parseFloat(datos.getAttribute("data-abono-anterior"));
+        var nuevoAbono = parseFloat(datos.value) || 0;
+        var idFactura = datos.getAttribute("data-id-factura");
+        var abonoAnterior = parseFloat(datos.getAttribute("data-abono-anterior")) || 0;
         
-        fetch('../directivo/ajax-guardar-abono.php?type=INVOICE&abono='+(nuevoAbono)+'&idAbono='+(idAbono)+'&idFactura='+(idFactura)+'&abonoAnterior='+(abonoAnterior), {
-            method: 'GET'
-        })
-        .then(response => response.text()) // Convertir la respuesta a texto
-        .then(data => {
-            var elementTotalNeto    = document.getElementById("totalNeto"+idFactura);
-            var elementAbono        = document.getElementById("abonos"+idFactura);
-            var elementPorCobrar    = document.getElementById("porCobrar"+idFactura);
-            
-            var totalNeto           = parseFloat(elementTotalNeto.getAttribute("data-total-neto"));
-            var totalAbonos         = elementAbono.getAttribute("data-abonos");
+        // Actualizar SOLO visualmente (sin AJAX)
+        var elementTotalNeto = document.getElementById("totalNeto" + idFactura);
+        var elementAbono = document.getElementById("abonos" + idFactura);
+        var elementPorCobrar = document.getElementById("porCobrar" + idFactura);
+        
+        if (!elementTotalNeto || !elementAbono || !elementPorCobrar) {
+            return;
+        }
+        
+        var totalNeto = parseFloat(elementTotalNeto.getAttribute("data-total-neto")) || 0;
+        var totalAbonos = parseFloat(elementAbono.getAttribute("data-abonos")) || 0;
 
-            var totalAbono          = (totalAbonos - abonoAnterior) + nuevoAbono;
-            var totalAbonoFinal     = "$"+numberFormat(totalAbono, 0, ',', '.');
+        // Recalcular totales
+        var totalAbono = (totalAbonos - abonoAnterior) + nuevoAbono;
+        var totalAbonoFinal = "$" + numberFormat(totalAbono, 0, ',', '.');
 
-            var porCobrar           = totalNeto - totalAbono;
-            var porCobrarFinal      = "$"+numberFormat(porCobrar, 0, ',', '.');
+        var porCobrar = totalNeto - totalAbono;
+        var porCobrarFinal = "$" + numberFormat(porCobrar, 0, ',', '.');
 
-            elementAbono.innerHTML = '';
-            elementAbono.appendChild(document.createTextNode(totalAbonoFinal));
-            elementAbono.dataset.abonos = totalAbono;
+        // Actualizar elementos visuales
+        elementAbono.innerHTML = '';
+        elementAbono.appendChild(document.createTextNode(totalAbonoFinal));
+        elementAbono.dataset.abonos = totalAbono;
 
-            elementPorCobrar.innerHTML = '';
-            elementPorCobrar.appendChild(document.createTextNode(porCobrarFinal));
-            elementPorCobrar.dataset.porCobrar = porCobrar;
+        elementPorCobrar.innerHTML = '';
+        elementPorCobrar.appendChild(document.createTextNode(porCobrarFinal));
+        elementPorCobrar.dataset.porCobrar = porCobrar;
 
-            if (porCobrar < 1) {
-                cambiarEstadoFactura(idFactura, 1);
-            } else if (porCobrar > 0) {
-                cambiarEstadoFactura(idFactura, 2);
-            }
+        // Guardar el nuevo valor como "anterior" para futuros cambios
+        datos.setAttribute("data-abono-anterior", nuevoAbono);
 
-            datos.dataset.abonoAnterior = nuevoAbono;
-
-            totalizarAbonos()
-
-            $.toast({
-                heading: 'Acción realizada',
-                text: 'Valor guardado correctamente.',
-                position: 'bottom-right',
-                showHideTransition: 'slide',
-                loaderBg: '#26c281',
-                icon: 'success',
-                hideAfter: 5000,
-                stack: 6
-            });
-        })
-        .catch(error => {
-            datos.value = 0;
-            console.error('Error:', error);
-        });
+        // Recalcular resumen
+        totalizarAbonos();
+        
+        // Feedback visual sutil (sin toast invasivo)
+        datos.style.borderColor = '#26c281';
+        setTimeout(function() {
+            datos.style.borderColor = '';
+        }, 500);
 
     } else {
-
-        Swal.fire({
-            title: 'Campo Vacío',
-            text: "Los campos valor recibido no pueden ir vacío",
-            icon: 'warning',
-            showCancelButton: false,
-            confirmButtonText: 'Ok',
-            backdrop: `
-                rgba(0,0,123,0.4)
-                no-repeat
-            `,
-        }).then((result) => {
-            datos.value = 0;
-        })
-
+        // Si borra el valor, resetear a 0
+        datos.value = 0;
+        var abonoAnteriorReset = parseFloat(datos.getAttribute("data-abono-anterior")) || 0;
+        if (abonoAnteriorReset > 0) {
+            datos.setAttribute("data-abono-anterior", 0);
+            // Recalcular con valor 0
+            actualizarAbonado(datos);
+        }
     }
 }
 
@@ -684,122 +669,95 @@ function cambiarEstadoFactura(idFactura, estado) {
  * Guarda un nuevo abono.
  * @param {HTMLSelectElement} selectElement - El elemento select que contiene la opción seleccionada.
  */
+/**
+ * Habilita campos para nuevo concepto contable (SIN AJAX - solo habilita inputs)
+ * Los datos se guardarán cuando el usuario haga submit del formulario
+ */
 function guardarNuevoConcepto(selectElement) {
     var concepto = selectElement.value;
-    var idAbono = document.getElementById('idAbono').value;
     var precioElement = document.getElementById('precioNuevo');
     var descripElement = document.getElementById('descripNueva');
     var cantidadElement = document.getElementById('cantidadNuevo');
     var conceptoElement = document.getElementById('idConcepto');
 
-    var conceptoModificar = '';
-    if (conceptoElement.innerHTML.trim() !== '') {
-        var conceptoModificar = conceptoElement.innerHTML;
-    }
-
-    fetch('../directivo/ajax-guardar-abono.php?type=ACCOUNT&conceptoModificar='+conceptoModificar+'&idAbono=' + idAbono + '&concepto=' + concepto + '&precio=0&cantidad=1&subtotal=0', {
-        method: 'GET'
-    })
-    .then(response => response.json()) // Convertir la respuesta a objeto JSON
-    .then(data => {
-        conceptoElement.innerHTML = '';
-        conceptoElement.appendChild(document.createTextNode(data.idInsercion));
-
+    if (concepto && concepto !== '') {
+        // Marcar el concepto seleccionado (temporal, solo visual)
+        conceptoElement.innerHTML = concepto;
+        
+        // Habilitar campos para que el usuario pueda ingresar datos
         precioElement.disabled = false;
         descripElement.disabled = false;
         cantidadElement.disabled = false;
-
-        $.toast({
-            heading: 'Acción realizada',
-            text: 'Nuevo item agregado correctamente.',
-            position: 'bottom-right',
-            showHideTransition: 'slide',
-            loaderBg: '#26c281',
-            icon: 'success',
-            hideAfter: 5000,
-            stack: 6
-        });
-    })
-    .catch(error => {
-        // Manejar errores
-        console.error('Error:', error);
-    });
+        
+        // Si ya tenían valores, mantenerlos; si no, inicializar
+        if (!precioElement.value || precioElement.value == '0') {
+            precioElement.value = '0';
+        }
+        if (!cantidadElement.value || cantidadElement.value == '0') {
+            cantidadElement.value = '1';
+        }
+        
+        // Feedback visual sutil
+        selectElement.style.borderColor = '#26c281';
+        setTimeout(function() {
+            selectElement.style.borderColor = '';
+        }, 500);
+    }
 }
 
 /**
  * Actualiza el subtotal según el precio y la cantidad especificados.
  * @param {string} id
  */
+/**
+ * Actualiza el subtotal según el precio y la cantidad (SOLO EN MEMORIA - SIN AJAX)
+ */
 function actualizarSubtotalConceptos(id) {
-    var idConcepto=document.getElementById('idConcepto').innerText;
-    // Obtener los elementos
+    var idConcepto = document.getElementById('idConcepto').innerText;
     var precioElement = document.getElementById('precioNuevo');
     var cantidadElement = document.getElementById('cantidadNuevo');
     var subtotalElement = document.getElementById('subtotalNuevo');
-    if(id !== 'idNuevo'){
-        var idConcepto=id
-        // Obtener los elementos
-        var precioElement = document.getElementById('precio'+id);
-        var cantidadElement = document.getElementById('cantidad'+id);
-        var subtotalElement = document.getElementById('subtotal'+id);
+    
+    if (id !== 'idNuevo') {
+        idConcepto = id;
+        precioElement = document.getElementById('precio' + id);
+        cantidadElement = document.getElementById('cantidad' + id);
+        subtotalElement = document.getElementById('subtotal' + id);
     }
 
     if (precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '') {
-
         // Obtener los valores
-        var precio = parseFloat(precioElement.value);
-        var cantidad = parseFloat(cantidadElement.value);
+        var precio = parseFloat(precioElement.value) || 0;
+        var cantidad = parseFloat(cantidadElement.value) || 0;
 
-        // Calcular el subtotal
+        // Calcular el subtotal SOLO visualmente
         var subtotal = precio * cantidad;
-        var subtotalFormat = "$"+numberFormat(subtotal, 0, ',', '.');
+        var subtotalFormat = "$" + numberFormat(subtotal, 0, ',', '.');
         
-        fetch('../directivo/ajax-cambiar-subtotal-concepto.php?subtotal='+(subtotal)+'&cantidad='+(cantidad)+'&precio='+(precio)+'&idConcepto='+(idConcepto), {
-            method: 'GET'
-        })
-        .then(response => response.text()) // Convertir la respuesta a texto
-        .then(data => {
-            precioElement.dataset.precio = precio;
+        // Actualizar datos para referencia
+        precioElement.dataset.precio = precio;
+        cantidadElement.dataset.cantidad = cantidad;
 
-            subtotalElement.innerHTML = '';
-            subtotalElement.appendChild(document.createTextNode(subtotalFormat));
-
-            $.toast({
-                heading: 'Acción realizada',
-                text: 'Valor guardado correctamente.',
-                position: 'bottom-right',
-                showHideTransition: 'slide',
-                loaderBg: '#26c281',
-                icon: 'success',
-                hideAfter: 5000,
-                stack: 6
-            });
-        })
-        .catch(error => {
-            // Manejar errores
-            console.error('Error:', error);
-        });
+        // Actualizar visualización
+        subtotalElement.innerHTML = '';
+        subtotalElement.appendChild(document.createTextNode(subtotalFormat));
+        
+        // Feedback visual sutil
+        precioElement.style.borderColor = '#26c281';
+        cantidadElement.style.borderColor = '#26c281';
+        setTimeout(function() {
+            precioElement.style.borderColor = '';
+            cantidadElement.style.borderColor = '';
+        }, 500);
 
     } else {
-
-        Swal.fire({
-            title: 'Campo Vacío',
-            text: "Los campos de precio y cantidad no pueden ir vacío",
-            icon: 'warning',
-            showCancelButton: false,
-            confirmButtonText: 'Ok',
-            backdrop: `
-                rgba(0,0,123,0.4)
-                no-repeat
-            `,
-        }).then((result) => {
-            var precioAnterior = parseFloat(precioElement.getAttribute("data-precio"));
-            var cantidadAnterior = parseFloat(cantidadElement.getAttribute("data-cantidad"));
-            
-            precioElement.value = precioAnterior;
-            cantidadElement.value = cantidadAnterior;
-        })
-
+        // Si faltan valores, resetear a valores por defecto
+        if (precioElement.value.trim() === '') {
+            precioElement.value = parseFloat(precioElement.getAttribute("data-precio")) || 0;
+        }
+        if (cantidadElement.value.trim() === '') {
+            cantidadElement.value = parseFloat(cantidadElement.getAttribute("data-cantidad")) || 1;
+        }
     }
 }
 
@@ -807,39 +765,23 @@ function actualizarSubtotalConceptos(id) {
  * Actualiza la descripción de un abono.
  * @param {string} id
  */
+/**
+ * Guarda la descripción del concepto (SOLO EN MEMORIA - SIN AJAX)
+ * Se guardará cuando el usuario haga submit del formulario
+ */
 function guardarDescripcionConcepto(id) {
-    var idConcepto=document.getElementById('idConcepto').innerText;
-    // Obtener los elementos
     var descripElement = document.getElementById('descripNueva');
-    if(id !== 'idNuevo'){
-        var idConcepto=id
-        // Obtener los elementos
-        var descripElement = document.getElementById('descrip'+id);
+    if (id !== 'idNuevo') {
+        descripElement = document.getElementById('descrip' + id);
     }
-    var descripcion = descripElement.value;
     
-    fetch('../directivo/ajax-guardar-descripcion-concepto.php?descripcion='+(descripcion)+'&idConcepto='+(idConcepto), {
-        method: 'GET'
-    })
-    .then(response => response.text()) // Convertir la respuesta a texto
-    .then(data => {
-        descripElement.value = descripcion;
-
-        $.toast({
-            heading: 'Acción realizada',
-            text: 'La descripción fue guardada correctamente.',
-            position: 'bottom-right',
-            showHideTransition: 'slide',
-            loaderBg: '#26c281',
-            icon: 'success',
-            hideAfter: 5000,
-            stack: 6
-        });
-    })
-    .catch(error => {
-         // Manejar errores
-        console.error('Error:', error);
-    });
+    // Solo feedback visual, sin guardar en BD
+    if (descripElement && descripElement.value.trim() !== '') {
+        descripElement.style.borderColor = '#26c281';
+        setTimeout(function() {
+            descripElement.style.borderColor = '';
+        }, 500);
+    }
 }
 
 /**
@@ -929,24 +871,57 @@ function deseaEliminarNuevoConcepto(dato) {
 
 function totalizarAbonos(){
     var tabla = document.getElementById('tablaItems');
+    if (!tabla) {
+        return; // Si no existe la tabla, salir
+    }
 
     var totalNeto = 0;
     var totalAbonos = 0;
     var totalPorCobrar = 0;
+    
+    // Buscar todas las filas de facturas (excluyendo la fila de detalles expandida)
     for (let i = 1; i < tabla.rows.length; i++) {
         var fila = tabla.rows[i];
-
-        var total = parseFloat(fila.cells[2].getAttribute('data-total-neto'));
-        totalNeto = totalNeto + total;
-
-        var abonos = parseFloat(fila.cells[3].getAttribute('data-abonos'));
-        if (isNaN(abonos)) {
-            var abonos = 0;
+        
+        // Saltar filas de detalles expandidas
+        if (fila.classList.contains('factura-details-row')) {
+            continue;
         }
-        totalAbonos = totalAbonos + abonos;
+        
+        // La estructura de la tabla tiene:
+        // cells[0]: botón expandir
+        // cells[1]: Cod. Factura
+        // cells[2]: Fecha
+        // cells[3]: Total Neto (con data-total-neto)
+        // cells[4]: Abonos (con data-abonos)
+        // cells[5]: Por Cobrar (con data-por-cobrar)
+        // cells[6]: Valor recibido
+        
+        var celdaTotalNeto = fila.cells[3];
+        var celdaAbonos = fila.cells[4];
+        var celdaPorCobrar = fila.cells[5];
+        
+        if (celdaTotalNeto) {
+            var total = parseFloat(celdaTotalNeto.getAttribute('data-total-neto'));
+            if (!isNaN(total)) {
+                totalNeto = totalNeto + total;
+            }
+        }
 
-        var porCobrar = parseFloat(fila.cells[4].getAttribute('data-por-cobrar'));
-        totalPorCobrar = totalPorCobrar + porCobrar;
+        if (celdaAbonos) {
+            var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
+            if (isNaN(abonos)) {
+                abonos = 0;
+            }
+            totalAbonos = totalAbonos + abonos;
+        }
+
+        if (celdaPorCobrar) {
+            var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
+            if (!isNaN(porCobrar)) {
+                totalPorCobrar = totalPorCobrar + porCobrar;
+            }
+        }
     }
 
     //TOTAL NETO
@@ -966,6 +941,30 @@ function totalizarAbonos(){
     var elementPorCobrarNeto = document.getElementById('porCobrarNeto');
     elementPorCobrarNeto.innerHTML = '';
     elementPorCobrarNeto.appendChild(document.createTextNode(porCobrarNetoFinal));
+}
+
+/**
+ * Actualiza los KPIs de la página principal
+ */
+function actualizarKPIs() {
+    fetch('../directivo/ajax-calcular-kpis-movimientos.php', {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar cada KPI con animación
+            Object.keys(data.kpis).forEach(key => {
+                const elemento = document.querySelector(`[data-kpi="${key}"]`);
+                if (elemento) {
+                    elemento.textContent = '$' + numberFormat(data.kpis[key], 0, ',', '.');
+                }
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando KPIs:', error);
+    });
 }
 
 /**
@@ -989,21 +988,28 @@ function totalizarMovimientos() {
     for (let i = 1; i < tabla.rows.length; i++) {
         // Obtener la fila actual
         var fila = tabla.rows[i];
+        if (fila.classList.contains('child')) {
+            continue;
+        }
 
-        if (fila.cells[4].getAttribute('data-anulado') == 1) { continue; }
+        var celdaTotal = fila.querySelector('td[data-total-neto]');
+        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
 
         // Obtener el valor neto total del atributo de datos
-        var total = parseFloat(fila.cells[4].getAttribute('data-total-neto'));
+        var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
         // Obtenga el valor total de abonos del atributo de datos
-        var abonos = parseFloat(fila.cells[5].getAttribute('data-abonos'));
+        var celdaAbonos = fila.querySelector('td[data-abonos]');
+        var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
+        if (!celdaAbonos || !celdaPorCobrar) { continue; }
+        var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
         // Validar si abonos es un número válido, establecer en 0 si NaN
         if (isNaN(abonos)) {
             abonos = 0;
         }
         // Obtener el valor total por cobrar del atributo de datos
-        var porCobrar = parseFloat(fila.cells[6].getAttribute('data-por-cobrar'));
+        var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
 
-        if (fila.cells[4].getAttribute('data-tipo') == 1) {
+        if (celdaTotal.getAttribute('data-tipo') == 1) {
 
             // Acumular el valor neto total del atributo de datos
             totalNetoVenta = totalNetoVenta + total;
@@ -1012,7 +1018,7 @@ function totalizarMovimientos() {
             // Acumular el valor total por cobrar del atributo de datos
             totalPorCobrarVenta = totalPorCobrarVenta + porCobrar;
 
-        } else if (fila.cells[4].getAttribute('data-tipo') == 2) {
+        } else if (celdaTotal.getAttribute('data-tipo') == 2) {
 
             // Acumular el valor neto total del atributo de datos
             totalNetoCompra = totalNetoCompra + total;

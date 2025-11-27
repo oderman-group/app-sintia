@@ -1,5 +1,5 @@
 <?php
-include("../compartido/datos-fechas.php");
+include_once(ROOT_PATH."/main-app/compartido/datos-fechas.php");
 
 //VALIDAMOS DIAS PARA NOTIFICAR POR CORREO
 if($dfDias==90 || $dfDias==30 || $dfDias==5 || $dfDias==1){

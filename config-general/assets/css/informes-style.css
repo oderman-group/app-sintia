@@ -1,0 +1,699 @@
+/* ================================================
+   ESTILOS PERSONALIZADOS PARA PÁGINA DE INFORMES
+   ================================================ */
+
+/* Estilos generales del acordeón */
+.accordion {
+    margin-top: 20px;
+}
+
+.informe-card {
+    border: none;
+    margin-bottom: 15px;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.informe-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Headers de las categorías principales */
+.informe-header {
+    border: none;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.informe-header-academico {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.informe-header-financiero {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.informe-header-disciplinario {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.informe-header-excel {
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+}
+
+.informe-header-administrativo {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.informe-header-inscripcion {
+    background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);
+}
+
+/* Botón toggle del acordeón */
+.informe-btn-toggle {
+    color: white !important;
+    text-decoration: none !important;
+    padding: 20px 25px;
+    font-weight: 600;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.informe-btn-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    text-decoration: none !important;
+}
+
+.informe-btn-toggle:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.informe-btn-toggle .informe-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    width: 30px;
+    text-align: center;
+}
+
+.informe-btn-toggle .informe-title {
+    flex: 1;
+}
+
+.informe-btn-toggle .fa-chevron-down {
+    transition: transform 0.3s ease;
+    font-size: 16px;
+}
+
+.informe-btn-toggle:not(.collapsed) .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Cuerpo de las cards */
+.informe-card-body {
+    padding: 25px;
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+}
+
+/* Subcategorías */
+.informe-subcategory {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.informe-subcategory-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.informe-subcategory-title i {
+    color: #667eea;
+    margin-right: 8px;
+}
+
+/* Lista de informes */
+.informe-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.informe-item {
+    margin-bottom: 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.informe-item:last-child {
+    border-bottom: none;
+}
+
+.informe-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 10px;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.informe-link i {
+    color: #667eea;
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.informe-link:hover {
+    background-color: #f1f3ff;
+    color: #667eea;
+    text-decoration: none;
+    padding-left: 15px;
+    border-radius: 5px;
+}
+
+.informe-link .badge {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+/* Alerta informativa */
+.alert-info {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    border: 1px solid #667eea30;
+    border-radius: 8px;
+    padding: 15px 20px;
+    color: #2c3e50;
+}
+
+.alert-info i {
+    color: #667eea;
+    margin-right: 8px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.informe-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .informe-btn-toggle {
+        font-size: 16px;
+        padding: 15px 20px;
+    }
+    
+    .informe-btn-toggle .informe-icon {
+        font-size: 20px;
+        margin-right: 10px;
+    }
+    
+    .informe-card-body {
+        padding: 15px;
+    }
+    
+    .informe-subcategory {
+        padding: 15px;
+    }
+    
+    .informe-link {
+        font-size: 13px;
+    }
+}
+
+/* ================================================
+   ESTILOS PARA MODALES MEJORADOS
+   ================================================ */
+
+/* Modal centralizado mejorado */
+#ModalCentralizado .modal-dialog,
+.modal[id^="ComponeteModal-"] .modal-dialog {
+    max-width: 1200px;
+    margin: 1.75rem auto;
+}
+
+/* Clase modal-dialog-scrollable de Bootstrap */
+#ModalCentralizado.modal-dialog-scrollable .modal-content,
+.modal[id^="ComponeteModal-"].modal-dialog-scrollable .modal-content,
+.modal-dialog-scrollable .modal-content {
+    max-height: calc(100vh - 3.5rem);
+    display: flex;
+    flex-direction: column;
+}
+
+#ModalCentralizado .modal-content,
+.modal[id^="ComponeteModal-"] .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#ModalCentralizado .modal-header,
+.modal[id^="ComponeteModal-"] .modal-header {
+    border-radius: 15px 15px 0 0;
+    padding: 20px 30px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+#ModalCentralizado .modal-title,
+.modal[id^="ComponeteModal-"] .modal-title {
+    font-weight: 700;
+    font-size: 20px;
+}
+
+/* Modal body con scroll correcto */
+.modal-dialog-scrollable .modal-body {
+    overflow-y: auto !important;
+    overflow-x: hidden;
+}
+
+#ModalCentralizado .modal-body,
+.modal[id^="ComponeteModal-"] .modal-body {
+    padding: 30px;
+    position: relative;
+    flex: 1 1 auto;
+}
+
+/* Asegurar que el contenido dentro del modal-body sea scrolleable */
+#ModalCentralizado .modal-body > div,
+.modal[id^="ComponeteModal-"] .modal-body > div {
+    min-height: 0;
+}
+
+/* Webkit scrollbar personalizado para modales */
+#ModalCentralizado .modal-body::-webkit-scrollbar,
+.modal[id^="ComponeteModal-"] .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#ModalCentralizado .modal-body::-webkit-scrollbar-track,
+.modal[id^="ComponeteModal-"] .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#ModalCentralizado .modal-body::-webkit-scrollbar-thumb,
+.modal[id^="ComponeteModal-"] .modal-body::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+#ModalCentralizado .modal-body::-webkit-scrollbar-thumb:hover,
+.modal[id^="ComponeteModal-"] .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #5568d3;
+}
+
+/* Secciones dentro de los modales */
+.modal-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+}
+
+.modal-section-title i {
+    margin-right: 10px;
+}
+
+/* Mejoras para los formularios en modales */
+.modal .panel {
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.modal .panel-heading {
+    border-radius: 10px 10px 0 0;
+    padding: 15px 20px;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.modal .panel-body {
+    padding: 25px;
+}
+
+.modal .form-group {
+    margin-bottom: 20px;
+}
+
+.modal .control-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.modal .form-control {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 10px 15px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.modal .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+/* Select2 dentro de modales - FIX PARA BÚSQUEDA Y Z-INDEX */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    min-height: 40px;
+    padding: 5px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 28px;
+    padding-left: 10px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #667eea;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+/* Z-INDEX CRÍTICO: Asegurar que el dropdown de select2 aparezca sobre el modal */
+/* Los modales de Bootstrap están en z-index 1050-1060 */
+.select2-container--open {
+    z-index: 99999 !important;
+}
+
+.select2-dropdown {
+    z-index: 99999 !important;
+    position: absolute !important;
+}
+
+/* Asegurar que el backdrop de select2 no interfiera */
+.select2-container--open .select2-dropdown {
+    z-index: 99999 !important;
+}
+
+/* Asegurar que los resultados se muestren correctamente */
+.select2-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.select2-results__options {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Mejorar la visualización del campo de búsqueda */
+.select2-search--dropdown {
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.select2-search--dropdown .select2-search__field {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+}
+
+.select2-search--dropdown .select2-search__field:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+}
+
+/* Placeholder del buscador */
+.select2-search--dropdown .select2-search__field::placeholder {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Asegurar que el modal tenga scroll correcto */
+.modal-open {
+    overflow: hidden;
+}
+
+.modal-open .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.modal-body {
+    position: relative;
+}
+
+/* CRÍTICO: Bloquear TODA interacción con el contenido de fondo cuando modal está abierto */
+.modal-open .page-wrapper,
+.modal-open .page-container,
+.modal-open .page-content,
+.modal-open .accordion,
+.modal-open .informe-card {
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+/* Permitir interacción SOLO dentro de modales */
+.modal-open .modal,
+.modal-open .modal * {
+    pointer-events: auto !important;
+    user-select: auto !important;
+}
+
+/* Bloquear específicamente los efectos hover del fondo */
+.modal-open .informe-card:hover,
+.modal-open .informe-link:hover,
+.modal-open .informe-btn-toggle:hover {
+    transform: none !important;
+    background-color: inherit !important;
+    box-shadow: none !important;
+}
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 992px) {
+    #ModalCentralizado .modal-dialog,
+    .modal[id^="ComponeteModal-"] .modal-dialog {
+        max-width: 95%;
+        margin: 10px auto;
+    }
+    
+    #ModalCentralizado .modal-body,
+    .modal[id^="ComponeteModal-"] .modal-body {
+        padding: 20px 15px;
+        max-height: calc(100vh - 120px);
+    }
+    
+    #ModalCentralizado .modal-header,
+    .modal[id^="ComponeteModal-"] .modal-header {
+        padding: 15px 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    #ModalCentralizado .modal-dialog,
+    .modal[id^="ComponeteModal-"] .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+    }
+    
+    #ModalCentralizado .modal-content,
+    .modal[id^="ComponeteModal-"] .modal-content {
+        border-radius: 0;
+        max-height: 100vh;
+    }
+    
+    #ModalCentralizado .modal-body,
+    .modal[id^="ComponeteModal-"] .modal-body {
+        padding: 15px;
+        max-height: calc(100vh - 100px);
+    }
+}
+
+/* Botones mejorados en modales */
+.modal .btn {
+    border-radius: 6px;
+    padding: 10px 25px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.modal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.modal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.modal .btn-info {
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    border: none;
+}
+
+.modal .btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(48, 207, 208, 0.4);
+}
+
+/* Estilos para los popovers de vista previa */
+.popover {
+    max-width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.popover-content img {
+    border-radius: 6px;
+}
+
+/* Mejoras para las cards de secciones dentro de modales */
+.modal .panel-heading-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.modal .panel-heading-red {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.modal .panel-heading-green {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #2c3e50;
+}
+
+/* Hints y mensajes de ayuda */
+.modal span[style*="darkblue"] {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #667eea !important;
+    font-style: italic;
+}
+
+/* Loading overlay */
+#gifCarga {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+/* Animación para la apertura del modal */
+.modal.fade .modal-dialog {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* ================================================
+   CRÍTICO: FIX PARA PARPADEO DEL BACKDROP EN MODALES ESPECÍFICOS
+   ================================================ */
+
+/* SOLUCIÓN: Fijar el backdrop para que NO cambie con el mouse */
+.modal-backdrop {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1040 !important;
+    opacity: 1 !important;
+    transition: none !important;
+    animation: none !important;
+    pointer-events: auto !important; /* Cambiar a auto para bloquear clicks */
+}
+
+/* Asegurar que el backdrop no cambie de opacidad */
+.modal-backdrop.show {
+    opacity: 1 !important;
+    transition: none !important;
+}
+
+.modal-backdrop.fade {
+    transition: none !important;
+}
+
+/* Modales específicos sin animaciones */
+#ComponeteModal-boletines,
+#ComponeteModal-insDocumentos {
+    animation: none !important;
+    transition: none !important;
+    z-index: 1050 !important;
+}
+
+#ComponeteModal-boletines *,
+#ComponeteModal-insDocumentos * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Forzar display directo sin transiciones */
+#ComponeteModal-boletines.modal,
+#ComponeteModal-insDocumentos.modal {
+    display: none !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#ComponeteModal-boletines.modal.show,
+#ComponeteModal-insDocumentos.modal.show {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Prevenir que el hover cambie nada */
+#ComponeteModal-boletines:hover,
+#ComponeteModal-insDocumentos:hover,
+#ComponeteModal-boletines *:hover,
+#ComponeteModal-insDocumentos *:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+}
+

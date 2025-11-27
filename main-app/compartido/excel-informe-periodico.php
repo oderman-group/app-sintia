@@ -1,19 +1,28 @@
 <?php
+// Importante: NO imprimir nada antes de generar el Excel
+ob_start(); // Capturar cualquier salida accidental
+
 include_once("session-compartida.php");
 require_once(ROOT_PATH . "/main-app/class/componentes/Excel/ExcelUtil.php");
 require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
-
+require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH . "/main-app/class/Boletin.php");
+require_once("../class/Informes.php");
 
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-require_once("../class/Informes.php");
-
 $num = 0;
 try {
+    // Validar parámetros POST
+    if(empty($_POST["gradoInforme"]) || empty($_POST["materiasInforme"])){
+        ob_end_clean(); // Limpiar buffer
+        echo "Error: Parámetros incompletos para generar el informe.";
+        exit();
+    }
+    
     $curos[0]         = $_POST["gradoInforme"];
-    $listagrupos      = $_POST["gruposInforme"];
+    $listagrupos      = !empty($_POST["gruposInforme"]) ? $_POST["gruposInforme"] : [];
     $listaMaterias    = $_POST["materiasInforme"];
     $consulta         = Informes::informePeriodico($curos, $listagrupos, $listaMaterias);
     $estilosNota      = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $_SESSION["bd"]);
@@ -59,13 +68,27 @@ try {
             $excelUtil->sheet[$indice]->getColumnDimension('B')->setWidth(15);
             $excelUtil->sheet[$indice]->getRowDimension('5')->setRowHeight(20);
 
-            $urlImage = '../files/images/logo/' . $informacion_inst["info_logo"];
-
-            if (!Utilidades::ArchivoExiste($urlImage)) {
-                $urlImage = '../files/images/logo/sintia-logo-2023.png';
+            // Validar logo de la institución
+            $urlImage = null;
+            if(!empty($informacion_inst["info_logo"])){
+                $urlImage = '../files/images/logo/' . $informacion_inst["info_logo"];
+                if (!Utilidades::ArchivoExiste($urlImage)) {
+                    $urlImage = null;
+                }
             }
-
-            $excelUtil->agregarImagenLogo('A1', $urlImage, 25, 2);
+            
+            // Intentar logo alternativo si no existe el principal
+            if(empty($urlImage)){
+                $urlImage = '../files/images/logo/sintia-logo-2023.png';
+                if (!Utilidades::ArchivoExiste($urlImage)) {
+                    $urlImage = null;
+                }
+            }
+            
+            // Solo agregar imagen si existe
+            if(!empty($urlImage)){
+                $excelUtil->agregarImagenLogo('A1', $urlImage, 25, 2);
+            }
             // //celdas de Nombre del reporte
             $excelUtil->agregarTitulo('C1', 'INFORME DE EVALUACIÓN INTERNA DE ESTUDIANTES', 14);
             $excelUtil->sheet[$indice]->mergeCells('C1:H5'); // Combinar celdas
@@ -102,11 +125,11 @@ try {
 
             $num = 7;
             $excelUtil->sheet[$indice]->mergeCells('C' . $num . ':H' . $num); // Combinar celdas
-            $excelUtil->agregarTexto('C' . $num++,  $informacion_inst["info_nombre"]);
+            $excelUtil->agregarTexto('C' . $num++, !empty($informacion_inst["info_nombre"]) ? $informacion_inst["info_nombre"] : '');
             $excelUtil->sheet[$indice]->mergeCells('C' . $num . ':H' . $num); // Combinar celdas          
-            $excelUtil->agregarTexto('C' . $num++,  $informacion_inst["info_dane"] . ' ');
+            $excelUtil->agregarTexto('C' . $num++, !empty($informacion_inst["info_dane"]) ? $informacion_inst["info_dane"] . ' ' : '');
             $excelUtil->sheet[$indice]->mergeCells('C' . $num . ':H' . $num); // Combinar celdas
-            $excelUtil->agregarTexto('C' . $num++, $informacion_inst["info_direccion"] . ' ');
+            $excelUtil->agregarTexto('C' . $num++, !empty($informacion_inst["info_direccion"]) ? $informacion_inst["info_direccion"] . ' ' : '');
             // // // /////////////////////////////CUADRO DE DESEMPENO///////////////////////////////////////////////
             $num = 6;
             $excelUtil->sheet[$indice]->getStyle('I6:K11')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN); //Todos los bordes sencillos
@@ -114,25 +137,35 @@ try {
             $excelUtil->agregarTexto('I' . $num, 'DESEMPEÑO');
             $excelUtil->ajustarTexto('I' . $num);
             $num = 8;
-            $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);   // Combinar celdas
-            $excelUtil->agregarTexto('I' . $num, '' . $listaTipoNotas[3]["notip_desde"] . ' - ' . $listaTipoNotas[3]["notip_hasta"], $ColorTextoClaro, $ColorSuperior);
-            $excelUtil->centrarTexto('I' . $num);
-            $excelUtil->agregarTexto('J' . $num++, $listaTipoNotas[3]["notip_nombre"]);
+            
+            // Validar que existan los tipos de notas antes de acceder
+            if(isset($listaTipoNotas[3])){
+                $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);
+                $excelUtil->agregarTexto('I' . $num, $listaTipoNotas[3]["notip_desde"] . ' - ' . $listaTipoNotas[3]["notip_hasta"], $ColorTextoClaro, $ColorSuperior);
+                $excelUtil->centrarTexto('I' . $num);
+                $excelUtil->agregarTexto('J' . $num++, $listaTipoNotas[3]["notip_nombre"]);
+            }
 
-            $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);   // Combinar celdas  
-            $excelUtil->agregarTexto('I' . $num, '' . $listaTipoNotas[2]["notip_desde"] . ' - ' . $listaTipoNotas[2]["notip_hasta"], $ColorTextoOscuro, $ColorAlto);
-            $excelUtil->centrarTexto('I' . $num);
-            $excelUtil->agregarTexto('J' . $num++,  $listaTipoNotas[2]["notip_nombre"]);
+            if(isset($listaTipoNotas[2])){
+                $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);
+                $excelUtil->agregarTexto('I' . $num, $listaTipoNotas[2]["notip_desde"] . ' - ' . $listaTipoNotas[2]["notip_hasta"], $ColorTextoOscuro, $ColorAlto);
+                $excelUtil->centrarTexto('I' . $num);
+                $excelUtil->agregarTexto('J' . $num++, $listaTipoNotas[2]["notip_nombre"]);
+            }
 
-            $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);   // Combinar celdas 
-            $excelUtil->agregarTexto('I' . $num, '' . $listaTipoNotas[1]["notip_desde"] . ' - ' . $listaTipoNotas[1]["notip_hasta"], $ColorTextoClaro, $ColorBasico);
-            $excelUtil->centrarTexto('I' . $num);
-            $excelUtil->agregarTexto('J' . $num++,  $listaTipoNotas[1]["notip_nombre"]);
+            if(isset($listaTipoNotas[1])){
+                $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);
+                $excelUtil->agregarTexto('I' . $num, $listaTipoNotas[1]["notip_desde"] . ' - ' . $listaTipoNotas[1]["notip_hasta"], $ColorTextoClaro, $ColorBasico);
+                $excelUtil->centrarTexto('I' . $num);
+                $excelUtil->agregarTexto('J' . $num++, $listaTipoNotas[1]["notip_nombre"]);
+            }
 
-            $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);   // Combinar celdas 
-            $excelUtil->agregarTexto('I' . $num, '' . $listaTipoNotas[0]["notip_desde"] . ' - ' . $listaTipoNotas[0]["notip_hasta"], $ColorTextoClaro, $ColorBajo);
-            $excelUtil->centrarTexto('I' . $num);
-            $excelUtil->agregarTexto('J' . $num++,  $listaTipoNotas[0]["notip_nombre"]);
+            if(isset($listaTipoNotas[0])){
+                $excelUtil->sheet[$indice]->mergeCells('J' . $num . ':K' . $num);
+                $excelUtil->agregarTexto('I' . $num, $listaTipoNotas[0]["notip_desde"] . ' - ' . $listaTipoNotas[0]["notip_hasta"], $ColorTextoClaro, $ColorBajo);
+                $excelUtil->centrarTexto('I' . $num);
+                $excelUtil->agregarTexto('J' . $num++, $listaTipoNotas[0]["notip_nombre"]);
+            }
             // // // /////////////////////////////DATOS ASIGNADTURA////////////////////////////////////////////////
             $excelUtil->sheet[$indice]->mergeCells('A10:H11'); // Combinar celdas
             $num = 10;
@@ -199,23 +232,29 @@ try {
 
                 $excelUtil->agregarTexto('A' . $num, $cont);
                 $excelUtil->ajustarTexto('A' . $num);
-                $excelUtil->agregarTexto('B' . $num, $registro["ogen_nombre"]);
+                $excelUtil->agregarTexto('B' . $num, !empty($registro["ogen_nombre"]) ? $registro["ogen_nombre"] : '');
 
                 if (!empty($registro["mat_documento"])) {
                     $excelUtil->agregarTexto('C' . $num, $registro["mat_documento"]);
                     $excelUtil->ajustarTexto('C' . $num);
                 }
 
-                if (!empty($registro["mat_primer_apellido"])) {
-                    $excelUtil->agregarTexto('D' . $num, Estudiantes::NombreCompletoDelEstudiante($registro));
+                // Validar que el array tenga los campos necesarios antes de llamar a la función
+                $nombreCompleto = '';
+                if (!empty($registro["mat_nombres"]) || !empty($registro["mat_primer_apellido"])) {
+                    $nombreCompleto = Estudiantes::NombreCompletoDelEstudiante($registro);
+                }
+                if (!empty($nombreCompleto)) {
+                    $excelUtil->agregarTexto('D' . $num, $nombreCompleto);
                 }
 
                 if (!empty($registro["gra_nombre"])) {
-                    $excelUtil->agregarTexto('E' . $num, $registro["gra_nombre"] . '-' . $registro["gru_nombre"]);
+                    $grupoNombre = !empty($registro["gru_nombre"]) ? $registro["gru_nombre"] : '';
+                    $excelUtil->agregarTexto('E' . $num, $registro["gra_nombre"] . '-' . $grupoNombre);
                     $excelUtil->ajustarTexto('E' . $num);
                 }
 
-                if (!empty( $datosUnicosInstitucion["ins_siglas"])) {
+                if (!empty($datosUnicosInstitucion["ins_siglas"])) {
                     $excelUtil->agregarTexto('F' . $num, $datosUnicosInstitucion["ins_siglas"]);
                     $excelUtil->ajustarTexto('F' . $num);
                 }
@@ -229,23 +268,24 @@ try {
             $Colorfondo = "ffffff";
             $texto = "000000";
 
-            switch ($estiloNota['notip_nombre']) {
-                case $listaTipoNotas[3]["notip_nombre"]:
+            // Validar que estiloNota y listaTipoNotas tengan datos
+            if(!empty($estiloNota['notip_nombre'])){
+                if(isset($listaTipoNotas[3]) && $estiloNota['notip_nombre'] == $listaTipoNotas[3]["notip_nombre"]){
                     $Colorfondo = $ColorSuperior;
                     $texto = $ColorTextoClaro;
-                    break;
-                case $listaTipoNotas[2]["notip_nombre"]:
+                }
+                elseif(isset($listaTipoNotas[2]) && $estiloNota['notip_nombre'] == $listaTipoNotas[2]["notip_nombre"]){
                     $Colorfondo = $ColorAlto;
                     $texto = $ColorTextoOscuro;
-                    break;
-                case $listaTipoNotas[1]["notip_nombre"]:
+                }
+                elseif(isset($listaTipoNotas[1]) && $estiloNota['notip_nombre'] == $listaTipoNotas[1]["notip_nombre"]){
                     $Colorfondo = $ColorBasico;
                     $texto = $ColorTextoClaro;
-                    break;
-                case $listaTipoNotas[0]["notip_nombre"]:
+                }
+                elseif(isset($listaTipoNotas[0]) && $estiloNota['notip_nombre'] == $listaTipoNotas[0]["notip_nombre"]){
                     $Colorfondo = $ColorBajo;
                     $texto = $ColorTextoClaro;
-                    break;
+                }
             }
 
             if ($registro["bol_periodo"] == '1') {
@@ -278,13 +318,18 @@ try {
                 continue;
             }
         }
-        // 
-        // "Informe_periodico_".date("d/m/Y")."-SINTIA.xls"
-        $excelUtil->descargarExcel("Informe_periodico_" . date("d/m/Y") . "-SINTIA.xlsx");
+        
+        // Limpiar cualquier salida antes de enviar el Excel
+        ob_end_clean();
+        
+        // Descargar Excel con nombre válido (sin barras diagonales)
+        $excelUtil->descargarExcel("Informe_periodico_" . date("d_m_Y") . "-SINTIA.xlsx");
     }
 
     exit;
 } catch (Exception $e) {
-    echo "Excepción catpurada: " . $e->getMessage();
+    // Log del error pero no imprimir nada que corrompa el Excel
+    error_log("Error en excel-informe-periodico.php: " . $e->getMessage());
+    echo "Error al generar el informe. Por favor, contacte al administrador.";
     exit();
 }

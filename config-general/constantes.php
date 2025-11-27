@@ -1,8 +1,44 @@
 <?php
+$tiempo_inicial        = microtime(true);
+$memoria_inicio_script = memory_get_usage();
+// ==============================================
+// CONFIGURACIÓN DE RUTAS BASE
+// ==============================================
+
+// Ruta física del proyecto (en disco)
 $rutaConSlash = str_replace('\\', '/', dirname(__DIR__));
 define('ROOT_PATH', $rutaConSlash);
+
+// Detectar protocolo
+$protocolo = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
+              || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+
+// Host del servidor
+$host = $_SERVER['HTTP_HOST'] . '/';
+
+// Carpetas base
+define('APP_FOLDER', 'app-sintia');     // Carpeta raíz del proyecto
+define('MAIN_FOLDER', 'main-app');      // Carpeta principal del módulo
+
+// Rutas públicas base
+define('BASE_URL', $protocolo . $host . APP_FOLDER);
+define('MAIN_URL', BASE_URL . '/' . MAIN_FOLDER . '/');
+
+// Rutas físicas en el servidor
+define('BASE_PATH', $_SERVER['DOCUMENT_ROOT'] . '/' . APP_FOLDER . '/');
+define('MAIN_PATH', BASE_PATH . MAIN_FOLDER . '/');
+
+// Ejemplo de recursos
+define('CSS_PATH', MAIN_URL . 'assets/css/');
+define('JS_PATH', MAIN_URL . 'assets/js/');
+define('IMG_PATH', MAIN_URL . 'assets/img/');
+
 include(ROOT_PATH."/sensitive.php");
 
+
+// ==============================================
+// CONSTANTES GENERALES
+// ==============================================
 define('EMAIL_SENDER', 'info@plataformasintia.com');
 define('NAME_SENDER', 'Plataforma Sintia');
 
@@ -75,7 +111,7 @@ define('PERMISO_EDICION_PERIODOS_DIFERENTES', true); //Diferentes al actual
 define('CUALITATIVA', 'CUALITATIVA');
 define('CUANTITATIVA', 'CUANTITATIVA');
 
-define('CLAVE_SUGERIDA', 'sherman1298');
+define('CLAVE_SUGERIDA', 'S1nt1a'.date("Y").'$');
 
 /* TIPO DE VALIDACION*/
 define('IDENTIFICAION', 'Identificacion');
@@ -180,6 +216,9 @@ define('USUARIOS', 'USUARIOS');
 define('MODULOS', 'MODULOS');
 define('PAQUETES', 'PAQUETES');
 
+// ==============================================
+// CONFIGURACIÓN POR ENTORNO
+// ==============================================
 
 //CUANDO SE EJECUTA POR CONSOLA (CLI)
 if (php_sapi_name() === 'cli') {
@@ -187,6 +226,14 @@ if (php_sapi_name() === 'cli') {
     $_ENV = $argv[1] ?? 'PROD';
 
     switch ($_ENV) {
+        case 'LOCAL':
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+            define('REDIRECT_ROUTE', 'http://localhost/app-sintia/main-app');
+            define('ENVIROMENT', 'LOCAL');
+            error_reporting (E_ALL);
+        break;
+
         case 'TEST':
             ini_set('display_errors', 1);
             ini_set('display_startup_errors', 1);
@@ -214,7 +261,7 @@ if (php_sapi_name() === 'cli') {
 
 } else {
 
-    $displayErrorsLocal = 0;
+    $displayErrorsLocal = 1;
     $displayErrorsProd = 0;
 
     if(!empty($_SESSION) && isset($_SESSION['admin']) || !empty($_SESSION['datosUsuario']) && $_SESSION['datosUsuario']['uss_tipo'] == TIPO_DEV){
@@ -270,6 +317,9 @@ if (php_sapi_name() === 'cli') {
     }
 }
 
+// ==============================================
+// INCLUSIÓN DE ARCHIVOS SEGÚN ENTORNO
+// ==============================================
 switch (ENVIROMENT) {
     case 'LOCAL':
     include(ROOT_PATH."/conexion-datos-localhost.php");

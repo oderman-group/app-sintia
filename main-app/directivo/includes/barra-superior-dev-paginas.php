@@ -13,7 +13,7 @@ if (!empty($_GET['busqueda'])) {
         )";
 }
 ?>
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -29,7 +29,7 @@ if (!empty($_GET['busqueda'])) {
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
                     try{
-                        $consultaFiltro = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+                        $consultaFiltro = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                     } catch (Exception $e) {
                         include("../compartido/error-catch-to-report.php");
                     }

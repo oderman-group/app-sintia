@@ -1,109 +1,361 @@
 <?php
-$filtro="AND ema_para='".$_SESSION["id"]."'";
+$filtro = "AND ema_para='".$_SESSION["id"]."'";
+$esEnviados = false;
 if(isset($_GET["opt"]) AND base64_decode($_GET["opt"])==2){
-	$filtro='';
+	$filtro = '';
+	$esEnviados = true;
 }
 
-$idR="";
-if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
+$idR = "";
+if(!empty($_GET["idR"])){ $idR = base64_decode($_GET["idR"]);}
 
-$datosConsulta = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".social_emails
-INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=ema_de AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-WHERE ema_id='".$idR."' $filtro"), MYSQLI_BOTH);
+// Consulta con PDO
+$sql = "SELECT *, uss.uss_nombre, uss.uss_email, uss.uss_foto 
+        FROM ".$baseDatosServicios.".social_emails
+        INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=ema_de AND uss.institucion=? AND uss.year=?
+        WHERE ema_id=? ".$filtro;
+$stmt = $conexionPDO->prepare($sql);
+$stmt->execute([$config['conf_id_institucion'], $_SESSION["bd"], $idR]);
+$datosConsulta = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-if($datosConsulta['ema_para']==$_SESSION["id"] and $datosConsulta['ema_visto']=='0'){
-	mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_emails SET ema_visto=1, ema_fecha_visto=now() WHERE ema_id='".$idR."'");
-	
+// Marcar como visto si es recibido y no se ha visto
+if(!empty($datosConsulta) && $datosConsulta['ema_para']==$_SESSION["id"] && $datosConsulta['ema_visto']=='0'){
+	$sqlUpdate = "UPDATE ".$baseDatosServicios.".social_emails SET ema_visto=1, ema_fecha_visto=now() WHERE ema_id=?";
+	$stmtUpdate = $conexionPDO->prepare($sqlUpdate);
+	$stmtUpdate->execute([$idR]);
 }
+
+$eliminarTipo = $datosConsulta['ema_para'] == $_SESSION["id"] ? 2 : 1;
 ?>
+
+<style>
+/* Vista de mensaje individual tipo Gmail */
+.gmail-message-view {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.gmail-message-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.gmail-message-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.gmail-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    color: #5f6368;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.gmail-back-btn:hover {
+    background: #f1f3f4;
+    color: #202124;
+    text-decoration: none;
+}
+
+.gmail-message-actions-top {
+    display: flex;
+    gap: 8px;
+}
+
+.gmail-action-btn-top {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    color: #5f6368;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.gmail-action-btn-top:hover {
+    background: #f1f3f4;
+    color: #202124;
+}
+
+.gmail-action-btn-top.danger:hover {
+    background: #fce8e6;
+    color: #d93025;
+    border-color: #d93025;
+}
+
+.gmail-subject-line {
+    font-size: 22px;
+    font-weight: 400;
+    color: #202124;
+    margin: 0 0 20px 0;
+    line-height: 1.4;
+}
+
+.gmail-sender-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.gmail-sender-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.gmail-sender-details {
+    flex: 1;
+}
+
+.gmail-sender-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 4px 0;
+}
+
+.gmail-sender-email {
+    font-size: 13px;
+    color: #5f6368;
+    margin: 0 0 8px 0;
+}
+
+.gmail-message-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: #5f6368;
+}
+
+.gmail-message-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.gmail-message-content {
+    padding: 32px 24px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #202124;
+}
+
+.gmail-message-content p {
+    margin: 0 0 16px 0;
+}
+
+.gmail-message-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.gmail-message-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gmail-reply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.gmail-reply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.gmail-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: white;
+    color: #5f6368;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.gmail-secondary-btn:hover {
+    background: #f1f3f4;
+    color: #202124;
+    text-decoration: none;
+}
+
+/* Dark mode */
+body.dark-mode .gmail-message-view {
+    background: #16213e;
+}
+
+body.dark-mode .gmail-message-header,
+body.dark-mode .gmail-message-footer {
+    border-color: #533483;
+}
+
+body.dark-mode .gmail-subject-line,
+body.dark-mode .gmail-sender-name,
+body.dark-mode .gmail-message-content {
+    color: #eaeaea;
+}
+
+body.dark-mode .gmail-sender-email,
+body.dark-mode .gmail-message-meta,
+body.dark-mode .gmail-message-date {
+    color: #b0b0b0;
+}
+
+body.dark-mode .gmail-back-btn,
+body.dark-mode .gmail-action-btn-top,
+body.dark-mode .gmail-secondary-btn {
+    background: #0f3460;
+    border-color: #533483;
+    color: #eaeaea;
+}
+
+body.dark-mode .gmail-back-btn:hover,
+body.dark-mode .gmail-action-btn-top:hover,
+body.dark-mode .gmail-secondary-btn:hover {
+    background: #533483;
+}
+</style>
+
 <div class="page-bar">
 	<div class="page-title-breadcrumb">
-		<div class=" pull-left">
-			<div class="page-title"><?php if(isset($datosConsulta['ema_asunto'])){ echo $datosConsulta['ema_asunto'];}?></div>
+		<div class="pull-left">
+			<div class="page-title"><?= htmlspecialchars($datosConsulta['ema_asunto'] ?? 'Mensaje'); ?></div>
 		</div>
 		<ol class="breadcrumb page-breadcrumb pull-right">
 			<li><a class="parent-item" href="mensajes.php">Mensajes</a>&nbsp;<i class="fa fa-angle-right"></i></li>
-			<li class="active"><?php if(isset($datosConsulta['ema_asunto'])){ echo $datosConsulta['ema_asunto'];}?></li>
+			<li class="active"><?= htmlspecialchars($datosConsulta['ema_asunto'] ?? 'Ver mensaje'); ?></li>
 		</ol>
 	</div>
 </div>
-<div class="inbox">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card card-topline-gray">
-                                <div class="card-body no-padding height-9">
-									<div class="row">
-			                            <div class="col-md-3">
-				                                <div class="inbox-sidebar">
-				                                    <a href="mensajes-redactar.php" data-title="Compose" class="btn red compose-btn btn-block">
-				                                        <i class="fa fa-edit"></i> Redactar </a>
-				                                    <ul class="inbox-nav inbox-divider">
-				                                        <li class="active"><a href="mensajes.php"><i class="fa fa-inbox"></i> Recibidos</a></li>
-				                                        <li><a href="mensajes.php?opt=<?=base64_encode(2)?>"><i class="fa fa-envelope"></i> Enviados</a></li>
-				                                    </ul>
-				                                </div>
-				                            </div>
-			                            <div class="col-md-9">
-			                                <div class="inbox-body">
-			                                    <div class="inbox-header">
-			                                        <!-- <h1 class="pull-left">Inbox</h1> -->
-			                                        <div class="mail-option">
-			                                            <div class="btn-group">
-			                                                <a class="btn" href="#"> Reply </a> 
-			                                                <a class="btn" href="#"> Reply all </a> 
-			                                            </div>
-			                                            <div class="btn-group">
-			                                                <a class="btn" href="#"> Forward </a> 
-			                                                <a class="btn" href="#"> Delete </a>
-			                                            </div>
-			                                            <div class="btn-group">
-			                                                <a class="btn" href="#"> Mark as read </a> 
-			                                            </div>
-			                                        </div>
-			                                    </div>
-			                                    <div class="inbox-body no-pad">
-			                                        <section class="mail-list">
-			                                            <div class="mail-sender">
-			                                            	<div class="mail-heading">
-			                                                	<h4 class="vew-mail-header"><b><?=$datosConsulta['ema_asunto'];?></b></h4>
-			                                                </div>
-			                                                <hr>
-															<div class="media">
-																<a href="#" class="pull-left"> <img alt=""
-																	src="../files/fotos/<?=$datosConsulta['uss_foto'];?>" class="img-circle" width="40">
-																</a>
-																<div class="media-body">
-																	<span class="date pull-right"><?=$datosConsulta['ema_fecha'];?></span>
-																	<h4 class="text-primary"><?=$datosConsulta['uss_nombre'];?></h4>
-																	<small class="text-muted">De: <?=$datosConsulta['uss_email'];?></small>
-																</div>
-															</div>
-														</div>
-			                                            <div class="view-mail">
-			                                                <p><?=$datosConsulta['ema_contenido'];?></p>
-			                                            </div>
-														
-			                                            <div class="compose-btn pull-left">
-			                                                <a href="mensajes-redactar.php?para=<?=base64_encode($datosConsulta['ema_de']);?>&asunto=<?=base64_encode('RE: '.$datosConsulta['ema_asunto'])?>" class="btn btn-sm btn-primary"><i
-																class="fa fa-reply"></i> Responder</a>
-			                                                <button class="btn btn-sm btn-default">
-			                                                    <i class="fa fa-arrow-right"></i> Reenviar
-			                                                </button>
-			                                                <button class="btn  btn-sm btn-default tooltips" data-original-title="Print" type="button" data-toggle="tooltip" data-placement="top" title="">
-			                                                    <i class="fa fa-print"></i>
-			                                                </button>
-			                                                <button class="btn btn-sm btn-default tooltips" data-original-title="Trash" data-toggle="tooltip" data-placement="top" title="">
-			                                                    <i class="fa fa-trash-o"></i>
-			                                                </button>
-			                                            </div>
-			                                        </section>
-			                                    </div>
-			                                </div>
-			                            </div>
-			                        </div>
-								</div>
-                            </div>
-                        </div>
+
+<div class="gmail-message-view">
+    <!-- Header del mensaje -->
+    <div class="gmail-message-header">
+        <div class="gmail-message-header-top">
+            <a href="mensajes.php<?= $esEnviados ? '?opt='.base64_encode(2) : ''; ?>" class="gmail-back-btn">
+                <i class="fa fa-arrow-left"></i>
+                <span>Volver</span>
+            </a>
+            
+            <div class="gmail-message-actions-top">
+                <button class="gmail-action-btn-top" onclick="imprimirMensaje()" title="Imprimir">
+                    <i class="fa fa-print"></i>
+                </button>
+                <button class="gmail-action-btn-top danger" onclick="eliminarEsteMensaje()" title="Eliminar">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        
+        <h1 class="gmail-subject-line"><?= htmlspecialchars($datosConsulta['ema_asunto']); ?></h1>
+        
+        <div class="gmail-sender-info">
+            <img src="../files/fotos/<?= $datosConsulta['uss_foto']; ?>" class="gmail-sender-avatar" alt="<?= htmlspecialchars($datosConsulta['uss_nombre']); ?>">
+            
+            <div class="gmail-sender-details">
+                <h3 class="gmail-sender-name"><?= htmlspecialchars($datosConsulta['uss_nombre']); ?></h3>
+                <p class="gmail-sender-email">De: <?= htmlspecialchars($datosConsulta['uss_email']); ?></p>
+                
+                <div class="gmail-message-meta">
+                    <div class="gmail-message-date">
+                        <i class="fa fa-clock"></i>
+                        <span><?= date('d \d\e F \d\e Y, H:i', strtotime($datosConsulta['ema_fecha'])); ?></span>
                     </div>
+                    <?php if($datosConsulta['ema_visto'] == 1 && !empty($datosConsulta['ema_fecha_visto'])): ?>
+                        <div class="gmail-message-date">
+                            <i class="fa fa-check-double" style="color: #1a73e8;"></i>
+                            <span>Visto el <?= date('d/m/Y H:i', strtotime($datosConsulta['ema_fecha_visto'])); ?></span>
+                        </div>
+                    <?php endif; ?>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenido del mensaje -->
+    <div class="gmail-message-content">
+        <?= $datosConsulta['ema_contenido']; ?>
+    </div>
+    
+    <!-- Footer con botones de acción -->
+    <div class="gmail-message-footer">
+        <a href="mensajes-redactar.php?para=<?= base64_encode($datosConsulta['ema_de']); ?>&asunto=<?= base64_encode('RE: '.$datosConsulta['ema_asunto']); ?>" class="gmail-reply-btn">
+            <i class="fa fa-reply"></i>
+            <span>Responder</span>
+        </a>
+        
+        <button class="gmail-secondary-btn" onclick="reenviarMensaje()">
+            <i class="fa fa-share"></i>
+            <span>Reenviar</span>
+        </button>
+        
+        <button class="gmail-secondary-btn" onclick="imprimirMensaje()">
+            <i class="fa fa-print"></i>
+            <span>Imprimir</span>
+        </button>
+        
+        <button class="gmail-secondary-btn danger" onclick="eliminarEsteMensaje()" style="margin-left: auto;">
+            <i class="fa fa-trash"></i>
+            <span>Eliminar</span>
+        </button>
+    </div>
+</div>
+
+<script>
+function eliminarEsteMensaje() {
+    if (confirm('¿Estás seguro de que deseas eliminar este mensaje?')) {
+        window.location.href = '../compartido/mensajes-eliminar.php?idR=<?= base64_encode($idR); ?>&elm=<?= base64_encode($eliminarTipo); ?>';
+    }
+}
+
+function imprimirMensaje() {
+    window.print();
+}
+
+function reenviarMensaje() {
+    // TODO: Implementar reenvío
+    alert('Función de reenvío en desarrollo');
+}
+</script>

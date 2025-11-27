@@ -18,23 +18,34 @@ if(!empty($_POST["respuestas"])){
         $idRespuestas[] = $arrayRespuesta['gpr_id_respuesta'];
     }
     
+    // Migrado a PDO - Consultas preparadas
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    
     $resultadoAgregar= array_diff($_POST["respuestas"],$idRespuestas);
     if($resultadoAgregar){
+        $sqlInsert = "INSERT INTO ".BD_ADMIN.".general_preguntas_respuestas(gpr_id_pregunta, gpr_id_respuesta) VALUES (?, ?)";
+        $stmtInsert = $conexionPDO->prepare($sqlInsert);
         foreach ($resultadoAgregar as $idRespuestaAgregar) {
             try{
-                mysqli_query($conexion,"INSERT INTO  ".BD_ADMIN.".general_preguntas_respuestas(gpr_id_pregunta, gpr_id_respuesta) VALUE('".$_POST["idP"]."', '".$idRespuestaAgregar."')");
+                $stmtInsert->bindParam(1, $_POST["idP"], PDO::PARAM_STR);
+                $stmtInsert->bindParam(2, $idRespuestaAgregar, PDO::PARAM_STR);
+                $stmtInsert->execute();
             } catch (Exception $e) {
                 include("../compartido/error-catch-to-report.php");
             }
         }
     }
 
-    
     $resultadoEliminar= array_diff($idRespuestas,$_POST["respuestas"]);
     if($resultadoEliminar){
+        $sqlDelete = "DELETE FROM ".BD_ADMIN.".general_preguntas_respuestas WHERE gpr_id_pregunta=? AND gpr_id_respuesta=?";
+        $stmtDelete = $conexionPDO->prepare($sqlDelete);
         foreach ($resultadoEliminar as $idRespuestaEliminar) {
             try{
-                mysqli_query($conexion,"DELETE FROM ".BD_ADMIN.".general_preguntas_respuestas WHERE gpr_id_pregunta='".$_POST["idP"]."' AND gpr_id_respuesta='".$idRespuestaEliminar."'");
+                $stmtDelete->bindParam(1, $_POST["idP"], PDO::PARAM_STR);
+                $stmtDelete->bindParam(2, $idRespuestaEliminar, PDO::PARAM_STR);
+                $stmtDelete->execute();
             } catch (Exception $e) {
                 include("../compartido/error-catch-to-report.php");
             }
@@ -42,7 +53,12 @@ if(!empty($_POST["respuestas"])){
     }
 }else{
     try{
-        mysqli_query($conexion,"DELETE FROM ".BD_ADMIN.".general_preguntas_respuestas WHERE gpr_id_pregunta='".$_POST["idP"]."'");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sqlDeleteAll = "DELETE FROM ".BD_ADMIN.".general_preguntas_respuestas WHERE gpr_id_pregunta=?";
+        $stmtDeleteAll = $conexionPDO->prepare($sqlDeleteAll);
+        $stmtDeleteAll->bindParam(1, $_POST["idP"], PDO::PARAM_STR);
+        $stmtDeleteAll->execute();
     } catch (Exception $e) {
         include("../compartido/error-catch-to-report.php");
     }

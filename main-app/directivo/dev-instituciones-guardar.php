@@ -47,8 +47,14 @@ if (!empty($_POST["modulos"])) {
 	$numModulos = count($_POST["modulos"]);
 }
 
+// Migrado a PDO - Consulta preparada
 try{
-	mysqli_query($conexion,"DELETE FROM ".$baseDatosServicios.".instituciones_modulos WHERE ipmod_institucion='".$_POST['id']."'");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$sql = "DELETE FROM ".$baseDatosServicios.".instituciones_modulos WHERE ipmod_institucion=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $_POST['id'], PDO::PARAM_STR);
+	$stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }
@@ -56,7 +62,7 @@ try{
 if($numModulos>0){
 	$contModulos = 0;
 	while ($contModulos < $numModulos) {
-		if($_POST["modulos"][$contModulos] == Modulos::MODULO_ADMISIONES) {
+		if($_POST["modulos"][$contModulos] == Modulos::MODULO_INSCRIPCIONES) {
 
 			try{
 				$colorBG = $Plataforma->colorUno;
@@ -94,8 +100,15 @@ if($numModulos>0){
 			
 		}
 
+		// Migrado a PDO - Consulta preparada para módulos
 		try{
-			mysqli_query($conexion,"INSERT INTO ".$baseDatosServicios.".instituciones_modulos (ipmod_institucion,ipmod_modulo) VALUES ('".$_POST['id']."', '".$_POST["modulos"][$contModulos]."')");
+			require_once(ROOT_PATH."/main-app/class/Conexion.php");
+			$conexionPDO = Conexion::newConnection('PDO');
+			$sqlMod = "INSERT INTO ".$baseDatosServicios.".instituciones_modulos (ipmod_institucion, ipmod_modulo) VALUES (?, ?)";
+			$stmtMod = $conexionPDO->prepare($sqlMod);
+			$stmtMod->bindParam(1, $_POST['id'], PDO::PARAM_STR);
+			$stmtMod->bindParam(2, $_POST["modulos"][$contModulos], PDO::PARAM_STR);
+			$stmtMod->execute();
 		} catch (Exception $e) {
 			include("../compartido/error-catch-to-report.php");
 		}

@@ -3,16 +3,239 @@ $idR="";
 if(!empty($_GET["idR"])){ $idR=base64_decode($_GET["idR"]);}
 require_once("../class/Estudiantes.php");
 require_once("../class/UsuariosPadre.php");
-$datosEditar = Estudiantes::obtenerDatosEstudiantePorIdUsuario($idR);
 
+// Optimización: obtener datos del estudiante
+$datosEditar = Estudiantes::obtenerDatosEstudiantePorIdUsuario($idR);
 $usuarioEstudiante = UsuariosPadre::sesionUsuario($idR);
 
-$agnoNacimiento = Estudiantes::traerYearNacimiento($config, $idR);
-
-$edad = date("Y") - $agnoNacimiento[0];
+// Optimización: calcular edad de forma más eficiente
+$edad = 'N/A';
+if (!empty($datosEditar['mat_fecha_nacimiento'])) {
+    $fechaNac = new DateTime($datosEditar['mat_fecha_nacimiento']);
+    $hoy = new DateTime();
+    $edad = $hoy->diff($fechaNac)->y;
+}
 
 $estadoAgno = array("EN CURSO", "SI", "NO");
+
+// Optimización: obtener todos los aspectos disciplinarios de una vez (fuera del bucle)
+$aspectosDisciplinarios = [];
+$consultaDisciplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota 
+    WHERE dn_cod_estudiante='".$datosEditar['mat_id']."' 
+    AND dn_periodo IN (1,2,3,4) 
+    AND institucion={$config['conf_id_institucion']} 
+    AND year={$_SESSION["bd"]}");
+
+while($aspecto = mysqli_fetch_array($consultaDisciplina, MYSQLI_BOTH)) {
+    $aspectosDisciplinarios[$aspecto['dn_periodo']] = $aspecto;
+}
+
+// Optimización: obtener todos los aspectos académicos por periodo
+$aspectosAcademicos = [];
+for ($p = 1; $p <= 4; $p++) {
+    $consultaAspectos = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".matriculas_aspectos mata
+        INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mata_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
+        WHERE mata_estudiante='".$datosEditar['mat_id']."' 
+        AND mata_periodo='".$p."' 
+        AND mata.institucion={$config['conf_id_institucion']} 
+        AND mata.year={$_SESSION["bd"]}
+        ORDER BY mata_id DESC");
+    
+    $aspectosAcademicos[$p] = [];
+    while($aspecto = mysqli_fetch_array($consultaAspectos, MYSQLI_BOTH)) {
+        $aspectosAcademicos[$p][] = $aspecto;
+    }
+}
 ?>
+
+<style>
+    /* Estilos mejorados para aspectos estudiantiles */
+    .estudiante-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+    }
+
+    .estudiante-info-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .foto-estudiante {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .foto-estudiante img {
+        border-radius: 50%;
+        border: 4px solid white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        max-width: 150px;
+        height: auto;
+    }
+
+    .tabla-info-estudiante {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+    }
+
+    .tabla-info-estudiante td {
+        padding: 10px 12px;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .tabla-info-estudiante .td-label {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        width: 15%;
+    }
+
+    .tabla-info-estudiante .td-valor {
+        background-color: white;
+        color: #212529;
+    }
+
+    .periodo-card {
+        margin-bottom: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .periodo-header {
+        background: #2c3e50;
+        color: white;
+        padding: 12px 20px;
+        font-weight: bold;
+        font-size: 13pt;
+        text-align: center;
+        border-left: 4px solid #3498db;
+    }
+
+    .periodo-body {
+        padding: 20px;
+        background: white;
+    }
+
+    .aspectos-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    .aspectos-table th,
+    .aspectos-table td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #dee2e6;
+    }
+
+    .aspectos-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        font-size: 9pt;
+        text-transform: uppercase;
+    }
+
+    .aspectos-table td {
+        font-size: 9pt;
+        vertical-align: top;
+    }
+
+    .aspectos-table tr:hover {
+        background-color: #f1f3f5;
+    }
+
+    .btn-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-section-title {
+        font-size: 14pt;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .disciplina-row {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+    }
+
+    .disciplina-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .disciplina-column {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    .disciplina-column h5 {
+        font-size: 10pt;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+
+    .estado-agno {
+        background: #e8f4f8;
+        padding: 10px 15px;
+        border-radius: 6px;
+        border-left: 4px solid #3498db;
+        margin-top: 15px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .disciplina-columns {
+            grid-template-columns: 1fr;
+        }
+
+        .btn-actions {
+            flex-direction: column;
+        }
+
+        .tabla-info-estudiante .td-label {
+            width: 30%;
+        }
+    }
+</style>
 
 <div class="page-content-wrapper">
                 <div class="page-content">
@@ -24,365 +247,275 @@ $estadoAgno = array("EN CURSO", "SI", "NO");
                             </div>
                         </div>
                     </div>
+        
                     <?php include("../../config-general/mensajes-informativos.php"); ?>
+        
                     <div class="row">
                         <div class="col-sm-12">
-
+                <!-- Botones de acción -->
+                <div class="btn-actions">
                             <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO or $datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE){?>
-                                <a href="reportes-lista.php?est=<?=$_GET["idR"];?>&fest=<?=base64_encode(1);?>" class="btn btn-danger" target="_blank"><?=strtoupper($frases[248][$datosUsuarioActual['uss_idioma']]);?></a>
+                        <a href="reportes-lista.php?est=<?=$_GET["idR"];?>&fest=<?=base64_encode(1);?>" class="btn btn-danger" target="_blank">
+                            <i class="fa fa-file-pdf"></i> <?=strtoupper($frases[248][$datosUsuarioActual['uss_idioma']]);?>
+                        </a>
                             <?php }?>
-                            
 
                             <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO){?>
-
-                                <a href="estudiantes-editar.php?idR=<?=$_GET["idR"];?>" class="btn btn-info" target="_blank"><?=strtoupper($frases[291][$datosUsuarioActual['uss_idioma']]);?></a>
-
+                        <a href="estudiantes-editar.php?id=<?=base64_encode($datosEditar['mat_id']);?>" class="btn btn-info">
+                            <i class="fa fa-edit"></i> <?=strtoupper($frases[291][$datosUsuarioActual['uss_idioma']]);?>
+                        </a>
                             <?php }?>
+                </div>
 
-                                <div style="text-align: right;">
-                                    <img src="../files/fotos/<?=$usuarioEstudiante['uss_foto'];?>" width="150" />
+                <!-- Foto del estudiante -->
+                <div class="foto-estudiante">
+                    <?php 
+                    $fotoPath = ROOT_PATH . '/main-app/files/fotos/' . $usuarioEstudiante['uss_foto'];
+                    if (!empty($usuarioEstudiante['uss_foto']) && file_exists($fotoPath)) {
+                    ?>
+                        <img src="../files/fotos/<?=$usuarioEstudiante['uss_foto'];?>" alt="Foto estudiante" />
+                    <?php } else { ?>
+                        <img src="../../config-general/assets/images/default-user.png" alt="Foto por defecto" />
+                    <?php } ?>
                                 </div>
 
-
-                            <div class="card card-box">
-                                
-                                <div class="card-body " id="bar-parent6">
-
-                                    <table border="1" rules="group" width="100%">
-                                        <tr>
-                                            <td style="background-color: lightgray;"><?=$frases[61][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td colspan="3"><?=$datosEditar['mat_primer_apellido']." ".$datosEditar['mat_segundo_apellido']." ".$datosEditar['mat_nombres'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[164][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['gra_nombre'];?></td>
-                                            <td style="background-color: lightgray;">D.I:</td>
-                                            <td><?=$datosEditar['mat_documento'];?></td>
+                <!-- Información del estudiante -->
+                <div class="card estudiante-info-card">
+                    <div class="estudiante-header">
+                        <h4 style="margin:0; font-weight:600;">
+                            <i class="fa fa-user"></i> Información del Estudiante
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="tabla-info-estudiante">
+                            <tr>
+                                <td class="td-label"><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor" colspan="3">
+                                    <?=strtoupper($datosEditar['mat_primer_apellido']." ".$datosEditar['mat_segundo_apellido']." ".$datosEditar['mat_nombres']);?>
+                                </td>
+                                <td class="td-label"><?=$frases[164][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['gra_nombre'];?></td>
                                         </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;"><?=$frases[189][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['mat_fecha_nacimiento'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[293][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$edad;?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[294][$datosUsuarioActual['uss_idioma']];?> RH:</td>
-                                            <td>&nbsp;</td>
-                                            <td style="background-color: lightgray;">EPS:</td>
-                                            <td>&nbsp;</td>
+                            <tr>
+                                <td class="td-label">D.I</td>
+                                <td class="td-valor"><?=$datosEditar['mat_documento'];?></td>
+                                <td class="td-label"><?=$frases[189][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['mat_fecha_nacimiento'];?></td>
+                                <td class="td-label"><?=$frases[293][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$edad;?> años</td>
                                         </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;">Email acudiente:</td>
-                                            <td colspan="3"><?=$datosEditar['uss_email'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[295][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
-                                            <td style="background-color: lightgray;"><?=$frases[296][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
+                            <tr>
+                                <td class="td-label"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor" colspan="3"><?=$datosEditar['mat_direccion'];?></td>
+                                <td class="td-label"><?=$frases[298][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['mat_barrio'];?></td>
                                         </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td colspan="3"><?=$datosEditar['mat_direccion'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[298][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['mat_barrio'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['mat_telefono'];?></td>
+                            <tr>
+                                <td class="td-label"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['mat_telefono'];?></td>
+                                <td class="td-label">Email Acudiente</td>
+                                <td class="td-valor" colspan="3"><?=$datosEditar['uss_email'];?></td>
                                         </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;"><?=$frases[301][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td colspan="3"></td>
-                                            <td style="background-color: lightgray;"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
-                                            <td style="background-color: lightgray;"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
+                            <tr>
+                                <td class="td-label">Acudiente</td>
+                                <td class="td-valor"><?=$datosEditar['uss_nombre'];?></td>
+                                <td class="td-label"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['uss_telefono'];?></td>
+                                <td class="td-label"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?></td>
+                                <td class="td-valor"><?=$datosEditar['uss_direccion'];?></td>
                                         </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;"><?=$frases[300][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td colspan="3"></td>
-                                            <td style="background-color: lightgray;"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
-                                            <td style="background-color: lightgray;"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
-                                        </tr>
-
-                                        <tr>
-                                            <td style="background-color: lightgray;">Acudiente:</td>
-                                            <td><?=$datosEditar['uss_nombre'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[182][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['uss_telefono'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[297][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td><?=$datosEditar['uss_direccion'];?></td>
-                                            <td style="background-color: lightgray;"><?=$frases[299][$datosUsuarioActual['uss_idioma']];?>:</td>
-                                            <td>&nbsp;</td>
-                                        </tr>
-
                                     </table>
-                                    
                                 </div>
                             </div>
 
-
+                <!-- Formulario para agregar aspectos (Directivos/Docentes) -->
                            <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO or $datosUsuarioActual['uss_tipo'] == TIPO_DOCENTE){?>
-                            <div class="card card-box">
-                                <div class="card-head">
-                                    <header><?=$frases[292][$datosUsuarioActual['uss_idioma']];?></header>
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fa fa-clipboard"></i> <?=$frases[292][$datosUsuarioActual['uss_idioma']];?>
                                 </div>
-                                <div class="card-body " id="bar-parent6">
-                                    <form class="form-horizontal" action="../compartido/aspectos-estudiantiles-guardar.php" method="post" enctype="multipart/form-data">
+                    <form class="form-horizontal" action="../compartido/aspectos-estudiantiles-guardar.php" method="post">
                                         <input type="hidden" name="estudiante" value="<?=$datosEditar['mat_id'];?>">
                                         <input type="hidden" name="idR" value="<?=$_GET["idR"];?>">
 
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[51][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-4">  
-                                                <input type="date" name="fecha" class="form-control">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><?=$frases[51][$datosUsuarioActual['uss_idioma']];?></label>
+                                    <input type="date" name="fecha" class="form-control" required>
                                             </div>
                                         </div>
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[27][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-2">  
-                                                <input type="number" name="periodo" class="form-control">
-                                            </div>
-                                        </div>
-
-                                        
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[302][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="descripcion" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[303][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="positivos" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[304][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="mejorar" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[305][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="tratamiento" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <a href="#" name="noticias.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i><?=$frases[184][$datosUsuarioActual['uss_idioma']];?></a>
-
-                                        <button type="submit" class="btn  btn-info">
-                                            <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
-                                        </button>
-                                    </form>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><?=$frases[27][$datosUsuarioActual['uss_idioma']];?></label>
+                                    <input type="number" name="periodo" class="form-control" min="1" max="4" required>
                                 </div>
+                                            </div>
+                                        </div>
+
+                        <div class="form-group">
+                            <label><?=$frases[302][$datosUsuarioActual['uss_idioma']];?></label>
+                            <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                                        </div>
+
+                        <div class="form-group">
+                            <label><?=$frases[303][$datosUsuarioActual['uss_idioma']];?></label>
+                            <textarea name="positivos" class="form-control" rows="3"></textarea>
+                                        </div>
+
+                        <div class="form-group">
+                            <label><?=$frases[304][$datosUsuarioActual['uss_idioma']];?></label>
+                            <textarea name="mejorar" class="form-control" rows="3"></textarea>
+                                        </div>
+
+                        <div class="form-group">
+                            <label><?=$frases[305][$datosUsuarioActual['uss_idioma']];?></label>
+                            <textarea name="tratamiento" class="form-control" rows="3"></textarea>
+                                        </div>
+
+                        <div class="form-group" style="margin-top: 20px;">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fa fa-save"></i> Guardar cambios
+                                        </button>
+                        </div>
+                                    </form>
                             </div>
 
-
-
-                            <div class="card card-box">
-                                <div class="card-head">
-                                    <header><?=$frases[292][$datosUsuarioActual['uss_idioma']];?> (<?=$frases[28][$datosUsuarioActual['uss_idioma']];?>)</header>
+                <!-- Formulario aspectos docentes -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="fa fa-book"></i> <?=$frases[292][$datosUsuarioActual['uss_idioma']];?> (<?=$frases[28][$datosUsuarioActual['uss_idioma']];?>)
                                 </div>
-                                <div class="card-body " id="bar-parent6">
-                                    <form class="form-horizontal" action="../compartido/aspectos-estudiantiles-guardar-docentes.php" method="post" enctype="multipart/form-data">
+                    <form class="form-horizontal" action="../compartido/aspectos-estudiantiles-guardar-docentes.php" method="post">
                                         <input type="hidden" name="idR" value="<?=$_GET["idR"];?>">
                                         <input type="hidden" name="estudiante" value="<?=$datosEditar['mat_id'];?>">
                                         <input type="hidden" name="curso" value="<?=$datosEditar['mat_grado'];?>">
 
-
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[27][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-2">  
-                                                <input type="number" name="periodo" class="form-control">
-                                            </div>
+                        <div class="form-group">
+                            <label><?=$frases[27][$datosUsuarioActual['uss_idioma']];?></label>
+                            <input type="number" name="periodo" class="form-control" min="1" max="4" required style="max-width: 200px;">
                                         </div>
 
-
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=strtoupper($frases[281][$datosUsuarioActual['uss_idioma']]);?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="academicos" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
+                        <div class="form-group">
+                            <label><?=strtoupper($frases[281][$datosUsuarioActual['uss_idioma']]);?></label>
+                            <textarea name="academicos" class="form-control" rows="3"></textarea>
                                         </div>
 
-                                        <div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=strtoupper($frases[282][$datosUsuarioActual['uss_idioma']]);?></label>
-                                            <div class="col-sm-10">  
-                                                <textarea name="convivenciales" class="form-control" rows="5" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;"></textarea>
-                                            </div>
+                        <div class="form-group">
+                            <label><?=strtoupper($frases[282][$datosUsuarioActual['uss_idioma']]);?></label>
+                            <textarea name="convivenciales" class="form-control" rows="3"></textarea>
                                         </div>
 
-                                        <a href="#" name="noticias.php" class="btn btn-secondary" onClick="deseaRegresar(this)"><i class="fa fa-long-arrow-left"></i><?=$frases[184][$datosUsuarioActual['uss_idioma']];?></a>
-
-                                        <button type="submit" class="btn  btn-info">
-                                            <i class="fa fa-save" aria-hidden="true"></i> Guardar cambios 
+                        <div class="form-group" style="margin-top: 20px;">
+                            <button type="submit" class="btn btn-info">
+                                <i class="fa fa-save"></i> Guardar cambios
                                         </button>
-
+                        </div>
                                     </form>
                                 </div>
-                            </div>
-
                         <?php }?>
 
                         </div>
                         
-
+            <!-- Periodos y aspectos -->
                         <div class="col-sm-12">
-
-
-                            
-
-
-                            
-
                                         <?php
-                                        $p=1;
-                                        while($p<=4){
-
-                                            $aspectos = mysqli_fetch_array(mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota 
-                                            WHERE dn_cod_estudiante='".$datosEditar['mat_id']."' AND dn_periodo='".$p."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}"), MYSQLI_BOTH);
-
-                                        ?>
-
-                                            <div class="card card-box">
-                                
-                                <div class="card-body " id="bar-parent6">
-
-
-                                    <table width="100%">
-                                            <tr style="font-weight: bold; font-size:large;">
-                                                <td colspan="2" align="center"><?=strtoupper($frases[27][$datosUsuarioActual['uss_idioma']]);?> <?=$p;?></td>
-                                            </tr>
-
-                                            <tr style="font-weight: bold;">
-                                                <td align="center" width="40%"><?=strtoupper($frases[281][$datosUsuarioActual['uss_idioma']]);?></td>
-                                                <td align="center" width="40%"><?=strtoupper($frases[282][$datosUsuarioActual['uss_idioma']]);?></td>
-                                                <td align="right" width="20%">&nbsp;</td>
-                                            </tr>
-
-                                            <tr style="height: 60px;">
-                                                <td><?php if(!empty($aspectos['dn_aspecto_academico'])){ echo $aspectos['dn_aspecto_academico'];}?></td>
-                                                <td><?php if(!empty($aspectos['dn_aspecto_convivencial'])){ echo $aspectos['dn_aspecto_convivencial'];}?></td>
-                                                <td>
-                                                    <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !empty($aspectos)){
-                                                        $href='../compartido/aspectos-estudiantiles-eliminar-docentes.php?idA='.$aspectos['dn_id'].'&idR='.$_GET["idR"];?>
-                                                        <a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','<?= $href ?>')" class="btn btn-danger">X</a>
-                                                    <?php }?>
-
-                                                </td>
-                                            </tr>
-
-                                            <?php if($p == 4){?>
-
-                                                <tfoot>
-                                                    <tr style="font-weight: bold;">
-                                                        <td align="right"><?=strtoupper($frases[308][$datosUsuarioActual['uss_idioma']]);?>: </td>
-                                                        <td><?php if(!empty($datosEditar['mat_estado_agno'])) echo $estadoAgno[$datosEditar['mat_estado_agno']];?></td>
-                                                    </tr>  
-                                                </tfoot>
-
-                                            <?php }?>
-
-
-                                            </table>
-
-                                    
+                for ($p = 1; $p <= 4; $p++) {
+                    $aspectos = isset($aspectosDisciplinarios[$p]) ? $aspectosDisciplinarios[$p] : null;
+                ?>
+                    <!-- Aspectos Disciplinarios por Periodo -->
+                    <div class="periodo-card">
+                        <div class="periodo-header">
+                            <?=strtoupper($frases[27][$datosUsuarioActual['uss_idioma']]);?> <?=$p;?>
+                        </div>
+                        <div class="periodo-body">
+                            <div class="disciplina-row">
+                                <div class="disciplina-columns">
+                                    <div class="disciplina-column">
+                                        <h5><?=strtoupper($frases[281][$datosUsuarioActual['uss_idioma']]);?></h5>
+                                        <p><?php if(!empty($aspectos['dn_aspecto_academico'])){ echo nl2br(htmlspecialchars($aspectos['dn_aspecto_academico'])); } else { echo '<em style="color:#999;">Sin registro</em>'; }?></p>
+                                    </div>
+                                    <div class="disciplina-column">
+                                        <h5><?=strtoupper($frases[282][$datosUsuarioActual['uss_idioma']]);?></h5>
+                                        <p><?php if(!empty($aspectos['dn_aspecto_convivencial'])){ echo nl2br(htmlspecialchars($aspectos['dn_aspecto_convivencial'])); } else { echo '<em style="color:#999;">Sin registro</em>'; }?></p>
+                                    </div>
                                 </div>
+                                <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && !empty($aspectos)){?>
+                                <div style="text-align: right; margin-top: 10px;">
+                                    <?php $href='../compartido/aspectos-estudiantiles-eliminar-docentes.php?idA='.$aspectos['dn_id'].'&idR='.$_GET["idR"];?>
+                                    <button type="button" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','<?= $href ?>')" class="btn btn-sm btn-danger">
+                                        <i class="fa fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                                <?php }?>
                             </div>
 
-
-
-                            <div class="card card-box">
-                                    <div class="card-head">
-                                        <header><?=strtoupper($frases[306][$datosUsuarioActual['uss_idioma']]);?></header>
+                            <?php if($p == 4 && !empty($datosEditar['mat_estado_agno'])){?>
+                            <div class="estado-agno">
+                                <?=strtoupper($frases[308][$datosUsuarioActual['uss_idioma']]);?>: 
+                                <strong><?php echo $estadoAgno[$datosEditar['mat_estado_agno']] ?? 'N/A';?></strong>
                                     </div>
-
-                                    <div class="card-body">
-
-                            <table width="100%">
-
-                                <tr style="font-weight: bold;">
-                                    <td><?=strtoupper($frases[51][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <td><?=strtoupper($frases[307][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <td><?=strtoupper($frases[302][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <td><?=strtoupper($frases[303][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <td><?=strtoupper($frases[304][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <td><?=strtoupper($frases[305][$datosUsuarioActual['uss_idioma']]);?></td>
-                                    <th title="Firma y aprobación del acudiente">F.A</th>
-                                    <td>&nbsp;</td>
-                                </tr>
-                                
-                            
-                            
-                                
-                            <?php
-                            $aspectosCosnulta = mysqli_query($conexion, "SELECT * FROM ".BD_ACADEMICA.".matriculas_aspectos mata
-                                INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=mata_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-                                WHERE mata_estudiante='".$datosEditar['mat_id']."' AND mata_periodo='".$p."' AND mata.institucion={$config['conf_id_institucion']} AND mata.year={$_SESSION["bd"]}
-                                ORDER BY mata_id DESC");
-                            while($aspectos = mysqli_fetch_array($aspectosCosnulta, MYSQLI_BOTH)){
-                            ?>
-                                
-
-
-                                <tr style="height: 40px;">
-                                    <td><?=$aspectos['mata_fecha_evento'];?></td>
-                                    <td><?=$aspectos['uss_nombre'];?></td>
-                                    <td><?=$aspectos['mata_descripcion'];?></td>
-                                    <td><?=$aspectos['mata_aspectos_positivos'];?></td>
-                                    <td><?=$aspectos['mata_aspectos_mejorar'];?></td>
-                                    <td><?=$aspectos['mata_tratamiento'];?></td>
-
-                                    <td>
-                                                            <?php if($aspectos['mata_aprobacion_acudiente']==0 and $datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE){?> 
-                                                                <a href="#reportes-disciplinarios.php?usrEstud=<?=$_GET["usrEstud"];?>&req=1&id=<?=$aspectos['dr_id'];?>">Firmar</a>
-                                                            <?php } else{?>
-                                                                <i class="fa fa-check-circle" title="<?=$aspectos['mata_aprobacion_acudiente_fecha'];?>"></i>
-                                                            <?php }?>
-                                    </td>
-
-                                    <td>
-                                        <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO){
-                                            $href='../compartido/aspectos-estudiantiles-eliminar.php?idA='.$aspectos['mata_id'].'&idR='.$_GET["idR"];
-                                            ?>
-                                            <a href="#" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','<?= $href ?>')" class="btn btn-danger">X</a>
-                                        <?php }?>
-
-                                    </td>
-                                </tr>
-                                
-
                             <?php }?>
 
+                            <!-- Tabla de aspectos académicos del periodo -->
+                            <?php if(!empty($aspectosAcademicos[$p])){?>
+                            <h5 style="margin-top: 20px; margin-bottom: 15px; font-weight: 600; color: #2c3e50;">
+                                <?=strtoupper($frases[306][$datosUsuarioActual['uss_idioma']]);?>
+                            </h5>
+                            <div style="overflow-x: auto;">
+                                <table class="aspectos-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 10%;"><?=strtoupper($frases[51][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 15%;"><?=strtoupper($frases[307][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 18%;"><?=strtoupper($frases[302][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 18%;"><?=strtoupper($frases[303][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 18%;"><?=strtoupper($frases[304][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 18%;"><?=strtoupper($frases[305][$datosUsuarioActual['uss_idioma']]);?></th>
+                                            <th style="width: 5%;" title="Firma y aprobación del acudiente">F.A</th>
+                                            <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO){?>
+                                            <th style="width: 5%;">&nbsp;</th>
+                                            <?php }?>
+                                </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach($aspectosAcademicos[$p] as $aspecto) {?>
+                                        <tr>
+                                            <td><?=$aspecto['mata_fecha_evento'];?></td>
+                                            <td><?=$aspecto['uss_nombre'];?></td>
+                                            <td><?=nl2br(htmlspecialchars($aspecto['mata_descripcion']));?></td>
+                                            <td><?=nl2br(htmlspecialchars($aspecto['mata_aspectos_positivos']));?></td>
+                                            <td><?=nl2br(htmlspecialchars($aspecto['mata_aspectos_mejorar']));?></td>
+                                            <td><?=nl2br(htmlspecialchars($aspecto['mata_tratamiento']));?></td>
+                                            <td style="text-align: center;">
+                                                <?php if($aspecto['mata_aprobacion_acudiente']==0 and $datosUsuarioActual['uss_tipo'] == TIPO_ACUDIENTE){?> 
+                                                    <a href="#reportes-disciplinarios.php?usrEstud=<?=$_GET["usrEstud"];?>&req=1&id=<?=$aspecto['dr_id'];?>" class="btn btn-sm btn-primary">Firmar</a>
+                                                            <?php } else{?>
+                                                    <i class="fa fa-check-circle" style="color: #27ae60; font-size: 18px;" title="<?=$aspecto['mata_aprobacion_acudiente_fecha'];?>"></i>
+                                                            <?php }?>
+                                    </td>
+                                            <?php if($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO){?>
+                                            <td style="text-align: center;">
+                                                <?php $href='../compartido/aspectos-estudiantiles-eliminar.php?idA='.$aspecto['mata_id'].'&idR='.$_GET["idR"];?>
+                                                <button type="button" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','<?= $href ?>')" class="btn btn-sm btn-danger">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </td>
+                                            <?php }?>
+                                        </tr>
+                                        <?php }?>
+                                    </tbody>
                             </table>
-
                             </div>
-
-                                    <div class="card-footer">&nbsp;</div>
-                                </div>
-
-                                        <?php
-                                            $p++;
-                                        }
-                                        ?>
-                                        
-                                    
-
-
-                            
-                            
+                            <?php } else {?>
+                            <p style="text-align: center; color: #999; padding: 20px; font-style: italic;">
+                                No hay registros de aspectos académicos para este periodo
+                            </p>
+                            <?php }?>
                         </div>
-                        
                     </div>
-                    <?php 
-                            $botones = new botonesGuardar("estudiantes.php", false); ?>
+                <?php }?>
+            </div>
+        </div>
                 </div>
             </div>

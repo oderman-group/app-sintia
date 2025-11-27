@@ -89,21 +89,23 @@ require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");?>
 
 											
 											<div class="form-group row">
-												<label class="col-md-2 control-label">Desde</label>
-												<div class="input-group date form_datetime col-md-4" data-date="<?=date("Y-m-d");?>T05:25:07Z" data-date-format="dd MM yyyy - HH:ii p" data-link-field="dtp_input1">
-													<input class="form-control" size="16" type="text" value="">
+												<label class="col-md-2 control-label">Desde <span style="color: #e74c3c;">*</span><br><small style="color: #7f8c8d;">Fecha de inicio</small></label>
+												<div class="input-group date form_datetime_desde col-md-4" data-date="<?=date("Y-m-d");?>T05:25:07Z" data-date-format="dd MM yyyy - HH:ii p" data-link-field="dtp_input1">
+													<input class="form-control" size="16" type="text" value="" readonly>
 													<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
 												</div>
-												<input type="hidden" id="dtp_input1" value="1979-09-16 15:05:07" name="desde" required>
+												<input type="hidden" id="dtp_input1" value="<?=date("Y-m-d");?> 15:00:00" name="desde" required>
+												<div class="col-md-6"><small class="text-info"><i class="fa fa-info-circle"></i> La fecha de inicio no puede ser anterior a hoy</small></div>
 											</div>
 											
 											<div class="form-group row">
-												<label class="col-md-2 control-label">Hasta</label>
-												<div class="input-group date form_datetime col-md-4" data-date="<?=date("Y-m-d");?>T05:25:07Z" data-date-format="dd MM yyyy - HH:ii p" data-link-field="dtp_input2">
-													<input class="form-control" size="16" type="text" value="">
+												<label class="col-md-2 control-label">Hasta <span style="color: #e74c3c;">*</span><br><small style="color: #7f8c8d;">Fecha límite</small></label>
+												<div class="input-group date form_datetime_hasta col-md-4" data-date="<?=date("Y-m-d");?>T05:25:07Z" data-date-format="dd MM yyyy - HH:ii p" data-link-field="dtp_input2">
+													<input class="form-control" size="16" type="text" value="" readonly>
 													<span class="input-group-addon"><span class="fa fa-calendar"></span></span>
 												</div>
-												<input type="hidden" id="dtp_input2" value="1979-09-16 15:05:07" name="hasta" required>
+												<input type="hidden" id="dtp_input2" value="<?=date("Y-m-d");?> 23:59:59" name="hasta" required>
+												<div class="col-md-6"><small class="text-info"><i class="fa fa-info-circle"></i> La fecha límite debe ser posterior a la fecha de inicio</small></div>
 											</div>
 
 											
@@ -179,8 +181,13 @@ require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");?>
     <!--select2-->
     <script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
+    <!-- Validación de fechas -->
+    <script src="../js/validacion-fechas.js?v=<?=time();?>"></script>
+    <script>
+        $(document).ready(function() {
+            inicializarValidacionFechas(true);
+        });
+    </script>
     <!-- end js include path -->
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

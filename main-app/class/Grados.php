@@ -308,6 +308,106 @@ class Grados {
     }
 
     /**
+     * Verifica si existen registros académicos (notas, actividades, cargas o matrículas) en la institución.
+     * Si existen registros, ciertos campos de los cursos no deben ser modificables.
+     *
+     * @param array $config Configuración del sistema que debe contener 'conf_id_institucion'.
+     * @param string $yearBd Año de la base de datos (opcional). Si no se proporciona, se utiliza el valor de sesión.
+     * @param string|null $cursoId ID del curso específico (opcional). Si se proporciona, verifica solo para ese curso.
+     * 
+     * @return bool Retorna true si existen registros académicos, false en caso contrario.
+     */
+    public static function hayRegistrosAcademicos(
+        array $config,
+        string $yearBd = "",
+        ?string $cursoId = null
+    ): bool {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $institucion = (int)$config['conf_id_institucion'];
+        
+        // Verificar en academico_boletin (notas de boletín)
+        $sqlBoletin = "SELECT COUNT(*) as total FROM " . BD_ACADEMICA . ".academico_boletin bol";
+        $parametrosBoletin = [];
+        
+        if ($cursoId !== null) {
+            // Si se especifica un curso, verificar solo para ese curso
+            $sqlBoletin .= " INNER JOIN " . BD_ACADEMICA . ".academico_cargas car ON car.car_id = bol.bol_carga 
+                           AND car.institucion = bol.institucion AND car.year = bol.year
+                           WHERE car.car_curso = ? AND bol.institucion = ? AND bol.year = ?";
+            $parametrosBoletin = [$cursoId, $institucion, $year];
+        } else {
+            // Verificar en general para toda la institución
+            $sqlBoletin .= " WHERE bol.institucion = ? AND bol.year = ?";
+            $parametrosBoletin = [$institucion, $year];
+        }
+        
+        $resultadoBoletin = BindSQL::prepararSQL($sqlBoletin, $parametrosBoletin);
+        $filaBoletin = mysqli_fetch_array($resultadoBoletin, MYSQLI_BOTH);
+        $hayNotasBoletin = !empty($filaBoletin['total']) && (int)$filaBoletin['total'] > 0;
+        
+        // Verificar en academico_actividades (actividades registradas)
+        $sqlActividades = "SELECT COUNT(*) as total FROM " . BD_ACADEMICA . ".academico_actividades act";
+        $parametrosActividades = [];
+        
+        if ($cursoId !== null) {
+            // Si se especifica un curso, verificar solo para ese curso
+            $sqlActividades .= " INNER JOIN " . BD_ACADEMICA . ".academico_cargas car ON car.car_id = act.act_id_carga 
+                               AND car.institucion = act.institucion AND car.year = act.year
+                               WHERE car.car_curso = ? AND act.act_registrada = 1 
+                               AND act.act_estado = 1 AND act.institucion = ? AND act.year = ?";
+            $parametrosActividades = [$cursoId, $institucion, $year];
+        } else {
+            // Verificar en general para toda la institución
+            $sqlActividades .= " WHERE act.act_registrada = 1 
+                               AND act.act_estado = 1 AND act.institucion = ? AND act.year = ?";
+            $parametrosActividades = [$institucion, $year];
+        }
+        
+        $resultadoActividades = BindSQL::prepararSQL($sqlActividades, $parametrosActividades);
+        $filaActividades = mysqli_fetch_array($resultadoActividades, MYSQLI_BOTH);
+        $hayNotasActividades = !empty($filaActividades['total']) && (int)$filaActividades['total'] > 0;
+        
+        // Verificar en academico_cargas (cargas académicas)
+        $sqlCargas = "SELECT COUNT(*) as total FROM " . BD_ACADEMICA . ".academico_cargas car";
+        $parametrosCargas = [];
+        
+        if ($cursoId !== null) {
+            // Si se especifica un curso, verificar solo para ese curso
+            $sqlCargas .= " WHERE car.car_curso = ? AND car.institucion = ? AND car.year = ?";
+            $parametrosCargas = [$cursoId, $institucion, $year];
+        } else {
+            // Verificar en general para toda la institución
+            $sqlCargas .= " WHERE car.institucion = ? AND car.year = ?";
+            $parametrosCargas = [$institucion, $year];
+        }
+        
+        $resultadoCargas = BindSQL::prepararSQL($sqlCargas, $parametrosCargas);
+        $filaCargas = mysqli_fetch_array($resultadoCargas, MYSQLI_BOTH);
+        $hayCargas = !empty($filaCargas['total']) && (int)$filaCargas['total'] > 0;
+        
+        // Verificar en academico_matriculas (estudiantes matriculados)
+        $sqlMatriculas = "SELECT COUNT(*) as total FROM " . BD_ACADEMICA . ".academico_matriculas mat";
+        $parametrosMatriculas = [];
+        
+        if ($cursoId !== null) {
+            // Si se especifica un curso, verificar solo para ese curso
+            $sqlMatriculas .= " WHERE mat.mat_grado = ? AND mat.institucion = ? AND mat.year = ? AND mat.mat_eliminado = 0";
+            $parametrosMatriculas = [$cursoId, $institucion, $year];
+        } else {
+            // Verificar en general para toda la institución
+            $sqlMatriculas .= " WHERE mat.institucion = ? AND mat.year = ? AND mat.mat_eliminado = 0";
+            $parametrosMatriculas = [$institucion, $year];
+        }
+        
+        $resultadoMatriculas = BindSQL::prepararSQL($sqlMatriculas, $parametrosMatriculas);
+        $filaMatriculas = mysqli_fetch_array($resultadoMatriculas, MYSQLI_BOTH);
+        $hayMatriculas = !empty($filaMatriculas['total']) && (int)$filaMatriculas['total'] > 0;
+        
+        // Si hay registros en cualquiera de las cuatro tablas, retornar true
+        return $hayNotasBoletin || $hayNotasActividades || $hayCargas || $hayMatriculas;
+    }
+
+    /**
      * Me elimina la intensidad de una materia en un curso
      *
      * @param mysqli $conexion

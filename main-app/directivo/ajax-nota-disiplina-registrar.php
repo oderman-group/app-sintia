@@ -1,44 +1,81 @@
 <?php
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+// Migrado a PDO - Consultas preparadas
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+
 try{
-	$cdnota=mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='".$_POST["codEst"]."' AND dn_id_carga='".$_POST["carga"]."' AND dn_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+	$sql = "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota 
+	        WHERE dn_cod_estudiante=? AND dn_id_carga=? AND dn_periodo=? AND institucion=? AND year=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $_POST["codEst"], PDO::PARAM_STR);
+	$stmt->bindParam(2, $_POST["carga"], PDO::PARAM_STR);
+	$stmt->bindParam(3, $_POST["periodo"], PDO::PARAM_INT);
+	$stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+	$stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+	$stmt->execute();
+	$numRows = $stmt->rowCount();
+	
+	if($numRows==0){
+		$idInsercion=Utilidades::generateCode("DN");
+		if(isset($_POST["nota"])){
+			$sqlInsert = "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(
+			    dn_id, dn_cod_estudiante, dn_id_carga, dn_nota, dn_fecha, dn_periodo, institucion, year
+			) VALUES (?, ?, ?, ?, now(), ?, ?, ?)";
+			$stmtInsert = $conexionPDO->prepare($sqlInsert);
+			$stmtInsert->bindParam(1, $idInsercion, PDO::PARAM_STR);
+			$stmtInsert->bindParam(2, $_POST["codEst"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(3, $_POST["carga"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(4, $_POST["nota"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(5, $_POST["periodo"], PDO::PARAM_INT);
+			$stmtInsert->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
+			$stmtInsert->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
+			$stmtInsert->execute();
+		}else{
+			$sqlInsert = "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(
+			    dn_id, dn_cod_estudiante, dn_id_carga, dn_observacion, dn_fecha, dn_periodo, institucion, year
+			) VALUES (?, ?, ?, ?, now(), ?, ?, ?)";
+			$stmtInsert = $conexionPDO->prepare($sqlInsert);
+			$stmtInsert->bindParam(1, $idInsercion, PDO::PARAM_STR);
+			$stmtInsert->bindParam(2, $_POST["codEst"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(3, $_POST["carga"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(4, $_POST["observacion"], PDO::PARAM_STR);
+			$stmtInsert->bindParam(5, $_POST["periodo"], PDO::PARAM_INT);
+			$stmtInsert->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
+			$stmtInsert->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
+			$stmtInsert->execute();
+		}
+	}else{
+		if(isset($_POST["nota"])){
+			$sqlUpdate = "UPDATE ".BD_DISCIPLINA.".disiplina_nota 
+			              SET dn_nota=?, dn_fecha=now() 
+			              WHERE dn_cod_estudiante=? AND dn_id_carga=? AND dn_periodo=? AND institucion=? AND year=?";
+			$stmtUpdate = $conexionPDO->prepare($sqlUpdate);
+			$stmtUpdate->bindParam(1, $_POST["nota"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(2, $_POST["codEst"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(3, $_POST["carga"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(4, $_POST["periodo"], PDO::PARAM_INT);
+			$stmtUpdate->bindParam(5, $config['conf_id_institucion'], PDO::PARAM_INT);
+			$stmtUpdate->bindParam(6, $_SESSION["bd"], PDO::PARAM_INT);
+			$stmtUpdate->execute();
+		}else{
+			$sqlUpdate = "UPDATE ".BD_DISCIPLINA.".disiplina_nota 
+			              SET dn_observacion=?, dn_fecha=now() 
+			              WHERE dn_cod_estudiante=? AND dn_id_carga=? AND dn_periodo=? AND institucion=? AND year=?";
+			$stmtUpdate = $conexionPDO->prepare($sqlUpdate);
+			$stmtUpdate->bindParam(1, $_POST["observacion"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(2, $_POST["codEst"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(3, $_POST["carga"], PDO::PARAM_STR);
+			$stmtUpdate->bindParam(4, $_POST["periodo"], PDO::PARAM_INT);
+			$stmtUpdate->bindParam(5, $config['conf_id_institucion'], PDO::PARAM_INT);
+			$stmtUpdate->bindParam(6, $_SESSION["bd"], PDO::PARAM_INT);
+			$stmtUpdate->execute();
+		}
+	}
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }
-
-if(mysqli_num_rows($cdnota)==0){
-	$idInsercion=Utilidades::generateCode("DN");
-	if(isset($_POST["nota"])){
-		try{
-			mysqli_query($conexion, "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(dn_id, dn_cod_estudiante, dn_id_carga, dn_nota, dn_fecha, dn_periodo, institucion, year)VALUES('" .$idInsercion . "', '".$_POST["codEst"]."','".$_POST["carga"]."','".$_POST["nota"]."', now(),'".$_POST["periodo"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
-	}else{
-		try{
-			mysqli_query($conexion, "INSERT INTO ".BD_DISCIPLINA.".disiplina_nota(dn_id, dn_cod_estudiante, dn_id_carga, dn_observacion, dn_fecha, dn_periodo, institucion, year)VALUES('" .$idInsercion . "', '".$_POST["codEst"]."','".$_POST["carga"]."','".$_POST["observacion"]."', now(),'".$_POST["periodo"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");	
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
-	}
-	
-}else{
-	if(isset($_POST["nota"])){
-		try{
-			mysqli_query($conexion, "UPDATE ".BD_DISCIPLINA.".disiplina_nota SET dn_nota='".$_POST["nota"]."', dn_fecha=now() WHERE dn_cod_estudiante='".$_POST["codEst"]."' AND dn_id_carga='".$_POST["carga"]."' AND dn_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
-	}else{
-		try{
-			mysqli_query($conexion, "UPDATE ".BD_DISCIPLINA.".disiplina_nota SET dn_observacion='".$_POST["observacion"]."', dn_fecha=now() WHERE dn_cod_estudiante='".$_POST["codEst"]."' AND dn_id_carga='".$_POST["carga"]."' AND dn_periodo='".$_POST["periodo"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");	
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
-	}
-	
-	}
 
 
 ?>

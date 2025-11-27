@@ -5,12 +5,12 @@ require_once ROOT_PATH."/main-app/class/Modulos.php";
 
 $conexionBaseDatosServicios = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, $baseDatosServicios);
 $institucionesConsulta = mysqli_query($conexionBaseDatosServicios, "SELECT ins.*, cfgi.* FROM instituciones ins
-INNER JOIN instituciones_modulos ON ipmod_institucion=ins_id AND ipmod_modulo=".Modulos::MODULO_ADMISIONES." 
+INNER JOIN instituciones_modulos ON ipmod_institucion=ins_id AND ipmod_modulo=".Modulos::MODULO_INSCRIPCIONES." 
 INNER JOIN ".BD_ADMISIONES.".config_instituciones cfgi ON cfgi_id_institucion=ins_id AND cfgi_inscripciones_activas=1 AND cfgi_year = ".date("Y")." 
 WHERE ins_estado = 1 AND ins_enviroment='".ENVIROMENT."'
 UNION
 SELECT ins.*, cfgi.* FROM instituciones ins
-INNER JOIN instituciones_paquetes_extras ON paqext_institucion=ins_id AND paqext_id_paquete=".Modulos::MODULO_ADMISIONES." AND paqext_tipo='".MODULOS."'
+INNER JOIN instituciones_paquetes_extras ON paqext_institucion=ins_id AND paqext_id_paquete=".Modulos::MODULO_INSCRIPCIONES." AND paqext_tipo='".MODULOS."'
 INNER JOIN ".BD_ADMISIONES.".config_instituciones cfgi ON cfgi_id_institucion=ins_id AND cfgi_inscripciones_activas=1 AND cfgi_year = ".date("Y")." 
 WHERE ins_estado = 1 AND ins_enviroment='".ENVIROMENT."'");
 $institucionesCantidad = mysqli_num_rows($institucionesConsulta);
@@ -18,6 +18,7 @@ $institucionesCantidad = mysqli_num_rows($institucionesConsulta);
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <?php include(ROOT_PATH."/config-general/analytics/instituciones.php");?>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Admisiones | Plataforma sintia</title>

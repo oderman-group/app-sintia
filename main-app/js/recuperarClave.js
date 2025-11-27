@@ -17,22 +17,32 @@ document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
           pasteData.split('').forEach((char, i) => {
               if (inputs[i]) {
                   inputs[i].value = char;
+                  inputs[i].classList.add('filled');
               }
           });
 
-          // Enfocar el siguiente input después de pegar
+          // Enfocar el último input después de pegar
           const lastFilledInput = inputs[Math.min(pasteData.length - 1, inputs.length - 1)];
           if (lastFilledInput) lastFilledInput.focus();
 
           verificarCodigo();
       } else {
-          alert('Por favor, pega un código válido de 6 dígitos.');
+          showMessage('Por favor, pega un código válido de 6 dígitos.', 'error');
       }
   });
 
   input.addEventListener('input', (e) => {
-    if (e.target.value.length === 1 && index < inputs.length - 1) {
-      inputs[index + 1].focus(); // Saltar al siguiente campo automáticamente
+    // Solo permitir números
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    
+    // Agregar clase filled si tiene valor
+    if (e.target.value.length === 1) {
+      e.target.classList.add('filled');
+      if (index < inputs.length - 1) {
+        inputs[index + 1].focus(); // Saltar al siguiente campo automáticamente
+      }
+    } else {
+      e.target.classList.remove('filled');
     }
 
     // Verificar si todos los campos están completos
@@ -45,105 +55,163 @@ document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Backspace' && index > 0 && !e.target.value) {
       inputs[index - 1].focus();
+      inputs[index - 1].classList.remove('filled');
+    }
+  });
+  
+  // Prevenir entrada de caracteres no numéricos
+  input.addEventListener('keypress', (e) => {
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault();
     }
   });
 });
 
 // Función para iniciar la cuenta regresiva
 function startCountdown(durationInSeconds) {
-  const message = document.getElementById('message');
   const contMinElement = document.getElementById('contMin');
   const textMinElement = document.getElementById('textMin');
   const intNuevoElement = document.getElementById('intNuevo');
-  const enviarSMS         = document.getElementById('enviarCodigoSMS');
-  var colorCambio = intNuevoElement.getAttribute('data-color-cambio')
+  const enviarSMS = document.getElementById('enviarCodigoSMS');
+  const timerContainer = document.getElementById('timerContainer');
+  var colorCambio = intNuevoElement ? intNuevoElement.getAttribute('data-color-cambio') : '#41c4c4';
   let remainingTime = durationInSeconds;
 
-  intNuevoElement.style.color = '#000';
-  intNuevoElement.onclick = null;
+  // Deshabilitar botones inicialmente
+  if (intNuevoElement) {
+    intNuevoElement.classList.add('disabled');
+    intNuevoElement.onclick = null;
+  }
+  
+  if (enviarSMS) {
+    enviarSMS.classList.add('disabled');
+    enviarSMS.onclick = null;
+  }
 
   // Actualiza cada segundo
   interval = setInterval(() => {
-    const minutes = Math.floor(remainingTime / 60); // Calcula los minutos
-    const seconds = remainingTime % 60; // Calcula los segundos
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
 
     // Muestra el tiempo en formato MM:SS
-    contMinElement.innerHTML = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-
-    if (minutes === 1) {
-      textMinElement.innerHTML = `minuto`;
-    } else if (minutes === 0) {
-      textMinElement.innerHTML = `segundos`;
+    if (contMinElement) {
+      contMinElement.innerHTML = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
     }
 
-    if (remainingTime === 0) {
-      clearInterval(interval); // Detén la cuenta regresiva al llegar a 0
-
-      if (intento === 3) {
-        notificarDirectivos();
+    if (textMinElement) {
+      if (minutes === 1) {
+        textMinElement.innerHTML = `minuto`;
+      } else if (minutes === 0) {
+        textMinElement.innerHTML = `segundos`;
       } else {
-        // Cambiar el color del texto
-        intNuevoElement.style.color = colorCambio;
-        intNuevoElement.onclick = function () {
-          intento++;
-          enviarCodigo();
-        };
-
-        enviarSMS.style.color = colorCambio;
-        enviarSMS.onclick = function () {
-          enviarCodigoSMS();
-        };
+        textMinElement.innerHTML = `minutos`;
       }
     }
 
-    remainingTime -= 1; // Reduce el tiempo restante en 1 segundo
-  }, 1000);
-  
-  setTimeout(() => {
-    miFuncionConDelay(message, 'alert-success');
-  }, 2000);
-}
+    // Advertencia cuando quedan 2 minutos
+    if (remainingTime === 120 && timerContainer) {
+      timerContainer.classList.add('timer-warning');
+      showMessage('⚠️ Tu código expirará en 2 minutos.', 'info');
+    }
 
-async function miFuncionConDelay(element, alert = '') {
-  await new Promise(resolve => setTimeout(resolve, 10000));
-  element.style.visibility = 'hidden';
-  element.innerHTML = '-';
-  if (alert !== '') {
-    element.classList.remove(alert);
-  }
-  element.classList.remove('animate__animated', 'animate__flash', 'animate__repeat-2');
+    if (remainingTime === 0) {
+      clearInterval(interval);
+      
+      // Marcar timer como expirado
+      if (timerContainer) {
+        timerContainer.classList.add('timer-expired');
+      }
+
+      if (intento >= 3) {
+        notificarDirectivos();
+      } else {
+        // Habilitar botones de reenvío
+        if (intNuevoElement) {
+          intNuevoElement.classList.remove('disabled');
+          intNuevoElement.onclick = function (e) {
+            e.preventDefault();
+            intento++;
+            enviarCodigo();
+          };
+        }
+
+        if (enviarSMS) {
+          enviarSMS.classList.remove('disabled');
+          enviarSMS.onclick = function (e) {
+            e.preventDefault();
+            enviarCodigoSMS();
+          };
+        }
+        
+        showMessage('⏱️ El código ha expirado. Puedes solicitar uno nuevo.', 'error');
+      }
+    }
+
+    remainingTime -= 1;
+  }, 1000);
 }
 
 function enviarCodigo() {
   var intputIdRegistro  = document.getElementById('idRegistro');
   var usuarioId         = document.getElementById('usuarioId').value;
+  const intNuevoElement = document.getElementById('intNuevo');
+  
+  // Deshabilitar botón temporalmente
+  intNuevoElement.classList.add('disabled');
+  intNuevoElement.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
 
   // Enviar el código al correo electrónico
   fetch('recuperar-clave-enviar-codigo.php?usuarioId=' + usuarioId + '&async=true', {
     method: 'GET'
   })
-    .then(response => response.json())
+    .then(response => {
+      // Verificar si la respuesta es JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new TypeError("La respuesta no es JSON válido. Verifica errores PHP.");
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
-        document.getElementById('emailCode').innerHTML = data.usuarioEmail;
-
-        // Mostrar mensaje si es un nuevo intento
-        if (intento > 0) {
-          const message = document.getElementById('message');
-
-          message.innerHTML = 'Hemos enviado un nuevo código a tu correo electrónico,<br> si no ves el correo revisa tu carpeta de spam o<br> verifica que hayas ingresado bien tu correo electrónico.<br> Te quedan <b>' + (3 - intento) + ' intentos</b>.';
-          message.style.visibility = 'visible';
-          message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
+        const emailElement = document.getElementById('emailCode');
+        if (emailElement && data.usuarioEmail) {
+          emailElement.innerHTML = data.usuarioEmail;
         }
 
-        idRegistro = data.code.idRegistro;
-        intputIdRegistro.value = idRegistro;
+        // Mostrar mensaje de éxito
+        const intentosRestantes = 3 - intento;
+        let mensaje = '✓ Código reenviado a tu correo electrónico.';
+        
+        if (intentosRestantes > 0) {
+          mensaje += ` Te quedan <strong>${intentosRestantes} ${intentosRestantes === 1 ? 'intento' : 'intentos'}</strong>.`;
+        }
+        
+        showMessage(mensaje, 'success');
+
+        idRegistro = data.code ? data.code.idRegistro : (data.datosCodigo ? data.datosCodigo.idRegistro : '');
+        if (intputIdRegistro) {
+          intputIdRegistro.value = idRegistro;
+        }
 
         clearInterval(interval);
         startCountdown(10 * 60); // Inicia la cuenta regresiva con 10 minutos
+        
+        // Restaurar botón
+        intNuevoElement.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Reenviar al correo';
+        intNuevoElement.classList.add('disabled');
+        intNuevoElement.onclick = null;
       } else {
-        alert(data.message);
+        showMessage(data.message || 'Error al reenviar el código.', 'error');
+        intNuevoElement.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Reenviar al correo';
+        intNuevoElement.classList.remove('disabled');
       }
+    })
+    .catch(error => {
+      console.error('Error en enviarCodigo:', error);
+      showMessage('Error: ' + error.message, 'error');
+      intNuevoElement.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Reenviar al correo';
+      intNuevoElement.classList.remove('disabled');
     });
 }
 
@@ -153,41 +221,81 @@ function enviarCodigoSMS() {
   const enviarSMS       = document.getElementById('enviarCodigoSMS');
   intento++;
 
-  enviarSMS.style.color = '#000';
-  enviarSMS.onclick = null;
+  // Deshabilitar botón temporalmente
+  enviarSMS.classList.add('disabled');
+  enviarSMS.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando por SMS...';
 
-  // Enviar el código al correo electrónico
+  // Enviar el código por SMS
   fetch('enviar-codigo-sms.php?usuarioId=' + usuarioId, {
     method: 'GET'
   })
-    .then(response => response.json())
+    .then(response => {
+      // Verificar si la respuesta es JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new TypeError("La respuesta no es JSON válido. Verifica errores PHP.");
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
-        document.getElementById('emailCode').innerHTML = data.telefono;
-        const message = document.getElementById('message');
+        const emailElement = document.getElementById('emailCode');
+        if (emailElement && data.telefono) {
+          emailElement.innerHTML = data.telefono;
+        }
 
-        message.innerHTML = 'Hemos enviado un nuevo código a tu número telefónico registrado o<br>verifica que hayas ingresado bien tu número telefónico.<br> Te quedan <b>' + (3 - intento) + ' intentos</b>.';
-        message.style.visibility = 'visible';
-        message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
+        // Mostrar mensaje de éxito
+        const intentosRestantes = 3 - intento;
+        let mensaje = '✓ Código enviado por SMS a tu número registrado.';
+        
+        if (intentosRestantes > 0) {
+          mensaje += ` Te quedan <strong>${intentosRestantes} ${intentosRestantes === 1 ? 'intento' : 'intentos'}</strong>.`;
+        }
+        
+        showMessage(mensaje, 'success');
 
-        idRegistro = data.code.idRegistro;
-        intputIdRegistro.value = idRegistro;
+        idRegistro = data.code ? data.code.idRegistro : (data.datosCodigo ? data.datosCodigo.idRegistro : '');
+        if (intputIdRegistro) {
+          intputIdRegistro.value = idRegistro;
+        }
 
         clearInterval(interval);
         startCountdown(10 * 60); // Inicia la cuenta regresiva con 10 minutos
+        
+        // Restaurar botón
+        const numeroCelular = data.telefono ? data.telefono.replace(/[()\s-]/g, '') : '';
+        const ultimos4 = numeroCelular ? numeroCelular.substr(-4) : '****';
+        enviarSMS.innerHTML = '<i class="bi bi-phone"></i> Enviar por SMS (*** *** ' + ultimos4 + ')';
+        enviarSMS.classList.add('disabled');
+        enviarSMS.onclick = null;
       } else {
-        alert(data.message);
+        showMessage(data.message || 'Error al enviar SMS.', 'error');
+        enviarSMS.innerHTML = '<i class="bi bi-phone"></i> Enviar por SMS';
+        enviarSMS.classList.remove('disabled');
       }
+    })
+    .catch(error => {
+      console.error('Error en enviarCodigoSMS:', error);
+      showMessage('Error: ' + error.message, 'error');
+      enviarSMS.innerHTML = '<i class="bi bi-phone"></i> Enviar por SMS';
+      enviarSMS.classList.remove('disabled');
     });
 }
 
 function verificarCodigo() {
   // Seleccionar todos los inputs
   const inputs = document.querySelectorAll('.code-input');
-  const message = document.getElementById('message');
   const btnValidarCodigo = document.getElementById('btnValidarCodigo');
-  var idRegistro =   document.getElementById('idRegistro').value;
-  btnValidarCodigo.style.visibility = 'hidden';
+  const btnText = document.getElementById('btnText');
+  const btnSpinner = document.getElementById('btnSpinner');
+  const idRegistroElement = document.getElementById('idRegistro');
+  
+  if (!btnValidarCodigo || !btnText || !btnSpinner || !idRegistroElement) {
+    console.error('Elementos requeridos no encontrados');
+    return;
+  }
+  
+  var idRegistro = idRegistroElement.value;
 
   // Verificar si todos los inputs están llenos
   let allFilled = true;
@@ -200,50 +308,123 @@ function verificarCodigo() {
       codigoIngresado += input.value.trim(); // Construir el código ingresado
   });
 
-  if (allFilled) {
-      fetch('validar-codigo.php?code=' + codigoIngresado + '&idRegistro=' + idRegistro, {
-        method: 'GET'
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            var usuarioId         =   document.getElementById('usuarioId').value;
-            message.innerHTML = 'El proceso de verificación ha sido exitoso, en 2 segundos le redireccionaremos para restaurar su nueva contraseña.';
-            message.style.visibility = 'visible';
-            message.classList.add('alert-success', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-            setTimeout(() => {
-                window.location.href = 'recuperar-clave-restaurar.php?usuarioId=' + btoa(usuarioId);
-            }, 2000);
-          } else {
-            btnValidarCodigo.style.visibility = 'visible';
-            message.innerHTML = data.message;
-            message.style.visibility = 'visible';
-            message.classList.add('alert-danger', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-            miFuncionConDelay(message, 'alert-danger');
-            
-            clearInterval(interval);
-            const intNuevoElement = document.getElementById('intNuevo');
-            var colorCambio = intNuevoElement.getAttribute('data-color-cambio')
-            intNuevoElement.style.color = colorCambio;
-            intNuevoElement.onclick = function () {
-              intento++;
-              enviarCodigo();
-            };
-          }
-        })
-        .catch(error => {
-          btnValidarCodigo.style.visibility = 'visible';
-          message.innerHTML = 'Error al validar el código: comunicate con un asesor.';
-          message.style.visibility = 'visible';
-          message.classList.add('alert-danger', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-          miFuncionConDelay(message, 'alert-danger');
+  if (!allFilled) {
+    showMessage('Por favor completa todos los dígitos del código.', 'error');
+    inputs.forEach(input => {
+      if (!input.value.trim()) {
+        input.classList.add('error');
+        setTimeout(() => input.classList.remove('error'), 500);
+      }
+    });
+    return;
+  }
+
+  // Cambiar estado del botón
+  btnValidarCodigo.disabled = true;
+  btnValidarCodigo.classList.add('loading');
+  btnText.textContent = 'Validando código...';
+  btnSpinner.style.display = 'inline-block';
+
+  fetch('validar-codigo.php?code=' + codigoIngresado + '&idRegistro=' + idRegistro, {
+    method: 'GET'
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        var usuarioId = document.getElementById('usuarioId').value;
+        
+        // Éxito
+        btnValidarCodigo.classList.remove('loading');
+        btnValidarCodigo.classList.add('success');
+        btnText.textContent = '¡Código válido!';
+        btnSpinner.style.display = 'none';
+        
+        // Marcar todos los inputs como correctos
+        inputs.forEach(input => {
+          input.classList.add('filled');
+          input.classList.remove('error');
         });
-  } else {
-    btnValidarCodigo.style.visibility = 'visible';
-    message.innerHTML = 'Faltan llenar algunos campos.';
-    message.style.visibility = 'visible';
-    message.classList.add('alert-danger', 'animate__animated', 'animate__flash', 'animate__repeat-2');
-    miFuncionConDelay(message, 'alert-danger');
+        
+        showMessage('✓ Verificación exitosa. Redirigiendo para crear tu nueva contraseña...', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'recuperar-clave-restaurar.php?usuarioId=' + btoa(usuarioId);
+        }, 2000);
+      } else {
+        // Error
+        btnValidarCodigo.classList.remove('loading');
+        btnValidarCodigo.disabled = false;
+        btnText.textContent = 'Validar Código';
+        btnSpinner.style.display = 'none';
+        
+        // Marcar inputs como error
+        inputs.forEach(input => {
+          input.classList.add('error');
+          input.value = '';
+          setTimeout(() => input.classList.remove('error'), 500);
+        });
+        
+        showMessage(data.message || 'Código incorrecto. Intenta nuevamente.', 'error');
+        
+        // Focus en el primer input
+        inputs[0].focus();
+        
+        // Habilitar reenvío
+        clearInterval(interval);
+        const intNuevoElement = document.getElementById('intNuevo');
+        var colorCambio = intNuevoElement.getAttribute('data-color-cambio')
+        intNuevoElement.classList.remove('disabled');
+        intNuevoElement.onclick = function () {
+          intento++;
+          enviarCodigo();
+        };
+      }
+    })
+    .catch(error => {
+      btnValidarCodigo.classList.remove('loading');
+      btnValidarCodigo.disabled = false;
+      btnText.textContent = 'Validar Código';
+      btnSpinner.style.display = 'none';
+      
+      inputs.forEach(input => {
+        input.classList.add('error');
+        setTimeout(() => input.classList.remove('error'), 500);
+      });
+      
+      showMessage('Error de conexión. Por favor intenta nuevamente o contacta soporte.', 'error');
+    });
+}
+
+// Función para mostrar mensajes dinámicos
+function showMessage(message, type) {
+  const dynamicMessages = document.getElementById('dynamicMessages');
+  if (!dynamicMessages) return;
+  
+  const iconMap = {
+    error: 'exclamation-triangle',
+    success: 'check-circle',
+    info: 'info-circle'
+  };
+  
+  const messageHtml = `
+    <div class="alert-dynamic ${type} animate__animated animate__fadeIn" role="alert">
+      <i class="bi bi-${iconMap[type]}"></i>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  dynamicMessages.innerHTML = messageHtml;
+  
+  // Auto-ocultar después de 8 segundos (excepto para éxito)
+  if (type !== 'success') {
+    setTimeout(() => {
+      if (dynamicMessages.firstElementChild) {
+        dynamicMessages.firstElementChild.classList.add('animate__fadeOut');
+        setTimeout(() => {
+          dynamicMessages.innerHTML = '';
+        }, 500);
+      }
+    }, 8000);
   }
 }
 

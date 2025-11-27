@@ -37,6 +37,41 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 								
 								<div class="col-md-12">
                                 <?php include("../../config-general/mensajes-informativos.php"); ?>
+                                <?php
+                                    $tieneCategorias = true;
+                                    $mensajeCategorias = "";
+                                    $totalCategorias = 0;
+                                    try{
+                                        $consultaCategorias = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM ".BD_DISCIPLINA.".disciplina_categorias
+                                        WHERE dcat_institucion={$config['conf_id_institucion']} AND dcat_year={$_SESSION["bd"]}");
+                                        if($consultaCategorias){
+                                            $datosCategorias = mysqli_fetch_array($consultaCategorias, MYSQLI_BOTH);
+                                            $totalCategorias = (int)($datosCategorias['total'] ?? 0);
+                                            if($totalCategorias <= 0){
+                                                $tieneCategorias = false;
+                                                $mensajeCategorias = "Antes de crear faltas debes registrar al menos una categoría en el módulo de disciplina.";
+                                            }
+                                        }else{
+                                            $tieneCategorias = false;
+                                            $mensajeCategorias = "No fue posible verificar las categorías. Intenta nuevamente.";
+                                        }
+                                    } catch (Exception $e) {
+                                        $tieneCategorias = false;
+                                        $mensajeCategorias = "Error al consultar las categorías. Intenta nuevamente.";
+                                        include("../compartido/error-catch-to-report.php");
+                                    }
+                                ?>
+                                <?php if(!$tieneCategorias){ ?>
+                                    <div class="alert alert-warning">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        <strong>Acción requerida:</strong> <?=$mensajeCategorias?><br>
+                                        <span style="display:inline-block;margin-top:5px;">
+                                            <a href="disciplina-categorias.php" class="btn btn-sm btn-primary">
+                                                <i class="fa fa-plus"></i> Crear categorías
+                                            </a>
+                                        </span>
+                                    </div>
+                                <?php } ?>
                                     <div class="card card-topline-purple">
                                         <div class="card-head">
                                             <header><?=$frases[248][$datosUsuarioActual['uss_idioma']];?></header>
@@ -52,9 +87,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 												<div class="col-sm-12">
 													<div class="btn-group">
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0068'])){?>
-                                                            <a href="disciplina-faltas-agregar.php" id="addRow" class="btn deepPink-bgcolor">
-                                                                Agregar nuevo <i class="fa fa-plus"></i>
-                                                            </a>
+                                                            <?php if($tieneCategorias){ ?>
+                                                                <a href="disciplina-faltas-agregar.php" id="addRow" class="btn deepPink-bgcolor">
+                                                                    Agregar nuevo <i class="fa fa-plus"></i>
+                                                                </a>
+                                                            <?php }else{ ?>
+                                                                <button type="button" class="btn deepPink-bgcolor" disabled title="Primero crea categorías en el módulo de disciplina">
+                                                                    Agregar nuevo <i class="fa fa-plus"></i>
+                                                                </button>
+                                                            <?php } ?>
                                                         <?php }?>
 													</div>
 												</div>

@@ -16,9 +16,15 @@ if( $_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA ) {
     UsuariosPadre::actualizarUsuarios($config, $_GET["idUsuario"], $update);
 }
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "UPDATE ".BD_GENERAL.".general_solicitudes SET soli_estado='" . $_GET["estado"] . "' 
-    WHERE soli_id='" . $_GET["idRegistro"] . "'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $sql = "UPDATE ".BD_GENERAL.".general_solicitudes SET soli_estado=? WHERE soli_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_GET["estado"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_GET["idRegistro"], PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
@@ -53,7 +59,7 @@ if($_GET["estado"] == Administrativo_General_Solicitud::SOLICITUD_ACEPTADA || $_
         'motivo'           => $_GET["motivo"]
     ];
     $asunto = 'Solicitud de desbloqueo ' . $estados[$_GET["estado"]];
-    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-solicitud-desbloqueo.php';
+    $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-respuesta-solicitud-desbloqueo.php';
 
     EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute,null,null);
 }

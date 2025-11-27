@@ -11,16 +11,19 @@ $conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion, 
 $year_actual=date('Y');
 
 $usuariosEncontrados = 1;
+$datosUsuario = null;
+
 if (!empty($_REQUEST['Usuario'])) {
     $datosUsuario = Usuarios::buscarUsuariosRecuperarClave($_REQUEST['Usuario'],$year_actual);
 	$usuariosEncontrados = count($datosUsuario);
+	$datosUsuario = !empty($datosUsuario) ? $datosUsuario[0] : null;
 } elseif (!empty($_REQUEST['usuarioId'])) {
     $datosUsuario = Usuarios::buscarUsuarioIdNuevo($_REQUEST['usuarioId']);
+    $usuariosEncontrados = !empty($datosUsuario) ? 1 : 0;
 }
 
-if ($usuariosEncontrados == 1) {
-	$datosUsuario = !empty($_REQUEST['Usuario']) ? $datosUsuario[0] : $datosUsuario;
-	if (!empty($datosUsuario) && !empty($datosUsuario['uss_email'])) {
+if ($usuariosEncontrados == 1 && !empty($datosUsuario)) {
+	if (!empty($datosUsuario['uss_email'])) {
 
         $data = [
             'usuario_nombre'      => $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1'],
@@ -42,13 +45,19 @@ if ($usuariosEncontrados == 1) {
 
 			$arrayIdInsercion=[
 				"success"=>true,
-				"message"=>"Código enviado exitosamente",
+				"message"=>"Codigo enviado exitosamente", // Sin tilde para evitar problemas de codificación
 				'usuarioEmail'=> $datosUsuario['uss_email'],
-				"code"=>$datosCodigo
+				'usuarioNombre' => $datosUsuario['uss_nombre'] . ' ' . $datosUsuario['uss_apellido1'],
+				'institucionId' => $datosUsuario['institucion'],
+				'usuarioId' => $datosUsuario['uss_id'],
+				'year' => $datosUsuario['year'],
+				'telefono' => $datosUsuario['uss_celular'],
+				'idNuevo' => $datosUsuario['id_nuevo'],
+				"datosCodigo"=>$datosCodigo
 			];
 
-			header('Content-Type: application/json');
-			echo json_encode($arrayIdInsercion);
+			header('Content-Type: application/json; charset=UTF-8');
+			echo json_encode($arrayIdInsercion, JSON_UNESCAPED_UNICODE);
 			exit;
 		} else {
 			$data['datos_codigo'] = $datosCodigo;
@@ -60,7 +69,7 @@ if ($usuariosEncontrados == 1) {
 	} else {
 
 		if (!empty($_REQUEST['async'])) {
-			$arrayIdInsercion=["success"=>false, "message"=>"Error al enviar el código: ".$e->getMessage()];
+			$arrayIdInsercion=["success"=>false, "message"=>"No se encontró un email registrado para este usuario. Contacta a tu administrador."];
 
 			header('Content-Type: application/json');
 			echo json_encode($arrayIdInsercion);
@@ -72,15 +81,37 @@ if ($usuariosEncontrados == 1) {
 	}
 }
 if ($usuariosEncontrados > 1) {
-	// Serializar el array para pasarlo como un campo oculto
-	$usuariosSerializados = serialize($datosUsuario);
-	// Crear el formulario de redirección automática
-	echo '<form id="form" method="post" action="recuperar-clave.php?valor=' . base64_encode($_REQUEST["Usuario"]) . '">';
-	echo '<input type="hidden" name="usuariosEncontrados" value="' . htmlspecialchars($usuariosSerializados) . '">';
-	echo '</form>';
-	echo '<script>document.getElementById("form").submit();</script>';
-	exit();
+	if (!empty($_REQUEST['async'])) {
+		// Retornar lista de usuarios para modal
+		$arrayIdInsercion=[
+			"success"=>true,
+			"multipleUsers"=>true,
+			"message"=>"Se encontraron múltiples usuarios",
+			"usuarios"=>$datosUsuario
+		];
+
+		header('Content-Type: application/json');
+		echo json_encode($arrayIdInsercion);
+		exit;
+	} else {
+		// Serializar el array para pasarlo como un campo oculto
+		$usuariosSerializados = serialize($datosUsuario);
+		// Crear el formulario de redirección automática
+		echo '<form id="form" method="post" action="recuperar-clave.php?valor=' . base64_encode($_REQUEST["Usuario"]) . '">';
+		echo '<input type="hidden" name="usuariosEncontrados" value="' . htmlspecialchars($usuariosSerializados) . '">';
+		echo '</form>';
+		echo '<script>document.getElementById("form").submit();</script>';
+		exit();
+	}
 } else {
-	echo '<script type="text/javascript">window.location.href="recuperar-clave.php?error=1";</script>';
-	exit();
+	if (!empty($_REQUEST['async'])) {
+		$arrayIdInsercion=["success"=>false, "message"=>"Usuario no encontrado. Verifica tus datos e intenta nuevamente."];
+
+		header('Content-Type: application/json');
+		echo json_encode($arrayIdInsercion);
+		exit;
+	} else {
+		echo '<script type="text/javascript">window.location.href="recuperar-clave.php?error=1";</script>';
+		exit();
+	}
 }

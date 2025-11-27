@@ -10,8 +10,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try {
-	mysqli_query($conexion, "UPDATE ".$baseDatosAdmisiones.".config_instituciones SET cfgi_politicas_adjunto='' WHERE cfgi_id='".base64_decode($_GET["id"])."'");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$idConfig = base64_decode($_GET["id"]);
+	$sql = "UPDATE ".$baseDatosAdmisiones.".config_instituciones SET cfgi_politicas_adjunto='' WHERE cfgi_id=?";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $idConfig, PDO::PARAM_STR);
+	$stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

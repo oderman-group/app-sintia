@@ -5,17 +5,37 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DT0300';
 require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consultas preparadas
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+
 if($_REQUEST['type'] == INVOICE){
     if($_REQUEST['abonoAnterior'] > 0){
         try {
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments_invoiced SET payment='".$_REQUEST['abono']."' WHERE invoiced='".$_REQUEST['idFactura']."' AND payments='".$_REQUEST['idAbono']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            $sql = "UPDATE ".BD_FINANCIERA.".payments_invoiced SET payment=? 
+                    WHERE invoiced=? AND payments=? AND institucion=? AND year=?";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $_REQUEST['abono'], PDO::PARAM_STR);
+            $stmt->bindParam(2, $_REQUEST['idFactura'], PDO::PARAM_STR);
+            $stmt->bindParam(3, $_REQUEST['idAbono'], PDO::PARAM_STR);
+            $stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
             exit();
         }
     }else{
         try {
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, payments, institucion, year)VALUES('".$_REQUEST['abono']."', '".$_REQUEST['idFactura']."', '".$_REQUEST['idAbono']."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, payments, institucion, year) 
+                    VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $_REQUEST['abono'], PDO::PARAM_STR);
+            $stmt->bindParam(2, $_REQUEST['idFactura'], PDO::PARAM_STR);
+            $stmt->bindParam(3, $_REQUEST['idAbono'], PDO::PARAM_STR);
+            $stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
             exit();
@@ -23,24 +43,42 @@ if($_REQUEST['type'] == INVOICE){
     }
 }
 
-
 if($_REQUEST['type'] == ACCOUNT){
     if(!empty($_REQUEST['conceptoModificar'])){
         $idInsercion=$_REQUEST['conceptoModificar'];
         try {
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments_invoiced SET invoiced='".$_REQUEST['concepto']."', payment='".$_REQUEST['precio']."', cantity='".$_REQUEST['cantidad']."', subtotal='".$_REQUEST['subtotal']."' WHERE id='".$_REQUEST['conceptoModificar']."' AND payments='".$_REQUEST['idAbono']."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            $sql = "UPDATE ".BD_FINANCIERA.".payments_invoiced 
+                    SET invoiced=?, payment=?, cantity=?, subtotal=? 
+                    WHERE id=? AND payments=? AND institucion=? AND year=?";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $_REQUEST['concepto'], PDO::PARAM_STR);
+            $stmt->bindParam(2, $_REQUEST['precio'], PDO::PARAM_STR);
+            $stmt->bindParam(3, $_REQUEST['cantidad'], PDO::PARAM_STR);
+            $stmt->bindParam(4, $_REQUEST['subtotal'], PDO::PARAM_STR);
+            $stmt->bindParam(5, $_REQUEST['conceptoModificar'], PDO::PARAM_STR);
+            $stmt->bindParam(6, $_REQUEST['idAbono'], PDO::PARAM_STR);
+            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
             exit();
         }
     }else{
         try {
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, payments, institucion, year)VALUES('".$_REQUEST['concepto']."', '".$_REQUEST['idAbono']."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, payments, institucion, year) 
+                    VALUES (?, ?, ?, ?)";
+            $stmt = $conexionPDO->prepare($sql);
+            $stmt->bindParam(1, $_REQUEST['concepto'], PDO::PARAM_STR);
+            $stmt->bindParam(2, $_REQUEST['idAbono'], PDO::PARAM_STR);
+            $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
+            $idInsercion = $conexionPDO->lastInsertId();
         } catch(Exception $e) {
             echo $e->getMessage();
             exit();
         }
-        $idInsercion = mysqli_insert_id($conexion);
     }
 }
 

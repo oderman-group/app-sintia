@@ -102,12 +102,15 @@ if(!empty($_POST['carga'])){
 								<div class="col-md-12">
 									<div class="card card-topline-purple">
 										<div class="card-body">
-											<div class="alert alert-block alert-warning">
-												<h4 class="alert-heading">Información importante!</h4>
-												<p>Usted est&aacute; registrando las nota de comportamiento del periodo <span style="font-size:20px; font-weight:bold;"><?=$periodo;?></span>.</p>
+											<div class="alert alert-block alert-warning" style="border-radius: 10px; border: none; background: linear-gradient(135deg,#f6e58d,#f9ca24); color:#4a3b00;">
+												<h4 class="alert-heading" style="font-weight:700;"><i class="fa fa-info-circle"></i> Información importante</h4>
+												<p style="margin-bottom:0;">
+													Está registrando las notas de comportamiento del periodo 
+													<span style="font-size:20px; font-weight:bold;"><?=$periodo;?></span> para la carga seleccionada.
+												</p>
 											</div>
 
-											<div class="table-scrollable">
+											<div class="table-scrollable" style="margin-top:15px;">
 												<table class="display" style="width:100%;">
 													<thead>
 														<tr>
@@ -130,9 +133,9 @@ if(!empty($_POST['carga'])){
 													</tbody>
 												</table>
 											</div>
-											<div class="alert alert-block alert-warning">
-												<h4 class="alert-heading">Nota importante!</h4>
-												<p>Coloque la nota num&eacute;rica que corresponda al desempeño que aparecer&aacute; en el bolet&iacute;n.</p>
+											<div class="alert alert-block alert-warning" style="border-radius: 10px; border:none; background:#ecf0f1; color:#2c3e50; margin-top:15px;">
+												<h4 class="alert-heading" style="font-weight:600;"><i class="fa fa-pencil"></i> Nota importante</h4>
+												<p style="margin-bottom:0;">Coloque la nota num&eacute;rica que corresponda al desempeño que aparecer&aacute; en el bolet&iacute;n.</p>
 											</div>
 										</div>
 									</div>	
@@ -152,7 +155,91 @@ if(!empty($_POST['carga'])){
 												<a class="t-close btn-color fa fa-times" href="javascript:;"></a>
 											</div>
 										</div>
-										<div class="card-body">					
+										<div class="card-body">
+											<?php
+											// ===============================
+											// PRE-CARGAR NOTAS DE COMPORTAMIENTO
+											// ===============================
+											$notasDisciplinaMapa = [];
+											$totalConNota        = 0;
+											$sumaNotas           = 0;
+
+											if(!empty($carga) && !empty($periodo)){
+												try{
+													$consultaNotasTodos = mysqli_query(
+														$conexion,
+														"SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota 
+														 WHERE dn_id_carga='".$carga."' 
+														   AND dn_periodo='".$periodo."' 
+														   AND institucion={$config['conf_id_institucion']} 
+														   AND year={$_SESSION['bd']}"
+													);
+
+													while ($filaNota = mysqli_fetch_array($consultaNotasTodos, MYSQLI_BOTH)) {
+														$notasDisciplinaMapa[$filaNota['dn_cod_estudiante']] = $filaNota;
+														if (!empty($filaNota['dn_nota'])) {
+															$totalConNota++;
+															$sumaNotas += (float)$filaNota['dn_nota'];
+														}
+													}
+												} catch (Exception $e) {
+													include("../compartido/error-catch-to-report.php");
+												}
+											}
+
+											// Listar estudiantes una sola vez y calcular totales
+											$listaEstudiantes   = [];
+											$filtroAdicional    = "AND mat_grado='".$grado."' AND mat_grupo='".$grupo."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
+											$consultaEstudiantes= Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"");
+											while($rowEst = mysqli_fetch_array($consultaEstudiantes, MYSQLI_BOTH)){
+												$listaEstudiantes[] = $rowEst;
+											}
+
+											$totalEstudiantes = count($listaEstudiantes);
+											$promedioComport = ($totalConNota > 0) ? ($sumaNotas / $totalConNota) : 0;
+											?>
+
+											<?php if ($totalEstudiantes > 0) { ?>
+											<!-- Cards de resumen de comportamiento -->
+											<div class="row mb-3">
+												<div class="col-md-4 col-sm-6 mb-2">
+													<div class="card" style="border-radius: 10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+														<div class="card-body" style="padding: 12px 14px;">
+															<div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Estudiantes en la lista</div>
+															<div style="font-size:24px; font-weight:700; color:#2c3e50; margin-top:4px;">
+																<?= $totalEstudiantes; ?>
+															</div>
+														</div>
+													</div>
+												</div>
+												<div class="col-md-4 col-sm-6 mb-2">
+													<div class="card" style="border-radius: 10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+														<div class="card-body" style="padding: 12px 14px;">
+															<div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Con nota registrada</div>
+															<div style="font-size:24px; font-weight:700; color:#16a085; margin-top:4px;">
+																<?= $totalConNota; ?>
+																<?php if ($totalEstudiantes > 0) { ?>
+																	<span style="font-size:13px; color:#7f8c8d;">
+																		(<?= round(($totalConNota / $totalEstudiantes) * 100); ?>%)
+																	</span>
+																<?php } ?>
+															</div>
+														</div>
+													</div>
+												</div>
+												<div class="col-md-4 col-sm-6 mb-2">
+													<div class="card" style="border-radius: 10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+														<div class="card-body" style="padding: 12px 14px;">
+															<div style="font-size:11px; text-transform:uppercase; color:#7f8c8d;">Promedio de comportamiento</div>
+															<div style="font-size:24px; font-weight:700; color:#2980b9; margin-top:4px;">
+																<?= number_format($promedioComport, $config['conf_decimales_notas']); ?>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+											<?php } ?>
+
 											<div class="table-scrollable">
 												<table id="example1" class="display" style="width:100%;">
 													<thead>
@@ -166,18 +253,9 @@ if(!empty($_POST['carga'])){
 													<tbody>
 														<?php
 														$con = 1;
-														$filtroAdicional= "AND mat_grado='".$grado."' AND mat_grupo='".$grupo."' AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
-														$consulta =Estudiantes::listarEstudiantesEnGrados($filtroAdicional,"");
-														
-														while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-															$nombre = Estudiantes::NombreCompletoDelEstudiante($resultado);	
-															try{
-																$consultaRnDisiplina=mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='".$resultado['mat_id']."' AND dn_id_carga='".$carga."' AND dn_periodo='".$periodo."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
-															} catch (Exception $e) {
-																include("../compartido/error-catch-to-report.php");
-															}
-															$rndisiplina=mysqli_fetch_array($consultaRnDisiplina, MYSQLI_BOTH);
-															//LAS CALIFICACIONES A MODIFICAR Y LAS OBSERVACIONES
+														foreach ($listaEstudiantes as $resultado){
+															$nombre       = Estudiantes::NombreCompletoDelEstudiante($resultado);
+															$rndisiplina  = $notasDisciplinaMapa[$resultado['mat_id']] ?? null;
 														?>
 														<tr id="data1">
 															<td style="text-align:center;"><?=$resultado['mat_id'];?></td>
@@ -191,7 +269,9 @@ if(!empty($_POST['carga'])){
 																>
 
 																<?php if(!empty($rndisiplina['dn_nota']) && Modulos::validarPermisoEdicion()){?>
-																	<a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este mensaje?','question','cargas-comportamiento-eliminar.php?id=<?=base64_encode($rndisiplina['dn_id']);?>&periodo=<?=base64_encode($periodo);?>&carga=<?=base64_encode($carga);?>&grado=<?=base64_encode($grado);?>&grupo=<?=base64_encode($grupo);?>')">X</a>
+																	<a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','¿Deseas eliminar esta nota de comportamiento?','question','cargas-comportamiento-eliminar.php?id=<?=base64_encode($rndisiplina['dn_id']);?>&periodo=<?=base64_encode($periodo);?>&carga=<?=base64_encode($carga);?>&grado=<?=base64_encode($grado);?>&grupo=<?=base64_encode($grupo);?>')" title="Eliminar nota">
+																		<i class="fa fa-trash text-danger"></i>
+																	</a>
 																	<?php }?>
 
 															</td>

@@ -12,12 +12,19 @@
         exit();
     }
 
+    // Migrado a PDO - Consulta preparada
     try{
-        mysqli_query($conexion, "INSERT INTO " . $baseDatosMarketPlace . ".servicios_categorias(svcat_nombre,svcat_icon) VALUES ('".$_POST["nombre"]."','".$_POST["icon"]."')");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "INSERT INTO " . $baseDatosMarketPlace . ".servicios_categorias(svcat_nombre, svcat_icon) VALUES (?, ?)";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["icon"], PDO::PARAM_STR);
+        $stmt->execute();
+        $idRegistro = $conexionPDO->lastInsertId();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}
-    $idRegistro = mysqli_insert_id($conexion);
     
     include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="mps-categorias-servicios.php?success=SC_DT_1&id='.base64_encode($idRegistro).'";</script>';

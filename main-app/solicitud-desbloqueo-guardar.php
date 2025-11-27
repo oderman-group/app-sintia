@@ -1,4 +1,9 @@
 <?php
+// Iniciar sesión para poder validar token CSRF
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/General_Solicitud.php");
 require_once(ROOT_PATH."/main-app/class/App/Administrativo/Usuario/Usuario.php");
@@ -6,6 +11,11 @@ require_once(ROOT_PATH."/main-app/class/App/Mensajes_Informativos/Mensajes_Infor
 require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
 require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Social_Email.php");
 require_once(ROOT_PATH."/main-app/class/App/Comunicativo/Usuarios_Notificaciones.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
+
+// Verificar token CSRF
+Csrf::verificar();
+
 echo '
 	<script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
 	<script>
@@ -75,15 +85,16 @@ foreach ($consultaDirectivoDesbloqueo as $datosDirectivosDesbloqueo) {
 
 
 	//Envío al correo real del directivo
-        $contenidoMsj = '<p style="color:navy;">'.$contenido.'</p>';
-
         $data = [
-			'asunto'         => $asunto,
-            'contenido_msj'  => $contenidoMsj,
-            'usuario_email'  => $datosDirectivosDesbloqueo['uss_email'],
-            'usuario_nombre' => $datosDirectivosDesbloqueo['uss_nombre'],
-			'institucion_id' => $_POST['inst'],
-			'usuario_id'     => $datosDirectivosDesbloqueo['upn_usuario']
+			'asunto'              => $asunto,
+            'contenido_msj'       => $_POST["contenido"], // Mensaje original del usuario
+            'usuario_email'       => $datosDirectivosDesbloqueo['uss_email'], // Email del directivo que recibe
+            'usuario_nombre'      => $datosDirectivosDesbloqueo['uss_nombre'], // Nombre del directivo que recibe
+            'nombre_solicitante'  => $nombreUsuario['uss_nombre'], // Nombre del usuario bloqueado
+            'usuario_solicitante' => $nombreUsuario['uss_nombre'], // Usuario bloqueado
+            'email_solicitante'   => '', // Se puede agregar si se necesita
+			'institucion_id'      => $_POST['inst'],
+			'usuario_id'          => $datosDirectivosDesbloqueo['upn_usuario']
         ];
 
         $bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-enviar-solicitud-desbloqueo-directivos.php';

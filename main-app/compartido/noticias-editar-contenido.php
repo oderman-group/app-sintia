@@ -170,7 +170,7 @@ $datosConsulta = mysqli_fetch_array($consultaNoticias, MYSQLI_BOTH);
                                                     <?php
                                                         $destinatarios=(!empty($datosConsulta['not_para']) && $datosConsulta['not_para']!="1,2,3,4,5") ? explode(',',$datosConsulta['not_para']) : "";
                                                         try{
-                                                            $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+                                                            $opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                                                         } catch (Exception $e) {
                                                             include("../compartido/error-catch-to-report.php");
                                                         }

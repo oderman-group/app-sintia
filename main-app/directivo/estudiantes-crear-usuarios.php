@@ -16,7 +16,12 @@ require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 $estud = Estudiantes::obtenerListadoDeEstudiantes(" AND mat_eliminado=0");
 
 while ($est = mysqli_fetch_array($estud, MYSQLI_BOTH)) {
-	$usComp = UsuariosPadre::sesionUsuario($est["mat_id_usuario"]);
+	$idUsuarioActual = $est["mat_id_usuario"] ?? '';
+	if(!empty($idUsuarioActual)){
+		$usComp = UsuariosPadre::sesionUsuario((string)$idUsuarioActual);
+	}else{
+		$usComp = [];
+	}
 	if ( empty($usComp) ) {
 
 		UsuariosPadre::eliminarUsuarioPorUsuario($config, $est['mat_documento']);

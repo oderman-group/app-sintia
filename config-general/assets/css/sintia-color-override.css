@@ -1,0 +1,297 @@
+/*
+ * Sintia - Configuración Adicional de Colores
+ * Archivo complementario para asegurar la aplicación completa de la regla 60-30-10
+ */
+
+/* Override de colores específicos que puedan haber quedado */
+.btn-primary {
+    background-color: var(--sintia-secondary) !important;
+    border-color: var(--sintia-secondary) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #34a3bc !important;
+    border-color: #34a3bc !important;
+}
+
+.btn-secondary {
+    background-color: var(--sintia-accent) !important;
+    border-color: var(--sintia-accent) !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active {
+    background-color: #4d0fa8 !important;
+    border-color: #4d0fa8 !important;
+}
+
+/* Links */
+a:not(.btn) {
+    color: var(--sintia-secondary) !important;
+}
+
+a:not(.btn):hover {
+    color: var(--sintia-accent) !important;
+}
+
+/* Sidebar específico */
+.sidemenu-container .sidemenu>li.active>a,
+.sidemenu-container .sidemenu>li.active.open>a {
+    background-color: var(--sintia-bg-active) !important;
+    color: var(--sintia-secondary) !important;
+}
+
+.sidemenu-container .sidemenu>li:hover>a {
+    background-color: var(--sintia-bg-hover) !important;
+    color: var(--sintia-secondary) !important;
+}
+
+.sidemenu-container .sidemenu>li>a>i {
+    color: var(--sintia-secondary) !important;
+}
+
+/* Header específico */
+.page-header.navbar {
+    background-color: var(--sintia-accent) !important;
+}
+
+.page-header.navbar .hor-menu .navbar-nav>li.active>a,
+.page-header.navbar .hor-menu .navbar-nav>li.current>a {
+    color: var(--sintia-primary-bg) !important;
+}
+
+/* Formularios */
+.form-control:focus {
+    border-color: var(--sintia-secondary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(65, 196, 196, 0.25) !important;
+}
+
+.form-select:focus {
+    border-color: var(--sintia-secondary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(65, 196, 196, 0.25) !important;
+}
+
+/* Tablas */
+.table-striped>tbody>tr:nth-of-type(odd)>td,
+.table-striped>tbody>tr:nth-of-type(odd)>th {
+    background-color: var(--sintia-bg-light) !important;
+}
+
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th {
+    background-color: var(--sintia-bg-hover) !important;
+}
+
+/* Cards */
+.card {
+    background-color: var(--sintia-primary-bg) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.card-header {
+    background-color: var(--sintia-bg-light) !important;
+    border-bottom-color: var(--sintia-border) !important;
+}
+
+/* Modales */
+.modal-header {
+    background-color: var(--sintia-bg-light) !important;
+    border-bottom-color: var(--sintia-border) !important;
+}
+
+.modal-footer {
+    background-color: var(--sintia-bg-light) !important;
+    border-top-color: var(--sintia-border) !important;
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link {
+    color: var(--sintia-text-secondary) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--sintia-secondary) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--sintia-secondary) !important;
+    background-color: var(--sintia-primary-bg) !important;
+    border-color: var(--sintia-border) var(--sintia-border) var(--sintia-primary-bg) !important;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+    background-color: var(--sintia-primary-bg) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.dropdown-item:hover {
+    background-color: var(--sintia-bg-hover) !important;
+    color: var(--sintia-secondary) !important;
+}
+
+.dropdown-item.active {
+    background-color: var(--sintia-secondary) !important;
+    color: var(--sintia-primary-bg) !important;
+}
+
+/* Pagination */
+.pagination .page-link {
+    color: var(--sintia-secondary) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.pagination .page-link:hover {
+    color: var(--sintia-accent) !important;
+    background-color: var(--sintia-bg-hover) !important;
+    border-color: var(--sintia-border) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--sintia-secondary) !important;
+    border-color: var(--sintia-secondary) !important;
+}
+
+/* Badges */
+.badge-primary {
+    background-color: var(--sintia-secondary) !important;
+}
+
+.badge-secondary {
+    background-color: var(--sintia-accent) !important;
+}
+
+/* Progress bars */
+.progress-bar {
+    background-color: var(--sintia-secondary) !important;
+}
+
+/* Alertas */
+.alert-info {
+    background-color: rgba(65, 196, 196, 0.1) !important;
+    border-color: var(--sintia-secondary) !important;
+    color: #0c5460 !important;
+}
+
+.alert-warning {
+    background-color: rgba(96, 23, 220, 0.1) !important;
+    border-color: var(--sintia-accent) !important;
+    color: #4a0d7a !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar-thumb {
+    background-color: var(--sintia-secondary) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--sintia-accent) !important;
+}
+
+/* Estados de carga */
+.spinner-border-primary {
+    color: var(--sintia-secondary) !important;
+}
+
+.spinner-border-secondary {
+    color: var(--sintia-accent) !important;
+}
+
+/* Iconos específicos */
+.fa-primary {
+    color: var(--sintia-secondary) !important;
+}
+
+.fa-accent {
+    color: var(--sintia-accent) !important;
+}
+
+/* Textos específicos */
+.text-primary {
+    color: var(--sintia-secondary) !important;
+}
+
+.text-secondary {
+    color: var(--sintia-accent) !important;
+}
+
+/* Bordes específicos */
+.border-primary {
+    border-color: var(--sintia-secondary) !important;
+}
+
+.border-secondary {
+    border-color: var(--sintia-accent) !important;
+}
+
+/* Fondos específicos */
+.bg-primary {
+    background-color: var(--sintia-secondary) !important;
+}
+
+.bg-secondary {
+    background-color: var(--sintia-accent) !important;
+}
+
+/* Override para elementos específicos de Sintia */
+.sintia-primary {
+    color: var(--sintia-secondary) !important;
+}
+
+.sintia-accent {
+    color: var(--sintia-accent) !important;
+}
+
+.sintia-bg-primary {
+    background-color: var(--sintia-secondary) !important;
+}
+
+.sintia-bg-accent {
+    background-color: var(--sintia-accent) !important;
+}
+
+/* Asegurar que los elementos de navegación usen los colores correctos */
+.navbar-nav .nav-link.active {
+    color: var(--sintia-secondary) !important;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--sintia-accent) !important;
+}
+
+/* Elementos de formulario específicos */
+.input-group-text {
+    background-color: var(--sintia-bg-light) !important;
+    border-color: var(--sintia-border) !important;
+    color: var(--sintia-text-primary) !important;
+}
+
+/* Listas */
+.list-group-item.active {
+    background-color: var(--sintia-secondary) !important;
+    border-color: var(--sintia-secondary) !important;
+}
+
+.list-group-item:hover {
+    background-color: var(--sintia-bg-hover) !important;
+}
+
+/* Breadcrumbs */
+.breadcrumb-item.active {
+    color: var(--sintia-text-secondary) !important;
+}
+
+.breadcrumb-item a {
+    color: var(--sintia-secondary) !important;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--sintia-accent) !important;
+}
+
+

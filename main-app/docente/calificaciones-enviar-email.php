@@ -2,8 +2,21 @@
 if($datosUnicosInstitucion['ins_notificaciones_acudientes']==1){
     if($datosRelacionados["mat_notificacion1"]==1){
 
-        //INSERTAR CORREO PARA ENVIAR TODOS DESPUÉS
-        mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".correos(corr_institucion, corr_carga, corr_actividad, corr_nota, corr_tipo, corr_fecha_registro, corr_estado, corr_usuario, corr_estudiante)VALUES('".$config['conf_id_institucion']."', '".$datosRelacionados["car_id"]."', '".$_POST["codNota"]."', '".$_POST["nota"]."', 1, now(), 0, '".$datosRelacionados["uss_id"]."', '".$_POST["codEst"]."')");
+        // Migrado a PDO - Consulta preparada
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "INSERT INTO ".$baseDatosServicios.".correos(
+            corr_institucion, corr_carga, corr_actividad, corr_nota, corr_tipo, 
+            corr_fecha_registro, corr_estado, corr_usuario, corr_estudiante
+        ) VALUES (?, ?, ?, ?, 1, now(), 0, ?, ?)";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
+        $stmt->bindParam(2, $datosRelacionados["car_id"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["codNota"], PDO::PARAM_STR);
+        $stmt->bindParam(4, $_POST["nota"], PDO::PARAM_STR);
+        $stmt->bindParam(5, $datosRelacionados["uss_id"], PDO::PARAM_STR);
+        $stmt->bindParam(6, $_POST["codEst"], PDO::PARAM_STR);
+        $stmt->execute();
         
 
         //INICIO ENVÍO DE MENSAJE

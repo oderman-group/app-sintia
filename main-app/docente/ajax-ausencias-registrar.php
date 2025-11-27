@@ -7,6 +7,9 @@ require_once(ROOT_PATH."/main-app/class/App/Academico/Clase.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Carga.php");
 require_once(ROOT_PATH."/main-app/class/App/Academico/Materia.php");
 require_once(ROOT_PATH.'/main-app/class/EnviarEmail.php');
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
+require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 
 $rC = Ausencias::traerAusenciasClaseEstudiante($config, $_POST["codNota"], $_POST["codEst"]);
 if (empty($rC)) {
@@ -19,7 +22,8 @@ if (empty($rC)) {
 	
 	Clases::registrarAusenciaClase($conexion, $config, $_POST);
 
-	if ($_POST["nota"] > 0 && ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER)) {
+	// Verificar si el módulo de notificaciones está activo antes de enviar email
+	if ($_POST["nota"] > 0 && Modulos::verificarModulosDeInstitucion(Modulos::MODULO_NOTIFICACIONES_NOTAS_BAJAS)) {
 
 		$predicadoClase= [
 			'cls_id'      => $_POST["codNota"],
@@ -48,26 +52,55 @@ if (empty($rC)) {
 		$datosAcudiente = mysqli_fetch_array($consultaDatosAcudiente, MYSQLI_BOTH);
 
 		//INICIO ENVÍO DE MENSAJE
-		$tituloMsj    = 'Inasistencia para ' .$nombre;
-		$contenidoMsj = '
-			<p style="color:navy;">
-				Hola ' . strtoupper($datosAcudiente['uss_nombre']) . ', a tu acudido ' . $nombre . ' le han colocado inasistencia en la asignatura de ' .$datosActividad[0]["mat_nombre"]. '.<br>
-				Por favor ingresa a la plataforma y verifica. 
-			</p>
-		';
+		// Solo intentar enviar si el acudiente tiene un correo válido
+		if (!empty($datosAcudiente) && !empty($datosAcudiente['uss_email'])) {
+			try {
+				// Preparar nombre completo del acudiente
+				$nombreCompleto = $datosAcudiente['uss_nombre'];
+				if (!empty($datosAcudiente['uss_apellido1'])) {
+					$nombreCompleto .= ' ' . $datosAcudiente['uss_apellido1'];
+				}
+				
+				// Obtener nombre del docente (de la sesión actual)
+				$nombreDocente = 'No asignado';
+				if (!empty($_SESSION["datosUsuario"]['uss_nombre'])) {
+					$nombreDocente = trim($_SESSION["datosUsuario"]['uss_nombre'] . ' ' . 
+										($_SESSION["datosUsuario"]['uss_apellido1'] ?? ''));
+				}
+				
+				// Preparar datos para el template moderno
+				$dataCorreo = [
+					'nombre_acudiente'  => $nombreCompleto,
+					'nombre_estudiante' => $nombre,
+					'nombre_materia'    => $datosActividad[0]["mat_nombre"] ?? 'la materia',
+					'numero_ausencias'  => $_POST["nota"],
+					'tema_clase'        => $datosActividad[0]["cls_tema"] ?? 'Clase',
+					'fecha_clase'       => !empty($datosActividad[0]["cls_fecha"]) ? date('d/m/Y', strtotime($datosActividad[0]["cls_fecha"])) : date('d/m/Y'),
+					'nombre_docente'    => $nombreDocente,
+					'curso'             => $datosActividad[0]["gra_nombre"] ?? '',
+					'grupo'             => $datosActividad[0]["gru_nombre"] ?? '',
+					'ausencias_totales' => $_POST["nota"], // Por ahora igual al número de ausencias de esta clase
+					'usuario_email'     => $datosAcudiente['uss_email'],
+					'usuario_nombre'    => $datosAcudiente['uss_nombre'],
+					'institucion_id'    => $config['conf_id_institucion'],
+					'usuario_id'        => $datosAcudiente['uss_id']
+				];
 
-		$data = [
-			'contenido_msj'  => $contenidoMsj,
-			'usuario_email'  => $datosAcudiente['uss_email'],
-			'usuario_nombre' => $datosAcudiente['uss_nombre'],
-			'institucion_id' => $config['conf_id_institucion'],
-			'usuario_id'     => $datosAcudiente['uss_id']
-		];
-
-		$asunto            = $tituloMsj;
-		$bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-2.php';
-		
-		EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+				$asunto = '📅 Notificación de Ausencia - ' . $nombre;
+				$bodyTemplateRoute = ROOT_PATH.'/config-general/template-email-ausencias.php';
+				
+				EnviarEmail::enviar($dataCorreo, $asunto, $bodyTemplateRoute, null, null);
+				
+				error_log("✅ Email de ausencia enviado a: " . $datosAcudiente['uss_email'] . " | Estudiante: " . $nombre . " | Ausencias: " . $_POST["nota"]);
+				
+			} catch (Exception $e) {
+				// Si falla el envío de correo, solo registramos el error pero continuamos
+				error_log("❌ Error al enviar correo de notificación de ausencia: " . $e->getMessage());
+			}
+		} else {
+			// Registrar que no se pudo enviar por falta de datos del acudiente
+			error_log("⚠️ No se pudo enviar notificación de ausencia para el estudiante {$_POST['codEst']}: acudiente sin correo electrónico");
+		}
 	}
 
 }else{

@@ -190,15 +190,15 @@ $frases[85][$l] = 'Mi matr&iacute;cula';
 
 $frases[86][$l] = 'Donde estudiar mi carrera universitaria';
 
-$frases[87][$l] = 'G. Administrativa';
+$frases[87][$l] = 'Administrativo';
 
-$frases[88][$l] = 'G. Acad&eacute;mica';
+$frases[88][$l] = 'Acad&eacute;mico';
 
-$frases[89][$l] = 'G. Financiera';
+$frases[89][$l] = 'Financiero';
 
-$frases[90][$l] = 'G. Disciplinaria';
+$frases[90][$l] = 'Convivencia';
 
-$frases[91][$l] = 'G. Social';
+$frases[91][$l] = 'Social';
 
 $frases[92][$l] = 'Perfiles';
 
@@ -1649,3 +1649,29 @@ $frases[431][$l] = 'Press Enter To Search';
 $frases[432][$l] = 'Notifications type';
 $frases[433][$l] = 'Subscribe users';
 $frases[434][$l] = 'Attach documents';
+
+// ====================================
+// NUEVO SISTEMA DE TRADUCCIÓN MODERNO
+// ====================================
+
+// Incluir la clase Traductor
+require_once __DIR__ . '/Traductor.php';
+
+// Inicializar sistema de traducción
+// Compatible con el sistema anterior: 1=ES, 2=EN
+$idiomaUsuario = isset($datosUsuarioActual['uss_idioma']) ? $datosUsuarioActual['uss_idioma'] : 1;
+$codigoIdioma = ($idiomaUsuario == 2) ? 'EN' : 'ES';
+
+Traductor::inicializar($codigoIdioma);
+
+// En modo desarrollo, registrar pendientes automáticamente
+// Esto detectará textos sin traducir y los guardará en pendientes.json
+if (!defined('MODO_DESARROLLO')) {
+    define('MODO_DESARROLLO', true); // Cambiar a false en producción
+}
+
+if (MODO_DESARROLLO === true) {
+    Traductor::setRegistroPendientes(true);
+} else {
+    Traductor::setRegistroPendientes(false);
+}

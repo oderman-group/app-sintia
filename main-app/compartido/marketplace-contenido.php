@@ -9,7 +9,7 @@
 ?>
 <div class="row mb-2 mt-2">
 	<div class="col-sm-12">
-		<img class="img-responsive" src="../../files-general/instituciones/marketplace/marketplace1.png">
+		<img class="img-responsive" src="<?=BASE_URL;?>/files-general/instituciones/marketplace/marketplace1.png">
 	</div>
 </div>
 <!-- start course list -->
@@ -32,7 +32,7 @@
 				';
 			}
 			while ($datosConsulta = mysqli_fetch_array($serviciosConsulta, MYSQLI_BOTH)) {
-				$ruta = '../files/marketplace/productos/';
+				$ruta = BASE_URL.'/main-app/files/marketplace/productos/';
 				$foto = 'https://via.placeholder.com/510?text=Sin+Imagen';
 				if (!empty($datosConsulta['prod_foto']) && file_exists($ruta.$datosConsulta['prod_foto'])) {
 					$foto = $ruta.$datosConsulta['prod_foto'];

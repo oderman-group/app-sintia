@@ -14,6 +14,28 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Validar que el estudiante no esté en estado "En inscripción"
+if (!empty($_POST["id"])) {
+	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"]);
+	if (!empty($datosEstudianteActual) && $datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_18&message='.urlencode('No se pueden realizar modificaciones a estudiantes en estado "En inscripción"').'";</script>';
+		exit();
+	}
+	
+	// Validar cambio de estado usando el método centralizado
+	if (!empty($datosEstudianteActual) && !empty($_POST["matestM"])) {
+		$estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
+		$estadoNuevo = (int)$_POST["matestM"];
+		
+		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+		
+		if (!$validacion['valido']) {
+			echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($validacion['mensaje']).'";</script>';
+			exit();
+		}
+	}
+}
+
 require_once("../class/servicios/MediaTecnicaServicios.php");
 //COMPROBAMOS QUE TODOS LOS CAMPOS NECESARIOS ESTEN LLENOS
 if(trim($_POST["nDoc"])=="" or trim($_POST["apellido1"])=="" or trim($_POST["nombres"])==""){
@@ -47,7 +69,7 @@ if($config['conf_mostrar_pasos_matricula'] == 1){
 	";
 }
 
-if ($config['conf_id_institucion'] == ICOLVEN) {//TODO: Esto debe aplicarsele el módulo
+if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {
 	require_once("apis-sion-modify-student.php");
 }
 
@@ -55,6 +77,19 @@ $fechaNacimiento  = "";
 $fechaNacimientoU = "";
 
 if (!empty($_POST["fNac"])) {
+	// Validar que la fecha de nacimiento no sea futura ni menor de 1 año
+	$fechaTimestamp = strtotime($_POST["fNac"]);
+	if ($fechaTimestamp === false) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('Formato de fecha de nacimiento inválido').'";</script>';
+		exit();
+	}
+	
+	$fechaMinima = strtotime('-1 year');
+	if ($fechaTimestamp > $fechaMinima) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('La fecha de nacimiento no puede ser futura ni menor de 1 año').'";</script>';
+		exit();
+	}
+	
 	$fechaNacimiento  = "mat_fecha_nacimiento='" . $_POST["fNac"] . "', ";
 	$fechaNacimientoU = "uss_fecha_nacimiento='" . $_POST["fNac"] . "', ";
 }
@@ -102,18 +137,35 @@ if (!empty($_FILES['fotoMat']['name'])) {
     UsuariosPadre::actualizarUsuarios($config, $_POST["idU"], $update);
 }
 
-Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
+try {
+	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
+} catch (Exception $e) {
+	// Si hay una excepción relacionada con validación de estado, redirigir con el mensaje
+	if (strpos($e->getMessage(), 'estado') !== false || strpos($e->getMessage(), 'Matriculado') !== false || 
+	    strpos($e->getMessage(), 'Asistente') !== false || strpos($e->getMessage(), 'No matriculado') !== false) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($e->getMessage()).'";</script>';
+		exit();
+	}
+	// Para otras excepciones, re-lanzar
+	throw $e;
+}
 
+// Sincronizar campos compartidos con la tabla usuarios
 $update = [
 	'uss_fecha_nacimiento'	=> !empty($_POST["fNac"]) ? $_POST["fNac"] : NULL,
 	'uss_usuario'			=> $_POST["nDoc"],
     "uss_documento"			=> $_POST["nDoc"],
     "uss_nombre"			=> mysqli_real_escape_string($conexion, $_POST["nombres"]),
-    "uss_nombre2"			=> mysqli_real_escape_string($conexion, $_POST["nombre2"]),
+    "uss_nombre2"			=> mysqli_real_escape_string($conexion, $_POST["nombre2"] ?? ''),
     "uss_apellido1"			=> mysqli_real_escape_string($conexion, $_POST["apellido1"]),
-    "uss_apellido2"			=> mysqli_real_escape_string($conexion, $_POST["apellido2"]),
-    "uss_email"				=> strtolower($_POST["email"]),
-    "uss_tipo_documento"	=> $_POST["tipoD"]
+    "uss_apellido2"			=> mysqli_real_escape_string($conexion, $_POST["apellido2"] ?? ''),
+    "uss_email"				=> strtolower($_POST["email"] ?? ''),
+    "uss_tipo_documento"	=> $_POST["tipoD"],
+    "uss_celular"			=> $_POST["celular"] ?? '',
+    "uss_telefono"			=> $_POST["telefono"] ?? '',
+    "uss_direccion"			=> $_POST["direccion"] ?? '',
+    "uss_lugar_expedicion"	=> $_POST["lugarD"] ?? '',
+    "uss_genero"			=> $_POST["genero"] ?? ''
 ];
 
 UsuariosPadre::actualizarUsuarios($config, $_POST["idU"], $update);
@@ -154,7 +206,7 @@ if ($_POST["documentoA"]!="") {
 		UsuariosPadre::actualizarUsuarios($config, $acudiente['uss_id'], $update);
 		$idAcudiente = $acudiente['uss_id'];
 	} else {
-		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'cyan-sidebar-color', 'header-indigo', 'logo-indigo', $config['conf_id_institucion'], $_SESSION["bd"]]);
+		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 	}
 
 	$update = ['mat_acudiente' => $idAcudiente];
@@ -169,8 +221,20 @@ if ($_POST["documentoA"]!="") {
 
 	$idInsercion  =Utilidades::generateCode("UPE");
 
+	// Migrado a PDO - Consulta preparada
 	try {
-		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(upe_id, upe_id_usuario, upe_id_estudiante, institucion, year)VALUES('" .$idInsercion . "', '".$idAcudiente."', '".$_POST["id"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		$sql = "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(
+		    upe_id, upe_id_usuario, upe_id_estudiante, institucion, year
+		) VALUES (?, ?, ?, ?, ?)";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $idInsercion, PDO::PARAM_STR);
+		$stmt->bindParam(2, $idAcudiente, PDO::PARAM_STR);
+		$stmt->bindParam(3, $_POST["id"], PDO::PARAM_STR);
+		$stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}	

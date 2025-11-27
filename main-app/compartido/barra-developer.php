@@ -16,18 +16,21 @@ $datosUsuarioActual['uss_tipo'] == TIPO_DEV
   }
 ?>
   <div style="
-          position:relative;
+          position:fixed;
+          bottom: 0;
+          left: 0;
           background-color: <?=$backgroundColor;?>; 
           color:#fff; 
           height: 40px; 
           width: 100%; 
-          margin-bottom: 20px; 
           padding: 6px;
           display:flex; 
           justify-content: center; 
           align-items: center;
           font-family:Arial;
           font-size:11px;
+          z-index: 9999;
+          box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
   ">
 
 <?php 

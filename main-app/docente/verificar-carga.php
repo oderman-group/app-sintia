@@ -23,7 +23,7 @@ if (isset($_GET["get"]) && base64_decode($_GET["get"]) == 100 && is_numeric($per
 }
 
 if (!isset($_GET["carga"]) || !isset($_GET["periodo"]) || !is_numeric($periodo)) {
-	if($_COOKIE["carga"] != "" && $_COOKIE["periodo"] != "") {
+	if(!empty($_COOKIE["carga"]) && !empty($_COOKIE["periodo"])) {
 		$cargaConsultaActual   = $_COOKIE["carga"];
 		$periodoConsultaActual = $_COOKIE["periodo"];
 	} else {

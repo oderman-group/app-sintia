@@ -12,47 +12,78 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 <!--select2-->
 <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Genera el informe de sábanas. Selecciona primero el año, luego los demás filtros se cargarán automáticamente.
+</div>
+
 <div class="panel">
-    <header class="panel-heading panel-heading-purple">POR CURSO </header>
+    <header class="panel-heading panel-heading-purple">
+        <i class="fas fa-table"></i> GENERAR INFORME DE SÁBANAS
+    </header>
     <div class="panel-body">
         <form name="formularioGuardar" action="../compartido/reportes-sabanas-fast.php" method="post" target="_blank">
+            
+            <!-- PASO 1: Año -->
             <div class="form-group row">
-                <label class="col-sm-2 control-label">Curso</label>
-                <div class="col-sm-8">
-                    <select class="form-control  select2" style="width: 100%;" name="curso" required>
-                        <option value="">Seleccione una opción</option>
+                <label class="col-sm-3 control-label">
+                    <i class="fas fa-calendar"></i> Año <span class="text-danger">*</span>
+                </label>
+                <div class="col-sm-4">
+                    <select class="form-control  select2" name="year" id="yearSabana" required onchange="window.cargarCursosPorYearSabana(this.value)">
+                        <option value="">Seleccione un año</option>
                         <?php
-                        $opcionesConsulta = Grados::traerGradosInstitucion($config);
-                        while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-                            $disabled = '';
-                            if ($opcionesDatos['gra_estado'] == '0') $disabled = 'disabled';
+                        $yearStartTemp = $yearStart;
+                        while ($yearStartTemp <= $yearEnd) {
+                            $selected = ($_SESSION["bd"] == $yearStartTemp) ? 'selected' : '';
+                            echo "<option value='" . $yearStartTemp . "' $selected>" . $yearStartTemp . "</option>";
+                            $yearStartTemp++;
+                        }
                         ?>
-                            <option value="<?= $opcionesDatos['gra_id']; ?>" <?= $disabled; ?>><?= $opcionesDatos['gra_id'] . ". " . strtoupper($opcionesDatos['gra_nombre']); ?></option>
-                        <?php } ?>
                     </select>
+                </div>
+                <div class="col-sm-5">
+                    <small class="form-text text-muted"><i class="fas fa-info-circle"></i> Primero selecciona el año académico</small>
+                </div>
+            </div>
+            
+            <!-- PASO 2: Curso -->
+            <div class="form-group row">
+                <label class="col-sm-3 control-label">
+                    <i class="fas fa-school"></i> Curso <span class="text-danger">*</span>
+                </label>
+                <div class="col-sm-9">
+                    <select class="form-control  select2" name="curso" id="cursoSabana" required disabled>
+                        <option value="">Primero seleccione un año</option>
+                    </select>
+                    <div id="loadingCursosSabana" style="display: none; margin-top: 5px;">
+                        <small><i class="fas fa-spinner fa-spin"></i> Cargando cursos...</small>
+                    </div>
                 </div>
             </div>
 
+            <!-- PASO 3: Grupo -->
             <div class="form-group row">
-                <label class="col-sm-2 control-label">Grupo</label>
-                <div class="col-sm-4">
-                    <select class="form-control  select2" style="width: 100%;" name="grupo">
-                        <option value="">Seleccione una opción</option>
-                        <?php
-                        $opcionesConsulta = Grupos::listarGrupos();
-                        while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
-                        ?>
-                            <option value="<?= $opcionesDatos['gru_id']; ?>"><?= $opcionesDatos['gru_id'] . ". " . strtoupper($opcionesDatos['gru_nombre']); ?></option>
-                        <?php } ?>
+                <label class="col-sm-3 control-label">
+                    <i class="fas fa-user-friends"></i> Grupo
+                </label>
+                <div class="col-sm-9">
+                    <select class="form-control  select2" name="grupo" id="grupoSabana" disabled>
+                        <option value="">Primero seleccione un año</option>
                     </select>
+                    <div id="loadingGruposSabana" style="display: none; margin-top: 5px;">
+                        <small><i class="fas fa-spinner fa-spin"></i> Cargando grupos...</small>
+                    </div>
                 </div>
             </div>
 
-
+            <!-- PASO 4: Periodo -->
             <div class="form-group row">
-                <label class="col-sm-2 control-label">Periodo</label>
+                <label class="col-sm-3 control-label">
+                    <i class="fas fa-calendar-alt"></i> Periodo <span class="text-danger">*</span>
+                </label>
                 <div class="col-sm-4">
-                    <select class="form-control  select2" style="width: 100%;" name="per" required>
+                    <select class="form-control  select2" name="per" required>
                         <option value="">Seleccione una opción</option>
                         <?php
                         $p = 1;
@@ -66,28 +97,13 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
             </div>
 
             <div class="form-group row">
-                <label class="col-sm-2 control-label">Año</label>
-                <div class="col-sm-4">
-                    <select class="form-control  select2" style="width: 100%;" name="year" required>
-                        <option value="">Seleccione una opción</option>
-                        <?php
-                        while ($yearStart <= $yearEnd) {
-                            if ($_SESSION["bd"] == $yearStart)
-                                echo "<option value='" . $yearStart . "' selected style='color:blue;'>" . $yearStart . "</option>";
-                            else
-                                echo "<option value='" . $yearStart . "'>" . $yearStart . "</option>";
-                            $yearStart++;
-                        }
-                        ?>
-                    </select>
+                <div class="col-sm-12 text-right">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-table"></i> Generar Sábana
+                    </button>
                 </div>
             </div>
-
-            <input type="submit" class="btn btn-primary" value="Generar Sabana">&nbsp;
 
         </form>
     </div>
 </div>
-<!--select2-->
-<script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
-<script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>

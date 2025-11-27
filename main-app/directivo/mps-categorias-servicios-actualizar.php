@@ -12,8 +12,16 @@
         exit();
     }
 
+    // Migrado a PDO - Consulta preparada
     try{
-        mysqli_query($conexion, "UPDATE " . $baseDatosMarketPlace . ".servicios_categorias SET svcat_nombre='".$_POST["nombre"]."', svcat_icon='".$_POST["icon"]."' WHERE svcat_id='".$_POST["idR"]."'");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "UPDATE " . $baseDatosMarketPlace . ".servicios_categorias SET svcat_nombre=?, svcat_icon=? WHERE svcat_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["icon"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["idR"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

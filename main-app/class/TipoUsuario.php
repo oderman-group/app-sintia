@@ -35,7 +35,7 @@ class TipoUsuario {
         $tableName = BDT_GeneralPerfiles::getTableName();
 
         try {
-            $consulta = "SELECT * FROM {$baseDatosServicios}.{$tableName}";
+            $consulta = "SELECT * FROM {$baseDatosServicios}.{$tableName} WHERE pes_disponible = 1";
             $stmt = $conexionPDO->prepare($consulta);
 
             if ($stmt) {

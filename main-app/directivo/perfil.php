@@ -42,7 +42,7 @@ require_once("../class/SubRoles.php");
 
                     <div class="row">
                         
-                       <?php include("../compartido/perfil-contenido.php");?>
+                       <?php include("../compartido/perfil-contenido-v2.php");?>
 						
                     </div>
 					

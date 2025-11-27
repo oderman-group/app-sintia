@@ -1,6 +1,10 @@
 var select = document.getElementById('estudiantesSeleccionados');
 var checkboxes = document.querySelectorAll('.check');
-contarEstudiantesSeleccionados();
+
+// Inicializar contador y estado del botón al cargar la página
+document.addEventListener("DOMContentLoaded", function() {
+    contarEstudiantesSeleccionados();
+});
 
 /**
  * Esta función es para marcar o desmarcar todos los estudiantes y tambien la agrega o elimina a la seleción
@@ -107,7 +111,21 @@ function eliminarEstudiantes(idEstudiante) {
 function contarEstudiantesSeleccionados() {
     var labelCant = document.getElementById('cantSeleccionadas');
     var cantidadSeleccionadas = select.selectedOptions.length;
-    labelCant.textContent = cantidadSeleccionadas;
+    if (labelCant) {
+        labelCant.textContent = cantidadSeleccionadas;
+    }
+    
+    // Habilitar/deshabilitar botón de promoción según la cantidad de estudiantes seleccionados
+    var btnRealizarPromocion = document.getElementById('btnRealizarPromocion');
+    if (btnRealizarPromocion) {
+        if (cantidadSeleccionadas > 0) {
+            btnRealizarPromocion.disabled = false;
+            btnRealizarPromocion.classList.remove('disabled');
+        } else {
+            btnRealizarPromocion.disabled = true;
+            btnRealizarPromocion.classList.add('disabled');
+        }
+    }
 }
 
 // Función para verificar si un elemento con el ID especificado existe

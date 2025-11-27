@@ -1,8 +1,14 @@
 <?php
 include("../../config-general/config.php");
-//include("../modelo/conexion.php");
-$notificacionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_alertas WHERE alr_year='" . $_SESSION["bd"] . "' AND alr_usuario='".$_POST["usuario"]."' AND alr_vista=0 ORDER BY alr_id DESC");
-$notificacionesNumero = mysqli_num_rows($notificacionesConsulta);
+// Migrado a PDO - Consulta preparada
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+$sql = "SELECT * FROM ".$baseDatosServicios.".general_alertas WHERE alr_year=? AND alr_usuario=? AND alr_vista=0 ORDER BY alr_id DESC";
+$stmt = $conexionPDO->prepare($sql);
+$stmt->bindParam(1, $_SESSION["bd"], PDO::PARAM_INT);
+$stmt->bindParam(2, $_POST["usuario"], PDO::PARAM_STR);
+$stmt->execute();
+$notificacionesNumero = $stmt->rowCount();
 ?>
 
 							<a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
@@ -18,7 +24,7 @@ $notificacionesNumero = mysqli_num_rows($notificacionesConsulta);
                                     <ul class="dropdown-menu-list small-slimscroll-style" data-handle-color="#637283">
                                         <?php
 										$i=1;
-										while($notificacionesDatos = mysqli_fetch_array($notificacionesConsulta, MYSQLI_BOTH)){
+										while($notificacionesDatos = $stmt->fetch(PDO::FETCH_ASSOC)){
 											if($i==6) break;
 										?>
 											<li>

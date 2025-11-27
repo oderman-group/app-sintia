@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark mb-2" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark mb-2" style="background-color: #ffffff;">
 
 
   <div class="navbar-collapse" id="navbarSupportedContent">
@@ -22,7 +22,7 @@
       <li class="nav-item"> <a class="nav-link" href="#">|</a></li>
 
       <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#FFF;">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#000;">
           Filtrar por periodos
           <span class="fa fa-angle-down"></span>
         </a>
@@ -50,7 +50,7 @@
       </li>
 
       <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#FFF;">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#000;">
           Filtrar por asignaturas
           <span class="fa fa-angle-down"></span>
         </a>
@@ -82,3 +82,100 @@
 
   </div>
 </nav>
+
+<script>
+// ============================================
+// MANTENER TAB ACTIVO AL CAMBIAR FILTROS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Detectar la página actual
+    var paginaActual = window.location.pathname.split('/').pop();
+    var claveLocalStorage = '';
+    
+    if (paginaActual.includes('calificaciones.php')) {
+        claveLocalStorage = 'calificaciones_tab_activo';
+    } else if (paginaActual.includes('clases.php')) {
+        claveLocalStorage = 'clases_tab_activo';
+    }
+    
+    // Función para obtener el tab activo
+    function obtenerTabActivo() {
+        if (!claveLocalStorage) return '';
+        
+        // Primero intentar desde URL
+        var params = new URLSearchParams(window.location.search);
+        var tabURL = params.get('tab');
+        if (tabURL !== null) {
+            return tabURL;
+        }
+        
+        // Luego desde localStorage
+        var tabLocalStorage = localStorage.getItem(claveLocalStorage);
+        if (tabLocalStorage !== null) {
+            return tabLocalStorage;
+        }
+        
+        return '';
+    }
+    
+    // Agregar parámetro tab a los enlaces de filtros
+    setTimeout(function() {
+        var tabActivo = obtenerTabActivo();
+        
+        // Modificar enlaces de periodos
+        document.querySelectorAll('.dropdown-menu a[href*="periodo="]').forEach(function(link) {
+            var hrefOriginal = link.getAttribute('href');
+            
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                var tabActivoActual = obtenerTabActivo();
+                var newHref = hrefOriginal;
+                
+                // Agregar parámetro tab si existe y no está ya en el href
+                if (tabActivoActual && !newHref.includes('&tab=') && !newHref.includes('?tab=')) {
+                    var separator = newHref.includes('?') ? '&' : '?';
+                    newHref = hrefOriginal + separator + 'tab=' + tabActivoActual;
+                } else if (tabActivoActual && newHref.includes('tab=')) {
+                    // Reemplazar tab existente
+                    newHref = newHref.replace(/[?&]tab=\d+/, '');
+                    var separator = newHref.includes('?') ? '&' : '?';
+                    newHref = newHref + separator + 'tab=' + tabActivoActual;
+                }
+                
+                window.location.href = newHref;
+            });
+        });
+        
+        // Modificar enlaces de asignaturas
+        document.querySelectorAll('.dropdown-menu a[href*="carga="]').forEach(function(link) {
+            var hrefOriginal = link.getAttribute('href');
+            
+            // Solo modificar si no es un enlace de periodo (ya tiene periodo=)
+            if (hrefOriginal.includes('periodo=')) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    var tabActivoActual = obtenerTabActivo();
+                    var newHref = hrefOriginal;
+                    
+                    // Agregar parámetro tab si existe y no está ya en el href
+                    if (tabActivoActual && !newHref.includes('&tab=') && !newHref.includes('?tab=')) {
+                        var separator = newHref.includes('?') ? '&' : '?';
+                        newHref = hrefOriginal + separator + 'tab=' + tabActivoActual;
+                    } else if (tabActivoActual && newHref.includes('tab=')) {
+                        // Reemplazar tab existente
+                        newHref = newHref.replace(/[?&]tab=\d+/, '');
+                        var separator = newHref.includes('?') ? '&' : '?';
+                        newHref = newHref + separator + 'tab=' + tabActivoActual;
+                    }
+                    
+                    window.location.href = newHref;
+                });
+            }
+        });
+        
+        console.log('✅ Filtros configurados para mantener tab activo:', claveLocalStorage);
+    }, 300);
+});
+</script>

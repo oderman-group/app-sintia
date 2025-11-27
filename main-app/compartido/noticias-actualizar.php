@@ -14,6 +14,10 @@ $destinatarios=!empty($_POST["destinatarios"]) ? implode(',',$_POST["destinatari
 $global=!empty($_POST["global"]) ? $_POST["global"] : "NO";
 $video2=!empty($_POST["video2"]) ? $_POST["video2"] : "";
 
+// Migrado a PDO - Consultas preparadas para archivos
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+
 if (!empty($_FILES['imagen']['name'])) {
     $archivoSubido->validarArchivo($_FILES['imagen']['size'], $_FILES['imagen']['name']);
     $explode=explode(".", $_FILES['imagen']['name']);
@@ -25,7 +29,11 @@ if (!empty($_FILES['imagen']['name'])) {
 	$storage->getBucket()->upload(fopen($localFilePath, 'r'), ['name' => $cloudFilePath	]);
     // move_uploaded_file($_FILES['imagen']['tmp_name'], $destino . "/" . $imagen);
     try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_imagen='" . $imagen . "' WHERE not_id='" . $_POST["idR"] . "'");
+        $sql = "UPDATE ".$baseDatosServicios.".social_noticias SET not_imagen=? WHERE not_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $imagen, PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["idR"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
@@ -41,7 +49,11 @@ if (!empty($_FILES['archivo']['name'])) {
 	$storage->getBucket()->upload(fopen($localFilePath, 'r'), ['name' => $cloudFilePath	]);
     // move_uploaded_file($_FILES['archivo']['tmp_name'], $destino . "/" . $archivo);
     try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_archivo='" . $archivo . "' WHERE not_id='" . $_POST["idR"] . "'");
+        $sql = "UPDATE ".$baseDatosServicios.".social_noticias SET not_archivo=? WHERE not_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $archivo, PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["idR"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
@@ -51,27 +63,58 @@ $findme   = '?v=';
 $pos = strpos($_POST["video"], $findme) + 3;
 $video = substr($_POST["video"], $pos, 11);
 $notificar=!empty($_POST["notificar"]) ? 1 : 0;
+
+// Migrado a PDO - Actualización de noticia
 try{
-    mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_noticias SET not_titulo='" . mysqli_real_escape_string($conexion,$_POST["titulo"]) . "', not_descripcion='" . mysqli_real_escape_string($conexion,$_POST["contenido"]) . "',  not_keywords='" . mysqli_real_escape_string($conexion,$_POST["keyw"]) . "', not_url_imagen='" . mysqli_real_escape_string($conexion,$_POST["urlImagen"]) . "', not_video='" . $video . "', not_id_categoria_general='" . $_POST["categoriaGeneral"] . "', not_video_url='" . $_POST["video"] . "', not_para='" . $destinatarios . "', not_global='" . $global . "', not_enlace_video2='" . $video2 . "', not_descripcion_pie='" . mysqli_real_escape_string($conexion,$_POST["contenidoPie"]) . "',not_notificar='".$notificar."' WHERE not_id='" . $_POST["idR"] . "'");
+    $sql = "UPDATE ".$baseDatosServicios.".social_noticias SET 
+            not_titulo=?, not_descripcion=?, not_keywords=?, not_url_imagen=?, 
+            not_video=?, not_id_categoria_general=?, not_video_url=?, not_para=?, 
+            not_global=?, not_enlace_video2=?, not_descripcion_pie=?, not_notificar=? 
+            WHERE not_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $_POST["titulo"], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_POST["contenido"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $_POST["keyw"], PDO::PARAM_STR);
+    $stmt->bindParam(4, $_POST["urlImagen"], PDO::PARAM_STR);
+    $stmt->bindParam(5, $video, PDO::PARAM_STR);
+    $stmt->bindParam(6, $_POST["categoriaGeneral"], PDO::PARAM_STR);
+    $stmt->bindParam(7, $_POST["video"], PDO::PARAM_STR);
+    $stmt->bindParam(8, $destinatarios, PDO::PARAM_STR);
+    $stmt->bindParam(9, $global, PDO::PARAM_STR);
+    $stmt->bindParam(10, $video2, PDO::PARAM_STR);
+    $stmt->bindParam(11, $_POST["contenidoPie"], PDO::PARAM_STR);
+    $stmt->bindParam(12, $notificar, PDO::PARAM_INT);
+    $stmt->bindParam(13, $_POST["idR"], PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
 
 try{
-    mysqli_query($conexion, "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia='" . $_POST["idR"] . "'");
+    $sqlDelete = "DELETE FROM ".$baseDatosServicios.".social_noticias_cursos WHERE notpc_noticia=?";
+    $stmtDelete = $conexionPDO->prepare($sqlDelete);
+    $stmtDelete->bindParam(1, $_POST["idR"], PDO::PARAM_STR);
+    $stmtDelete->execute();
 } catch (Exception $e) {
     include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
 }
+
 if(!empty($_POST["cursos"])){
-    $cont = count($_POST["cursos"]);
-    $i = 0;
-    while ($i < $cont) {
+    $sqlInsert = "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(
+        notpc_noticia, notpc_curso, notpc_institucion, notpc_year
+    ) VALUES (?, ?, ?, ?)";
+    $stmtInsert = $conexionPDO->prepare($sqlInsert);
+    
+    foreach ($_POST["cursos"] as $curso) {
         try{
-            mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".social_noticias_cursos(notpc_noticia, notpc_curso, notpc_institucion, notpc_year)VALUES('" . $_POST["idR"] . "','" . $_POST["cursos"][$i] . "','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "')");
+            $stmtInsert->bindParam(1, $_POST["idR"], PDO::PARAM_STR);
+            $stmtInsert->bindParam(2, $curso, PDO::PARAM_STR);
+            $stmtInsert->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtInsert->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtInsert->execute();
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }
-        $i++;
     }
 }
 

@@ -5,10 +5,11 @@ require_once(ROOT_PATH."/main-app/class/Tables/BDT_codigo_verificacion.php");
 
 class Notificacion {
 
-    public const CANAL_SMS   = 'SMS';
-    public const CANAL_EMAIL = 'EMAIL';
+    public const CANAL_SMS      = 'SMS';
+    public const CANAL_EMAIL    = 'EMAIL';
+    public const CANAL_WHATSAPP = 'WHATSAPP';
 
-    public const CANALES_VALIDOS = [self::CANAL_SMS, self::CANAL_EMAIL];
+    public const CANALES_VALIDOS = [self::CANAL_SMS, self::CANAL_EMAIL, self::CANAL_WHATSAPP];
 
     public const PROCESO_RECUPERAR_CLAVE = 'RECUPERAR_CLAVE';
     public const PROCESO_ACTIVAR_CUENTA  = 'ACTIVAR_CUENTA';
@@ -64,9 +65,20 @@ class Notificacion {
 
         switch ($canal) {
             case self::CANAL_SMS:
+                // Validar que la institución tenga el módulo SMS activo
+                require_once(ROOT_PATH . "/main-app/class/Modulos.php");
+                if (!Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SMS)) {
+                    throw new Exception("El módulo SMS no está activo para esta institución");
+                }
                 $sms = new Sms();
                 $data['mensaje'] = $mensaje;
                 $sms->enviarSms($data);
+                break;
+
+            case self::CANAL_WHATSAPP:
+                $sms = new Sms();
+                $data['mensaje'] = $mensaje;
+                $sms->enviarWhatsApp($data);
                 break;
 
             case self::CANAL_EMAIL:
@@ -74,7 +86,8 @@ class Notificacion {
                 $bodyTemplateRoute = $data['body_template_route'];
                 $data['codigo']    = $codigo; // Añadir el código al array de datos para el template de email.
 
-                EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+                // Enviar inmediatamente (códigos de verificación expiran en 10 minutos)
+                EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null, true);
                 break;
         }
 

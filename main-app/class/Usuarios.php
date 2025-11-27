@@ -278,6 +278,10 @@ class Usuarios {
             AND   mat.mat_eliminado     = 0
             AND   mat.mat_id_usuario    = us.uss_id
 
+            LEFT JOIN " . BD_ADMIN . ".opciones_generales ogen_genero
+            ON    ogen_genero.ogen_id   = us.uss_genero
+            AND   ogen_genero.ogen_grupo = 4
+
             WHERE us.institucion = ?
             AND us.year          = ?
             AND us.uss_id       != '".$_SESSION["id"]."'

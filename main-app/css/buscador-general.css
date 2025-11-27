@@ -1,0 +1,384 @@
+/**
+ * Estilos del Buscador General
+ * Sistema de búsqueda en tiempo real con UI/UX moderno
+ */
+
+/* Contenedor principal del buscador - mantiene estilos originales */
+#buscador-general-container {
+    position: relative;
+}
+
+/* No alteramos el input original, solo agregamos transición suave */
+#buscador-general-input {
+    transition: box-shadow 0.3s ease;
+}
+
+#buscador-general-input:focus {
+    box-shadow: 0 2px 12px rgba(79, 172, 254, 0.15);
+}
+
+/* Contenedor de resultados */
+#buscador-resultados {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    min-width: 500px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 10000;
+    display: none;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Asegurar que el dropdown no afecte otros elementos */
+#buscador-resultados {
+    pointer-events: auto;
+}
+
+#buscador-resultados.hidden {
+    pointer-events: none;
+}
+
+/* Scrollbar personalizado */
+#buscador-resultados::-webkit-scrollbar {
+    width: 8px;
+}
+
+#buscador-resultados::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#buscador-resultados::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+#buscador-resultados::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Categorías de resultados */
+.search-category {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.search-category:last-child {
+    border-bottom: none;
+}
+
+.search-category-header {
+    display: flex;
+    align-items: center;
+    padding: 0 20px 12px;
+    color: #333;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.search-category-header i {
+    margin-right: 10px;
+    font-size: 16px;
+    color: #4facfe;
+}
+
+.search-category-count {
+    margin-left: auto;
+    background: #f0f0f0;
+    color: #666;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.search-category-items {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Items de resultados */
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.search-result-item:hover {
+    background: linear-gradient(90deg, rgba(79, 172, 254, 0.08) 0%, rgba(79, 172, 254, 0.02) 100%);
+    border-left-color: #4facfe;
+}
+
+.search-result-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 14px;
+    flex-shrink: 0;
+    border: 2px solid #f0f0f0;
+}
+
+.search-result-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.search-result-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-result-icon i {
+    color: white;
+    font-size: 18px;
+}
+
+.search-result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.search-result-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-result-title mark {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.search-result-meta {
+    font-size: 12px;
+    color: #999;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.search-result-meta .badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.search-result-meta .badge-sm {
+    font-size: 10px;
+}
+
+.search-result-arrow {
+    color: #ccc;
+    margin-left: 12px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.search-result-item:hover .search-result-arrow {
+    color: #4facfe;
+    transform: translateX(4px);
+}
+
+/* Estados especiales */
+.search-loading,
+.search-no-results,
+.search-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.search-loading {
+    color: #4facfe;
+}
+
+.search-no-results {
+    color: #999;
+}
+
+.search-error {
+    color: #ff6b6b;
+}
+
+.search-loading p,
+.search-no-results p,
+.search-error p {
+    font-size: 15px;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
+.search-no-results small,
+.search-error small {
+    font-size: 13px;
+    margin-top: 6px;
+    display: block;
+}
+
+/* Spinner de carga */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Badges */
+.badge-success {
+    background-color: #43e97b;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #buscador-resultados {
+        max-height: 60vh;
+        left: -20px;
+        min-width: 320px;
+        width: calc(100vw - 40px);
+    }
+    
+    .search-result-item {
+        padding: 10px 15px;
+    }
+    
+    .search-result-avatar,
+    .search-result-icon {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+    }
+    
+    .search-result-title {
+        font-size: 13px;
+    }
+    
+    .search-result-meta {
+        font-size: 11px;
+    }
+}
+
+/* Adaptación para el header existente */
+.search-form-opened {
+    position: relative;
+}
+
+.search-form-opened .input-group {
+    position: relative;
+}
+
+/* Mantener el botón de submit visible */
+.search-form-opened .input-group-btn {
+    /* Se mantiene visible para diseño original */
+}
+
+/* Ajustes para el tema oscuro (si existe) */
+@media (prefers-color-scheme: dark) {
+    #buscador-general-input {
+        background: #2c3e50;
+        color: #ecf0f1;
+        border-color: #34495e;
+    }
+    
+    #buscador-resultados {
+        background: #2c3e50;
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+    }
+    
+    .search-category {
+        border-bottom-color: #34495e;
+    }
+    
+    .search-category-header {
+        color: #ecf0f1;
+    }
+    
+    .search-result-item {
+        color: #ecf0f1;
+    }
+    
+    .search-result-item:hover {
+        background: rgba(79, 172, 254, 0.15);
+    }
+    
+    .search-result-title {
+        color: #ecf0f1;
+    }
+}
+
+/* Animaciones adicionales */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.search-category-items .search-result-item {
+    animation: fadeIn 0.3s ease;
+}
+
+.search-category-items .search-result-item:nth-child(1) { animation-delay: 0.05s; }
+.search-category-items .search-result-item:nth-child(2) { animation-delay: 0.1s; }
+.search-category-items .search-result-item:nth-child(3) { animation-delay: 0.15s; }
+.search-category-items .search-result-item:nth-child(4) { animation-delay: 0.2s; }
+.search-category-items .search-result-item:nth-child(5) { animation-delay: 0.25s; }
+

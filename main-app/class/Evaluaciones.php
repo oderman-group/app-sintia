@@ -406,6 +406,45 @@ class Evaluaciones extends BindSQL{
     }
 
     /**
+     * Este metodo trae todos los tiempos de evaluación de todos los estudiantes
+     * en una sola consulta, organizados en un mapa [id_estudiante] => datos
+     * 
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idEvaluacion
+     * 
+     * @return array $mapa Mapa [id_estudiante] => [epe_inicio, epe_fin, minutos, segundos]
+     */
+    public static function traerTiemposEvaluacionMapa(mysqli $conexion, array $config, string $idEvaluacion): array {
+        $sql = "SELECT 
+                    epe_id_estudiante,
+                    epe_inicio,
+                    epe_fin,
+                    MOD(TIMESTAMPDIFF(MINUTE, epe_inicio, epe_fin), 60) AS minutos,
+                    MOD(TIMESTAMPDIFF(SECOND, epe_inicio, epe_fin), 60) AS segundos
+                FROM " . BD_ACADEMICA . ".academico_actividad_evaluaciones_estudiantes 
+                WHERE epe_id_evaluacion = ?
+                AND institucion = ?
+                AND year = ?";
+
+        $parametros = [$idEvaluacion, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $mapa[$fila['epe_id_estudiante']] = [
+                'epe_inicio' => $fila['epe_inicio'],
+                'epe_fin' => $fila['epe_fin'],
+                2 => $fila['minutos'],
+                3 => $fila['segundos']
+            ];
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo me actualiza el estado de un estudiante al terminar la evaluación
      * @param mysqli $conexion
      * @param array $config
@@ -694,6 +733,71 @@ class Evaluaciones extends BindSQL{
     }
 
     /**
+     * Este metodo trae todos los conteos de preguntas de todos los estudiantes
+     * en una sola consulta, organizados en un mapa [id_estudiante] => datos
+     * 
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idEvaluacion
+     * 
+     * @return array $mapa Mapa [id_estudiante] => [total_puntos, puntos_obtenidos, preguntas_correctas]
+     */
+    public static function traerConteosPreguntasMapa(mysqli $conexion, array $config, string $idEvaluacion): array {
+        // Primero obtener el total de puntos de la evaluación (es el mismo para todos)
+        $sqlTotal = "SELECT COALESCE(SUM(preg_valor), 0) AS total_puntos
+                     FROM " . BD_ACADEMICA . ".academico_actividad_preguntas preg
+                     INNER JOIN " . BD_ACADEMICA . ".academico_actividad_evaluacion_preguntas aca_eva_pre 
+                         ON aca_eva_pre.evp_id_pregunta = preg.preg_id 
+                         AND aca_eva_pre.evp_id_evaluacion = ?
+                         AND aca_eva_pre.institucion = preg.institucion 
+                         AND aca_eva_pre.year = preg.year
+                     WHERE preg.institucion = ? AND preg.year = ?";
+        
+        $parametrosTotal = [$idEvaluacion, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $resultadoTotal = BindSQL::prepararSQL($sqlTotal, $parametrosTotal);
+        $filaTotal = mysqli_fetch_array($resultadoTotal, MYSQLI_BOTH);
+        $totalPuntos = (float)($filaTotal['total_puntos'] ?? 0);
+
+        // Ahora obtener los puntos obtenidos y preguntas correctas por estudiante
+        $sql = "SELECT 
+                    res.res_id_estudiante,
+                    COALESCE(SUM(preg.preg_valor), 0) AS puntos_obtenidos,
+                    COUNT(DISTINCT preg.preg_id) AS preguntas_correctas
+                FROM " . BD_ACADEMICA . ".academico_actividad_evaluaciones_resultados res
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividad_preguntas preg 
+                    ON preg.preg_id = res.res_id_pregunta
+                    AND preg.institucion = res.institucion
+                    AND preg.year = res.year
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividad_respuestas resp 
+                    ON resp.resp_id = res.res_id_respuesta 
+                    AND resp.resp_correcta = 1
+                    AND resp.institucion = res.institucion
+                    AND resp.year = res.year
+                WHERE res.res_id_evaluacion = ?
+                AND res.institucion = ?
+                AND res.year = ?
+                GROUP BY res.res_id_estudiante";
+
+        $parametros = [$idEvaluacion, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $mapa[$fila['res_id_estudiante']] = [
+                0 => $totalPuntos, // Total de puntos de la evaluación
+                1 => (float)$fila['puntos_obtenidos'], // Puntos obtenidos
+                2 => (int)$fila['preguntas_correctas'] // Preguntas correctas
+            ];
+        }
+
+        // Para estudiantes que no tienen resultados, agregar entrada con total_puntos y 0 en el resto
+        // Esto se manejará en el código que usa el mapa con el operador ??
+
+        return $mapa;
+    }
+
+    /**
      * Este metodo guarda una pregunta
      * @param mysqli $conexion
      * @param array $config
@@ -842,6 +946,56 @@ class Evaluaciones extends BindSQL{
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
+    }
+
+    /**
+     * Este metodo trae todas las respuestas de todas las preguntas de una evaluación
+     * en una sola consulta, organizadas en un mapa [id_pregunta] => [array de respuestas]
+     * 
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idEvaluacion
+     * 
+     * @return array $mapa Mapa [id_pregunta] => [array de respuestas]
+     */
+    public static function traerRespuestasEvaluacionMapa(mysqli $conexion, array $config, string $idEvaluacion): array {
+        $sql = "SELECT resp.* 
+                FROM " . BD_ACADEMICA . ".academico_actividad_respuestas resp
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividad_preguntas preg 
+                    ON preg.preg_id = resp.resp_id_pregunta
+                    AND preg.institucion = ?
+                    AND preg.year = ?
+                INNER JOIN " . BD_ACADEMICA . ".academico_actividad_evaluacion_preguntas aca_eva_pre
+                    ON aca_eva_pre.evp_id_pregunta = preg.preg_id
+                    AND aca_eva_pre.evp_id_evaluacion = ?
+                    AND aca_eva_pre.institucion = ?
+                    AND aca_eva_pre.year = ?
+                WHERE resp.institucion = ?
+                AND resp.year = ?
+                ORDER BY resp.resp_id_pregunta, resp.resp_id";
+
+        $parametros = [
+            $config['conf_id_institucion'],
+            $_SESSION["bd"],
+            $idEvaluacion,
+            $config['conf_id_institucion'],
+            $_SESSION["bd"],
+            $config['conf_id_institucion'],
+            $_SESSION["bd"]
+        ];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $idPregunta = $fila['resp_id_pregunta'];
+            if (!isset($mapa[$idPregunta])) {
+                $mapa[$idPregunta] = [];
+            }
+            $mapa[$idPregunta][] = $fila;
+        }
+
+        return $mapa;
     }
 
     /**

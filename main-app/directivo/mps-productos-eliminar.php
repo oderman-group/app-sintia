@@ -5,8 +5,15 @@ Modulos::validarAccesoDirectoPaginas();
 $idPaginaInterna = 'DV0066';
 include("../compartido/historial-acciones-guardar.php");
 
+// Migrado a PDO - Consulta preparada
 try{
-    mysqli_query($conexion, "UPDATE " . $baseDatosMarketPlace . ".productos SET prod_estado=1 WHERE prod_id='".base64_decode($_GET["idR"])."'");
+    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+    $conexionPDO = Conexion::newConnection('PDO');
+    $idProducto = base64_decode($_GET["idR"]);
+    $sql = "UPDATE " . $baseDatosMarketPlace . ".productos SET prod_estado=1 WHERE prod_id=?";
+    $stmt = $conexionPDO->prepare($sql);
+    $stmt->bindParam(1, $idProducto, PDO::PARAM_STR);
+    $stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

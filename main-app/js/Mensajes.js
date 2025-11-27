@@ -53,15 +53,18 @@ function enviarMensajes(year, institucion, emisor, nombreEmisor) {
 
     // Enviar un mensaje para cada receptor
     receptores.forEach(function (receptor) {
-        // Emitir el evento para enviar el mensaje de correo al servidor
-        socket.emit("enviar_mensaje_correo", {
-            year: year,
-            institucion: institucion,
-            emisor: emisor,
-            nombreEmisor: nombreEmisor,
-            asunto: asunto,
-            contenido: contenido,
-            receptor: receptor
-        });
+        // 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+        if (typeof socket !== 'undefined') {
+            // Emitir el evento para enviar el mensaje de correo al servidor
+            socket.emit("enviar_mensaje_correo", {
+                year: year,
+                institucion: institucion,
+                emisor: emisor,
+                nombreEmisor: nombreEmisor,
+                asunto: asunto,
+                contenido: contenido,
+                receptor: receptor
+            });
+        }
     });
 }

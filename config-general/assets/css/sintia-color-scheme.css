@@ -1,0 +1,268 @@
+/*
+ * Sintia Color Scheme - Regla 60-30-10
+ * 60% Blanco - Fondos principales
+ * 30% #41c4c4 - Color secundario (cian/turquesa)
+ * 10% #6017dc - Color de acento (púrpura)
+ */
+
+:root {
+  /* Colores principales */
+  --sintia-primary-bg: #ffffff;        /* 60% - Fondos principales */
+  --sintia-secondary: #41c4c4;         /* 30% - Color secundario */
+  --sintia-accent: #6017dc;           /* 10% - Color de acento */
+  
+  /* Fuente principal */
+  --sintia-font-family: "Satoshi", sans-serif;
+  
+  /* Colores de texto */
+  --sintia-text-primary: #333333;
+  --sintia-text-secondary: #666666;
+  --sintia-text-muted: #999999;
+  
+  /* Colores de fondo */
+  --sintia-bg-light: #f8f9fa;
+  --sintia-bg-hover: #f4f6f9;
+  --sintia-bg-active: #e8f4f8;
+  
+  /* Bordes */
+  --sintia-border: #e9ecef;
+  --sintia-border-light: #f1f3f4;
+}
+
+/* Aplicar colores a elementos principales */
+body {
+  background-color: var(--sintia-primary-bg);
+  color: var(--sintia-text-primary);
+}
+
+/* Sidebar - Usar color secundario para elementos activos */
+.sidemenu-container {
+  background-color: var(--sintia-primary-bg);
+}
+
+.sidemenu-container .sidemenu>li.active>a,
+.sidemenu-container .sidemenu>li.active.open>a {
+  background-color: var(--sintia-bg-active);
+  color: var(--sintia-secondary);
+}
+
+.sidemenu-container .sidemenu>li:hover>a {
+  background-color: var(--sintia-bg-hover);
+  color: var(--sintia-secondary);
+}
+
+.sidemenu-container .sidemenu>li>a>i,
+.sidemenu-container .sidemenu>li.active>a>i {
+  color: var(--sintia-secondary);
+}
+
+/* Header - Usar color de acento para elementos activos */
+.page-header.navbar {
+  background-color: var(--sintia-accent);
+}
+
+.page-header.navbar .hor-menu .navbar-nav>li.active>a,
+.page-header.navbar .hor-menu .navbar-nav>li.current>a {
+  color: var(--sintia-primary-bg);
+}
+
+/* Botones principales */
+.btn-primary {
+  background-color: var(--sintia-secondary);
+  border-color: var(--sintia-secondary);
+  color: var(--sintia-primary-bg);
+}
+
+.btn-primary:hover {
+  background-color: #34a3bc;
+  border-color: #34a3bc;
+}
+
+.btn-secondary {
+  background-color: var(--sintia-accent);
+  border-color: var(--sintia-accent);
+  color: var(--sintia-primary-bg);
+}
+
+.btn-secondary:hover {
+  background-color: #4d0fa8;
+  border-color: #4d0fa8;
+}
+
+/* Enlaces */
+a {
+  color: var(--sintia-secondary);
+}
+
+a:hover {
+  color: var(--sintia-accent);
+}
+
+/* Tablas */
+.table-striped>tbody>tr:nth-of-type(odd)>td,
+.table-striped>tbody>tr:nth-of-type(odd)>th {
+  background-color: var(--sintia-bg-light);
+}
+
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th {
+  background-color: var(--sintia-bg-hover);
+}
+
+/* Formularios */
+.form-control:focus {
+  border-color: var(--sintia-secondary);
+  box-shadow: 0 0 0 0.2rem rgba(65, 196, 196, 0.25);
+}
+
+/* Cards */
+.card {
+  background-color: var(--sintia-primary-bg);
+  border: 1px solid var(--sintia-border);
+}
+
+.card-header {
+  background-color: var(--sintia-bg-light);
+  border-bottom: 1px solid var(--sintia-border);
+}
+
+/* Alertas */
+.alert-info {
+  background-color: rgba(65, 196, 196, 0.1);
+  border-color: var(--sintia-secondary);
+  color: #0c5460;
+}
+
+.alert-warning {
+  background-color: rgba(96, 23, 220, 0.1);
+  border-color: var(--sintia-accent);
+  color: #4a0d7a;
+}
+
+/* Badges */
+.badge-primary {
+  background-color: var(--sintia-secondary);
+}
+
+.badge-secondary {
+  background-color: var(--sintia-accent);
+}
+
+/* Progress bars */
+.progress-bar {
+  background-color: var(--sintia-secondary);
+}
+
+/* Pagination */
+.pagination .page-link {
+  color: var(--sintia-secondary);
+  border-color: var(--sintia-border);
+}
+
+.pagination .page-link:hover {
+  color: var(--sintia-accent);
+  background-color: var(--sintia-bg-hover);
+  border-color: var(--sintia-border);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--sintia-secondary);
+  border-color: var(--sintia-secondary);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  background-color: var(--sintia-primary-bg);
+  border: 1px solid var(--sintia-border);
+}
+
+.dropdown-item:hover {
+  background-color: var(--sintia-bg-hover);
+  color: var(--sintia-secondary);
+}
+
+.dropdown-item.active {
+  background-color: var(--sintia-secondary);
+  color: var(--sintia-primary-bg);
+}
+
+/* Modales */
+.modal-header {
+  background-color: var(--sintia-bg-light);
+  border-bottom: 1px solid var(--sintia-border);
+}
+
+.modal-footer {
+  background-color: var(--sintia-bg-light);
+  border-top: 1px solid var(--sintia-border);
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link {
+  color: var(--sintia-text-secondary);
+  border-color: var(--sintia-border);
+}
+
+.nav-tabs .nav-link:hover {
+  color: var(--sintia-secondary);
+  border-color: var(--sintia-border);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--sintia-secondary);
+  background-color: var(--sintia-primary-bg);
+  border-color: var(--sintia-border) var(--sintia-border) var(--sintia-primary-bg);
+}
+
+/* Scrollbars personalizados */
+::-webkit-scrollbar-thumb {
+  background-color: var(--sintia-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sintia-accent);
+}
+
+/* Estados de carga */
+.loading {
+  border-color: var(--sintia-secondary);
+}
+
+/* Iconos */
+.icon-primary {
+  color: var(--sintia-secondary);
+}
+
+.icon-accent {
+  color: var(--sintia-accent);
+}
+
+/* Utilidades de color */
+.text-primary-sintia {
+  color: var(--sintia-secondary) !important;
+}
+
+.text-accent-sintia {
+  color: var(--sintia-accent) !important;
+}
+
+.bg-primary-sintia {
+  background-color: var(--sintia-secondary) !important;
+}
+
+.bg-accent-sintia {
+  background-color: var(--sintia-accent) !important;
+}
+
+.border-primary-sintia {
+  border-color: var(--sintia-secondary) !important;
+}
+
+.border-accent-sintia {
+  border-color: var(--sintia-accent) !important;
+}
+
+/* Aplicar fuente Satoshi globalmente */
+body, html, * {
+  font-family: var(--sintia-font-family) !important;
+}

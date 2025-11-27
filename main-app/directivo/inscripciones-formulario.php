@@ -204,13 +204,35 @@ $procesoAnterior = [
                                                 </div>
                                                 <div class="form-group col-md-4">
                                                     <label>Lugar de expedición <span style="color:red;">(*)</span></label>
-                                                    <input type="text" class="form-control" name="LugarExp" value="<?= $datos['mat_lugar_expedicion']; ?>" required>
+                                                    <select class="form-control select2" name="LugarExp" required>
+                                                        <option value="">Seleccione una ciudad</option>
+                                                        <?php
+                                                        $ciudadesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                                        INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                                        ORDER BY ciu_nombre ASC
+                                                        ");
+                                                        while($ciudad = mysqli_fetch_array($ciudadesConsulta, MYSQLI_BOTH)){
+                                                        ?>
+                                                        <option value="<?=$ciudad['ciu_id'];?>" <?php if($ciudad['ciu_id']==$datos['mat_lugar_expedicion']){echo "selected";}?>><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+                                                        <?php }?>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group row">
                                                 <div class="form-group col-md-6">
                                                     <label>Lugar de nacimiento <span style="color:red;">(*)</span></label>
-                                                    <input type="text" class="form-control" name="LugarNacimiento" value="<?= $datos['mat_lugar_nacimiento']; ?>" required>
+                                                    <select class="form-control select2" name="LugarNacimiento" required>
+                                                        <option value="">Seleccione una ciudad</option>
+                                                        <?php
+                                                        $ciudadesConsulta2 = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                                        INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                                        ORDER BY ciu_nombre ASC
+                                                        ");
+                                                        while($ciudad2 = mysqli_fetch_array($ciudadesConsulta2, MYSQLI_BOTH)){
+                                                        ?>
+                                                        <option value="<?=$ciudad2['ciu_id'];?>" <?php if($ciudad2['ciu_id']==$datos['mat_lugar_nacimiento']){echo "selected";}?>><?=$ciudad2['ciu_nombre'].", ".$ciudad2['dep_nombre'];?></option>
+                                                        <?php }?>
+                                                    </select>
                                                 </div>
                                                 <div class="form-group col-md-6">
                                                     <label>Fecha de Nacimiento <span style="color:red;">(*)</span></label>
@@ -279,7 +301,18 @@ $procesoAnterior = [
                                                 </div>
                                                 <div class="form-group col-md-4">
                                                     <label>Municipio <span style="color:red;">(*)</span></label>
-                                                    <input type="text" class="form-control" name="municipio" value="<?= $datos['mat_ciudad_actual']; ?>" required>
+                                                    <select class="form-control select2" name="municipio" required>
+                                                        <option value="">Seleccione una ciudad</option>
+                                                        <?php
+                                                        $ciudadesConsulta3 = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".localidad_ciudades
+                                                        INNER JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+                                                        ORDER BY ciu_nombre ASC
+                                                        ");
+                                                        while($ciudad3 = mysqli_fetch_array($ciudadesConsulta3, MYSQLI_BOTH)){
+                                                        ?>
+                                                        <option value="<?=$ciudad3['ciu_id'];?>" <?php if($ciudad3['ciu_id']==$datos['mat_ciudad_actual']){echo "selected";}?>><?=$ciudad3['ciu_nombre'].", ".$ciudad3['dep_nombre'];?></option>
+                                                        <?php }?>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group row">

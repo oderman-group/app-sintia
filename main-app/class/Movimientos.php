@@ -370,27 +370,150 @@ class Movimientos {
         array $FILES
     )
     {
-
-        $comprobante= '';
-
-        if (!empty($FILES['comprobante']['name'])) {
-            $destino = ROOT_PATH.'/main-app/files/comprobantes';
-            $explode = explode(".", $FILES['comprobante']['name']);
-            $extension = end($explode);
-            $comprobante= uniqid('abono_'.$POST["cliente"].'_') . "." . $extension;
-            @unlink($destino . "/" . $comprobante);
-            move_uploaded_file($FILES['comprobante']['tmp_name'], $destino . "/" . $comprobante);
-        }
-
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
         try {
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".payments (responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, institucion, year)VALUES('{$_SESSION["id"]}', '".$POST["cliente"]."', '".$POST["codigoUnico"]."', '".$POST["tipoTransaccion"]."', '".$POST["metodoPago"]."', '".$POST["obser"]."', '".$comprobante."', '".$POST["notas"]."', {$config['conf_id_institucion']}, {$_SESSION["bd"]});");
+            $conexionPDO->beginTransaction();
+            
+            // Generar código único para este abono
+            $codigoAbonoFinal = Utilidades::generateCode("ABO");
+            
+            $comprobante = '';
+            if (!empty($FILES['comprobante']['name'])) {
+                $destino = ROOT_PATH.'/main-app/files/comprobantes';
+                if (!file_exists($destino)) {
+                    @mkdir($destino, 0777, true);
+                }
+                $explode = explode(".", $FILES['comprobante']['name']);
+                $extension = end($explode);
+                $comprobante = uniqid('abono_'.$POST["cliente"].'_') . "." . $extension;
+                move_uploaded_file($FILES['comprobante']['tmp_name'], $destino . "/" . $comprobante);
+            }
+
+            // Preparar fecha
+            $fechaRegistro = date('Y-m-d H:i:s');
+            if (!empty($POST["fecha"])) {
+                $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
+                if ($fecha !== false) {
+                    $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+                } else {
+                    $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
+                    if ($fecha !== false) {
+                        $fechaRegistro = $fecha->format('Y-m-d H:i:s');
+                    }
+                }
+            }
+            
+            $tipoTransaccion = trim($POST["tipoTransaccion"] ?? '');
+            
+            // PROCESAR ABONOS A FACTURAS (TIPO INVOICE)
+            // Buscar en el POST todos los campos que empiecen con "abono_factura["
+            $abonosAFacturas = [];
+            if ($tipoTransaccion == INVOICE && !empty($POST['abono_factura']) && is_array($POST['abono_factura'])) {
+                foreach ($POST['abono_factura'] as $idFactura => $valorAbono) {
+                    $valorAbono = floatval($valorAbono);
+                    if ($valorAbono > 0) {
+                        // Validar que no exceda el saldo pendiente
+                        $totalNetoFactura = self::calcularTotalNeto($conexion, $config, $idFactura, 0);
+                        $totalAbonadoFactura = self::calcularTotalAbonado($conexion, $config, $idFactura);
+                        $saldoPendiente = $totalNetoFactura - $totalAbonadoFactura;
+                        
+                        if ($valorAbono > $saldoPendiente + 0.5) {
+                            throw new Exception("El abono de $$valorAbono a la factura $idFactura excede el saldo pendiente de $" . number_format($saldoPendiente, 0, ",", "."));
+                        }
+                        
+                        $abonosAFacturas[] = [
+                            'idFactura' => $idFactura,
+                            'valorAbono' => $valorAbono
+                        ];
+                    }
+                }
+            }
+            
+            // Validar que haya al menos un abono si es tipo INVOICE
+            if ($tipoTransaccion == INVOICE && empty($abonosAFacturas)) {
+                throw new Exception("Debes ingresar al menos un valor de abono a una factura.");
+            }
+            
+            // 1. INSERTAR en payments_invoiced PRIMERO (para tipo INVOICE)
+            if ($tipoTransaccion == INVOICE && !empty($abonosAFacturas)) {
+                $sqlInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
+                    payment, invoiced, payments, institucion, year
+                ) VALUES (?, ?, ?, ?, ?)";
+                $stmtInvoiced = $conexionPDO->prepare($sqlInvoiced);
+                
+                foreach ($abonosAFacturas as $abono) {
+                    $stmtInvoiced->bindParam(1, $abono['valorAbono'], PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(2, $abono['idFactura'], PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(3, $codigoAbonoFinal, PDO::PARAM_STR);
+                    $stmtInvoiced->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
+                    $stmtInvoiced->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+                    $stmtInvoiced->execute();
+                }
+            }
+            
+            // 2. INSERTAR conceptos contables si es tipo ACCOUNT
+            if ($tipoTransaccion == ACCOUNT && !empty($POST["conceptos_contables_json"])) {
+                $conceptos = json_decode($POST["conceptos_contables_json"], true);
+                
+                if (is_array($conceptos) && count($conceptos) > 0) {
+                    $sqlConcepto = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
+                        invoiced, payment, cantity, subtotal, description, payments, institucion, year
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmtConcepto = $conexionPDO->prepare($sqlConcepto);
+                    
+                    foreach ($conceptos as $concepto) {
+                        if (!empty($concepto['concepto']) && floatval($concepto['precio']) > 0) {
+                            $stmtConcepto->bindParam(1, $concepto['concepto'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(2, $concepto['precio'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(3, $concepto['cantidad'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(4, $concepto['subtotal'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(5, $concepto['descripcion'], PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(6, $codigoAbonoFinal, PDO::PARAM_STR);
+                            $stmtConcepto->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+                            $stmtConcepto->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+                            $stmtConcepto->execute();
+                        }
+                    }
+                }
+            }
+            
+            // 3. FINALMENTE, INSERTAR registro en payments con el código generado
+            $sqlPayment = "INSERT INTO ".BD_FINANCIERA.".payments (
+                responsible_user, invoiced, cod_payment, type_payments, payment_method, 
+                observation, voucher, note, registration_date, institucion, year
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmtPayment = $conexionPDO->prepare($sqlPayment);
+            $stmtPayment->bindParam(1, $_SESSION["id"], PDO::PARAM_INT);
+            $stmtPayment->bindParam(2, $POST["cliente"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(3, $codigoAbonoFinal, PDO::PARAM_STR);
+            $stmtPayment->bindParam(4, $POST["tipoTransaccion"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(5, $POST["metodoPago"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(6, $POST["obser"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(7, $comprobante, PDO::PARAM_STR);
+            $stmtPayment->bindParam(8, $POST["notas"], PDO::PARAM_STR);
+            $stmtPayment->bindParam(9, $fechaRegistro, PDO::PARAM_STR);
+            $stmtPayment->bindParam(10, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtPayment->bindParam(11, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtPayment->execute();
+            
+            $idRegistro = $conexionPDO->lastInsertId();
+            
+            $conexionPDO->commit();
+            
+            return $idRegistro;
+            
         } catch (Exception $e) {
+            $conexionPDO->rollBack();
+            if (!empty($comprobante)) {
+                @unlink(ROOT_PATH.'/main-app/files/comprobantes/' . $comprobante);
+            }
             include("../compartido/error-catch-to-report.php");
+            throw $e;
         }
-
-        $idRegistro = mysqli_insert_id($conexion);
-
-        return $idRegistro;
     }
 
     /**
@@ -409,26 +532,51 @@ class Movimientos {
     {
         $resultado = [];
         try {
-            $consulta = mysqli_query($conexion, "SELECT pay.id, pay.registration_date, pay.responsible_user, pay.invoiced, pay.cod_payment, pay.payment_method, pay.voucher,
-            uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2,
-            pi.invoiced as numeroFactura, pi.payment as valorAbono
+            // Consulta mejorada para traer todos los datos del abono
+            $consulta = mysqli_query($conexion, "SELECT 
+            pay.id, pay.registration_date, pay.responsible_user, pay.invoiced, pay.cod_payment, 
+            pay.payment_method, pay.voucher, pay.type_payments, pay.observation, pay.note,
+            uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, uss.uss_id, uss.uss_tipo,
+            pes.pes_nombre,
+            CONCAT_WS(' ', cli.uss_nombre, cli.uss_nombre2, cli.uss_apellido1, cli.uss_apellido2) AS cliente_nombre,
+            cli.uss_nombre AS cli_nombre, cli.uss_nombre2 AS cli_nombre2, cli.uss_apellido1 AS cli_apellido1, cli.uss_apellido2 AS cli_apellido2,
+            cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_documento AS cli_documento,
+            cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil,
+            pi.numeroFactura, pi.valorAbono
             FROM ".BD_FINANCIERA.".payments pay
-            INNER JOIN ".BD_GENERAL.".usuarios uss 
-                ON uss_id=responsible_user 
+            LEFT JOIN ".BD_GENERAL.".usuarios uss 
+                ON uss.uss_id=pay.responsible_user 
                 AND uss.institucion={$config['conf_id_institucion']} 
                 AND uss.year={$_SESSION["bd"]}
-            INNER JOIN ".BD_FINANCIERA.".payments_invoiced pi 
-                ON pi.payments=pay.cod_payment
+            LEFT JOIN ".BD_ADMIN.".general_perfiles pes
+                ON pes.pes_id=uss.uss_tipo
+            LEFT JOIN ".BD_GENERAL.".usuarios cli
+                ON cli.uss_id=pay.invoiced
+                AND cli.institucion={$config['conf_id_institucion']}
+                AND cli.year={$_SESSION["bd"]}
+            LEFT JOIN ".BD_ADMIN.".general_perfiles pes_cli
+                ON pes_cli.pes_id=cli.uss_tipo
+            LEFT JOIN (
+                SELECT payments, MIN(invoiced) AS numeroFactura, SUM(payment) AS valorAbono, institucion, year
+                FROM ".BD_FINANCIERA.".payments_invoiced
+                WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
+                GROUP BY payments, institucion, year
+            ) pi ON pi.payments = pay.cod_payment AND pi.institucion = pay.institucion AND pi.year = pay.year
             WHERE 
-                is_deleted=0 
+                pay.is_deleted=0 
             AND pay.id='{$idAbono}'
             AND pay.institucion = {$config['conf_id_institucion']} 
             AND pay.year = {$_SESSION["bd"]}
+            LIMIT 1
             ");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        
+        $resultado = [];
+        if ($consulta && mysqli_num_rows($consulta) > 0) {
+            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+        }
 
         return $resultado;
     }
@@ -463,8 +611,29 @@ class Movimientos {
             }
         }
 
+        // Preparar fecha si viene en el POST
+        $fechaActualizada = '';
+        if (!empty($POST["fecha"])) {
+            // Convertir datetime-local a formato MySQL
+            $fecha = DateTime::createFromFormat('Y-m-d\TH:i', $POST["fecha"]);
+            if ($fecha !== false) {
+                $fechaActualizada = $fecha->format('Y-m-d H:i:s');
+            } else {
+                // Intentar otro formato si falla
+                $fecha = DateTime::createFromFormat('Y-m-d H:i:s', $POST["fecha"]);
+                if ($fecha !== false) {
+                    $fechaActualizada = $fecha->format('Y-m-d H:i:s');
+                }
+            }
+        }
+        
         try {
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments SET invoiced='".$POST["cliente"]."', payment_method='".$POST["metodoPago"]."', observation='".$POST["obser"]."', note='".$POST["notas"]."' WHERE id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            $sqlUpdate = "UPDATE ".BD_FINANCIERA.".payments SET invoiced='".$POST["cliente"]."', payment_method='".$POST["metodoPago"]."', observation='".$POST["obser"]."', note='".$POST["notas"]."'";
+            if (!empty($fechaActualizada)) {
+                $sqlUpdate .= ", registration_date='".$fechaActualizada."'";
+            }
+            $sqlUpdate .= " WHERE id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}";
+            mysqli_query($conexion, $sqlUpdate);
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -860,6 +1029,66 @@ class Movimientos {
     }
 
     /**
+     * Devuelve información extendida de una factura y sus ítems
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idFactura
+     * @return array
+     */
+    public static function obtenerDetallesFactura(
+        mysqli $conexion,
+        array $config,
+        string $idFactura
+    )
+    {
+        $detalles = [
+            'factura' => null,
+            'items' => []
+        ];
+
+        try {
+            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2
+                FROM ".BD_FINANCIERA.".finanzas_cuentas fc
+                LEFT JOIN ".BD_GENERAL.".usuarios uss
+                    ON uss.uss_id = fc.fcu_usuario
+                    AND uss.institucion = {$config['conf_id_institucion']}
+                    AND uss.year = {$_SESSION['bd']}
+                WHERE fc.fcu_id = '{$idFactura}'
+                  AND fc.institucion = {$config['conf_id_institucion']}
+                  AND fc.year = {$_SESSION['bd']}
+                LIMIT 1");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            $consultaFactura = false;
+        }
+
+        if ($consultaFactura && mysqli_num_rows($consultaFactura) > 0) {
+            $detalles['factura'] = mysqli_fetch_array($consultaFactura, MYSQLI_BOTH);
+        }
+
+        try {
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.name as item_name
+                FROM ".BD_FINANCIERA.".transaction_items ti
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION['bd']}
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION['bd']}
+                WHERE ti.id_transaction='{$idFactura}'
+                AND ti.institucion={$config['conf_id_institucion']}
+                AND ti.year={$_SESSION['bd']}");
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            $consultaItems = false;
+        }
+
+        if ($consultaItems) {
+            while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
+                $detalles['items'][] = $item;
+            }
+        }
+
+        return $detalles;
+    }
+
+    /**
      * Este metodo me trae las facturas de un usuario para listar
      * @param mysqli            $conexion
      * @param array             $config
@@ -933,14 +1162,20 @@ class Movimientos {
     public static function listarConceptos (
         mysqli  $conexion, 
         array   $config, 
-        string   $codAbono
+        ?string   $codAbono = null
     )
     {
+        // Si no hay código de abono, retornar resultado vacío
+        if (empty($codAbono)) {
+            return false;
+        }
+        
         try {
             $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".payments_invoiced
             WHERE payments='{$codAbono}' AND institucion = {$config['conf_id_institucion']} AND year = {$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            return false;
         }
 
         return $consulta;
@@ -1128,25 +1363,29 @@ class Movimientos {
         try {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
-                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN IFNULL(totalAbonos, 0) ELSE 0 END) AS abonosRecibidos,
-                SUM(CASE WHEN fc.fcu_status = '" . POR_COBRAR . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) WHEN fc.fcu_status = '" . COBRADA . "' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalIngresos,
+                SUM(CASE WHEN fc.fcu_tipo = 2 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalEgresos,
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosVentas,
+                SUM(CASE WHEN fc.fcu_tipo = 2 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosEgreso,
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) ELSE 0 END) AS totalFacturado
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti 
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction
+                GROUP BY ti.id_transaction, ti.institucion, ti.year
             ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
             LEFT JOIN (
-                SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
-                FROM ".BD_FINANCIERA.".payments_invoiced pi 
-                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
+                SELECT pi.invoiced, pi.institucion, pi.year, SUM(pi.payment) AS totalAbonos
+                FROM ".BD_FINANCIERA.".payments_invoiced pi
+                INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment = pi.payments AND p.institucion = pi.institucion AND p.year = pi.year
                 WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
-                GROUP BY pi.invoiced
-            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
-            WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
+                GROUP BY pi.invoiced, pi.institucion, pi.year
+            ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion = fc.institucion AND pi.year = fc.year
+            WHERE fc.fcu_anulado = 0
+              AND fc.institucion={$config['conf_id_institucion']}
+              AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
         } catch (Exception $e) {
@@ -1171,23 +1410,31 @@ class Movimientos {
         try {
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_status = 'POR_COBRAR' THEN (CAST(fc.fcu_valor AS DECIMAL(10, 2)) + IFNULL(ti.totalItems, 0) - IFNULL(totalAbonos, 0)) ELSE 0 END) AS totalPorCobrar
+                SUM(
+                    GREATEST(
+                        (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalItems, 0)) - IFNULL(pi.totalAbonos, 0),
+                        0
+                    )
+                ) AS totalPorCobrar
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
                 SELECT ti.id_transaction, SUM(ti.price * ti.cantity * (1 - ti.discount / 100) * CASE WHEN ti.tax != 0 THEN (1 + tax.fee / 100) ELSE 1 END) AS totalItems, ti.institucion, ti.year
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
                 WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction
+                GROUP BY ti.id_transaction, ti.institucion, ti.year
             ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
             LEFT JOIN (
                 SELECT pi.invoiced, SUM(pi.payment) AS totalAbonos, pi.institucion, pi.year
                 FROM ".BD_FINANCIERA.".payments_invoiced pi 
                 INNER JOIN ".BD_FINANCIERA.".payments p ON p.cod_payment=pi.payments AND p.type_payments='INVOICE' AND p.institucion = pi.institucion AND p.year = pi.year
                 WHERE pi.institucion={$config['conf_id_institucion']} AND pi.year={$_SESSION["bd"]}
-                GROUP BY pi.invoiced
+                GROUP BY pi.invoiced, pi.institucion, pi.year
             ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion=fc.institucion AND pi.year=fc.year
-            WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
+            WHERE fc.fcu_anulado = 0
+              AND fc.fcu_tipo = 1
+              AND fc.institucion={$config['conf_id_institucion']}
+              AND fc.year={$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
         } catch (Exception $e) {

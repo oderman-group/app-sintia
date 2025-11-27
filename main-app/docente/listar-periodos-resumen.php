@@ -39,18 +39,15 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
                             <th><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></th>
 
                             <?php
-                                $p = 1;
-                                while($p<=$datosCargaActual['gra_periodos']){
+                                // Precalcular porcentajes de todos los periodos una sola vez
+                                $porcentajesPeriodos = [];
+                                for ($p = 1; $p <= $datosCargaActual['gra_periodos']; $p++) {
                                     $periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosCargaActual['car_curso'], $p);
-                                    
-                                    $porcentajeGrado=25;
-                                    if(!empty($periodosCursos['gvp_valor'])){
-                                        $porcentajeGrado=$periodosCursos['gvp_valor'];
-                                    }
-                                    echo '<th style="text-align:center;">'.$p.'P<br>('.$porcentajeGrado.'%)</th>';
-                                    $p++;
+                                    $porcentajeGrado = !empty($periodosCursos['gvp_valor']) ? $periodosCursos['gvp_valor'] : 25;
+                                    $porcentajesPeriodos[$p] = $porcentajeGrado;
+                                    echo '<th style="text-align:center;">' . $p . 'P<br>(' . $porcentajeGrado . '%)</th>';
                                 }
-                            ?> 
+                            ?>
                             <th 
                                 style="text-align:center;" 
                                 data-toggle="tooltip" 
@@ -71,13 +68,21 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
                     </thead>
                     <tbody>
                         <?php
-                        $contReg  = 1; 
+                        $contReg  = 1;
                         $consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
-                        while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-                            $colorEstudiante = '#000;';
-                            if ($resultado['mat_inclusion'] == 1) {
-                                $colorEstudiante = 'blue;';
+
+                        // Pre-cargar tipos de nota para modo cualitativo, si aplica
+                        $listaDesemp = [];
+                        if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                            $tablaNotasRes = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
+                            while ($filaDes = mysqli_fetch_array($tablaNotasRes, MYSQLI_BOTH)) {
+                                $listaDesemp[] = $filaDes;
                             }
+                            mysqli_free_result($tablaNotasRes);
+                        }
+
+                        while ($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+                            $colorEstudiante = ($resultado['mat_inclusion'] == 1) ? 'blue;' : '#000;';
                         ?>
                         
                         <tr>
@@ -92,14 +97,10 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
                                 $sumaPorcentaje          = 0;
                                 $iteradorPeriodosConNota = 0;
 
-                                for ($periodoIterado=1; $periodoIterado <= $datosCargaActual['gra_periodos']; $periodoIterado++) {
-                                    $periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosCargaActual['car_curso'], $periodoIterado);
-                                    
-                                    $porcentajeGrado = 25;
-                                    if (!empty($periodosCursos['gvp_valor'])) {
-                                        $porcentajeGrado=$periodosCursos['gvp_valor'];
-                                    }
-                                    $decimal = $porcentajeGrado/100;
+                                for ($periodoIterado = 1; $periodoIterado <= $datosCargaActual['gra_periodos']; $periodoIterado++) {
+                                    // Usar porcentajes precalculados
+                                    $porcentajeGrado = $porcentajesPeriodos[$periodoIterado] ?? 25;
+                                    $decimal         = $porcentajeGrado / 100;
                                     
                                 //LAS CALIFICACIONES
                                 $notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $periodoIterado, $resultado['mat_id'], $cargaConsultaActual);
@@ -143,10 +144,12 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
                                             "
                                         ';
 
-                                        $estiloNota          = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasResultado['bol_nota']);
-                                        $notasResultadoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-                                        $estiloNota          = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasResultado['bol_nota_anterior']);
-                                        $notasAnteriorFinal  = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                        if (!empty($listaDesemp)) {
+                                            $estiloNota          = Boletin::obtenerDatosTipoDeNotasCargadas($listaDesemp, $notasResultado['bol_nota']);
+                                            $notasResultadoFinal = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                            $estiloNota          = Boletin::obtenerDatosTipoDeNotasCargadas($listaDesemp, $notasResultado['bol_nota_anterior']);
+                                            $notasAnteriorFinal  = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+                                        }
                                     }
                                 }
 

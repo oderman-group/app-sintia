@@ -140,6 +140,8 @@ function enviarCodigo() {
   email       =   document.getElementById('email').value;
   celular     =   document.getElementById('celular').value;
 
+  return; /* TODO: Validar Robots */
+
   // Enviar el código al correo electrónico
   fetch('enviar-codigo.php?nombre=' + nombre + '&apellidos=' + apellidos + '&email=' + email + '&celular=' + celular, {
     method: 'GET'

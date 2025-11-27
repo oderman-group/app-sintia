@@ -108,13 +108,13 @@
 									<input type="hidden" id="fotoUsuarioChat" value="<?=$datosUsuarioActual['uss_foto'];?>">
 									
 									
-									<audio id="audioChat" controls style="display: none;">
-										<source type="audio/mp3" src="../../files-general/main-app/sonidos/nuevoMensaje.mp3">
-									</audio>
-									
-									<audio id="audioInbox" controls style="display: none;">
-										<source type="audio/mp3" src="../../files-general/main-app/sonidos/inbox.mp3">
-									</audio>
+								<audio id="audioChat" controls style="display: none;">
+									<source type="audio/mp3" src="../../files-general/instituciones/sonidos/nuevoMensaje.mp3">
+								</audio>
+								
+								<audio id="audioInbox" controls style="display: none;">
+									<source type="audio/mp3" src="../../files-general/instituciones/sonidos/inbox.mp3">
+								</audio>
 									
 									<script type="application/javascript">
 										let ws = null;

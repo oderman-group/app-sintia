@@ -11,13 +11,25 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 include("../compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 
+// Migrado a PDO - Consulta preparada con ON DUPLICATE KEY
 try{
-	mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".general_encuestas(genc_estudiante, genc_fecha, genc_respuesta, genc_comentario, genc_institucion, genc_year) VALUES('".base64_decode($_GET["idEstudiante"])."', now(), 1, 'Reservado por un directivo (".UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual).").','" . $config['conf_id_institucion'] . "','" . $_SESSION["bd"] . "') 
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$idEstudiante = base64_decode($_GET["idEstudiante"]);
+	$comentario = 'Reservado por un directivo ('.UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual).').';
+	$sql = "INSERT INTO ".$baseDatosServicios.".general_encuestas(
+	    genc_estudiante, genc_fecha, genc_respuesta, genc_comentario, genc_institucion, genc_year
+	) VALUES (?, now(), 1, ?, ?, ?) 
 	ON DUPLICATE KEY UPDATE
-	genc_fecha = VALUES(genc_fecha),
-	genc_comentario = VALUES(genc_comentario),
-	genc_respuesta = VALUES(genc_respuesta)
-	");
+	    genc_fecha = VALUES(genc_fecha),
+	    genc_comentario = VALUES(genc_comentario),
+	    genc_respuesta = VALUES(genc_respuesta)";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $idEstudiante, PDO::PARAM_STR);
+	$stmt->bindParam(2, $comentario, PDO::PARAM_STR);
+	$stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+	$stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+	$stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

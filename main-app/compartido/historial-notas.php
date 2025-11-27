@@ -1,4 +1,9 @@
 <?php
+// Configuraciones para reportes grandes
+set_time_limit(300);
+ini_set('memory_limit', '256M');
+ini_set('max_execution_time', 300);
+
 include_once("session-compartida.php");
 require_once(ROOT_PATH . "/main-app/class/componentes/Excel/ExcelUtil.php");
 require_once(ROOT_PATH . "/main-app/class/Utilidades.php");
@@ -7,17 +12,29 @@ require_once(ROOT_PATH . "/main-app/class/App/Academico/boletin/Boletin.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Notas_tipo.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Calificacion/Vista_historial_calificaiones.php");
 require_once(ROOT_PATH . "/main-app/class/App/Academico/Calificacion/Vista_cursos_estudiante.php");
-
+require_once(ROOT_PATH . "/main-app/class/Plataforma.php");
 require_once("../class/Informes.php");
+
+$Plataforma = new Plataforma;
 
 $num = 0;
 try {
-  $grado        = $_POST["grado"];
-  $grupo        = $_POST["grupo"];
-  $formato      = $_POST["formato"];
-  $estudiantes  = $_POST["estudiantes"];
+  $grado        = !empty($_POST["grado"]) ? $_POST["grado"] : '';
+  $grupo        = !empty($_POST["grupo"]) ? $_POST["grupo"] : '';
+  $formato      = !empty($_POST["formato"]) ? $_POST["formato"] : '';
+  $estudiantes  = !empty($_POST["estudiantes"]) ? $_POST["estudiantes"] : [];
   $cPeriodo     = $config['conf_periodos_maximos'];
   $year         = $_SESSION["bd"];
+
+  // Validar parámetros requeridos
+  if(empty($grado) || empty($estudiantes)){
+      echo '<html><body><div style="text-align: center; padding: 50px; font-family: Arial;">
+          <h2>Error: Parámetros Incompletos</h2>
+          <p>No se especificaron el grado o los estudiantes para generar el informe.</p>
+          <button onclick="window.close()">Cerrar</button>
+      </div></body></html>';
+      exit();
+  }
 
   $periodos = [];
 
@@ -25,8 +42,8 @@ try {
     $periodos[$i] = $i;
   }
 
-  $tiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year)->fetch_all(MYSQLI_ASSOC); //obenemos los tipos de notas
-  $listaCursoEstudiantes = Vista_cursos_estudiante::listarCursosEstudiates($estudiantes);//obenemos los cursos  de cada estudiante en caso de que alguno tenga registros en otros cursos el mismo año 
+  $tiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year)->fetch_all(MYSQLI_ASSOC); //obtenemos los tipos de notas
+  $listaCursoEstudiantes = Vista_cursos_estudiante::listarCursosEstudiates($estudiantes);//obtenemos los cursos de cada estudiante en caso de que alguno tenga registros en otros cursos el mismo año 
   $listaCalificaionesEstudiantes = Vista_historial_calificaciones::listarHistorialCalificaiones($grado, $grupo, $estudiantes);
 
   $listaEstudiantes = [];
@@ -40,27 +57,34 @@ try {
     $listaEstudiantes[$item1['mat_id']] = $item1;
   }
 
-
-
 } catch (Exception $e) {
-  echo "Excepción catpurada: " . $e->getMessage();
+  echo "Excepción capturada: " . $e->getMessage();
   exit();
 }
 ?>
-
+<!DOCTYPE html>
+<html>
 <head>
   <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
-
-  <title>Historial de Calificaicones</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Calificaciones - SINTIA</title>
+  <link rel="shortcut icon" href="<?= $Plataforma->logo; ?>">
 
   <style>
     body {
-      font-family: 'revert-layer' !important, sans-serif;
+      font-family: Arial, sans-serif !important;
       font-size: 12px !important;
       margin: 0;
-      padding: 0;
-      background-image: url(./../../config-general/assets-login-2023/img/bg-login.png);
-      grid-template-columns: 100%;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container-historial {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 30px;
+      background-color: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     .progress-indicador {
@@ -80,14 +104,12 @@ try {
 
     .collapse-container.show {
       max-height: 1000px;
-      /* Ajusta esto según el contenido */
     }
 
     .form-control:disabled,
     .form-control[readonly] {
       background-color: #ffffff !important;
       opacity: 1 !important;
-
     }
 
     .form-control {
@@ -95,9 +117,7 @@ try {
     }
 
     #saltoPagina {
-
       PAGE-BREAK-AFTER: always;
-
     }
 
     .list-group-item {
@@ -109,6 +129,62 @@ try {
     .list-group-item input {
       order: -1;
       margin-right: auto;
+    }
+    
+    /* Botones flotantes */
+    .no-print {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-print-custom, .btn-close-custom {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .btn-print-custom {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-print-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    }
+    .btn-close-custom {
+      background: #f44336;
+      color: white;
+    }
+    .btn-close-custom:hover {
+      background: #da190b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(244, 67, 54, 0.4);
+    }
+    
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+      }
+      .container-historial {
+        max-width: 100%;
+        box-shadow: none;
+        padding: 10px;
+      }
+      .no-print {
+        display: none !important;
+      }
+      @page {
+        size: letter;
+        margin: 1.5cm;
+      }
     }
   </style>
   <!-- <link rel="stylesheet" href="../../config-general/assets/plugins/steps/steps.css"> -->
@@ -122,9 +198,20 @@ try {
 </head>
 
 <body style="font-family:Arial;">
+
+  <!-- Botones de Acción -->
+  <div class="no-print">
+    <button class="btn-print-custom" onclick="window.print();">
+      <i class="fa fa-print"></i> Imprimir
+    </button>
+    <button class="btn-close-custom" onclick="window.close();">
+      <i class="fa fa-times"></i> Cerrar
+    </button>
+  </div>
+
+  <div class="container-historial">
+  
   <script src="funciones.js"></script>
-
-
 
   <?php
   include_once("sintia-funciones.php");
@@ -364,6 +451,8 @@ try {
     });
   </script>
 
+  </div> <!-- Cierre container-historial -->
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
     crossorigin="anonymous"></script>
@@ -374,5 +463,16 @@ try {
     integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13"
     crossorigin="anonymous"></script>
 
+  <script type="text/javascript">
+    // Atajo de teclado para imprimir
+    document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'p') {
+          e.preventDefault();
+          window.print();
+        }
+      });
+    });
+  </script>
 
 </body>

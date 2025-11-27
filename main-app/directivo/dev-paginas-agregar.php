@@ -106,7 +106,7 @@ include("../compartido/head.php");
                                                     <option value="">Seleccione una opción</option>
                                                     <?php
                                                     try{
-                                                        $consultaUsuarios = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+                                                        $consultaUsuarios = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                                                     } catch (Exception $e) {
                                                         include("../compartido/error-catch-to-report.php");
                                                     }
@@ -274,6 +274,4 @@ include("../compartido/head.php");
         CKEDITOR.replace( 'editor1' );
     </script>
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

@@ -1,0 +1,418 @@
+/**
+ * ESTILOS PERSONALIZADOS PARA REGISTRO
+ * Plataforma Educativa SINTIA
+ * Versión 2.0 - Diseño Moderno y Profesional
+ */
+
+/* ===== VARIABLES Y ANIMACIONES ===== */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== UTILIDADES GENERALES ===== */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== INPUTS CON ANIMACIÓN ===== */
+.form-floating > .form-control {
+    border-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.form-floating > .form-control:focus {
+    transform: translateY(-2px);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-color) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+}
+
+.form-control.is-invalid {
+    border-color: var(--error-color) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ef4444'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23ef4444' stroke='none'/%3e%3c/svg%3e");
+}
+
+.valid-feedback {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.invalid-feedback {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+/* ===== ANIMACIÓN SHAKE PARA ERRORES ===== */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.5s;
+}
+
+/* ===== INPUTS DE CÓDIGO MEJORADOS ===== */
+.code-input {
+    font-family: 'Courier New', monospace;
+    background: #f9fafb;
+    caret-color: #667eea;
+}
+
+.code-input:hover {
+    background: #ffffff;
+    border-color: #d1d5db;
+}
+
+.code-input.filled {
+    background: #f0fdf4;
+    border-color: var(--success-color);
+}
+
+/* ===== TARJETAS DE PLANES MEJORADAS ===== */
+.plan-card {
+    background: #ffffff;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.plan-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 15px;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+}
+
+.plan-card:hover::before {
+    opacity: 0.05;
+}
+
+.plan-card.selected {
+    transform: translateY(-8px) scale(1.02);
+}
+
+.plan-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    background: var(--success-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== BOTONES MEJORADOS ===== */
+.btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    position: relative;
+    z-index: 1;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ===== PROGRESS STEPS MEJORADO ===== */
+.step-circle {
+    position: relative;
+}
+
+.step-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.step-item.active .step-circle::after {
+    width: 50px;
+    height: 50px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+/* ===== ALERTS PERSONALIZADOS ===== */
+.alert-custom {
+    animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ===== LOADING SPINNER ===== */
+.loading-spinner.show {
+    display: inline-block !important;
+}
+
+/* ===== COUNTDOWN ===== */
+#countdown {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* ===== HELP SECTION ===== */
+.help-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.help-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.help-section > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .registration-card {
+        margin: 1rem;
+    }
+    
+    .form-content {
+        padding: 2rem 1rem;
+    }
+    
+    .progress-container {
+        padding: 1.5rem;
+    }
+    
+    .step-label {
+        font-size: 0.75rem;
+    }
+    
+    .step-circle {
+        width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+    
+    .plan-card {
+        margin-bottom: 1rem;
+    }
+    
+    .code-input {
+        width: 45px;
+        height: 55px;
+        font-size: 20px;
+    }
+    
+    .whatsapp-float {
+        width: 50px;
+        height: 50px;
+        bottom: 20px;
+        right: 20px;
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 576px) {
+    .code-input {
+        width: 40px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .code-input-container {
+        gap: 0.3rem;
+    }
+    
+    h3 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ===== MEJORAS DE ACCESIBILIDAD ===== */
+.btn:focus,
+.form-control:focus,
+.code-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* ===== TRANSICIONES SUAVES ===== */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== SCROLL SUAVE ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ===== SELECCIÓN DE TEXTO ===== */
+::selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: inherit;
+}
+
+::-moz-selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: inherit;
+}
+
+/* ===== PLACEHOLDER ===== */
+::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+:-ms-input-placeholder {
+    color: #9ca3af;
+}
+
+::-ms-input-placeholder {
+    color: #9ca3af;
+}
+
+/* ===== SCROLLBAR PERSONALIZADO ===== */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* ===== ANIMACIONES DE ENTRADA ===== */
+.animate-in {
+    animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== MEJORAS PARA IMPRESIÓN ===== */
+@media print {
+    .whatsapp-float,
+    .help-section,
+    .btn {
+        display: none !important;
+    }
+}
+

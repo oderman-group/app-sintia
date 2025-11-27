@@ -24,27 +24,30 @@ class BindSQL
             $consulta = mysqli_prepare($conexion, $sql);
 
             if ($consulta) {
-                $tipoParametro = self::validartipoValor($parametros);                
-                // aplanamos los array por si hay un elemento tipo aarray (unificamos los parametros con los array)
-                $arrayParametrosPreparadosUnificados = [];
-                array_walk_recursive($parametros, function ($item) use (&$arrayParametrosPreparadosUnificados) {
-                    $arrayParametrosPreparadosUnificados[] = $item;
-                });
-                // Aplicar trim a cada valor en $parametros para eliminar comillas innecesarias
-                $arrayParametrosPreparadosUnificados = array_map(function ($value) {
+                // Solo hacer bind si hay parámetros
+                if (!empty($parametros)) {
+                    $tipoParametro = self::validartipoValor($parametros);                
+                    // aplanamos los array por si hay un elemento tipo aarray (unificamos los parametros con los array)
+                    $arrayParametrosPreparadosUnificados = [];
+                    array_walk_recursive($parametros, function ($item) use (&$arrayParametrosPreparadosUnificados) {
+                        $arrayParametrosPreparadosUnificados[] = $item;
+                    });
+                    // Aplicar trim a cada valor en $parametros para eliminar comillas innecesarias
+                    $arrayParametrosPreparadosUnificados = array_map(function ($value) {
 
-                    if ($value != null) {
-                        if (is_string($value)) {
-                            return trim($value, "'");
-                        }else{
-                            return $value;
+                        if ($value != null) {
+                            if (is_string($value)) {
+                                return trim($value, "'");
+                            }else{
+                                return $value;
+                            }
+                        } else {
+                            return null;
                         }
-                    } else {
-                        return null;
-                    }
-                }, $arrayParametrosPreparadosUnificados);
+                    }, $arrayParametrosPreparadosUnificados);
 
-                mysqli_stmt_bind_param($consulta, $tipoParametro, ...$arrayParametrosPreparadosUnificados);
+                    mysqli_stmt_bind_param($consulta, $tipoParametro, ...$arrayParametrosPreparadosUnificados);
+                }
 
                 mysqli_stmt_execute($consulta);
 
@@ -62,6 +65,7 @@ class BindSQL
             }
         } catch (Exception $e) {
             self::revertirTransacion();
+            Utilidades::writeLog('LOG desde el método prepararSQL: '.$e->getMessage());
             include(ROOT_PATH . "/main-app/compartido/error-catch-to-report.php");
         }
     }

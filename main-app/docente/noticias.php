@@ -51,6 +51,8 @@
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js" ></script>
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
+	
+	<!-- Feed Moderno JS ya está incluido en noticias-contenido.php -->
     <!-- end js include path -->
 </body>
 

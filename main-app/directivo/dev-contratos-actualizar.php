@@ -12,8 +12,18 @@
         exit();
     }
     
+    // Migrado a PDO - Consulta preparada
     try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".contratos SET cont_nombre='".$_POST["titulo"]."', cont_descripcion='".$_POST["descripcion"]."', cont_fecha_modificacion=now(), cont_visible='".$_POST["visible"]."' WHERE cont_id=1");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "UPDATE ".$baseDatosServicios.".contratos 
+                SET cont_nombre=?, cont_descripcion=?, cont_fecha_modificacion=now(), cont_visible=? 
+                WHERE cont_id=1";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["titulo"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["descripcion"], PDO::PARAM_STR);
+        $stmt->bindParam(3, $_POST["visible"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

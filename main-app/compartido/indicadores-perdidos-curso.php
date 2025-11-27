@@ -24,13 +24,28 @@ if (empty($_REQUEST["periodo"])) {
 if ($periodoActual == 1) { $periodoActuales = "Primero"; $condicion = "1"; $condicion2 = "1";}
 if ($periodoActual == 2) { $periodoActuales = "Segundo"; $condicion = "1,2"; $condicion2 = "2";}
 if ($periodoActual == 3) { $periodoActuales = "Tercero"; $condicion = "1,2,3"; $condicion2 = "3";}
-if ($periodoActual == 4) { $periodoActuales = "Cuarto"; $condicion = "1,2,3,4"; $condicion2 = "4";}
+if ($periodoActual >= 4 && $periodoActual < $config['conf_periodos_maximos']) { 
+    $periodoActuales = "Periodo ".$periodoActual; 
+    $condicionArray = [];
+    for($p = 1; $p <= $periodoActual; $p++){
+        $condicionArray[] = $p;
+    }
+    $condicion = implode(",", $condicionArray);
+    $condicion2 = (string)$periodoActual;
+}
+if ($periodoActual == $config['conf_periodos_maximos']) { 
+    $periodoActuales = "Final"; 
+    $condicionArray = [];
+    for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){
+        $condicionArray[] = $p;
+    }
+    $condicion = implode(",", $condicionArray);
+    $condicion2 = (string)$config['conf_periodos_maximos'];
+}
 ?>
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(1)?>">Periodo 1</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(2)?>">Periodo 2</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(3)?>">Periodo 3</a>&nbsp;&nbsp;
-    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode(4)?>">Periodo 4</a>&nbsp;&nbsp;
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <?php for($p = 1; $p <= $config['conf_periodos_maximos']; $p++){ ?>
+    <a href="indicadores-perdidos-curso.php?curso=<?php if(!empty($_REQUEST["curso"])) echo $_REQUEST["curso"];?>&periodo=<?=base64_encode($p)?>">Periodo <?=$p?></a>&nbsp;&nbsp;
+    <?php } ?>
 <?php
 
 $filtroAdicional = " AND (mat_estado_matricula=1 OR mat_estado_matricula=2)";
@@ -42,20 +57,22 @@ if (!empty($_REQUEST["curso"])) {
 }
 
 $cursoActual=GradoServicios::consultarCurso(base64_decode($_REQUEST["curso"]));
-$matriculadosPorCurso =Estudiantes::listarEstudiantes(0,$filtroAdicional,"",$cursoActual);
+$matriculadosPorCurso = Estudiantes::listarEstudiantes(0, $filtroAdicional, "", $cursoActual);
 while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH)) {
 
-    //contador materias
-    $cont_periodos = 0;
-    $contador_indicadores = 0;
-    $materiasPerdidas = 0;
-
-    $idCurso=$matriculadosDatos["mat_grado"];
-    $idGrupo=$matriculadosDatos["mat_grupo"];
-    if($cursoActual["gra_tipo"]==GRADO_INDIVIDUAL){
-        $idCurso=$matriculadosDatos["matcur_id_curso"];
-        $idGrupo=$matriculadosDatos["matcur_id_grupo"];
+    // Determinar curso y grupo del estudiante (soporta grados individuales)
+    $idCurso = isset($matriculadosDatos["mat_grado"]) ? (string)$matriculadosDatos["mat_grado"] : '';
+    $idGrupo = isset($matriculadosDatos["mat_grupo"]) ? (string)$matriculadosDatos["mat_grupo"] : '';
+    if ($cursoActual["gra_tipo"] == GRADO_INDIVIDUAL) {
+        $idCurso = isset($matriculadosDatos["matcur_id_curso"]) ? (string)$matriculadosDatos["matcur_id_curso"] : '';
+        $idGrupo = isset($matriculadosDatos["matcur_id_grupo"]) ? (string)$matriculadosDatos["matcur_id_grupo"] : '';
     }
+
+    // Si por alguna razón no hay curso o grupo asociados, no tiene sentido buscar indicadores
+    if ($idCurso === '' || $idGrupo === '') {
+        continue;
+    }
+
     $contador_periodos = 0;
     ?>
 
@@ -100,23 +117,25 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
             <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
             <?php
-            $contador = 1;
+            $contador      = 1;
             $idMatAnterior = "";
             while ($fila = mysqli_fetch_array($consulta_mat_area_est, MYSQLI_BOTH)) {
 
                 $leyendaRI = '';
-                if(!empty($fila['rind_nota']) && $fila['rind_nota']>$fila["nota"]){
+                if (!empty($fila['rind_nota']) && $fila['rind_nota'] > $fila["nota"]) {
                     $nota_indicador = $fila['rind_nota'];
                     $leyendaRI = '<br><span style="color:navy; font-size:9px;">Recuperado.</span>';
-                }else{
+                } else {
                     $nota_indicador = $fila["nota"];
                 }
 
-                if ($nota_indicador == 1)    $nota_indicador = "1.0";
-                if ($nota_indicador == 2)    $nota_indicador = "2.0";
-                if ($nota_indicador == 3)    $nota_indicador = "3.0";
-                if ($nota_indicador == 4)    $nota_indicador = "4.0";
-                if ($nota_indicador == 5)    $nota_indicador = "5.0";
+                // Formatear nota con los decimales configurados
+                if ($nota_indicador !== "" && $nota_indicador !== null) {
+                    $nota_indicador = number_format(
+                        (float)$nota_indicador,
+                        isset($config['conf_decimales_notas']) ? (int)$config['conf_decimales_notas'] : 1
+                    );
+                }
 
                 if ($idMatAnterior != $fila["mat_id"]) {
                     $idMatAnterior = $fila["mat_id"];

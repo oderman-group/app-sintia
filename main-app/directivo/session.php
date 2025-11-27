@@ -1,14 +1,50 @@
 <?php
-// Log ANTES de session_start
-error_log("🔵 SESSION.PHP INICIO - Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN') . " - IP: " . ($_SERVER["REMOTE_ADDR"] ?? 'UNKNOWN') . " - Time: " . microtime(true));
+// Headers de seguridad HTTP (deben enviarse ANTES de cualquier output)
+require_once(__DIR__ . "/../class/App/Seguridad/SecurityHeaders.php");
+
+// Incluir clase CSRF
+require_once(__DIR__ . "/../class/App/Seguridad/Csrf.php");
+
+// Configuración segura de sesiones ANTES de session_start()
+ini_set('session.cookie_httponly', 1); // Previene acceso a cookies desde JavaScript
+ini_set('session.use_only_cookies', 1); // Solo cookies, no URLs
+ini_set('session.cookie_samesite', 'Lax'); // Protección CSRF
+ini_set('session.use_strict_mode', 1); // No aceptar IDs no inicializados
+ini_set('session.gc_maxlifetime', 7200); // 2 horas
+ini_set('session.cookie_lifetime', 0); // Cookie expira al cerrar navegador
+
+// HTTPS solo en producción (descomentar cuando se tenga SSL)
+// ini_set('session.cookie_secure', 1);
 
 session_start();
+
+// Regenerar ID de sesión periódicamente (prevenir session fixation)
+if (!isset($_SESSION['last_regeneration'])) {
+    $_SESSION['last_regeneration'] = time();
+} elseif (time() - $_SESSION['last_regeneration'] > 1800) { // 30 minutos
+    session_regenerate_id(true);
+    $_SESSION['last_regeneration'] = time();
+}
+
+// Validar User-Agent (prevenir session hijacking)
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+if (!isset($_SESSION['user_agent'])) {
+    $_SESSION['user_agent'] = $userAgent;
+} elseif ($_SESSION['user_agent'] !== $userAgent) {
+    session_destroy();
+    require_once '../class/Utilidades.php';
+    $directory = Utilidades::getDirectoryUserFromUrl($_SERVER['PHP_SELF']);
+    $page = Utilidades::getPageFromUrl($_SERVER['PHP_SELF']);
+    header("Location:../controlador/salir.php?urlDefault=".$page."&directory=".$directory."&msg=session_hijack");
+    exit();
+}
 
 date_default_timezone_set('America/Bogota');
 
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 
-// Log detallado del estado de la sesión
+// Log detallado del estado de la sesión DESPUÉS de session_start (línea 19)
+error_log("🔵 SESSION.PHP INICIO - Página: " . ($_SERVER["PHP_SELF"] ?? 'UNKNOWN') . " - IP: " . ($_SERVER["REMOTE_ADDR"] ?? 'UNKNOWN') . " - Time: " . microtime(true));
 error_log("✅ SESSION.PHP: session_start() exitoso - Session ID: " . session_id());
 error_log("   └─ SESSION[id]: " . ($_SESSION["id"] ?? 'NULL'));
 error_log("   └─ SESSION[bd]: " . ($_SESSION["bd"] ?? 'NULL'));
@@ -19,10 +55,10 @@ error_log("   └─ SESSION[yearAnterior]: " . ($_SESSION["yearAnterior"] ?? 'N
 //Si otro usuario de mayor rango entra como él
 if (isset($_SESSION["idO"]) and $_SESSION["idO"]!="") {
 	$idSession = $_SESSION["idO"];
-	error_log("ℹ️ SESSION.PHP: Usando idSession de idO (auto-login) - idO: " . $_SESSION["idO"]);
+	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[idO] (auto-login) - idO: " . $_SESSION["idO"]);
 } else {
-	$idSession = $_SESSION["id"];
-	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[id] - id: " . ($_SESSION["id"] ?? 'NULL'));
+	$idSession = $_SESSION["id"] ?? '';
+	error_log("ℹ️ SESSION.PHP: Usando idSession de SESSION[id] - id: " . ($idSession ?: 'NULL'));
 }
 
 if (empty($idSession)) {
@@ -50,8 +86,8 @@ if (empty($idSession)) {
 	error_log("✅ SESSION.PHP: idSession válido - " . $idSession);
 	
 	require_once(ROOT_PATH."/config-general/config.php");
-	require_once(ROOT_PATH."/config-general/idiomas.php");
 	require_once(ROOT_PATH."/config-general/consulta-usuario-actual.php");
+	require_once(ROOT_PATH."/config-general/idiomas.php"); // Movido después de consulta-usuario-actual
 	require_once(ROOT_PATH."/config-general/verificar-usuario-bloqueado.php");
 
 	// Validar que el usuario sea DIRECTIVO o DEV

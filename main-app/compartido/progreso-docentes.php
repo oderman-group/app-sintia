@@ -9,12 +9,12 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 }
 ?>
 <div class="panel">
-											<header class="panel-heading panel-heading-blue"><i class="fa fa-signal"></i> PROGRESO DE DOCENTES</header>
+											<header class="panel-heading panel-heading-secondary" style="font-size: 18px;"><i class="fa fa-signal"></i> PROGRESO DE DOCENTES</header>
 
 											<div class="panel-body">
-												<p class="text-danger">Aquí se muestra el progreso general que cada uno de los docentes lleva en cuanto al registro de sus calificaciones para este <b>periodo <?=$config['conf_periodo'];?></b>.<br>
-												<span class="text-info"><i class="fa fa-trophy"></i> <b>FELICITAMOS A LOS PRIMEROS LUGARES</b> <i class="fa fa-trophy"></i></span><br>	
-												<span class="text-success"><b>¡APRESÚRATE TÚ TAMBIÉN!</b></span>
+												<p style="color: #333; font-size: 14px;">Aquí se muestra el progreso general que cada uno de los docentes lleva en cuanto al registro de sus calificaciones para este <b>periodo <?=$config['conf_periodo'];?></b>.<br>
+												<span style="color: #007bff; font-size: 14px;"><i class="fa fa-trophy"></i> <b>FELICITAMOS A LOS PRIMEROS LUGARES</b> <i class="fa fa-trophy"></i></span><br>
+												<span style="color: #28a745; font-size: 14px;"><b>¡APRESÚRATE TÚ TAMBIÉN!</b></span>
 												</p>
 												
 												<?php
@@ -45,7 +45,7 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 												foreach ($profes as $key => $val) {
 													if($val <= 50) $colorGrafico = 'danger';
 													if($val > 50 and $val <80) $colorGrafico = 'warning';
-													if($val > 80) $colorGrafico = 'info';
+													if($val > 80) $colorGrafico = 'success';
 												?>
 													<div class="work-monitor work-progress">
 															<div class="states">
@@ -66,6 +66,6 @@ if( !empty($_GET["modal"]) && $_GET["modal"] == 1 ) {
 												}
 												?>
 												
-												<p class="text-info" style="margin-top: 15px;">Los docentes que no aparecen en este listado es porque aún no han iniciado este proceso. Los instamos a iniciar pronto.</p>
+												<p style="color: #007bff; font-size: 14px; margin-top: 15px;">Los docentes que no aparecen en este listado es porque aún no han iniciado este proceso. Los instamos a iniciar pronto.</p>
 											</div>
 										</div>

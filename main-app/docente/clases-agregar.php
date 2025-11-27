@@ -5,8 +5,11 @@ require_once(ROOT_PATH."/main-app/class/Unidades.php");?>
 <?php include("verificar-carga.php");?>
 <?php include("verificar-periodos-diferentes.php");?>
 <?php include("../compartido/head.php");?>
+
 <?php
 require_once(ROOT_PATH."/main-app/class/Clases.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
+
 if( CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual) )
 {
 	
@@ -179,7 +182,7 @@ if( CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodo
 											</div>
 										</div>
 
-										<?php if ($config['conf_id_institucion'] == DEVELOPER_PROD || $config['conf_id_institucion'] == DEVELOPER) {?>
+										<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_GRBAR_VIDEO_CLASE)) {?>
 										<div class="form-group row">
 											
 											<label class="col-sm-2 control-label">Grabar Video

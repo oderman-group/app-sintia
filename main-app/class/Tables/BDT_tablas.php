@@ -341,7 +341,7 @@ abstract class BDT_Tablas implements BDT_Interface{
             {$having} \n
             {$orderBy} \n
             {$limit} \n";
-            return self::ejecutarSQL($consulta);;
+            return self::ejecutarSQL($consulta);
         } catch (PDOException  $e) {
             echo "Excepción capturada: " . $e->getMessage();
             return null;

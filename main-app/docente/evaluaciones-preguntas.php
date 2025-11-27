@@ -173,11 +173,17 @@ function mostrarNuevaRespuesta(datos){
 											$puntosSumados = 0;
 											$totalPuntos = 0;
 											$contPreguntas = 1;
+											
+											// PRE-CARGAR TODAS LAS RESPUESTAS DE TODAS LAS PREGUNTAS
+											// EN UNA SOLA CONSULTA PARA EVITAR N+1 QUERIES
+											// ============================================
+											$respuestasMapa = Evaluaciones::traerRespuestasEvaluacionMapa($conexion, $config, $idE);
+											
 											$preguntasConsulta = Evaluaciones::preguntasEvaluacion($conexion, $config, $idE);
 											while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
-												$respuestasConsulta = Evaluaciones::traerRespuestaPregunta($conexion, $config, $preguntas['preg_id']);
-												
-												$cantRespuestas = mysqli_num_rows($respuestasConsulta);
+												// Obtener respuestas del mapa pre-cargado
+												$respuestasPregunta = $respuestasMapa[$preguntas['preg_id']] ?? [];
+												$cantRespuestas = count($respuestasPregunta);
 												
 												$totalPuntos +=$preguntas['preg_valor'];
 											?>
@@ -235,7 +241,8 @@ function mostrarNuevaRespuesta(datos){
 														
 											<?php 
 												$contRespuestas = 1;
-												while($respuestas = mysqli_fetch_array($respuestasConsulta, MYSQLI_BOTH)){
+												// Iterar sobre el array pre-cargado en lugar de hacer consulta
+												foreach($respuestasPregunta as $respuestas){
 													if($respuestas['resp_correcta']==1) {$colorRespuesta = 'green';} else {$colorRespuesta = 'red';}
 													if($respuestas['resp_correcta']==1 and !empty($compararRespuestas[0])){
 														$puntosSumados += $preguntas['preg_valor'];
@@ -244,9 +251,9 @@ function mostrarNuevaRespuesta(datos){
 												
 														
 												<p id="reg<?=$respuestas['resp_id'];?>">	
-													<a href="#" title="<?=$objetoEnviar;?>" id="<?=$respuestas['resp_id'];?>" name="evaluaciones-respuestas-eliminar.php?idR=<?=base64_encode($respuestas['resp_id']);?>&estado=<?=base64_encode($respuestas['resp_correcta']);?>&preg=<?=base64_encode($preguntas['preg_id']);?>&idE=<?=$_GET["idE"];?>" onClick="deseaEliminar(this)"><i class="fa fa-times-circle"></i></a>
+													<a href="#" title="<?=$objetoEnviar;?>" id="<?=$respuestas['resp_id'];?>" name="evaluaciones-respuestas-eliminar.php?idR=<?=base64_encode($respuestas['resp_id'] ?? '');?>&estado=<?=base64_encode($respuestas['resp_correcta'] ?? '');?>&preg=<?=base64_encode($preguntas['preg_id'] ?? '');?>&idE=<?=$_GET["idE"] ?? '';?>" onClick="deseaEliminar(this)"><i class="fa fa-times-circle"></i></a>
 													
-													<a href="evaluaciones-respuestas-cambiar-estado.php?idR=<?=base64_encode($respuestas['resp_id']);?>&estado=<?=base64_encode($respuestas['resp_correcta']);?>&preg=<?=base64_encode($preguntas['preg_id']);?>&idE=<?=$_GET["idE"];?>">
+													<a href="evaluaciones-respuestas-cambiar-estado.php?idR=<?=base64_encode($respuestas['resp_id'] ?? '');?>&estado=<?=base64_encode($respuestas['resp_correcta'] ?? '');?>&preg=<?=base64_encode($preguntas['preg_id'] ?? '');?>&idE=<?=$_GET["idE"] ?? '';?>">
 														<i class="fa fa-exchange"></i>
 													</a>
 													
@@ -329,5 +336,5 @@ function mostrarNuevaRespuesta(datos){
 		
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/course_details.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:31:36 GMT -->
+
 </html>

@@ -6,10 +6,15 @@ $user   		   = $usuarioConexion;
 $pass   		   = $claveConexion;
 $dbName 		   = $baseDatosAdmisiones;
 $conexion = mysqli_connect($servidorConexion, $usuarioConexion, $claveConexion);
+if ($conexion) {
+	mysqli_set_charset($conexion, "utf8mb4");
+}
 if(!empty($_REQUEST['idInst'])){
 	$idInsti=base64_decode($_REQUEST['idInst']);
 	try{
-		$pdoAdmin = new PDO('mysql:host='.$server.';dbname='.$baseDatosServicios, $user, $pass);
+		$pdoAdmin = new PDO('mysql:host='.$server.';dbname='.$baseDatosServicios.';charset=utf8mb4', $user, $pass);
+		$pdoAdmin->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$pdoAdmin->exec("SET NAMES 'utf8mb4'");
 	}catch (PDOException $e) {
 		echo "Error!: " . $e->getMessage() . "<br/>";
 		header("Location:".REDIRECT_ROUTE."/admisiones".$e);
@@ -49,7 +54,9 @@ if(!empty($_REQUEST['idInst'])){
 }
 
 try{
-	$pdo = new PDO('mysql:host='.$server.';dbname='.$dbName, $user, $pass);
+	$pdo = new PDO('mysql:host='.$server.';dbname='.$dbName.';charset=utf8mb4', $user, $pass);
+	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	$pdo->exec("SET NAMES 'utf8mb4'");
 }catch (PDOException $e) {
 	echo "Error!: " . $e->getMessage() . "<br/>";
 	header("Location:".REDIRECT_ROUTE."/admisiones".$e);
@@ -59,7 +66,9 @@ try{
 $dbNameInstitucion = !empty($BD_ADMISIONES_MOCK) ? $BD_ADMISIONES_MOCK : $baseDatosServicios;
 
 try{
-	$pdoI = new PDO('mysql:host='.$server.';dbname='.$dbNameInstitucion, $user, $pass);
+	$pdoI = new PDO('mysql:host='.$server.';dbname='.$dbNameInstitucion.';charset=utf8mb4', $user, $pass);
+	$pdoI->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	$pdoI->exec("SET NAMES 'utf8mb4'");
 }catch (PDOException $e) {
 	header("Location:".REDIRECT_ROUTE."/admisiones".$e);
 	echo "Error!: " . $e->getMessage() . "<br/>";

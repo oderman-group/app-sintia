@@ -165,6 +165,4 @@ require_once("../class/Estudiantes.php");
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
     <!-- end js include path -->
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

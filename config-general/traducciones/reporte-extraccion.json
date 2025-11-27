@@ -1,0 +1,3644 @@
+{
+    "fecha_generacion": "2025-10-23 01:18:39",
+    "estadisticas": {
+        "total_archivos": 576,
+        "archivos_con_textos": 192,
+        "total_textos": 650
+    },
+    "textos_encontrados": {
+        "abonos-agregar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Estas notas no se verán reflejadas en el comprobante.",
+                "clave_sugerida": "estas_notas_no_se"
+            }
+        ],
+        "abonos-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Puedes buscar por ID de la factura o por el nombre del usuario que realiza el abono.",
+                "clave_sugerida": "puedes_buscar_por_id"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Estas notas no se verán reflejadas en el comprobante.",
+                "clave_sugerida": "estas_notas_no_se"
+            }
+        ],
+        "ajax-actualizar-tabla-estudiantes.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Hacer clic para editar datos del estudiante",
+                "clave_sugerida": "hacer_clic_para_editar_datos_del_estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Retirar Estudiante",
+                "clave_sugerida": "retirar_estudiante"
+            },
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<i class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<i class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<ul class=",
+                "clave_sugerida": ""
+            }
+        ],
+        "ajax-dev-paginas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\" id=\"addRow\" class=\"btn deepPink-bgcolor\">\r\n                    Sí, deseo mostrar la información",
+                "clave_sugerida": "idaddrow_classbtn_deeppinkbgcolor_sí"
+            }
+        ],
+        "ajax-dev-paginas-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\" id=\"addRow\" class=\"btn deepPink-bgcolor\">\r\n                    Sí, deseo mostrar la información",
+                "clave_sugerida": "idaddrow_classbtn_deeppinkbgcolor_sí"
+            }
+        ],
+        "ajax-estudiantes-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\" id=\"addRow\" class=\"btn deepPink-bgcolor\">\r\n                    Sí, deseo mostrar la información",
+                "clave_sugerida": "idaddrow_classbtn_deeppinkbgcolor_sí"
+            }
+        ],
+        "ajax-estudiantes-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\" id=\"addRow\" class=\"btn deepPink-bgcolor\">\r\n                    Sí, deseo mostrar la información",
+                "clave_sugerida": "idaddrow_classbtn_deeppinkbgcolor_sí"
+            }
+        ],
+        "ajax-estudiantes-materias.php": [
+            {
+                "tipo": "html_content",
+                "texto": "No se encontraron materias asignadas para este estudiante.",
+                "clave_sugerida": "no_se_encontraron_materias"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "No se encontraron datos del estudiante.",
+                "clave_sugerida": "no_se_encontraron_datos_del_estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Parámetros inválidos.",
+                "clave_sugerida": "parámetros_inválidos"
+            },
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            }
+        ],
+        "ajax-listar-cursos.php": [
+            {
+                "tipo": "echo",
+                "texto": "Excepción catpurada: ",
+                "clave_sugerida": "excepción_catpurada"
+            }
+        ],
+        "ajax-listar-estudiantes.php": [
+            {
+                "tipo": "echo",
+                "texto": "Excepción catpurada: ",
+                "clave_sugerida": "excepción_catpurada"
+            }
+        ],
+        "ajax-listar-usuarios.php": [
+            {
+                "tipo": "echo",
+                "texto": "Excepción catpurada: ",
+                "clave_sugerida": "excepción_catpurada"
+            }
+        ],
+        "ajax-usuarios-listar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Este supuesto estudiante no cuenta con un registro en las matrículas.",
+                "clave_sugerida": "este_supuesto_estudiante_no"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "' . UsuariosPadre::nombreCompletoDelUsuario($usuario) . '",
+                "clave_sugerida": "usuariospadrenombrecompletodelusuariousuario"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Editar",
+                "clave_sugerida": "editar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Eliminar",
+                "clave_sugerida": "eliminar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Planillas de las cargas",
+                "clave_sugerida": "planillas_de_las_cargas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información Detallada",
+                "clave_sugerida": "información_detallada"
+            }
+        ],
+        "areas-agregar-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Orden o posición en los informes",
+                "clave_sugerida": "orden_o_posición_en_los_informes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Este número se usa para mostrar en una posición específica el área en los informes de la institución.",
+                "clave_sugerida": "este_número_se_usa"
+            }
+        ],
+        "areas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Areas",
+                "clave_sugerida": "agregar_areas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Orden o posición en los informes",
+                "clave_sugerida": "orden_o_posición_en_los_informes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Este número se usa para mostrar en una posición específica el área en los informes de la institución.",
+                "clave_sugerida": "este_número_se_usa"
+            }
+        ],
+        "areas-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Areas",
+                "clave_sugerida": "editar_areas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre del Areas",
+                "clave_sugerida": "nombre_del_areas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Posición",
+                "clave_sugerida": "posición"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Filtrar por área:",
+                "clave_sugerida": "filtrar_por_área"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Error de conexión: ' + error + '",
+                "clave_sugerida": "error_de_conexión_error"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Error de conexión: ' + error + '",
+                "clave_sugerida": "error_de_conexión_error"
+            }
+        ],
+        "areas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Posición",
+                "clave_sugerida": "posición"
+            }
+        ],
+        "asignaciones-agregar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "A que o quien se va a enfocar esta asignación.",
+                "clave_sugerida": "a_que_o_quien_se_va_a_enfocar_esta_asignación"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Escoja los usuarios, curso, materia o areas que seran evaluadas.",
+                "clave_sugerida": "escoja_los_usuarios_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Escoja el tipo de usuarios o cursos que realizaran esta encuesta.",
+                "clave_sugerida": "escoja_el_tipo_de"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Si el evaluador sera curso, especifique que cursos realizaran la encuesta.",
+                "clave_sugerida": "si_el_evaluador_sera"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Con este campo determinas cuantos usuarios pueden realizar la encuesta.",
+                "clave_sugerida": "con_este_campo_determinas"
+            }
+        ],
+        "asignaciones-asignados.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios Asignados",
+                "clave_sugerida": "usuarios_asignados"
+            }
+        ],
+        "asignaciones-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "A que o quien se va a enfocar esta asignación.",
+                "clave_sugerida": "a_que_o_quien_se_va_a_enfocar_esta_asignación"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Escoja los usuarios, curso, materia o areas que seran evaluadas.",
+                "clave_sugerida": "escoja_los_usuarios_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Escoja el tipo de usuarios o cursos que realizaran esta encuesta.",
+                "clave_sugerida": "escoja_el_tipo_de"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Si el evaluador sera curso, especifique que cursos realizaran la encuesta.",
+                "clave_sugerida": "si_el_evaluador_sera"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Con este campo determinas cuantos usuarios pueden realizar la encuesta.",
+                "clave_sugerida": "con_este_campo_determinas"
+            }
+        ],
+        "asignaturas-agregar-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Este valor se usa para mostrar de forma abreviada el nombre de la asignatura en algunos informes.",
+                "clave_sugerida": "este_valor_se_usa"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Deseas que esta asignatura cuente en la suma del promedio general en los informes?.",
+                "clave_sugerida": "deseas_que_esta_asignatura"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Porcentaje",
+                "clave_sugerida": "porcentaje"
+            }
+        ],
+        "asignaturas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Asignatura",
+                "clave_sugerida": "agregar_asignatura"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre corto, Abreviatura o Siglas de la asignatura",
+                "clave_sugerida": "nombre_corto_abreviatura_o_siglas_de_la_asignatura"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Este valor se usa para mostrar de forma abreviada el nombre de la asignatura en algunos informes.",
+                "clave_sugerida": "este_valor_se_usa"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Porcentaje",
+                "clave_sugerida": "porcentaje"
+            }
+        ],
+        "asignaturas-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Deseas que esta asignatura cuente en la suma del promedio general en los informes?.",
+                "clave_sugerida": "deseas_que_esta_asignatura"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Editar Asignatura",
+                "clave_sugerida": "editar_asignatura"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Siglas",
+                "clave_sugerida": "siglas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Porcentaje",
+                "clave_sugerida": "porcentaje"
+            }
+        ],
+        "asignaturas.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar asignatura...",
+                "clave_sugerida": "buscar_asignatura"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Limpiar búsqueda",
+                "clave_sugerida": "limpiar_búsqueda"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Código",
+                "clave_sugerida": "código"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Siglas",
+                "clave_sugerida": "siglas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Porcentaje (%)",
+                "clave_sugerida": "porcentaje"
+            }
+        ],
+        "asistencia-entrega-informes-filtros-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "asistencia-entrega-informes-filtros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "asistencia-planilla-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "async-cargas-listar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Este gráfico te muestra qué porcentaje de notas ha registrado el docente, a los estudiantes, en cada una de sus cargas.",
+                "clave_sugerida": "este_gráfico_te_muestra"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "No hay cargas asignadas para este docente.",
+                "clave_sugerida": "no_hay_cargas_asignadas_para_este_docente"
+            }
+        ],
+        "async-editar-sub-rol.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios:",
+                "clave_sugerida": "usuarios"
+            }
+        ],
+        "cargas-agregar-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para generar informe",
+                "clave_sugerida": "permiso_para_generar_informe"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para editar en periodos anteriores",
+                "clave_sugerida": "permiso_para_editar_en_periodos_anteriores"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Indicador automático",
+                "clave_sugerida": "indicador_automático"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si selecciona SI, el docente no llenará indicadores; solo las calificaciones. Habrá un solo indicador definitivo con el 100%.",
+                "clave_sugerida": "si_selecciona_si_el"
+            }
+        ],
+        "cargas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para generar informe",
+                "clave_sugerida": "permiso_para_generar_informe"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para editar en periodos anteriores",
+                "clave_sugerida": "permiso_para_editar_en_periodos_anteriores"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Indicador automático",
+                "clave_sugerida": "indicador_automático"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si selecciona SI, el docente no llenará indicadores; solo las calificaciones. Habrá un solo indicador definitivo con el 100%.",
+                "clave_sugerida": "si_selecciona_si_el"
+            }
+        ],
+        "cargas-comportamiento-filtros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Comportamiento",
+                "clave_sugerida": "comportamiento"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento por favor.",
+                "clave_sugerida": "espere_un_momento_por_favor"
+            }
+        ],
+        "cargas-comportamiento.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Nota de Comportamiento",
+                "clave_sugerida": "nota_de_comportamiento"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Comportamiento",
+                "clave_sugerida": "comportamiento"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nota importante!",
+                "clave_sugerida": "nota_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Coloque la nota num&eacute;rica que corresponda al desempeño que aparecer&aacute; en el bolet&iacute;n.",
+                "clave_sugerida": "coloque_la_nota_numeacuterica"
+            }
+        ],
+        "cargas-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Configuración y permisos adicionales",
+                "clave_sugerida": "configuración_y_permisos_adicionales"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para generar informe",
+                "clave_sugerida": "permiso_para_generar_informe"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Permiso para editar en periodos anteriores",
+                "clave_sugerida": "permiso_para_editar_en_periodos_anteriores"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Esta opción ha sido temporalmente deshabilitada.",
+                "clave_sugerida": "esta_opción_ha_sido_temporalmente_deshabilitada"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Indicador automático",
+                "clave_sugerida": "indicador_automático"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si selecciona SI, el docente no llenará indicadores; solo las calificaciones. Habrá un solo indicador definitivo con el 100%.",
+                "clave_sugerida": "si_selecciona_si_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Observaciones en el boletin de los estudiantes ?",
+                "clave_sugerida": "observaciones_en_el_boletin_de_los_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si selecciona SI, el docente podrá colocar observaciones que aparecerán en el boletín de los estudiantes.",
+                "clave_sugerida": "si_selecciona_si_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Primer acceso docente",
+                "clave_sugerida": "primer_acceso_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Último acceso docente",
+                "clave_sugerida": "último_acceso_docente"
+            }
+        ],
+        "cargas-eliminar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Se eliminó una carga académica. A continuación relacionamos la información:",
+                "clave_sugerida": "se_eliminó_una_carga"
+            }
+        ],
+        "cargas-estilo-notas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Categoria de Nota",
+                "clave_sugerida": "agregar_categoria_de_nota"
+            }
+        ],
+        "cargas-estilo-notas-especifica-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Categoria Notas especifica",
+                "clave_sugerida": "editar_categoria_notas_especifica"
+            }
+        ],
+        "cargas-estilo-notas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            }
+        ],
+        "cargas-horarios-actualizar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            }
+        ],
+        "cargas-horarios-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Horarios",
+                "clave_sugerida": "agregar_horarios"
+            }
+        ],
+        "cargas-horarios-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Horarios",
+                "clave_sugerida": "editar_horarios"
+            }
+        ],
+        "cargas-horarios-guardar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            }
+        ],
+        "cargas-horarios.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Editar Horarios",
+                "clave_sugerida": "editar_horarios"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Eliminar Horarios",
+                "clave_sugerida": "eliminar_horarios"
+            }
+        ],
+        "cargas-indicadores-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Creado por el docente",
+                "clave_sugerida": "creado_por_el_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo de evaluación",
+                "clave_sugerida": "tipo_de_evaluación"
+            }
+        ],
+        "cargas-indicadores-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "ID Relación",
+                "clave_sugerida": "id_relación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Creado por el docente",
+                "clave_sugerida": "creado_por_el_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo de evaluación",
+                "clave_sugerida": "tipo_de_evaluación"
+            }
+        ],
+        "cargas-indicadores-obligatorios-actualizar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Los valores de los indicadores no deben superar el 100%.",
+                "clave_sugerida": "los_valores_de_los"
+            }
+        ],
+        "cargas-indicadores-obligatorios-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.",
+                "clave_sugerida": "estos_valores_maacutes_la"
+            }
+        ],
+        "cargas-indicadores-obligatorios-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Indicadores",
+                "clave_sugerida": "editar_indicadores"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.",
+                "clave_sugerida": "estos_valores_maacutes_la"
+            }
+        ],
+        "cargas-indicadores-obligatorios-guardar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Los valores de los indicadores no deben superar el 100%.",
+                "clave_sugerida": "los_valores_de_los"
+            }
+        ],
+        "cargas-indicadores-obligatorios.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Grados por asignaturas",
+                "clave_sugerida": "grados_por_asignaturas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            }
+        ],
+        "cargas-transferir-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Del Docente",
+                "clave_sugerida": "del_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Al Docente",
+                "clave_sugerida": "al_docente"
+            }
+        ],
+        "cargas-transferir.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Del Docente:",
+                "clave_sugerida": "del_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Al Docente:",
+                "clave_sugerida": "al_docente"
+            }
+        ],
+        "cargas-visual.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar por docente, asignatura, curso o grupo...",
+                "clave_sugerida": "buscar_por_docente_asignatura_curso_o_grupo"
+            },
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar por curso, grupo, docente o asignatura...",
+                "clave_sugerida": "buscar_por_curso_grupo_docente_o_asignatura"
+            },
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar en la tabla...",
+                "clave_sugerida": "buscar_en_la_tabla"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Colapsar\/Expandir todas las tarjetas",
+                "clave_sugerida": "colapsarexpandir_todas_las_tarjetas"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Cambiar docente",
+                "clave_sugerida": "cambiar_docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Organiza y gestiona las cargas de docentes mediante drag & drop. Arrastra las tarjetas para cambiar docentes o reorganizar asignaciones.",
+                "clave_sugerida": "organiza_y_gestiona_las"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Docentes con Cargas",
+                "clave_sugerida": "docentes_con_cargas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cursos",
+                "clave_sugerida": "cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "No hay cargas académicas que coincidan con los filtros seleccionados.",
+                "clave_sugerida": "no_hay_cargas_académicas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Selecciona el nuevo docente para esta carga:",
+                "clave_sugerida": "selecciona_el_nuevo_docente_para_esta_carga"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Docente:",
+                "clave_sugerida": "docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "${docente.nombre}",
+                "clave_sugerida": "docentenombre"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "${renderizarCargasDocente(docente.cargas)}",
+                "clave_sugerida": "renderizarcargasdocentedocentecargas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "${carga.curso_nombre}",
+                "clave_sugerida": "cargacurso_nombre"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "${renderizarGruposCurso(curso.grupos, curso.id)}",
+                "clave_sugerida": "renderizargruposcursocursogrupos_cursoid"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "${carga.docente_nombre}",
+                "clave_sugerida": "cargadocente_nombre"
+            }
+        ],
+        "cargas.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Paginación de cargas",
+                "clave_sugerida": "paginación_de_cargas"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Calificaciones",
+                "clave_sugerida": "calificaciones"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "' + docente + '",
+                "clave_sugerida": "docente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "' + curso + '",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "' + maxCalificaciones + '",
+                "clave_sugerida": "maxcalificaciones"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Seleccionar Nuevo Período",
+                "clave_sugerida": "seleccionar_nuevo_período"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cancelar",
+                "clave_sugerida": "cancelar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Indicador Automático",
+                "clave_sugerida": "indicador_automático"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "' + nuevoContenido + '",
+                "clave_sugerida": "nuevocontenido"
+            },
+            {
+                "tipo": "echo",
+                "texto": "<!-- Error al cargar docentes: ",
+                "clave_sugerida": ""
+            }
+        ],
+        "chat.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar usuario...",
+                "clave_sugerida": "buscar_usuario"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "¡Todo listo para chatear! Comencemos.",
+                "clave_sugerida": "todo_listo_para_chatear_comencemos"
+            }
+        ],
+        "configuracion-admisiones.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Este será el año lectivo en el que quedaran inscritos los nuevos estudiantes.",
+                "clave_sugerida": "este_será_el_año"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Este será el color principal que verán los usuarios el modulo de inscripciones. (En la barra superior, botones, etc.)",
+                "clave_sugerida": "este_será_el_color"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Este será el color de los textos sobre el color principal. Asegurese de escoger un color que combine y que no se pueda distinguir del color principal.",
+                "clave_sugerida": "este_será_el_color"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Cuando el estudiante esté en estado aprobado le aparecerá el botón de pago de prematricula, si usted desea.",
+                "clave_sugerida": "cuando_el_estudiante_esté"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Es link de alguna entidad externa o pasarela de pagos donde harán el pago de la prematricula.",
+                "clave_sugerida": "es_link_de_alguna"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Si usted desea, puede subir un banner resaltando o mostrando alguna aviso que quiere que vean los usuarios cuando vayan a hacer el proceso de inscripción.",
+                "clave_sugerida": "si_usted_desea_puede"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Es un texto informativo que verán los usuarios al momento de hacer la inscripción.",
+                "clave_sugerida": "es_un_texto_informativo"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Un texto con nombre del banco y numero de cuenta, este texto lo vera el usuario al consultar el estado y estar el proceso en ",
+                "clave_sugerida": "un_texto_con_nombre"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Este archivo lo podrán descargar los usuarios antes de enviar el formulario de inscripción.",
+                "clave_sugerida": "este_archivo_lo_podrán"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Eliminar archivo de politicas.",
+                "clave_sugerida": "eliminar_archivo_de_politicas"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Este texto lo podrán leer los usuarios antes de enviar el formulario de inscripción.",
+                "clave_sugerida": "este_texto_lo_podrán"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Este frase la podrán leer los usuarios antes de enviar el formulario de inscripción. Escribe algo que les quieras informar o advertir.",
+                "clave_sugerida": "este_frase_la_podrán"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año Actual",
+                "clave_sugerida": "año_actual"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Valor de la inscripción",
+                "clave_sugerida": "valor_de_la_inscripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estilos y apariencia",
+                "clave_sugerida": "estilos_y_apariencia"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Habilitar proceso de inscripción",
+                "clave_sugerida": "habilitar_proceso_de_inscripción"
+            }
+        ],
+        "configuracion-finanzas.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Este será el numero inicial para el consecutivo de los documetos a imprimir.",
+                "clave_sugerida": "este_será_el_numero"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta firma se mostrara en los documentos a imprimir.",
+                "clave_sugerida": "esta_firma_se_mostrara"
+            }
+        ],
+        "configuracion-institucion-guardar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            }
+        ],
+        "configuracion-institucion.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información Basica",
+                "clave_sugerida": "información_basica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Código DANE",
+                "clave_sugerida": "código_dane"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre de la institución",
+                "clave_sugerida": "nombre_de_la_institución"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Clase",
+                "clave_sugerida": "clase"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Resolución para certificados",
+                "clave_sugerida": "resolución_para_certificados"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Decretos de plan de estudio para certificados",
+                "clave_sugerida": "decretos_de_plan_de_estudio_para_certificados"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información académica",
+                "clave_sugerida": "información_académica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Secretario(a) Académico(a)",
+                "clave_sugerida": "secretarioa_académicoa"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Coordinador(a) Académico(a)",
+                "clave_sugerida": "coordinadora_académicoa"
+            }
+        ],
+        "configuracion-opciones-generales-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Opciones",
+                "clave_sugerida": "editar_opciones"
+            }
+        ],
+        "configuracion-opciones-generales.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Editar Informacion",
+                "clave_sugerida": "editar_informacion"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Eliminar",
+                "clave_sugerida": "eliminar"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Eliminar Horarios",
+                "clave_sugerida": "eliminar_horarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\" data-toggle=\"popover\" data-placement=\"top\" data-content=\"Editar Informacion\" title=\"Editar Informacion\">Editar",
+                "clave_sugerida": "datatogglepopover_dataplacementtop_datacontenteditar_informacion"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            }
+        ],
+        "configuracion-sistema.php": [
+            {
+                "tipo": "echo",
+                "texto": "<li><a class=",
+                "clave_sugerida": ""
+            }
+        ],
+        "consolidado-final-filtro-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "consolidado-final-filtro.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "consolidado-perdidos-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "consolidado-perdidos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "consumo-plan.php": [
+            {
+                "tipo": "html_content",
+                "texto": "CONSUMO DEL PLAN",
+                "clave_sugerida": "consumo_del_plan"
+            }
+        ],
+        "cotizacion-imprimir.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Cotización",
+                "clave_sugerida": "cotización"
+            }
+        ],
+        "cursos-agregar-modal.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Genera una imagen con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_una_imagen_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Genera una descripcion con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_una_descripcion_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Genera un contenido con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_un_contenido_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcado con esta opción permitirán que cualquiera pueda participar del curso",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Configuracion del curso",
+                "clave_sugerida": "configuracion_del_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso Siguiente",
+                "clave_sugerida": "curso_siguiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Minimo de estudiantes",
+                "clave_sugerida": "minimo_de_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Maximo de estudiantes",
+                "clave_sugerida": "maximo_de_estudiantes"
+            }
+        ],
+        "cursos-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Cursos",
+                "clave_sugerida": "agregar_cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso Siguiente",
+                "clave_sugerida": "curso_siguiente"
+            }
+        ],
+        "cursos-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Genera una imagen con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_una_imagen_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Genera una descripcion con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_una_descripcion_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Genera un contenido con inteligencia artificial teniendo en cuenta el nombre del curso",
+                "clave_sugerida": "genera_un_contenido_con"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcado con esta opción permitirán que cualquiera pueda participar del curso",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Los cursos que estén marcados como no activos no podrán ser manipulados",
+                "clave_sugerida": "los_cursos_que_estén"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Editar Cursos",
+                "clave_sugerida": "editar_cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Configuracion del curso",
+                "clave_sugerida": "configuracion_del_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiantes",
+                "clave_sugerida": "estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre Curso",
+                "clave_sugerida": "nombre_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Formato Boletin",
+                "clave_sugerida": "formato_boletin"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso Siguiente",
+                "clave_sugerida": "curso_siguiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso Anterior",
+                "clave_sugerida": "curso_anterior"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Minimo de estudiantes",
+                "clave_sugerida": "minimo_de_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Maximo de estudiantes",
+                "clave_sugerida": "maximo_de_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Agregar un estudiante:",
+                "clave_sugerida": "agregar_un_estudiante"
+            }
+        ],
+        "cursos-intensidad.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Intesidad por cursos",
+                "clave_sugerida": "intesidad_por_cursos"
+            }
+        ],
+        "cursos-promocionar-estudiantes-detalles.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Podrás relacionar las cargas del curso actual con las cargas del curso al que deseas promocionar al estudiante, no podrás cambiar el grupo de los estudiantes de forma individual.",
+                "clave_sugerida": "podrás_relacionar_las_cargas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Promocionar Estudiantes",
+                "clave_sugerida": "promocionar_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cursos",
+                "clave_sugerida": "cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desde El Curso:",
+                "clave_sugerida": "desde_el_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Se Moverán Al Curso:",
+                "clave_sugerida": "se_moverán_al_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Se Moverán Al Grupo:",
+                "clave_sugerida": "se_moverán_al_grupo"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Realizar promoción",
+                "clave_sugerida": "realizar_promoción"
+            }
+        ],
+        "cursos.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Imprimir boletin por curso",
+                "clave_sugerida": "imprimir_boletin_por_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Imprimir boletin por curso",
+                "clave_sugerida": "imprimir_boletin_por_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Imprimir Libro por curso",
+                "clave_sugerida": "imprimir_libro_por_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Hoja de matrícula por curso",
+                "clave_sugerida": "hoja_de_matrícula_por_curso"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Observaciones de comportamiento registradas",
+                "clave_sugerida": "observaciones_de_comportamiento_registradas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\" title=\"Hoja de matrícula por curso\" target=\"_blank\">Hojas de matrícula",
+                "clave_sugerida": "titlehoja_de_matrícula_por"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\" title=\"Observaciones de comportamiento registradas\">Comportamiento",
+                "clave_sugerida": "titleobservaciones_de_comportamiento_registradascomportamiento"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Código",
+                "clave_sugerida": "código"
+            }
+        ],
+        "dev-contratos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Ver usuarios que aceptaron",
+                "clave_sugerida": "ver_usuarios_que_aceptaron"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Ultima Modificación",
+                "clave_sugerida": "ultima_modificación"
+            }
+        ],
+        "dev-crear-bd-informacion.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Confirmación BD nueva",
+                "clave_sugerida": "confirmación_bd_nueva"
+            }
+        ],
+        "dev-crear-nueva-bd.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Nombre corto de la compañía.",
+                "clave_sugerida": "nombre_corto_de_la_compañía"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Aquí colocamos las siglas que van al intermedio del nombre de la BD ejemplo: dominio_{{SiglasBD}}_year",
+                "clave_sugerida": "aquí_colocamos_las_siglas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Crear compañía nueva",
+                "clave_sugerida": "crear_compañía_nueva"
+            }
+        ],
+        "dev-datos-contacto.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Animación del login de acceso",
+                "clave_sugerida": "animación_del_login_de_acceso"
+            }
+        ],
+        "dev-ejecutar-scripts-guardar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\".$filasAfectadas.\" filas afectadas para \".$CURRENTDB.\"",
+                "clave_sugerida": "filasafectadas_filas_afectadas_para_currentdb"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "No aparecen columnas afectadas, pero es muy probable que si haya aplicado los cambios para \".$CURRENTDB.\"",
+                "clave_sugerida": "no_aparecen_columnas_afectadas"
+            }
+        ],
+        "dev-errores-sistema-detalles.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Errores del Sistema Detalles",
+                "clave_sugerida": "errores_del_sistema_detalles"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Errores del Sistema",
+                "clave_sugerida": "errores_del_sistema"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "ID Reporte",
+                "clave_sugerida": "id_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Numero Reporte",
+                "clave_sugerida": "numero_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Fecha Reporte",
+                "clave_sugerida": "fecha_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Institución",
+                "clave_sugerida": "institución"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Parametros",
+                "clave_sugerida": "parametros"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Linea del Error",
+                "clave_sugerida": "linea_del_error"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            }
+        ],
+        "dev-errores-sistema.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Errores del Sistema",
+                "clave_sugerida": "errores_del_sistema"
+            }
+        ],
+        "dev-historial-acciones-detalles.php": [
+            {
+                "tipo": "html_content",
+                "texto": "ID Reporte",
+                "clave_sugerida": "id_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Fecha Reporte",
+                "clave_sugerida": "fecha_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Institución",
+                "clave_sugerida": "institución"
+            }
+        ],
+        "dev-instituciones-Informacion-actualizar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Debe llenar todos los campos.",
+                "clave_sugerida": "debe_llenar_todos_los_campos"
+            }
+        ],
+        "dev-instituciones-Informacion.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información Basica",
+                "clave_sugerida": "información_basica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año Actual",
+                "clave_sugerida": "año_actual"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre de la institución",
+                "clave_sugerida": "nombre_de_la_institución"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Clase",
+                "clave_sugerida": "clase"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información académica",
+                "clave_sugerida": "información_académica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Secretario(a) Académico(a)",
+                "clave_sugerida": "secretarioa_académicoa"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Coordinador(a) Académico(a)",
+                "clave_sugerida": "coordinadora_académicoa"
+            }
+        ],
+        "dev-instituciones-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Instituciones",
+                "clave_sugerida": "editar_instituciones"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nombre Institución",
+                "clave_sugerida": "nombre_institución"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Siglas Institución",
+                "clave_sugerida": "siglas_institución"
+            }
+        ],
+        "dev-instituciones.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\">Información",
+                "clave_sugerida": "información"
+            }
+        ],
+        "dev-modulos-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Modulos",
+                "clave_sugerida": "agregar_modulos"
+            }
+        ],
+        "dev-modulos-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Modulos",
+                "clave_sugerida": "editar_modulos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Portada Módulo",
+                "clave_sugerida": "portada_módulo"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            }
+        ],
+        "dev-modulos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "dev-paginas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Paginas",
+                "clave_sugerida": "agregar_paginas"
+            }
+        ],
+        "dev-paginas-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Paginas",
+                "clave_sugerida": "editar_paginas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Url para youtube",
+                "clave_sugerida": "url_para_youtube"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            }
+        ],
+        "dev-paginas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "dev-solicitudes-cancelacion-detalle.php": [
+            {
+                "tipo": "html_content",
+                "texto": "ID Reporte:",
+                "clave_sugerida": "id_reporte"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Institución:",
+                "clave_sugerida": "institución"
+            }
+        ],
+        "dev-terminos-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Ultima Modificación",
+                "clave_sugerida": "ultima_modificación"
+            }
+        ],
+        "dev-terminos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\">Usuarios que aceptaron",
+                "clave_sugerida": "usuarios_que_aceptaron"
+            }
+        ],
+        "disciplina-categorias-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Categoría",
+                "clave_sugerida": "agregar_categoría"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Categoría",
+                "clave_sugerida": "categoría"
+            }
+        ],
+        "disciplina-categorias-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Categoría",
+                "clave_sugerida": "categoría"
+            }
+        ],
+        "disciplina-categorias.php": [
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            }
+        ],
+        "disciplina-faltas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Faltas",
+                "clave_sugerida": "agregar_faltas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Código",
+                "clave_sugerida": "código"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Categoría",
+                "clave_sugerida": "categoría"
+            }
+        ],
+        "disciplina-faltas-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Código",
+                "clave_sugerida": "código"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Categoría",
+                "clave_sugerida": "categoría"
+            }
+        ],
+        "disciplina-faltas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "')\">Eliminar",
+                "clave_sugerida": "eliminar"
+            }
+        ],
+        "estudiantes-agregar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Crear matrículas",
+                "clave_sugerida": "crear_matrículas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Matrículas",
+                "clave_sugerida": "matrículas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información personal",
+                "clave_sugerida": "información_personal"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Género",
+                "clave_sugerida": "género"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante de Inclusión",
+                "clave_sugerida": "estudiante_de_inclusión"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Grupo étnico?",
+                "clave_sugerida": "grupo_étnico"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Limitación o discapacidad",
+                "clave_sugerida": "limitación_o_discapacidad"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo de situación",
+                "clave_sugerida": "tipo_de_situación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información académica",
+                "clave_sugerida": "información_académica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo estudiante",
+                "clave_sugerida": "tipo_estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Puede estar en multiples cursos?",
+                "clave_sugerida": "puede_estar_en_multiples_cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cursos adicionales",
+                "clave_sugerida": "cursos_adicionales"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Grupo Cursos Adicionales",
+                "clave_sugerida": "grupo_cursos_adicionales"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información del Acudiente",
+                "clave_sugerida": "información_del_acudiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Verificando Documento, Espere Por Favor!",
+                "clave_sugerida": "verificando_documento_espere_por_favor"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Guardando matrícula, por favor espere…",
+                "clave_sugerida": "guardando_matrícula_por_favor_espere"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante creado",
+                "clave_sugerida": "estudiante_creado"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "El estudiante se creó correctamente. ¿Qué deseas hacer?",
+                "clave_sugerida": "el_estudiante_se_creó"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Agregar otro",
+                "clave_sugerida": "agregar_otro"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Ir a editar",
+                "clave_sugerida": "ir_a_editar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Ocurrió un error de red. Intente nuevamente.",
+                "clave_sugerida": "ocurrió_un_error_de_red_intente_nuevamente"
+            }
+        ],
+        "estudiantes-cambiar-grupo-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desea tranferir las notas?",
+                "clave_sugerida": "desea_tranferir_las_notas"
+            }
+        ],
+        "estudiantes-cambiar-grupo.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "estudiantes-certificados-modal.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Ingrese el número de estampilla",
+                "clave_sugerida": "ingrese_el_número_de_estampilla"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desde que año",
+                "clave_sugerida": "desde_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Hasta que año",
+                "clave_sugerida": "hasta_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desde que año",
+                "clave_sugerida": "desde_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Hasta que año",
+                "clave_sugerida": "hasta_que_año"
+            }
+        ],
+        "estudiantes-certificados.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desde que año",
+                "clave_sugerida": "desde_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Hasta que año",
+                "clave_sugerida": "hasta_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Desde que año",
+                "clave_sugerida": "desde_que_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Hasta que año",
+                "clave_sugerida": "hasta_que_año"
+            }
+        ],
+        "estudiantes-consolidado-final-detalles.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Digite la nota para cada estudiante en el periodo y materia correspondiente y pulse Enter o simplemente cambie de casilla para que los cambios se guarden automaticamente.",
+                "clave_sugerida": "digite_la_nota_para"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Por favor despu&eacute;s de digitar una nota, espere un momento a que el sistema le indique que la nota se guard&oacute; y prosiga con la siguiente.",
+                "clave_sugerida": "por_favor_despueacutes_de"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "La definitiva de cada materia se obtiene del promedio de los periodos. Para que esta definitiva pueda ser correcta debe estar la nota de todos los periodos registada.",
+                "clave_sugerida": "la_definitiva_de_cada"
+            }
+        ],
+        "estudiantes-consolidado-final-detalles2.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "1 ): Digite la nota para cada estudiante en el periodo y materia correspondiente y pulse Enter o simplemente cambie de casilla para que los cambios se guarden automaticamente.",
+                "clave_sugerida": "1_digite_la_nota"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Por favor despu&eacute;s de digitar una nota, espere un momento a que el sistema le indique que la nota se guard&oacute; y prosiga con la siguiente.",
+                "clave_sugerida": "por_favor_despueacutes_de"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "2): La definitiva de cada materia se obtiene del promedio de los periodos. Para que esta definitiva pueda ser correcta debe estar la nota de todos los periodos registada.",
+                "clave_sugerida": "2_la_definitiva_de"
+            }
+        ],
+        "estudiantes-consolidado-final.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiantes",
+                "clave_sugerida": "estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "estudiantes-consultar-notas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            }
+        ],
+        "estudiantes-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar matrículas",
+                "clave_sugerida": "editar_matrículas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Matrículas",
+                "clave_sugerida": "matrículas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Documentos de Inscripción",
+                "clave_sugerida": "documentos_de_inscripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información personal",
+                "clave_sugerida": "información_personal"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información académica",
+                "clave_sugerida": "información_académica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información del Acudiente",
+                "clave_sugerida": "información_del_acudiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Error al cargar las materias. Por favor, inténtelo de nuevo.",
+                "clave_sugerida": "error_al_cargar_las"
+            }
+        ],
+        "estudiantes-importar-excel.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importar estudiantes desde Excel",
+                "clave_sugerida": "importar_estudiantes_desde_excel"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importar matrículas",
+                "clave_sugerida": "importar_matrículas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Preview del archivo Excel",
+                "clave_sugerida": "preview_del_archivo_excel"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Resultados de la importación",
+                "clave_sugerida": "resultados_de_la_importación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Mostrando las primeras 10 filas válidas de ${currentFileData.rowCount} filas con datos completos.",
+                "clave_sugerida": "mostrando_las_primeras_10"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Mostrando ${currentFileData.rowCount} filas válidas encontradas.",
+                "clave_sugerida": "mostrando_currentfiledatarowcount_filas_válidas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "El procesamiento se realizará en segundo plano. Puede verificar el estado en la tabla de solicitudes de importación.",
+                "clave_sugerida": "el_procesamiento_se_realizará"
+            }
+        ],
+        "estudiantes-nivelaciones-registrar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Digite la Nivelación, el acta y la fecha para cada estudiante en la materia correspondiente y pulse Enter o simplemente cambie de casilla para que los cambios se guarden automaticamente.",
+                "clave_sugerida": "digite_la_nivelación_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Por favor despu&eacute;s de digitar cada dato, espere un momento a que el sistema le indique que estos se guadaron y prosiga.",
+                "clave_sugerida": "por_favor_despueacutes_de"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Para ver los cambios reflejados en pantalla debe actualizar (Tecla F5) la página.",
+                "clave_sugerida": "para_ver_los_cambios"
+            }
+        ],
+        "estudiantes-nivelaciones-registrar2.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Información importante!",
+                "clave_sugerida": "información_importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Digite la Nivelación, el acta y la fecha para cada estudiante en la materia correspondiente y pulse Enter o simplemente cambie de casilla para que los cambios se guarden automaticamente.",
+                "clave_sugerida": "digite_la_nivelación_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Por favor despu&eacute;s de digitar cada dato, espere un momento a que el sistema le indique que estos se guadaron y prosiga.",
+                "clave_sugerida": "por_favor_despueacutes_de"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Para ver los cambios reflejados en pantalla debe actualizar (Tecla F5) la página.",
+                "clave_sugerida": "para_ver_los_cambios"
+            }
+        ],
+        "estudiantes-nivelaciones.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "estudiantes-planilla-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "estudiantes-retirar-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Última actualización",
+                "clave_sugerida": "última_actualización"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Último responsable",
+                "clave_sugerida": "último_responsable"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Este estudiante no tiene historial de retiros.",
+                "clave_sugerida": "este_estudiante_no_tiene_historial_de_retiros"
+            }
+        ],
+        "estudiantes-retirar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Última actualización",
+                "clave_sugerida": "última_actualización"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Último responsable",
+                "clave_sugerida": "último_responsable"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Este estudiante no tiene historial de retiros.",
+                "clave_sugerida": "este_estudiante_no_tiene_historial_de_retiros"
+            }
+        ],
+        "estudiantes.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar por nombre completo, apellidos, documento, email o usuario...",
+                "clave_sugerida": "buscar_por_nombre_completo"
+            }
+        ],
+        "excel-importar-estudiantes.php": [
+            {
+                "tipo": "echo",
+                "texto": "Excepción catpurada: ",
+                "clave_sugerida": "excepción_catpurada"
+            },
+            {
+                "tipo": "echo",
+                "texto": "<br>Hubo un error al guardar todo los datos: ",
+                "clave_sugerida": "hubo_un_error_al_guardar_todo_los_datos"
+            }
+        ],
+        "excel-importar-movimientos.php": [
+            {
+                "tipo": "echo",
+                "texto": "<br>Hubo un error al guardar todo los datos: ",
+                "clave_sugerida": "hubo_un_error_al_guardar_todo_los_datos"
+            }
+        ],
+        "excel-importar-usuarios.php": [
+            {
+                "tipo": "echo",
+                "texto": "Excepción catpurada: ",
+                "clave_sugerida": "excepción_catpurada"
+            },
+            {
+                "tipo": "echo",
+                "texto": "<br>Hubo un error al guardar todo los datos: ",
+                "clave_sugerida": "hubo_un_error_al_guardar_todo_los_datos"
+            }
+        ],
+        "factura-recurrente-agregar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Indica el último día de la creación automática de la factura.",
+                "clave_sugerida": "indica_el_último_día"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica cada cuántos meses se generará la factura, por ejemplo si eliges 2 se creará cada 2 meses.",
+                "clave_sugerida": "indica_cada_cuántos_meses"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica que dias del mes deseas que se genere la factura.",
+                "clave_sugerida": "indica_que_dias_del"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Agregar nueva línea para item",
+                "clave_sugerida": "agregar_nueva_línea_para_item"
+            }
+        ],
+        "factura-recurrente-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Indica el último día de la creación automática de la factura.",
+                "clave_sugerida": "indica_el_último_día"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica cada cuántos meses se generará la factura, por ejemplo si eliges 2 se creará cada 2 meses.",
+                "clave_sugerida": "indica_cada_cuántos_meses"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica que dias del mes deseas que se genere la factura.",
+                "clave_sugerida": "indica_que_dias_del"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Agregar nueva línea para item",
+                "clave_sugerida": "agregar_nueva_línea_para_item"
+            }
+        ],
+        "fetch-estudiante-mediatecnica.php": [
+            {
+                "tipo": "echo",
+                "texto": "Opción no reconocida",
+                "clave_sugerida": "opción_no_reconocida"
+            }
+        ],
+        "filtro-general-folio.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiantes",
+                "clave_sugerida": "estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Número de inicio de folio",
+                "clave_sugerida": "número_de_inicio_de_folio"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiantes a generar folio",
+                "clave_sugerida": "estudiantes_a_generar_folio"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "historico-notas-filtros-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento mientras se\r\n                            cargan los grupos.",
+                "clave_sugerida": "espere_un_momento_mientras_se_cargan_los_grupos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento mientras se\r\n                cargan los Estudiantes.",
+                "clave_sugerida": "espere_un_momento_mientras"
+            }
+        ],
+        "hoja-matricula-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Seleccione solo una opción de este listado.",
+                "clave_sugerida": "seleccione_solo_una_opción_de_este_listado"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "includes\/acudiente-1.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            }
+        ],
+        "includes\/acudiente-2.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            }
+        ],
+        "includes\/barra-superior-cargas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Notas de Comportamiento",
+                "clave_sugerida": "notas_de_comportamiento"
+            }
+        ],
+        "includes\/barra-superior-cursos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "colorUno;?>;\">Promocionar Estudiantes",
+                "clave_sugerida": "colorunopromocionar_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "I.H por curso",
+                "clave_sugerida": "ih_por_curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Poner en $0 la pensión",
+                "clave_sugerida": "poner_en_0_la_pensión"
+            }
+        ],
+        "includes\/barra-superior-matriculas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Importar matrículas desde Excel",
+                "clave_sugerida": "importar_matrículas_desde_excel"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cancelar a todos",
+                "clave_sugerida": "cancelar_a_todos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Remover estudiantes Inactivos este año",
+                "clave_sugerida": "remover_estudiantes_inactivos_este_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Verificar y generar credenciales a estudiantes",
+                "clave_sugerida": "verificar_y_generar_credenciales_a_estudiantes"
+            }
+        ],
+        "includes\/barra-superior-movimientos-financieros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Importar saldos",
+                "clave_sugerida": "importar_saldos"
+            }
+        ],
+        "includes\/barra-superior-servicios-modulos.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Búscar Módulo...",
+                "clave_sugerida": "búscar_módulo"
+            }
+        ],
+        "includes\/barra-superior-servicios-paquetes.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Búscar Paquete...",
+                "clave_sugerida": "búscar_paquete"
+            }
+        ],
+        "includes\/barra-superior-usuarios.php": [
+            {
+                "tipo": "html_content",
+                "texto": "')\"\r\n          >Bloquear estudiantes",
+                "clave_sugerida": "bloquear_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\"\r\n          >Desbloquear estudiantes",
+                "clave_sugerida": "desbloquear_estudiantes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\"\r\n          >Bloquear docentes",
+                "clave_sugerida": "bloquear_docentes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "')\"\r\n          >Desbloquear docentes",
+                "clave_sugerida": "desbloquear_docentes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importar usuarios",
+                "clave_sugerida": "importar_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Generar contraseña masiva",
+                "clave_sugerida": "generar_contraseña_masiva"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Consultar todos los años",
+                "clave_sugerida": "consultar_todos_los_años"
+            }
+        ],
+        "includes\/config-sistema-comportamiento.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Las instituciones normalmente manejan 4 periodos. Los colegios semestralizados o de bachillerato acelerado manejan 2 periodos.",
+                "clave_sugerida": "las_instituciones_normalmente_manejan"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica cuántos decimales aparecerán en los cálculos de las notas.",
+                "clave_sugerida": "indica_cuántos_decimales_aparecerán"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Indica si las asignaturas tendrán un porcentaje diferente dentro del área al momento de calcular las notas en el boletín.",
+                "clave_sugerida": "indica_si_las_asignaturas"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción mostrará a los usuarios las notas en formato numérico o con frases de desempeño que corresponden a las notas numéricas, dependiendo la opción que seleccione.",
+                "clave_sugerida": "esta_opción_mostrará_a"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción define el comportamiento a la hora de generar los informes por parte de los docentes o directivos. Escoja la configuración deseada. Esto aplica para todas las cargas académicas.",
+                "clave_sugerida": "esta_opción_define_el"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Permitirá a los docentes colocar o escoger solo una observación para los estudiantes que aparecerá en los boletines, o seleccionar múltiples de ellas.",
+                "clave_sugerida": "permitirá_a_los_docentes"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Es el peso máximo, en MB, que debe tener el archivo que suben los usuarios en los diferentes lugares de la plataforma. Tenga en cuenta que entre más pese el archivo más tiempo puede tomar el proceso de carga y descarga del mismo.",
+                "clave_sugerida": "es_el_peso_máximo"
+            }
+        ],
+        "includes\/config-sistema-informes.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Ver formato boletin",
+                "clave_sugerida": "ver_formato_boletin"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción permite agregar un referente o estampilla de pago a los certificados.",
+                "clave_sugerida": "esta_opción_permite_agregar"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite escoger como promediar la definitiva de los estudiantes retirados en el libro final .",
+                "clave_sugerida": "esta_acción_permite_escoger"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite ver el encabezado general de los informes o solo el logo.",
+                "clave_sugerida": "esta_acción_permite_ver"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite calcular en el reporte de sabanas, las notas por indicador o no.",
+                "clave_sugerida": "esta_acción_permite_calcular"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción permite dar un espacio para que el estudiante firme en el reporte de asistencia a la entrega de informes.",
+                "clave_sugerida": "esta_opción_permite_dar"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción permite mostrar campo para la firma del docente e inasistencias en planilla de docentes con notas.",
+                "clave_sugerida": "esta_opción_permite_mostrar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Académicos",
+                "clave_sugerida": "académicos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estilo Boletin '+valorB.value+'",
+                "clave_sugerida": "estilo_boletin_valorbvalue"
+            }
+        ],
+        "includes\/config-sistema-permisos.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite a los directivos editar registros en años anteriores al actual.",
+                "clave_sugerida": "esta_acción_permite_a"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite que las instituciones tengan doble buscador en paginas donde se listan los registros.",
+                "clave_sugerida": "esta_acción_permite_que"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite o no actualizar las definitivas, en el consolidado final, en cualquier momento.",
+                "clave_sugerida": "esta_acción_permite_o"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite o no a los docentes ver el listado de los puestos de los estudiantes, por periodo, en el informe de sábanas.",
+                "clave_sugerida": "esta_acción_permite_o"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite a los acudientes descargar el boletín de sus acudidos.",
+                "clave_sugerida": "esta_acción_permite_a"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite a los acudientes responder si desean reservar o no el cupo para sus acudidos para el siguiente año.",
+                "clave_sugerida": "esta_acción_permite_a"
+            },
+            {
+                "tipo": "atributo",
+                "texto": "Esta acción permite ver a los estudiantes el paso a paso del proceso de matricula.",
+                "clave_sugerida": "esta_acción_permite_ver"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Docentes",
+                "clave_sugerida": "docentes"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiantes",
+                "clave_sugerida": "estudiantes"
+            }
+        ],
+        "includes\/config-sistema-preferencias.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Esta opción permite escoger la cantidad de registros que desea que se listen al entrar, por ejemplo, a matrículas, cargas académicas o usuarios.",
+                "clave_sugerida": "esta_opción_permite_escoger"
+            }
+        ],
+        "includes\/formulario-configuracion-contenido.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Este valor solo se verá reflejado en los informes que obtienen los directivos.",
+                "clave_sugerida": "este_valor_solo_se"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año Actual",
+                "clave_sugerida": "año_actual"
+            }
+        ],
+        "includes\/info-academica.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Tenga en cuenta que al cambiar de curso o grupo a un estudiante con notas ya registradas estas podrían perderse.",
+                "clave_sugerida": "tenga_en_cuenta_que"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento mientras se cargan los grupos.",
+                "clave_sugerida": "espere_un_momento_mientras_se_cargan_los_grupos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo estudiante",
+                "clave_sugerida": "tipo_estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estado del año",
+                "clave_sugerida": "estado_del_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Puede estar en multiples cursos?",
+                "clave_sugerida": "puede_estar_en_multiples_cursos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cursos",
+                "clave_sugerida": "cursos"
+            }
+        ],
+        "includes\/info-personal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Código del Sistema",
+                "clave_sugerida": "código_del_sistema"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Número de matrícula",
+                "clave_sugerida": "número_de_matrícula"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante de Inclusión",
+                "clave_sugerida": "estudiante_de_inclusión"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Grupo étnico?",
+                "clave_sugerida": "grupo_étnico"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Limitación o discapacidad",
+                "clave_sugerida": "limitación_o_discapacidad"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipo de situación",
+                "clave_sugerida": "tipo_de_situación"
+            }
+        ],
+        "includes\/pasos-matricula.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Puede iniciar el proceso?",
+                "clave_sugerida": "puede_iniciar_el_proceso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "2. Pago de matrícula",
+                "clave_sugerida": "2_pago_de_matrícula"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "4. Pagaré",
+                "clave_sugerida": "4_pagaré"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "5. Compromiso académico",
+                "clave_sugerida": "5_compromiso_académico"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "8. Contrato mayores de 14 años",
+                "clave_sugerida": "8_contrato_mayores_de_14_años"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "9. Firma hoja matrícula",
+                "clave_sugerida": "9_firma_hoja_matrícula"
+            }
+        ],
+        "includes\/usuarios-editar-info-basica.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Contraseña",
+                "clave_sugerida": "contraseña"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cambiar Contraseña",
+                "clave_sugerida": "cambiar_contraseña"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "IR A LA MATRÍCULA",
+                "clave_sugerida": "ir_a_la_matrícula"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Teléfono",
+                "clave_sugerida": "teléfono"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Dirección",
+                "clave_sugerida": "dirección"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición del documento",
+                "clave_sugerida": "lugar_de_expedición_del_documento"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Género",
+                "clave_sugerida": "género"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Última actualización",
+                "clave_sugerida": "última_actualización"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Último ingreso",
+                "clave_sugerida": "último_ingreso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Última salida",
+                "clave_sugerida": "última_salida"
+            }
+        ],
+        "index.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Tu plataforma educativa está lista para comenzar",
+                "clave_sugerida": "tu_plataforma_educativa_está_lista_para_comenzar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "¿Qué te gustaría hacer primero?",
+                "clave_sugerida": "qué_te_gustaría_hacer_primero"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Crear Matrícula",
+                "clave_sugerida": "crear_matrícula"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Registra nuevos estudiantes en el sistema",
+                "clave_sugerida": "registra_nuevos_estudiantes_en_el_sistema"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Crear Usuarios",
+                "clave_sugerida": "crear_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Agrega docentes, directivos y personal",
+                "clave_sugerida": "agrega_docentes_directivos_y_personal"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Personaliza la configuración del sistema",
+                "clave_sugerida": "personaliza_la_configuración_del_sistema"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información Institución",
+                "clave_sugerida": "información_institución"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Completa los datos de tu institución",
+                "clave_sugerida": "completa_los_datos_de_tu_institución"
+            }
+        ],
+        "informe-estudiantes-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "informe-libro-cursos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "informe-parcial-grupo.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "informe-periodicos-filtros-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento mientras se cargan los grupos.",
+                "clave_sugerida": "espere_un_momento_mientras_se_cargan_los_grupos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento mientras se cargan las materias.",
+                "clave_sugerida": "espere_un_momento_mientras_se_cargan_las_materias"
+            }
+        ],
+        "informe-reporte-sabana.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Reporte Sabanas",
+                "clave_sugerida": "reporte_sabanas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "informes-boletines.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Informes Boletines",
+                "clave_sugerida": "informes_boletines"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "informes-todos.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Informes Académicos",
+                "clave_sugerida": "informes_académicos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importante",
+                "clave_sugerida": "importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importante",
+                "clave_sugerida": "importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importante",
+                "clave_sugerida": "importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importante",
+                "clave_sugerida": "importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Importante",
+                "clave_sugerida": "importante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Exportar a Excel",
+                "clave_sugerida": "exportar_a_excel"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Informes de Inscripción",
+                "clave_sugerida": "informes_de_inscripción"
+            }
+        ],
+        "inscripciones-formulario-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Gestionar Inscripción",
+                "clave_sugerida": "gestionar_inscripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Género",
+                "clave_sugerida": "género"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Lugar de expedición",
+                "clave_sugerida": "lugar_de_expedición"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Enviar correo al guardar los cambios",
+                "clave_sugerida": "enviar_correo_al_guardar_los_cambios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si escoge que sí, se enviará un correo al acudiente con la observación y el estado de la solicitud al guardar los cambios.",
+                "clave_sugerida": "si_escoge_que_sí"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Observación",
+                "clave_sugerida": "observación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Debe cargar solo un archivo por cada campo. Si necesita cargar más de un archivo en un solo campo por favor comprimalos(.ZIP, .RAR) y los carga.",
+                "clave_sugerida": "debe_cargar_solo_un"
+            }
+        ],
+        "inscripciones-formulario.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Formulario de Inscripción",
+                "clave_sugerida": "formulario_de_inscripción"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "INFORMACIÓN PERSONAL DEL ASPIRANTE",
+                "clave_sugerida": "información_personal_del_aspirante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Anteriormente hizo el proceso de admisión?",
+                "clave_sugerida": "anteriormente_hizo_el_proceso_de_admisión"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Colegio donde cursó su último año",
+                "clave_sugerida": "colegio_donde_cursó_su_último_año"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "INFORMACIÓN FAMILIAR",
+                "clave_sugerida": "información_familiar"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "INFORMACIÓN DEL PADRE",
+                "clave_sugerida": "información_del_padre"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Teléfono",
+                "clave_sugerida": "teléfono"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "INFORMACIÓN DE LA MADRE",
+                "clave_sugerida": "información_de_la_madre"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Teléfono",
+                "clave_sugerida": "teléfono"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "(El acudiente es quien se reportará en la DIAN en la información exógena)",
+                "clave_sugerida": "el_acudiente_es_quien"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Teléfono",
+                "clave_sugerida": "teléfono"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "DOCUMENTACIÓN DEL ASPIRANTE",
+                "clave_sugerida": "documentación_del_aspirante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Debe cargar solo un archivo por cada campo. Si necesita cargar más de un archivo en un solo campo por favor comprimalos(.ZIP, .RAR) y los carga.",
+                "clave_sugerida": "debe_cargar_solo_un"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "2. Paz y salvo a la fecha del colegio de procedencia",
+                "clave_sugerida": "2_paz_y_salvo"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "3. Ficha acumulativa u observador del alumno",
+                "clave_sugerida": "3_ficha_acumulativa_u_observador_del_alumno"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "5. Hoja de recomendación",
+                "clave_sugerida": "5_hoja_de_recomendación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "7. Boletines actuales",
+                "clave_sugerida": "7_boletines_actuales"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "3. DOCUMENTACIÓN DEL ACUDIENTE",
+                "clave_sugerida": "3_documentación_del_acudiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Debe cargar solo un archivo por cada campo. Si necesita cargar más de un archivo en un solo campo por favor comprimalos(.ZIP, .RAR) y los carga.",
+                "clave_sugerida": "debe_cargar_solo_un"
+            }
+        ],
+        "inscripciones.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Buscar por nombre, documento, email del acudiente...",
+                "clave_sugerida": "buscar_por_nombre_documento_email_del_acudiente"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Recomendamos descargar la documentación y comprobante de pago de cada aspirante y luego borrar esa documentación del sistema para evitar que el disco se llene más rápido.",
+                "clave_sugerida": "recomendamos_descargar_la_documentación"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Documentación eliminada!",
+                "clave_sugerida": "documentación_eliminada"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "La documentación del aspirante se ha borrado correctamente.",
+                "clave_sugerida": "la_documentación_del_aspirante"
+            }
+        ],
+        "items-editar.php": [
+            {
+                "tipo": "placeholder",
+                "texto": "Escribe aqui la descripción para este item",
+                "clave_sugerida": "escribe_aqui_la_descripción_para_este_item"
+            }
+        ],
+        "matriculas-adjuntar-documentos-agregar-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Descripción",
+                "clave_sugerida": "descripción"
+            },
+            {
+                "tipo": "echo",
+                "texto": " <button  class=",
+                "clave_sugerida": ""
+            }
+        ],
+        "matriculas-retiradas-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Seleccione solo una opción de este listado.",
+                "clave_sugerida": "seleccione_solo_una_opción_de_este_listado"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "movimientos-agregar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Agregar nueva línea para item",
+                "clave_sugerida": "agregar_nueva_línea_para_item"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción general",
+                "clave_sugerida": "descripción_general"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Añadir Abono Automático",
+                "clave_sugerida": "añadir_abono_automático"
+            }
+        ],
+        "movimientos-editar.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Agregar nueva línea para item",
+                "clave_sugerida": "agregar_nueva_línea_para_item"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Editar Movimientos",
+                "clave_sugerida": "editar_movimientos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Descripción general",
+                "clave_sugerida": "descripción_general"
+            }
+        ],
+        "movimientos-importar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Importar saldos",
+                "clave_sugerida": "importar_saldos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Fila hasta donde hay información de los usuarios. Esto se usa para evitar que se lean filas que no tienen información.",
+                "clave_sugerida": "fila_hasta_donde_hay"
+            }
+        ],
+        "mps-categorias-productos-aditar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Categorias de Producto",
+                "clave_sugerida": "editar_categorias_de_producto"
+            }
+        ],
+        "mps-categorias-productos-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Categorias de Producto",
+                "clave_sugerida": "agregar_categorias_de_producto"
+            }
+        ],
+        "mps-categorias-productos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "mps-categorias-servicios-aditar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Categorias de Servicios",
+                "clave_sugerida": "editar_categorias_de_servicios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Class CSS del Icono",
+                "clave_sugerida": "class_css_del_icono"
+            }
+        ],
+        "mps-categorias-servicios-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Categorias de Servicios",
+                "clave_sugerida": "agregar_categorias_de_servicios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Class CSS del Icono",
+                "clave_sugerida": "class_css_del_icono"
+            }
+        ],
+        "mps-categorias-servicios.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "mps-empresas-aditar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Empresa",
+                "clave_sugerida": "editar_empresa"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Institución",
+                "clave_sugerida": "institución"
+            }
+        ],
+        "mps-empresas-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Empresas",
+                "clave_sugerida": "agregar_empresas"
+            }
+        ],
+        "mps-empresas.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "mps-productos-aditar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Productos",
+                "clave_sugerida": "editar_productos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Foto del producto",
+                "clave_sugerida": "foto_del_producto"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Solamente digite el número sin puntos ni simbolos.",
+                "clave_sugerida": "solamente_digite_el_número_sin_puntos_ni_simbolos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si desea recibir el pago en línea, el valor mínimo debe ser de $10.000 COP.",
+                "clave_sugerida": "si_desea_recibir_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Con estas palabras claves relacionadas pueden encontrar más fácil esta publicación.",
+                "clave_sugerida": "con_estas_palabras_claves"
+            }
+        ],
+        "mps-productos-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar Producto",
+                "clave_sugerida": "agregar_producto"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Foto del producto",
+                "clave_sugerida": "foto_del_producto"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Solamente digite el número sin puntos ni simbolos.",
+                "clave_sugerida": "solamente_digite_el_número_sin_puntos_ni_simbolos"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Si desea recibir el pago en línea, el valor mínimo debe ser de $10.000 COP.",
+                "clave_sugerida": "si_desea_recibir_el"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Con estas palabras claves relacionadas pueden encontrar más fácil esta publicación.",
+                "clave_sugerida": "con_estas_palabras_claves"
+            }
+        ],
+        "mps-productos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "\">Editar",
+                "clave_sugerida": "editar"
+            }
+        ],
+        "notas-registradas-informes-filtros-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento por favor.",
+                "clave_sugerida": "espere_un_momento_por_favor"
+            }
+        ],
+        "notas-registradas-informes-filtros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Espere un momento por favor.",
+                "clave_sugerida": "espere_un_momento_por_favor"
+            }
+        ],
+        "paginacion-cargas-academicas.php": [
+            {
+                "tipo": "echo",
+                "texto": "<div class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<span class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<a  class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<span class=",
+                "clave_sugerida": ""
+            },
+            {
+                "tipo": "echo",
+                "texto": "<span class=",
+                "clave_sugerida": ""
+            }
+        ],
+        "paz-salvo-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Estudiante",
+                "clave_sugerida": "estudiante"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Seleccione solo una opción de este listado.",
+                "clave_sugerida": "seleccione_solo_una_opción_de_este_listado"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Año",
+                "clave_sugerida": "año"
+            }
+        ],
+        "planilla-docentes-filtros-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "planilla-docentes-filtros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Planilla Docentes con Notas",
+                "clave_sugerida": "planilla_docentes_con_notas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Curso",
+                "clave_sugerida": "curso"
+            }
+        ],
+        "reportes-sacar-filtro-modal.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Seleccione solo una opción de este listado.",
+                "clave_sugerida": "seleccione_solo_una_opción_de_este_listado"
+            }
+        ],
+        "servicios-modulos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Comprar Módulos Extras",
+                "clave_sugerida": "comprar_módulos_extras"
+            }
+        ],
+        "solicitud-cancelacion.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Esta seguro de cancelar este servicio?",
+                "clave_sugerida": "esta_seguro_de_cancelar_este_servicio"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Receurde que una vez enviada la solicitud sera evalauda y se le dará respuesta prontamente",
+                "clave_sugerida": "receurde_que_una_vez"
+            }
+        ],
+        "sub-roles-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios:",
+                "clave_sugerida": "usuarios"
+            }
+        ],
+        "sub-roles-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar Sub Rol",
+                "clave_sugerida": "editar_sub_rol"
+            }
+        ],
+        "usuarios-acudidos.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios",
+                "clave_sugerida": "usuarios"
+            }
+        ],
+        "usuarios-agregar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Agregar usuarios",
+                "clave_sugerida": "agregar_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios",
+                "clave_sugerida": "usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Puedes usar letras, números o combinarlos. Pero no se permiten caracteres especiales o espacios en blanco.",
+                "clave_sugerida": "puedes_usar_letras_números"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "La contraseña debe ser de 8 caracteres como mínimo y 20 como máximo.",
+                "clave_sugerida": "la_contraseña_debe_ser"
+            }
+        ],
+        "usuarios-bloquear-modal.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Close",
+                "clave_sugerida": "close"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cancelar",
+                "clave_sugerida": "cancelar"
+            }
+        ],
+        "usuarios-editar.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Editar usuarios",
+                "clave_sugerida": "editar_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios",
+                "clave_sugerida": "usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Información básica",
+                "clave_sugerida": "información_básica"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "', 'nav-cargas')\">Cargas académicas",
+                "clave_sugerida": "navcargascargas_académicas"
+            }
+        ],
+        "usuarios-generar-clave-filtros.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Generar Contraseña",
+                "clave_sugerida": "generar_contraseña"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Usuarios",
+                "clave_sugerida": "usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Cuál desea que sea la nueva contraseña?",
+                "clave_sugerida": "cuál_desea_que_sea_la_nueva_contraseña"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Nueva Contraseña",
+                "clave_sugerida": "nueva_contraseña"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "La contraseña debe ser de 8 caracteres como mínimo y 20 como máximo.",
+                "clave_sugerida": "la_contraseña_debe_ser"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Tipos de Usuarios para aplicar el cambio",
+                "clave_sugerida": "tipos_de_usuarios_para_aplicar_el_cambio"
+            }
+        ],
+        "usuarios-importar-excel.php": [
+            {
+                "tipo": "html_content",
+                "texto": "Importar usuarios",
+                "clave_sugerida": "importar_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Plantilla Usuarios",
+                "clave_sugerida": "plantilla_usuarios"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Fila hasta donde hay información de los usuarios. Esto se usa para evitar que se lean filas que no tienen información.",
+                "clave_sugerida": "fila_hasta_donde_hay"
+            }
+        ],
+        "usuarios.php": [
+            {
+                "tipo": "atributo",
+                "texto": "Este supuesto estudiante no cuenta con un registro en las matrículas.",
+                "clave_sugerida": "este_supuesto_estudiante_no"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "\" target=\"_blank\">Planillas de las cargas",
+                "clave_sugerida": "target_blankplanillas_de_las_cargas"
+            },
+            {
+                "tipo": "html_content",
+                "texto": "Número de Documento",
+                "clave_sugerida": "número_de_documento"
+            }
+        ]
+    }
+}

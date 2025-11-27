@@ -25,24 +25,13 @@
 	                                <span></span>
 	                            </div>
 	                        </li>
-	                        <?php
-							$fotoPerfilUsr = $usuariosClase->verificarFoto($datosUsuarioActual['uss_foto']);
-							?>
-							<li class="sidebar-user-panel">
-	                            <div class="user-panel">
-	                                <div class="pull-left image">
-	                                    <img src="<?=$fotoPerfilUsr;?>" class="img-circle user-img-circle" alt="User Image" />
-	                                </div>
-	                                <div class="pull-left info">
-	                                    <p> <?=UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual);?></p>
-	                                </div>
-	                            </div>
-	                        </li>
 
 							<?php include_once("menu-metodos.php");?>
 							<li <?php agregarClass(MENU,["DT0004"]) ?>>
 							<a href="index.php" class="nav-link nav-toggle">
-	                                <i class="material-icons">dashboard</i>
+	                                <div class="menu-icon icon-dashboard">
+	                                    <i class="fa fa-th-large"></i>
+	                                </div>
 	                                <span class="title"><?=$frases[100][$datosUsuarioActual['uss_idioma']];?></span>
                                 	<span class="selected"></span>
 	                            </a>
@@ -55,52 +44,6 @@
 							<?php include_once("menu-acudientes.php");?>
 							
 							<?php include_once("menu-estudiantes.php");?>
-
-							<li class="nav-item">
-	                            <a href="noticias.php" class="nav-link nav-toggle">
-	                                <i class="fa fa-bullhorn"></i>
-	                                <span class="title"><?=$frases[69][$datosUsuarioActual['uss_idioma']];?></span>
-	                            </a>
-	                        </li>
-
-							<li class="nav-item">
-								<a href="javascript:void(0);" class="nav-link nav-toggle"> 
-									<i class="fa fa-question-circle"></i>
-									<span class="title">Ayuda</span>
-								</a>
-								<ul class="sub-menu">
-									<li class="nav-item start">
-										<a href="javascript:void(0);" onclick="javascript:introJs().start();" class="nav-link">
-											<span class="title">Tour SINTIA</span>
-										</a>
-									</li>
-									<?php if ($datosUsuarioActual['uss_tipo'] != TIPO_DOCENTE) {?>
-										<li class="nav-item start">
-											<a href="como-empezar.php" class="nav-link">
-												<span class="title"><?=$frases[255][$datosUsuarioActual['uss_idioma']];?></span>
-											</a>
-										</li>
-									<?php }
-									if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
-									?>
-									<li class="nav-item start">
-										<a href="https://docs.google.com/document/d/1ZgtUFs0WJQD797Dp5fy8T-lsUs4BddArW-49mAi5JkQ/edit?usp=sharing" target="_blank" class="nav-link">
-											<span class="title">Manual de usuario</span>
-										</a>
-									</li>
-									<?php }?>
-									<li class="nav-item start">
-										<a href="https://forms.gle/1NpXSwyqoomKdch76" target="_blank" class="nav-link">
-											<span class="title"><?=$frases[16][$datosUsuarioActual['uss_idioma']];?>/<?=$frases[257][$datosUsuarioActual['uss_idioma']];?></span>
-										</a>
-									</li>
-									<li class="nav-item start">
-										<a href="https://docs.google.com/document/d/1ytMzsH-w3qPUVPF7ScPG3tzEXYcSKbAcaIgLN-VtuyM/edit?usp=sharing" target="_blank" class="nav-link">
-											<span class="title">Histórico de cambios</span>
-										</a>
-									</li>
-								</ul>
-							</li>
 
 	                    </ul>
 	                </div>

@@ -1,11 +1,12 @@
 <?php
-$tiempo_inicial = microtime(true);
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/modelo/conexion.php");
 require_once(ROOT_PATH."/main-app/class/Plataforma.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Modulos.php");
 require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
+require_once ROOT_PATH . '/main-app/class/Paginas.php';
+require_once ROOT_PATH . '/main-app/class/App/Seguridad/Historial_Acciones.php';
 
 $arregloModulos = $_SESSION["modulos"];
 

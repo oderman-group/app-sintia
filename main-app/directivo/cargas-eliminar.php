@@ -25,8 +25,20 @@ $contenidoMsg = '
 </p>
 ';
 
+// Migrado a PDO - Consulta preparada
 try {
-	mysqli_query($conexion, "INSERT INTO ".BD_ADMIN.".seguridad_historial_registros_borrados(hrb_id_institucion, hrb_year, hrb_id_registro, hrb_responsable, hrb_referencia)VALUES('".$config['conf_id_institucion']."', '".$_SESSION["bd"]."', '".base64_decode($_GET["id"])."', '".$_SESSION["id"]."', 'CARGA_ACADEMICA')");
+	require_once(ROOT_PATH."/main-app/class/Conexion.php");
+	$conexionPDO = Conexion::newConnection('PDO');
+	$idCarga = base64_decode($_GET["id"]);
+	$sql = "INSERT INTO ".BD_ADMIN.".seguridad_historial_registros_borrados(
+	    hrb_id_institucion, hrb_year, hrb_id_registro, hrb_responsable, hrb_referencia
+	) VALUES (?, ?, ?, ?, 'CARGA_ACADEMICA')";
+	$stmt = $conexionPDO->prepare($sql);
+	$stmt->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
+	$stmt->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
+	$stmt->bindParam(3, $idCarga, PDO::PARAM_STR);
+	$stmt->bindParam(4, $_SESSION["id"], PDO::PARAM_STR);
+	$stmt->execute();
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

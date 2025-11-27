@@ -149,8 +149,20 @@ try{
                                                     }
                                                 }
 
+                                                // Migrado a PDO - Consulta preparada
                                                 try{
-                                                    mysqli_query($conexion,"INSERT INTO ".$baseDatosServicios.".ejecucion_scripts(spt_fecha_registro,spt_responsable,spt_script,spt_ambiente,spt_bds) VALUES (now(),".$_SESSION['id'].",'".$sql."','".$_POST['enviroment']."','".json_encode($bdInstituciones)."')");
+                                                    require_once(ROOT_PATH."/main-app/class/Conexion.php");
+                                                    $conexionPDO = Conexion::newConnection('PDO');
+                                                    $sqlInsert = "INSERT INTO ".$baseDatosServicios.".ejecucion_scripts(
+                                                        spt_fecha_registro, spt_responsable, spt_script, spt_ambiente, spt_bds
+                                                    ) VALUES (now(), ?, ?, ?, ?)";
+                                                    $stmtInsert = $conexionPDO->prepare($sqlInsert);
+                                                    $bdJson = json_encode($bdInstituciones);
+                                                    $stmtInsert->bindParam(1, $_SESSION['id'], PDO::PARAM_STR);
+                                                    $stmtInsert->bindParam(2, $sql, PDO::PARAM_STR);
+                                                    $stmtInsert->bindParam(3, $_POST['enviroment'], PDO::PARAM_STR);
+                                                    $stmtInsert->bindParam(4, $bdJson, PDO::PARAM_STR);
+                                                    $stmtInsert->execute();
                                                 }catch(Exception $e) {
                                                     include("../compartido/error-catch-to-report.php");
                                                 }

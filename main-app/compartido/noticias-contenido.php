@@ -1,132 +1,192 @@
+<!-- CSS y JS Modernos -->
+<link href="../compartido/noticias-feed-modern.css" rel="stylesheet" type="text/css" />
+<link href="../compartido/modales-noticias.css" rel="stylesheet" type="text/css" />
 <link href="../compartido/comentarios.css" rel="stylesheet" type="text/css" />
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<link href="../../config-general/assets/css/cargando.css" rel="stylesheet" type="text/css" />
 <link href="../../config-general/assets/css/comentarios-reacciones.css" rel="stylesheet" type="text/css" />
-<script src="../ckeditor/ckeditor.js"></script>
-<div class="row">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<script src="../compartido/modales-noticias.js"></script>
 
-    <div class="col-md-12">
-        <?php include("../compartido/barra-superior-noticias.php");
-        include("../class/SocialComentarios.php");
-        include("../class/SocialReacciones.php"); ?>
-        <div class="row">
+<div class="feed-container">
 
-            <div class="col-md-4 col-lg-3">
+    <?php 
+    include("../compartido/barra-superior-noticias.php");
+    include("../class/SocialComentarios.php");
+    include("../class/SocialReacciones.php"); 
+    ?>
+    
+    <div class="feed-layout">
+        
+        <!-- SIDEBAR IZQUIERDO (FIJO) -->
+        <aside class="feed-sidebar-left">
 
-                <?php
-                include("../compartido/datos-fechas.php");
-                if ((($datosUsuarioActual['uss_tipo'] == TIPO_DEV) || ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO)) && ($datosUnicosInstitucion['ins_deuda'] == 1 || $dfDias <= 1)) {
-                    $monto = 0;
-                    $descripcion = 'Pago de';
-                    if ($datosUnicosInstitucion['ins_deuda'] == 1 && !empty($datosUnicosInstitucion['ins_valor_deuda'])) {
-                        $monto += $datosUnicosInstitucion['ins_valor_deuda'];
-                        $descripcion .= ' saldo pendiente';
-                    }
-                    if ($dfDias <= 1 && ($datosUnicosInstitucion['ins_deuda'] == 1 && !empty($datosUnicosInstitucion['ins_valor_deuda']))) {
-                        $descripcion .= ' y';
-                    }
-                    if ($dfDias <= 1) {
-                        $consultaPlan = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".planes_sintia 
-                            WHERE plns_id='" . $datosUnicosInstitucion['ins_id_plan'] . "'");
-                        $datosPlan = mysqli_fetch_array($consultaPlan, MYSQLI_BOTH);
-
-                        $monto += $datosPlan['plns_valor'];
-                        $descripcion .= ' renovación de la plataforma';
-                    }
-                ?>
-                    <div class="panel animate__animated animate__heartBeat animate__delay-1s animate__repeat-2">
-                        <header class="panel-heading panel-heading-red">Pagos</header>
-                        <div class="panel-body">
-                            <p style="text-align: justify;">
-                                Estimado <b><?= UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual) ?></b>, le recordamos que,
-                                su Institución, <b><?= strtoupper($datosUnicosInstitucion['ins_nombre']) ?></b>, tiene un
-                                saldo pendiente con nuestra compañía.<br>
-                                A continuación los detalles y las opciónes de pago:<br>
-                                <b>Saldo pendiente:</b> <?php if (is_numeric($monto) && $monto > 0) echo "$" . number_format($monto, 0, ".", "."); ?>.<br>
-                                <b>Descripción:</b> <?= $datosUnicosInstitucion['ins_concepto_deuda']; ?>.<br>
-                                <hr>
-                                Puede hacer una transferencia bancaria a la cuenta siguiente cuenta:<br>
-                                <a href="javascript:void(0);" onclick="verCuentaBancaria()" id="cuentaBancaria" style="text-decoration: underline;">Ver número de cuenta</a>,<br> o tambien puede hacer el pago en linea, de forma segura, en el siguiente botón.
-                            </p>
-                            <div class="col-sm-4">
-                                <form action="../pagos-online/index.php" method="post" target="_target">
-                                    <input type="hidden" class="form-control" name="idUsuario" value="<?= $datosUsuarioActual['uss_id']; ?>">
-                                    <input type="hidden" class="form-control" name="emailUsuario" value="<?= $datosUsuarioActual['uss_email']; ?>">
-                                    <input type="hidden" class="form-control" name="documentoUsuario" value="<?= $datosUsuarioActual['uss_documento']; ?>">
-                                    <input type="hidden" class="form-control" name="nombreUsuario" value="<?= UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual); ?>">
-                                    <input type="hidden" class="form-control" name="celularUsuario" value="<?= $datosUsuarioActual['uss_celular']; ?>">
-                                    <input type="hidden" class="form-control" name="idInstitucion" value="<?= $config['conf_id_institucion']; ?>">
-                                    <input type="hidden" class="form-control" name="monto" value="<?= $monto; ?>">
-                                    <input type="hidden" class="form-control" name="nombre" value="<?= $descripcion; ?>">
-
-                                    <button type="submit" class="btn btn-success"><i class="fa fa-credit-card" aria-hidden="true"></i>PAGA EN LINEA AQUÍ</button>
-                                </form>
-                            </div>
-                        </div>
+            <!-- Perfil del usuario -->
+            <div class="sidebar-card">
+                <div class="sidebar-profile">
+                    <div class="sidebar-profile-bg"></div>
+                    <?php $fotoUsrActual = $usuariosClase->verificarFoto($datosUsuarioActual['uss_foto']); ?>
+                    <img src="<?= $fotoUsrActual; ?>" alt="<?= $datosUsuarioActual['uss_nombre']; ?>" class="sidebar-profile-photo">
+                    <div class="sidebar-profile-name"><?= UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual); ?></div>
+                    <div class="sidebar-profile-role">
+                        <?php 
+                        $roles = [
+                            1 => 'Directivo',
+                            2 => 'Docente',
+                            3 => 'Acudiente',
+                            4 => 'Estudiante',
+                            5 => 'Administrador'
+                        ];
+                        echo $roles[$datosUsuarioActual['uss_tipo']] ?? 'Usuario';
+                        ?>
                     </div>
-                <?php } ?>
-
-                <?php include("../compartido/modulo-frases-lateral.php"); ?>
-
-                <?php include("../compartido/publicidad-lateral.php"); ?>
-
+                </div>
+                <div class="sidebar-stats">
+                    <?php
+                    // Contar publicaciones del último mes (solo publicadas, no eliminadas)
+                    $fechaHaceUnMes = date('Y-m-d', strtotime('-30 days'));
+                    $consultaPosts = mysqli_query($conexion, "SELECT COUNT(*) as total 
+                                                              FROM " . $baseDatosServicios . ".social_noticias 
+                                                              WHERE not_usuario = '{$_SESSION["id"]}' 
+                                                              AND not_year = '{$_SESSION["bd"]}'
+                                                              AND not_fecha >= '{$fechaHaceUnMes}'
+                                                              AND not_estado IN (0, 1)");
+                    $dataPosts = mysqli_fetch_array($consultaPosts, MYSQLI_ASSOC);
+                    $totalPosts = $dataPosts['total'] ?? 0;
+                    ?>
+                    <div class="sidebar-stat-item" style="cursor: pointer;" onclick="window.location.href='noticias.php?usuario=<?= base64_encode($_SESSION['id']); ?>'">
+                        <span class="sidebar-stat-label">
+                            <i class="fa fa-newspaper-o"></i> Publicaciones (último mes)
+                        </span>
+                        <span class="sidebar-stat-value"><?= $totalPosts; ?></span>
+                    </div>
+                </div>
             </div>
 
+            <?php
+            include("../compartido/datos-fechas.php");
+            if ((($datosUsuarioActual['uss_tipo'] == TIPO_DEV) || ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO)) && ($datosUnicosInstitucion['ins_deuda'] == 1 || $dfDias <= 1)) {
+                $monto = 0;
+                $descripcion = 'Pago de';
+                if ($datosUnicosInstitucion['ins_deuda'] == 1 && !empty($datosUnicosInstitucion['ins_valor_deuda'])) {
+                    $monto += $datosUnicosInstitucion['ins_valor_deuda'];
+                    $descripcion .= ' saldo pendiente';
+                }
+                if ($dfDias <= 1 && ($datosUnicosInstitucion['ins_deuda'] == 1 && !empty($datosUnicosInstitucion['ins_valor_deuda']))) {
+                    $descripcion .= ' y';
+                }
+                if ($dfDias <= 1) {
+                    $consultaPlan = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".planes_sintia 
+                        WHERE plns_id='" . $datosUnicosInstitucion['ins_id_plan'] . "'");
+                    $datosPlan = mysqli_fetch_array($consultaPlan, MYSQLI_BOTH);
+                    $monto += $datosPlan['plns_valor'];
+                    $descripcion .= ' renovación de la plataforma';
+                }
+            ?>
+                <div class="sidebar-card animate__animated animate__pulse">
+                    <div class="sidebar-section-title" style="color: #e74c3c;">⚠️ Pagos Pendientes</div>
+                    <p style="font-size: 12px; line-height: 1.5; color: var(--text-secondary);">
+                        <b>Saldo:</b> <?php if (is_numeric($monto) && $monto > 0) echo "$" . number_format($monto, 0, ".", "."); ?><br>
+                        <b>Descripción:</b> <?= $datosUnicosInstitucion['ins_concepto_deuda']; ?>
+                    </p>
+                    <form action="../pagos-online/index.php" method="post" target="_blank">
+                        <input type="hidden" name="idUsuario" value="<?= $datosUsuarioActual['uss_id']; ?>">
+                        <input type="hidden" name="emailUsuario" value="<?= $datosUsuarioActual['uss_email']; ?>">
+                        <input type="hidden" name="documentoUsuario" value="<?= $datosUsuarioActual['uss_documento']; ?>">
+                        <input type="hidden" name="nombreUsuario" value="<?= UsuariosPadre::nombreCompletoDelUsuario($datosUsuarioActual); ?>">
+                        <input type="hidden" name="celularUsuario" value="<?= $datosUsuarioActual['uss_celular']; ?>">
+                        <input type="hidden" name="idInstitucion" value="<?= $config['conf_id_institucion']; ?>">
+                        <input type="hidden" name="monto" value="<?= $monto; ?>">
+                        <input type="hidden" name="nombre" value="<?= $descripcion; ?>">
+                        <button type="submit" class="btn btn-success btn-sm btn-block">
+                            <i class="fa fa-credit-card"></i> Pagar en línea
+                        </button>
+                    </form>
+                </div>
+            <?php } ?>
 
-            <div class="col-md-4 col-lg-6" id="contendedor-publicaciones">
-                <?php $page = 0; ?>
-                <div class="card card-box">
-                    <div class="card-head">
-                        <header><?= $frases[168][$datosUsuarioActual['uss_idioma']]; ?></header>
+        </aside>
+
+
+        <!-- CONTENIDO PRINCIPAL (FEED) -->
+        <main class="feed-main">
+            <?php $fotoUsrActual = $usuariosClase->verificarFoto($datosUsuarioActual['uss_foto']); ?>
+            <input type="hidden" id="infoGeneral" value="<?= base64_encode($datosUsuarioActual['uss_id']); ?>|<?= $fotoUsrActual; ?>|<?= $datosUsuarioActual['uss_nombre']; ?>">
+            
+            <!-- Card para crear publicación -->
+            <div class="post-create-card">
+                <form id="quick-post-form">
+                    <div class="post-create-header">
+                        <img src="<?= $fotoUsrActual; ?>" alt="<?= $datosUsuarioActual['uss_nombre']; ?>" class="post-create-avatar">
+                        <textarea id="contenido" 
+                                  name="contenido" 
+                                  class="post-create-input" 
+                                  placeholder="<?= $frases[169][$datosUsuarioActual['uss_idioma']]; ?>" 
+                                  rows="1"
+                                  style="resize: none; overflow: hidden;"
+                                  required></textarea>
                     </div>
-                    <?php
-                    $fotoUsrActual = $usuariosClase->verificarFoto($datosUsuarioActual['uss_foto']);
-                    ?>
-                    <div class="card-body " id="bar-parent1">
-                        <form class="form-horizontal" action="../compartido/noticia-rapida-guardar.php" method="post">
-                            <input type="hidden" id="infoGeneral" value="<?= base64_encode($datosUsuarioActual['uss_id']); ?>|<?= $fotoUsrActual; ?>|<?= $datosUsuarioActual['uss_nombre']; ?>">
-                            <div class="form-group row">
-                                <div class="col-sm-12" data-hint="Realiza una publicación rápida, con solo texto.">
-                                    <textarea id="contenido" name="contenido" class="form-control" rows="3" placeholder="<?= $frases[169][$datosUsuarioActual['uss_idioma']]; ?>" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" required></textarea>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <div class="offset-md-5 col-md-7">
-                                    <button type="button" class="btn deepPink-bgcolor" onClick="crearNoticia()">
-                                        <?= $frases[170][$datosUsuarioActual['uss_idioma']]; ?>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="post-create-actions">
+                        <?php 
+                        // Modal para foto (simple)
+                        $modalFoto = new ComponenteModal('nuevoFoto', 'Publicar Foto', '../compartido/noticias-agregar-foto-modal.php');
+                        // Modal para video (simple)
+                        $modalVideo = new ComponenteModal('nuevoVideo', 'Publicar Video', '../compartido/noticias-agregar-video-modal.php');
+                        // Modal para archivo (simple)
+                        $modalArchivo = new ComponenteModal('nuevoArchivo', 'Publicar Archivo', '../compartido/noticias-agregar-archivo-modal.php');
+                        ?>
+                        <button type="button" class="post-create-action action-photo" onclick="<?=$modalFoto->getMetodoAbrirModal()?>" data-hint="Sube una foto con descripción">
+                            <i class="fa fa-image"></i>
+                            <span>Foto</span>
+                        </button>
+                        <button type="button" class="post-create-action action-video" onclick="<?=$modalVideo->getMetodoAbrirModal()?>" data-hint="Comparte un video de YouTube">
+                            <i class="fa fa-video-camera"></i>
+                            <span>Video</span>
+                        </button>
+                        <button type="button" class="post-create-action action-event" onclick="<?=$modalArchivo->getMetodoAbrirModal()?>" data-hint="Adjunta un documento">
+                            <i class="fa fa-file"></i>
+                            <span>Archivo</span>
+                        </button>
+                        <button type="button" class="btn deepPink-bgcolor" style="margin-left: auto; border-radius: 20px; padding: 8px 20px; font-weight: 600;" onClick="crearNoticia()">
+                            <i class="fa fa-paper-plane"></i> <?= $frases[170][$datosUsuarioActual['uss_idioma']]; ?>
+                        </button>
                     </div>
-                </div>
+                </form>
+            </div>
 
-                <?php include("../compartido/encuestas.php"); ?>
+            <?php include("../compartido/encuestas.php"); ?>
 
-                <div id="nuevaPublicacion"></div>
+            <!-- Contenedor de publicaciones -->
+            <div id="posts-container"></div>
 
-                <?php include("../compartido/publicaciones-lista.php"); ?>
-                <div id="gifCarga" class="gif-carga" style="position: fixed !important;">
-                    <img alt="Cargando...">
-                </div>
-                <input type="hidden" id="page" class="form-control" name="nombre" value="<?= $page ?>">
-                <input type="hidden" id="paginar" class="form-control" name="paginar" value="true">
+            <div id="nuevaPublicacion"></div>
 
-                <!--<div class="col-md-4 col-lg-3">
+        </main>
 
-                <div class="panel" data-hint="Se muestran las personas que están de cumpleaños en este día."
-                    id="../compartido/cumplimentados.php" title="cumplimentados" onClick="axiosAjax(this)">
-                    <header class="panel-heading panel-heading-red">
-                        <?php echo $frases[215][$datosUsuarioActual['uss_idioma']]; ?></header>
+        <!-- SIDEBAR DERECHO -->
+        <aside class="feed-sidebar-right">
+            
+            <?php include("../compartido/modulo-frases-lateral.php"); ?>
+            
+            <?php include("../compartido/publicidad-lateral.php"); ?>
 
-                    <div id="RESP_cumplimentados" class="panel-body"></div>
-                </div>
+            <!-- Sección de cumpleañeros (opcional) -->
+            <!--
+            <div class="sidebar-section">
+                <div class="sidebar-section-title"><?php echo $frases[215][$datosUsuarioActual['uss_idioma']]; ?></div>
+                <div id="RESP_cumplimentados"></div>
+            </div>
+            -->
+            
+        </aside>
+        
+    </div>
 
+</div>
 
-            </div>-->
+<!-- Scripts modernos -->
+<script src="../compartido/noticias-feed-modern.js"></script>
 
-                <script type="text/javascript">
+<!-- Scripts antiguos (se mantendrán para compatibilidad y se migrarán gradualmente) -->
+<script type="text/javascript">
                     function recargarInclude(id) {
                         var xhr = new XMLHttpRequest();
                         xhr.open("POST", "../compartido/reacciones-lista.php", true);
@@ -361,52 +421,12 @@
                     }
 
 
-                    var limite = 5;
-
-                    window.addEventListener('scroll', function() {
-                        var paginar = document.getElementById("paginar").value;
-                        let paginado = (paginar === "true");
-
-                        console.log(paginado + '  1:' + window.innerHeight + ' 2:' + window.scrollY + ' 3:' + (window.innerHeight + window.scrollY) + ' 4:' + document.body.offsetHeight);
-                        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                            if (paginado) {
-                                listarPublicaciones();
-                            }
-
-                        }
-                    });
-
-                    function listarPublicaciones() {
-                        console.log('Has llegado al final de la página.');
-                        var cont = parseInt(document.getElementById("page").value);
-                        document.getElementById("paginar").value = 'false';
-                        var data = {
-                            "pagina": (cont + limite),
-                        };
-                        var url = "../compartido/publicaciones-lista.php";
-                        document.getElementById("gifCarga").style.display = "block";
-                        metodoFetch(url, data, 'html', false, 'pintarPublicacionDiv');
-
-                    }
-
-                    function pintarPublicacionDiv(response, data) {
-                        console.log(data["pagina"]);
-                        var cont = parseInt(document.getElementById("page").value);
-                        var miDiv = document.getElementById("contendedor-publicaciones");
-                        var div = document.createElement('div');
-                        console.log(response);
-                        div.innerHTML = response;
-                        console.log(div.childNodes.length);
-                        if (div.childNodes.length > 0) {
-                            document.getElementById("page").value = (cont + limite);
-                            document.getElementById("paginar").value = 'true';
-                            miDiv.appendChild(div);
-                        } else {
-                            document.getElementById("paginar").value = 'false';
-                        }
-                        document.getElementById("gifCarga").style.display = "none";
-                    }
-                </script>
-            </div>
-        </div>
-    </div>
+    // Auto-expand textarea
+    const contenidoTextarea = document.getElementById('contenido');
+    if (contenidoTextarea) {
+        contenidoTextarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+</script>

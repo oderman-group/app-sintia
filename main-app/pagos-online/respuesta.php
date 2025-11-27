@@ -65,7 +65,7 @@ require_once ROOT_PATH."/main-app/class/Modulos.php";
 
         mysqli_query($conexion, "INSERT INTO " . BD_ADMIN . ".instituciones_paquetes_extras(paqext_institucion, paqext_id_paquete, paqext_fecha, paqext_tipo) VALUES ('" . $jsonObject['data']['x_extra6'] . "', '" . $jsonObject['data']['x_extra16'] . "', now(), '".MODULOS."')");
 
-        if($jsonObject['data']['x_extra16'] == Modulos::MODULO_ADMISIONES) {
+        if($jsonObject['data']['x_extra16'] == Modulos::MODULO_INSCRIPCIONES) {
           require_once(ROOT_PATH."/main-app/class/Plataforma.php");
           
           $Plataforma = new Plataforma;
@@ -120,7 +120,7 @@ require_once ROOT_PATH."/main-app/class/Modulos.php";
             $datosPaquetes = Plataforma::contarDatosPaquetes($jsonObject['data']['x_extra6'], PAQUETES);
 
             $arrayModulos = explode(",", $datosPaquetes['plns_modulos']);
-            if(in_array(Modulos::MODULO_ADMISIONES, $arrayModulos)) {
+            if(in_array(Modulos::MODULO_INSCRIPCIONES, $arrayModulos)) {
               
               $Plataforma = new Plataforma;
         

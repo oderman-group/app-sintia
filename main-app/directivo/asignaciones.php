@@ -12,9 +12,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-$idE = '';
+$idE = 0;
 if (!empty($_GET['idE'])) {
-    $idE = base64_decode($_GET['idE']);;
+    $idEDecoded = base64_decode($_GET['idE']);
+    $idE = is_numeric($idEDecoded) ? (int)$idEDecoded : 0;
 }
 ?>
 	<!-- data tables -->
@@ -90,7 +91,9 @@ if (!empty($_GET['idE'])) {
 													<?php
 													include("includes/consulta-paginacion-asignaciones.php");
 													$filtroLimite = 'LIMIT '.$inicio.','.$registros;
-													$consulta = Asignaciones::consultarAsignacionesEvaluacion($conexion, $config, $idE, $filtro, $filtroLimite);
+													// Asegurar que $idE sea un entero válido
+													$idEInt = is_numeric($idE) ? (int)$idE : 0;
+													$consulta = Asignaciones::consultarAsignacionesEvaluacion($conexion, $config, $idEInt, $filtro, $filtroLimite);
 													$contReg = 1;
 													if(!empty($consulta)){
 														while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){

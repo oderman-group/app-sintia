@@ -79,8 +79,10 @@
 														<th><?=$frases[248][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[186][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[109][$datosUsuarioActual['uss_idioma']];?></th>
-														<th title="Firma y aprobación del estudiante">F.E</th>
-														<th title="Firma y aprobación del acudiente">F.A</th>
+														<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_FIRMAS_DIGITALES)) {?>
+															<th title="Firma y aprobación del estudiante">F.E</th>
+															<th title="Firma y aprobación del acudiente">F.A</th>
+														<?php }?>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -109,20 +111,22 @@
 														<td><?=$resultado['dfal_nombre'];?></td>
 														<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></td>
 														<td><?=$resultado['dr_observaciones'];?></td>
-														<td>
-															<?php if($resultado['dr_aprobacion_estudiante']==0){?>
-																-
-															<?php }else{?>
-																<i class="fa fa-check-circle" title="<?=$resultado['dr_aprobacion_estudiante_fecha'];?>"></i>
-															<?php }?>
-														</td>
-														<td>
-															<?php if($resultado['dr_aprobacion_acudiente']==0){?> 
-																<a href="reportes-disciplinarios.php?usrEstud=<?=base64_encode($usrEstud);?>&req=1&id=<?=base64_encode($resultado['dr_id']);?>"><?=$frases[286][$datosUsuarioActual['uss_idioma']];?></a>
-															<?php } else{?>
-																<i class="fa fa-check-circle" title="<?=$resultado['dr_aprobacion_acudiente_fecha'];?>"></i>
-															<?php }?>
-														</td>
+														<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_FIRMAS_DIGITALES)) {?>
+															<td>
+																<?php if($resultado['dr_aprobacion_estudiante']==0){?>
+																	-
+																<?php }else{?>
+																	<i class="fa fa-check-circle" title="<?=$resultado['dr_aprobacion_estudiante_fecha'];?>"></i>
+																<?php }?>
+															</td>
+															<td>
+																<?php if($resultado['dr_aprobacion_acudiente']==0){?> 
+																	<a href="reportes-disciplinarios.php?usrEstud=<?=base64_encode($usrEstud);?>&req=1&id=<?=base64_encode($resultado['dr_id']);?>"><?=$frases[286][$datosUsuarioActual['uss_idioma']];?></a>
+																<?php } else{?>
+																	<i class="fa fa-check-circle" title="<?=$resultado['dr_aprobacion_acudiente_fecha'];?>"></i>
+																<?php }?>
+															</td>
+														<?php }?>
                                                     </tr>
 													<?php 
 														 $contReg++;

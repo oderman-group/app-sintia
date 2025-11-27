@@ -14,7 +14,7 @@
                                 	<div class="panel-body">
 
                                    
-									<form name="formularioGuardar" action="../compartido/cargas-carpetas-guardar.php" method="post" enctype="multipart/form-data">
+									<form name="formularioGuardar" action="../compartido/carpetas/cargas-carpetas-guardar.php" method="post" enctype="multipart/form-data">
 										<input type="hidden" value="<?=$cargaConsultaActual;?>" name="idRecursoP">
 										<input type="hidden" value="2" name="idCategoria">
 
