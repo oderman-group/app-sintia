@@ -21,6 +21,19 @@ if (!empty($_POST["id"])) {
 		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_18&message='.urlencode('No se pueden realizar modificaciones a estudiantes en estado "En inscripción"').'";</script>';
 		exit();
 	}
+	
+	// Validar cambio de estado usando el método centralizado
+	if (!empty($datosEstudianteActual) && !empty($_POST["matestM"])) {
+		$estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
+		$estadoNuevo = (int)$_POST["matestM"];
+		
+		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+		
+		if (!$validacion['valido']) {
+			echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($validacion['mensaje']).'";</script>';
+			exit();
+		}
+	}
 }
 
 require_once("../class/servicios/MediaTecnicaServicios.php");
@@ -124,7 +137,18 @@ if (!empty($_FILES['fotoMat']['name'])) {
     UsuariosPadre::actualizarUsuarios($config, $_POST["idU"], $update);
 }
 
-Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
+try {
+	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
+} catch (Exception $e) {
+	// Si hay una excepción relacionada con validación de estado, redirigir con el mensaje
+	if (strpos($e->getMessage(), 'estado') !== false || strpos($e->getMessage(), 'Matriculado') !== false || 
+	    strpos($e->getMessage(), 'Asistente') !== false || strpos($e->getMessage(), 'No matriculado') !== false) {
+		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($e->getMessage()).'";</script>';
+		exit();
+	}
+	// Para otras excepciones, re-lanzar
+	throw $e;
+}
 
 // Sincronizar campos compartidos con la tabla usuarios
 $update = [

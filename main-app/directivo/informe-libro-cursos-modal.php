@@ -49,7 +49,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <i class="fas fa-calendar"></i> Año <span class="text-danger">*</span>
                 </label>
                 <div class="col-sm-4">
-                    <select class="form-control  select2" name="year" id="yearLibroCurso" required onchange="window.cargarCursosPorYearLibro(this.value, 'cursoLibroCurso', 'grupoLibroCurso')">
+                    <select class="form-control  select2" name="year" id="yearLibroCurso" required onchange="cargarCursosYActualizarFormato()">
                         <option value="">Seleccione un año</option>
                         <?php
                         $yearStartTemp=$yearStart;
@@ -78,6 +78,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <div id="loadingCursosLibro" style="display: none; margin-top: 5px;">
                         <small><i class="fas fa-spinner fa-spin"></i> Cargando cursos...</small>
                     </div>
+                    <small class="form-text text-muted" id="ayudaCursoLibro" style="display: none;">
+                        <i class="fas fa-info-circle"></i> Para el Formato 4 puedes seleccionar múltiples cursos
+                    </small>
                 </div>
             </div>
 
@@ -93,6 +96,9 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
                     <div id="loadingGruposLibro" style="display: none; margin-top: 5px;">
                         <small><i class="fas fa-spinner fa-spin"></i> Cargando grupos...</small>
                     </div>
+                    <small class="form-text text-muted" id="ayudaGrupoLibro" style="display: none;">
+                        <i class="fas fa-info-circle"></i> Para el Formato 4 puedes seleccionar múltiples grupos
+                    </small>
                 </div>
             </div>
 
@@ -234,6 +240,108 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
         
         form.action = action;
         console.log('📄 Formato seleccionado: ' + formato + ' → Action: ' + action);
+        
+        // Si es formato 4, habilitar selección múltiple
+        if (formId === 'formLibroCurso' && formato === '4') {
+            const cursoSelect = $('#cursoLibroCurso');
+            const grupoSelect = $('#grupoLibroCurso');
+            
+            // Guardar valores actuales
+            const cursoVal = cursoSelect.val();
+            const grupoVal = grupoSelect.val();
+            
+            // Destruir select2 actual
+            if (cursoSelect.data('select2')) {
+                cursoSelect.select2('destroy');
+            }
+            if (grupoSelect.data('select2')) {
+                grupoSelect.select2('destroy');
+            }
+            
+            // Configurar como múltiple
+            cursoSelect.attr('multiple', 'multiple');
+            grupoSelect.attr('multiple', 'multiple');
+            cursoSelect.attr('name', 'curso[]');
+            grupoSelect.attr('name', 'grupo[]');
+            
+            // Reinicializar select2 con múltiple
+            cursoSelect.select2({
+                dropdownParent: $('#ModalCentralizado .modal-content'),
+                width: '100%',
+                placeholder: 'Seleccione uno o más cursos',
+                allowClear: true,
+                closeOnSelect: false // No cerrar el dropdown al seleccionar
+            });
+            
+            grupoSelect.select2({
+                dropdownParent: $('#ModalCentralizado .modal-content'),
+                width: '100%',
+                placeholder: 'Seleccione uno o más grupos (opcional)',
+                allowClear: true,
+                closeOnSelect: false // No cerrar el dropdown al seleccionar
+            });
+            
+            // Restaurar valores si existían
+            if (cursoVal) {
+                cursoSelect.val([cursoVal]).trigger('change');
+            }
+            if (grupoVal) {
+                grupoSelect.val([grupoVal]).trigger('change');
+            }
+            
+            // Mostrar ayuda
+            $('#ayudaCursoLibro, #ayudaGrupoLibro').show();
+        } else if (formId === 'formLibroCurso') {
+            // Si no es formato 4, deshabilitar múltiple
+            const cursoSelect = $('#cursoLibroCurso');
+            const grupoSelect = $('#grupoLibroCurso');
+            
+            // Guardar valores actuales
+            const cursoVal = cursoSelect.val();
+            const grupoVal = grupoSelect.val();
+            
+            // Destruir select2 actual
+            if (cursoSelect.data('select2')) {
+                cursoSelect.select2('destroy');
+            }
+            if (grupoSelect.data('select2')) {
+                grupoSelect.select2('destroy');
+            }
+            
+            // Remover múltiple
+            cursoSelect.removeAttr('multiple');
+            grupoSelect.removeAttr('multiple');
+            cursoSelect.attr('name', 'curso');
+            grupoSelect.attr('name', 'grupo');
+            
+            // Reinicializar select2 sin múltiple
+            cursoSelect.select2({
+                dropdownParent: $('#ModalCentralizado .modal-content'),
+                width: '100%',
+                placeholder: 'Seleccione un curso',
+                allowClear: true
+            });
+            
+            grupoSelect.select2({
+                dropdownParent: $('#ModalCentralizado .modal-content'),
+                width: '100%',
+                placeholder: 'Seleccione un grupo (opcional)',
+                allowClear: true
+            });
+            
+            // Restaurar valores si existían (tomar solo el primero si es array)
+            if (cursoVal) {
+                const val = Array.isArray(cursoVal) ? cursoVal[0] : cursoVal;
+                cursoSelect.val(val).trigger('change');
+            }
+            if (grupoVal) {
+                const val = Array.isArray(grupoVal) ? grupoVal[0] : grupoVal;
+                grupoSelect.val(val).trigger('change');
+            }
+            
+            // Ocultar ayuda
+            $('#ayudaCursoLibro, #ayudaGrupoLibro').hide();
+        }
     }
     
     // Validar y habilitar campos antes de enviar (para formulario por curso)
@@ -250,13 +358,41 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
         }
         
         // Validar que curso tenga valor
-        if (!curso.val() || curso.val() === '') {
+        let cursoVal = curso.val();
+        
+        // Si es array, filtrar valores vacíos
+        if (Array.isArray(cursoVal)) {
+            cursoVal = cursoVal.filter(function(val) {
+                return val && val !== '' && val !== null;
+            });
+            
+            // Si después de filtrar está vacío, mostrar error
+            if (cursoVal.length === 0) {
+                e.preventDefault();
+                alert('⚠️ Campo Requerido\n\nPor favor selecciona al menos un Curso antes de generar el informe.');
+                return false;
+            }
+            
+            // Actualizar el valor del select con solo los valores válidos
+            curso.val(cursoVal).trigger('change');
+        } else if (!cursoVal || cursoVal === '') {
             e.preventDefault();
-            alert('⚠️ Campo Requerido\n\nPor favor selecciona un Curso antes de generar el informe.');
+            alert('⚠️ Campo Requerido\n\nPor favor selecciona al menos un Curso antes de generar el informe.');
             return false;
         }
         
-        console.log('✅ Enviando formulario - Curso:', curso.val(), 'Grupo:', grupo.val());
+        // Filtrar grupos también si es array
+        let grupoVal = grupo.val();
+        if (Array.isArray(grupoVal)) {
+            grupoVal = grupoVal.filter(function(val) {
+                return val && val !== '' && val !== null;
+            });
+            if (grupoVal.length > 0) {
+                grupo.val(grupoVal).trigger('change');
+            }
+        }
+        
+        console.log('✅ Enviando formulario - Curso:', cursoVal, 'Grupo:', grupoVal);
     });
     
     // Validar para formulario por estudiante
@@ -278,10 +414,35 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
         console.log('✅ Enviando formulario - Estudiante:', estudiante.val());
     });
     
+    // Función para cargar cursos y actualizar según formato
+    function cargarCursosYActualizarFormato() {
+        const year = $('#yearLibroCurso').val();
+        const formato = $('#formatoLibroCurso').val();
+        
+        if (year) {
+            window.cargarCursosPorYearLibro(year, 'cursoLibroCurso', 'grupoLibroCurso');
+            
+            // Si el formato ya está seleccionado, aplicar la configuración de múltiple
+            if (formato === '4') {
+                setTimeout(function() {
+                    cambiarAccionFormulario('formLibroCurso', '4');
+                }, 500);
+            }
+        }
+    }
+    
     // Inicializar al cargar el modal
     $(document).ready(function() {
         // Establecer el action inicial en el formato por defecto (mejorado)
         cambiarAccionFormulario('formLibroCurso', 'mejorado');
         cambiarAccionFormulario('formLibroEstudiante', 'mejorado');
+        
+        // Si el año ya está seleccionado al cargar, cargar cursos
+        const yearInicial = $('#yearLibroCurso').val();
+        if (yearInicial) {
+            setTimeout(function() {
+                cargarCursosYActualizarFormato();
+            }, 500);
+        }
     });
 </script>

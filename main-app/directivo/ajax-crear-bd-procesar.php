@@ -137,24 +137,48 @@ try {
         ");
         
         // CATEGORIA NOTAS - CON CAMPOS REALES
-        mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_categorias_notas(
-            catn_id, catn_nombre, institucion, year
-        ) 
-        SELECT 
-            catn_id, catn_nombre, institucion, {$year}
-        FROM ".BD_ACADEMICA.".academico_categorias_notas 
-        WHERE institucion={$idInsti} AND year={$yearAnterior}");
+        // Verificar si ya existen categorías para este año antes de insertar
+        $checkCategorias = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_categorias_notas 
+            WHERE institucion={$idInsti} AND year={$year}");
+        $checkRow = mysqli_fetch_assoc($checkCategorias);
+        
+        if ($checkRow['total'] == 0) {
+            $resultCategorias = mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_categorias_notas(
+                catn_id, catn_nombre, institucion, year
+            ) 
+            SELECT 
+                catn_id, catn_nombre, institucion, {$year}
+            FROM ".BD_ACADEMICA.".academico_categorias_notas 
+            WHERE institucion={$idInsti} AND year={$yearAnterior}");
+            
+            if (!$resultCategorias) {
+                $errorMsg = mysqli_error($conexion);
+                throw new Exception("Error al copiar categorías de notas desde el año anterior. Tabla: academico_categorias_notas. Detalles: " . $errorMsg);
+            }
+        }
         
         // TIPOS DE NOTAS - CON CAMPOS REALES
-        mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_notas_tipos(
-            notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_nombre2, 
-            notip_imagen, institucion, year
-        ) 
-        SELECT 
-            notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_nombre2, 
-            notip_imagen, institucion, {$year}
-        FROM ".BD_ACADEMICA.".academico_notas_tipos 
-        WHERE institucion={$idInsti} AND year={$yearAnterior}");
+        // Verificar si ya existen tipos de notas para este año antes de insertar
+        $checkTipos = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_notas_tipos 
+            WHERE institucion={$idInsti} AND year={$year}");
+        $checkRowTipos = mysqli_fetch_assoc($checkTipos);
+        
+        if ($checkRowTipos['total'] == 0) {
+            $resultTipos = mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_notas_tipos(
+                notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_nombre2, 
+                notip_imagen, institucion, year
+            ) 
+            SELECT 
+                notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_nombre2, 
+                notip_imagen, institucion, {$year}
+            FROM ".BD_ACADEMICA.".academico_notas_tipos 
+            WHERE institucion={$idInsti} AND year={$yearAnterior}");
+            
+            if (!$resultTipos) {
+                $errorMsg = mysqli_error($conexion);
+                throw new Exception("Error al copiar tipos de notas desde el año anterior. Tabla: academico_notas_tipos. Detalles: " . $errorMsg);
+            }
+        }
         
         // AREAS - CON CAMPOS REALES
         mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_areas(
@@ -614,24 +638,48 @@ try {
         ");
         
         // CATEGORIAS DE NOTAS
-        mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_categorias_notas(
-            catn_id, catn_nombre, institucion, year
-        ) VALUES 
-        ('1','Desempeños (Bajo a Superior)','".$idInsti."','".$year."'),
-        ('2','Letras (D a E)','".$idInsti."','".$year."'),
-        ('3','Numerica de 0 a 100','".$idInsti."','".$year."'),
-        ('4','Caritas (Llorando - Contento)','".$idInsti."','".$year."')
-        ");
+        // Verificar si ya existen categorías para este año antes de insertar
+        $checkCategorias = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_categorias_notas 
+            WHERE institucion={$idInsti} AND year={$year}");
+        $checkRow = mysqli_fetch_assoc($checkCategorias);
+        
+        if ($checkRow['total'] == 0) {
+            $resultCategorias = mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_categorias_notas(
+                catn_id, catn_nombre, institucion, year
+            ) VALUES 
+            ('1','Desempeños (Bajo a Superior)','".$idInsti."','".$year."'),
+            ('2','Letras (D a E)','".$idInsti."','".$year."'),
+            ('3','Numerica de 0 a 100','".$idInsti."','".$year."'),
+            ('4','Caritas (Llorando - Contento)','".$idInsti."','".$year."')
+            ");
+            
+            if (!$resultCategorias) {
+                $errorMsg = mysqli_error($conexion);
+                throw new Exception("Error al crear categorías de notas iniciales. Tabla: academico_categorias_notas. Detalles: " . $errorMsg);
+            }
+        }
         
         // TIPOS DE NOTAS
-        mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_notas_tipos(
-            notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_imagen, institucion, year
-        ) VALUES 
-        ('1','Bajo',1.00,3.49,'1','bajo.png','".$idInsti."','".$year."'),
-        ('2','Basico',3.50,3.99,'1','bas.png','".$idInsti."','".$year."'),
-        ('3','Alto',4.00,4.59,'1','alto.png','".$idInsti."','".$year."'),
-        ('4','Superior',4.60,5.00,'1','sup.png','".$idInsti."','".$year."')
-        ");
+        // Verificar si ya existen tipos de notas para este año antes de insertar
+        $checkTipos = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_notas_tipos 
+            WHERE institucion={$idInsti} AND year={$year}");
+        $checkRowTipos = mysqli_fetch_assoc($checkTipos);
+        
+        if ($checkRowTipos['total'] == 0) {
+            $resultTipos = mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_notas_tipos(
+                notip_id, notip_nombre, notip_desde, notip_hasta, notip_categoria, notip_imagen, institucion, year
+            ) VALUES 
+            ('1','Bajo',1.00,3.49,'1','bajo.png','".$idInsti."','".$year."'),
+            ('2','Basico',3.50,3.99,'1','bas.png','".$idInsti."','".$year."'),
+            ('3','Alto',4.00,4.59,'1','alto.png','".$idInsti."','".$year."'),
+            ('4','Superior',4.60,5.00,'1','sup.png','".$idInsti."','".$year."')
+            ");
+            
+            if (!$resultTipos) {
+                $errorMsg = mysqli_error($conexion);
+                throw new Exception("Error al crear tipos de notas iniciales. Tabla: academico_notas_tipos. Detalles: " . $errorMsg);
+            }
+        }
         
         // AREAS
         mysqli_query($conexion, "INSERT INTO ".BD_ACADEMICA.".academico_areas(
@@ -738,12 +786,68 @@ try {
         mysqli_query($conexion, "ROLLBACK");
     }
     
+    // Extraer información del error de MySQL si está disponible
+    $errorMessage = $e->getMessage();
+    $tabla = 'Desconocida';
+    $operacion = 'Desconocida';
+    
+    // Intentar identificar tabla y operación del mensaje de error
+    if (preg_match('/Tabla:\s*([^\s.]+)/i', $errorMessage, $matches)) {
+        $tabla = $matches[1];
+    } elseif (preg_match('/(INSERT|UPDATE|DELETE)\s+INTO\s+[^`]*`?([^`\s.]+)`?/i', $errorMessage, $matches)) {
+        $operacion = strtoupper($matches[1]);
+        if (isset($matches[2])) {
+            $tabla = $matches[2];
+        }
+    } elseif (preg_match('/academico_(\w+)/i', $errorMessage, $matches)) {
+        $tabla = 'academico_' . $matches[1];
+    } elseif (preg_match('/Duplicate entry.*for key.*catn_id/i', $errorMessage)) {
+        $tabla = 'academico_categorias_notas';
+        $operacion = 'INSERT';
+    } elseif (preg_match('/Duplicate entry.*for key.*notip_id/i', $errorMessage)) {
+        $tabla = 'academico_notas_tipos';
+        $operacion = 'INSERT';
+    } elseif (preg_match('/Duplicate entry.*for key.*(\w+_id)/i', $errorMessage, $matches)) {
+        // Intentar identificar tabla por el nombre del campo de clave
+        $campoId = $matches[1];
+        $mapaTablas = [
+            'catn_id' => 'academico_categorias_notas',
+            'notip_id' => 'academico_notas_tipos',
+            'gra_id' => 'academico_grados',
+            'gru_id' => 'academico_grupos',
+            'ar_id' => 'academico_areas',
+            'mat_id' => 'academico_materias',
+            'car_id' => 'academico_cargas',
+            'conf_id' => 'configuracion',
+            'info_id' => 'general_informacion'
+        ];
+        if (isset($mapaTablas[$campoId])) {
+            $tabla = $mapaTablas[$campoId];
+            $operacion = 'INSERT';
+        }
+    }
+    
+    // Construir mensaje más descriptivo
+    $tipoProceso = isset($nueva) && $nueva == '1' ? 'creación' : 'renovación';
+    $mensajeUsuario = "Error en el proceso de " . $tipoProceso . ":\n\n";
+    $mensajeUsuario .= "📋 Tabla: " . $tabla . "\n";
+    $mensajeUsuario .= "⚙️ Operación: " . $operacion . "\n";
+    $mensajeUsuario .= "❌ Error: " . $errorMessage;
+    
+    // Si es un error de duplicado, agregar sugerencia
+    if (preg_match('/Duplicate entry/i', $errorMessage)) {
+        $mensajeUsuario .= "\n\n💡 Sugerencia: Ya existe un registro con estos valores. Verifica si el año ya fue creado anteriormente.";
+    }
+    
     $response['success'] = false;
-    $response['message'] = 'Error en el proceso: ' . $e->getMessage();
+    $response['message'] = $mensajeUsuario;
     $response['error_details'] = [
         'code' => $e->getCode(),
         'line' => $e->getLine(),
-        'file' => basename($e->getFile())
+        'file' => basename($e->getFile()),
+        'tabla' => $tabla,
+        'operacion' => $operacion,
+        'error_original' => $errorMessage
     ];
     
     // Log del error sin generar HTML

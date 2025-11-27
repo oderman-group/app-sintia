@@ -175,9 +175,45 @@ try {
                 continue;
             }
 
+            // Obtener datos actuales del estudiante para validaciones
+            $datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($idEstudiante);
+            if (empty($datosEstudianteActual)) {
+                $mensaje = "Estudiante no encontrado: $idEstudiante";
+                error_log("ERROR: $mensaje");
+                $errores[] = $mensaje;
+                continue;
+            }
+            
+            // Validar cambio de estado usando el método centralizado
+            if (isset($datosActualizar['mat_estado_matricula'])) {
+                $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
+                $estadoNuevo = (int)$datosActualizar['mat_estado_matricula'];
+                
+                $validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+                
+                if (!$validacion['valido']) {
+                    $mensaje = "Estudiante $idEstudiante: " . $validacion['mensaje'];
+                    error_log("ERROR: $mensaje");
+                    $errores[] = $mensaje;
+                    
+                    // Remover el estado de matrícula de los datos a actualizar
+                    $datosActualizarEstudiante = $datosActualizar;
+                    unset($datosActualizarEstudiante['mat_estado_matricula']);
+                    
+                    if (count($datosActualizarEstudiante) === 0) {
+                        error_log("No hay campos para actualizar en estudiante $idEstudiante (solo estado de matrícula)");
+                        continue;
+                    }
+                } else {
+                    $datosActualizarEstudiante = $datosActualizar;
+                }
+            } else {
+                $datosActualizarEstudiante = $datosActualizar;
+            }
+            
             // Verificar si el estudiante tiene registros académicos (para grado/grupo)
             $tieneRegistrosAcademicos = false;
-            if (isset($datosActualizar['mat_grado']) || isset($datosActualizar['mat_grupo'])) {
+            if (isset($datosActualizarEstudiante['mat_grado']) || isset($datosActualizarEstudiante['mat_grupo'])) {
                 // Usar el método existente de la clase Estudiante
                 $EstudianteObj = new Administrativo_Usuario_Estudiante(['mat_id' => $idEstudiante]);
                 $tieneRegistrosAcademicos = (bool) $EstudianteObj->tieneRegistrosAcademicos();
@@ -192,7 +228,6 @@ try {
                     error_log("⚠️ Estudiante $idEstudiante tiene registros académicos y no se permite cambiar grado/grupo, se omiten cambios");
                     
                     // Remover grado y grupo de los datos a actualizar para este estudiante
-                    $datosActualizarEstudiante = $datosActualizar;
                     unset($datosActualizarEstudiante['mat_grado']);
                     unset($datosActualizarEstudiante['mat_grupo']);
                     
@@ -200,11 +235,7 @@ try {
                         error_log("No hay campos para actualizar en estudiante $idEstudiante (solo grado/grupo)");
                         continue;
                     }
-                } else {
-                    $datosActualizarEstudiante = $datosActualizar;
                 }
-            } else {
-                $datosActualizarEstudiante = $datosActualizar;
             }
 
             // Actualizar la matrícula usando UPDATE directo

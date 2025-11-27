@@ -1894,12 +1894,67 @@ $(document).ready(function() {
 		}
 	});
 	
+	// Función para deshabilitar controles de filtro de usuarios
+	function deshabilitarControlesFiltroUsuarios() {
+		// Deshabilitar select2 (usando métodos específicos de select2)
+		if ($('#filtro_usuarios_tipo').hasClass('select2-hidden-accessible')) {
+			$('#filtro_usuarios_tipo').prop('disabled', true);
+			$('#filtro_usuarios_tipo').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_usuarios_tipo').prop('disabled', true);
+		}
+		
+		if ($('#filtro_usuarios_estado').hasClass('select2-hidden-accessible')) {
+			$('#filtro_usuarios_estado').prop('disabled', true);
+			$('#filtro_usuarios_estado').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_usuarios_estado').prop('disabled', true);
+		}
+		
+		// Deshabilitar botón de limpiar filtros
+		$('#btnLimpiarFiltrosUsuarios').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+		
+		// Deshabilitar campo de búsqueda de DataTables si existe
+		if ($.fn.DataTable.isDataTable('#example1')) {
+			$('#example1_filter input').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+		}
+	}
+	
+	// Función para habilitar controles de filtro de usuarios
+	function habilitarControlesFiltroUsuarios() {
+		// Habilitar select2 (usando métodos específicos de select2)
+		if ($('#filtro_usuarios_tipo').hasClass('select2-hidden-accessible')) {
+			$('#filtro_usuarios_tipo').prop('disabled', false);
+			$('#filtro_usuarios_tipo').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_usuarios_tipo').prop('disabled', false);
+		}
+		
+		if ($('#filtro_usuarios_estado').hasClass('select2-hidden-accessible')) {
+			$('#filtro_usuarios_estado').prop('disabled', false);
+			$('#filtro_usuarios_estado').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_usuarios_estado').prop('disabled', false);
+		}
+		
+		// Habilitar botón de limpiar filtros
+		$('#btnLimpiarFiltrosUsuarios').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+		
+		// Habilitar campo de búsqueda de DataTables si existe
+		if ($.fn.DataTable.isDataTable('#example1')) {
+			$('#example1_filter input').prop('disabled', false).css('opacity', '1').css('cursor', 'text');
+		}
+	}
+	
 	// Función para aplicar filtros de usuarios
 	function aplicarFiltrosUsuarios() {
 		const tipos = $('#filtro_usuarios_tipo').val() || [];
 		const estados = $('#filtro_usuarios_estado').val() || [];
 		
 		console.log('Aplicando filtros usuarios:', { tipos, estados });
+		
+		// Deshabilitar controles al inicio
+		deshabilitarControlesFiltroUsuarios();
 		
 		// Mostrar loader en la tabla
 		$('tbody').html('<tr><td colspan="8" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
@@ -1994,6 +2049,9 @@ $(document).ready(function() {
 						icon: 'success',
 						hideAfter: 3000
 					});
+					
+					// Habilitar controles al finalizar exitosamente
+					habilitarControlesFiltroUsuarios();
 				} else {
 					console.error('Error del servidor:', response.error);
 					
@@ -2007,6 +2065,9 @@ $(document).ready(function() {
 					});
 					
 					$('tbody').html('<tr><td colspan="8" class="text-center text-danger">Error al cargar los datos</td></tr>');
+					
+					// Habilitar controles aunque haya error
+					habilitarControlesFiltroUsuarios();
 				}
 			},
 			error: function(xhr, status, error) {
@@ -2023,6 +2084,9 @@ $(document).ready(function() {
 				});
 				
 				$('tbody').html('<tr><td colspan="8" class="text-center text-danger">Error de conexión</td></tr>');
+				
+				// Habilitar controles aunque haya error
+				habilitarControlesFiltroUsuarios();
 			}
 		});
 	}

@@ -528,6 +528,17 @@ if($config['conf_doble_buscador'] == 1) {
 			height: 36px;
 		}
 		
+		/* Estilos para Select2 deshabilitado */
+		#editarMasivoEstudiantesModal .select2-container-disabled .select2-selection--single {
+			background-color: #e9ecef !important;
+			cursor: not-allowed !important;
+			opacity: 0.6 !important;
+		}
+		
+		#editarMasivoEstudiantesModal .select2-container-disabled .select2-selection--single .select2-selection__rendered {
+			color: #6c757d !important;
+		}
+		
 		#editarMasivoEstudiantesModal input[type="number"] {
 			height: 38px;
 			padding: 6px 12px;
@@ -1406,6 +1417,9 @@ if($config['conf_doble_buscador'] == 1) {
 			
 			// Inicializar Select2 DESPUÉS de que el modal esté completamente visible
 			$('#editarMasivoEstudiantesModal').on('shown.bs.modal', function () {
+				// Primero, asegurar que "No matriculado" esté habilitado inicialmente
+				$('#estadoMatricula option[value="4"]').prop('disabled', false);
+				
 				$('.select2-modal').select2({
 					width: '100%',
 					placeholder: 'Seleccionar...',
@@ -1419,7 +1433,238 @@ if($config['conf_doble_buscador'] == 1) {
 						}
 					}
 				});
+				
+				// Validar si alguno de los estudiantes seleccionados tiene notas y estados
+				validarNotasEstudiantes();
 			});
+			
+			// Función para validar si los estudiantes tienen notas y estados
+			function validarNotasEstudiantes() {
+				if (selectedEstudiantes.length === 0) {
+					return;
+				}
+				
+				// Mostrar indicador de carga
+				$('#grado').prop('disabled', true).css('opacity', '0.6');
+				$('#grupo').prop('disabled', true).css('opacity', '0.6');
+				$('#mensajeGradoGrupo').html('<i class="fa fa-spinner fa-spin"></i> Validando registros académicos...').show();
+				
+				$.ajax({
+					url: 'ajax-validar-notas-estudiantes.php',
+					type: 'POST',
+					data: {
+						estudiantes: selectedEstudiantes
+					},
+					dataType: 'json',
+					success: function(response) {
+						if (response.success) {
+							// Validar grado y grupo
+							if (response.tieneNotas && !response.puedeModificarGradoGrupo) {
+								// Deshabilitar campos de grado y grupo
+								$('#grado').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+								$('#grupo').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+								
+								// Deshabilitar también el contenedor de Select2
+								$('#grado').next('.select2-container').addClass('select2-container-disabled');
+								$('#grupo').next('.select2-container').addClass('select2-container-disabled');
+								
+								// Forzar actualización de Select2
+								$('#grado').trigger('change.select2');
+								$('#grupo').trigger('change.select2');
+								
+								// Mostrar mensaje informativo
+								var mensaje = '<div class="alert alert-warning mt-2">';
+								mensaje += '<i class="fa fa-exclamation-triangle"></i> ';
+								mensaje += '<strong>Importante:</strong> ';
+								if (response.cantidadConNotas === selectedEstudiantes.length) {
+									mensaje += 'Todos los estudiantes seleccionados tienen notas registradas. ';
+								} else {
+									mensaje += response.cantidadConNotas + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados tienen notas registradas. ';
+								}
+								mensaje += 'Los campos de Grado y Grupo están deshabilitados para proteger los registros académicos existentes.';
+								mensaje += '</div>';
+								$('#mensajeGradoGrupo').html(mensaje).show();
+							} else {
+								// Habilitar campos de grado y grupo
+								$('#grado').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+								$('#grupo').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+								
+								// Habilitar también el contenedor de Select2
+								$('#grado').next('.select2-container').removeClass('select2-container-disabled');
+								$('#grupo').next('.select2-container').removeClass('select2-container-disabled');
+								
+								// Forzar actualización de Select2
+								$('#grado').trigger('change.select2');
+								$('#grupo').trigger('change.select2');
+								
+								// Ocultar o mostrar mensaje según configuración
+								if (response.tieneNotas && response.puedeModificarGradoGrupo) {
+									var mensaje = '<div class="alert alert-warning mt-2">';
+									mensaje += '<i class="fa fa-exclamation-triangle"></i> ';
+									mensaje += '<strong>Advertencia:</strong> Algunos estudiantes tienen notas registradas. ';
+									mensaje += 'Tenga en cuenta que al cambiar de grado o grupo, estas notas podrían perderse.';
+									mensaje += '</div>';
+									$('#mensajeGradoGrupo').html(mensaje).show();
+								} else {
+									$('#mensajeGradoGrupo').hide();
+								}
+							}
+							
+							// Validar estados de matrícula según las reglas centralizadas
+							// Reglas:
+							// - En Inscripción (5): No puede modificarse
+							// - Asistente (2): Solo puede cambiar a Matriculado (1)
+							// - No matriculado (4): Solo puede cambiar a Matriculado (1)
+							// - Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2)
+							// - Cancelado (3): Se gestiona automáticamente
+							
+							// Obtener estados únicos de los estudiantes seleccionados
+							var estadosUnicos = {};
+							if (response.estadosEstudiantes) {
+								Object.keys(response.estadosEstudiantes).forEach(function(idEst) {
+									var estado = response.estadosEstudiantes[idEst];
+									if (!estadosUnicos[estado]) {
+										estadosUnicos[estado] = 0;
+									}
+									estadosUnicos[estado]++;
+								});
+							}
+							
+							// Determinar qué opciones deshabilitar
+							var opcionesDeshabilitar = [];
+							var mensajesValidacion = [];
+							
+							// Si hay estudiantes en "En inscripción" (5), no se puede cambiar ningún estado
+							if (estadosUnicos[5]) {
+								// Deshabilitar todos los estados excepto "En inscripción" para esos estudiantes
+								opcionesDeshabilitar = [1, 2, 3, 4]; // Todos excepto 5
+								mensajesValidacion.push('Algunos estudiantes están en estado "En inscripción" y no pueden cambiar de estado.');
+							} else {
+								// Si hay estudiantes "Matriculados" (1), deshabilitar "No matriculado" (4) y "Asistente" (2)
+								if (response.tieneMatriculados) {
+									opcionesDeshabilitar.push(2, 4); // Asistente y No matriculado
+								}
+								
+								// Si hay estudiantes "Asistentes" (2), solo permitir "Matriculado" (1)
+								if (response.tieneAsistentes) {
+									// Agregar todos los estados excepto Matriculado (1) si no están ya en la lista
+									var estadosParaAsistentes = [2, 3, 4, 5];
+									estadosParaAsistentes.forEach(function(estado) {
+										if (opcionesDeshabilitar.indexOf(estado) === -1) {
+											opcionesDeshabilitar.push(estado);
+										}
+									});
+									mensajesValidacion.push('Estudiantes en estado "Asistente" solo pueden cambiar a "Matriculado".');
+								}
+								
+								// Si hay estudiantes "No matriculados" (4), solo permitir "Matriculado" (1)
+								if (response.tieneNoMatriculados) {
+									// Agregar todos los estados excepto Matriculado (1) si no están ya en la lista
+									var estadosParaNoMatriculados = [2, 3, 4, 5];
+									estadosParaNoMatriculados.forEach(function(estado) {
+										if (opcionesDeshabilitar.indexOf(estado) === -1) {
+											opcionesDeshabilitar.push(estado);
+										}
+									});
+									if (!response.tieneAsistentes) { // Solo agregar mensaje si no se agregó ya por Asistentes
+										mensajesValidacion.push('Estudiantes en estado "No matriculado" solo pueden cambiar a "Matriculado".');
+									}
+								}
+							}
+							
+							// Eliminar duplicados
+							opcionesDeshabilitar = [...new Set(opcionesDeshabilitar)];
+							
+							// Aplicar deshabilitación a las opciones
+							var currentVal = $('#estadoMatricula').val();
+							$('#estadoMatricula option').each(function() {
+								var optionVal = parseInt($(this).val());
+								if (optionVal && opcionesDeshabilitar.indexOf(optionVal) !== -1) {
+									$(this).prop('disabled', true);
+									// Si estaba seleccionado, limpiarlo
+									if (currentVal == optionVal) {
+										currentVal = '';
+									}
+								} else if (optionVal) {
+									// Habilitar las opciones que no están en la lista de deshabilitadas
+									$(this).prop('disabled', false);
+								}
+							});
+							
+							// Actualizar Select2
+							$('#estadoMatricula').select2('destroy');
+							$('#estadoMatricula').select2({
+								width: '100%',
+								placeholder: 'Seleccionar...',
+								allowClear: true,
+								language: {
+									noResults: function() {
+										return "No se encontraron resultados";
+									},
+									searching: function() {
+										return "Buscando...";
+									}
+								}
+							});
+							
+							// Restaurar valor si es válido
+							if (currentVal && opcionesDeshabilitar.indexOf(parseInt(currentVal)) === -1) {
+								$('#estadoMatricula').val(currentVal).trigger('change');
+							} else {
+								$('#estadoMatricula').val('').trigger('change');
+							}
+							
+							// Mostrar mensajes informativos
+							if (mensajesValidacion.length > 0 || response.tieneMatriculados) {
+								var mensajeEstado = '<div class="alert alert-info mt-2" id="mensajeEstadoMatricula">';
+								mensajeEstado += '<i class="fa fa-info-circle"></i> ';
+								mensajeEstado += '<strong>Nota:</strong> ';
+								
+								if (mensajesValidacion.length > 0) {
+									mensajeEstado += mensajesValidacion.join(' ');
+								}
+								
+								if (response.tieneMatriculados) {
+									if (mensajesValidacion.length > 0) {
+										mensajeEstado += '<br>';
+									}
+									if (response.cantidadMatriculados === selectedEstudiantes.length) {
+										mensajeEstado += 'Todos los estudiantes seleccionados están en estado "Matriculado". ';
+									} else {
+										mensajeEstado += response.cantidadMatriculados + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados están en estado "Matriculado". ';
+									}
+									mensajeEstado += 'Las opciones "Asistente" y "No matriculado" aparecen deshabilitadas (solo lectura) para estudiantes que ya están matriculados.';
+								}
+								
+								mensajeEstado += '</div>';
+								
+								// Agregar o actualizar mensaje
+								if ($('#mensajeEstadoMatricula').length) {
+									$('#mensajeEstadoMatricula').replaceWith(mensajeEstado);
+								} else {
+									$('#estadoMatricula').closest('.form-group').after(mensajeEstado);
+								}
+							} else {
+								// Ocultar mensaje si no hay restricciones
+								$('#mensajeEstadoMatricula').remove();
+							}
+						} else {
+							console.error('Error al validar notas:', response.error);
+							// En caso de error, habilitar los campos por seguridad
+							$('#grado').prop('disabled', false).css('opacity', '1');
+							$('#grupo').prop('disabled', false).css('opacity', '1');
+							$('#mensajeGradoGrupo').hide();
+						}
+					},
+					error: function(xhr, status, error) {
+						console.error('Error AJAX al validar notas:', status, error);
+						// En caso de error, habilitar los campos por seguridad
+						$('#grado').prop('disabled', false).css('opacity', '1');
+						$('#grupo').prop('disabled', false).css('opacity', '1');
+						$('#mensajeGradoGrupo').hide();
+					}
+				});
+			}
 			
 			// Manejar clic del botón de aplicar cambios masivos
 			console.log('Enlazando evento click al botón de aplicar cambios...');
@@ -1655,6 +1900,16 @@ if($config['conf_doble_buscador'] == 1) {
 			// Limpiar selección al cerrar el modal
 			$('#editarMasivoEstudiantesModal').on('hidden.bs.modal', function () {
 				$('.select2-modal').select2('destroy');
+				
+				// Resetear campos de grado y grupo
+				$('#grado').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#grupo').val('').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#mensajeGradoGrupo').hide().html('');
+				
+				// Resetear estado de matrícula: habilitar "No matriculado" y limpiar selección
+				$('#estadoMatricula').val('');
+				$('#estadoMatricula option[value="4"]').prop('disabled', false);
+				$('#mensajeEstadoMatricula').remove();
 			});
 			
 		} catch(error) {
@@ -1701,8 +1956,95 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 			});
 			
+			// Función para deshabilitar controles de filtro
+			function deshabilitarControlesFiltro() {
+				// Deshabilitar campos de entrada
+				$('#filtro_busqueda').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#filtro_fecha_desde').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#filtro_fecha_hasta').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				
+				// Deshabilitar select2 (usando métodos específicos de select2)
+				if ($('#filtro_cursos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_cursos').prop('disabled', true);
+					$('#filtro_cursos').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_cursos').prop('disabled', true);
+				}
+				
+				if ($('#filtro_grupos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_grupos').prop('disabled', true);
+					$('#filtro_grupos').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_grupos').prop('disabled', true);
+				}
+				
+				if ($('#filtro_estados').hasClass('select2-hidden-accessible')) {
+					$('#filtro_estados').prop('disabled', true);
+					$('#filtro_estados').next('.select2-container').addClass('select2-container-disabled');
+				} else {
+					$('#filtro_estados').prop('disabled', true);
+				}
+				
+				// Deshabilitar botones
+				$('#btnBuscar').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				$('#btnLimpiarFiltros').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				
+				// Verificar si existe el botón de aplicar filtros
+				if ($('#btnAplicarFiltros').length) {
+					$('#btnAplicarFiltros').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+				}
+				
+				// Agregar indicador visual
+				$('#btnBuscar').html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+			}
+			
+			// Función para habilitar controles de filtro
+			function habilitarControlesFiltro() {
+				// Habilitar campos de entrada
+				$('#filtro_busqueda').prop('disabled', false).css('opacity', '1').css('cursor', 'text');
+				$('#filtro_fecha_desde').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#filtro_fecha_hasta').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				
+				// Habilitar select2 (usando métodos específicos de select2)
+				if ($('#filtro_cursos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_cursos').prop('disabled', false);
+					$('#filtro_cursos').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_cursos').prop('disabled', false);
+				}
+				
+				if ($('#filtro_grupos').hasClass('select2-hidden-accessible')) {
+					$('#filtro_grupos').prop('disabled', false);
+					$('#filtro_grupos').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_grupos').prop('disabled', false);
+				}
+				
+				if ($('#filtro_estados').hasClass('select2-hidden-accessible')) {
+					$('#filtro_estados').prop('disabled', false);
+					$('#filtro_estados').next('.select2-container').removeClass('select2-container-disabled');
+				} else {
+					$('#filtro_estados').prop('disabled', false);
+				}
+				
+				// Habilitar botones
+				$('#btnBuscar').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				$('#btnLimpiarFiltros').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				
+				// Verificar si existe el botón de aplicar filtros
+				if ($('#btnAplicarFiltros').length) {
+					$('#btnAplicarFiltros').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+				}
+				
+				// Restaurar texto del botón
+				$('#btnBuscar').html('<i class="fa fa-search"></i> Buscar');
+			}
+			
 			// Función para aplicar filtros
 			function aplicarFiltros() {
+				// Deshabilitar controles al inicio
+				deshabilitarControlesFiltro();
+				
 				const cursos = $('#filtro_cursos').val() || [];
 				const grupos = $('#filtro_grupos').val() || [];
 				const estados = $('#filtro_estados').val() || [];
@@ -1733,6 +2075,9 @@ if($config['conf_doble_buscador'] == 1) {
 						console.log('Respuesta del filtro:', response);
 						
 						$('#gifCarga').hide();
+						
+						// Habilitar controles al finalizar (éxito o error)
+						habilitarControlesFiltro();
 						
 						if (response.success) {
 							// Insertar el HTML
@@ -1785,6 +2130,9 @@ if($config['conf_doble_buscador'] == 1) {
 						
 						$('#gifCarga').hide();
 						
+						// Habilitar controles al finalizar (error)
+						habilitarControlesFiltro();
+						
 						$.toast({
 							heading: 'Error de Conexión',
 							text: 'No se pudo conectar con el servidor',
@@ -1806,6 +2154,9 @@ if($config['conf_doble_buscador'] == 1) {
 			
 			// Limpiar filtros
 			$('#btnLimpiarFiltros').on('click', function() {
+				// Deshabilitar controles mientras se limpia
+				deshabilitarControlesFiltro();
+				
 				$('#filtro_cursos').val(null).trigger('change');
 				$('#filtro_grupos').val(null).trigger('change');
 				$('#filtro_estados').val(null).trigger('change');
@@ -1814,6 +2165,7 @@ if($config['conf_doble_buscador'] == 1) {
 				$('#filtro_fecha_hasta').val('');
 				
 				// Recargar la página para mostrar todos los estudiantes
+				// Los controles se habilitarán automáticamente al recargar la página
 				location.reload();
 			});
 			
@@ -2000,9 +2352,9 @@ if($config['conf_doble_buscador'] == 1) {
 				panel.append(lista);
 				
 				// Posicionar el panel cerca del botón
-				var btnOffset = $(btn).offset();
-				var btnHeight = $(btn).outerHeight();
-				var btnWidth = $(btn).outerWidth();
+				// Usar getBoundingClientRect() para obtener posición relativa al viewport (considera scroll)
+				var btnElement = btn instanceof jQuery ? btn[0] : btn;
+				var btnRect = btnElement.getBoundingClientRect();
 				
 				// Agregar el panel al body temporalmente para obtener sus dimensiones
 				$('body').append(panel);
@@ -2012,28 +2364,35 @@ if($config['conf_doble_buscador'] == 1) {
 				var windowWidth = $(window).width();
 				var windowHeight = $(window).height();
 				
-				// Calcular posición óptima (alineado a la derecha del botón)
-				var topPos = btnOffset.top;
-				var leftPos = btnOffset.left - panelWidth - 5;
+				// Con position: fixed, las coordenadas son relativas al viewport (no al documento)
+				// Por lo tanto, NO sumamos scrollTop/scrollLeft
+				// Calcular posición óptima (alineado a la derecha del botón por defecto)
+				var topPos = btnRect.top;
+				var leftPos = btnRect.right - panelWidth - 5; // A la izquierda del botón
 				
 				// Si se sale por la izquierda, mostrar a la derecha del botón
-				if (leftPos < 20) {
-					leftPos = btnOffset.left + btnWidth + 5;
+				if (btnRect.right - panelWidth < 20) {
+					leftPos = btnRect.right + 5; // A la derecha del botón
 				}
 				
-				// Si se sale por la derecha, alinearlo al borde derecho
+				// Si se sale por la derecha, ajustar al borde derecho con margen
 				if (leftPos + panelWidth > windowWidth - 20) {
 					leftPos = windowWidth - panelWidth - 20;
 				}
 				
 				// Ajustar verticalmente si se sale por abajo
-				if (topPos + panelHeight > windowHeight - 20) {
-					topPos = windowHeight - panelHeight - 20;
+				if (btnRect.bottom + panelHeight > windowHeight - 20) {
+					topPos = btnRect.top - panelHeight; // Mostrar arriba del botón
 				}
 				
 				// Ajustar verticalmente si se sale por arriba
 				if (topPos < 20) {
 					topPos = 20;
+				}
+				
+				// Asegurar que el panel esté alineado verticalmente con el botón si hay espacio
+				if (btnRect.top + panelHeight <= windowHeight - 20) {
+					topPos = btnRect.top;
 				}
 				
 				// Aplicar posición
@@ -2047,6 +2406,11 @@ if($config['conf_doble_buscador'] == 1) {
 				
 				// Cerrar al hacer clic en el overlay
 				overlay.on('click', cerrarPanelAcciones);
+				
+				// Prevenir que el scroll dentro del panel lo cierre
+				panel.on('scroll', function(e) {
+					e.stopPropagation();
+				});
 			};
 			
 			// Función para cerrar el panel
@@ -2058,10 +2422,39 @@ if($config['conf_doble_buscador'] == 1) {
 				}
 			};
 			
-			// Cerrar al hacer scroll
-			$('.table-estudiantes-wrapper, window').on('scroll', function() {
+			// Cerrar al hacer scroll en cualquier contenedor (EXCEPTO dentro del panel)
+			function handleScrollClose(e) {
+				// Verificar si el scroll ocurrió dentro del panel de acciones
+				var target = e.target || e.currentTarget;
+				var $target = $(target);
+				
+				// Si el scroll es dentro del panel o sus elementos hijos, no cerrar
+				if ($target.closest('.acciones-panel').length > 0) {
+					return;
+				}
+				
+				// Si el scroll es en cualquier otro lugar, cerrar el panel
 				if (window.currentAccionesPanel) {
 					cerrarPanelAcciones();
+				}
+			}
+			
+			// Agregar listeners de scroll en múltiples contenedores
+			var scrollContainers = [
+				window,
+				document.body,
+				'.table-estudiantes-wrapper',
+				'.table-responsive',
+				'.dataTables_scrollBody',
+				'#matriculas_result',
+				'.main-content'
+			];
+			
+			scrollContainers.forEach(function(container) {
+				if (typeof container === 'string') {
+					$(container).on('scroll', handleScrollClose);
+				} else {
+					$(container).on('scroll', handleScrollClose);
 				}
 			});
 			
@@ -2207,10 +2600,17 @@ if($config['conf_doble_buscador'] == 1) {
 							<label for="estadoMatricula">Estado de Matrícula</label>
 							<select class="form-control select2-modal" id="estadoMatricula" name="estadoMatricula">
 								<option value="">-- No modificar --</option>
-								<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { ?>
-									<option value="<?= $clave; ?>"><?= $valor; ?></option>
+								<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
+									// Estados EN_INSCRIPCION (5) y CANCELADO (3) no se pueden seleccionar - se gestionan desde otros lugares
+									$esEstadoRestringido = ($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO);
+									$disabledEstado = $esEstadoRestringido ? 'disabled' : '';
+								?>
+									<option value="<?= $clave; ?>" <?= $disabledEstado; ?>><?= $valor; ?></option>
 								<?php } ?>
 							</select>
+							<small class="form-text text-muted">
+								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".
+							</small>
 						</div>
 						
 						<!-- Estrato -->
@@ -2230,10 +2630,9 @@ if($config['conf_doble_buscador'] == 1) {
 						<hr>
 						
 						<h5><i class="fa fa-graduation-cap"></i> Cambios Académicos</h5>
-						<div class="alert alert-warning">
-							<i class="fa fa-exclamation-triangle"></i>
-							<strong>Importante:</strong> Los cambios de grado y grupo solo se aplicarán a estudiantes que NO tengan notas registradas.
-						</div>
+						
+						<!-- Mensaje dinámico para grado y grupo -->
+						<div id="mensajeGradoGrupo" style="display: none;"></div>
 						
 						<!-- Grado -->
 						<div class="form-group">

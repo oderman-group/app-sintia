@@ -142,10 +142,13 @@ foreach ($data["data"] as $resultado) {
 		$marcaMediaTecnica = '<i class="fa fa-bookmark" aria-hidden="true" data-toggle="tooltip" data-placement="top" title="Media técnica"></i> ';
 	}
 
-	// Verificar si el estudiante está en estado de inscripción
+	// Verificar si el estudiante está en estado de inscripción o cancelado
 	$estadoEnInscripcion = ($resultado['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION);
-	$disabledCheckbox = $estadoEnInscripcion ? 'disabled' : '';
-	$disabledAcciones = $estadoEnInscripcion ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+	$estadoCancelado = ($resultado['mat_estado_matricula'] == Estudiantes::ESTADO_CANCELADO);
+	// Solo "En inscripción" deshabilita checkbox y acciones
+	$estadoNoModificable = $estadoEnInscripcion;
+	$disabledCheckbox = $estadoNoModificable ? 'disabled' : '';
+	$disabledAcciones = $estadoNoModificable ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
 	$titleAcciones = $estadoEnInscripcion ? 'Estudiante en proceso de inscripción - Solo lectura' : $frases[54][$datosUsuarioActual['uss_idioma']];
 
 ?>
@@ -174,12 +177,27 @@ foreach ($data["data"] as $resultado) {
 			<?php
 			$cambiarEstado = '';
 			$cursorStyle = '';
-			// No permitir cambiar estado si está en "En inscripción" o si no tiene permiso
-			if ($permisoCambiarEstado && !$estadoEnInscripcion) {
+			$titleEstado = '';
+			
+			// Obtener el estado actual del estudiante
+			$estadoActual = (int)$resultado['mat_estado_matricula'];
+			$estadoMatriculado = ($estadoActual == Estudiantes::ESTADO_MATRICULADO);
+			
+			// No permitir cambiar estado si está en "En inscripción", "Cancelado", "Matriculado" o si no tiene permiso
+			// Matriculado no puede cambiar a Asistente ni a No Matriculado mediante click
+			// Cancelado no puede cambiarse desde el badge (se gestiona automáticamente), pero el menú de acciones sí está habilitado
+			if ($permisoCambiarEstado && !$estadoNoModificable && !$estadoCancelado && !$estadoMatriculado) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
 				$cursorStyle = "cursor: pointer;";
-			} elseif ($estadoEnInscripcion) {
+			} else {
 				$cursorStyle = "cursor: not-allowed;";
+				if ($estadoEnInscripcion) {
+					$titleEstado = 'Estudiante en proceso de inscripción - No se puede cambiar el estado';
+				} elseif ($estadoCancelado) {
+					$titleEstado = 'Estudiante cancelado - No se puede cambiar el estado desde aquí';
+				} elseif ($estadoMatriculado) {
+					$titleEstado = 'Un estudiante en estado "Matriculado" no puede cambiar a "Asistente" ni a "No matriculado" mediante este botón.';
+				}
 			}
 			
 			// Mapear estados a clases de badge
@@ -193,13 +211,12 @@ foreach ($data["data"] as $resultado) {
 			
 			if(!empty($resultado['mat_estado_matricula'])){
 				$badgeClass = $badgeClasses[$resultado['mat_estado_matricula']] ?? 'badge badge-secondary';
-				$titleEstado = $estadoEnInscripcion ? 'Estudiante en proceso de inscripción - No se puede cambiar el estado' : '';
 			?>
 			<span class="<?= $badgeClass; ?>" 
 				  id="estadoMatricula<?= $resultado['mat_id']; ?>" 
 				  style="<?= $cursorStyle; ?>" 
 				  <?= $cambiarEstado; ?>
-				  <?= $estadoEnInscripcion ? 'title="' . htmlspecialchars($titleEstado, ENT_QUOTES) . '"' : ''; ?>>
+				  <?= !empty($titleEstado) ? 'title="' . htmlspecialchars($titleEstado, ENT_QUOTES) . '"' : ''; ?>>
 				<?= $estadosMatriculasEstudiantes[$resultado['mat_estado_matricula']]; ?>
 			</span>
 			<?php } ?>
@@ -214,7 +231,7 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $resultado['uss_usuario']; ?></td>
 		<td>
 			<!-- Botón de tres puntos verticales -->
-			<?php if ($estadoEnInscripcion) { ?>
+			<?php if ($estadoNoModificable) { ?>
 				<button type="button" class="btn-acciones-menu" <?= $disabledAcciones; ?> title="<?= $titleAcciones; ?>">
 					<i class="fa fa-ellipsis-v"></i>
 				</button>
@@ -245,9 +262,29 @@ foreach ($data["data"] as $resultado) {
 						<?php } ?>
 
 
-						<?php if (!empty($resultado['gra_nombre']) && $permisoCambiarGrupo  &&  empty($marcaMediaTecnica)) { ?>
-							<li><a href="javascript:void(0);" data-toggle="modal" onclick="cambiarGrupo('<?= base64_encode($resultado['mat_id']) ?>')">Cambiar de grupo</a></li>
-						<?php } ?>
+						<?php 
+						// Cambiar de grupo - Mostrar siempre, deshabilitar según condiciones
+						$puedeCambiarGrupo = $permisoCambiarGrupo && !empty($resultado['gra_nombre']) && empty($marcaMediaTecnica) && !$estadoCancelado;
+						$tooltipCambiarGrupo = '';
+						if (!$puedeCambiarGrupo) {
+							if (!$permisoCambiarGrupo) {
+								$tooltipCambiarGrupo = 'No tiene permisos para cambiar de grupo';
+							} elseif ($estadoCancelado) {
+								$tooltipCambiarGrupo = 'No se puede cambiar de grupo a estudiantes en estado "Cancelado"';
+							} elseif (empty($resultado['gra_nombre'])) {
+								$tooltipCambiarGrupo = 'El estudiante no tiene un curso asignado';
+							} elseif (!empty($marcaMediaTecnica)) {
+								$tooltipCambiarGrupo = 'No se puede cambiar de grupo a estudiantes de Media Técnica';
+							}
+						}
+						?>
+						<li>
+							<?php if ($puedeCambiarGrupo) { ?>
+								<a href="javascript:void(0);" data-toggle="modal" onclick="cambiarGrupo('<?= base64_encode($resultado['mat_id']) ?>')">Cambiar de grupo</a>
+							<?php } else { ?>
+								<span style="display: block; padding: 3px 20px; color: #999; opacity: 0.5; cursor: not-allowed;" title="<?= htmlspecialchars($tooltipCambiarGrupo, ENT_QUOTES); ?>">Cambiar de grupo</span>
+							<?php } ?>
+						</li>
 						<?php if ($permisoRetirar && !empty($resultado['mat_id'])) {
 							$retirarRestaurar = 'Retirar';
 							if ($resultado['mat_estado_matricula'] == CANCELADO) {
@@ -260,9 +297,27 @@ foreach ($data["data"] as $resultado) {
 							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea reservar el cupo para este estudiante?','question','estudiantes-reservar-cupo.php?idEstudiante=<?= base64_encode($resultado['mat_id']); ?>')">Reservar cupo</a></li>
 						<?php } ?>
 
-						<?php if ($permisoEliminar && !empty($resultado['mat_id']) && !empty($resultado['mat_id_usuario'])) { ?>
-							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro de ejecutar esta acción?','question','estudiantes-eliminar.php?idE=<?= base64_encode($resultado["mat_id"]); ?>&idU=<?= base64_encode($resultado["mat_id_usuario"]); ?>')">Eliminar</a></li>
-						<?php } ?>
+						<?php 
+						// Eliminar - Mostrar siempre, deshabilitar si no es DEV o no tiene permisos
+						$puedeEliminar = $permisoEliminar && !empty($resultado['mat_id']) && !empty($resultado['mat_id_usuario']) && isset($datosUsuarioActual['uss_tipo']) && $datosUsuarioActual['uss_tipo'] == TIPO_DEV;
+						$tooltipEliminar = '';
+						if (!$puedeEliminar) {
+							if (!isset($datosUsuarioActual['uss_tipo']) || $datosUsuarioActual['uss_tipo'] != TIPO_DEV) {
+								$tooltipEliminar = 'Esta opción solo está disponible para usuarios de tipo Developer (DEV)';
+							} elseif (!$permisoEliminar) {
+								$tooltipEliminar = 'No tiene permisos para eliminar estudiantes';
+							} elseif (empty($resultado['mat_id']) || empty($resultado['mat_id_usuario'])) {
+								$tooltipEliminar = 'El estudiante no tiene los datos necesarios para ser eliminado';
+							}
+						}
+						?>
+						<li>
+							<?php if ($puedeEliminar) { ?>
+								<a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro de ejecutar esta acción?','question','estudiantes-eliminar.php?idE=<?= base64_encode($resultado["mat_id"]); ?>&idU=<?= base64_encode($resultado["mat_id_usuario"]); ?>')">Eliminar</a>
+							<?php } else { ?>
+								<span style="display: block; padding: 3px 20px; color: #999; opacity: 0.5; cursor: not-allowed;" title="<?= htmlspecialchars($tooltipEliminar, ENT_QUOTES); ?>">Eliminar</span>
+							<?php } ?>
+						</li>
 
 						<?php if ($permisoCrearUsuario) { ?>
 							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Está seguro de ejecutar esta acción?','question','estudiantes-crear-usuario-estudiante.php?id=<?= base64_encode($resultado["mat_id"]); ?>')">Generar usuario</a></li>

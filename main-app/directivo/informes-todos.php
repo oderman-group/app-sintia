@@ -986,6 +986,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 			var loadingCursos = $('#loadingCursosLibro');
 			var loadingGrupos = $('#loadingGruposLibro');
 			
+			// Verificar si el formato 4 está seleccionado
+			var formatoSeleccionado = $('#formatoLibroCurso').val();
+			var esFormato4 = (formatoSeleccionado === '4');
+			
 			selectCurso.empty().prop('disabled', true);
 			selectGrupo.empty().prop('disabled', true);
 			
@@ -1009,19 +1013,32 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 					selectCurso.empty();
 					
 					if (response.success && response.data.length > 0) {
-						selectCurso.append('<option value="">Seleccione un curso</option>');
+						// Solo agregar opción por defecto si NO es formato 4
+						if (!esFormato4) {
+							selectCurso.append('<option value="">Seleccione un curso</option>');
+						}
 						response.data.forEach(function(curso) {
 							selectCurso.append($('<option></option>').attr('value', curso.id).text(curso.texto_completo));
 						});
 						selectCurso.prop('disabled', false);
 						
 						if (selectCurso.data('select2')) { selectCurso.select2('destroy'); }
-						selectCurso.select2({
+						
+						// Configurar select2 según si es formato 4 o no
+						var select2Config = {
 							dropdownParent: $('#ModalCentralizado .modal-content'),
 							width: '100%',
-							minimumResultsForSearch: 0,
-							placeholder: 'Seleccione un curso'
-						});
+							minimumResultsForSearch: 0
+						};
+						
+						if (esFormato4) {
+							select2Config.placeholder = 'Seleccione uno o más cursos';
+							select2Config.allowClear = true;
+						} else {
+							select2Config.placeholder = 'Seleccione un curso';
+						}
+						
+						selectCurso.select2(select2Config);
 					}
 				}
 			});
@@ -1037,19 +1054,32 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 					selectGrupo.empty();
 					
 					if (response.success && response.data.length > 0) {
-						selectGrupo.append('<option value="">Seleccione un grupo (opcional)</option>');
+						// Solo agregar opción por defecto si NO es formato 4
+						if (!esFormato4) {
+							selectGrupo.append('<option value="">Seleccione un grupo (opcional)</option>');
+						}
 						response.data.forEach(function(grupo) {
 							selectGrupo.append($('<option></option>').attr('value', grupo.id).text(grupo.texto_completo));
 						});
 						selectGrupo.prop('disabled', false);
 						
 						if (selectGrupo.data('select2')) { selectGrupo.select2('destroy'); }
-						selectGrupo.select2({
+						
+						// Configurar select2 según si es formato 4 o no
+						var select2Config = {
 							dropdownParent: $('#ModalCentralizado .modal-content'),
 							width: '100%',
-							minimumResultsForSearch: 0,
-							placeholder: 'Seleccione un grupo'
-						});
+							minimumResultsForSearch: 0
+						};
+						
+						if (esFormato4) {
+							select2Config.placeholder = 'Seleccione uno o más grupos (opcional)';
+							select2Config.allowClear = true;
+						} else {
+							select2Config.placeholder = 'Seleccione un grupo';
+						}
+						
+						selectGrupo.select2(select2Config);
 					}
 				}
 			});

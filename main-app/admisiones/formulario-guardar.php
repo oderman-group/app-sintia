@@ -74,7 +74,8 @@ try {
 	mat_foto = :foto,
 	mat_etnia = :etnia,
 	mat_tiene_discapacidad = :discapacidad,
-	mat_tipo_situacion = :situacion
+	mat_tipo_situacion = :situacion,
+	mat_acudiente = :acudiente
 	WHERE mat_id = :idMatricula AND institucion= :idInstitucion AND year= :year";
 	$stmt = $pdoI->prepare($sql);
 
@@ -102,6 +103,7 @@ try {
 	$stmt->bindParam(':etnia', $_POST['grupoEtnico'], PDO::PARAM_STR);
 	$stmt->bindParam(':discapacidad', $_POST['discapacidad'], PDO::PARAM_STR);
 	$stmt->bindParam(':situacion', $_POST['tipoSituacion'], PDO::PARAM_INT);
+	$stmt->bindParam(':acudiente', $_POST['idAcudiente'], PDO::PARAM_STR);
 
 	$stmt->execute();
 	$filasAfectadas = $stmt->rowCount();
@@ -158,6 +160,69 @@ try {
 
 	$acudiente->execute();
 	$filasAfectadasAcu = $acudiente->rowCount();
+} catch (Exception $e) {
+    echo $e->getMessage();
+}
+
+try {
+	// Asegurar que el acudiente esté relacionado como acudiente principal (número 1) en usuarios_por_estudiantes
+	require_once(ROOT_PATH."/main-app/class/Utilidades.php");
+	
+	// Verificar si ya existe la relación
+	$verificarRelacionQuery = "SELECT upe_id FROM ".BD_GENERAL.".usuarios_por_estudiantes 
+	WHERE upe_id_usuario = :acudiente 
+	AND upe_id_estudiante = :idMatricula 
+	AND institucion = :idInstitucion 
+	AND year = :year";
+	$verificarRelacion = $pdoI->prepare($verificarRelacionQuery);
+	$verificarRelacion->bindParam(':acudiente', $_POST['idAcudiente'], PDO::PARAM_STR);
+	$verificarRelacion->bindParam(':idMatricula', $_POST['idMatricula'], PDO::PARAM_STR);
+	$verificarRelacion->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+	$verificarRelacion->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
+	$verificarRelacion->execute();
+	
+	if ($verificarRelacion->rowCount() == 0) {
+		// No existe la relación, crearla
+		$idRelacion = Utilidades::generateCode("UPE");
+		$crearRelacionQuery = "INSERT INTO ".BD_GENERAL.".usuarios_por_estudiantes(
+			upe_id, 
+			upe_id_usuario, 
+			upe_id_estudiante, 
+			upe_parentezco, 
+			institucion, 
+			year
+		) VALUES (
+			:idRelacion, 
+			:acudiente, 
+			:idMatricula, 
+			:parentesco, 
+			:idInstitucion, 
+			:year
+		)";
+		$crearRelacion = $pdoI->prepare($crearRelacionQuery);
+		$crearRelacion->bindParam(':idRelacion', $idRelacion, PDO::PARAM_STR);
+		$crearRelacion->bindParam(':acudiente', $_POST['idAcudiente'], PDO::PARAM_STR);
+		$crearRelacion->bindParam(':idMatricula', $_POST['idMatricula'], PDO::PARAM_STR);
+		$crearRelacion->bindParam(':parentesco', $_POST['parentesco'], PDO::PARAM_STR);
+		$crearRelacion->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+		$crearRelacion->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
+		$crearRelacion->execute();
+	} else {
+		// Ya existe la relación, actualizar el parentesco si es necesario
+		$actualizarRelacionQuery = "UPDATE ".BD_GENERAL.".usuarios_por_estudiantes 
+		SET upe_parentezco = :parentesco 
+		WHERE upe_id_usuario = :acudiente 
+		AND upe_id_estudiante = :idMatricula 
+		AND institucion = :idInstitucion 
+		AND year = :year";
+		$actualizarRelacion = $pdoI->prepare($actualizarRelacionQuery);
+		$actualizarRelacion->bindParam(':parentesco', $_POST['parentesco'], PDO::PARAM_STR);
+		$actualizarRelacion->bindParam(':acudiente', $_POST['idAcudiente'], PDO::PARAM_STR);
+		$actualizarRelacion->bindParam(':idMatricula', $_POST['idMatricula'], PDO::PARAM_STR);
+		$actualizarRelacion->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+		$actualizarRelacion->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
+		$actualizarRelacion->execute();
+	}
 } catch (Exception $e) {
     echo $e->getMessage();
 }

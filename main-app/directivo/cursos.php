@@ -71,6 +71,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 										"SELECT COUNT(*) AS total 
 										 FROM ".BD_ACADEMICA.".academico_matriculas 
 										 WHERE (mat_estado_matricula=".MATRICULADO." OR mat_estado_matricula=".ASISTENTE.")
+										   AND (mat_eliminado IS NULL OR mat_eliminado = 0)
 										   AND institucion={$config['conf_id_institucion']}
 										   AND year={$_SESSION['bd']}"
 									);

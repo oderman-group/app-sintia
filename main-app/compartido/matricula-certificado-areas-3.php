@@ -42,6 +42,20 @@ if(isset($_REQUEST["sin_encabezado"])){
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
 $notasCualitativasCache = [];
 
+// Obtener nombre de la ciudad desde el código (info_ciudad ahora guarda el código)
+if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["info_ciudad"])) {
+	$consultaCiudad = mysqli_query($conexion, "SELECT ciu_nombre, dep_nombre 
+		FROM ".BD_ADMIN.".localidad_ciudades 
+		INNER JOIN ".BD_ADMIN.".localidad_departamentos ON dep_id = ciu_departamento 
+		WHERE ciu_id = " . intval($informacion_inst["info_ciudad"]) . " 
+		LIMIT 1");
+	if ($consultaCiudad && mysqli_num_rows($consultaCiudad) > 0) {
+		$datosCiudad = mysqli_fetch_array($consultaCiudad, MYSQLI_BOTH);
+		$informacion_inst["ciu_nombre"] = $datosCiudad["ciu_nombre"];
+		$informacion_inst["dep_nombre"] = $datosCiudad["dep_nombre"];
+	}
+}
+
 // Cargar tipos de notas para usar en determinarRango
 $tiposNotas = [];
 ?>
@@ -451,11 +465,6 @@ $tiposNotas = [];
 			
 			// Validar que el estudiante exista
 			if (empty($matricula) || !is_array($matricula)) {
-				?>
-				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
-				</div>
-				<?php
 				$i++;
 				$inicio++;
 				continue;
@@ -670,25 +679,27 @@ $tiposNotas = [];
 								}
 								echo implode(" / ", $estilosTexto);
 								
-								echo "<br>";
-
-								// Porcentajes de áreas
-								$consultaMaterias = CargaAcademica::consultaMateriasAreas($config, $gradoActual, $grupoActual, $inicio);
-								$numMaterias = mysqli_num_rows($consultaMaterias);
-								$areaAnterior = null;
-								$valorAreas = "PORCENTAJES ÁREAS:";
-								
-								while($datosArea = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
-									$diagonal = " ";
+								// Porcentajes de áreas (solo si está configurado el porcentaje de materias)
+								if ($config['conf_agregar_porcentaje_asignaturas'] == SI) {
+									echo "<br>";
 									
-									if(!is_null($areaAnterior) && $areaAnterior != $datosArea['mat_area']){
-										$diagonal = " // ";
+									$consultaMaterias = CargaAcademica::consultaMateriasAreas($config, $gradoActual, $grupoActual, $inicio);
+									$numMaterias = mysqli_num_rows($consultaMaterias);
+									$areaAnterior = null;
+									$valorAreas = "PORCENTAJES ÁREAS:";
+									
+									while($datosArea = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
+										$diagonal = " ";
+										
+										if(!is_null($areaAnterior) && $areaAnterior != $datosArea['mat_area']){
+											$diagonal = " // ";
+										}
+										
+										$areaAnterior = $datosArea['mat_area'];
+										$valorAreas .= $diagonal . strtoupper($datosArea['mat_nombre']) . " (" . $datosArea['mat_valor'] . ")";
 									}
-									
-									$areaAnterior = $datosArea['mat_area'];
-									$valorAreas .= $diagonal . strtoupper($datosArea['mat_nombre']) . " (" . $datosArea['mat_valor'] . ")";
+									echo $valorAreas;
 								}
-								echo $valorAreas;
 								?>
 							</mark>
 						</td>
