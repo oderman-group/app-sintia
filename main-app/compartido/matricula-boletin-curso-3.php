@@ -108,6 +108,17 @@ $logoAlto = $formularioEnviado && isset($_GET['logo_alto']) && is_numeric($_GET[
     ? (int)$_GET['logo_alto']
     : 0; // 0 significa que no se especifica alto (solo ancho)
 
+// Configuración de visualización de elementos adicionales
+$mostrarLogoEncabezado = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_encabezado']) ? (int)$_GET['mostrar_logo_encabezado'] : 0)
+    : 1; // Por defecto visible
+$mostrarFirmas = $formularioEnviado 
+    ? (isset($_GET['mostrar_firmas']) ? (int)$_GET['mostrar_firmas'] : 0)
+    : 1; // Por defecto visible
+$mostrarLogoPlataforma = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_plataforma']) ? (int)$_GET['mostrar_logo_plataforma'] : 0)
+    : 1; // Por defecto visible
+
 // Actualizar $tamañoLogo para mantener compatibilidad
 $tamañoLogo = $logoAncho;
 
@@ -310,6 +321,18 @@ foreach($rows as $matriculadosDatos) {
                         Alto (px, 0=auto): <input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="0" style="width: 60px;">
                     </label>
                 </div>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_logo_encabezado" value="1" <?= $mostrarLogoEncabezado ? 'checked' : '' ?>>
+                    Mostrar logo del encabezado
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_firmas" value="1" <?= $mostrarFirmas ? 'checked' : '' ?>>
+                    Mostrar firmas del pie de página
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_logo_plataforma" value="1" <?= $mostrarLogoPlataforma ? 'checked' : '' ?>>
+                    Mostrar logo y leyenda de SINTIA
+                </label>
                 <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
             </form>
         </div>
@@ -319,12 +342,14 @@ foreach($rows as $matriculadosDatos) {
             }
         </style>
 
+        <?php if($mostrarLogoEncabezado): ?>
         <div align="center" style="margin-bottom:20px;">
     <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" <?= $logoAncho > 0 ? 'width="'.$logoAncho.'%"' : '' ?> <?= $logoAlto > 0 ? 'height="'.$logoAlto.'"' : '' ?>><br>
     <!-- <?=$informacion_inst["info_nombre"]?><br>
     BOLETÍN DE CALIFICACIONES<br> -->
 
         </div>
+        <?php endif; ?>
 
 
 
@@ -802,11 +827,8 @@ foreach($rows as $matriculadosDatos) {
 
         </div>
 
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>   
         <!--******FIRMAS******-->   
-
+        <?php if($mostrarFirmas): ?>
         <table width="100%" cellspacing="0" cellpadding="0" rules="none" border="0" style="text-align:center; font-size:10px;">
             <tr>
                 <td align="center" width="50%">
@@ -871,6 +893,7 @@ foreach($rows as $matriculadosDatos) {
                 </td>
             </tr>
         </table>
+        <?php endif; ?>
 
 
 
@@ -878,6 +901,7 @@ foreach($rows as $matriculadosDatos) {
 
 
 
+        <?php if($mostrarLogoPlataforma): ?>
         <div align="center" style="font-size:10px; margin-top:5px; margin-bottom: 10px;">
 
             <img src="https://plataformasintia.com/images/logo.png" height="50"><br>
@@ -887,6 +911,7 @@ foreach($rows as $matriculadosDatos) {
             SINTIA - SISTEMA INTEGRAL DE GESTI&Oacute;N INSTITUCIONAL
 
         </div>
+        <?php endif; ?>
 
 
 

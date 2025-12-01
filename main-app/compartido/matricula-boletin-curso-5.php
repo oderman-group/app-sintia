@@ -64,6 +64,8 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
+	<title>Boletín Formato 5</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
 	<style>
     	#saltoPagina{PAGE-BREAK-AFTER: always;}
@@ -299,12 +301,15 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 			$promedioArea += !empty($datosBoletinArea['bol_nota']) ? (float)$datosBoletinArea['bol_nota'] : 0;
 			$a++;
 		}
-		$promedioArea = $a > 0 ? round(($promedioArea/$a),1) : 0;
-
-		$promedioAreaFinal=$promedioArea;
+		$promedioArea = $a > 0 ? ($promedioArea/$a) : 0;
+		
+		// Formatear promedio del área con decimales configurados
+		$promedioAreaFormateado = Boletin::notaDecimales($promedioArea);
+		
+		$promedioAreaFinal = $promedioAreaFormateado;
 		if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 			// OPTIMIZACIÓN: Usar cache de notas cualitativas
-			$notaRedondeada = number_format((float)$promedioArea, 1, '.', '');
+			$notaRedondeada = number_format((float)$promedioArea, $config['conf_decimales_notas'], '.', '');
 			$promedioAreaFinal = isset($notasCualitativasCache[$notaRedondeada]) 
 				? $notasCualitativasCache[$notaRedondeada] 
 				: "";
@@ -351,16 +356,22 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 		// OPTIMIZACIÓN: Obtener acumulado del mapa pre-cargado
 		$acumulado = $definitivasMapa[$datosCargas['car_id']] ?? [0];
 		
+		// Formatear acumulado con decimales configurados
+		$acumuladoNum = !empty($acumulado[0]) ? (float)$acumulado[0] : 0;
+		$acumuladoFormateado = Boletin::notaDecimales($acumuladoNum);
+		
 		// OPTIMIZACIÓN: Usar cache de notas cualitativas para acumulado
 		$acumuladoDesempeno = ['notip_nombre' => ''];
-		if($config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($acumulado[0])){
-			$notaAcumRedondeada = number_format((float)$acumulado[0], 1, '.', '');
+		if($config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($acumuladoNum)){
+			$notaAcumRedondeada = number_format($acumuladoNum, $config['conf_decimales_notas'], '.', '');
 			$acumuladoDesempeno['notip_nombre'] = isset($notasCualitativasCache[$notaAcumRedondeada]) 
 				? $notasCualitativasCache[$notaAcumRedondeada] 
 				: "";
 		}
 
-		$notaBoletin = !empty($datosBoletin['bol_nota']) ? $datosBoletin['bol_nota']."<br>".($datosBoletin['notip_nombre'] ?? '') : '';
+		// Formatear nota del boletín con decimales configurados
+		$notaBoletinFormateada = !empty($datosBoletin['bol_nota']) ? Boletin::notaDecimales((float)$datosBoletin['bol_nota']) : '';
+		$notaBoletin = !empty($notaBoletinFormateada) ? $notaBoletinFormateada."<br>".($datosBoletin['notip_nombre'] ?? '') : '';
 		if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 			$notaBoletin = !empty($datosBoletin['notip_nombre']) ? $datosBoletin['notip_nombre'] : '';
 		}
@@ -382,16 +393,21 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 							continue;
 						}
 
-                        $notaIndicadorPAFinal = !empty($notaIndicadorPA[0]) ? $notaIndicadorPA[0] : 0;
-                        $notaIndicadorPFinal = !empty($indicadorP['rind_nota']) ? $indicadorP['rind_nota'] : 0;
+                        // Formatear notas de indicadores perdidos con decimales configurados
+                        $notaIndicadorPANum = !empty($notaIndicadorPA[0]) ? (float)$notaIndicadorPA[0] : 0;
+                        $notaIndicadorPNum = !empty($indicadorP['rind_nota']) ? (float)$indicadorP['rind_nota'] : 0;
+                        
+                        $notaIndicadorPAFinal = Boletin::notaDecimales($notaIndicadorPANum);
+                        $notaIndicadorPFinal = Boletin::notaDecimales($notaIndicadorPNum);
+                        
                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 							// OPTIMIZACIÓN: Usar cache de notas cualitativas
-							$notaPARedondeada = number_format((float)$notaIndicadorPA[0], 1, '.', '');
+							$notaPARedondeada = number_format($notaIndicadorPANum, $config['conf_decimales_notas'], '.', '');
                             $notaIndicadorPAFinal = isset($notasCualitativasCache[$notaPARedondeada]) 
 								? $notasCualitativasCache[$notaPARedondeada] 
 								: "";
 
-							$notaPRedondeada = number_format((float)$indicadorP['rind_nota'], 1, '.', '');
+							$notaPRedondeada = number_format($notaIndicadorPNum, $config['conf_decimales_notas'], '.', '');
                             $notaIndicadorPFinal = isset($notasCualitativasCache[$notaPRedondeada]) 
 								? $notasCualitativasCache[$notaPRedondeada] 
 								: "";
@@ -410,10 +426,13 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 					while($indicador = mysqli_fetch_array($indicadores, MYSQLI_BOTH)){
 						$notaIndicador = Calificaciones::consultaNotaIndicadores($config, $indicador['ipc_indicador'], $datosCargas['car_id'], $datosUsr['mat_id'], $periodoActual, $year);
 
-                        $notaIndicadorFinal = !empty($notaIndicador[0]) ? $notaIndicador[0] : 0;
+                        // Formatear nota de indicador con decimales configurados
+                        $notaIndicadorNum = !empty($notaIndicador[0]) ? (float)$notaIndicador[0] : 0;
+                        $notaIndicadorFinal = Boletin::notaDecimales($notaIndicadorNum);
+                        
                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 							// OPTIMIZACIÓN: Usar cache de notas cualitativas
-							$notaIndRedondeada = number_format((float)$notaIndicador[0], 1, '.', '');
+							$notaIndRedondeada = number_format($notaIndicadorNum, $config['conf_decimales_notas'], '.', '');
                             $notaIndicadorFinal = isset($notasCualitativasCache[$notaIndRedondeada]) 
 								? $notasCualitativasCache[$notaIndRedondeada] 
 								: "";
@@ -426,9 +445,10 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 					<?php
 					}
 
-					$notaAcumulado=$acumulado[0]."<br>".$acumuladoDesempeno['notip_nombre'];
+					// Usar acumulado formateado con decimales configurados
+					$notaAcumulado = $acumuladoFormateado."<br>".$acumuladoDesempeno['notip_nombre'];
 					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-						$notaAcumulado= $acumuladoDesempeno['notip_nombre'];
+						$notaAcumulado = $acumuladoDesempeno['notip_nombre'];
 					}
 					?>
 				</table>

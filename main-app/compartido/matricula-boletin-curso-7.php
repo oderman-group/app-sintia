@@ -48,14 +48,23 @@ while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH
 	<?php
 		exit();
 	}
+// Configuración de visualización del puesto del curso
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+$mostrarPuestoCurso = $formularioEnviado 
+    ? (isset($_GET['mostrar_puesto_curso']) ? (int)$_GET['mostrar_puesto_curso'] : 0)
+    : 1; // Por defecto visible
+
 $contp = 1;
 $puestoCurso = 0;
-$puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
-$numMatriculados = count($puestos);
-
-foreach($puestos as $puesto){
-	if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){$puestoCurso = $contp;}
-	$contp ++;
+$numMatriculados = 0;
+if($mostrarPuestoCurso){
+    $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
+    $numMatriculados = count($puestos);
+    
+    foreach($puestos as $puesto){
+        if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){$puestoCurso = $contp;}
+        $contp ++;
+    }
 }
 //======================= DATOS DEL ESTUDIANTE MATRICULADO =========================
 $usr =Estudiantes::obtenerDatosEstudiantesParaBoletin($matriculadosDatos['mat_id'],$year);
@@ -65,6 +74,8 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
+	<title>Boletín Formato 7</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
 	<style>
     	#saltoPagina{PAGE-BREAK-AFTER: always;}
@@ -74,6 +85,32 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 
 <body style="font-family:Arial; font-size:9px;">
 
+<!-- Formulario de configuración -->
+<div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+        if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_puesto_curso" value="1" <?= $mostrarPuestoCurso ? 'checked' : '' ?>>
+            Mostrar puesto del curso
+        </label>
+        <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+    </form>
+</div>
+<style>
+    @media print {
+        .config-boletin-form { display: none !important; }
+    }
+</style>
+
 <div>
     <div style="float:left; width:50%"><img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="80"></div>
     <div style="float:right; width:50%">
@@ -82,7 +119,7 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
                 <td>C&oacute;digo:<br> <?=strpos($datosUsr["mat_documento"], '.') !== true && is_numeric($datosUsr["mat_documento"]) ? number_format($datosUsr["mat_documento"],0,",",".") : $datosUsr["mat_documento"];?></td>
                 <td>Nombre:<br> <?=$nombre?></td>
                 <td>Grado:<br> <?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></td>
-                <td>Puesto Curso:<br> <?=$puestoCurso." de ".$numMatriculados;?></td>   
+                <td>Puesto Curso:<br> <?php if($mostrarPuestoCurso): ?><?=$puestoCurso." de ".$numMatriculados;?><?php else: ?>&nbsp;<?php endif; ?></td>   
             </tr>
             
             <tr>
@@ -336,11 +373,11 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
                     echo round($datosAusencias[0],0);
                 } 
                 ?></td>
-                <td align="center"><?=!empty($datosBoletin['bol_nota']) ? $datosBoletin['bol_nota'] : '';?></td>
+                <td align="center"><?=!empty($datosBoletin['bol_nota']) ? Boletin::notaDecimales((float)$datosBoletin['bol_nota']) : '';?></td>
                 <td align="center"><?=!empty($datosBoletin['notip_nombre']) ? $datosBoletin['notip_nombre'] : '';?></td>
             <?php 
 			}
-			$promedioMateria = ($j-1) > 0 ? round($promedioMateria/($j-1),2) : 0;
+			$promedioMateria = ($j-1) > 0 ? ($promedioMateria/($j-1)) : 0;
 			$promedioMateriaFinal = $promedioMateria;
 			// OPTIMIZACIÓN: Obtener nivelación del mapa pre-cargado
 			$nivelacion = $nivelacionesMapa[$datosCargas['car_id']] ?? null;
@@ -362,8 +399,11 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 				}	
 			}
 
+			// Formatear promedio de la materia con decimales configurados
+			$promedioMateriaFinalFormateado = Boletin::notaDecimales($promedioMateriaFinal);
+			
 			// OPTIMIZACIÓN: Usar cache de notas cualitativas
-			$notaMateriaRedondeada = number_format((float)$promedioMateriaFinal, 1, '.', '');
+			$notaMateriaRedondeada = number_format($promedioMateriaFinal, $config['conf_decimales_notas'], '.', '');
 			$promediosMateriaEstiloNota = isset($notasCualitativasCache[$notaMateriaRedondeada]) 
 				? ['notip_nombre' => $notasCualitativasCache[$notaMateriaRedondeada]] 
 				: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioMateriaFinal, $year);
@@ -371,7 +411,7 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 				$promediosMateriaEstiloNota = ['notip_nombre' => ''];
 			}
 			?>
-            <td align="center"><?=$promedioMateriaFinal;?></td>
+            <td align="center"><?=$promedioMateriaFinalFormateado;?></td>
             <td align="center"><?=!empty($promediosMateriaEstiloNota['notip_nombre']) ? $promediosMateriaEstiloNota['notip_nombre'] : '';?></td>
             <td align="center">&nbsp;</td>
         </tr>
@@ -388,30 +428,34 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
             $promedioFinal = 0;
             for($j=1;$j<=$periodoActual;$j++){
 				// OPTIMIZACIÓN: Obtener promedio del mapa pre-cargado
-				$promediosPeriodos = ['promedio' => ($promediosPeriodosMapa[$j] ?? 0)];
+				$promedioPeriodo = $promediosPeriodosMapa[$j] ?? 0;
+				$promedioPeriodoFormateado = Boletin::notaDecimales($promedioPeriodo);
 				
 				// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
 				$sumaAusencias = [0 => ($ausenciasTotalesMapa[$j] ?? 0)];
 				
 				// OPTIMIZACIÓN: Usar cache de notas cualitativas
-				$promedioRedondeado = number_format((float)$promediosPeriodos['promedio'], 1, '.', '');
+				$promedioRedondeado = number_format($promedioPeriodo, $config['conf_decimales_notas'], '.', '');
 				$promediosEstiloNota = isset($notasCualitativasCache[$promedioRedondeado]) 
 					? ['notip_nombre' => $notasCualitativasCache[$promedioRedondeado]] 
-					: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promediosPeriodos['promedio'], $year);
+					: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioPeriodo, $year);
 				if($promediosEstiloNota === null){
 					$promediosEstiloNota = ['notip_nombre' => ''];
 				}
             ?>
                 <td><?php //echo $sumaAusencias[0];?></td>
-                <td><?=$promediosPeriodos['promedio'];?></td>
+                <td><?=$promedioPeriodoFormateado;?></td>
                 <td><?=!empty($promediosEstiloNota['notip_nombre']) ? $promediosEstiloNota['notip_nombre'] : '';?></td>
             <?php 
-                $promedioFinal += $promediosPeriodos['promedio'];
+                $promedioFinal += $promedioPeriodo;
             }
 
-            $promedioFinal = $periodoActual > 0 ? round($promedioFinal/$periodoActual,2) : 0;
+            $promedioFinal = $periodoActual > 0 ? ($promedioFinal/$periodoActual) : 0;
+			// Formatear promedio final con decimales configurados
+			$promedioFinalFormateado = Boletin::notaDecimales($promedioFinal);
+			
 			// OPTIMIZACIÓN: Usar cache de notas cualitativas
-			$promedioFinalRedondeado = number_format((float)$promedioFinal, 1, '.', '');
+			$promedioFinalRedondeado = number_format($promedioFinal, $config['conf_decimales_notas'], '.', '');
 			$promedioFinalEstiloNota = isset($notasCualitativasCache[$promedioFinalRedondeado]) 
 				? ['notip_nombre' => $notasCualitativasCache[$promedioFinalRedondeado]] 
 				: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioFinal, $year);
@@ -419,7 +463,7 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 				$promedioFinalEstiloNota = ['notip_nombre' => ''];
 			}
             ?>
-            <td><?=$promedioFinal;?></td>
+            <td><?=$promedioFinalFormateado;?></td>
             <td><?=!empty($promedioFinalEstiloNota['notip_nombre']) ? $promedioFinalEstiloNota['notip_nombre'] : '';?></td>
             <td>-</td>
         </tr>
