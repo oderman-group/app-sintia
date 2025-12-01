@@ -26,7 +26,34 @@ if(empty($_GET["periodo"])){
 if($periodoActual==1) $periodoActuales = "Primero";
 if($periodoActual==2) $periodoActuales = "Segundo";
 if($periodoActual==3) $periodoActuales = "Tercero";
-if($periodoActual==$config['conf_periodos_maximos']) $periodoActuales = "Final";?>
+if($periodoActual==$config['conf_periodos_maximos']) $periodoActuales = "Final";
+
+// Configuración de visualización del PRO, NOTAS LOGROS, AUSENCIAS, INDICADORES y AREAS
+// Detectar si el formulario fue enviado usando un campo hidden que siempre se envía
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+$mostrarProMaterias = isset($_GET['mostrar_pro_materias']) ? (int)$_GET['mostrar_pro_materias'] : 0;
+$mostrarProPromedio = isset($_GET['mostrar_pro_promedio']) ? (int)$_GET['mostrar_pro_promedio'] : 0;
+// Si el formulario fue enviado:
+//   - Si mostrar_notas_logros está presente y es 1, mostrar (1)
+//   - Si mostrar_notas_logros NO está presente, significa que el checkbox estaba desmarcado (0)
+// Si el formulario NO fue enviado, usar valor por defecto (1 = visible)
+$mostrarNotasLogros = $formularioEnviado 
+    ? (isset($_GET['mostrar_notas_logros']) ? (int)$_GET['mostrar_notas_logros'] : 0)
+    : 1; // Por defecto visible
+// Misma lógica para ausencias
+$mostrarAusencias = $formularioEnviado 
+    ? (isset($_GET['mostrar_ausencias']) ? (int)$_GET['mostrar_ausencias'] : 0)
+    : 1; // Por defecto visible
+// Misma lógica para indicadores/logros
+$mostrarIndicadores = $formularioEnviado 
+    ? (isset($_GET['mostrar_indicadores']) ? (int)$_GET['mostrar_indicadores'] : 0)
+    : 1; // Por defecto visible
+// Misma lógica para áreas
+$mostrarAreas = $formularioEnviado 
+    ? (isset($_GET['mostrar_areas']) ? (int)$_GET['mostrar_areas'] : 0)
+    : 1; // Por defecto visible
+?>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 <?php
 //CONSULTA ESTUDIANTES MATRICULADOS
@@ -69,7 +96,8 @@ $contadorPeriodos=0;
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
-	<link rel="shortcut icon" href="<?=$Plataforma->logo;?>">
+	<title>Boletín Formato 1</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 <style>
 #saltoPagina
 {
@@ -214,6 +242,62 @@ $contadorPeriodos=0;
 .desempeno-alto { color: #17a2b8; font-weight: 600; }
 .desempeno-basico { color: #ffc107; font-weight: 600; }
 .desempeno-bajo { color: #dc3545; font-weight: 600; }
+
+/* Ocultar formulario de configuración en impresión */
+@media print {
+    .config-boletin-form {
+        display: none !important;
+    }
+}
+
+.config-boletin-form {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #ffffff;
+    border: 2px solid #2c3e50;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    font-size: 12px;
+    min-width: 250px;
+}
+
+.config-boletin-form h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.config-boletin-form label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.config-boletin-form input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.config-boletin-form .btn-aplicar {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #2c3e50;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: 100%;
+}
+
+.config-boletin-form .btn-aplicar:hover {
+    background: #34495e;
+}
 </style>
 </head>
 
@@ -250,7 +334,7 @@ if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 	if($consultaNotasTipo){
 		while ($notaTipo = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)) {
 			for ($i = $notaTipo['notip_desde']; $i <= $notaTipo['notip_hasta']; $i += 0.1) {
-				$key = number_format((float)$i, 1, '.', '');
+				$key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
 				if (!isset($notasCualitativasCache[$key])) {
 					$notasCualitativasCache[$key] = $notaTipo['notip_nombre'];
 				}
@@ -340,22 +424,66 @@ include("head-informes.php");
         </tr>
         <tr>
             <td style="padding:6px 8px; border-bottom:1px solid #e9ecef;"><strong>NOTAS ASIGNATURA:</strong> <span style="color:#6c757d;">Promedio definitivo calculado a partir de las notas registradas en el boletín por períodos académicos</span></td>
-            <td style="padding:6px 8px; border-bottom:1px solid #e9ecef;"><strong>NOTAS LOGROS:</strong> <span style="color:#6c757d;">Promedio de los logros/indicadores de desempeño evaluados</span></td>
+            <td style="padding:6px 8px; border-bottom:1px solid #e9ecef;"><strong>NOTAS LOGROS:</strong> <span style="color:#6c757d;">Promedio aritmético simple de todos los indicadores/logros de desempeño de la materia. Cada indicador se calcula como promedio ponderado de las actividades asociadas (donde el peso es el porcentaje de valor de cada actividad).</span></td>
         </tr>
         <tr>
             <td colspan="2" class="convencion-diferencia" style="padding:8px; margin-top:5px;">
-                <strong>DIFERENCIA:</strong> La "NOTA ASIGNATURA" puede diferir de "NOTAS LOGROS" porque la primera es el promedio de las notas definitivas por período registradas en el boletín, mientras que la segunda es el promedio directo de los logros/indicadores evaluados. Ambas son válidas según el sistema de evaluación institucional.
+                <strong>DIFERENCIA:</strong> La "NOTA ASIGNATURA" puede diferir de "NOTAS LOGROS" porque la primera es el promedio de las notas definitivas por período registradas en el boletín, mientras que la segunda es el promedio directo de todos los indicadores/logros evaluados (cada uno calculado como promedio ponderado de sus actividades). Ambas son válidas según el sistema de evaluación institucional.
             </td>
         </tr>
         <tr>
             <td style="padding:6px 8px;"><strong>PRO:</strong> <span style="color:#6c757d;">Promedio general del estudiante (solo materias que suman al promedio)</span></td>
             <td style="padding:6px 8px;"><strong>DESEMPEÑO:</strong> <span style="color:#6c757d;">Nivel de desempeño según la escala institucional (Superior, Alto, Básico, Bajo)</span></td>
         </tr>
+        <?php if($mostrarAusencias): ?>
         <tr>
             <td style="padding:6px 8px;"><strong>AUS:</strong> <span style="color:#6c757d;">Total de ausencias acumuladas en la asignatura hasta el período actual</span></td>
             <td style="padding:6px 8px;"></td>
         </tr>
+        <?php endif; ?>
     </table>
+</div>
+
+<!-- Formulario de Configuración (no se imprime) -->
+<div class="config-boletin-form">
+    <h4>⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+        if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        // Campo hidden para detectar que el formulario fue enviado
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label>
+            <input type="checkbox" name="mostrar_pro_materias" value="1" <?= $mostrarProMaterias ? 'checked' : '' ?>>
+            Mostrar PRO en filas de materias
+        </label>
+        <label>
+            <input type="checkbox" name="mostrar_pro_promedio" value="1" <?= $mostrarProPromedio ? 'checked' : '' ?>>
+            Mostrar PRO en fila PROMEDIO
+        </label>
+        <label>
+            <input type="checkbox" name="mostrar_notas_logros" value="1" <?= $mostrarNotasLogros ? 'checked' : '' ?>>
+            Mostrar columna NOTAS LOGROS
+        </label>
+        <label>
+            <input type="checkbox" name="mostrar_ausencias" value="1" <?= $mostrarAusencias ? 'checked' : '' ?>>
+            Mostrar columna AUSENCIAS
+        </label>
+        <label>
+            <input type="checkbox" name="mostrar_indicadores" value="1" <?= $mostrarIndicadores ? 'checked' : '' ?>>
+            Mostrar filas de indicadores/logros
+        </label>
+        <label>
+            <input type="checkbox" name="mostrar_areas" value="1" <?= $mostrarAreas ? 'checked' : '' ?>>
+            Mostrar filas de áreas con promedio
+        </label>
+        <button type="submit" class="btn-aplicar">Aplicar Configuración</button>
+    </form>
 </div>
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" class="header-estudiante" style="margin-bottom:15px;">
@@ -376,18 +504,29 @@ include("head-informes.php");
 <td width="20%" align="center">AREAS/ ASIGNATURAS</td>
 <td width="2%" align="center">I.H</td>
 <td width="3%" align="center" style="font-size:10px;">NOTAS<br>ASIGNATURA</td>
+<?php if($mostrarNotasLogros): ?>
 <td width="3%" align="center" style="font-size:10px;">NOTAS<br>LOGROS</td>
+<?php endif; ?>
 <td width="4%" align="center">PRO</td>
 <td width="8%" align="center">DESEMPE&Ntilde;O</td>   
+<?php if($mostrarAusencias): ?>
 <td width="5%" align="center">AUS</td>
+<?php endif; ?>
 </tr>
 </thead>
 <tbody>
+<?php if($mostrarAreas): ?>
 <tr class="area-row">
-    	<td colspan="7"></td>
+    	<td colspan="<?= ($mostrarNotasLogros ? 1 : 0) + ($mostrarAusencias ? 1 : 0) + 5; ?>"></td>
     </tr>
+<?php endif; ?>
         <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
-        <?php while($fila = mysqli_fetch_array($consultaMatAreaEst, MYSQLI_BOTH)){
+        <?php 
+		// Inicializar variables para calcular el promedio general (antes del loop de áreas)
+		$sumaPromedioGeneral = 0;
+		$contadorMateriasPromedio = 0;
+		
+		while($fila = mysqli_fetch_array($consultaMatAreaEst, MYSQLI_BOTH)){
 		
 		$condicionArray = [];
 		for($p = 1; $p <= $periodoActual; $p++){
@@ -427,26 +566,33 @@ while($fila3 = mysqli_fetch_array($consultaMatPer, MYSQLI_BOTH)){
 	if (!isset($notasPeriodosMapa[$keyNota])) {
 		$notasPeriodosMapa[$keyNota] = [];
 	}
-	$notaBoletin = !empty($fila3["bol_nota"]) ? $fila3["bol_nota"] : 0;
-	$notaPeriodo = round($notaBoletin, $config['conf_decimales_notas']);
-	if($notaPeriodo==1)	$notaPeriodo="1.0";	if($notaPeriodo==2)	$notaPeriodo="2.0";		if($notaPeriodo==3)	$notaPeriodo="3.0";	if($notaPeriodo==4)	$notaPeriodo="4.0";	if($notaPeriodo==5)	$notaPeriodo="5.0";
+	$notaBoletin = !empty($fila3["bol_nota"]) ? (float)$fila3["bol_nota"] : 0;
+	$notaPeriodo = Boletin::notaDecimales($notaBoletin);
 	$notasPeriodosMapa[$keyNota][] = $notaPeriodo;
 }
 
 //CONSULTA QUE ME TRAE LOS INDICADORES DE CADA MATERIA
-$consultaMatIndicadores = Boletin::obtenerIndicadoresPorMateria($datosUsr["mat_grado"], $datosUsr["mat_grupo"], $fila["ar_id"], $condicion, $matriculadosDatos['mat_id'], $condicion2, $year);
-
-$numIndicadores=mysqli_num_rows($consultaMatIndicadores);
-
-$resultadoNotArea=mysqli_fetch_array($consultaNotdefArea, MYSQLI_BOTH);
-$numfilasNotArea=mysqli_num_rows($consultaNotdefArea);
-$totalPromedio=0;
-if(!empty($resultadoNotArea['suma'])){
-	$totalPromedio=round( $resultadoNotArea["suma"],1);
+// Solo ejecutar la consulta si se van a mostrar los indicadores (optimización)
+$consultaMatIndicadores = null;
+$numIndicadores = 0;
+if($mostrarIndicadores){
+	$consultaMatIndicadores = Boletin::obtenerIndicadoresPorMateria($datosUsr["mat_grado"], $datosUsr["mat_grupo"], $fila["ar_id"], $condicion, $matriculadosDatos['mat_id'], $condicion2, $year);
+	$numIndicadores = mysqli_num_rows($consultaMatIndicadores);
 }
 
-if($totalPromedio==1)	$totalPromedio="1.0";	if($totalPromedio==2)	$totalPromedio="2.0";		if($totalPromedio==3)	$totalPromedio="3.0";	if($totalPromedio==4)	$totalPromedio="4.0";	if($totalPromedio==5)	$totalPromedio="5.0";
-	if($numfilasNotArea>0){
+// Solo calcular promedio del área si se van a mostrar las áreas (optimización)
+$resultadoNotArea = null;
+$numfilasNotArea = 0;
+$totalPromedio = 0;
+if($mostrarAreas){
+	$resultadoNotArea = mysqli_fetch_array($consultaNotdefArea, MYSQLI_BOTH);
+	$numfilasNotArea = mysqli_num_rows($consultaNotdefArea);
+	if(!empty($resultadoNotArea['suma'])){
+		$totalPromedio = (float)$resultadoNotArea["suma"];
+		$totalPromedio = Boletin::notaDecimales($totalPromedio);
+	}
+}
+if($mostrarAreas && $numfilasNotArea>0){
 			?>
   <tr class="area-row">
             <td><?php echo $resultadoNotArea["ar_nombre"];?></td> 
@@ -466,7 +612,7 @@ if($totalPromedio==1)	$totalPromedio="1.0";	if($totalPromedio==2)	$totalPromedio
 					$totalPromedioFinal=$totalPromedio;
 					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 						// OPTIMIZACIÓN: Usar cache de notas cualitativas
-						$notaRedondeada = number_format((float)$totalPromedio, 1, '.', '');
+						$notaRedondeada = number_format((float)$totalPromedio, $config['conf_decimales_notas'], '.', '');
 						$totalPromedioFinal = isset($notasCualitativasCache[$notaRedondeada]) 
 							? $notasCualitativasCache[$notaRedondeada] 
 							: "";
@@ -475,11 +621,19 @@ if($totalPromedio==1)	$totalPromedio="1.0";	if($totalPromedio==2)	$totalPromedio
 				}
 		
 		?></td>
+            <?php if($mostrarNotasLogros): ?>
+            <td align="center" style="font-weight:bold;"></td>
+            <?php endif; ?>
             <td align="center" style="font-weight:bold;"></td>
             <td align="center" style="font-weight:bold;"></td>
+            <?php if($mostrarAusencias): ?>
             <td align="center" style="font-weight:bold;"></td>
-            <td align="center" style="font-weight:bold;"></td>
+            <?php endif; ?>
 	</tr>
+<?php 
+}
+?>
+
 <?php
 
 while($fila2=mysqli_fetch_array($consultaMat, MYSQLI_BOTH)){ 
@@ -495,9 +649,11 @@ $contadorPeriodos=0;
 	}
 	
 	// Calcular promedio de logros/indicadores para esta materia
+	// Solo calcular si se van a mostrar los indicadores (optimización)
 	$promedioLogros = 0;
 	$contadorLogros = 0;
-	if($numIndicadores > 0){
+	$promedioLogrosFinal = 0;
+	if($mostrarIndicadores && $numIndicadores > 0){
 		mysqli_data_seek($consultaMatIndicadores, 0);
 		while($filaIndicador = mysqli_fetch_array($consultaMatIndicadores, MYSQLI_BOTH)){
 			if($filaIndicador["mat_id"] == $fila2["mat_id"]){
@@ -508,17 +664,12 @@ $contadorPeriodos=0;
 				}
 			}
 		}
-	}
-	
-	// Calcular promedio final de logros
-	$promedioLogrosFinal = 0;
-	if($contadorLogros > 0){
-		$promedioLogrosFinal = round($promedioLogros / $contadorLogros, 1);
-		if($promedioLogrosFinal==1) $promedioLogrosFinal="1.0";
-		if($promedioLogrosFinal==2) $promedioLogrosFinal="2.0";
-		if($promedioLogrosFinal==3) $promedioLogrosFinal="3.0";
-		if($promedioLogrosFinal==4) $promedioLogrosFinal="4.0";
-		if($promedioLogrosFinal==5) $promedioLogrosFinal="5.0";
+		
+		// Calcular promedio final de logros
+		if($contadorLogros > 0){
+			$promedioLogrosFinal = (float)($promedioLogros / $contadorLogros);
+			$promedioLogrosFinal = Boletin::notaDecimales($promedioLogrosFinal);
+		}
 	}
 ?>
  <tr class="materia-row">
@@ -544,7 +695,7 @@ $contadorPeriodos=0;
 				if(isset($notas[$l])){
 					// OPTIMIZACIÓN: Usar cache de notas cualitativas y desempeños
 					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-						$notaRedondeada = number_format((float)$notas[$l], 1, '.', '');
+						$notaRedondeada = number_format((float)$notas[$l], $config['conf_decimales_notas'], '.', '');
 						$notaCualitativa = isset($notasCualitativasCache[$notaRedondeada]) 
 							? $notasCualitativasCache[$notaRedondeada] 
 							: "";
@@ -572,9 +723,8 @@ $contadorPeriodos=0;
         <?php }?>
 -->
       <?php 
-	  $totalPromedio2=round( $fila2["suma"],1);
-	   
-	   if($totalPromedio2==1)	$totalPromedio2="1.0";	if($totalPromedio2==2)	$totalPromedio2="2.0";		if($totalPromedio2==3)	$totalPromedio2="3.0";	if($totalPromedio2==4)	$totalPromedio2="4.0";	if($totalPromedio2==5)	$totalPromedio2="5.0";
+	  $totalPromedio2 = !empty($fila2["suma"]) ? (float)$fila2["suma"] : 0;
+	  $totalPromedio2 = Boletin::notaDecimales($totalPromedio2);
 	   // OPTIMIZACIÓN: Usar valor cacheado
 	   if($totalPromedio2<$notaMinimaAprobar){$materiasPerdidas++;}
 	   ?>
@@ -594,7 +744,7 @@ $contadorPeriodos=0;
 					$totalPromedio2Final=$totalPromedio2;
 					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 						// OPTIMIZACIÓN: Usar cache de notas cualitativas
-						$notaRedondeada = number_format((float)$totalPromedio2, 1, '.', '');
+						$notaRedondeada = number_format((float)$totalPromedio2, $config['conf_decimales_notas'], '.', '');
 						$totalPromedio2Final = isset($notasCualitativasCache[$notaRedondeada]) 
 							? $notasCualitativasCache[$notaRedondeada] 
 							: "";
@@ -603,6 +753,7 @@ $contadorPeriodos=0;
 				}
 		
 		?></td>
+        <?php if($mostrarNotasLogros): ?>
         <td align="center" class="nota-destacada"><?php //NOTAS LOGROS
 		// Mostrar promedio de logros/indicadores
 		if($contadorLogros > 0){
@@ -620,7 +771,7 @@ $contadorPeriodos=0;
 				$promedioLogrosFinalMostrar = $promedioLogrosFinal;
 				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 					// OPTIMIZACIÓN: Usar cache de notas cualitativas
-					$notaRedondeada = number_format((float)$promedioLogrosFinal, 1, '.', '');
+					$notaRedondeada = number_format((float)$promedioLogrosFinal, $config['conf_decimales_notas'], '.', '');
 					$promedioLogrosFinalMostrar = isset($notasCualitativasCache[$notaRedondeada]) 
 						? $notasCualitativasCache[$notaRedondeada] 
 						: "";
@@ -631,8 +782,30 @@ $contadorPeriodos=0;
 			echo "-";
 		}
 		?></td>
-        <td align="center" class="nota-destacada"><?php //PRO - Promedio (vacío para materias individuales)
-		// Esta columna se usa solo en la fila de PROMEDIO general
+        <?php endif; ?>
+        <td align="center" class="nota-destacada"><?php 
+		if($mostrarProMaterias){
+			// Calcular PRO para esta materia (solo si suma al promedio)
+			if ($fila2["mat_sumar_promedio"] == SI && $totalPromedio2 > 0) {
+				$proMateria = $totalPromedio2;
+				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+					$notaRedondeada = number_format((float)$proMateria, $config['conf_decimales_notas'], '.', '');
+					$proMateriaFinal = isset($notasCualitativasCache[$notaRedondeada]) 
+						? $notasCualitativasCache[$notaRedondeada] 
+						: "";
+					echo $proMateriaFinal;
+				} else {
+					echo $proMateria;
+				}
+			} else {
+				echo "-";
+			}
+		}
+		// Acumular para el promedio general (siempre, aunque no se muestre)
+		if ($fila2["mat_sumar_promedio"] == SI && $totalPromedio2 > 0) {
+			$sumaPromedioGeneral += $totalPromedio2;
+			$contadorMateriasPromedio++;
+		}
 		?></td>
         <td align="center"><?php //DESEMPEÑO
 		// OPTIMIZACIÓN: Usar cache de desempeños
@@ -661,6 +834,7 @@ $contadorPeriodos=0;
 			}
 		}
 		?></td>
+        <?php if($mostrarAusencias): ?>
         <td align="center"><?php //AUS
 		// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
 		$sumAusencias = 0;
@@ -672,32 +846,38 @@ $contadorPeriodos=0;
 		}
 		if($sumAusencias>0){ echo $sumAusencias;} else{ echo "0.0";}
 		?></td>
+        <?php endif; ?>
 	</tr>
 <?php
-if($numIndicadores>0){
+// Solo mostrar indicadores si está habilitado (optimización)
+if($mostrarIndicadores && $numIndicadores > 0){
 	 mysqli_data_seek($consultaMatIndicadores,0);
 	 $contadorIndicadores=0;
 	while($fila4=mysqli_fetch_array($consultaMatIndicadores, MYSQLI_BOTH)){
 	if($fila4["mat_id"]==$fila2["mat_id"]){
 		$contadorIndicadores++;
-		$notaIndicador=round($fila4["nota"],1);
-		 if($notaIndicador==1)	$notaIndicador="1.0";	if($notaIndicador==2)	$notaIndicador="2.0";		if($notaIndicador==3)	$notaIndicador="3.0";	if($notaIndicador==4)	$notaIndicador="4.0";	if($notaIndicador==5)	$notaIndicador="5.0";
+		$notaIndicador = !empty($fila4["nota"]) ? (float)$fila4["nota"] : 0;
+		$notaIndicador = Boletin::notaDecimales($notaIndicador);
 	?>
 <tr class="indicador-row">
             <td><?php echo $contadorIndicadores.". ".$fila4["ind_nombre"];?></td> 
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
             <td align="center" style="font-weight:bold;"></td>
+            <?php if($mostrarNotasLogros): ?>
+            <td align="center" style="font-weight:bold;"></td>
+            <?php endif; ?>
             <td align="center" style="font-weight:bold;"></td>
             <td align="center" style="font-weight:bold;"></td>
+            <?php if($mostrarAusencias): ?>
             <td align="center" style="font-weight:bold;"></td>
-            <td align="center" style="font-weight:bold;"></td>
+            <?php endif; ?>
 <?php
 	}//fin if
 	}
 }
 }//while fin materias
 ?>  
-<?php }}//while fin areas?>
+<?php }//while fin areas?>
 	 
 
           
@@ -713,19 +893,39 @@ if($numIndicadores>0){
 		// Este cálculo se hace basado en las materias que suman al promedio
 		// Por ahora mostramos vacío o podemos calcularlo si es necesario
 		?></td>
+        <?php if($mostrarNotasLogros): ?>
         <td style="font-size:16px; font-weight:bold;"><?php 
 		// Calcular promedio de NOTAS LOGROS
 		// Por ahora mostramos vacío
 		?></td>
+        <?php endif; ?>
         <td style="font-size:16px; font-weight:bold;"><?php 
-		// Calcular PRO (promedio general)
-		$promedioGeneral = 0;
-		$contadorMaterias = 0;
-		// Este cálculo se hace basado en las materias que suman al promedio
-		// Por ahora mostramos vacío o podemos calcularlo si es necesario
+		if($mostrarProPromedio){
+			// Calcular PRO (promedio general)
+			$promedioGeneral = 0;
+			if($contadorMateriasPromedio > 0){
+				$promedioGeneral = (float)($sumaPromedioGeneral / $contadorMateriasPromedio);
+				$promedioGeneral = Boletin::notaDecimales($promedioGeneral);
+				
+				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+					// OPTIMIZACIÓN: Usar cache de notas cualitativas
+					$notaRedondeada = number_format((float)$promedioGeneral, $config['conf_decimales_notas'], '.', '');
+					$promedioGeneralFinal = isset($notasCualitativasCache[$notaRedondeada]) 
+						? $notasCualitativasCache[$notaRedondeada] 
+						: "";
+					echo $promedioGeneralFinal;
+				} else {
+					echo $promedioGeneral;
+				}
+			} else {
+				echo "-";
+			}
+		}
 		?></td>
         <td></td>
+        <?php if($mostrarAusencias): ?>
         <td></td>
+        <?php endif; ?>
     </tr>
 </tbody>
 </table>

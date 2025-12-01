@@ -85,6 +85,32 @@ if ($periodoActual == 3) $periodoActuales = "Tercero";
 
 if ($periodoActual == 4) $periodoActuales = "Final";
 
+// Configuración de visualización de áreas, indicadores, I.H y tamaño del logo
+// Detectar si el formulario fue enviado usando un campo hidden que siempre se envía
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+// Si el formulario fue enviado, usar los valores enviados, si no, usar valores por defecto
+$mostrarAreas = $formularioEnviado 
+    ? (isset($_GET['mostrar_areas']) ? (int)$_GET['mostrar_areas'] : 0)
+    : 1; // Por defecto visible
+$mostrarIndicadores = $formularioEnviado 
+    ? (isset($_GET['mostrar_indicadores']) ? (int)$_GET['mostrar_indicadores'] : 0)
+    : 1; // Por defecto visible
+$mostrarIH = $formularioEnviado 
+    ? (isset($_GET['mostrar_ih']) ? (int)$_GET['mostrar_ih'] : 0)
+    : 1; // Por defecto visible
+
+// Tamaño del logo (ancho y alto)
+$logoAncho = $formularioEnviado && isset($_GET['logo_ancho']) && is_numeric($_GET['logo_ancho'])
+    ? (int)$_GET['logo_ancho']
+    : ($_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50); // Por defecto según institución
+$logoAlto = $formularioEnviado && isset($_GET['logo_alto']) && is_numeric($_GET['logo_alto'])
+    ? (int)$_GET['logo_alto']
+    : 0; // 0 significa que no se especifica alto (solo ancho)
+
+// Actualizar $tamañoLogo para mantener compatibilidad
+$tamañoLogo = $logoAncho;
+
 ?>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
@@ -123,8 +149,8 @@ foreach($rows as $matriculadosDatos) {
 
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
 
-        <title>Boletín</title>
-
+        <title>Boletín Formato 3</title>
+        <link rel="shortcut icon" href="../sintia-icono.png" />
         <style>
             #saltoPagina {
 
@@ -233,7 +259,7 @@ foreach($rows as $matriculadosDatos) {
             if($consultaNotasTipo){
                 while ($notaTipo = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)) {
                     for ($i = $notaTipo['notip_desde']; $i <= $notaTipo['notip_hasta']; $i += 0.1) {
-                        $key = number_format((float)$i, 1, '.', '');
+                        $key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
                         if (!isset($notasCualitativasCache[$key])) {
                             $notasCualitativasCache[$key] = $notaTipo['notip_nombre'];
                         }
@@ -249,8 +275,52 @@ foreach($rows as $matriculadosDatos) {
 
         ?>
 
+        <!-- Formulario de Configuración (no se imprime) -->
+        <div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+            <form method="GET" id="configBoletinForm">
+                <?php
+                // Mantener todos los parámetros GET existentes
+                if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+                if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+                if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+                if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+                if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+                // Campo hidden para detectar que el formulario fue enviado
+                echo '<input type="hidden" name="config_aplicada" value="1">';
+                ?>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_areas" value="1" <?= $mostrarAreas ? 'checked' : '' ?>>
+                    Mostrar filas de áreas
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_indicadores" value="1" <?= $mostrarIndicadores ? 'checked' : '' ?>>
+                    Mostrar filas de indicadores
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="checkbox" name="mostrar_ih" value="1" <?= $mostrarIH ? 'checked' : '' ?>>
+                    Mostrar columna I.H (Intensidad Horaria)
+                </label>
+                <div style="margin: 15px 0;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Tamaño del Logo:</label>
+                    <label style="display: block; margin-bottom: 5px;">
+                        Ancho (%): <input type="number" name="logo_ancho" value="<?= $logoAncho ?>" min="1" max="100" style="width: 60px;">
+                    </label>
+                    <label style="display: block; margin-bottom: 5px;">
+                        Alto (px, 0=auto): <input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="0" style="width: 60px;">
+                    </label>
+                </div>
+                <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+            </form>
+        </div>
+        <style>
+            @media print {
+                .config-boletin-form { display: none !important; }
+            }
+        </style>
+
         <div align="center" style="margin-bottom:20px;">
-    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="<?=$tamañoLogo?>%"><br>
+    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" <?= $logoAncho > 0 ? 'width="'.$logoAncho.'%"' : '' ?> <?= $logoAlto > 0 ? 'height="'.$logoAlto.'"' : '' ?>><br>
     <!-- <?=$informacion_inst["info_nombre"]?><br>
     BOLETÍN DE CALIFICACIONES<br> -->
 
@@ -302,7 +372,9 @@ foreach($rows as $matriculadosDatos) {
 
                 <td width="20%" align="center">AREAS/ ASIGNATURAS</td>
 
+                <?php if($mostrarIH): ?>
                 <td width="2%" align="center">I.H</td>
+                <?php endif; ?>
 
                 <td width="2%" align="center">NOTA</td>
 
@@ -371,23 +443,19 @@ foreach($rows as $matriculadosDatos) {
                 $numfilas_not_area = mysqli_num_rows($consulta_notdef_area);
 
                 if ($numfilas_not_area > 0) {
-
+                    // Mostrar fila del área solo si está habilitado
+                    if ($mostrarAreas) {
             ?>
-
                     <tr style="background-color: #b9b91730" style="font-size:12px;">
-
-                        <td colspan="2" style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultado_not_area["ar_nombre"]; ?></td>
-
+                        <td colspan="<?= $mostrarIH ? '2' : '1'; ?>" style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultado_not_area["ar_nombre"]; ?></td>
+                        <?php if($mostrarIH): ?>
                         <td align="center" style="font-weight:bold; font-size:12px;"></td>
-
+                        <?php endif; ?>
                         <td>&nbsp;</td>
-
                     </tr>
-
-                    <?php
-
-
-
+            <?php
+                    }
+                    // Las materias siempre se muestran, independientemente de si se muestra el área
                     while ($fila2 = mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)) {
                         //DIRECTOR DE GRUPO
                         if($fila2["car_director_grupo"]==1){
@@ -406,7 +474,9 @@ foreach($rows as $matriculadosDatos) {
 
                             <td style="font-size:12px; height:35px; font-weight:bold;background:#EAEAEA;"><?php echo $fila2["mat_nombre"]; ?></td>
 
+                            <?php if($mostrarIH): ?>
                             <td align="center" style="font-weight:bold; font-size:12px;background:#EAEAEA;"><?php echo $fila["car_ih"]; ?></td>
+                            <?php endif; ?>
 
                             <td>&nbsp;</td>
 
@@ -414,7 +484,7 @@ foreach($rows as $matriculadosDatos) {
 
                         <?php
 
-                        if ($numIndicadores > 0) {
+                        if ($mostrarIndicadores && $numIndicadores > 0) {
 
                             mysqli_data_seek($consulta_a_mat_indicadores, 0);
 
@@ -429,28 +499,18 @@ foreach($rows as $matriculadosDatos) {
                                     $contador_indicadores++;
                                     $leyendaRI = '';
                                     if(!empty($recuperacionIndicador['rind_nota']) && $recuperacionIndicador['rind_nota']>$fila4["nota"]){
-                                        $nota_indicador = round($recuperacionIndicador['rind_nota'], 1);
+                                        $nota_indicador = (float)$recuperacionIndicador['rind_nota'];
                                         $leyendaRI = '<br><span style="color:navy; font-size:9px;">Recuperdo.</span>';
                                     }else{
-                                        $nota_indicador = round($fila4["nota"], 1);
+                                        $nota_indicador = !empty($fila4["nota"]) ? (float)$fila4["nota"] : 0;
                                     }
 
-                                    
-
-                                    if ($nota_indicador == 1)    $nota_indicador = "1.0";
-
-                                    if ($nota_indicador == 2)    $nota_indicador = "2.0";
-
-                                    if ($nota_indicador == 3)    $nota_indicador = "3.0";
-
-                                    if ($nota_indicador == 4)    $nota_indicador = "4.0";
-
-                                    if ($nota_indicador == 5)    $nota_indicador = "5.0";
+                                    $nota_indicador = Boletin::notaDecimales($nota_indicador);
 
                                     $notaIndicadorFinal=$nota_indicador;
                                     if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
                                         // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                        $notaRedondeada = number_format((float)$nota_indicador, 1, '.', '');
+                                        $notaRedondeada = number_format((float)$nota_indicador, $config['conf_decimales_notas'], '.', '');
                                         $notaIndicadorFinal = isset($notasCualitativasCache[$notaRedondeada]) 
                                             ? $notasCualitativasCache[$notaRedondeada] 
                                             : "";
@@ -468,7 +528,9 @@ foreach($rows as $matriculadosDatos) {
 
                                         <td style="font-size:12px; height:15px;"><?php echo $contador_indicadores . ". " . $fila4["ind_nombre"].$indicador_inclusion; ?></td>
 
+                                        <?php if($mostrarIH): ?>
                                         <td>&nbsp;</td>
+                                        <?php endif; ?>
 
                                         <td align="center" style="font-weight:bold; font-size:12px;"><?= $notaIndicadorFinal." ".$leyendaRI; ?></td>
 
@@ -566,13 +628,19 @@ foreach($rows as $matriculadosDatos) {
     
                     $numFilasNotArea = mysqli_num_rows($consultaNotaDefArea);
                     if ($numFilasNotArea > 0) {
+                        // Mostrar fila del área solo si está habilitado
+                        if ($mostrarAreas) {
                 ?>
                         <tr style="background-color: #e0e0153b" style="font-size:12px;">
-                            <td colspan="2" style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultadoNotArea["ar_nombre"]; ?></td>
+                            <td colspan="<?= $mostrarIH ? '2' : '1'; ?>" style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultadoNotArea["ar_nombre"]; ?></td>
+                            <?php if($mostrarIH): ?>
                             <td align="center" style="font-weight:bold; font-size:12px;"></td>
+                            <?php endif; ?>
                             <td>&nbsp;</td>
                         </tr>
-                        <?php
+                <?php
+                        }
+                        // Las materias siempre se muestran, independientemente de si se muestra el área
                         while ($fila2 = mysqli_fetch_array($consultaMat, MYSQLI_BOTH)) {
                             $contador_periodos = 0;
                             mysqli_data_seek($consultaMatPeriodo, 0);
@@ -580,11 +648,13 @@ foreach($rows as $matriculadosDatos) {
                             <tr bgcolor="#EAEAEA" style="font-size:12px;">
                                 <td align="center"><?= $contador; ?></td>
                                 <td style="font-size:12px; height:35px; font-weight:bold;background:#EAEAEA;"><?php echo $fila2["mat_nombre"]; ?></td>
+                                <?php if($mostrarIH): ?>
                                 <td align="center" style="font-weight:bold; font-size:12px;background:#EAEAEA;"><?php echo $fila["car_ih"]; ?></td>
+                                <?php endif; ?>
                                 <td>&nbsp;</td>
                             </tr>
                             <?php
-                            if ($numIndicadores > 0) {
+                            if ($mostrarIndicadores && $numIndicadores > 0) {
                                 mysqli_data_seek($consultaMatIndicadores, 0);
                                 $contadorIndicadores = 0;
                                 while ($fila4 = mysqli_fetch_array($consultaMatIndicadores, MYSQLI_BOTH)) {
@@ -595,22 +665,18 @@ foreach($rows as $matriculadosDatos) {
                                         $contadorIndicadores++;
                                         $leyendaRI = '';
                                         if(!empty($recuperacionIndicador['rind_nota']) && $recuperacionIndicador['rind_nota']>$fila4["nota"]){
-                                            $notaIndicador = round($recuperacionIndicador['rind_nota'], 1);
+                                            $notaIndicador = (float)$recuperacionIndicador['rind_nota'];
                                             $leyendaRI = '<br><span style="color:navy; font-size:9px;">Recuperdo.</span>';
                                         }else{
-                                            $notaIndicador = round($fila4["nota"], 1);
+                                            $notaIndicador = !empty($fila4["nota"]) ? (float)$fila4["nota"] : 0;
                                         }
 
-                                        if ($notaIndicador == 1)    $notaIndicador = "1.0";
-                                        if ($notaIndicador == 2)    $notaIndicador = "2.0";
-                                        if ($notaIndicador == 3)    $notaIndicador = "3.0";
-                                        if ($notaIndicador == 4)    $notaIndicador = "4.0";
-                                        if ($notaIndicador == 5)    $notaIndicador = "5.0";
+                                        $notaIndicador = Boletin::notaDecimales($notaIndicador);
 
                                         $notaIndicadorFinal=$notaIndicador;
                                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
                                             // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                            $notaRedondeada = number_format((float)$notaIndicador, 1, '.', '');
+                                            $notaRedondeada = number_format((float)$notaIndicador, $config['conf_decimales_notas'], '.', '');
                                             $notaIndicadorFinal = isset($notasCualitativasCache[$notaRedondeada]) 
                                                 ? $notasCualitativasCache[$notaRedondeada] 
                                                 : "";
@@ -619,7 +685,9 @@ foreach($rows as $matriculadosDatos) {
                                         <tr bgcolor="#FFF" style="font-size:12px;">
                                             <td align="center">&nbsp;</td>
                                             <td style="font-size:12px; height:15px;"><?php echo $contadorIndicadores . "." . $fila4["ind_nombre"]; ?></td>
+                                            <?php if($mostrarIH): ?>
                                             <td>&nbsp;</td>
+                                            <?php endif; ?>
                                             <td align="center" style="font-weight:bold; font-size:12px;"><?= $notaIndicadorFinal." ".$leyendaRI; ?></td>
                                         </tr>
                             <?php

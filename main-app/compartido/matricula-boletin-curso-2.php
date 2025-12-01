@@ -79,16 +79,165 @@ foreach($puestoDatos as $puesto){
 <!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
+	<title>Boletín Formato 2</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
 <style>
 #saltoPagina
 {
 	PAGE-BREAK-AFTER: always;
 }
+
+/* Estilos profesionales para el boletín */
+body {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	color: #333;
+}
+
+.header-boletin {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	height: 35px;
+	font-size: 13px;
+	letter-spacing: 0.5px;
+}
+
+.tabla-boletin {
+	border: 1px solid #dee2e6;
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 15px;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tabla-boletin th, .tabla-boletin td {
+	border: 1px solid #dee2e6;
+	padding: 8px;
+	text-align: center;
+	font-size: 11px;
+}
+
+.tabla-boletin thead th {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	height: 30px;
+	font-size: 12px;
+	letter-spacing: 0.3px;
+}
+
+.area-row {
+	background: #e9ecef;
+	font-weight: bold;
+	font-size: 12px;
+	text-align: left;
+}
+
+.area-row td:first-child {
+	text-align: left !important;
+	padding-left: 15px !important;
+}
+
+.materia-row {
+	background: #FFFFFF;
+	font-size: 11px;
+}
+
+.materia-row td:first-child {
+	text-align: left !important;
+	padding-left: 15px !important;
+}
+
+.materia-row:nth-child(even) {
+	background: #f8f9fa;
+}
+
+.indicador-row {
+	background: #fdfdfd;
+	font-size: 10px;
+	text-align: left;
+}
+
+.indicador-row td:first-child {
+	text-align: left !important;
+	padding-left: 30px !important;
+}
+
+.promedio-row {
+	background: #e9ecef;
+	font-weight: bold;
+	font-size: 12px;
+	border-top: 2px solid #2c3e50;
+}
+
+.nota-destacada {
+	font-weight: 600;
+	font-size: 12px;
+}
+
+.desempeno-superior {
+	color: #28a745;
+	font-weight: 600;
+}
+
+.desempeno-alto {
+	color: #17a2b8;
+	font-weight: 600;
+}
+
+.desempeno-basico {
+	color: #ffc107;
+	font-weight: 600;
+}
+
+.desempeno-bajo {
+	color: #dc3545;
+	font-weight: 600;
+}
+
+.info-header {
+	background: #2c3e50;
+	color: #ffffff;
+	padding: 12px 15px;
+	font-weight: 600;
+	letter-spacing: 0.3px;
+}
+
+.info-content {
+	background: #ffffff;
+	border: 1px solid #dee2e6;
+	padding: 10px 15px;
+	color: #495057;
+	font-weight: 500;
+}
+
+.tabla-comportamiento {
+	border: 1px solid #dee2e6;
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 15px;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tabla-comportamiento thead th {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	padding: 12px;
+	font-size: 12px;
+	letter-spacing: 0.3px;
+}
+
+.tabla-comportamiento tbody td {
+	border: 1px solid #dee2e6;
+	padding: 10px;
+	font-size: 11px;
+}
 </style>
 </head>
 
-<body style="font-family:Arial;">
+<body>
 <?php
 //CONSULTA QUE ME TRAE EL DESEMPEÑO
 $consulta_desempeno = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year);	
@@ -221,21 +370,21 @@ if($consultaAusencias){
 $nombreInforme = "BOLETÍN DE CALIFICACIONES";
 include("../compartido/head-informes.php") ?>
 
-<table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" style="font-size:12px;">
+<table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" class="info-header" style="font-size:12px; margin-bottom: 15px;">
     <tr>
-    	<td>C&oacute;digo: <b><?=$datosUsr["mat_matricula"];?></b></td>
-        <td colspan="2">Nombre: <b><?=$nombre?></b></td>   
+    	<td style="padding: 12px 15px;">C&oacute;digo: <b><?=$datosUsr["mat_matricula"];?></b></td>
+        <td colspan="2" style="padding: 12px 15px;">Nombre: <b><?=$nombre?></b></td>   
     </tr>
     
-    <tr>
-    	<td>Grado: <b><?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></b></td>
-        <td>Periodo: <b><?=strtoupper($periodoActuales);?></b></td>
-        <td>Puesto Curso:<br> <?=$puestoCurso?></td>    
+    <tr class="info-content">
+    	<td style="padding: 10px 15px;">Grado: <b><?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></b></td>
+        <td style="padding: 10px 15px;">Periodo: <b><?=strtoupper($periodoActuales);?></b></td>
+        <td style="padding: 10px 15px;">Puesto Curso: <b><?=$puestoCurso?></b></td>    
     </tr>
 </table>
 <br>
-<table width="100%" id="tblBoletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="left">
-<tr style="font-weight:bold; background:#EAEAEA; border-color:#000; height:20px; color:#000; font-size:12px;">
+<table width="100%" id="tblBoletin" class="tabla-boletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="left">
+<tr class="header-boletin">
 <td width="20%" align="center">AREAS/ ASIGNATURAS</td>
 <td width="2%" align="center">I.H</td>
 
@@ -252,9 +401,8 @@ include("../compartido/head-informes.php") ?>
 <td width="5%" align="center">AUS</td>
 </tr> 
 
-    <tr style="background:#F06;">
+    <tr class="area-row">
     	<td class="area" id="" colspan="<?=$columnas;?>" style="font-size:12px; font-weight:bold;"></td>
-        <!--<td colspan="3"></td>-->
     </tr>
         <!-- Aca ira un while con los indiracores, dentro de los cuales debera ir otro while con las notas de los indicadores-->
         <?php while($fila = mysqli_fetch_array($consulta_mat_area_est, MYSQLI_BOTH)){
@@ -300,8 +448,8 @@ if(!empty($resultado_not_area['suma'])){
 if($total_promedio==1)	$total_promedio="1.0";	if($total_promedio==2)	$total_promedio="2.0";		if($total_promedio==3)	$total_promedio="3.0";	if($total_promedio==4)	$total_promedio="4.0";	if($total_promedio==5)	$total_promedio="5.0";
 	if($numfilas_not_area>0){
 			?>
-  <tr bgcolor="#ABABAB" style="font-size:12px;">
-            <td style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultado_not_area["ar_nombre"];?></td> 
+  <tr class="area-row">
+            <td align="left" style="font-size:12px; height:25px; font-weight:bold; padding-left: 15px;"><?php echo $resultado_not_area["ar_nombre"];?></td> 
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
             <?php for($k=1;$k<=$numero_periodos;$k++){ 
 			?>
@@ -354,15 +502,15 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 		}
 	}//FIN FILA3
 ?>
- <tr bgcolor="#EAEAEA" style="font-size:12px;">
-            <td style="font-size:12px; height:35px; font-weight:bold;background:#EAEAEA;">&raquo;<?php echo $fila2["car_id"]." - ".$fila2["mat_nombre"];?></td> 
-            <td align="center" style="font-weight:bold; font-size:12px;background:#EAEAEA;"><?php echo $fila["car_ih"];?></td>
+ <tr class="materia-row">
+            <td align="left" style="font-size:12px; height:35px; font-weight:bold; padding-left: 15px;">&raquo; <?php echo $fila2["mat_nombre"];?></td> 
+            <td align="center" style="font-weight:bold; font-size:12px;"><?php echo $fila["car_ih"];?></td>
 <?php 
 for($l=1;$l<=$numero_periodos;$l++){
 	// OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
 	$notaDelEstudiante = $notasBoletinMapa[$fila2['car_id']][$l] ?? null;
 ?>
-			<td class=""  align="center" style="font-weight:bold; background:#EAEAEA; font-size:16px;">
+			<td class="nota-destacada" align="center" style="font-weight:bold; font-size:16px;">
 			<?php 
 			if(!empty($notaDelEstudiante['bol_nota'])){
 				// OPTIMIZACIÓN: Usar cache de desempeños
@@ -436,7 +584,7 @@ for($l=1;$l<=$numero_periodos;$l++){
 		}
 	   ?>
        
-        <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php 
+        <td align="center" class="nota-destacada" style="font-weight:bold;"><?php 
 		// OPTIMIZACIÓN: Usar cache de desempeños
 		$desempenoNotaXasig = Boletin::obtenerDatosTipoDeNotasCargadas($desempenosCache, $total_promedio2);
 	
@@ -466,7 +614,7 @@ for($l=1;$l<=$numero_periodos;$l++){
 				}
 		
 		?></td>
-        <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php //DESEMPEÑO
+        <td align="center" class="nota-destacada" style="font-weight:bold;"><?php //DESEMPEÑO
 		// OPTIMIZACIÓN: Usar cache de desempeños
 		$r_desempeno = Boletin::obtenerDatosTipoDeNotasCargadas($desempenosCache, $total_promedio2);
 		if($r_desempeno){
@@ -493,7 +641,7 @@ for($l=1;$l<=$numero_periodos;$l++){
 		// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
 		$sumAusencias = $ausenciasMapa[$fila2['car_id']] ?? 0;
 		 ?></td>
-        <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php if($sumAusencias>0){ echo $sumAusencias."/".$matmaxaus;} else{ echo "0.0/".$matmaxaus;}?></td>
+        <td align="center" class="nota-destacada" style="font-weight:bold;"><?php if($sumAusencias>0){ echo $sumAusencias."/".$matmaxaus;} else{ echo "0.0/".$matmaxaus;}?></td>
 	
 	</tr>
 	
@@ -510,8 +658,8 @@ if($numIndicadores>0){
 		// OPTIMIZACIÓN: Usar cache de desempeños
 		$desempenoNotaInd = Boletin::obtenerDatosTipoDeNotasCargadas($desempenosCache, $nota_indicador);
 	?>
-<tr bgcolor="#FFF" style="font-size:12px;">
-            <td style="font-size:12px; height:15px;"><?php echo $contador_indicadores.".".$fila4["ind_nombre"];?></td> 
+<tr class="indicador-row">
+            <td align="left" style="font-size:12px; height:15px; padding-left: 30px;"><?php echo $contador_indicadores.".".$fila4["ind_nombre"];?></td> 
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
             <?php for($m=1;$m<=$numero_periodos;$m++){ 
 			?>
@@ -576,7 +724,7 @@ if($numIndicadores>0){
 
             
 
-    <tr align="center" style="font-size:12px; font-weight:bold;">
+    <tr class="promedio-row" align="center" style="font-size:12px; font-weight:bold;">
         <td colspan="2" align="right">PROMEDIO</td>
 
 		<?php for($n=1;$n<=$numero_periodos;$n++){ 
@@ -628,23 +776,21 @@ $sqlDisciplina = "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_es
 $cndisiplina = mysqli_query($conexion, $sqlDisciplina);
 if($cndisiplina && mysqli_num_rows($cndisiplina)>0){
 ?>
-<table width="100%" id="tblBoletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
+<table width="100%" id="tblBoletin" class="tabla-comportamiento" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
 
-    <tr style="font-weight:bold; background:#036; border-color:#036; height:40px; color:#FC0; font-size:12px; text-align:center">
-    	<td colspan="3">NOTA DE COMPORTAMIENTO</td>
+    <tr>
+    	<th colspan="3" style="text-align:center">NOTA DE COMPORTAMIENTO</th>
     </tr>
     
-    <tr style="font-weight:bold; background:#F06; border-color:#F06; height:25px; color:#FFF; font-size:12px; text-align:center">
-        <td width="8%">Periodo</td>
-        <!--<td width="8%">Nota</td>-->
-        <td>Observaciones</td>
+    <tr>
+        <th width="8%">Periodo</th>
+        <th>Observaciones</th>
     </tr>
 <?php while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
 ?>
     <tr align="center" style="font-weight:bold; font-size:12px; height:20px;">
-        <td><?=$rndisiplina["dn_periodo"]?></td>
-        <!--<td><?=$desempenoND['notip_nombre']?></td>-->
-        <td align="left"><?=$rndisiplina["dn_observacion"]?></td>
+        <td style="text-align:center;"><?=$rndisiplina["dn_periodo"]?></td>
+        <td align="left" style="padding-left: 15px;"><?=$rndisiplina["dn_observacion"]?></td>
     </tr>
 <?php }?>
 </table>
