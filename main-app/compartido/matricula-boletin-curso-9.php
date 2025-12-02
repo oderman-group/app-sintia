@@ -18,7 +18,23 @@ if(isset($_GET["year"])){
 $year=base64_decode($_GET["year"]);
 }
 
-$tamañoLogo = $_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50; //TODO: Esto debe ser una configuración
+// Configuración de visualización y tamaño del logo
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+$mostrarLogoEncabezado = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_encabezado']) ? (int)$_GET['mostrar_logo_encabezado'] : 0)
+    : 1; // Por defecto visible
+$mostrarFirmas = $formularioEnviado 
+    ? (isset($_GET['mostrar_firmas']) ? (int)$_GET['mostrar_firmas'] : 0)
+    : 1; // Por defecto visible
+
+// Tamaño del logo (ancho en % y alto en px, 0 = auto)
+$logoAncho = $formularioEnviado && isset($_GET['logo_ancho']) && is_numeric($_GET['logo_ancho'])
+    ? (int)$_GET['logo_ancho']
+    : ($_SESSION['idInstitucion'] == ICOLVEN ? 100 : 50); // Por defecto según institución
+$logoAlto = $formularioEnviado && isset($_GET['logo_alto']) && is_numeric($_GET['logo_alto'])
+    ? (int)$_GET['logo_alto']
+    : 0; // Por defecto 0 (auto) - mantiene proporción si solo se especifica ancho
 
 $modulo = 1;
 if(empty($_GET["periodo"])){
@@ -74,40 +90,217 @@ $contador_periodos=0;
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
-	<title>Boletín Preescolar</title>
+	<title>Boletín Formato 9</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 <style>
 #saltoPagina
 {
 	PAGE-BREAK-AFTER: always;
 }
+
+/* Estilos profesionales para el boletín */
+body {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	color: #333;
+	background: #ffffff;
+}
+
+.header-boletin {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	height: 35px;
+	font-size: 13px;
+	letter-spacing: 0.5px;
+}
+
+.tabla-boletin {
+	border: 1px solid #dee2e6;
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 15px;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tabla-boletin th, .tabla-boletin td {
+	border: 1px solid #dee2e6;
+	padding: 10px;
+	text-align: left;
+	font-size: 11px;
+}
+
+.tabla-boletin thead th {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	height: 30px;
+	font-size: 12px;
+	letter-spacing: 0.3px;
+	text-align: center;
+}
+
+.fila-par {
+	background: #ffffff;
+}
+
+.fila-impar {
+	background: #f8f9fa;
+}
+
+.dimension-nombre {
+	font-weight: 600;
+	font-size: 12px;
+	color: #2c3e50;
+	margin-bottom: 8px;
+}
+
+.indicador-item {
+	font-size: 11px;
+	color: #495057;
+	margin: 4px 0;
+	padding-left: 15px;
+}
+
+.observaciones-titulo {
+	font-weight: 600;
+	font-size: 11px;
+	color: #34495e;
+	text-align: center;
+	margin: 10px 0 5px 0;
+	letter-spacing: 0.3px;
+}
+
+.observaciones-texto {
+	font-size: 10px;
+	color: #6c757d;
+	font-style: italic;
+	margin: 5px 10px;
+	line-height: 1.4;
+}
+
+.info-header {
+	background: #2c3e50;
+	color: #ffffff;
+	padding: 12px 15px;
+	font-weight: 600;
+	letter-spacing: 0.3px;
+}
+
+.info-content {
+	background: #ffffff;
+	border: 1px solid #dee2e6;
+	padding: 10px 15px;
+	color: #495057;
+	font-weight: 500;
+}
+
+.tabla-convivencia {
+	border: 1px solid #dee2e6;
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 15px;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tabla-convivencia thead th {
+	background: #34495e;
+	color: #FFF;
+	font-weight: bold;
+	padding: 12px;
+	font-size: 12px;
+	letter-spacing: 0.3px;
+}
+
+.tabla-convivencia tbody td {
+	border: 1px solid #dee2e6;
+	padding: 10px;
+	font-size: 11px;
+}
+
+.firmas-container {
+	margin-top: 30px;
+	padding: 20px 0;
+	border-top: 2px solid #dee2e6;
+}
+
+.firma-nombre {
+	font-weight: 600;
+	font-size: 11px;
+	color: #2c3e50;
+	margin-top: 5px;
+}
+
+.firma-cargo {
+	font-size: 10px;
+	color: #6c757d;
+	margin-top: 3px;
+}
 </style>
 </head>
 
-<body style="font-family:Arial;">
+<body>
 
-<div align="center" style="margin-bottom:20px;">
-	<img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="<?=$tamañoLogo?>%"><br>
-    <!-- <?=$informacion_inst["info_nombre"]?><br>
-    BOLETÍN DE CALIFICACIONES<br> -->
-</div> 
+<!-- Formulario de configuración -->
+<div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+        if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_logo_encabezado" value="1" <?= $mostrarLogoEncabezado ? 'checked' : '' ?>>
+            Mostrar logo del encabezado
+        </label>
+        <div style="margin: 15px 0;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Tamaño del Logo:</label>
+            <label style="display: block; margin-bottom: 5px;">
+                Ancho (%): <input type="number" name="logo_ancho" value="<?= $logoAncho ?>" min="1" max="100" style="width: 60px;">
+            </label>
+            <label style="display: block; margin-bottom: 5px;">
+                Alto (px, 0=auto): <input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="0" style="width: 60px;">
+            </label>
+        </div>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_firmas" value="1" <?= $mostrarFirmas ? 'checked' : '' ?>>
+            Mostrar firmas del pie de página
+        </label>
+        <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+    </form>
+</div>
+<style>
+    @media print {
+        .config-boletin-form { display: none !important; }
+    }
+</style>
 
-<table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" style="font-size:12px;">
+<?php if($mostrarLogoEncabezado): ?>
+<div align="center" style="margin-bottom:25px;">
+	<img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="<?=$logoAncho?>%" <?= $logoAlto > 0 ? 'height="'.$logoAlto.'"' : '' ?>><br>
+</div>
+<?php endif; ?> 
+
+<table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" class="info-header" style="font-size:12px; margin-bottom: 20px;">
     <tr>
-    	<td>C&oacute;digo: <b><?=$datosUsr["mat_matricula"];?></b></td>
-        <td>Nombre: <b><?=$nombre?></b></td>   
+    	<td style="padding: 12px 15px;">C&oacute;digo: <b><?=$datosUsr["mat_matricula"];?></b></td>
+        <td style="padding: 12px 15px;">Nombre: <b><?=$nombre?></b></td>   
     </tr>
     
-    <tr>
-    	<td>Grado: <b><?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></b></td>
-        <td>Periodo: <b><?=strtoupper($periodoActuales);?></b></td>    
+    <tr class="info-content">
+    	<td style="padding: 10px 15px;">Grado: <b><?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></b></td>
+        <td style="padding: 10px 15px;">Periodo: <b><?=strtoupper($periodoActuales);?></b></td>    
     </tr>
 </table>
-<br>
-<table width="100%" cellspacing="0" cellpadding="0" rules="all" border="1" align="left">
-	<tr style="font-weight:bold; background:#4c9858; border-color:#000; height:20px; color:#000; font-size:12px;">
-		<td width="1%" align="center">No.</td>
-		<td width="92%" align="center">DIMENSIONES</td>
-		<td width="2%" align="center">I.H</td>
+<table width="100%" class="tabla-boletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="left">
+	<tr class="header-boletin">
+		<td width="5%" align="center">No.</td>
+		<td width="90%" align="center">DIMENSIONES</td>
+		<td width="5%" align="center">I.H</td>
 	</tr>
 	
 	<?php
@@ -190,26 +383,27 @@ $contador_periodos=0;
 			}
 		}
 		
-		$colorFondo = '#FFF;';
-		if($i%2==0){$colorFondo = '#e0e0153b';}
+		$claseFila = ($i % 2 == 0) ? 'fila-par' : 'fila-impar';
 	?>
-	<tr style="background-color: <?=$colorFondo;?>">
-		<td width="1%" align="center"><?=$i;?></td>
-		<td width="92%">
-			<b><?=$cargas['mat_nombre'];?></b><br>
+	<tr class="<?=$claseFila;?>">
+		<td width="5%" align="center" style="font-weight: 600; color: #495057;"><?=$i;?></td>
+		<td width="90%">
+			<div class="dimension-nombre"><?=$cargas['mat_nombre'];?></div>
 			<?php
 			// OPTIMIZACIÓN: Usar array pre-cargado en lugar de mysqli_result
-			foreach($indicadores as $ind){
-				echo "- ".$ind['ind_nombre']."<br>";
+			if(!empty($indicadores)){
+				foreach($indicadores as $ind){
+					echo '<div class="indicador-item">• '.$ind['ind_nombre'].'</div>';
+				}
 			}
 			?>
-			<hr>
-			<h5 align="center">Observaciones</h5>
-			<p style="margin-left: 5px;">
-				<?=$observacion['bol_observaciones_boletin'] ?? "";?>
-			</p>
+			<hr style="border: none; border-top: 1px solid #dee2e6; margin: 10px 0;">
+			<div class="observaciones-titulo">OBSERVACIONES</div>
+			<div class="observaciones-texto">
+				<?=!empty($observacion['bol_observaciones_boletin']) ? htmlspecialchars($observacion['bol_observaciones_boletin']) : "Sin observaciones";?>
+			</div>
 		</td>
-		<td width="2%" align="center"><?=$cargas['car_ih'];?></td>
+		<td width="5%" align="center" style="font-weight: 600; color: #495057;"><?=$cargas['car_ih'];?></td>
 	</tr>
 	<?php $i++;}?>
 </table>
@@ -225,96 +419,84 @@ ORDER BY dn_id
 ");
 if(@mysqli_num_rows($cndisiplina)>0){
 ?>
-<table width="100%" id="tblBoletin" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
-
-    <tr style="font-weight:bold; background:#4c9858; border-color:#036; height:40px; font-size:12px; text-align:center">
-    	<td colspan="3">OBSERVACIONES DE CONVIVENCIA</td>
-    </tr>
-    
-    <tr style="font-weight:bold; background:#e0e0153b; height:25px; font-size:12px; text-align:center">
-        <td width="8%">Periodo</td>
-        <td>Observaciones</td>
-    </tr>
+<table width="100%" id="tblBoletin" class="tabla-convivencia" cellspacing="0" cellpadding="0" rules="all" border="1" align="center">
+    <thead>
+        <tr>
+            <th colspan="2">OBSERVACIONES DE CONVIVENCIA</th>
+        </tr>
+        <tr>
+            <th width="15%" style="text-align:center;">Periodo</th>
+            <th>Observaciones</th>
+        </tr>
+    </thead>
+    <tbody>
 <?php while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
 ?>
-    <tr align="center" style="font-weight:bold; font-size:12px; height:20px;">
-        <td><?=$rndisiplina["dn_periodo"]?></td>
-        <td align="left"><?=$rndisiplina["dn_observacion"]?></td>
-    </tr>
+        <tr>
+            <td align="center" style="font-weight: 600; color: #495057;"><?=$rndisiplina["dn_periodo"]?></td>
+            <td align="left" style="padding-left: 15px; color: #6c757d;"><?=htmlspecialchars($rndisiplina["dn_observacion"])?></td>
+        </tr>
 <?php }?>
+    </tbody>
 </table>
 <?php }?>
-	
 
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>   
-<!--******FIRMAS******-->   
-
-<table width="100%" cellspacing="0" cellpadding="0" rules="none" border="0" style="text-align:center; font-size:10px;">
-	<tr>
-		<td align="center">
-			<?php
-				// OPTIMIZACIÓN: Usar director cacheado (ya se cargó arriba)
-				if($directorGrupo === null && !empty($idDirector)){
-					$directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
-				}
-				if($directorGrupo){
-					$nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
-					if(!empty($directorGrupo["uss_firma"])){
-						echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
-					}else{
-						echo '<p>&nbsp;</p>
-							<p>&nbsp;</p>
-							<p>&nbsp;</p>';
+<?php if($mostrarFirmas): ?>
+<div class="firmas-container">
+	<table width="100%" cellspacing="0" cellpadding="0" rules="none" border="0" style="text-align:center;">
+		<tr>
+			<td width="50%" align="center" style="padding: 20px;">
+				<?php
+					// OPTIMIZACIÓN: Usar director cacheado (ya se cargó arriba)
+					if($directorGrupo === null && !empty($idDirector)){
+						$directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
 					}
-					echo '<p style="height:0px;"></p>_________________________________<br>
-						<p>&nbsp;</p>
-						'.$nombreDirectorGrupo.'<br>
-						Director(a) de grupo';
-				}else{
-					echo '<p>&nbsp;</p>
-						<p>&nbsp;</p>
-						<p>&nbsp;</p>
-						<p style="height:0px;"></p>_________________________________<br>
-						<p>&nbsp;</p>
-						<br>
-						Director(a) de grupo';
-				}
-			?>
-		</td>
-		<td align="center">
-			<?php
-				// OPTIMIZACIÓN: Cargar rector solo una vez
-				if($rector === null && !empty($informacion_inst["info_rector"])){
-					$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
-				}
-				if($rector){
-					$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-					if(!empty($rector["uss_firma"])){
-						echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+					if($directorGrupo){
+						$nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
+						if(!empty($directorGrupo["uss_firma"])){
+							echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="120" style="margin-bottom: 10px;"><br>';
+						}else{
+							echo '<div style="height: 80px; margin-bottom: 10px;"></div>';
+						}
+						echo '<div style="border-top: 2px solid #2c3e50; width: 200px; margin: 0 auto; padding-top: 5px;"></div>
+							<div class="firma-nombre">'.htmlspecialchars($nombreDirectorGrupo).'</div>
+							<div class="firma-cargo">Director(a) de grupo</div>';
 					}else{
-						echo '<p>&nbsp;</p>
-							<p>&nbsp;</p>
-							<p>&nbsp;</p>';
+						echo '<div style="height: 80px; margin-bottom: 10px;"></div>
+							<div style="border-top: 2px solid #2c3e50; width: 200px; margin: 0 auto; padding-top: 5px;"></div>
+							<div class="firma-nombre"></div>
+							<div class="firma-cargo">Director(a) de grupo</div>';
 					}
-					echo '<p style="height:0px;"></p>_________________________________<br>
-						<p>&nbsp;</p>
-						'.$nombreRector.'<br>
-						Rector(a)';
-				}else{
-					echo '<p>&nbsp;</p>
-						<p>&nbsp;</p>
-						<p>&nbsp;</p>
-						<p style="height:0px;"></p>_________________________________<br>
-						<p>&nbsp;</p>
-						<br>
-						Rector(a)';
-				}
-			?>
-		</td>
-	</tr>
-</table>
+				?>
+			</td>
+			<td width="50%" align="center" style="padding: 20px;">
+				<?php
+					// OPTIMIZACIÓN: Cargar rector solo una vez
+					if($rector === null && !empty($informacion_inst["info_rector"])){
+						$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+					}
+					if($rector){
+						$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+						if(!empty($rector["uss_firma"])){
+							echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="120" style="margin-bottom: 10px;"><br>';
+						}else{
+							echo '<div style="height: 80px; margin-bottom: 10px;"></div>';
+						}
+						echo '<div style="border-top: 2px solid #2c3e50; width: 200px; margin: 0 auto; padding-top: 5px;"></div>
+							<div class="firma-nombre">'.htmlspecialchars($nombreRector).'</div>
+							<div class="firma-cargo">Rector(a)</div>';
+					}else{
+						echo '<div style="height: 80px; margin-bottom: 10px;"></div>
+							<div style="border-top: 2px solid #2c3e50; width: 200px; margin: 0 auto; padding-top: 5px;"></div>
+							<div class="firma-nombre"></div>
+							<div class="firma-cargo">Rector(a)</div>';
+					}
+				?>
+			</td>
+		</tr>
+	</table>
+</div>
+<?php endif; ?>
 		
  <div id="saltoPagina"></div>
                                     

@@ -68,7 +68,7 @@ $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculado
 foreach($puestos as $puesto){
         if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){
 		$puestoCurso = $puesto['puesto'];
-		$promedioPuesto = round($puesto['prom'],2);
+		$promedioPuesto = Boletin::notaDecimales((float)$puesto['prom']);
 	}
 	$contp ++;
 }
@@ -80,6 +80,8 @@ foreach($puestos as $puesto){
 <!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 <head>
+	<title>Boletín Formato 13</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
 <style>
 #saltoPagina
@@ -201,7 +203,7 @@ if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
 		while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
 			// Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
 			for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
-				$key = number_format((float)$i, 1, '.', '');
+				$key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
 				if(!isset($notasCualitativasCache[$key])){
 					$notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
 				}
@@ -216,7 +218,7 @@ mysqli_data_seek($consulta_desempeno, 0);
 while($r_desempeno_temp = mysqli_fetch_array($consulta_desempeno, MYSQLI_BOTH)){
 	// Crear un mapa por rango de notas para búsqueda rápida
 	for($i = $r_desempeno_temp['notip_desde']; $i <= $r_desempeno_temp['notip_hasta']; $i += 0.1){
-		$key = number_format((float)$i, 1, '.', '');
+		$key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
 		if(!isset($desempenosCache[$key])){
 			$desempenosCache[$key] = $r_desempeno_temp;
 		}
@@ -303,10 +305,9 @@ $resultado_not_area=mysqli_fetch_array($consulta_notdef_area, MYSQLI_BOTH);
 $numfilas_not_area=mysqli_num_rows($consulta_notdef_area);
 $total_promedio=0;
 if(!empty($resultado_not_area['suma'])){
-	$total_promedio=round( $resultado_not_area["suma"],1);
+	$total_promedio = (float)$resultado_not_area["suma"];
+	$total_promedio = Boletin::notaDecimales($total_promedio);
 }
-
-if($total_promedio==1)	$total_promedio="1.0";	if($total_promedio==2)	$total_promedio="2.0";		if($total_promedio==3)	$total_promedio="3.0";	if($total_promedio==4)	$total_promedio="4.0";	if($total_promedio==5)	$total_promedio="5.0";
 	if($numfilas_not_area>0){
 			?>
   <tr bgcolor="#ABABAB" style="font-size:12px;">
@@ -329,14 +330,14 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 	while($fila3=mysqli_fetch_array($consulta_a_mat_per, MYSQLI_BOTH)){
 		if($fila2["mat_id"]==$fila3["mat_id"]){
 			$contador_periodos++;
-			$nota_periodo=round($fila3["bol_nota"],1);
-			if($nota_periodo==1)$nota_periodo="1.0";	if($nota_periodo==2)$nota_periodo="2.0";	if($nota_periodo==3)$nota_periodo="3.0";	if($nota_periodo==4)$nota_periodo="4.0";	if($nota_periodo==5)$nota_periodo="5.0";
-			$notas[$contador_periodos] =$nota_periodo;
+			$nota_periodo = !empty($fila3["bol_nota"]) ? (float)$fila3["bol_nota"] : 0;
+			$nota_periodo = Boletin::notaDecimales($nota_periodo);
+			$notas[$contador_periodos] = $nota_periodo;
 		}
 	}//FIN FILA3
 ?>
  <tr bgcolor="#EAEAEA" style="font-size:12px;">
-            <td style="font-size:12px; height:35px; font-weight:bold;background:#EAEAEA;">&raquo;<?php echo $fila2["car_id"]." - ".$fila2["mat_nombre"];?></td> 
+            <td style="font-size:12px; height:35px; font-weight:bold;background:#EAEAEA;">&raquo;<?php echo $fila2["mat_nombre"];?></td> 
             <td align="center" style="font-weight:bold; font-size:12px;background:#EAEAEA;"><?php echo $fila["car_ih"];?></td>
 <?php for($l=1;$l<=$numero_periodos;$l++){
 	// OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
@@ -345,8 +346,9 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 			<td class=""  align="center" style="font-weight:bold; background:#EAEAEA; font-size:16px;">
 			<?php 
 			if(!empty($notaDelEstudiante['bol_nota'])){
+				$notaFormateada = Boletin::notaDecimales((float)$notaDelEstudiante['bol_nota']);
 				// OPTIMIZACIÓN: Usar cache de notas cualitativas
-				$notaRedondeada = number_format((float)$notaDelEstudiante['bol_nota'], 1, '.', '');
+				$notaRedondeada = number_format((float)$notaDelEstudiante['bol_nota'], $config['conf_decimales_notas'], '.', '');
 				$desempenoNotaP = isset($notasCualitativasCache[$notaRedondeada]) 
 					? ['notip_nombre' => $notasCualitativasCache[$notaRedondeada]] 
 					: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaDelEstudiante['bol_nota'], $year);
@@ -356,7 +358,7 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 				if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
 					echo $desempenoNotaP['notip_nombre'];
 				}else{
-					echo $notaDelEstudiante['bol_nota']."<br>".$desempenoNotaP['notip_nombre'];
+					echo $notaFormateada."<br>".$desempenoNotaP['notip_nombre'];
 				}
 
 				if (!isset($promedios[$l])) {
@@ -382,9 +384,8 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 	}
 	 ?>
       <?php 
-	  $total_promedio2=round( $fila2["suma"],1);
-	   
-	   if($total_promedio2==1)	$total_promedio2="1.0";	if($total_promedio2==2)	$total_promedio2="2.0";		if($total_promedio2==3)	$total_promedio2="3.0";	if($total_promedio2==4)	$total_promedio2="4.0";	if($total_promedio2==5)	$total_promedio2="5.0";
+	  $total_promedio2 = !empty($fila2["suma"]) ? (float)$fila2["suma"] : 0;
+	  $total_promedio2 = Boletin::notaDecimales($total_promedio2);
 	   //if($total_promedio2<$r_desempeno["desbasdesde"]){$materiasPerdidas++;}
 	    $msj='';
 	   if($total_promedio2<$config[5]){
@@ -415,7 +416,7 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
         <td align="center" style="font-weight:bold; background:#EAEAEA;"><?=$total_promedio2?></td>
         <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php //DESEMPEÑO
 		// OPTIMIZACIÓN: Usar cache de desempeños
-		$totalPromedioRedondeado = number_format((float)$total_promedio2, 1, '.', '');
+		$totalPromedioRedondeado = number_format((float)$total_promedio2, $config['conf_decimales_notas'], '.', '');
 		$r_desempeno = $desempenosCache[$totalPromedioRedondeado] ?? null;
 		if($r_desempeno === null){
 			// Fallback: buscar en consulta original
@@ -457,8 +458,8 @@ if($numIndicadores>0){
 	while($fila4=mysqli_fetch_array($consulta_a_mat_indicadores, MYSQLI_BOTH)){
 	if($fila4["mat_id"]==$fila2["mat_id"]){
 		$contador_indicadores++;
-		$nota_indicador=round($fila4["nota"],1);
-		 if($nota_indicador==1)	$nota_indicador="1.0";	if($nota_indicador==2)	$nota_indicador="2.0";		if($nota_indicador==3)	$nota_indicador="3.0";	if($nota_indicador==4)	$nota_indicador="4.0";	if($nota_indicador==5)	$nota_indicador="5.0";
+		$nota_indicador = !empty($fila4["nota"]) ? (float)$fila4["nota"] : 0;
+		$nota_indicador = Boletin::notaDecimales($nota_indicador);
 		
 	?>
 <tr bgcolor="#FFF" style="font-size:12px;">
@@ -466,7 +467,7 @@ if($numIndicadores>0){
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
             <?php for($m=1;$m<=$numero_periodos;$m++){ 
 			// OPTIMIZACIÓN: Usar cache de notas cualitativas
-			$notaIndRedondeada = number_format((float)$nota_indicador, 1, '.', '');
+			$notaIndRedondeada = number_format((float)$nota_indicador, $config['conf_decimales_notas'], '.', '');
 			$desempenoNotaInd = isset($notasCualitativasCache[$notaIndRedondeada]) 
 				? ['notip_nombre' => $notasCualitativasCache[$notaIndRedondeada]] 
 				: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota_indicador, $year);
@@ -513,10 +514,11 @@ if($numIndicadores>0){
 		<?php for($n=1;$n<=$numero_periodos;$n++){ 
 		$notaFFF =0;
 		if(!empty($contpromedios[$n]) && $contpromedios[$n] > 0){
-			$notaFFF = round(($promedios[$n]/$contpromedios[$n]),1);
+			$notaFFF = (float)($promedios[$n]/$contpromedios[$n]);
+			$notaFFF = Boletin::notaDecimales($notaFFF);
 		}
 		// OPTIMIZACIÓN: Usar cache de notas cualitativas
-		$notaFFFRedondeada = number_format((float)$notaFFF, 1, '.', '');
+		$notaFFFRedondeada = number_format((float)$notaFFF, $config['conf_decimales_notas'], '.', '');
 		$desempenoNotaProm = isset($notasCualitativasCache[$notaFFFRedondeada]) 
 			? ['notip_nombre' => $notasCualitativasCache[$notaFFFRedondeada]] 
 			: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaFFF, $year);
@@ -556,7 +558,7 @@ if(@mysqli_num_rows($cndisiplina)>0){
     </tr>
 <?php while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
 // OPTIMIZACIÓN: Usar cache de notas cualitativas
-$notaDisciplinaRedondeada = number_format((float)$rndisiplina["dn_nota"], 1, '.', '');
+$notaDisciplinaRedondeada = number_format((float)$rndisiplina["dn_nota"], $config['conf_decimales_notas'], '.', '');
 $desempenoND = isset($notasCualitativasCache[$notaDisciplinaRedondeada]) 
 	? ['notip_nombre' => $notasCualitativasCache[$notaDisciplinaRedondeada]] 
 	: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $rndisiplina["dn_nota"], $year);

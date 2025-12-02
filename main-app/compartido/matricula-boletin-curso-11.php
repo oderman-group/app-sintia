@@ -97,7 +97,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>Boletín</title>
+        <title>Boletín Formato 11</title>
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
         <style>
@@ -268,7 +268,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                     while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
                         // Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
                         for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
-                            $key = number_format((float)$i, 1, '.', '');
+                            $key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
                             if(!isset($notasCualitativasCache[$key])){
                                 $notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
                             }
@@ -389,12 +389,12 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                                     if($numIndicadoresPorPeriodo!=0){
                                         $estudianteNota=$sumaNotaEstudiante;
                                     }
-                                    $notaEstudiante = round((float)$estudianteNota, 2);
-                                    
-                                    $notaEstudiante= Boletin::agregarDecimales($notaEstudiante);
+                                    // Formatear nota del estudiante con decimales configurados
+                                    $notaEstudianteFormateada = Boletin::notaDecimales((float)$estudianteNota);
+                                    $notaEstudiante = (float)$estudianteNota;
 
                                     // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                    $notaEstRedondeada = number_format((float)$notaEstudiante, 1, '.', '');
+                                    $notaEstRedondeada = number_format($notaEstudiante, $config['conf_decimales_notas'], '.', '');
                                     $desempenoNotaP = isset($notasCualitativasCache[$notaEstRedondeada]) 
                                         ? ['notip_nombre' => $notasCualitativasCache[$notaEstRedondeada]] 
                                         : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaEstudiante,$year);
@@ -421,14 +421,14 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                                         }
                                     }
                             ?>
-                                <td align="center" style=" font-size:12px;"><?=$notaEstudiante;?></td>
+                                <td align="center" style=" font-size:12px;"><?=$notaEstudianteFormateada;?></td>
                                 <td align="center" style=" font-size:12px;"><?=$desempenoNotaPFinal;?></td>
                             <?php
                                 }
                                 if ($materia["mat_sumar_promedio"] == SI) {
                                     $matPromedio ++;
                                 }
-                                $promedioMateria = ($j - 1) > 0 ? round($promedioMateria / ($j - 1), 2) : 0;
+                                $promedioMateria = ($j - 1) > 0 ? ($promedioMateria / ($j - 1)) : 0;
                                 $promedioMateriaFinal = $promedioMateria;
 
                                 // OPTIMIZACIÓN: Obtener nivelación del mapa pre-cargado
@@ -451,10 +451,11 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                                     }
                                 }
                                 
-                                $promedioMateriaFinal= Boletin::agregarDecimales($promedioMateriaFinal);
+                                // Formatear promedio de la materia con decimales configurados
+                                $promedioMateriaFinalFormateado = Boletin::notaDecimales($promedioMateriaFinal);
 
                                 // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                $notaMateriaRedondeada = number_format((float)$promedioMateriaFinal, 1, '.', '');
+                                $notaMateriaRedondeada = number_format($promedioMateriaFinal, $config['conf_decimales_notas'], '.', '');
                                 $promediosMateriaEstiloNota = isset($notasCualitativasCache[$notaMateriaRedondeada]) 
                                     ? ['notip_nombre' => $notasCualitativasCache[$notaMateriaRedondeada]] 
                                     : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioMateriaFinal,$year);
@@ -463,7 +464,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                                 }
                                 $promediosMateriaEstiloNotaFinal= !empty($promediosMateriaEstiloNota['notip_nombre']) ? $promediosMateriaEstiloNota['notip_nombre'] : "";
                             ?>
-                            <td align="center" style=" font-size:12px;"><?=$promedioMateriaFinal;?></td>
+                            <td align="center" style=" font-size:12px;"><?=$promedioMateriaFinalFormateado;?></td>
                             <td align="center" style=" font-size:12px;"><?=$promediosMateriaEstiloNotaFinal;?></td>
                         </tr>
                         <?php
@@ -523,10 +524,11 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                             $promediosPeriodos = ($matPromedio > 0) ? ($sumaNotaP4/$matPromedio) : 0;
                             break;
                     }
-                    $promediosPeriodos = round((float)$promediosPeriodos, 2);
+                    // Formatear promedio por período con decimales configurados
+                    $promediosPeriodosFormateado = Boletin::notaDecimales((float)$promediosPeriodos);
 
                     // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                    $promedioRedondeado = number_format((float)$promediosPeriodos, 1, '.', '');
+                    $promedioRedondeado = number_format((float)$promediosPeriodos, $config['conf_decimales_notas'], '.', '');
                     $promediosEstiloNota = isset($notasCualitativasCache[$promedioRedondeado]) 
                         ? ['notip_nombre' => $notasCualitativasCache[$promedioRedondeado]] 
                         : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promediosPeriodos,$year);
@@ -536,16 +538,18 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                     $promediosEstiloNotaFinal= !empty($promediosEstiloNota['notip_nombre']) ? $promediosEstiloNota['notip_nombre'] : "";
                 ?>
 
-                    <td style=" font-size:12px;"><?= $promediosPeriodos; ?></td>
+                    <td style=" font-size:12px;"><?= $promediosPeriodosFormateado; ?></td>
                     <td style=" font-size:12px;"><?= $promediosEstiloNotaFinal; ?></td>
                 <?php 
                     $promedioFinal +=$promediosPeriodos;
                 } 
 
-                    $promedioFinal = $periodoActual > 0 ? round($promedioFinal/$periodoActual,2) : 0;
+                    $promedioFinal = $periodoActual > 0 ? ($promedioFinal/$periodoActual) : 0;
+                    // Formatear promedio final con decimales configurados
+                    $promedioFinalFormateado = Boletin::notaDecimales($promedioFinal);
 
                     // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                    $promedioFinalRedondeado = number_format((float)$promedioFinal, 1, '.', '');
+                    $promedioFinalRedondeado = number_format($promedioFinal, $config['conf_decimales_notas'], '.', '');
                     $promedioFinalEstiloNota = isset($notasCualitativasCache[$promedioFinalRedondeado]) 
                         ? ['notip_nombre' => $notasCualitativasCache[$promedioFinalRedondeado]] 
                         : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioFinal,$year);
@@ -554,7 +558,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                     }
                     $promedioFinalEstiloNotaFinal= !empty($promedioFinalEstiloNota['notip_nombre']) ? $promedioFinalEstiloNota['notip_nombre'] : "";
                 ?>
-                <td style=" font-size:12px;"><?=$promedioFinal;?></td>
+                <td style=" font-size:12px;"><?=$promedioFinalFormateado;?></td>
                 <td style=" font-size:12px;"><?= $promedioFinalEstiloNotaFinal; ?></td>
             </tr>
 
@@ -611,7 +615,7 @@ while ($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOT
                 <?php
                 while ($rndisciplina = mysqli_fetch_array($cndisciplina, MYSQLI_BOTH)) {
                     // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                    $notaDisciplinaRedondeada = number_format((float)$rndisciplina["dn_nota"], 1, '.', '');
+                    $notaDisciplinaRedondeada = number_format((float)$rndisciplina["dn_nota"], $config['conf_decimales_notas'], '.', '');
                     $desempenoND = isset($notasCualitativasCache[$notaDisciplinaRedondeada]) 
                         ? ['notip_nombre' => $notasCualitativasCache[$notaDisciplinaRedondeada]] 
                         : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $rndisciplina["dn_nota"],$year);

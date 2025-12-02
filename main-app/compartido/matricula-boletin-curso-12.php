@@ -106,7 +106,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 <!doctype html>
 <html class="no-js" lang="en">
     <head>
-        <title>Boletín</title>
+        <title>Boletín Formato 12</title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -312,7 +312,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                             while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
                                 // Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
                                 for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
-                                    $key = number_format((float)$i, 1, '.', '');
+                                    $key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
                                     if(!isset($notasCualitativasCache[$key])){
                                         $notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
                                     }
@@ -330,6 +330,9 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                         $consultaMaterias = CargaAcademica::consultaMaterias($config, $periodoActual, $matriculadosDatos['mat_id'], $datosAreas['car_curso'], $datosAreas['car_grupo'], $datosAreas['ar_id'], $year);
                         $notaArea=0;
                         $notaAreasPeriodos=0;
+                        // Definir rangos de notas una vez por área
+                        $notaMinima = isset($config['conf_nota_desde']) ? (float)$config['conf_nota_desde'] : 1.0;
+                        $notaMaxima = isset($config['conf_nota_hasta']) ? (float)$config['conf_nota_hasta'] : 5.0;
                         while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
                             //DIRECTOR DE GRUPO
                             if($datosMaterias["car_director_grupo"]==1){
@@ -341,20 +344,23 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                             }
 
                             //NOTA PARA LAS MATERIAS
-                            $notaMateria = !empty($datosMaterias['bol_nota']) ? round($datosMaterias['bol_nota'], $config['conf_decimales_notas']) : 0;
+                            $notaMateria = !empty($datosMaterias['bol_nota']) ? (float)$datosMaterias['bol_nota'] : 0;
+                            // Validar que la nota esté dentro del rango configurado
+                            if($notaMateria > $notaMaxima){
+                                $notaMateria = $notaMaxima;
+                            }
+                            if($notaMateria < $notaMinima && $notaMateria > 0){
+                                $notaMateria = $notaMinima;
+                            }
+                            // Formatear nota de la materia con decimales configurados
+                            $notaMateriaFormateada = Boletin::notaDecimales($notaMateria);
                             // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                            $notaMateriaRedondeada = number_format((float)$notaMateria, 1, '.', '');
+                            $notaMateriaRedondeada = number_format($notaMateria, $config['conf_decimales_notas'], '.', '');
                             $estiloNota = isset($notasCualitativasCache[$notaMateriaRedondeada]) 
                                 ? ['notip_nombre' => $notasCualitativasCache[$notaMateriaRedondeada]] 
                                 : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateria,$year);
                             if($estiloNota === null){
                                 $estiloNota = ['notip_nombre' => ''];
-                            }
-                            if($notaMateria<10){
-                                $estiloNota['notip_nombre']="Bajo";
-                            }
-                            if($notaMateria>50){
-                                $estiloNota['notip_nombre']="Superior";
                             }
 
                             // OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
@@ -381,13 +387,21 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                                 // OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
                                                 $datosPeriodos = $notasBoletinMapa[$datosMaterias['car_id']][$i] ?? ['bol_nota' => 0, 'bol_periodo' => null];
                                                 $notaMateriasPeriodos = !empty($datosPeriodos['bol_nota']) ? (float)$datosPeriodos['bol_nota'] : 0;
-                                                $notaMateriasPeriodos=round($notaMateriasPeriodos, $config['conf_decimales_notas']);
+                                                // Validar que la nota esté dentro del rango configurado
+                                                if($notaMateriasPeriodos > $notaMaxima){
+                                                    $notaMateriasPeriodos = $notaMaxima;
+                                                }
+                                                if($notaMateriasPeriodos < $notaMinima && $notaMateriasPeriodos > 0){
+                                                    $notaMateriasPeriodos = $notaMinima;
+                                                }
+                                                // Formatear nota de período con decimales configurados
+                                                $notaMateriasPeriodosFormateada = Boletin::notaDecimales($notaMateriasPeriodos);
                                                 $notaMateriasPeriodosTotal+=$notaMateriasPeriodos;
 
-                                                $notaMateriasPeriodosFinal=$notaMateriasPeriodos;
+                                                $notaMateriasPeriodosFinal=$notaMateriasPeriodosFormateada;
                                                 if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
                                                     // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                                    $notaPerRedondeada = number_format((float)$notaMateriasPeriodos, 1, '.', '');
+                                                    $notaPerRedondeada = number_format($notaMateriasPeriodos, $config['conf_decimales_notas'], '.', '');
                                                     $estiloNotaAreas = isset($notasCualitativasCache[$notaPerRedondeada]) 
                                                         ? ['notip_nombre' => $notasCualitativasCache[$notaPerRedondeada]] 
                                                         : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateriasPeriodos,$year);
@@ -395,12 +409,6 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                                         $estiloNotaAreas = ['notip_nombre' => ''];
                                                     }
                                                     $notaMateriasPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                                    if($notaMateriasPeriodos<10){
-                                                        $notaMateriasPeriodosFinal="Bajo";
-                                                    }
-                                                    if($notaMateriasPeriodos>50){
-                                                        $notaMateriasPeriodosFinal="Superior";
-                                                    }
                                                 }
                                                 if (empty($datosPeriodos['bol_periodo'])){
                                                     $ultimoPeriodo -= 1;
@@ -409,7 +417,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                     <td align="center" style="background: #9ed8ed"><?=$notaMateriasPeriodosFinal?></td>
                                     <?php
                                                 }else{
-                                                    $notaMateriaFinal = $notaMateria;
+                                                    $notaMateriaFinal = $notaMateriaFormateada;
                                                     if (empty($datosMaterias['bol_periodo'])){
                                                         $notaMateriaFinal = "";
                                                         $estiloNota['notip_nombre'] = "";
@@ -424,27 +432,26 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
                                         //ACOMULADO PARA LAS MATERIAS
                                         $notaAcomuladoMateria = ($ultimoPeriodo > 0) ? (($notaMateria + $notaMateriasPeriodosTotal) / $ultimoPeriodo) : 0;
-                                        $notaAcomuladoMateria = round((float)$notaAcomuladoMateria,$config['conf_decimales_notas']);
-                                        if(strlen($notaAcomuladoMateria) === 1 || $notaAcomuladoMateria == 10){
-                                            $notaAcomuladoMateria = $notaAcomuladoMateria.".0";
+                                        // Validar que el acumulado esté dentro del rango configurado
+                                        if($notaAcomuladoMateria > $notaMaxima){
+                                            $notaAcomuladoMateria = $notaMaxima;
                                         }
+                                        if($notaAcomuladoMateria < $notaMinima && $notaAcomuladoMateria > 0){
+                                            $notaAcomuladoMateria = $notaMinima;
+                                        }
+                                        // Formatear acumulado de materia con decimales configurados
+                                        $notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateria);
                                         // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                        $notaAcumRedondeada = number_format((float)$notaAcomuladoMateria, 1, '.', '');
+                                        $notaAcumRedondeada = number_format($notaAcomuladoMateria, $config['conf_decimales_notas'], '.', '');
                                         $estiloNotaAcomuladoMaterias = isset($notasCualitativasCache[$notaAcumRedondeada]) 
                                             ? ['notip_nombre' => $notasCualitativasCache[$notaAcumRedondeada]] 
                                             : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria,$year);
                                         if($estiloNotaAcomuladoMaterias === null){
                                             $estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
                                         }
-                                        if($notaAcomuladoMateria<10){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Bajo";
-                                        }
-                                        if($notaAcomuladoMateria>50){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Superior";
-                                        }
                                     ?>
                                     <td align="center"><?=$ausencia?></td>
-                                    <td align="center"><?=$notaAcomuladoMateria?></td>
+                                    <td align="center"><?=$notaAcomuladoMateriaFormateada?></td>
                                     <td align="center"><?=$estiloNotaAcomuladoMaterias['notip_nombre']?></td>
                                 </tr>
                     <?php
@@ -454,13 +461,13 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                             }
 
                             //NOTA PARA LAS AREAS
-                            if(!empty($datosMaterias['notaArea'])) $notaArea+=round($datosMaterias['notaArea'], $config['conf_decimales_notas']);
+                            if(!empty($datosMaterias['notaArea'])) $notaArea+=(float)$datosMaterias['notaArea'];
 
                         } //FIN WHILE DE LAS MATERIAS
                     ?>
                     <!--********SE IMPRIME LO REFERENTE A LAS AREAS*******-->
-                        <tr>
-                            <td <?=$background?>><?=$datosAreas['ar_nombre']?></td>
+                        <tr style="background: #EAEAEA;">
+                            <td><?=$datosAreas['ar_nombre']?></td>
                             <td align="center"><?=$ih?></td>
                             <?php
                                 $notaAreasPeriodosTotal=0;
@@ -472,7 +479,16 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                     if($i!=$periodoActual){
                                         // OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
                                         $datosAreasPeriodos = $notasAreasPeriodoMapa[$datosAreas['ar_id']][$i] ?? ['notaArea' => 0, 'bol_periodo' => null];
-                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? round($datosAreasPeriodos['notaArea'], $config['conf_decimales_notas']) : 0;
+                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? (float)$datosAreasPeriodos['notaArea'] : 0;
+                                        // Validar que la nota esté dentro del rango configurado
+                                        if($notaAreasPeriodos > $notaMaxima){
+                                            $notaAreasPeriodos = $notaMaxima;
+                                        }
+                                        if($notaAreasPeriodos < $notaMinima && $notaAreasPeriodos > 0){
+                                            $notaAreasPeriodos = $notaMinima;
+                                        }
+                                        // Formatear nota de área por período con decimales configurados
+                                        $notaAreasPeriodosFormateada = Boletin::notaDecimales($notaAreasPeriodos);
                                         $notaAreasPeriodosTotal+=$notaAreasPeriodos;
                                         switch($i){
                                             case 1:
@@ -490,10 +506,10 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                             $ultimoPeriodoAreas -= 1;
                                         }
 
-                                        $notaAreasPeriodosFinal=$notaAreasPeriodos;
+                                        $notaAreasPeriodosFinal=$notaAreasPeriodosFormateada;
                                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
                                             // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                            $notaAreaPerRedondeada = number_format((float)$notaAreasPeriodos, 1, '.', '');
+                                            $notaAreaPerRedondeada = number_format($notaAreasPeriodos, $config['conf_decimales_notas'], '.', '');
                                             $estiloNotaAreas = isset($notasCualitativasCache[$notaAreaPerRedondeada]) 
                                                 ? ['notip_nombre' => $notasCualitativasCache[$notaAreaPerRedondeada]] 
                                                 : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAreasPeriodos,$year);
@@ -501,33 +517,30 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                                 $estiloNotaAreas = ['notip_nombre' => ''];
                                             }
                                             $notaAreasPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                            if($notaAreasPeriodos<10){
-                                                $notaAreasPeriodosFinal="Bajo";
-                                            }
-                                            if($notaAreasPeriodos>50){
-                                                $notaAreasPeriodosFinal="Superior";
-                                            }
                                         }
                             ?>
-                            <td align="center" style="background: #9ed8ed"><?=$notaAreasPeriodosFinal?></td>
+                            <td align="center"><?=$notaAreasPeriodosFinal?></td>
                             <?php
                                     }else{
+                                        // Validar que la nota del área esté dentro del rango configurado
+                                        if($notaArea > $notaMaxima){
+                                            $notaArea = $notaMaxima;
+                                        }
+                                        if($notaArea < $notaMinima && $notaArea > 0){
+                                            $notaArea = $notaMinima;
+                                        }
+                                        // Formatear nota del área con decimales configurados
+                                        $notaAreaFormateada = Boletin::notaDecimales($notaArea);
                                         // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                        $notaAreaRedondeada = number_format((float)$notaArea, 1, '.', '');
+                                        $notaAreaRedondeada = number_format($notaArea, $config['conf_decimales_notas'], '.', '');
                                         $estiloNotaAreas = isset($notasCualitativasCache[$notaAreaRedondeada]) 
                                             ? ['notip_nombre' => $notasCualitativasCache[$notaAreaRedondeada]] 
                                             : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaArea,$year);
                                         if($estiloNotaAreas === null){
                                             $estiloNotaAreas = ['notip_nombre' => ''];
                                         }
-                                        if($notaArea<10){
-                                            $estiloNotaAreas['notip_nombre']="Bajo";
-                                        }
-                                        if($notaArea>50){
-                                            $estiloNotaAreas['notip_nombre']="Superior";
-                                        }
 
-                                        $notaAreaFinal = $notaArea;
+                                        $notaAreaFinal = $notaAreaFormateada;
                                         if (empty($notaArea) || $notaArea == 0){
                                             $notaAreaFinal = "";
                                             $estiloNotaAreas['notip_nombre'] = "";
@@ -542,27 +555,26 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                         
                                 //ACOMULADO PARA LAS AREAS
                                 $notaAcomuladoArea = ($ultimoPeriodoAreas > 0) ? (($notaArea + $notaAreasPeriodosTotal) / $ultimoPeriodoAreas) : 0;
-                                $notaAcomuladoArea = round((float)$notaAcomuladoArea,$config['conf_decimales_notas']);
-                                if(strlen($notaAcomuladoArea) === 1 || $notaAcomuladoArea == 10){
-                                    $notaAcomuladoArea = $notaAcomuladoArea.".0";
+                                // Validar que el acumulado esté dentro del rango configurado
+                                if($notaAcomuladoArea > $notaMaxima){
+                                    $notaAcomuladoArea = $notaMaxima;
                                 }
+                                if($notaAcomuladoArea < $notaMinima && $notaAcomuladoArea > 0){
+                                    $notaAcomuladoArea = $notaMinima;
+                                }
+                                // Formatear acumulado de área con decimales configurados
+                                $notaAcomuladoAreaFormateada = Boletin::notaDecimales($notaAcomuladoArea);
                                 // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                $notaAcumAreaRedondeada = number_format((float)$notaAcomuladoArea, 1, '.', '');
+                                $notaAcumAreaRedondeada = number_format($notaAcomuladoArea, $config['conf_decimales_notas'], '.', '');
                                 $estiloNotaAcomuladoAreas = isset($notasCualitativasCache[$notaAcumAreaRedondeada]) 
                                     ? ['notip_nombre' => $notasCualitativasCache[$notaAcumAreaRedondeada]] 
                                     : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea,$year);
                                 if($estiloNotaAcomuladoAreas === null){
                                     $estiloNotaAcomuladoAreas = ['notip_nombre' => ''];
                                 }
-                                if($notaAcomuladoArea<10){
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Bajo";
-                                }
-                                if($notaAcomuladoArea>50){
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Superior";
-                                }
                             ?>
                             <td align="center"><?=$ausencia?></td>
-                            <td align="center"><?=$notaAcomuladoArea?></td>
+                            <td align="center"><?=$notaAcomuladoAreaFormateada?></td>
                             <td align="center"><?=$estiloNotaAcomuladoAreas['notip_nombre']?></td>
                         </tr>
                     <?php
@@ -579,17 +591,22 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
                         //PROMEDIO DE LAS AREAS
                         $promedioGeneral += !empty($sumaPromedioGeneral) && !empty($numAreas) ? ($sumaPromedioGeneral/$numAreas) : 0;
-                        $promedioGeneral= round((float)$promedioGeneral,$config['conf_decimales_notas']);
+                        // Validar que el promedio general esté dentro del rango configurado
+                        if($promedioGeneral > $notaMaxima){
+                            $promedioGeneral = $notaMaxima;
+                        }
+                        if($promedioGeneral < $notaMinima && $promedioGeneral > 0){
+                            $promedioGeneral = $notaMinima;
+                        }
+                        // Formatear promedio general con decimales configurados
+                        $promedioGeneralFormateado = Boletin::notaDecimales($promedioGeneral);
                         // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                        $promedioGenRedondeado = number_format((float)$promedioGeneral, 1, '.', '');
+                        $promedioGenRedondeado = number_format($promedioGeneral, $config['conf_decimales_notas'], '.', '');
                         $estiloNotaPromedioGeneral = isset($notasCualitativasCache[$promedioGenRedondeado]) 
                             ? ['notip_nombre' => $notasCualitativasCache[$promedioGenRedondeado]] 
                             : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneral,$year);
                         if($estiloNotaPromedioGeneral === null){
                             $estiloNotaPromedioGeneral = ['notip_nombre' => ''];
-                        }
-                        if($promedioGeneral<10){
-                            $estiloNotaPromedioGeneral['notip_nombre']="Bajo";
                         }
                         
                     ?>
@@ -614,12 +631,20 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
                             //PROMEDIO DE LAS AREAS PERIODOS ANTERIORES
                             $promedioGeneralPeriodos = !empty($sumaPromedioGeneralPeriodos) && !empty($numAreas) ? ($sumaPromedioGeneralPeriodos/$numAreas) : 0;
-                            $promedioGeneralPeriodos= round($promedioGeneralPeriodos,$config['conf_decimales_notas']);
+                            // Validar que el promedio por período esté dentro del rango configurado
+                            if($promedioGeneralPeriodos > $notaMaxima){
+                                $promedioGeneralPeriodos = $notaMaxima;
+                            }
+                            if($promedioGeneralPeriodos < $notaMinima && $promedioGeneralPeriodos > 0){
+                                $promedioGeneralPeriodos = $notaMinima;
+                            }
+                            // Formatear promedio general por período con decimales configurados
+                            $promedioGeneralPeriodosFormateado = Boletin::notaDecimales($promedioGeneralPeriodos);
 
-                            $promedioGeneralPeriodosFinal=$promedioGeneralPeriodos;
+                            $promedioGeneralPeriodosFinal=$promedioGeneralPeriodosFormateado;
                             if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
                                 // OPTIMIZACIÓN: Usar cache de notas cualitativas
-                                $promedioGenPerRedondeado = number_format((float)$promedioGeneralPeriodos, 1, '.', '');
+                                $promedioGenPerRedondeado = number_format($promedioGeneralPeriodos, $config['conf_decimales_notas'], '.', '');
                                 $estiloNotaAreas = isset($notasCualitativasCache[$promedioGenPerRedondeado]) 
                                     ? ['notip_nombre' => $notasCualitativasCache[$promedioGenPerRedondeado]] 
                                     : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneralPeriodos,$year);
@@ -627,19 +652,13 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                     $estiloNotaAreas = ['notip_nombre' => ''];
                                 }
                                 $promedioGeneralPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                if($promedioGeneralPeriodos<10){
-                                    $promedioGeneralPeriodosFinal="Bajo";
-                                }
-                                if($promedioGeneralPeriodos>50){
-                                    $promedioGeneralPeriodosFinal="Superior";
-                                }
                             }
                     ?>
                     <td align="center"><?=$promedioGeneralPeriodosFinal;?></td>
                     <?php
                         }else{
                     ?>
-                    <td align="center"><?=$promedioGeneral;?></td>
+                    <td align="center"><?=$promedioGeneralFormateado;?></td>
                     <td align="center"><?=$estiloNotaPromedioGeneral['notip_nombre']?></td>
                     <?php
                         }
