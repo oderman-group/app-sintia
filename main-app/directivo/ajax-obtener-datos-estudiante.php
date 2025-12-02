@@ -1,6 +1,8 @@
 <?php
 error_reporting(E_ERROR | E_PARSE);
 ini_set('display_errors', 0);
+// Aumentar límite de memoria para este script
+ini_set('memory_limit', '256M');
 
 ob_clean();
 ob_start();
@@ -26,9 +28,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'ID de matrícula es obligatorio.']);
         }
         
-        // Consultar datos del estudiante con información académica y opciones generales
+        // OPTIMIZACIÓN: Seleccionar solo los campos necesarios en lugar de m.*
+        // Esto evita cargar campos BLOB o TEXT grandes que consumen memoria
         $sql = "SELECT 
-                    m.*,
+                    m.mat_id,
+                    m.mat_matricula,
+                    m.mat_nombres,
+                    m.mat_nombre2,
+                    m.mat_primer_apellido,
+                    m.mat_segundo_apellido,
+                    m.mat_documento,
+                    m.mat_fecha_nacimiento,
+                    m.mat_grado,
+                    m.mat_grupo,
+                    m.mat_genero,
+                    m.mat_estrato,
+                    m.mat_tipo_sangre,
+                    m.mat_estado_matricula,
+                    m.mat_acudiente,
+                    m.mat_direccion,
+                    m.mat_telefono,
+                    m.mat_celular,
+                    m.mat_email,
+                    m.mat_ciudad_nacimiento,
+                    m.mat_departamento_nacimiento,
+                    m.mat_pais_nacimiento,
+                    m.mat_ciudad_residencia,
+                    m.mat_departamento_residencia,
+                    m.mat_pais_residencia,
+                    m.mat_eps,
+                    m.mat_sisben,
+                    m.mat_discapacidad,
+                    m.mat_etnia,
+                    m.mat_resguardo,
+                    m.mat_situacion_victima,
+                    m.mat_religion,
+                    m.mat_lugar_expedicion,
+                    m.mat_lugar_nacimiento,
+                    m.mat_barrio,
+                    m.mat_inclusion,
                     g.gra_nombre,
                     gr.gru_nombre,
                     og_genero.ogen_nombre as genero_nombre,
@@ -43,7 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE m.mat_id = :mat_id 
                 AND m.mat_eliminado = 0
                 AND m.institucion = :institucion
-                AND m.year = :year";
+                AND m.year = :year
+                LIMIT 1";
         
         $stmt = $conexionPDO->prepare($sql);
         $stmt->bindParam(':mat_id', $matId, PDO::PARAM_STR);
