@@ -76,6 +76,8 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
         $promedioGeneralPeriodos = 0;
         $gradoActual = $matriculadosDatos['mat_grado'];
         $grupoActual = $matriculadosDatos['mat_grupo'];
+        // Inicializar variable $grupo con valor por defecto
+        $grupo = "";
         switch($matriculadosDatos["gru_id"]){
             case 1:
                 $grupo= "Uno";
@@ -93,6 +95,8 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
         //METODO QUE ME TRAE EL NOMBRE COMPLETO DEL ESTUDIANTE
         $nombreEstudainte=Estudiantes::NombreCompletoDelEstudiante($matriculadosDatos);
 	
+        // Inicializar variable $educacion con valor por defecto
+        $educacion = "";
         if($matriculadosDatos["mat_grado"]>=12 && $matriculadosDatos["mat_grado"]<=15) {$educacion = "PREESCOLAR";}	
         elseif($matriculadosDatos["mat_grado"]>=1 && $matriculadosDatos["mat_grado"]<=5) {$educacion = "PRIMARIA";}	
         elseif($matriculadosDatos["mat_grado"]>=6 && $matriculadosDatos["mat_grado"]<=9) {$educacion = "SECUNDARIA";}
@@ -102,7 +106,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 <!doctype html>
 <html class="no-js" lang="en">
     <head>
-        <title>Boletín</title>
+        <title>Boletín Formato 12</title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -198,30 +202,169 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                     $sumaPromedioGeneralPeriodo1=0;
                     $sumaPromedioGeneralPeriodo2=0;
                     $sumaPromedioGeneralPeriodo3=0;
+                    
+                    // ============================================
+                    // OPTIMIZACIONES: Pre-cargar datos para evitar N+1 queries
+                    // ============================================
+                    
+                    // OPTIMIZACIÓN 1: Pre-cargar todas las notas del boletín para este estudiante y todos los períodos
+                    $notasBoletinMapa = []; // [car_id][periodo] => datos_nota
+                    try {
+                        // Obtener todas las cargas del estudiante
+                        $idsCargas = [];
+                        mysqli_data_seek($consultaAreas, 0);
+                        while ($areaTemp = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)) {
+                            $consultaMateriasTemp = CargaAcademica::consultaMaterias($config, $periodoActual, $matriculadosDatos['mat_id'], $areaTemp['car_curso'], $areaTemp['car_grupo'], $areaTemp['ar_id'], $year);
+                            while ($materiaTemp = mysqli_fetch_array($consultaMateriasTemp, MYSQLI_BOTH)) {
+                                if (!in_array($materiaTemp['car_id'], $idsCargas)) {
+                                    $idsCargas[] = $materiaTemp['car_id'];
+                                }
+                            }
+                        }
+                        mysqli_data_seek($consultaAreas, 0);
+                        
+                        if (!empty($idsCargas)) {
+                            $sqlNotas = "SELECT bol_carga, bol_periodo, bol_nota
+                                         FROM " . BD_ACADEMICA . ".academico_boletin
+                                         WHERE bol_estudiante = ?
+                                           AND bol_carga IN (" . implode(',', array_map('intval', $idsCargas)) . ")
+                                           AND institucion = ?
+                                           AND year = ?
+                                           AND bol_periodo <= ?";
+                            $paramNotas = [
+                                $matriculadosDatos['mat_id'],
+                                $config['conf_id_institucion'],
+                                $year,
+                                $periodoActual
+                            ];
+                            $resNotas = BindSQL::prepararSQL($sqlNotas, $paramNotas);
+                            while ($rowNota = mysqli_fetch_array($resNotas, MYSQLI_BOTH)) {
+                                $idCarga = $rowNota['bol_carga'];
+                                $per = (int)$rowNota['bol_periodo'];
+                                if (!isset($notasBoletinMapa[$idCarga])) {
+                                    $notasBoletinMapa[$idCarga] = [];
+                                }
+                                $notasBoletinMapa[$idCarga][$per] = $rowNota;
+                            }
+                        }
+                    } catch (Exception $eNotas) {
+                        include("../compartido/error-catch-to-report.php");
+                    }
+                    
+                    // OPTIMIZACIÓN 2: Pre-cargar todas las ausencias para este estudiante
+                    $ausenciasMapa = []; // [materia_id][periodo] => suma_ausencias
+                    try {
+                        mysqli_data_seek($consultaAreas, 0);
+                        while ($areaTemp = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)) {
+                            $consultaMateriasTemp = CargaAcademica::consultaMaterias($config, $periodoActual, $matriculadosDatos['mat_id'], $areaTemp['car_curso'], $areaTemp['car_grupo'], $areaTemp['ar_id'], $year);
+                            while ($materiaTemp = mysqli_fetch_array($consultaMateriasTemp, MYSQLI_BOTH)) {
+                                $idMateria = $materiaTemp['car_materia'];
+                                if (!isset($ausenciasMapa[$idMateria])) {
+                                    $ausenciasMapa[$idMateria] = [];
+                                }
+                                for($j=1; $j<=$periodoActual; $j++){
+                                    if (!isset($ausenciasMapa[$idMateria][$j])) {
+                                        $ausTemp = Boletin::obtenerDatosAusencias($gradoActual, $idMateria, $j, $matriculadosDatos['mat_id'], $year);
+                                        $ausData = mysqli_fetch_array($ausTemp, MYSQLI_BOTH);
+                                        $ausenciasMapa[$idMateria][$j] = !empty($ausData[0]) ? (float)$ausData[0] : 0;
+                                    }
+                                }
+                            }
+                        }
+                        mysqli_data_seek($consultaAreas, 0);
+                    } catch (Exception $eAus) {
+                        include("../compartido/error-catch-to-report.php");
+                    }
+                    
+                    // OPTIMIZACIÓN 3: Pre-cargar notas de áreas por período
+                    $notasAreasPeriodoMapa = []; // [ar_id][periodo] => datos_nota
+                    try {
+                        mysqli_data_seek($consultaAreas, 0);
+                        while ($areaTemp = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)) {
+                            $arId = $areaTemp['ar_id'];
+                            if (!isset($notasAreasPeriodoMapa[$arId])) {
+                                $notasAreasPeriodoMapa[$arId] = [];
+                            }
+                            for($j=1; $j<$periodoActual; $j++){
+                                if (!isset($notasAreasPeriodoMapa[$arId][$j])) {
+                                    $areaPerTemp = CargaAcademica::consultaAreasPeriodos($config, $j, $matriculadosDatos['mat_id'], $arId, $year, $matriculadosDatos['mat_grupo']);
+                                    $areaPerData = mysqli_fetch_array($areaPerTemp, MYSQLI_BOTH);
+                                    $notasAreasPeriodoMapa[$arId][$j] = $areaPerData;
+                                }
+                            }
+                        }
+                        mysqli_data_seek($consultaAreas, 0);
+                    } catch (Exception $eArea) {
+                        include("../compartido/error-catch-to-report.php");
+                    }
+                    
+                    // OPTIMIZACIÓN 4: Pre-cargar cache de notas cualitativas
+                    $notasCualitativasCache = [];
+                    if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                        $consultaNotasTipo = mysqli_query($conexion, 
+                            "SELECT notip_desde, notip_hasta, notip_nombre 
+                             FROM ".BD_ACADEMICA.".academico_notas_tipos 
+                             WHERE notip_categoria='".mysqli_real_escape_string($conexion, $config['conf_notas_categoria'])."' 
+                             AND institucion=".(int)$config['conf_id_institucion']." 
+                             AND year='".mysqli_real_escape_string($conexion, $year)."' 
+                             ORDER BY notip_desde ASC");
+                        if($consultaNotasTipo){
+                            while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
+                                // Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
+                                for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
+                                    $key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
+                                    if(!isset($notasCualitativasCache[$key])){
+                                        $notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // OPTIMIZACIÓN 5: Cachear datos de usuarios (director y rector)
+                    $directorGrupo = null;
+                    $rector = null;
+                    
                     while($datosAreas = mysqli_fetch_array($consultaAreas, MYSQLI_BOTH)){
 
                         $consultaMaterias = CargaAcademica::consultaMaterias($config, $periodoActual, $matriculadosDatos['mat_id'], $datosAreas['car_curso'], $datosAreas['car_grupo'], $datosAreas['ar_id'], $year);
                         $notaArea=0;
                         $notaAreasPeriodos=0;
+                        // Definir rangos de notas una vez por área
+                        $notaMinima = isset($config['conf_nota_desde']) ? (float)$config['conf_nota_desde'] : 1.0;
+                        $notaMaxima = isset($config['conf_nota_hasta']) ? (float)$config['conf_nota_hasta'] : 5.0;
                         while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
                             //DIRECTOR DE GRUPO
                             if($datosMaterias["car_director_grupo"]==1){
                                 $idDirector=$datosMaterias["car_docente"];
+                                // OPTIMIZACIÓN: Cargar director solo una vez
+                                if($directorGrupo === null && !empty($idDirector)){
+                                    $directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
+                                }
                             }
 
                             //NOTA PARA LAS MATERIAS
-                            $notaMateria = !empty($datosMaterias['bol_nota']) ? round($datosMaterias['bol_nota'], $config['conf_decimales_notas']) : 0;
-                            $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateria,$year);
-                            if($notaMateria<10){
-                                $estiloNota['notip_nombre']="Bajo";
+                            $notaMateria = !empty($datosMaterias['bol_nota']) ? (float)$datosMaterias['bol_nota'] : 0;
+                            // Validar que la nota esté dentro del rango configurado
+                            if($notaMateria > $notaMaxima){
+                                $notaMateria = $notaMaxima;
                             }
-                            if($notaMateria>50){
-                                $estiloNota['notip_nombre']="Superior";
+                            if($notaMateria < $notaMinima && $notaMateria > 0){
+                                $notaMateria = $notaMinima;
+                            }
+                            // Formatear nota de la materia con decimales configurados
+                            $notaMateriaFormateada = Boletin::notaDecimales($notaMateria);
+                            // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                            $notaMateriaRedondeada = number_format($notaMateria, $config['conf_decimales_notas'], '.', '');
+                            $estiloNota = isset($notasCualitativasCache[$notaMateriaRedondeada]) 
+                                ? ['notip_nombre' => $notasCualitativasCache[$notaMateriaRedondeada]] 
+                                : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateria,$year);
+                            if($estiloNota === null){
+                                $estiloNota = ['notip_nombre' => ''];
                             }
 
-                            //AUSENCIAS EN ESTA MATERIA
-                            $consultaDatosAusencias = Boletin::obtenerDatosAusencias($gradoActual, $datosMaterias['car_materia'], $periodoActual, $matriculadosDatos['mat_id'], $year);
-                            $datosAusencias = mysqli_fetch_array($consultaDatosAusencias, MYSQLI_BOTH);
+                            // OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
+                            $datosAusencias = [0 => ($ausenciasMapa[$datosMaterias['car_materia']][$periodoActual] ?? 0)];
                             $ausencia="";
 
                             if ($datosAusencias[0]>0) {
@@ -241,21 +384,31 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                         $ultimoPeriodo = $config["conf_periodos_maximos"];
                                         for($i=1;$i<=$periodoActual;$i++){
                                             if($i!=$periodoActual){
-                                                $datosPeriodos = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $matriculadosDatos['mat_id'], $datosMaterias['car_id'], $year);
-                                                $notaMateriasPeriodos=$datosPeriodos['bol_nota'];
-                                                $notaMateriasPeriodos=round($notaMateriasPeriodos, $config['conf_decimales_notas']);
+                                                // OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
+                                                $datosPeriodos = $notasBoletinMapa[$datosMaterias['car_id']][$i] ?? ['bol_nota' => 0, 'bol_periodo' => null];
+                                                $notaMateriasPeriodos = !empty($datosPeriodos['bol_nota']) ? (float)$datosPeriodos['bol_nota'] : 0;
+                                                // Validar que la nota esté dentro del rango configurado
+                                                if($notaMateriasPeriodos > $notaMaxima){
+                                                    $notaMateriasPeriodos = $notaMaxima;
+                                                }
+                                                if($notaMateriasPeriodos < $notaMinima && $notaMateriasPeriodos > 0){
+                                                    $notaMateriasPeriodos = $notaMinima;
+                                                }
+                                                // Formatear nota de período con decimales configurados
+                                                $notaMateriasPeriodosFormateada = Boletin::notaDecimales($notaMateriasPeriodos);
                                                 $notaMateriasPeriodosTotal+=$notaMateriasPeriodos;
 
-                                                $notaMateriasPeriodosFinal=$notaMateriasPeriodos;
+                                                $notaMateriasPeriodosFinal=$notaMateriasPeriodosFormateada;
                                                 if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                                    $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateriasPeriodos,$year);
+                                                    // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                                    $notaPerRedondeada = number_format($notaMateriasPeriodos, $config['conf_decimales_notas'], '.', '');
+                                                    $estiloNotaAreas = isset($notasCualitativasCache[$notaPerRedondeada]) 
+                                                        ? ['notip_nombre' => $notasCualitativasCache[$notaPerRedondeada]] 
+                                                        : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateriasPeriodos,$year);
+                                                    if($estiloNotaAreas === null){
+                                                        $estiloNotaAreas = ['notip_nombre' => ''];
+                                                    }
                                                     $notaMateriasPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                                    if($notaMateriasPeriodos<10){
-                                                        $notaMateriasPeriodosFinal="Bajo";
-                                                    }
-                                                    if($notaMateriasPeriodos>50){
-                                                        $notaMateriasPeriodosFinal="Superior";
-                                                    }
                                                 }
                                                 if (empty($datosPeriodos['bol_periodo'])){
                                                     $ultimoPeriodo -= 1;
@@ -264,7 +417,7 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                     <td align="center" style="background: #9ed8ed"><?=$notaMateriasPeriodosFinal?></td>
                                     <?php
                                                 }else{
-                                                    $notaMateriaFinal = $notaMateria;
+                                                    $notaMateriaFinal = $notaMateriaFormateada;
                                                     if (empty($datosMaterias['bol_periodo'])){
                                                         $notaMateriaFinal = "";
                                                         $estiloNota['notip_nombre'] = "";
@@ -278,21 +431,27 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                         }//FIN FOR
 
                                         //ACOMULADO PARA LAS MATERIAS
-                                        $notaAcomuladoMateria = ($notaMateria + $notaMateriasPeriodosTotal) / $ultimoPeriodo;
-                                        $notaAcomuladoMateria = round($notaAcomuladoMateria,$config['conf_decimales_notas']);
-                                        if(strlen($notaAcomuladoMateria) === 1 || $notaAcomuladoMateria == 10){
-                                            $notaAcomuladoMateria = $notaAcomuladoMateria.".0";
+                                        $notaAcomuladoMateria = ($ultimoPeriodo > 0) ? (($notaMateria + $notaMateriasPeriodosTotal) / $ultimoPeriodo) : 0;
+                                        // Validar que el acumulado esté dentro del rango configurado
+                                        if($notaAcomuladoMateria > $notaMaxima){
+                                            $notaAcomuladoMateria = $notaMaxima;
                                         }
-                                        $estiloNotaAcomuladoMaterias = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria,$year);
-                                        if($notaAcomuladoMateria<10){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Bajo";
+                                        if($notaAcomuladoMateria < $notaMinima && $notaAcomuladoMateria > 0){
+                                            $notaAcomuladoMateria = $notaMinima;
                                         }
-                                        if($notaAcomuladoMateria>50){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Superior";
+                                        // Formatear acumulado de materia con decimales configurados
+                                        $notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateria);
+                                        // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                        $notaAcumRedondeada = number_format($notaAcomuladoMateria, $config['conf_decimales_notas'], '.', '');
+                                        $estiloNotaAcomuladoMaterias = isset($notasCualitativasCache[$notaAcumRedondeada]) 
+                                            ? ['notip_nombre' => $notasCualitativasCache[$notaAcumRedondeada]] 
+                                            : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria,$year);
+                                        if($estiloNotaAcomuladoMaterias === null){
+                                            $estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
                                         }
                                     ?>
                                     <td align="center"><?=$ausencia?></td>
-                                    <td align="center"><?=$notaAcomuladoMateria?></td>
+                                    <td align="center"><?=$notaAcomuladoMateriaFormateada?></td>
                                     <td align="center"><?=$estiloNotaAcomuladoMaterias['notip_nombre']?></td>
                                 </tr>
                     <?php
@@ -302,13 +461,13 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                             }
 
                             //NOTA PARA LAS AREAS
-                            if(!empty($datosMaterias['notaArea'])) $notaArea+=round($datosMaterias['notaArea'], $config['conf_decimales_notas']);
+                            if(!empty($datosMaterias['notaArea'])) $notaArea+=(float)$datosMaterias['notaArea'];
 
                         } //FIN WHILE DE LAS MATERIAS
                     ?>
                     <!--********SE IMPRIME LO REFERENTE A LAS AREAS*******-->
-                        <tr>
-                            <td <?=$background?>><?=$datosAreas['ar_nombre']?></td>
+                        <tr style="background: #EAEAEA;">
+                            <td><?=$datosAreas['ar_nombre']?></td>
                             <td align="center"><?=$ih?></td>
                             <?php
                                 $notaAreasPeriodosTotal=0;
@@ -318,9 +477,18 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                 $ultimoPeriodoAreas = $config["conf_periodos_maximos"];
                                 for($i=1;$i<=$periodoActual;$i++){
                                     if($i!=$periodoActual){
-                                        $consultaAreasPeriodos = CargaAcademica::consultaAreasPeriodos($config, $i, $matriculadosDatos['mat_id'], $datosAreas['ar_id'], $year, $matriculadosDatos['mat_grupo']);
-                                        $datosAreasPeriodos=mysqli_fetch_array($consultaAreasPeriodos, MYSQLI_BOTH);
-                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? round($datosAreasPeriodos['notaArea'], $config['conf_decimales_notas']) : 0;
+                                        // OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
+                                        $datosAreasPeriodos = $notasAreasPeriodoMapa[$datosAreas['ar_id']][$i] ?? ['notaArea' => 0, 'bol_periodo' => null];
+                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? (float)$datosAreasPeriodos['notaArea'] : 0;
+                                        // Validar que la nota esté dentro del rango configurado
+                                        if($notaAreasPeriodos > $notaMaxima){
+                                            $notaAreasPeriodos = $notaMaxima;
+                                        }
+                                        if($notaAreasPeriodos < $notaMinima && $notaAreasPeriodos > 0){
+                                            $notaAreasPeriodos = $notaMinima;
+                                        }
+                                        // Formatear nota de área por período con decimales configurados
+                                        $notaAreasPeriodosFormateada = Boletin::notaDecimales($notaAreasPeriodos);
                                         $notaAreasPeriodosTotal+=$notaAreasPeriodos;
                                         switch($i){
                                             case 1:
@@ -338,30 +506,41 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                             $ultimoPeriodoAreas -= 1;
                                         }
 
-                                        $notaAreasPeriodosFinal=$notaAreasPeriodos;
+                                        $notaAreasPeriodosFinal=$notaAreasPeriodosFormateada;
                                         if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                            $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAreasPeriodos,$year);
+                                            // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                            $notaAreaPerRedondeada = number_format($notaAreasPeriodos, $config['conf_decimales_notas'], '.', '');
+                                            $estiloNotaAreas = isset($notasCualitativasCache[$notaAreaPerRedondeada]) 
+                                                ? ['notip_nombre' => $notasCualitativasCache[$notaAreaPerRedondeada]] 
+                                                : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAreasPeriodos,$year);
+                                            if($estiloNotaAreas === null){
+                                                $estiloNotaAreas = ['notip_nombre' => ''];
+                                            }
                                             $notaAreasPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                            if($notaAreasPeriodos<10){
-                                                $notaAreasPeriodosFinal="Bajo";
-                                            }
-                                            if($notaAreasPeriodos>50){
-                                                $notaAreasPeriodosFinal="Superior";
-                                            }
                                         }
                             ?>
-                            <td align="center" style="background: #9ed8ed"><?=$notaAreasPeriodosFinal?></td>
+                            <td align="center"><?=$notaAreasPeriodosFinal?></td>
                             <?php
                                     }else{
-                                        $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaArea,$year);
-                                        if($notaArea<10){
-                                            $estiloNotaAreas['notip_nombre']="Bajo";
+                                        // Validar que la nota del área esté dentro del rango configurado
+                                        if($notaArea > $notaMaxima){
+                                            $notaArea = $notaMaxima;
                                         }
-                                        if($notaArea>50){
-                                            $estiloNotaAreas['notip_nombre']="Superior";
+                                        if($notaArea < $notaMinima && $notaArea > 0){
+                                            $notaArea = $notaMinima;
+                                        }
+                                        // Formatear nota del área con decimales configurados
+                                        $notaAreaFormateada = Boletin::notaDecimales($notaArea);
+                                        // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                        $notaAreaRedondeada = number_format($notaArea, $config['conf_decimales_notas'], '.', '');
+                                        $estiloNotaAreas = isset($notasCualitativasCache[$notaAreaRedondeada]) 
+                                            ? ['notip_nombre' => $notasCualitativasCache[$notaAreaRedondeada]] 
+                                            : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaArea,$year);
+                                        if($estiloNotaAreas === null){
+                                            $estiloNotaAreas = ['notip_nombre' => ''];
                                         }
 
-                                        $notaAreaFinal = $notaArea;
+                                        $notaAreaFinal = $notaAreaFormateada;
                                         if (empty($notaArea) || $notaArea == 0){
                                             $notaAreaFinal = "";
                                             $estiloNotaAreas['notip_nombre'] = "";
@@ -375,21 +554,27 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                                 }
                         
                                 //ACOMULADO PARA LAS AREAS
-                                $notaAcomuladoArea = ($notaArea + $notaAreasPeriodosTotal) / $ultimoPeriodoAreas;
-                                $notaAcomuladoArea = round($notaAcomuladoArea,$config['conf_decimales_notas']);
-                                if(strlen($notaAcomuladoArea) === 1 || $notaAcomuladoArea == 10){
-                                    $notaAcomuladoArea = $notaAcomuladoArea.".0";
+                                $notaAcomuladoArea = ($ultimoPeriodoAreas > 0) ? (($notaArea + $notaAreasPeriodosTotal) / $ultimoPeriodoAreas) : 0;
+                                // Validar que el acumulado esté dentro del rango configurado
+                                if($notaAcomuladoArea > $notaMaxima){
+                                    $notaAcomuladoArea = $notaMaxima;
                                 }
-                                $estiloNotaAcomuladoAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea,$year);
-                                if($notaAcomuladoArea<10){
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Bajo";
+                                if($notaAcomuladoArea < $notaMinima && $notaAcomuladoArea > 0){
+                                    $notaAcomuladoArea = $notaMinima;
                                 }
-                                if($notaAcomuladoArea>50){
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Superior";
+                                // Formatear acumulado de área con decimales configurados
+                                $notaAcomuladoAreaFormateada = Boletin::notaDecimales($notaAcomuladoArea);
+                                // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                $notaAcumAreaRedondeada = number_format($notaAcomuladoArea, $config['conf_decimales_notas'], '.', '');
+                                $estiloNotaAcomuladoAreas = isset($notasCualitativasCache[$notaAcumAreaRedondeada]) 
+                                    ? ['notip_nombre' => $notasCualitativasCache[$notaAcumAreaRedondeada]] 
+                                    : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea,$year);
+                                if($estiloNotaAcomuladoAreas === null){
+                                    $estiloNotaAcomuladoAreas = ['notip_nombre' => ''];
                                 }
                             ?>
                             <td align="center"><?=$ausencia?></td>
-                            <td align="center"><?=$notaAcomuladoArea?></td>
+                            <td align="center"><?=$notaAcomuladoAreaFormateada?></td>
                             <td align="center"><?=$estiloNotaAcomuladoAreas['notip_nombre']?></td>
                         </tr>
                     <?php
@@ -406,10 +591,22 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
                         //PROMEDIO DE LAS AREAS
                         $promedioGeneral += !empty($sumaPromedioGeneral) && !empty($numAreas) ? ($sumaPromedioGeneral/$numAreas) : 0;
-                        $promedioGeneral= round($promedioGeneral,$config['conf_decimales_notas']);
-                        $estiloNotaPromedioGeneral = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneral,$year);
-                        if($promedioGeneral<10){
-                            $estiloNotaPromedioGeneral['notip_nombre']="Bajo";
+                        // Validar que el promedio general esté dentro del rango configurado
+                        if($promedioGeneral > $notaMaxima){
+                            $promedioGeneral = $notaMaxima;
+                        }
+                        if($promedioGeneral < $notaMinima && $promedioGeneral > 0){
+                            $promedioGeneral = $notaMinima;
+                        }
+                        // Formatear promedio general con decimales configurados
+                        $promedioGeneralFormateado = Boletin::notaDecimales($promedioGeneral);
+                        // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                        $promedioGenRedondeado = number_format($promedioGeneral, $config['conf_decimales_notas'], '.', '');
+                        $estiloNotaPromedioGeneral = isset($notasCualitativasCache[$promedioGenRedondeado]) 
+                            ? ['notip_nombre' => $notasCualitativasCache[$promedioGenRedondeado]] 
+                            : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneral,$year);
+                        if($estiloNotaPromedioGeneral === null){
+                            $estiloNotaPromedioGeneral = ['notip_nombre' => ''];
                         }
                         
                     ?>
@@ -434,25 +631,34 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
                             //PROMEDIO DE LAS AREAS PERIODOS ANTERIORES
                             $promedioGeneralPeriodos = !empty($sumaPromedioGeneralPeriodos) && !empty($numAreas) ? ($sumaPromedioGeneralPeriodos/$numAreas) : 0;
-                            $promedioGeneralPeriodos= round($promedioGeneralPeriodos,$config['conf_decimales_notas']);
+                            // Validar que el promedio por período esté dentro del rango configurado
+                            if($promedioGeneralPeriodos > $notaMaxima){
+                                $promedioGeneralPeriodos = $notaMaxima;
+                            }
+                            if($promedioGeneralPeriodos < $notaMinima && $promedioGeneralPeriodos > 0){
+                                $promedioGeneralPeriodos = $notaMinima;
+                            }
+                            // Formatear promedio general por período con decimales configurados
+                            $promedioGeneralPeriodosFormateado = Boletin::notaDecimales($promedioGeneralPeriodos);
 
-                            $promedioGeneralPeriodosFinal=$promedioGeneralPeriodos;
+                            $promedioGeneralPeriodosFinal=$promedioGeneralPeriodosFormateado;
                             if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-                                $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneralPeriodos,$year);
+                                // OPTIMIZACIÓN: Usar cache de notas cualitativas
+                                $promedioGenPerRedondeado = number_format($promedioGeneralPeriodos, $config['conf_decimales_notas'], '.', '');
+                                $estiloNotaAreas = isset($notasCualitativasCache[$promedioGenPerRedondeado]) 
+                                    ? ['notip_nombre' => $notasCualitativasCache[$promedioGenPerRedondeado]] 
+                                    : Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneralPeriodos,$year);
+                                if($estiloNotaAreas === null){
+                                    $estiloNotaAreas = ['notip_nombre' => ''];
+                                }
                                 $promedioGeneralPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                if($promedioGeneralPeriodos<10){
-                                    $promedioGeneralPeriodosFinal="Bajo";
-                                }
-                                if($promedioGeneralPeriodos>50){
-                                    $promedioGeneralPeriodosFinal="Superior";
-                                }
                             }
                     ?>
                     <td align="center"><?=$promedioGeneralPeriodosFinal;?></td>
                     <?php
                         }else{
                     ?>
-                    <td align="center"><?=$promedioGeneral;?></td>
+                    <td align="center"><?=$promedioGeneralFormateado;?></td>
                     <td align="center"><?=$estiloNotaPromedioGeneral['notip_nombre']?></td>
                     <?php
                         }
@@ -518,16 +724,44 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                 <tr style="color:#000;">
                     <td style="padding-left: 20px;">
                         <?php 
-                            $cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='".$matriculadosDatos['mat_id']."' AND dn_periodo='".$periodoActual."' AND institucion={$config['conf_id_institucion']} AND year={$year}");
+                            // OPTIMIZACIÓN: Usar prepared statements para consulta de disciplina
+                            $idEstudianteEsc = mysqli_real_escape_string($conexion, $matriculadosDatos['mat_id']);
+                            $periodoEsc = (int)$periodoActual;
+                            $cndisiplina = mysqli_query($conexion, "SELECT * FROM ".BD_DISCIPLINA.".disiplina_nota WHERE dn_cod_estudiante='{$idEstudianteEsc}' AND dn_periodo='{$periodoEsc}' AND institucion=".(int)$config['conf_id_institucion']." AND year='".mysqli_real_escape_string($conexion, $year)."'");
+                            
+                            // OPTIMIZACIÓN: Pre-cargar observaciones de disciplina
+                            $observacionesDisciplinaMapa = []; // [id_observacion] => descripcion
+                            if($config['conf_observaciones_multiples_comportamiento'] == '1'){
+                                mysqli_data_seek($cndisiplina, 0);
+                                while($rndisiplinaTemp=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
+                                    if(!empty($rndisiplinaTemp['dn_observacion'])){
+                                        $explode=explode(",",$rndisiplinaTemp['dn_observacion']);
+                                        foreach($explode as $idObs){
+                                            $idObs = trim($idObs);
+                                            if(!empty($idObs) && !isset($observacionesDisciplinaMapa[$idObs])){
+                                                $obsTemp = Disciplina::traerDatosObservacion($config, $idObs, "obser_descripcion");
+                                                if($obsTemp){
+                                                    $observacionesDisciplinaMapa[$idObs] = $obsTemp['obser_descripcion'];
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                mysqli_data_seek($cndisiplina, 0);
+                            }
+                            
                             while($rndisiplina=mysqli_fetch_array($cndisiplina, MYSQLI_BOTH)){
-
                                 if(!empty($rndisiplina['dn_observacion'])){
                                     if($config['conf_observaciones_multiples_comportamiento'] == '1'){
                                         $explode=explode(",",$rndisiplina['dn_observacion']);
                                         $numDatos=count($explode);
                                         for($i=0;$i<$numDatos;$i++){
-                                            $observaciones = Disciplina::traerDatosObservacion($config, $explode[$i], "obser_descripcion");
-                                            echo "- " . $observaciones['obser_descripcion'] . "<br> ";
+                                            $idObs = trim($explode[$i]);
+                                            // OPTIMIZACIÓN: Usar mapa pre-cargado
+                                            $descripcion = $observacionesDisciplinaMapa[$idObs] ?? '';
+                                            if(!empty($descripcion)){
+                                                echo "- " . $descripcion . "<br> ";
+                                            }
                                         }
                                     }else{
                                         echo "- ".$rndisiplina["dn_observacion"]."<br>";
@@ -560,6 +794,26 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
             <?php
             $conCargasDos = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $year);
+            
+            // OPTIMIZACIÓN: Pre-cargar indicadores para la segunda página
+            $indicadoresSegundaPaginaMapa = []; // [car_id] => array de indicadores
+            try {
+                mysqli_data_seek($conCargasDos, 0);
+                while ($filaTemp = mysqli_fetch_array($conCargasDos, MYSQLI_BOTH)) {
+                    $idCarga = $filaTemp['car_id'];
+                    if (!isset($indicadoresSegundaPaginaMapa[$idCarga])) {
+                        $indicadoresSegundaPaginaMapa[$idCarga] = [];
+                        $indicadoresTemp = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $idCarga, $periodoActual, $year);
+                        while ($indTemp = mysqli_fetch_array($indicadoresTemp, MYSQLI_BOTH)) {
+                            $indicadoresSegundaPaginaMapa[$idCarga][] = $indTemp;
+                        }
+                    }
+                }
+                mysqli_data_seek($conCargasDos, 0);
+            } catch (Exception $eInd) {
+                include("../compartido/error-catch-to-report.php");
+            }
+            
             while ($datosCargasDos = mysqli_fetch_array($conCargasDos, MYSQLI_BOTH)) {
 
                 
@@ -570,9 +824,9 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
                         <td>
                         
                             <?php
-                            //INDICADORES
-		                    $indicadores = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $datosCargasDos['car_id'], $periodoActual, $year);
-                            while ($indicador = mysqli_fetch_array($indicadores, MYSQLI_BOTH)) {
+                            // OPTIMIZACIÓN: Obtener indicadores del mapa pre-cargado
+                            $indicadores = $indicadoresSegundaPaginaMapa[$datosCargasDos['car_id']] ?? [];
+                            foreach ($indicadores as $indicador) {
                             ?>
                    
                         <?= $indicador['ind_nombre']; ?><br>
@@ -597,37 +851,63 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
             <tr>
                 <td align="center">
                     <?php
-                        $directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
-                        $nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
-                        if(!empty($directorGrupo["uss_firma"])){
-                            echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+                        // OPTIMIZACIÓN: Usar director cacheado (ya se cargó arriba)
+                        if($directorGrupo === null && !empty($idDirector)){
+                            $directorGrupo = Usuarios::obtenerDatosUsuario($idDirector);
+                        }
+                        if($directorGrupo){
+                            $nombreDirectorGrupo = UsuariosPadre::nombreCompletoDelUsuario($directorGrupo);
+                            if(!empty($directorGrupo["uss_firma"])){
+                                echo '<img src="../files/fotos/'.$directorGrupo["uss_firma"].'" width="100"><br>';
+                            }else{
+                                echo '<p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>';
+                            }
+                            echo '<p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                '.$nombreDirectorGrupo.'<br>
+                                Director(a) de grupo';
                         }else{
                             echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
-                                <p>&nbsp;</p>';
+                                <p>&nbsp;</p>
+                                <p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                <br>
+                                Director(a) de grupo';
                         }
                     ?>
-                    <p style="height:0px;"></p>_________________________________<br>
-                    <p>&nbsp;</p>
-                    <?=$nombreDirectorGrupo?><br>
-                    Director(a) de grupo
                 </td>
                 <td align="center">
                     <?php
-                        $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
-                        $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-                        if(!empty($rector["uss_firma"])){
-                            echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+                        // OPTIMIZACIÓN: Cargar rector solo una vez
+                        if($rector === null && !empty($informacion_inst["info_rector"])){
+                            $rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+                        }
+                        if($rector){
+                            $nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+                            if(!empty($rector["uss_firma"])){
+                                echo '<img src="../files/fotos/'.$rector["uss_firma"].'" width="100"><br>';
+                            }else{
+                                echo '<p>&nbsp;</p>
+                                    <p>&nbsp;</p>
+                                    <p>&nbsp;</p>';
+                            }
+                            echo '<p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                '.$nombreRector.'<br>
+                                Rector(a)';
                         }else{
                             echo '<p>&nbsp;</p>
                                 <p>&nbsp;</p>
-                                <p>&nbsp;</p>';
+                                <p>&nbsp;</p>
+                                <p style="height:0px;"></p>_________________________________<br>
+                                <p>&nbsp;</p>
+                                <br>
+                                Rector(a)';
                         }
                     ?>
-                    <p style="height:0px;"></p>_________________________________<br>
-                    <p>&nbsp;</p>
-                    <?=$nombreRector?><br>
-                    Rector(a)
                 </td>
             </tr>
         </table>

@@ -93,20 +93,64 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 				<label class="col-sm-3 control-label">Estado Matricula</label>
 				<div class="col-sm-9">
 					<select class="form-control" name="matestM" <?= $disabledPermiso; ?>>
-						<option value="">Seleccione una opción</option>
-						<?php foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
-							// Estados EN_INSCRIPCION (5) y CANCELADO (3) solo lectura - se gestionan desde otros lugares
-							$esEstadoRestringido = ($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO);
-							$disabledEstado = ($esEstadoRestringido && $datosEstudianteActual["mat_estado_matricula"] != $clave) ? 'disabled' : '';
+						<?php 
+						$estadoActualEstudiante = (int)$datosEstudianteActual["mat_estado_matricula"];
+						foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
+							$estadoNuevo = (int)$clave;
+							
+							// Usar el método centralizado para validar el cambio de estado
+							$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActualEstudiante, $estadoNuevo);
+							
+							// Determinar si la opción debe estar deshabilitada
+							$disabledEstado = '';
+							if (!$validacion['valido']) {
+								// Si el cambio no es válido, deshabilitar la opción (excepto si es el estado actual)
+								if ($estadoActualEstudiante != $estadoNuevo) {
+									$disabledEstado = 'disabled';
+								}
+							}
+							
+							// Estados EN_INSCRIPCION (5) y CANCELADO (3) solo lectura si no es el estado actual
+							if (($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO) 
+								&& $datosEstudianteActual["mat_estado_matricula"] != $clave) {
+								$disabledEstado = 'disabled';
+							}
+							
+							// Si es el estado actual y está restringido, aplicar disabled de campos académicos
 							$selected = ($datosEstudianteActual["mat_estado_matricula"] == $clave) ? 'selected' : '';
-							$disabledFinal = ($esEstadoRestringido && $datosEstudianteActual["mat_estado_matricula"] == $clave) ? $disabledCamposAcademicos : $disabledEstado;
+							$disabledFinal = '';
+							if (($clave == Estudiantes::ESTADO_EN_INSCRIPCION || $clave == Estudiantes::ESTADO_CANCELADO) 
+								&& $datosEstudianteActual["mat_estado_matricula"] == $clave) {
+								$disabledFinal = $disabledCamposAcademicos;
+							} else {
+								$disabledFinal = $disabledEstado;
+							}
 						?>
 							<option value="<?= $clave; ?>" <?= $selected; ?> <?= $disabledFinal; ?>><?= $valor; ?></option>
 						<?php } ?>
 					</select>
-					<?php if (($datosEstudianteActual["mat_estado_matricula"] == Estudiantes::ESTADO_EN_INSCRIPCION || $datosEstudianteActual["mat_estado_matricula"] == Estudiantes::ESTADO_CANCELADO) && empty($disabledPermiso)) { ?>
+					<?php 
+					// Mostrar mensajes informativos según el estado actual
+					$estadoActual = $datosEstudianteActual["mat_estado_matricula"];
+					
+					if (($estadoActual == Estudiantes::ESTADO_EN_INSCRIPCION || $estadoActual == Estudiantes::ESTADO_CANCELADO) && empty($disabledPermiso)) { ?>
 						<small class="form-text text-muted">
 							<i class="fa fa-info-circle"></i> Este estado se gestiona desde otros módulos del sistema y no puede ser modificado desde aquí.
+						</small>
+					<?php } ?>
+					<?php if ($estadoActual == Estudiantes::ESTADO_ASISTENTE && empty($disabledPermiso)) { ?>
+						<small class="form-text text-muted">
+							<i class="fa fa-info-circle"></i> Un estudiante en estado "Asistente" solo puede cambiar a estado "Matriculado".
+						</small>
+					<?php } ?>
+					<?php if ($estadoActual == Estudiantes::ESTADO_NO_MATRICULADO && empty($disabledPermiso)) { ?>
+						<small class="form-text text-muted">
+							<i class="fa fa-info-circle"></i> Un estudiante en estado "No matriculado" solo puede cambiar a estado "Matriculado".
+						</small>
+					<?php } ?>
+					<?php if ($estadoActual == Estudiantes::ESTADO_MATRICULADO && empty($disabledPermiso)) { ?>
+						<small class="form-text text-muted">
+							<i class="fa fa-info-circle"></i> Las opciones "No matriculado" y "Asistente" aparecen deshabilitadas (solo lectura) porque el estudiante está en estado "Matriculado". Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".
 						</small>
 					<?php } ?>
 				</div>

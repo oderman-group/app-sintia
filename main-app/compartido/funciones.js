@@ -701,31 +701,76 @@ function cambiarEstadoMatricula(data) {
         5: { clase: 'badge badge-info', texto: 'En inscripción' }
     };
 
-    // Alternar entre Matriculado (1) y No Matriculado (4)
-    if(estudiantesPorEstados[data.id_estudiante] == 1) {
-        estudiantesPorEstados[data.id_estudiante] = 4;
+    const estadoActual = parseInt(estudiantesPorEstados[data.id_estudiante]);
+    let nuevoEstado = null;
+
+    // Determinar el siguiente estado válido según las reglas:
+    // - En Inscripción (5): No puede modificarse
+    // - Asistente (2): Solo puede cambiar a Matriculado (1)
+    // - No matriculado (4): Solo puede cambiar a Matriculado (1)
+    // - Matriculado (1): Puede cambiar a otros estados, pero no a No matriculado (4)
+    // - Cancelado (3): Se gestiona automáticamente
+
+    if (estadoActual === 5) {
+        // En Inscripción: No puede modificarse
+        alert('El estado "En inscripción" no puede modificarse. Se gestiona automáticamente desde el módulo de admisiones.');
+        return;
+    }
+
+    if (estadoActual === 3) {
+        // Cancelado: Se gestiona automáticamente
+        alert('El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.');
+        return;
+    }
+
+    if (estadoActual === 2) {
+        // Asistente: Solo puede cambiar a Matriculado (1)
+        nuevoEstado = 1;
+    } else if (estadoActual === 4) {
+        // No matriculado: Solo puede cambiar a Matriculado (1)
+        nuevoEstado = 1;
+    } else if (estadoActual === 1) {
+        // Matriculado: NO puede cambiar a Asistente (2) ni a No matriculado (4)
+        // No se permite cambiar desde Matriculado a otros estados desde aquí
+        alert('El estado "Matriculado" no puede cambiarse desde aquí. Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".');
+        return;
     } else {
-        estudiantesPorEstados[data.id_estudiante] = 1;
+        // Para cualquier otro estado, intentar cambiar a Matriculado
+        nuevoEstado = 1;
     }
 
     // Actualizar el badge con el nuevo estado
-    const nuevoEstado = estudiantesPorEstados[data.id_estudiante];
     const estadoInfo = estadosInfo[nuevoEstado];
     
     badge.className = estadoInfo.clase;
     badge.textContent = estadoInfo.texto;
+    estudiantesPorEstados[data.id_estudiante] = nuevoEstado;
 
-    let datos = "nuevoEstado="+estudiantesPorEstados[data.id_estudiante]+
+    let datos = "nuevoEstado="+nuevoEstado+
                 "&idEstudiante="+data.id_estudiante;
 
     $.ajax({
         type: "POST",
         url: "ajax-cambiar-estado-matricula.php",
         data: datos,
-        success: function(data){
-            $('#respuestaCambiarEstado').empty().hide().html(data).show(1);
+        success: function(response){
+            $('#respuestaCambiarEstado').empty().hide().html(response).show(1);
+        },
+        error: function(xhr, status, error) {
+            // Si hay error, revertir el cambio visual
+            const estadoInfoActual = estadosInfo[estadoActual];
+            badge.className = estadoInfoActual.clase;
+            badge.textContent = estadoInfoActual.texto;
+            estudiantesPorEstados[data.id_estudiante] = estadoActual;
+            
+            // Mostrar mensaje de error
+            $('#respuestaCambiarEstado').empty().hide().html(
+                '<div class="alert alert-danger">' +
+                '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                '<p><strong>Error:</strong> No se pudo cambiar el estado de la matrícula.</p>' +
+                '</div>'
+            ).show(1);
         }
-
     });
 }
 

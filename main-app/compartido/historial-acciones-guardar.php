@@ -64,5 +64,3 @@ if (empty($datosPaginaActual) && $idPaginaInterna!='DT0107' && !in_array($modulo
 }
 
 $datosPaginaActual = Modulos::datosPaginaActual($idPaginaInterna);
-
-error_log("Saliendo desde el final de la pagina historial-acciones-guardar.php para verificar permisos: ".$idPaginaInterna . " - ".$_SESSION["id"]);

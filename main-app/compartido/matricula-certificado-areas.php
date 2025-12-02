@@ -42,6 +42,20 @@ $modulo = 1;
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
 $notasCualitativasCache = [];
 
+// Obtener nombre de la ciudad desde el código (info_ciudad ahora guarda el código)
+if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["info_ciudad"])) {
+	$consultaCiudad = mysqli_query($conexion, "SELECT ciu_nombre, dep_nombre 
+		FROM ".BD_ADMIN.".localidad_ciudades 
+		INNER JOIN ".BD_ADMIN.".localidad_departamentos ON dep_id = ciu_departamento 
+		WHERE ciu_id = " . intval($informacion_inst["info_ciudad"]) . " 
+		LIMIT 1");
+	if ($consultaCiudad && mysqli_num_rows($consultaCiudad) > 0) {
+		$datosCiudad = mysqli_fetch_array($consultaCiudad, MYSQLI_BOTH);
+		$informacion_inst["ciu_nombre"] = $datosCiudad["ciu_nombre"];
+		$informacion_inst["dep_nombre"] = $datosCiudad["dep_nombre"];
+	}
+}
+
 ?>
 
 <!doctype html>
@@ -422,69 +436,6 @@ $notasCualitativasCache = [];
 		$meses = array(" ", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
 		$horas = array('CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE', 'DIEZ', 'ONCE', 'DOCE');
 
-		$restaAgnos = ($hasta - $desde) + 1;
-		$i = 1;
-		$inicio = $desde;
-
-		// Optimización: Obtener información del nombre y grados de una sola vez
-		$grados = "";
-		$nombreEstudiante = "";
-		$educacion = "BÁSICA";
-		
-		while ($i <= $restaAgnos) {	
-			$estudiante = Estudiantes::obtenerDatosEstudiante($id, $inicio);
-			
-			// Validar que el estudiante exista
-			if (empty($estudiante) || !is_array($estudiante)) {
-				?>
-				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
-				</div>
-				<?php
-				$i++;
-				$inicio++;
-				continue;
-			}
-			
-			if ($i == 1) {
-				$nombreEstudiante = Estudiantes::NombreCompletoDelEstudiante($estudiante);
-				
-				// Determinar tipo de educación
-				switch (!empty($estudiante["gra_nivel"]) ? $estudiante["gra_nivel"] : null) {
-					case PREESCOLAR: 
-						$educacion = "PREESCOLAR"; 
-					break;
-					case BASICA_PRIMARIA: 
-						$educacion = "BÁSICA PRIMARIA"; 
-					break;
-					case BASICA_SECUNDARIA: 
-						$educacion = "BÁSICA SECUNDARIA"; 
-					break;
-					case MEDIA: 
-						$educacion = "MEDIA"; 
-					break;
-					default: 
-						$educacion = "BÁSICA"; 
-					break;
-				}
-			}
-
-			if ($i < $restaAgnos) {
-				$grados .= (!empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '') . ", ";
-			} else {
-				$grados .= !empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '';
-			}
-
-			$inicio++;
-			$i++;
-		}
-		?>
-
-		<p class="texto-estudiante">
-			Que, <b><?=$nombreEstudiante?></b> cursó en esta Institución <b><?=strtoupper($grados);?> GRADO DE EDUCACIÓN <?=$educacion;?></b> y obtuvo las siguientes calificaciones:
-		</p>
-
-		<?php
 		// Obtener datos del estudiante del año actual (donde sabemos que existe) para información general
 		$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $config['conf_agno']);
 		if (empty($estudianteActual) || !is_array($estudianteActual)) {
@@ -492,7 +443,7 @@ $notasCualitativasCache = [];
 			$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $hasta);
 		}
 		
-		// Obtener nombre y tipo de educación desde el año actual
+		// Obtener información del nombre y tipo de educación desde el año actual
 		$nombreEstudiante = "";
 		$educacion = "BÁSICA";
 		if (!empty($estudianteActual) && is_array($estudianteActual)) {
@@ -518,6 +469,32 @@ $notasCualitativasCache = [];
 			}
 		}
 		
+		// Obtener grados de todos los años donde el estudiante existe
+		$grados = "";
+		$restaAgnos = ($hasta - $desde) + 1;
+		$i = 1;
+		$inicio = $desde;
+		while ($i <= $restaAgnos) {
+			$estudiante = Estudiantes::obtenerDatosEstudiante($id, $inicio);
+			
+			// Solo agregar grados si el estudiante existe en ese año
+			if (!empty($estudiante) && is_array($estudiante)) {
+				if (!empty($grados)) {
+					$grados .= ", ";
+				}
+				$grados .= !empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '';
+			}
+
+			$inicio++;
+			$i++;
+		}
+		?>
+
+		<p class="texto-estudiante">
+			Que, <b><?=$nombreEstudiante?></b> cursó en esta Institución <b><?=strtoupper($grados);?> GRADO DE EDUCACIÓN <?=$educacion;?></b> y obtuvo las siguientes calificaciones:
+		</p>
+
+		<?php
 		$restaAgnos = ($hasta - $desde) + 1;
 		$i = 1;
 		$inicio = $desde;
@@ -529,11 +506,6 @@ $notasCualitativasCache = [];
 			
 			// Validar que el estudiante exista en este año
 			if (empty($matricula) || !is_array($matricula)) {
-				?>
-				<div style="padding: 15px; margin: 20px 0; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-					<strong>Nota:</strong> El estudiante no tiene registro en el año <?= $inicio; ?>. Se omite este año y se continúa con el siguiente.
-				</div>
-				<?php
 				$inicio++;
 				$i++;
 				continue;

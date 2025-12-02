@@ -47,18 +47,20 @@ foreach ($cursos as $curso) {
     $total = 0;
     
     // Consultar estudiantes por estado para este curso
-    // Filtrar por grado y unir con academico_grados para filtrar por institucion y year
+    // Filtrar por grado, institucion y year directamente en matrículas
     $sql = "SELECT mat.mat_estado_matricula, COUNT(*) AS cantidad
             FROM " . BD_ACADEMICA . ".academico_matriculas mat
-            INNER JOIN " . BD_ACADEMICA . ".academico_grados gra ON gra.gra_id = mat.mat_grado
             WHERE mat.mat_grado = ? 
-              AND mat.mat_eliminado = 0
-              AND gra.institucion = ? 
-              AND gra.year = ?
+              AND (mat.mat_eliminado IS NULL OR mat.mat_eliminado = 0)
+              AND mat.institucion = ? 
+              AND mat.year = ?
             GROUP BY mat.mat_estado_matricula";
     
     $stmt = $conexionPDO->prepare($sql);
-    $stmt->execute([$cursoId, $config['conf_id_institucion'], $_SESSION["bd"]]);
+    $stmt->bindParam(1, $cursoId, PDO::PARAM_STR);
+    $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_STR);
+    $stmt->execute();
     $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     foreach ($resultados as $fila) {

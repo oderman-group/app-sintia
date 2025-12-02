@@ -7,18 +7,24 @@
 
 $(document).ready(function() {
 	'use strict';
-    if (!$.fn.DataTable.isDataTable('#example1')) {
+    // Solo inicializar #example1 si no está ya inicializado, no tiene filas expandibles, y no está en la página de inscripciones
+    var isInscripcionesPage = window.location.pathname.indexOf('inscripciones.php') !== -1;
+    if (!$.fn.DataTable.isDataTable('#example1') && $('#example1 .expandable-row').length === 0 && !isInscripcionesPage) {
         $('#example1').DataTable();
+    }
+    
+    // No inicializar #example2 si está en la página de inscripciones
+    if (!isInscripcionesPage && !$.fn.DataTable.isDataTable('#example2')) {
+        // Solo inicializar #example2 si NO está en inscripciones
+        var table = $('#example2').DataTable( {
+            "scrollY": "200px",
+            "paging": false
+        } );
     }
 
     if (!$.fn.DataTable.isDataTable('#tablaItems')) {
         $('#tablaItems').DataTable();
     }
-    
-    var table = $('#example2').DataTable( {
-        "scrollY": "200px",
-        "paging": false
-    } );
  
     $('a.toggle-vis').on( 'click', function (e) {
         e.preventDefault();

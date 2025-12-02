@@ -104,10 +104,145 @@ if (empty($catalogoGrados)) {
 		.tab-content-inscripcion.active {
 			display: block;
 		}
+		
+		/* ========================================
+		   SKELETON LOADER
+		   ======================================== */
+		.skeleton-loader {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #f5f5f5;
+			z-index: 99999;
+			overflow-y: auto;
+		}
+		
+		.skeleton-content {
+			padding: 20px;
+			max-width: 100%;
+		}
+		
+		.skeleton-page-bar {
+			height: 60px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-description {
+			height: 20px;
+			width: 70%;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-buttons {
+			display: flex;
+			gap: 10px;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+		}
+		
+		.skeleton-button {
+			height: 38px;
+			width: 150px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-card {
+			background: white;
+			border-radius: 4px;
+			padding: 20px;
+			margin-bottom: 20px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		
+		.skeleton-table-header {
+			height: 40px;
+			background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 15px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		.skeleton-table-row {
+			height: 50px;
+			background: linear-gradient(90deg, #f8f8f8 25%, #f0f0f0 50%, #f8f8f8 75%);
+			background-size: 200% 100%;
+			border-radius: 4px;
+			margin-bottom: 10px;
+			animation: skeleton-loading 1.5s ease-in-out infinite;
+		}
+		
+		@keyframes skeleton-loading {
+			0% {
+				background-position: 200% 0;
+			}
+			100% {
+				background-position: -200% 0;
+			}
+		}
+		
+		.skeleton-loader.hidden {
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+		}
+		
+		.page-content-wrapper {
+			opacity: 0;
+			transition: opacity 0.5s ease-in;
+		}
+		
+		.page-content-wrapper.loaded {
+			opacity: 1;
+		}
 	</style>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
+	<!-- Skeleton Loader -->
+	<div class="skeleton-loader" id="skeletonLoader">
+		<div class="skeleton-content">
+			<!-- Page Bar Skeleton -->
+			<div class="skeleton-page-bar"></div>
+			
+			<!-- Description Skeleton -->
+			<div class="skeleton-description"></div>
+			
+			<!-- Buttons Skeleton -->
+			<div class="skeleton-buttons">
+				<div class="skeleton-button"></div>
+				<div class="skeleton-button" style="width: 180px;"></div>
+				<div class="skeleton-button" style="width: 200px;"></div>
+				<div class="skeleton-button" style="width: 160px;"></div>
+			</div>
+			
+			<!-- Card Skeleton -->
+			<div class="skeleton-card">
+				<div class="skeleton-table-header"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+				<div class="skeleton-table-row"></div>
+			</div>
+		</div>
+	</div>
+	
     <div class="page-wrapper">
         <?php include("../compartido/encabezado.php");?>
 		
@@ -116,7 +251,7 @@ if (empty($catalogoGrados)) {
         <div class="page-container">
  			<?php include("../compartido/menu.php");?>
 			<!-- start page content -->
-            <div class="page-content-wrapper">
+            <div class="page-content-wrapper" id="pageContentWrapper">
                 <div class="page-content">
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
@@ -357,13 +492,16 @@ if (empty($catalogoGrados)) {
                                         ?>
                                         
                                         <!-- Tabs para visibles/ocultos -->
+                                        <?php 
+                                        $tabActivo = isset($_GET['tab']) ? $_GET['tab'] : 'visibles';
+                                        ?>
                                         <div class="tabs-inscripciones">
-                                            <button class="tab-inscripcion active" onclick="cambiarTabInscripciones('visibles')" id="tab-visibles">
+                                            <button class="tab-inscripcion <?= $tabActivo === 'visibles' ? 'active' : ''; ?>" onclick="cambiarTabInscripciones('visibles')" id="tab-visibles">
                                                 <i class="fa fa-eye"></i> 
                                                 <span>Visibles</span>
                                                 <span class="badge badge-primary" id="badge-visibles"><?= $totalVisibles; ?></span>
                                             </button>
-                                            <button class="tab-inscripcion" onclick="cambiarTabInscripciones('ocultos')" id="tab-ocultos">
+                                            <button class="tab-inscripcion <?= $tabActivo === 'ocultos' ? 'active' : ''; ?>" onclick="cambiarTabInscripciones('ocultos')" id="tab-ocultos">
                                                 <i class="fa fa-eye-slash"></i> 
                                                 <span>Ocultos</span>
                                                 <span class="badge badge-secondary" id="badge-ocultos"><?= $totalOcultos; ?></span>
@@ -371,9 +509,10 @@ if (empty($catalogoGrados)) {
                                         </div>
                                         
                                         <!-- Contenido tab VISIBLES -->
-                                        <div id="content-visibles" class="tab-content-inscripcion active">
+                                        <div id="content-visibles" class="tab-content-inscripcion <?= $tabActivo === 'visibles' ? 'active' : ''; ?>">
+                                        <?php if ($tabActivo === 'visibles') { ?>
                                         <div class="table">
-                                    		<table  id="example1" class="display" style="width:100%;">
+                                    		<table id="example1" class="table table-striped table-bordered" style="width:100%;">
                                             <div id="gifCarga" class="gif-carga">
 										        <img   alt="Cargando...">
 									        </div>
@@ -396,7 +535,7 @@ if (empty($catalogoGrados)) {
                                                 <tbody id="inscripciones_result">
                                                 <?php
                                                 try {
-                                                    // Filtro por defecto para mostrar solo visibles
+                                                    // Filtro para mostrar solo visibles
                                                     $filtro = ' AND (asp.asp_oculto IS NULL OR asp.asp_oculto=0)';
                                                     
                                                     include("includes/consulta-paginacion-inscripciones.php");
@@ -405,16 +544,21 @@ if (empty($catalogoGrados)) {
 																  "asp_documento_acudiente","asp_id","asp_fecha","asp_comprobante","mat_nombres",
 																  "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2", "mat_primer_apellido", "mat_segundo_apellido",
 																  "mat.*", "asp.*"];
-
-                                                    $filtroLimite = '';
                                                     
+                                                    // $filtroLimite ya está definido en consulta-paginacion-inscripciones.php
                                                     $consulta = Estudiantes::listarMatriculasAspirantes($config, $filtro, $filtroLimite,"",$selectSql);
                                                     
-                                                    // Construir array de datos manualmente
+                                                    // Construir array de datos manualmente, eliminando duplicados por asp_id
                                                     $data = ["data" => []];
+                                                    $aspIdsVistos = []; // Para evitar duplicados
                                                     if (!empty($consulta)) {
                                                         while ($fila = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
-                                                            $data["data"][] = $fila;
+                                                            $aspId = $fila['asp_id'] ?? null;
+                                                            // Solo agregar si no hemos visto este asp_id antes
+                                                            if ($aspId && !in_array($aspId, $aspIdsVistos)) {
+                                                                $aspIdsVistos[] = $aspId;
+                                                                $data["data"][] = $fila;
+                                                            }
                                                         }
                                                     }
 													
@@ -441,13 +585,22 @@ if (empty($catalogoGrados)) {
                                                 </tbody>
                                             </table>
                                             </div>
+                                            
+                                            <!-- Paginación para visibles -->
+                                            <?php 
+                                            if (!empty($numRegistros) && $numRegistros > 0) {
+                                                include("enlaces-paginacion.php");
+                                            }
+                                            ?>
                                         </div>
+                                        <?php } ?>
                                         </div><!-- Cierre content-visibles -->
                                         
                                         <!-- Contenido tab OCULTOS -->
-                                        <div id="content-ocultos" class="tab-content-inscripcion">
+                                        <div id="content-ocultos" class="tab-content-inscripcion <?= $tabActivo === 'ocultos' ? 'active' : ''; ?>">
+                                        <?php if ($tabActivo === 'ocultos') { ?>
                                         <div class="table">
-                                    		<table  id="example2" class="display" style="width:100%;">
+                                    		<table id="example2" class="table table-striped table-bordered" style="width:100%;">
                                             <div id="gifCarga2" class="gif-carga">
 										        <img   alt="Cargando...">
 									        </div>
@@ -470,37 +623,62 @@ if (empty($catalogoGrados)) {
                                                 <tbody id="inscripciones_ocultos_result">
 													<?php
 													try {
-                                                        // Consulta para estudiantes ocultos
-                                                        $filtroOcultos = ' AND (asp.asp_oculto=1)';
-                                                        
-                                                        $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
-                                                                      "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
-                                                                      "gra.gra_nombre",
-                                                                      "mat.*", "asp.*"];
-
-                                                        $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
-                                                        
-                                                        // Construir array de datos para ocultos
-                                                        $dataOcultos = ["data" => []];
-                                                        if (!empty($consultaOcultos)) {
-                                                            while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
-                                                                $dataOcultos["data"][] = $fila;
+                                                            $filtroOcultos = ' AND (asp.asp_oculto=1)';
+                                                            
+                                                            // Aplicar paginación también para ocultos
+                                                            include("includes/consulta-paginacion-inscripciones.php");
+                                                            // Recalcular con el filtro de ocultos
+                                                            $consultaTotalOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos);
+                                                            $numRegistrosOcultos = mysqli_num_rows($consultaTotalOcultos);
+                                                            if ($consultaTotalOcultos) {
+                                                                mysqli_free_result($consultaTotalOcultos);
                                                             }
-                                                        }
-                                                        
-                                                        $contReg = 1;
-                                                        $mostrarOcultos = true; // Contexto de ocultos
-                                                        $data = $dataOcultos; // Usar los datos de ocultos
-                                                        
-                                                        // Verificar si hay datos para mostrar
-                                                        if (empty($data["data"])) {
-                                                            echo '<tr><td colspan="12" class="text-center">
-                                                                <i class="fa fa-info-circle fa-2x text-info"></i><br>
-                                                                <strong>No hay inscripciones ocultas en este momento.</strong>
-                                                            </td></tr>';
-                                                        } else {
-                                                            include(ROOT_PATH."/main-app/class/componentes/result/inscripciones-tbody.php");
-                                                        }
+                                                            // Recalcular inicio y límite
+                                                            $registros = !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20;
+                                                            $pagina = base64_decode($_REQUEST["nume"]);
+                                                            if (is_numeric($pagina) && $pagina > 0){
+                                                                $inicio = (($pagina-1)*$registros);
+                                                            } else {
+                                                                $inicio = 0;
+                                                                $pagina = 1;
+                                                            }
+                                                            $filtroLimite = 'LIMIT '.$inicio.','.$registros;
+                                                            $numRegistros = $numRegistrosOcultos; // Para la paginación
+                                                            
+                                                            $selectSql = ["mat_nombres","mat_primer_apellido","mat_segundo_apellido",
+                                                                          "asp_agno","asp_email_acudiente","asp_estado_solicitud", "mat_nombre2",
+                                                                          "gra.gra_nombre",
+                                                                          "mat.*", "asp.*"];
+
+                                                            $consultaOcultos = Estudiantes::listarMatriculasAspirantes($config, $filtroOcultos, $filtroLimite,"",$selectSql);
+                                                            
+                                                            // Construir array de datos para ocultos, eliminando duplicados por asp_id
+                                                            $dataOcultos = ["data" => []];
+                                                            $aspIdsVistosOcultos = []; // Para evitar duplicados
+                                                            if (!empty($consultaOcultos)) {
+                                                                while ($fila = mysqli_fetch_array($consultaOcultos, MYSQLI_BOTH)) {
+                                                                    $aspId = $fila['asp_id'] ?? null;
+                                                                    // Solo agregar si no hemos visto este asp_id antes
+                                                                    if ($aspId && !in_array($aspId, $aspIdsVistosOcultos)) {
+                                                                        $aspIdsVistosOcultos[] = $aspId;
+                                                                        $dataOcultos["data"][] = $fila;
+                                                                    }
+                                                                }
+                                                            }
+                                                            
+                                                            $contReg = 1;
+                                                            $mostrarOcultos = true; // Contexto de ocultos
+                                                            $data = $dataOcultos; // Usar los datos de ocultos
+                                                            
+                                                            // Verificar si hay datos para mostrar
+                                                            if (empty($data["data"])) {
+                                                                echo '<tr><td colspan="12" class="text-center">
+                                                                    <i class="fa fa-info-circle fa-2x text-info"></i><br>
+                                                                    <strong>No hay inscripciones ocultas en este momento.</strong>
+                                                                </td></tr>';
+                                                            } else {
+                                                                include(ROOT_PATH."/main-app/class/componentes/result/inscripciones-tbody.php");
+                                                            }
                                                     } catch (Exception $e) {
                                                         echo '<tr><td colspan="12" class="text-center text-warning">
                                                             <i class="fa fa-exclamation-triangle fa-2x"></i><br>
@@ -513,9 +691,16 @@ if (empty($catalogoGrados)) {
                                                 </tbody>
                                             </table>
                                             </div>
+                                            
+                                            <!-- Paginación para ocultos -->
+                                            <?php 
+                                            if (!empty($numRegistros) && $numRegistros > 0) {
+                                                include("enlaces-paginacion.php");
+                                            }
+                                            ?>
                                         </div>
+                                        <?php } ?>
                                         </div><!-- Cierre content-ocultos -->
-                      				    <!-- <?php include("enlaces-paginacion.php");?> -->
                                     </div>
                                 </div>
                             </div>
@@ -632,8 +817,81 @@ if (empty($catalogoGrados)) {
 			}
 		});
 		
+		// Función para deshabilitar controles de filtro
+		function deshabilitarControlesFiltro() {
+			// Deshabilitar campos de entrada
+			$('#filtro_inscripciones_busqueda').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			
+			// Deshabilitar select2 (usando métodos específicos de select2)
+			if ($('#filtro_inscripciones_grado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_grado').prop('disabled', true);
+				$('#filtro_inscripciones_grado').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_grado').prop('disabled', true);
+			}
+			
+			if ($('#filtro_inscripciones_estado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_estado').prop('disabled', true);
+				$('#filtro_inscripciones_estado').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_estado').prop('disabled', true);
+			}
+			
+			if ($('#filtro_inscripciones_anio').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_anio').prop('disabled', true);
+				$('#filtro_inscripciones_anio').next('.select2-container').addClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_anio').prop('disabled', true);
+			}
+			
+			// Deshabilitar botones
+			$('#btnBuscarInscripciones').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			$('#btnLimpiarFiltrosInscripciones').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+			
+			// Agregar indicador visual
+			$('#btnBuscarInscripciones').html('<i class="fa fa-spinner fa-spin"></i> Buscando...');
+		}
+		
+		// Función para habilitar controles de filtro
+		function habilitarControlesFiltro() {
+			// Habilitar campos de entrada
+			$('#filtro_inscripciones_busqueda').prop('disabled', false).css('opacity', '1').css('cursor', 'text');
+			
+			// Habilitar select2 (usando métodos específicos de select2)
+			if ($('#filtro_inscripciones_grado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_grado').prop('disabled', false);
+				$('#filtro_inscripciones_grado').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_grado').prop('disabled', false);
+			}
+			
+			if ($('#filtro_inscripciones_estado').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_estado').prop('disabled', false);
+				$('#filtro_inscripciones_estado').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_estado').prop('disabled', false);
+			}
+			
+			if ($('#filtro_inscripciones_anio').hasClass('select2-hidden-accessible')) {
+				$('#filtro_inscripciones_anio').prop('disabled', false);
+				$('#filtro_inscripciones_anio').next('.select2-container').removeClass('select2-container-disabled');
+			} else {
+				$('#filtro_inscripciones_anio').prop('disabled', false);
+			}
+			
+			// Habilitar botones
+			$('#btnBuscarInscripciones').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+			$('#btnLimpiarFiltrosInscripciones').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+			
+			// Restaurar texto del botón
+			$('#btnBuscarInscripciones').html('<i class="fa fa-search"></i> Buscar');
+		}
+		
 		// Función para aplicar filtros de inscripciones
 		function aplicarFiltrosInscripciones() {
+			// Deshabilitar controles al inicio
+			deshabilitarControlesFiltro();
+			
 			const grados = $('#filtro_inscripciones_grado').val() || [];
 			const estados = $('#filtro_inscripciones_estado').val() || [];
 			const anios = $('#filtro_inscripciones_anio').val() || [];
@@ -663,9 +921,14 @@ if (empty($catalogoGrados)) {
 				success: function(response) {
 					console.log('Respuesta del filtro inscripciones:', response);
 					
+					// Habilitar controles al finalizar (éxito o error)
+					habilitarControlesFiltro();
+					
 					if (response.success) {
 						// Insertar el HTML en el tab activo
 						$(targetId).html(response.html);
+						
+						// No necesitamos DataTables - la paginación se maneja del lado del servidor
 						
 						// Mensaje dinámico
 						let mensaje = 'Se encontraron ' + response.total + ' inscripción/inscripciones';
@@ -701,6 +964,9 @@ if (empty($catalogoGrados)) {
 					console.error('Error AJAX inscripciones:', status, error);
 					console.error('Response:', xhr.responseText);
 					
+					// Habilitar controles al finalizar (error)
+					habilitarControlesFiltro();
+					
 					$.toast({
 						heading: 'Error de Conexión',
 						text: 'No se pudo conectar con el servidor',
@@ -730,12 +996,16 @@ if (empty($catalogoGrados)) {
 		
 		// Limpiar filtros de inscripciones
 		$('#btnLimpiarFiltrosInscripciones').on('click', function() {
+			// Deshabilitar controles mientras se limpia
+			deshabilitarControlesFiltro();
+			
 			$('#filtro_inscripciones_grado').val(null).trigger('change');
 			$('#filtro_inscripciones_estado').val(null).trigger('change');
 			$('#filtro_inscripciones_anio').val(null).trigger('change');
 			$('#filtro_inscripciones_busqueda').val('');
 			
 			// Recargar la página para mostrar todas las inscripciones
+			// Los controles se habilitarán automáticamente al recargar la página
 			location.reload();
 		});
 		
@@ -748,97 +1018,96 @@ if (empty($catalogoGrados)) {
 		});
 		
 		// ========================================
-		// SISTEMA DE TABS PARA VISIBLES/OCULTOS
+		// SKELETON LOADER - Ocultar cuando la página esté cargada
 		// ========================================
+		function ocultarSkeletonLoader() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			const pageContentWrapper = document.getElementById('pageContentWrapper');
+			
+			if (skeletonLoader && pageContentWrapper) {
+				// Agregar clase para mostrar el contenido
+				pageContentWrapper.classList.add('loaded');
+				
+				// Ocultar skeleton con transición suave
+				setTimeout(function() {
+					skeletonLoader.classList.add('hidden');
+					
+					// Remover del DOM después de la transición
+					setTimeout(function() {
+						skeletonLoader.style.display = 'none';
+					}, 500);
+				}, 100);
+			}
+		}
 		
-		// Inicializar DataTable para la tabla de ocultos
-		$(document).ready(function() {
-			// Verificar si ya existe la instancia de DataTable
-			if (!$.fn.DataTable.isDataTable('#example2')) {
-				$('#example2').DataTable({
-					"language": {
-						"url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-					},
-					"order": [[1, 'desc']]
+		// Prevenir interacciones mientras el skeleton está visible
+		document.addEventListener('DOMContentLoaded', function() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			
+			if (skeletonLoader) {
+				skeletonLoader.addEventListener('click', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
 				});
+				
+				skeletonLoader.addEventListener('keydown', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					return false;
+				});
+				
+				skeletonLoader.style.userSelect = 'none';
+				skeletonLoader.style.pointerEvents = 'auto';
 			}
 		});
 		
-		// Función para cambiar entre tabs con carga asíncrona
+		// Ocultar skeleton cuando todo esté cargado
+		window.addEventListener('load', function() {
+			setTimeout(ocultarSkeletonLoader, 300);
+		});
+		
+		// Fallback: Si window.load no se dispara, ocultar después de un tiempo razonable
+		setTimeout(function() {
+			const skeletonLoader = document.getElementById('skeletonLoader');
+			if (skeletonLoader && !skeletonLoader.classList.contains('hidden')) {
+				ocultarSkeletonLoader();
+			}
+		}, 3000);
+		
+		// ========================================
+		// SISTEMA DE TABS PARA VISIBLES/OCULTOS
+		// ========================================
+		
+		// NO usar DataTables - Usamos paginación del lado del servidor con PHP
+		
+		// Función para cambiar entre tabs - recarga la página con el tab seleccionado
 		window.cambiarTabInscripciones = function(tab) {
-			// Remover clase active de todos los tabs
-			$('.tab-inscripcion').removeClass('active');
-			$('.tab-content-inscripcion').removeClass('active');
+			// Obtener parámetros actuales de la URL
+			var urlParams = new URLSearchParams(window.location.search);
+			var nuevaUrl = 'inscripciones.php?tab=' + tab;
 			
-			// Activar el tab seleccionado
-			$('#tab-' + tab).addClass('active');
-			$('#content-' + tab).addClass('active');
+			// Mantener el parámetro de página si existe
+			if (urlParams.has('nume')) {
+				nuevaUrl += '&nume=' + urlParams.get('nume');
+			}
 			
-			// Determinar qué tbody actualizar
-			const targetId = tab === 'ocultos' ? '#inscripciones_ocultos_result' : '#inscripciones_result';
+			// Mantener otros parámetros de filtros si existen
+			if (urlParams.has('filtro_grado')) {
+				nuevaUrl += '&filtro_grado=' + urlParams.get('filtro_grado');
+			}
+			if (urlParams.has('filtro_estado')) {
+				nuevaUrl += '&filtro_estado=' + urlParams.get('filtro_estado');
+			}
+			if (urlParams.has('filtro_anio')) {
+				nuevaUrl += '&filtro_anio=' + urlParams.get('filtro_anio');
+			}
+			if (urlParams.has('busqueda')) {
+				nuevaUrl += '&busqueda=' + encodeURIComponent(urlParams.get('busqueda'));
+			}
 			
-			// Mostrar loader
-			$(targetId).html('<tr><td colspan="12" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
-			
-			// Cargar datos del tab vía AJAX
-			$.ajax({
-				url: 'ajax-cargar-tab-inscripciones.php',
-				type: 'POST',
-				data: { tab: tab },
-				dataType: 'json',
-				success: function(response) {
-					if (response.success) {
-						// Insertar el HTML
-						$(targetId).html(response.html);
-						
-						// Actualizar el contador del badge
-						if (tab === 'visibles') {
-							$('#badge-visibles').text(response.total);
-						} else {
-							$('#badge-ocultos').text(response.total);
-						}
-						
-						// Toast informativo
-						var mensaje = tab === 'visibles' 
-							? 'Mostrando ' + response.total + ' inscripción(es) visible(s)' 
-							: 'Mostrando ' + response.total + ' inscripción(es) oculta(s)';
-						
-						$.toast({
-							heading: 'Tab Cargado',
-							text: mensaje,
-							position: 'top-right',
-							loaderBg: '#667eea',
-							icon: 'info',
-							hideAfter: 2000
-						});
-					} else {
-						console.error('Error al cargar tab:', response.error);
-						$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error al cargar los datos</td></tr>');
-						
-						$.toast({
-							heading: 'Error',
-							text: 'No se pudieron cargar los datos',
-							position: 'top-right',
-							loaderBg: '#bf441d',
-							icon: 'error',
-							hideAfter: 3000
-						});
-					}
-				},
-				error: function(xhr, status, error) {
-					console.error('Error AJAX al cambiar tab:', status, error);
-					$(targetId).html('<tr><td colspan="12" class="text-center text-danger">Error de conexión</td></tr>');
-					
-					$.toast({
-						heading: 'Error de Conexión',
-						text: 'No se pudo conectar con el servidor',
-						position: 'top-right',
-						loaderBg: '#bf441d',
-						icon: 'error',
-						hideAfter: 3000
-					});
-				}
-			});
+			// Recargar la página con el nuevo tab
+			window.location.href = nuevaUrl;
 		};
 		
 		// Función para desocultar inscripción

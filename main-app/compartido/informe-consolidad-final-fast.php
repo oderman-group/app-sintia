@@ -178,6 +178,15 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 			font-size: 11px;
 			text-align: center;
 		}
+		.tabla-consolidado thead th.nombre-estudiante,
+		.tabla-consolidado tbody td.nombre-estudiante {
+			width: 250px;
+			min-width: 250px;
+			max-width: 250px;
+			text-align: left;
+			white-space: nowrap;
+			overflow: visible;
+		}
 		.tabla-consolidado tbody td.nota-cell {
 			font-weight: bold;
 		}
@@ -336,7 +345,7 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 		<thead>
 			<tr>
 				<th rowspan="2">Mat</th>
-				<th rowspan="2">Estudiante</th>
+				<th rowspan="2" class="nombre-estudiante">Estudiante</th>
 				<?php foreach ($codigosCargas as $carga) { ?>
 					<th colspan="<?= $config[19] + 2; ?>">
 						<?= htmlspecialchars($carga['nombre']); ?>
@@ -371,7 +380,7 @@ $porcPeriodo = array("", 0.25, 0.15, 0.35, 0.25);
 				?>
 				<tr>
 					<td><?= htmlspecialchars(!empty($estudiante['mat_matricula']) ? $estudiante['mat_matricula'] : ''); ?></td>
-					<td><?= htmlspecialchars(!empty($estudiante['nombre']) ? $estudiante['nombre'] : ''); ?></td>
+					<td class="nombre-estudiante"><?= htmlspecialchars(!empty($estudiante['nombre']) ? $estudiante['nombre'] : ''); ?></td>
 					<?php foreach ($codigosCargas as $codigo) {
 						if(!empty($estudiante["areas"]) && is_array($estudiante["areas"])){
 							foreach ($estudiante["areas"] as $area) {

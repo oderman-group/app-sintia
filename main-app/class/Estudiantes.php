@@ -389,9 +389,7 @@ class Estudiantes {
             $parametros = [$estudiante, $doctSinPuntos, $doctConPuntos, $estudiante, $config['conf_id_institucion'], $year];
             $consulta = BindSQL::prepararSQL($sql, $parametros);
             $num = mysqli_num_rows($consulta);
-            if($num == 0){
-                echo "Estás intentando obtener datos de un estudiante que no existe: ".$estudiante."<br>";
-            }
+            // Removido el mensaje de error - el código que llama a esta función debe validar si el estudiante existe
             $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
         } catch (Exception $e) {
             echo "Excepción catpurada: ".$e->getMessage();
@@ -677,6 +675,91 @@ class Estudiantes {
             }
         }
         return strtoupper($nombre);
+    }
+
+    /**
+     * Valida si un cambio de estado de matrícula es permitido según las reglas de negocio.
+     * 
+     * Reglas de validación:
+     * - En Inscripción (5): No puede modificarse (se gestiona automáticamente)
+     * - Asistente (2): Solo puede cambiar a Matriculado (1)
+     * - No matriculado (4): Solo puede cambiar a Matriculado (1)
+     * - Matriculado (1): No puede cambiar a No matriculado (4)
+     * - Cancelado (3): Se gestiona automáticamente desde otros módulos
+     * 
+     * @param int $estadoActual Estado actual de la matrícula del estudiante
+     * @param int $estadoNuevo Estado nuevo que se desea asignar
+     * 
+     * @return array Array con las claves:
+     *               - 'valido' (bool): true si el cambio es permitido, false en caso contrario
+     *               - 'mensaje' (string): Mensaje descriptivo del error si el cambio no es permitido, vacío si es válido
+     */
+    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo): array
+    {
+        // Si el estado no cambia, es válido
+        if ($estadoActual === $estadoNuevo) {
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // En Inscripción (5): No puede modificarse
+        if ($estadoActual === self::ESTADO_EN_INSCRIPCION) {
+            return [
+                'valido' => false,
+                'mensaje' => 'El estado "En inscripción" no puede modificarse. Se gestiona automáticamente desde el módulo de admisiones.'
+            ];
+        }
+
+        // Cancelado (3): Se gestiona automáticamente desde otros módulos
+        if ($estadoActual === self::ESTADO_CANCELADO) {
+            return [
+                'valido' => false,
+                'mensaje' => 'El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.'
+            ];
+        }
+
+        // Asistente (2): Solo puede cambiar a Matriculado (1)
+        if ($estadoActual === self::ESTADO_ASISTENTE) {
+            if ($estadoNuevo !== self::ESTADO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Asistente" solo puede cambiar a estado "Matriculado".'
+                ];
+            }
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // No matriculado (4): Solo puede cambiar a Matriculado (1)
+        if ($estadoActual === self::ESTADO_NO_MATRICULADO) {
+            if ($estadoNuevo !== self::ESTADO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "No matriculado" solo puede cambiar a estado "Matriculado".'
+                ];
+            }
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2)
+        if ($estadoActual === self::ESTADO_MATRICULADO) {
+            if ($estadoNuevo === self::ESTADO_NO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Matriculado" no puede cambiar a estado "No matriculado".'
+                ];
+            }
+            if ($estadoNuevo === self::ESTADO_ASISTENTE) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Matriculado" no puede cambiar a estado "Asistente". Solo los estudiantes en estado "Asistente" pueden cambiar a "Matriculado".'
+                ];
+            }
+            // Matriculado puede cambiar a otros estados (Cancelado, etc.) pero no a Asistente ni No matriculado
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // Si no se cumple ninguna regla específica, permitir el cambio por defecto
+        // (para estados futuros o casos especiales)
+        return ['valido' => true, 'mensaje' => ''];
     }
 
     /**
@@ -1240,6 +1323,20 @@ class Estudiantes {
         $grupoActual   = !empty($POST["grupoActual"]) ? $POST["grupoActual"] : null;
 
         try {
+            // Validar cambio de estado si se está modificando
+            if (!empty($id) && !empty($matestM)) {
+                $datosEstudianteActual = self::obtenerDatosEstudiante($id);
+                if (!empty($datosEstudianteActual)) {
+                    $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
+                    $estadoNuevo = (int)$matestM;
+                    
+                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+                    
+                    if (!$validacion['valido']) {
+                        throw new Exception($validacion['mensaje']);
+                    }
+                }
+            }
             
             $consulta = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
             mat_tipo_documento    = :tipoD, 
@@ -1516,7 +1613,7 @@ class Estudiantes {
             $stringSelect .= ", gra.gra_nombre as gra_nombre";
         }
 
-        $sql = " SELECT 
+        $sql = " SELECT DISTINCT
                  $stringSelect
                  FROM ".BD_ACADEMICA.".academico_matriculas mat
 
@@ -1527,6 +1624,7 @@ class Estudiantes {
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
                  ON gra.gra_id = asp.asp_grado 
                  AND gra.institucion = mat.institucion
+                 AND gra.year = mat.year
 
                  WHERE mat.mat_estado_matricula = ".EN_INSCRIPCION." 
                  AND mat.institucion = ? 
