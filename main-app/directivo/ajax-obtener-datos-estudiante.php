@@ -8,6 +8,7 @@ ob_clean();
 ob_start();
 include("session.php");
 require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH . "/main-app/class/Conexion.php");
 
 function jsonResponse($data) {
     while (ob_get_level()) { ob_end_clean(); }
@@ -21,63 +22,57 @@ function jsonResponse($data) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $matId = $_POST['mat_id'] ?? null;
+        // Obtener conexión PDO
+        $conexionPDO = Conexion::newConnection('PDO');
+        $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
+        $matId = $_POST['mat_id'] ?? null;
         
         if (empty($matId)) {
             jsonResponse(['success' => false, 'message' => 'ID de matrícula es obligatorio.']);
         }
         
-        // OPTIMIZACIÓN: Seleccionar solo los campos necesarios en lugar de m.*
-        // Esto evita cargar campos BLOB o TEXT grandes que consumen memoria
+        // OPTIMIZACIÓN: Seleccionar solo los campos necesarios basados en la estructura real de la tabla
+        // Evita campos BLOB o TEXT grandes que consumen memoria
         $sql = "SELECT 
                     m.mat_id,
                     m.mat_matricula,
-                    m.mat_nombres,
-                    m.mat_nombre2,
+                    m.mat_fecha,
                     m.mat_primer_apellido,
                     m.mat_segundo_apellido,
-                    m.mat_documento,
-                    m.mat_fecha_nacimiento,
+                    m.mat_nombres,
+                    m.mat_nombre2,
                     m.mat_grado,
                     m.mat_grupo,
                     m.mat_genero,
-                    m.mat_estrato,
-                    m.mat_tipo_sangre,
-                    m.mat_estado_matricula,
-                    m.mat_acudiente,
+                    m.mat_fecha_nacimiento,
+                    m.mat_lugar_nacimiento,
+                    m.mat_tipo_documento,
+                    m.mat_documento,
+                    m.mat_lugar_expedicion,
+                    m.mat_religion,
                     m.mat_direccion,
+                    m.mat_barrio,
                     m.mat_telefono,
                     m.mat_celular,
+                    m.mat_celular2,
+                    m.mat_estrato,
+                    m.mat_tipo,
+                    m.mat_estado_matricula,
                     m.mat_email,
-                    m.mat_ciudad_nacimiento,
-                    m.mat_departamento_nacimiento,
-                    m.mat_pais_nacimiento,
-                    m.mat_ciudad_residencia,
-                    m.mat_departamento_residencia,
-                    m.mat_pais_residencia,
-                    m.mat_eps,
-                    m.mat_sisben,
-                    m.mat_discapacidad,
-                    m.mat_etnia,
-                    m.mat_resguardo,
-                    m.mat_situacion_victima,
-                    m.mat_religion,
-                    m.mat_lugar_expedicion,
-                    m.mat_lugar_nacimiento,
-                    m.mat_barrio,
+                    m.mat_acudiente,
                     m.mat_inclusion,
+                    m.mat_eps,
+                    m.mat_ciudad_residencia,
                     g.gra_nombre,
                     gr.gru_nombre,
                     og_genero.ogen_nombre as genero_nombre,
-                    og_estrato.ogen_nombre as estrato_nombre,
-                    og_tipo_sangre.ogen_nombre as tipo_sangre_nombre
+                    og_estrato.ogen_nombre as estrato_nombre
                 FROM ".BD_ACADEMICA.".academico_matriculas m
-                LEFT JOIN ".BD_ACADEMICA.".academico_grados g ON m.mat_grado = g.gra_id
-                LEFT JOIN ".BD_ACADEMICA.".academico_grupos gr ON m.mat_grupo = gr.gru_id
+                LEFT JOIN ".BD_ACADEMICA.".academico_grados g ON m.mat_grado = g.gra_id AND g.institucion = m.institucion AND g.year = m.year
+                LEFT JOIN ".BD_ACADEMICA.".academico_grupos gr ON m.mat_grupo = gr.gru_id AND gr.institucion = m.institucion AND gr.year = m.year
                 LEFT JOIN ".BD_ADMIN.".opciones_generales og_genero ON m.mat_genero = og_genero.ogen_id
                 LEFT JOIN ".BD_ADMIN.".opciones_generales og_estrato ON m.mat_estrato = og_estrato.ogen_id
-                LEFT JOIN ".BD_ADMIN.".opciones_generales og_tipo_sangre ON m.mat_tipo_sangre = og_tipo_sangre.ogen_id
                 WHERE m.mat_id = :mat_id 
                 AND m.mat_eliminado = 0
                 AND m.institucion = :institucion
@@ -101,7 +96,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
     } catch (Exception $e) {
         error_log("Error al obtener datos del estudiante: " . $e->getMessage());
-        jsonResponse(['success' => false, 'message' => 'Error interno del servidor.']);
+        error_log("Stack trace: " . $e->getTraceAsString());
+        jsonResponse([
+            'success' => false, 
+            'message' => 'Error interno del servidor.',
+            'error_detail' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => basename($e->getFile())
+        ]);
     }
 } else {
     jsonResponse(['success' => false, 'message' => 'Método no permitido.']);
