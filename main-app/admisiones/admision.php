@@ -765,6 +765,11 @@ function limpiarUTF8($texto) {
                 <i class="fas fa-graduation-cap"></i>
             </div>
             <h1>¡Bienvenido al Proceso de Admisión!</h1>
+            <?php if(!empty($datosInfo['info_nombre']) && !empty($config["cfgi_year_inscripcion"])): ?>
+            <div style="font-size: 18px; font-weight: 600; color: #667eea; margin-top: 15px; margin-bottom: 15px;">
+                <?= $datosInfo['info_nombre']; ?> - Año <?= $config["cfgi_year_inscripcion"]; ?>
+            </div>
+            <?php endif; ?>
             <p class="lead">
                 <?= $config['cfgi_texto_inicial']; ?>
             </p>
