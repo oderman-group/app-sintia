@@ -1270,10 +1270,9 @@ function limpiarUTF8($texto) {
                                 $('#estudianteMatIdExistente').val('');
                                 $('#estudianteExisteEnYear').val('');
                                 
-                                // Habilitar todos los campos si el documento del acudiente también está validado
-                                if (documentoAcudienteValidado) {
-                                    habilitarCamposFormulario(true);
-                                }
+                                // Habilitar todos los campos ya que el documento es válido
+                                // No importa si el acudiente está validado o no
+                                habilitarCamposFormulario(true);
                             }
                             actualizarProgreso();
                         },
