@@ -172,12 +172,22 @@ $datosAsp = $asp->fetch();
                                         <div class="form-group row">
                                             <div class="form-group col-md-6">
                                                 <label>Estado de solicitud <span style="color:red;">(*)</span></label>
+                                                <?php if ($datosAsp['asp_estado_solicitud'] == 6): ?>
+                                                    <div class="alert alert-warning">
+                                                        <i class="fa fa-lock"></i> <strong>Este aspirante ya está aprobado y no se puede modificar su estado.</strong>
+                                                    </div>
+                                                    <input type="hidden" name="estadoSolicitud" value="6">
+                                                    <select class="form-control select2" disabled>
+                                                        <option value="6" selected><?= $estadosSolicitud[6]; ?></option>
+                                                    </select>
+                                                <?php else: ?>
                                                 <select class="form-control select2" name="estadoSolicitud" required>
                                                     <option value="">Escoger</option>
                                                     <?php foreach ($ordenReal as $clave) { ?>
                                                         <option value="<?= $clave; ?>" <?php if ($datosAsp['asp_estado_solicitud'] == $clave) echo "selected"; ?>><?= $estadosSolicitud[$clave]; ?></option>
                                                     <?php } ?>
                                                 </select>
+                                                <?php endif; ?>
                                             </div>
                                             <div class="form-group col-md-6">
                                                 <label>Enviar correo al guardar los cambios </label>

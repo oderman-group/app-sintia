@@ -50,6 +50,20 @@ if (!empty($_FILES['archivo2']['name'])) {
     $adjunto2 = '';
 }
 
+// Verificar el estado actual del aspirante
+$sqlVerificar = "SELECT asp_estado_solicitud, asp_agno FROM ".$baseDatosAdmisiones.".aspirantes WHERE asp_id = :asp_id";
+$stmtVerificar = $conexionPDO->prepare($sqlVerificar);
+$stmtVerificar->bindParam(':asp_id', $_POST['solicitud'], PDO::PARAM_INT);
+$stmtVerificar->execute();
+$aspiranteActual = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
+
+// Si el aspirante ya está en estado Aprobado (6), no permitir cambios de estado
+if (!empty($aspiranteActual) && $aspiranteActual['asp_estado_solicitud'] == 6) {
+    include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+    echo '<script type="text/javascript">window.location.href="inscripciones.php?error=ER_DT_8";</script>';
+    exit();
+}
+
 //Actualiza datos en aspirantes
 $aspQuery = 'UPDATE '.$baseDatosAdmisiones.'.aspirantes SET asp_estado_solicitud = :estado, asp_observacion = :observacion, asp_fecha_observacion = now(), asp_usuario_observacion = :sesion, asp_observacion_enviada = :envioCorreo, asp_archivo1 = :archivo1, asp_archivo2 = :archivo2 WHERE asp_id = :id';
 $asp = $conexionPDO->prepare($aspQuery);
@@ -61,6 +75,22 @@ $asp->bindParam(':sesion', $_SESSION["id"] , PDO::PARAM_INT);
 $asp->bindParam(':archivo1', $archivo1, PDO::PARAM_STR);
 $asp->bindParam(':archivo2', $archivo2, PDO::PARAM_STR);
 $asp->execute();
+
+// Si el estado cambió a Aprobado (6) y el año de inscripción coincide con el año actual de la institución
+// Actualizar el estado de la matrícula a No matriculado (4)
+if ($_POST['estadoSolicitud'] == 6 && !empty($aspiranteActual['asp_agno']) && $aspiranteActual['asp_agno'] == $_SESSION["bd"]) {
+    $sqlMatricula = "UPDATE ".BD_ACADEMICA.".academico_matriculas 
+                    SET mat_estado_matricula = 4
+                    WHERE mat_solicitud_inscripcion = :asp_id
+                    AND institucion = :institucion
+                    AND year = :year";
+    
+    $stmtMatricula = $conexionPDO->prepare($sqlMatricula);
+    $stmtMatricula->bindParam(':asp_id', $_POST['solicitud'], PDO::PARAM_INT);
+    $stmtMatricula->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmtMatricula->bindParam(':year', $_SESSION["bd"], PDO::PARAM_INT);
+    $stmtMatricula->execute();
+}
 
 //INSERTAR EN EL HISTORIAL DE OBSERVACIONES
 $sql = "INSERT INTO ".$baseDatosAdmisiones.".historial_observaciones(hiso_id_institucion, hiso_year, hiso_id_solicitud, hiso_estado, hiso_envio_correo, hiso_observacion, hiso_adjuntos, hiso_resposable)VALUES(:institucion, :agno, :solicitud, :estado, :envio_correo, :observacion, :adjuntos, :responsable)";
