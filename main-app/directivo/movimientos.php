@@ -217,12 +217,21 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 											include("../compartido/error-catch-to-report.php");
 										}
 										$data =$barraSuperior->builderArray($consulta);
+										$hayRegistros = !empty($data["data"]) && count($data["data"]) > 0;
 										include("../class/componentes/result/movimientos-tbody.php");
 										
 										?>
 									</tbody>
 									<script>
 										$(document).ready(totalizarMovimientos);
+										// Verificar si hay registros al cargar la página
+										var hayRegistrosInicial = <?= $hayRegistros ? 'true' : 'false'; ?>;
+										if (!hayRegistrosInicial) {
+											$('.movimientos-actions-bar button[onclick="bloquearUsuariosPendientes()"]').hide();
+											$('.movimientos-actions-bar button[onclick="recordarSaldoSeleccionados()"]').hide();
+											$('.movimientos-actions-bar a[href*="mostrarAnuladas"]').hide();
+											$('.movimientos-actions-bar a[href*="movimientos-reporte-morosos"]').hide();
+										}
 									</script>
 								</table>
 							</div>
@@ -493,6 +502,10 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 
 <script type="text/javascript">
 	function mostrarResultado(dato) {
+		// Verificar y ocultar/mostrar botones después de actualizar la tabla
+		setTimeout(function() {
+			verificarYMostrarOcultarBotones();
+		}, 100);
 		console.log(dato);
 		$(document).ready(totalizarMovimientos);
 	}
@@ -625,10 +638,41 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 			order: [[3, 'desc']]
 		});
 
+		// Función para verificar si hay registros y ocultar/mostrar botones de acciones
+		function verificarYMostrarOcultarBotones() {
+			var totalFilas = 0;
+			
+			// Intentar obtener el conteo desde DataTables si está inicializado
+			if ($.fn.DataTable.isDataTable('#tablaItems')) {
+				totalFilas = tablaMovimientos.rows({ filter: 'applied' }).count();
+			} else {
+				// Si DataTables no está inicializado, contar filas directamente
+				totalFilas = $('#tablaItems tbody tr.movimiento-row').length;
+			}
+			
+			var hayRegistros = totalFilas > 0;
+			
+			// Ocultar/mostrar botones de acciones en la barra superior
+			if (hayRegistros) {
+				$('.movimientos-actions-bar button[onclick="bloquearUsuariosPendientes()"]').show();
+				$('.movimientos-actions-bar button[onclick="recordarSaldoSeleccionados()"]').show();
+				$('.movimientos-actions-bar a[href*="mostrarAnuladas"]').show();
+				$('.movimientos-actions-bar a[href*="movimientos-reporte-morosos"]').show();
+			} else {
+				$('.movimientos-actions-bar button[onclick="bloquearUsuariosPendientes()"]').hide();
+				$('.movimientos-actions-bar button[onclick="recordarSaldoSeleccionados()"]').hide();
+				$('.movimientos-actions-bar a[href*="mostrarAnuladas"]').hide();
+				$('.movimientos-actions-bar a[href*="movimientos-reporte-morosos"]').hide();
+			}
+		}
+
 		totalizarMovimientos();
+		verificarYMostrarOcultarBotones();
+		
 	tablaMovimientos.on('draw', function(){
 		totalizarMovimientos();
 		actualizarEstadoSeleccionGeneral();
+		verificarYMostrarOcultarBotones();
 	});
 
 		function actualizarEstadoSeleccionGeneral(){
