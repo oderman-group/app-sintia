@@ -228,12 +228,17 @@ require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");?>
 										
 									
 											<?php
+											// OPTIMIZACIÓN: Pre-cargar todas las respuestas de todas las preguntas en un mapa
+											// para evitar N+1 queries dentro del bucle
+											$respuestasMapa = Evaluaciones::traerRespuestasEvaluacionMapa($conexion, $config, $idE);
+											
 											$contPreguntas = 1;
 											$preguntasConsulta = Evaluaciones::preguntasEvaluacion($conexion, $config, $idE);
 											while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
-												$respuestasConsulta = Evaluaciones::traerRespuestaPregunta($conexion, $config, $preguntas['preg_id']);
+												// OPTIMIZACIÓN: Obtener respuestas del mapa pre-cargado
+												$respuestasArray = $respuestasMapa[$preguntas['preg_id']] ?? [];
 												
-												$cantRespuestas = mysqli_num_rows($respuestasConsulta);
+												$cantRespuestas = count($respuestasArray);
 												if($cantRespuestas==0) {
 													echo "<hr><span style='color:red';>".$frases[146][$datosUsuarioActual['uss_idioma']].".</span>";
 													continue;
@@ -268,7 +273,8 @@ require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");?>
 													
 											<?php 
 												$contRespuestas = 1;
-												while($respuestas = mysqli_fetch_array($respuestasConsulta, MYSQLI_BOTH)){
+												// OPTIMIZACIÓN: Iterar sobre el array pre-cargado en lugar de hacer consulta
+												foreach($respuestasArray as $respuestas){
 											?>
 												<div>
 													
