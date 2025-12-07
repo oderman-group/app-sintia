@@ -382,14 +382,17 @@ foreach ($data["data"] as $resultado) {
 }
 
 // Consultar opciones generales para los selects del modal
+$opcionesTipoDocumento = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=1 ORDER BY ogen_nombre");
 $opcionesGenero = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=4 ORDER BY ogen_nombre");
 $opcionesEstrato = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=3 ORDER BY CAST(ogen_nombre AS UNSIGNED)");
 $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=14 ORDER BY ogen_nombre");
+$opcionesTipoEstudiante = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=5 ORDER BY ogen_nombre");
+$opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=8 ORDER BY ogen_nombre");
 ?>
 
 <!-- Modal de Edición Rápida -->
 <div class="modal fade" id="modalEdicionRapida" tabindex="-1" role="dialog" aria-labelledby="modalEdicionRapidaLabel" aria-hidden="true">
-	<div class="modal-dialog modal-lg" role="document">
+	<div class="modal-dialog modal-xl" role="document">
 		<div class="modal-content">
 			<div class="modal-header bg-primary text-white">
 				<h5 class="modal-title" id="modalEdicionRapidaLabel">
@@ -399,47 +402,104 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
-			<div class="modal-body">
+			<div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
 				<form id="formEdicionRapida">
 					<input type="hidden" id="mat_id_modal" name="mat_id">
 					
+					<!-- Información de Identificación -->
+					<div class="row mb-3">
+						<div class="col-md-12">
+							<h6 class="text-primary mb-3"><i class="fa fa-id-card"></i> Información de Identificación</h6>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="tipo_documento_modal">Tipo de Documento</label>
+								<select class="form-control" id="tipo_documento_modal" name="tipo_documento">
+									<option value="">Seleccionar...</option>
+									<?php
+									mysqli_data_seek($opcionesTipoDocumento, 0);
+									while($opcion = mysqli_fetch_array($opcionesTipoDocumento, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="documento_modal">Número de Documento</label>
+								<input type="text" class="form-control" id="documento_modal" name="documento" readonly style="background-color: #e9ecef;">
+							</div>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="lugar_expedicion_modal">Lugar de Expedición</label>
+								<input type="text" class="form-control" id="lugar_expedicion_modal" name="lugar_expedicion" maxlength="100">
+							</div>
+						</div>
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="matricula_modal">Número de Matrícula</label>
+								<input type="text" class="form-control" id="matricula_modal" name="matricula" readonly style="background-color: #e9ecef;">
+							</div>
+						</div>
+					</div>
+					
 					<!-- Información Personal -->
-					<div class="row">
-						<div class="col-md-6">
+					<div class="row mb-3">
+						<div class="col-md-12">
 							<h6 class="text-primary mb-3"><i class="fa fa-user"></i> Información Personal</h6>
-							
+						</div>
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="primer_nombre_modal">Primer Nombre *</label>
 								<input type="text" class="form-control" id="primer_nombre_modal" name="primer_nombre" required maxlength="50">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="segundo_nombre_modal">Segundo Nombre</label>
 								<input type="text" class="form-control" id="segundo_nombre_modal" name="segundo_nombre" maxlength="50">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="primer_apellido_modal">Primer Apellido *</label>
 								<input type="text" class="form-control" id="primer_apellido_modal" name="primer_apellido" required maxlength="50">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="segundo_apellido_modal">Segundo Apellido</label>
 								<input type="text" class="form-control" id="segundo_apellido_modal" name="segundo_apellido" maxlength="50">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group" id="fNacModalGroup">
 								<label for="fecha_nacimiento_modal">Fecha de Nacimiento</label>
 								<input type="date" class="form-control" id="fecha_nacimiento_modal" name="fecha_nacimiento" max="<?=date('Y-m-d', strtotime('-1 year'));?>">
 								<small id="fNacModalError" class="text-danger" style="display:none;">La fecha de nacimiento no puede ser futura ni menor de 1 año.</small>
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="lugar_nacimiento_modal">Lugar de Nacimiento</label>
+								<input type="text" class="form-control" id="lugar_nacimiento_modal" name="lugar_nacimiento" maxlength="100">
+							</div>
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="genero_modal">Género</label>
 								<select class="form-control" id="genero_modal" name="genero">
 									<option value="">Seleccionar...</option>
 									<?php
-									mysqli_data_seek($opcionesGenero, 0); // Reiniciar el puntero
+									mysqli_data_seek($opcionesGenero, 0);
 									while($opcion = mysqli_fetch_array($opcionesGenero, MYSQLI_BOTH)) {
 										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
 									}
@@ -448,40 +508,83 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 							</div>
 						</div>
 						
-						<div class="col-md-6">
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="religion_modal">Religión</label>
+								<select class="form-control" id="religion_modal" name="religion">
+									<option value="">Seleccionar...</option>
+									<?php
+									mysqli_data_seek($opcionesReligion, 0);
+									while($opcion = mysqli_fetch_array($opcionesReligion, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
+								</select>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Información de Contacto -->
+					<div class="row mb-3">
+						<div class="col-md-12">
 							<h6 class="text-success mb-3"><i class="fa fa-home"></i> Información de Contacto</h6>
-							
+						</div>
+						<div class="col-md-6">
 							<div class="form-group">
 								<label for="direccion_modal">Dirección</label>
 								<textarea class="form-control" id="direccion_modal" name="direccion" rows="2" maxlength="200"></textarea>
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="barrio_modal">Barrio</label>
 								<input type="text" class="form-control" id="barrio_modal" name="barrio" maxlength="100">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="ciudad_residencia_modal">Ciudad de Residencia</label>
+								<input type="text" class="form-control" id="ciudad_residencia_modal" name="ciudad_residencia" maxlength="100">
+							</div>
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="celular_modal">Celular</label>
 								<input type="tel" class="form-control" id="celular_modal" name="celular" maxlength="15">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="celular2_modal">Celular 2</label>
+								<input type="tel" class="form-control" id="celular2_modal" name="celular2" maxlength="15">
+							</div>
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="telefono_modal">Teléfono</label>
 								<input type="tel" class="form-control" id="telefono_modal" name="telefono" maxlength="15">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="email_modal">Email</label>
 								<input type="email" class="form-control" id="email_modal" name="email" maxlength="100">
 							</div>
-							
+						</div>
+						
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="estrato_modal">Estrato</label>
 								<select class="form-control" id="estrato_modal" name="estrato">
 									<option value="">Seleccionar...</option>
 									<?php
-									mysqli_data_seek($opcionesEstrato, 0); // Reiniciar el puntero
+									mysqli_data_seek($opcionesEstrato, 0);
 									while($opcion = mysqli_fetch_array($opcionesEstrato, MYSQLI_BOTH)) {
 										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
 									}
@@ -492,37 +595,78 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 					</div>
 					
 					<!-- Información Académica -->
-					<div class="row mt-3">
-						<div class="col-md-6">
+					<div class="row mb-3">
+						<div class="col-md-12">
 							<h6 class="text-info mb-3"><i class="fa fa-graduation-cap"></i> Información Académica</h6>
-							
+						</div>
+						<div class="col-md-3">
 							<div class="form-group">
 								<label for="grado_modal">Grado</label>
-								<input type="text" class="form-control" id="grado_modal" name="grado" readonly>
-							</div>
-							
-							<div class="form-group">
-								<label for="grupo_modal">Grupo</label>
-								<input type="text" class="form-control" id="grupo_modal" name="grupo" readonly>
+								<input type="text" class="form-control" id="grado_modal" name="grado" readonly style="background-color: #e9ecef;">
 							</div>
 						</div>
 						
-						<div class="col-md-6">
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="grupo_modal">Grupo</label>
+								<input type="text" class="form-control" id="grupo_modal" name="grupo" readonly style="background-color: #e9ecef;">
+							</div>
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="tipo_estudiante_modal">Tipo de Estudiante</label>
+								<select class="form-control" id="tipo_estudiante_modal" name="tipo_estudiante">
+									<option value="">Seleccionar...</option>
+									<?php
+									mysqli_data_seek($opcionesTipoEstudiante, 0);
+									while($opcion = mysqli_fetch_array($opcionesTipoEstudiante, MYSQLI_BOTH)) {
+										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="inclusion_modal">Inclusión</label>
+								<select class="form-control" id="inclusion_modal" name="inclusion">
+									<option value="0">No</option>
+									<option value="1">Sí</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-3">
+							<div class="form-group">
+								<label for="estado_matricula_modal">Estado de Matrícula</label>
+								<input type="text" class="form-control" id="estado_matricula_modal" name="estado_matricula" readonly style="background-color: #e9ecef;">
+							</div>
+						</div>
+					</div>
+					
+					<!-- Información Médica -->
+					<div class="row mb-3">
+						<div class="col-md-12">
 							<h6 class="text-warning mb-3"><i class="fa fa-heart"></i> Información Médica</h6>
-							
+						</div>
+						<div class="col-md-6">
 							<div class="form-group">
 								<label for="tipo_sangre_modal">Grupo Sanguíneo</label>
 								<select class="form-control" id="tipo_sangre_modal" name="tipo_sangre">
 									<option value="">Seleccionar...</option>
 									<?php
-									mysqli_data_seek($opcionesTipoSangre, 0); // Reiniciar el puntero
+									mysqli_data_seek($opcionesTipoSangre, 0);
 									while($opcion = mysqli_fetch_array($opcionesTipoSangre, MYSQLI_BOTH)) {
 										echo '<option value="'.$opcion['ogen_id'].'">'.$opcion['ogen_nombre'].'</option>';
 									}
 									?>
 								</select>
 							</div>
-							
+						</div>
+						
+						<div class="col-md-6">
 							<div class="form-group">
 								<label for="eps_modal">EPS</label>
 								<input type="text" class="form-control" id="eps_modal" name="eps" maxlength="100">
@@ -581,22 +725,41 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 				if (response.success) {
 					var estudiante = response.data;
 					
-					// Llenar formulario
+					// Llenar formulario - Información de Identificación
 					$('#mat_id_modal').val(matId);
+					$('#tipo_documento_modal').val(estudiante.mat_tipo_documento || '');
+					$('#documento_modal').val(estudiante.mat_documento || '');
+					$('#lugar_expedicion_modal').val(estudiante.mat_lugar_expedicion || '');
+					$('#matricula_modal').val(estudiante.mat_matricula || '');
+					
+					// Información Personal
 					$('#primer_nombre_modal').val(estudiante.mat_nombres || '');
 					$('#segundo_nombre_modal').val(estudiante.mat_nombre2 || '');
 					$('#primer_apellido_modal').val(estudiante.mat_primer_apellido || '');
 					$('#segundo_apellido_modal').val(estudiante.mat_segundo_apellido || '');
 					$('#fecha_nacimiento_modal').val(estudiante.mat_fecha_nacimiento || '');
+					$('#lugar_nacimiento_modal').val(estudiante.mat_lugar_nacimiento || '');
 					$('#genero_modal').val(estudiante.mat_genero || '');
+					$('#religion_modal').val(estudiante.mat_religion || '');
+					
+					// Información de Contacto
 					$('#direccion_modal').val(estudiante.mat_direccion || '');
 					$('#barrio_modal').val(estudiante.mat_barrio || '');
+					$('#ciudad_residencia_modal').val(estudiante.mat_ciudad_residencia || '');
 					$('#celular_modal').val(estudiante.mat_celular || '');
+					$('#celular2_modal').val(estudiante.mat_celular2 || '');
 					$('#telefono_modal').val(estudiante.mat_telefono || '');
 					$('#email_modal').val(estudiante.mat_email || '');
 					$('#estrato_modal').val(estudiante.mat_estrato || '');
+					
+					// Información Académica
 					$('#grado_modal').val(estudiante.gra_nombre || '');
 					$('#grupo_modal').val(estudiante.gru_nombre || '');
+					$('#tipo_estudiante_modal').val(estudiante.mat_tipo || '');
+					$('#inclusion_modal').val(estudiante.mat_inclusion || '0');
+					$('#estado_matricula_modal').val(estudiante.estado_matricula_nombre || '');
+					
+					// Información Médica
 					$('#tipo_sangre_modal').val(estudiante.mat_tipo_sangre || '');
 					$('#eps_modal').val(estudiante.mat_eps || '');
 					
@@ -663,18 +826,26 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 		// Preparar datos del formulario
 		var formData = {
 			mat_id: $('#mat_id_modal').val(),
+			tipo_documento: $('#tipo_documento_modal').val(),
+			lugar_expedicion: $('#lugar_expedicion_modal').val().trim(),
 			primer_nombre: primerNombre,
 			segundo_nombre: $('#segundo_nombre_modal').val().trim(),
 			primer_apellido: primerApellido,
 			segundo_apellido: $('#segundo_apellido_modal').val().trim(),
 			fecha_nacimiento: $('#fecha_nacimiento_modal').val(),
+			lugar_nacimiento: $('#lugar_nacimiento_modal').val().trim(),
 			genero: $('#genero_modal').val(),
+			religion: $('#religion_modal').val(),
 			direccion: $('#direccion_modal').val().trim(),
 			barrio: $('#barrio_modal').val().trim(),
+			ciudad_residencia: $('#ciudad_residencia_modal').val().trim(),
 			celular: $('#celular_modal').val().trim(),
+			celular2: $('#celular2_modal').val().trim(),
 			telefono: $('#telefono_modal').val().trim(),
 			email: $('#email_modal').val().trim(),
 			estrato: $('#estrato_modal').val(),
+			tipo_estudiante: $('#tipo_estudiante_modal').val(),
+			inclusion: $('#inclusion_modal').val(),
 			tipo_sangre: $('#tipo_sangre_modal').val(),
 			eps: $('#eps_modal').val().trim()
 		};
@@ -691,14 +862,28 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 					// Cerrar modal
 					$('#modalEdicionRapida').modal('hide');
 					
-					// Mostrar mensaje de éxito
-					alert('✅ ' + (response.message || 'Datos del estudiante actualizados correctamente'));
+					// Mostrar mensaje de éxito con toast
+					$.toast({
+						heading: 'Éxito',
+						text: response.message || 'Datos del estudiante actualizados correctamente',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 3000
+					});
 					
-					// Actualizar la tabla sin recargar la página
-					actualizarTablaEstudiantes();
+					// Actualizar solo la fila del estudiante sin recargar la página
+					actualizarFilaEstudiante($('#mat_id_modal').val());
 				} else {
 					// Mostrar mensaje de error
-					alert('❌ Error: ' + (response.message || 'Error desconocido'));
+					$.toast({
+						heading: 'Error',
+						text: response.message || 'Error desconocido',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 5000
+					});
 				}
 			},
 			error: function(xhr, status, error) {
@@ -711,13 +896,59 @@ $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM 
 		});
 	}
 
-	// Función para actualizar la tabla de estudiantes sin recargar la página
-	function actualizarTablaEstudiantes() {
-		// Por ahora, simplemente recargar la página para evitar problemas
-		// TODO: Implementar actualización AJAX más robusta
-		setTimeout(function() {
-			location.reload();
-		}, 1000);
+	// Función para actualizar solo la fila del estudiante sin recargar la página
+	function actualizarFilaEstudiante(matId) {
+		// Obtener los datos actualizados del estudiante
+		$.ajax({
+			url: 'ajax-obtener-datos-estudiante.php',
+			method: 'POST',
+			data: { mat_id: matId },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					var estudiante = response.data;
+					var nombreCompleto = (estudiante.mat_primer_apellido || '') + ' ' + 
+										(estudiante.mat_segundo_apellido || '') + ' ' + 
+										(estudiante.mat_nombres || '') + ' ' + 
+										(estudiante.mat_nombre2 || '');
+					nombreCompleto = nombreCompleto.trim();
+					
+					// Buscar la fila en la tabla por el documento del estudiante
+					// La estructura de la tabla tiene el documento en una celda específica
+					var $fila = null;
+					
+					// Intentar encontrar la fila por el documento
+					$('#example1 tbody tr, table tbody tr').each(function() {
+						var $tr = $(this);
+						// Buscar en la segunda columna (índice 1) que contiene el documento
+						var $docCell = $tr.find('td').eq(1);
+						if ($docCell.length > 0 && $docCell.text().trim() === (estudiante.mat_documento || '').trim()) {
+							$fila = $tr;
+							return false; // Salir del each
+						}
+					});
+					
+					if ($fila && $fila.length > 0) {
+						// Actualizar el nombre en la celda correspondiente (tercera columna)
+						var $nombreCell = $fila.find('td').eq(2);
+						if ($nombreCell.length > 0) {
+							$nombreCell.find('.editable-name').text(nombreCompleto);
+						}
+					}
+					
+					// Si hay DataTables, redibujar la tabla manteniendo la página actual
+					if ($.fn.DataTable.isDataTable('#example1')) {
+						var table = $('#example1').DataTable();
+						// Obtener la página actual antes de redibujar
+						var currentPage = table.page();
+						table.draw(false); // false para mantener la página actual y no perder la posición
+					}
+				}
+			},
+			error: function() {
+				console.error('Error al actualizar fila del estudiante');
+			}
+		});
 	}
 
 	$(document).ready(function() {

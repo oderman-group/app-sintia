@@ -64,15 +64,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     m.mat_inclusion,
                     m.mat_eps,
                     m.mat_ciudad_residencia,
+                    m.mat_tipo_sangre,
                     g.gra_nombre,
                     gr.gru_nombre,
                     og_genero.ogen_nombre as genero_nombre,
-                    og_estrato.ogen_nombre as estrato_nombre
+                    og_estrato.ogen_nombre as estrato_nombre,
+                    og_estado.ogen_nombre as estado_matricula_nombre
                 FROM ".BD_ACADEMICA.".academico_matriculas m
                 LEFT JOIN ".BD_ACADEMICA.".academico_grados g ON m.mat_grado = g.gra_id AND g.institucion = m.institucion AND g.year = m.year
                 LEFT JOIN ".BD_ACADEMICA.".academico_grupos gr ON m.mat_grupo = gr.gru_id AND gr.institucion = m.institucion AND gr.year = m.year
                 LEFT JOIN ".BD_ADMIN.".opciones_generales og_genero ON m.mat_genero = og_genero.ogen_id
                 LEFT JOIN ".BD_ADMIN.".opciones_generales og_estrato ON m.mat_estrato = og_estrato.ogen_id
+                LEFT JOIN ".BD_ADMIN.".opciones_generales og_estado ON m.mat_estado_matricula = og_estado.ogen_id AND og_estado.ogen_grupo = 2
                 WHERE m.mat_id = :mat_id 
                 AND m.mat_eliminado = 0
                 AND m.institucion = :institucion
