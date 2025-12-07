@@ -34,9 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // OPTIMIZACIÓN: Seleccionar solo los campos necesarios basados en la estructura real de la tabla
         // Evita campos BLOB o TEXT grandes que consumen memoria
+        // Incluir mat_numero_matricula para el modal
         $sql = "SELECT 
                     m.mat_id,
                     m.mat_matricula,
+                    m.mat_numero_matricula,
                     m.mat_fecha,
                     m.mat_primer_apellido,
                     m.mat_segundo_apellido,

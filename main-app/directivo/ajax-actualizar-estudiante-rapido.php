@@ -36,13 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Obtener datos del POST y convertir tipos apropiados
         $matId = $_POST['mat_id'] ?? null;
         $tipoDocumento = $_POST['tipo_documento'] ?? '';
-        $lugarExpedicion = trim($_POST['lugar_expedicion'] ?? '');
+        // lugar_expedicion y lugar_nacimiento ahora vienen como IDs de ciudad
+        $lugarExpedicion = !empty($_POST['lugar_expedicion']) ? (int)$_POST['lugar_expedicion'] : null;
         $primerNombre = trim($_POST['primer_nombre'] ?? '');
         $segundoNombre = trim($_POST['segundo_nombre'] ?? '');
         $primerApellido = trim($_POST['primer_apellido'] ?? '');
         $segundoApellido = trim($_POST['segundo_apellido'] ?? '');
         $fechaNacimiento = $_POST['fecha_nacimiento'] ?? '';
-        $lugarNacimiento = trim($_POST['lugar_nacimiento'] ?? '');
+        // lugar_nacimiento ahora viene como ID de ciudad
+        $lugarNacimiento = !empty($_POST['lugar_nacimiento']) ? (int)$_POST['lugar_nacimiento'] : null;
         $genero = $_POST['genero'] ?? '';
         $religion = $_POST['religion'] ?? '';
         $direccion = trim($_POST['direccion'] ?? '');
@@ -94,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Crear consulta SQL para actualizar
+        // mat_lugar_expedicion y mat_lugar_nacimiento ahora almacenan IDs de ciudad
         $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
                     mat_tipo_documento = :tipoDocumento,
                     mat_lugar_expedicion = :lugarExpedicion,
@@ -126,13 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Bind de parámetros
         $stmt->bindParam(':tipoDocumento', $tipoDocumentoInt, PDO::PARAM_INT);
-        $stmt->bindParam(':lugarExpedicion', $lugarExpedicion, PDO::PARAM_STR);
+        $stmt->bindParam(':lugarExpedicion', $lugarExpedicion, PDO::PARAM_INT);
         $stmt->bindParam(':nombres', $primerNombre, PDO::PARAM_STR);
         $stmt->bindParam(':nombre2', $segundoNombre, PDO::PARAM_STR);
         $stmt->bindParam(':apellido1', $primerApellido, PDO::PARAM_STR);
         $stmt->bindParam(':apellido2', $segundoApellido, PDO::PARAM_STR);
         $stmt->bindParam(':fechaNacimiento', $fechaNacimiento, PDO::PARAM_STR);
-        $stmt->bindParam(':lugarNacimiento', $lugarNacimiento, PDO::PARAM_STR);
+        $stmt->bindParam(':lugarNacimiento', $lugarNacimiento, PDO::PARAM_INT);
         $stmt->bindParam(':genero', $generoInt, PDO::PARAM_INT);
         $stmt->bindParam(':religion', $religionInt, PDO::PARAM_INT);
         $stmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);

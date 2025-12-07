@@ -388,6 +388,26 @@ $opcionesEstrato = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".B
 $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=14 ORDER BY ogen_nombre");
 $opcionesTipoEstudiante = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=5 ORDER BY ogen_nombre");
 $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=8 ORDER BY ogen_nombre");
+
+// Consultar ciudades para los selects de lugar de expedición y lugar de nacimiento
+$catalogoCiudades = [];
+try {
+	$consultaCiudades = mysqli_query(
+		$conexion,
+		"SELECT ciu_id, TRIM(ciu_codigo) AS ciu_codigo, ciu_nombre, dep_nombre 
+		 FROM {$baseDatosServicios}.localidad_ciudades
+		 INNER JOIN {$baseDatosServicios}.localidad_departamentos ON dep_id = ciu_departamento
+		 ORDER BY ciu_nombre"
+	);
+	if ($consultaCiudades) {
+		while ($ciudad = mysqli_fetch_assoc($consultaCiudades)) {
+			$catalogoCiudades[] = $ciudad;
+		}
+	}
+} catch (Exception $e) {
+	// Si hay error, dejar el array vacío
+	$catalogoCiudades = [];
+}
 ?>
 
 <!-- Modal de Edición Rápida -->
@@ -434,7 +454,12 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 						<div class="col-md-3">
 							<div class="form-group">
 								<label for="lugar_expedicion_modal">Lugar de Expedición</label>
-								<input type="text" class="form-control" id="lugar_expedicion_modal" name="lugar_expedicion" maxlength="100">
+								<select class="form-control select2" id="lugar_expedicion_modal" name="lugar_expedicion" style="width: 100%;">
+									<option value="">Seleccione una opción</option>
+									<?php foreach($catalogoCiudades as $ciudad){ ?>
+										<option value="<?=$ciudad['ciu_id'];?>"><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+									<?php }?>
+								</select>
 							</div>
 						</div>
 						<div class="col-md-3">
@@ -489,7 +514,12 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 						<div class="col-md-3">
 							<div class="form-group">
 								<label for="lugar_nacimiento_modal">Lugar de Nacimiento</label>
-								<input type="text" class="form-control" id="lugar_nacimiento_modal" name="lugar_nacimiento" maxlength="100">
+								<select class="form-control select2" id="lugar_nacimiento_modal" name="lugar_nacimiento" style="width: 100%;">
+									<option value="">Seleccione una opción</option>
+									<?php foreach($catalogoCiudades as $ciudad){ ?>
+										<option value="<?=$ciudad['ciu_id'];?>"><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+									<?php }?>
+								</select>
 							</div>
 						</div>
 						
@@ -725,12 +755,34 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 				if (response.success) {
 					var estudiante = response.data;
 					
+					// Inicializar select2 para los campos de ciudades ANTES de establecer valores
+					if (!$('#lugar_expedicion_modal').hasClass('select2-hidden-accessible')) {
+						$('#lugar_expedicion_modal').select2({
+							dropdownParent: $('#modalEdicionRapida'),
+							language: {
+								noResults: function() {
+									return "No se encontraron resultados";
+								}
+							}
+						});
+					}
+					if (!$('#lugar_nacimiento_modal').hasClass('select2-hidden-accessible')) {
+						$('#lugar_nacimiento_modal').select2({
+							dropdownParent: $('#modalEdicionRapida'),
+							language: {
+								noResults: function() {
+									return "No se encontraron resultados";
+								}
+							}
+						});
+					}
+					
 					// Llenar formulario - Información de Identificación
 					$('#mat_id_modal').val(matId);
 					$('#tipo_documento_modal').val(estudiante.mat_tipo_documento || '');
 					$('#documento_modal').val(estudiante.mat_documento || '');
-					$('#lugar_expedicion_modal').val(estudiante.mat_lugar_expedicion || '');
-					$('#matricula_modal').val(estudiante.mat_matricula || '');
+					$('#lugar_expedicion_modal').val(estudiante.mat_lugar_expedicion || '').trigger('change');
+					$('#matricula_modal').val(estudiante.mat_numero_matricula || estudiante.mat_matricula || '');
 					
 					// Información Personal
 					$('#primer_nombre_modal').val(estudiante.mat_nombres || '');
@@ -738,7 +790,7 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 					$('#primer_apellido_modal').val(estudiante.mat_primer_apellido || '');
 					$('#segundo_apellido_modal').val(estudiante.mat_segundo_apellido || '');
 					$('#fecha_nacimiento_modal').val(estudiante.mat_fecha_nacimiento || '');
-					$('#lugar_nacimiento_modal').val(estudiante.mat_lugar_nacimiento || '');
+					$('#lugar_nacimiento_modal').val(estudiante.mat_lugar_nacimiento || '').trigger('change');
 					$('#genero_modal').val(estudiante.mat_genero || '');
 					$('#religion_modal').val(estudiante.mat_religion || '');
 					
@@ -827,13 +879,13 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 		var formData = {
 			mat_id: $('#mat_id_modal').val(),
 			tipo_documento: $('#tipo_documento_modal').val(),
-			lugar_expedicion: $('#lugar_expedicion_modal').val().trim(),
+			lugar_expedicion: $('#lugar_expedicion_modal').val() || '',
 			primer_nombre: primerNombre,
 			segundo_nombre: $('#segundo_nombre_modal').val().trim(),
 			primer_apellido: primerApellido,
 			segundo_apellido: $('#segundo_apellido_modal').val().trim(),
 			fecha_nacimiento: $('#fecha_nacimiento_modal').val(),
-			lugar_nacimiento: $('#lugar_nacimiento_modal').val().trim(),
+			lugar_nacimiento: $('#lugar_nacimiento_modal').val() || '',
 			genero: $('#genero_modal').val(),
 			religion: $('#religion_modal').val(),
 			direccion: $('#direccion_modal').val().trim(),
@@ -955,6 +1007,16 @@ $opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".
 		// Event listener para el botón de guardar en el modal
 		$('#btnGuardarRapido').on('click', function() {
 			guardarCambiosRapidos();
+		});
+		
+		// Destruir select2 cuando se cierra el modal para evitar problemas de inicialización múltiple
+		$('#modalEdicionRapida').on('hidden.bs.modal', function() {
+			if ($('#lugar_expedicion_modal').hasClass('select2-hidden-accessible')) {
+				$('#lugar_expedicion_modal').select2('destroy');
+			}
+			if ($('#lugar_nacimiento_modal').hasClass('select2-hidden-accessible')) {
+				$('#lugar_nacimiento_modal').select2('destroy');
+			}
 		});
 		
 		// Validación en tiempo real de fecha de nacimiento en el modal
