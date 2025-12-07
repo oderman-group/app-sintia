@@ -35,24 +35,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Obtener datos del POST y convertir tipos apropiados
         $matId = $_POST['mat_id'] ?? null;
+        $tipoDocumento = $_POST['tipo_documento'] ?? '';
+        // lugar_expedicion y lugar_nacimiento ahora vienen como IDs de ciudad
+        $lugarExpedicion = !empty($_POST['lugar_expedicion']) ? (int)$_POST['lugar_expedicion'] : null;
         $primerNombre = trim($_POST['primer_nombre'] ?? '');
         $segundoNombre = trim($_POST['segundo_nombre'] ?? '');
         $primerApellido = trim($_POST['primer_apellido'] ?? '');
         $segundoApellido = trim($_POST['segundo_apellido'] ?? '');
         $fechaNacimiento = $_POST['fecha_nacimiento'] ?? '';
+        // lugar_nacimiento ahora viene como ID de ciudad
+        $lugarNacimiento = !empty($_POST['lugar_nacimiento']) ? (int)$_POST['lugar_nacimiento'] : null;
         $genero = $_POST['genero'] ?? '';
+        $religion = $_POST['religion'] ?? '';
         $direccion = trim($_POST['direccion'] ?? '');
         $barrio = trim($_POST['barrio'] ?? '');
+        $ciudadResidencia = trim($_POST['ciudad_residencia'] ?? '');
         $celular = trim($_POST['celular'] ?? '');
+        $celular2 = trim($_POST['celular2'] ?? '');
         $telefono = trim($_POST['telefono'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $estrato = $_POST['estrato'] ?? '';
+        $tipoEstudiante = $_POST['tipo_estudiante'] ?? '';
+        $inclusion = $_POST['inclusion'] ?? '0';
         $tipoSangre = $_POST['tipo_sangre'] ?? '';
         $eps = trim($_POST['eps'] ?? '');
         
         // Los valores ya vienen como IDs desde el frontend, solo necesitamos convertirlos a enteros
+        $tipoDocumentoInt = !empty($tipoDocumento) ? (int)$tipoDocumento : null;
         $generoInt = !empty($genero) ? (int)$genero : null;
+        $religionInt = !empty($religion) ? (int)$religion : null;
         $estratoInt = !empty($estrato) ? (int)$estrato : null;
+        $tipoEstudianteInt = !empty($tipoEstudiante) ? (int)$tipoEstudiante : null;
+        $inclusionInt = !empty($inclusion) ? (int)$inclusion : 0;
         $tipoSangreInt = !empty($tipoSangre) ? (int)$tipoSangre : null;
         
         // Validar campos obligatorios
@@ -82,19 +96,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Crear consulta SQL para actualizar
+        // mat_lugar_expedicion y mat_lugar_nacimiento ahora almacenan IDs de ciudad
         $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
+                    mat_tipo_documento = :tipoDocumento,
+                    mat_lugar_expedicion = :lugarExpedicion,
                     mat_nombres = :nombres,
                     mat_nombre2 = :nombre2,
                     mat_primer_apellido = :apellido1,
                     mat_segundo_apellido = :apellido2,
                     mat_fecha_nacimiento = :fechaNacimiento,
+                    mat_lugar_nacimiento = :lugarNacimiento,
                     mat_genero = :genero,
+                    mat_religion = :religion,
                     mat_direccion = :direccion,
                     mat_barrio = :barrio,
+                    mat_ciudad_residencia = :ciudadResidencia,
                     mat_celular = :celular,
+                    mat_celular2 = :celular2,
                     mat_telefono = :telefono,
                     mat_email = :email,
                     mat_estrato = :estrato,
+                    mat_tipo = :tipoEstudiante,
+                    mat_inclusion = :inclusion,
                     mat_tipo_sangre = :tipoSangre,
                     mat_eps = :eps
                 WHERE mat_id = :id 
@@ -105,19 +128,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conexionPDO->prepare($sql);
         
         // Bind de parámetros
+        $stmt->bindParam(':tipoDocumento', $tipoDocumentoInt, PDO::PARAM_INT);
+        $stmt->bindParam(':lugarExpedicion', $lugarExpedicion, PDO::PARAM_INT);
         $stmt->bindParam(':nombres', $primerNombre, PDO::PARAM_STR);
         $stmt->bindParam(':nombre2', $segundoNombre, PDO::PARAM_STR);
         $stmt->bindParam(':apellido1', $primerApellido, PDO::PARAM_STR);
         $stmt->bindParam(':apellido2', $segundoApellido, PDO::PARAM_STR);
         $stmt->bindParam(':fechaNacimiento', $fechaNacimiento, PDO::PARAM_STR);
+        $stmt->bindParam(':lugarNacimiento', $lugarNacimiento, PDO::PARAM_INT);
         $stmt->bindParam(':genero', $generoInt, PDO::PARAM_INT);
+        $stmt->bindParam(':religion', $religionInt, PDO::PARAM_INT);
         $stmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $stmt->bindParam(':barrio', $barrio, PDO::PARAM_STR);
+        $stmt->bindParam(':ciudadResidencia', $ciudadResidencia, PDO::PARAM_STR);
         $stmt->bindParam(':celular', $celular, PDO::PARAM_STR);
+        $stmt->bindParam(':celular2', $celular2, PDO::PARAM_STR);
         $stmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
         $stmt->bindParam(':estrato', $estratoInt, PDO::PARAM_INT);
-        $stmt->bindParam(':tipoSangre', $tipoSangreInt, PDO::PARAM_STR);
+        $stmt->bindParam(':tipoEstudiante', $tipoEstudianteInt, PDO::PARAM_INT);
+        $stmt->bindParam(':inclusion', $inclusionInt, PDO::PARAM_INT);
+        $stmt->bindParam(':tipoSangre', $tipoSangreInt, PDO::PARAM_INT);
         $stmt->bindParam(':eps', $eps, PDO::PARAM_STR);
         $stmt->bindParam(':id', $matId, PDO::PARAM_STR);
         $stmt->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);

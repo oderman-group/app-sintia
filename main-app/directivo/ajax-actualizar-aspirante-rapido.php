@@ -47,6 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'ID de aspirante, matrícula y estado son obligatorios.']);
         }
         
+        // Verificar el estado actual del aspirante antes de actualizar
+        $sqlVerificar = "SELECT asp_estado_solicitud, asp_agno 
+                         FROM ".BD_ADMISIONES.".aspirantes 
+                         WHERE asp_id = :asp_id";
+        $stmtVerificar = $conexionPDO->prepare($sqlVerificar);
+        $stmtVerificar->bindParam(':asp_id', $aspId, PDO::PARAM_INT);
+        $stmtVerificar->execute();
+        $aspiranteActual = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
+        
+        // Si el aspirante ya está en estado Aprobado (6), no permitir cambios de estado
+        if (!empty($aspiranteActual) && $aspiranteActual['asp_estado_solicitud'] == 6) {
+            jsonResponse(['success' => false, 'message' => 'No se puede modificar el estado de un aspirante ya aprobado.']);
+        }
+        
         // Actualizar el estado y observación del aspirante
         $sqlAsp = "UPDATE ".BD_ADMISIONES.".aspirantes SET 
                     asp_estado_solicitud = :estado,
@@ -62,6 +76,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($resultadoAsp === false) {
             jsonResponse(['success' => false, 'message' => 'No se pudo actualizar el aspirante.']);
+        }
+        
+        // Si el estado cambió a Aprobado (6) y el año de inscripción coincide con el año actual de la institución
+        // Actualizar el estado de la matrícula a No matriculado (4)
+        if ($estadoSolicitud == 6 && !empty($aspiranteActual['asp_agno']) && $aspiranteActual['asp_agno'] == $_SESSION["bd"]) {
+            $sqlMatricula = "UPDATE ".BD_ACADEMICA.".academico_matriculas 
+                            SET mat_estado_matricula = 4
+                            WHERE mat_id = :mat_id
+                            AND mat_solicitud_inscripcion = :asp_id
+                            AND institucion = :institucion
+                            AND year = :year";
+            
+            $stmtMatricula = $conexionPDO->prepare($sqlMatricula);
+            $stmtMatricula->bindParam(':mat_id', $matId, PDO::PARAM_STR);
+            $stmtMatricula->bindParam(':asp_id', $aspId, PDO::PARAM_INT);
+            $stmtMatricula->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtMatricula->bindParam(':year', $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtMatricula->execute();
         }
         
         // Si se solicita enviar correo

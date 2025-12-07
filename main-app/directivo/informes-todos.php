@@ -337,7 +337,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     <ul class="informe-list">
                                                         <?php if(Modulos::validarSubRol(['DT0240'])){?>
                                                         <li class="informe-item">
-                                                            <a href="../compartido/reporte-movimientos.php" target="_blank" class="informe-link">
+                                                            <a href="javascript:void(0);" onclick="abrirModal('Filtros - Informe de Movimientos Financieros','informes-movimientos-filtro-modal.php')" class="informe-link">
                                                                 <i class="fas fa-money-bill-wave"></i> Informe de movimientos financieros
                                                             </a>
                                                             <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Registro detallado de todos los movimientos financieros del sistema</div>

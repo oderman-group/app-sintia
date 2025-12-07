@@ -141,6 +141,22 @@ if($config['conf_doble_buscador'] == 1) {
 			opacity: 0.6;
 		}
 		
+		/* Estilos para select2 deshabilitados en filtros */
+		.select2-container-disabled .select2-selection--multiple {
+			background-color: #e9ecef !important;
+			cursor: not-allowed !important;
+			opacity: 0.6 !important;
+		}
+		
+		.select2-container-disabled .select2-selection--multiple .select2-selection__rendered {
+			color: #6c757d !important;
+		}
+		
+		.select2-container-disabled .select2-selection--multiple .select2-selection__choice {
+			background-color: #dee2e6 !important;
+			border-color: #ced4da !important;
+		}
+		
 		/* ========================================
 		   SKELETON LOADER
 		   ======================================== */
@@ -2215,8 +2231,81 @@ $(document).ready(function() {
 		}
 	});
 	
+	// Función para deshabilitar controles de filtro de cargas
+	function deshabilitarControlesFiltroCargas() {
+		// Deshabilitar select2 (usando métodos específicos de select2)
+		if ($('#filtro_cargas_cursos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_cursos').prop('disabled', true);
+			$('#filtro_cargas_cursos').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_cursos').prop('disabled', true);
+		}
+		
+		if ($('#filtro_cargas_grupos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_grupos').prop('disabled', true);
+			$('#filtro_cargas_grupos').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_grupos').prop('disabled', true);
+		}
+		
+		if ($('#filtro_cargas_docentes').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_docentes').prop('disabled', true);
+			$('#filtro_cargas_docentes').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_docentes').prop('disabled', true);
+		}
+		
+		if ($('#filtro_cargas_periodos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_periodos').prop('disabled', true);
+			$('#filtro_cargas_periodos').next('.select2-container').addClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_periodos').prop('disabled', true);
+		}
+		
+		// Deshabilitar botón de limpiar filtros
+		$('#btnLimpiarFiltrosCargas').prop('disabled', true).css('opacity', '0.6').css('cursor', 'not-allowed');
+	}
+	
+	// Función para habilitar controles de filtro de cargas
+	function habilitarControlesFiltroCargas() {
+		// Habilitar select2 (usando métodos específicos de select2)
+		if ($('#filtro_cargas_cursos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_cursos').prop('disabled', false);
+			$('#filtro_cargas_cursos').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_cursos').prop('disabled', false);
+		}
+		
+		if ($('#filtro_cargas_grupos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_grupos').prop('disabled', false);
+			$('#filtro_cargas_grupos').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_grupos').prop('disabled', false);
+		}
+		
+		if ($('#filtro_cargas_docentes').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_docentes').prop('disabled', false);
+			$('#filtro_cargas_docentes').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_docentes').prop('disabled', false);
+		}
+		
+		if ($('#filtro_cargas_periodos').hasClass('select2-hidden-accessible')) {
+			$('#filtro_cargas_periodos').prop('disabled', false);
+			$('#filtro_cargas_periodos').next('.select2-container').removeClass('select2-container-disabled');
+		} else {
+			$('#filtro_cargas_periodos').prop('disabled', false);
+		}
+		
+		// Habilitar botón de limpiar filtros
+		$('#btnLimpiarFiltrosCargas').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
+	}
+	
 	// Función para aplicar filtros de cargas
 	function aplicarFiltrosCargas() {
+		// Deshabilitar controles al inicio
+		deshabilitarControlesFiltroCargas();
+		
 		const cursos = $('#filtro_cargas_cursos').val() || [];
 		const grupos = $('#filtro_cargas_grupos').val() || [];
 		const docentes = $('#filtro_cargas_docentes').val() || [];
@@ -2243,6 +2332,9 @@ $(document).ready(function() {
 				console.log('Respuesta del filtro cargas:', response);
 				
 				$('#gifCarga').hide();
+				
+				// Habilitar controles al finalizar
+				habilitarControlesFiltroCargas();
 				
 				if (response.success) {
 					// Insertar el HTML
@@ -2331,12 +2423,18 @@ $(document).ready(function() {
 					
 					$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error al cargar los datos. Ver consola para detalles.</td></tr>');
 				}
+				
+				// Habilitar controles incluso si hay error
+				habilitarControlesFiltroCargas();
 			},
 			error: function(xhr, status, error) {
 				console.error('Error AJAX cargas:', status, error);
 				console.error('Response:', xhr.responseText);
 				
 				$('#gifCarga').hide();
+				
+				// Habilitar controles al finalizar (incluso con error)
+				habilitarControlesFiltroCargas();
 				
 				$.toast({
 					heading: 'Error de Conexión',
@@ -2354,6 +2452,9 @@ $(document).ready(function() {
 	
 	// Limpiar filtros de cargas
 	$('#btnLimpiarFiltrosCargas').on('click', function() {
+		// Deshabilitar controles mientras se limpia
+		deshabilitarControlesFiltroCargas();
+		
 		$('#filtro_cargas_cursos').val(null).trigger('change');
 		$('#filtro_cargas_grupos').val(null).trigger('change');
 		$('#filtro_cargas_docentes').val(null).trigger('change');

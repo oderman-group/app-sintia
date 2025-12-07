@@ -366,8 +366,26 @@ function abrirModalEdicionAspirante(aspId, matId) {
 				$('#estado_solicitud_modal').val(aspirante.asp_estado_solicitud || '');
 				$('#observacion_modal').val(observacionTexto);
 				
-				// Restaurar botón
-				$('#btnGuardarAspirante').html('<i class="fa fa-save"></i> Guardar Cambios').prop('disabled', false);
+				// Si el estado es Aprobado (6), deshabilitar el campo de estado y mostrar advertencia
+				if (aspirante.asp_estado_solicitud == 6) {
+					$('#estado_solicitud_modal').prop('disabled', true);
+					$('#btnGuardarAspirante').prop('disabled', true).html('<i class="fa fa-lock"></i> No se puede editar (Aprobado)');
+					
+					// Mostrar advertencia en el modal
+					if ($('#advertenciaAprobado').length === 0) {
+						$('#formEdicionAspirante').prepend(
+							'<div id="advertenciaAprobado" class="alert alert-warning">' +
+							'<i class="fa fa-exclamation-triangle"></i> ' +
+							'<strong>Advertencia:</strong> Este aspirante ya está aprobado y no se puede modificar su estado.' +
+							'</div>'
+						);
+					}
+				} else {
+					// Habilitar el campo de estado si no está aprobado
+					$('#estado_solicitud_modal').prop('disabled', false);
+					$('#btnGuardarAspirante').prop('disabled', false).html('<i class="fa fa-save"></i> Guardar Cambios');
+					$('#advertenciaAprobado').remove();
+				}
 				
 				// Mostrar modal
 				$('#modalEdicionAspirante').modal('show');

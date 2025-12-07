@@ -26,8 +26,8 @@ if(!empty($_REQUEST['idInst'])){
 	$configConsulta = "SELECT * FROM configuracion
 	INNER JOIN {$baseDatosAdmisiones}.config_instituciones ON cfgi_id_institucion=conf_id_institucion 
 	AND cfgi_inscripciones_activas=1 
-	AND cfgi_year = conf_agno
-	WHERE conf_id_institucion = ".$idInsti." AND conf_agno = ".date("Y");
+	AND cfgi_year_inscripcion = conf_agno
+	WHERE conf_id_institucion = ".$idInsti." AND conf_agno = cfgi_year_inscripcion";
 	$configuracion = $pdoAdmin->prepare($configConsulta);
 	$configuracion->execute();
 	$config = $configuracion->fetch();
@@ -39,11 +39,22 @@ if(!empty($_REQUEST['idInst'])){
 	
 
 	//información
+	// Usar el año de inscripción para obtener la información correcta
+	$yearInfo = !empty($config['cfgi_year_inscripcion']) ? $config['cfgi_year_inscripcion'] : date("Y");
 	$infogConsulta = "SELECT * FROM general_informacion
-	WHERE info_institucion = ".$idInsti." AND info_year = ".date("Y");
+	WHERE info_institucion = ".$idInsti." AND info_year = ".$yearInfo;
 	$info = $pdoAdmin->prepare($infogConsulta);
 	$info->execute();
 	$datosInfo = $info->fetch();
+	
+	// Si no hay información para el año de inscripción, intentar con el año actual
+	if(!$datosInfo){
+		$infogConsulta = "SELECT * FROM general_informacion
+		WHERE info_institucion = ".$idInsti." ORDER BY info_year DESC LIMIT 1";
+		$info = $pdoAdmin->prepare($infogConsulta);
+		$info->execute();
+		$datosInfo = $info->fetch();
+	}
 
 
 	$BD_ADMISIONES_MOCK = $baseDatosServicios;

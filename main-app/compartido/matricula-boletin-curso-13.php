@@ -60,17 +60,45 @@ if($num_usr==0)
 
 $contador_periodos=0;
 
+// Configuración de visualización de elementos
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+$mostrarEncabezado = $formularioEnviado 
+    ? (isset($_GET['mostrar_encabezado']) ? (int)$_GET['mostrar_encabezado'] : 0)
+    : 1; // Por defecto visible
+$mostrarFirmas = $formularioEnviado 
+    ? (isset($_GET['mostrar_firmas']) ? (int)$_GET['mostrar_firmas'] : 0)
+    : 1; // Por defecto visible
+$mostrarLogoPlataforma = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_plataforma']) ? (int)$_GET['mostrar_logo_plataforma'] : 0)
+    : 1; // Por defecto visible
+$mostrarAUS = $formularioEnviado 
+    ? (isset($_GET['mostrar_aus']) ? (int)$_GET['mostrar_aus'] : 0)
+    : 1; // Por defecto visible
+$mostrarPuestoCurso = $formularioEnviado 
+    ? (isset($_GET['mostrar_puesto_curso']) ? (int)$_GET['mostrar_puesto_curso'] : 0)
+    : 1; // Por defecto visible
+$mostrarAreas = $formularioEnviado 
+    ? (isset($_GET['mostrar_areas']) ? (int)$_GET['mostrar_areas'] : 0)
+    : 1; // Por defecto visible
+$mostrarIndicadores = $formularioEnviado 
+    ? (isset($_GET['mostrar_indicadores']) ? (int)$_GET['mostrar_indicadores'] : 0)
+    : 1; // Por defecto visible
+
 $contp = 1;
 $puestoCurso = 0;
 $promedioPuesto = 0;
-$puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
-
-foreach($puestos as $puesto){
-        if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){
-		$puestoCurso = $puesto['puesto'];
-		$promedioPuesto = Boletin::notaDecimales((float)$puesto['prom']);
-	}
-	$contp ++;
+$numMatriculados = 0;
+if($mostrarPuestoCurso){
+    $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
+    $numMatriculados = count($puestos);
+    foreach($puestos as $puesto){
+            if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){
+            $puestoCurso = $puesto['puesto'];
+            $promedioPuesto = Boletin::notaDecimales((float)$puesto['prom']);
+        }
+        $contp ++;
+    }
 }
 ?>
 <!doctype html>
@@ -228,9 +256,62 @@ mysqli_data_seek($consulta_desempeno, 0);
 
  ?>
 
+<!-- Formulario de configuración -->
+<div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+        if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_encabezado" value="1" <?= $mostrarEncabezado ? 'checked' : '' ?>>
+            Mostrar encabezado completo
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_areas" value="1" <?= $mostrarAreas ? 'checked' : '' ?>>
+            Mostrar filas de áreas
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_indicadores" value="1" <?= $mostrarIndicadores ? 'checked' : '' ?>>
+            Mostrar filas de indicadores
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_aus" value="1" <?= $mostrarAUS ? 'checked' : '' ?>>
+            Mostrar columna AUS (Ausencias)
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_puesto_curso" value="1" <?= $mostrarPuestoCurso ? 'checked' : '' ?>>
+            Mostrar puesto del curso
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_firmas" value="1" <?= $mostrarFirmas ? 'checked' : '' ?>>
+            Mostrar firmas del pie de página
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_logo_plataforma" value="1" <?= $mostrarLogoPlataforma ? 'checked' : '' ?>>
+            Mostrar logo y leyenda de SINTIA
+        </label>
+        <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+    </form>
+</div>
+<style>
+    @media print {
+        .config-boletin-form { display: none !important; }
+    }
+</style>
+
 <?php
 $nombreInforme = "BOLETÍN DE CALIFICACIONES";
-include("../compartido/head-informes.php") ?>
+if($mostrarEncabezado){
+    include("../compartido/head-informes.php");
+}
+?>
 
 <table width="100%" cellspacing="0" cellpadding="0" border="0" align="left" style="font-size:12px;">
     <tr>
@@ -241,7 +322,7 @@ include("../compartido/head-informes.php") ?>
     <tr>
     	<td>Grado: <b><?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></b></td>
         <td>Periodo: <b><?=strtoupper($periodoActuales);?></b></td>
-        <td>Puesto Curso:<br> <?=$puestoCurso?></td>    
+        <td>Puesto Curso:<br> <?php if($mostrarPuestoCurso): ?><?=$puestoCurso?><?php else: ?>&nbsp;<?php endif; ?></td>    
     </tr>
 </table>
 <br>
@@ -260,7 +341,7 @@ include("../compartido/head-informes.php") ?>
 <td width="4%" align="center">PRO</td>
 <!--<td width="5%" align="center">PER</td>-->
 <td width="8%" align="center">DESEMPE&Ntilde;O</td>   
-<td width="5%" align="center">AUS</td>
+<?php if($mostrarAUS): ?><td width="5%" align="center">AUS</td><?php endif; ?>
 </tr> 
 
     <tr style="background:#F06;">
@@ -310,6 +391,7 @@ if(!empty($resultado_not_area['suma'])){
 }
 	if($numfilas_not_area>0){
 			?>
+  <?php if($mostrarAreas): ?>
   <tr bgcolor="#ABABAB" style="font-size:12px;">
             <td style="font-size:12px; height:25px; font-weight:bold;"><?php echo $resultado_not_area["ar_nombre"];?></td> 
             <td align="center" style="font-weight:bold; font-size:12px;"></td>
@@ -319,8 +401,9 @@ if(!empty($resultado_not_area['suma'])){
             <?php }?>
         <td align="center" style="font-weight:bold;"><?=$total_promedio;?></td>
          <td align="center" style="font-weight:bold;"></td>
-          <td align="center" style="font-weight:bold;"></td>
+          <?php if($mostrarAUS): ?><td align="center" style="font-weight:bold;"></td><?php endif; ?>
 	</tr>
+  <?php endif; ?>
 <?php
 
 while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){ 
@@ -437,7 +520,7 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 			}
 		}
 		 ?></td>
-        <td align="center" style="font-weight:bold; background:#EAEAEA;"><?php 
+        <?php if($mostrarAUS): ?><td align="center" style="font-weight:bold; background:#EAEAEA;"><?php 
 		// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado (si está disponible)
 		$ausenciasData = $ausenciasMapa[$fila2['car_id']] ?? ['ausencias' => 0, 'matmaxaus' => ($fila2["matmaxaus"] ?? 0)];
 		$ausencias = $ausenciasData['ausencias'];
@@ -447,12 +530,12 @@ while($fila2=mysqli_fetch_array($consulta_a_mat, MYSQLI_BOTH)){
 		} else{ 
 			echo "0.0/".$matmaxaus;
 		}
-		?></td>
+		?></td><?php endif; ?>
 	
 	</tr>
 	
 <?php
-if($numIndicadores>0){
+if($mostrarIndicadores && $numIndicadores>0){
 	 mysqli_data_seek($consulta_a_mat_indicadores,0);
 	 $contador_indicadores=0;
 	while($fila4=mysqli_fetch_array($consulta_a_mat_indicadores, MYSQLI_BOTH)){
@@ -476,7 +559,7 @@ if($numIndicadores>0){
             <?php } ?>
  <td align="center" style="font-weight:bold;"></td>
         <td align="center" style="font-weight:bold;"></td>
-        <td align="center" style="font-weight:bold;"></td>
+        <?php if($mostrarAUS): ?><td align="center" style="font-weight:bold;"></td><?php endif; ?>
 <?php
 	}//fin if
 	}
@@ -530,7 +613,8 @@ if($numIndicadores>0){
         	<?php  if($promedios[$n]!=0){ echo $promedioPuesto;}?></td>
         <?php } ?>
         <td></td>
-        <td colspan="2">&nbsp;</td>
+        <td>&nbsp;</td>
+        <?php if($mostrarAUS): ?><td>&nbsp;</td><?php endif; ?>
     </tr>
     
 </table>
@@ -606,13 +690,15 @@ if($desempenoND === null){
 </div>
 -->
 
+<?php if($mostrarFirmas): ?>
 <p>&nbsp;</p>
 <table width="100%" cellspacing="0" cellpadding="0" rules="none" border="0" style="text-align:center; font-size:10px;">
 	<tr>
 		<td align="center">_________________________________<br><!--<?=strtoupper("");?><br>-->Rector(a)</td>
 		<td align="center">_________________________________<br><!--<?=strtoupper("");?><br>-->Director(a) de grupo</td>
     </tr>
-</table> 
+</table>
+<?php endif; ?> 
 
 <!--
 <br>
@@ -648,7 +734,13 @@ if($desempenoND === null){
 <p align="center">
 	<div style="font-weight:bold; font-family:Arial, Helvetica, sans-serif; font-style:italic; font-size:12px;" align="center"><?=$msj;?></div>
 </p>
-<?php include("../compartido/footer-informes.php") ?>
+<?php 
+if($mostrarFirmas || $mostrarLogoPlataforma){
+    if($mostrarLogoPlataforma){
+        include("../compartido/footer-informes.php");
+    }
+}
+?>
 				                   
 <!-- 
 <div align="center" style="font-size:10px; margin-top:10px;">
