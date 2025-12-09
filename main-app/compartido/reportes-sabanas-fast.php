@@ -173,6 +173,12 @@ if (!empty($materias1)) {
 			border: 1px solid #ddd;
 			font-size: 11px;
 		}
+		.tabla-sabanas tbody td:nth-child(3) {
+			white-space: nowrap;
+			max-width: 200px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 		.tabla-sabanas tbody td.nota-cell {
 			font-weight: bold;
 			text-align: center;
@@ -307,6 +313,12 @@ if (!empty($materias1)) {
 				writing-mode: vertical-rl;
 				text-orientation: mixed;
 				height: 100px;
+			}
+			.tabla-sabanas tbody td:nth-child(3) {
+				white-space: nowrap !important;
+				max-width: 200px !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
 			}
 			.puesto-primero {
 				background-color: #fff9e6 !important;
