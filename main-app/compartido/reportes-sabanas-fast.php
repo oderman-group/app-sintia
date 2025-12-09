@@ -270,6 +270,10 @@ if (!empty($materias1)) {
 		
 		/* Estilos de impresión */
 		@media print {
+			@page {
+				size: landscape;
+				margin: 1cm;
+			}
 			body {
 				margin: 0;
 				background-color: white;
@@ -282,10 +286,6 @@ if (!empty($materias1)) {
 			}
 			.no-print {
 				display: none !important;
-			}
-			@page {
-				size: landscape;
-				margin: 1cm;
 			}
 			.tabla-sabanas, .tabla-puestos {
 				page-break-inside: auto;
@@ -525,6 +525,23 @@ if (!empty($materias1)) {
 					window.print();
 				}
 			});
+		});
+		
+		// Forzar orientación landscape al imprimir (Chrome)
+		window.addEventListener('beforeprint', function() {
+			// Agregar estilos inline para forzar landscape
+			var style = document.createElement('style');
+			style.id = 'print-landscape-style';
+			style.textContent = '@page { size: landscape !important; }';
+			document.head.appendChild(style);
+		});
+		
+		window.addEventListener('afterprint', function() {
+			// Remover estilos después de imprimir
+			var style = document.getElementById('print-landscape-style');
+			if (style) {
+				style.remove();
+			}
 		});
 	</script>
 </body>
