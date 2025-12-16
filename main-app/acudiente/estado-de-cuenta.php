@@ -253,6 +253,57 @@ if($config['conf_id_institucion'] == ICOLVEN) {
         color: #00b894;
     }
 
+    /* Estilos para expandir detalles */
+    .detalle-movimiento-btn {
+        cursor: pointer;
+        color: var(--secondary-color);
+        font-size: 14px;
+        transition: transform 0.2s ease;
+        padding: 5px;
+    }
+
+    .detalle-movimiento-btn:hover {
+        color: var(--primary-color);
+        transform: scale(1.2);
+    }
+
+    .detalle-movimiento-btn.expanded {
+        transform: rotate(90deg);
+    }
+
+    .detalle-factura-wrapper {
+        padding: 20px;
+        background: #f8f9fa;
+        border-left: 4px solid var(--secondary-color);
+    }
+
+    .detalle-factura-wrapper h5 {
+        color: var(--secondary-color);
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .detalle-factura-wrapper ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .detalle-factura-wrapper li {
+        padding: 5px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .detalle-factura-wrapper li:last-child {
+        border-bottom: none;
+    }
+
+    .detalle-factura-wrapper strong {
+        color: #333;
+        min-width: 150px;
+        display: inline-block;
+    }
+
     /* Botones de Acción Especiales */
     .acciones-especiales {
         background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
@@ -380,20 +431,30 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                     <?php include("../../config-general/mensajes-informativos.php"); ?>
                     
                     <?php
-                    // Calcular resumen financiero
-                    $resumen = mysqli_fetch_array(mysqli_query($conexion, "SELECT
-                        (SELECT sum(fcu_valor) FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario='".$_SESSION["id"]."' AND fcu_anulado=0 AND fcu_tipo=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-                        (SELECT sum(fcu_valor) FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario='".$_SESSION["id"]."' AND fcu_anulado=0 AND fcu_tipo=2 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-                        (SELECT sum(fcu_valor) FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario='".$_SESSION["id"]."' AND fcu_anulado=0 AND fcu_tipo=3 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}),
-                        (SELECT sum(pi.payment) FROM ".BD_FINANCIERA.".payments p
-                        INNER JOIN ".BD_FINANCIERA.".payments_invoiced pi ON pi.payments=p.cod_payment
-                        WHERE p.invoiced='".$_SESSION["id"]."' AND p.institucion={$config['conf_id_institucion']} AND p.year={$_SESSION["bd"]})
-                    "), MYSQLI_BOTH);
+                    // Calcular resumen financiero usando los mismos métodos que la tabla
+                    $consultaFacturas = mysqli_query($conexion, "SELECT * FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
+                        WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
+                        AND fc.institucion={$_SESSION['idInstitucion']} 
+                        AND fc.year='{$_SESSION["bd"]}' 
+                        ORDER BY fc.id_nuevo DESC");
                     
-                    $deuda = !empty($resumen[0]) ? $resumen[0] : 0;
-                    $abonos = !empty($resumen[1]) ? $resumen[1] : 0;
-                    $descuentos = !empty($resumen[2]) ? $resumen[2] : 0;
-                    $recibido = !empty($resumen[3]) ? $resumen[3] : 0;
+                    $totalFacturado = 0;
+                    $totalAbonado = 0;
+                    $totalPorCobrar = 0;
+                    
+                    while($factura = mysqli_fetch_array($consultaFacturas, MYSQLI_BOTH)){
+                        $vlrAdicional = !empty($factura['fcu_valor']) ? $factura['fcu_valor'] : 0;
+                        $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $vlrAdicional);
+                        $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
+                        $porCobrar = $totalNeto - $abonos;
+                        
+                        $totalFacturado += $totalNeto;
+                        $totalAbonado += $abonos;
+                        $totalPorCobrar += max(0, $porCobrar);
+                    }
+                    
+                    $deuda = $totalFacturado;
+                    $recibido = $totalAbonado;
                     $saldo = ($recibido - $deuda);
                     
                     $mensajeSaldo = $frases[309][$datosUsuarioActual['uss_idioma']];
@@ -425,7 +486,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                 <i class="fa fa-file-invoice-dollar"></i>
                                 <?=strtoupper($frases[312][$datosUsuarioActual['uss_idioma']]);?>
                             </div>
-                            <p class="resumen-card-value" style="color: var(--danger-color);">
+                            <p class="resumen-card-value" id="cardTotalFacturado" style="color: var(--danger-color);">
                                 $<?=number_format($deuda, 0, ",", ".");?>
                             </p>
                         </div>
@@ -435,7 +496,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                 <i class="fa fa-hand-holding-usd"></i>
                                 <?=strtoupper($frases[413][$datosUsuarioActual['uss_idioma']]);?>
                             </div>
-                            <p class="resumen-card-value" style="color: var(--info-color);">
+                            <p class="resumen-card-value" id="cardTotalAbonado" style="color: var(--info-color);">
                                 $<?=number_format($recibido, 0, ",", ".");?>
                             </p>
                         </div>
@@ -445,7 +506,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                 <i class="fa fa-wallet"></i>
                                 <?=strtoupper($frases[315][$datosUsuarioActual['uss_idioma']]);?>
                             </div>
-                            <p class="resumen-card-value" style="color: <?= $saldo >= 0 ? 'var(--success-color)' : 'var(--danger-color)'; ?>;">
+                            <p class="resumen-card-value" id="cardSaldo" style="color: <?= $saldo >= 0 ? 'var(--success-color)' : 'var(--danger-color)'; ?>;">
                                 $<?=number_format($saldo, 0, ",", ".");?>
                             </p>
                             <div class="resumen-card-message">
@@ -509,6 +570,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                             <table class="table-modern" id="movimientosTable">
                                 <thead>
                                     <tr>
+                                        <th style="width: 30px;"></th>
                                         <th>#</th>
                                         <th><?=$frases[51][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[162][$datosUsuarioActual['uss_idioma']];?></th>
@@ -519,14 +581,10 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                 </thead>
                                 <tbody id="movimientosTableBody">
                                     <?php
-                                    $consulta = mysqli_query($conexion, "SELECT * FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
-                                    WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
-                                        AND fc.institucion={$_SESSION['idInstitucion']} 
-                                        AND fc.year='{$_SESSION["bd"]}' 
-                                    ORDER BY fc.id_nuevo DESC");
+                                    mysqli_data_seek($consultaFacturas, 0); // Resetear el puntero
                                     $contReg = 1;
                                     $hayMovimientos = false;
-                                    while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                                    while($resultado = mysqli_fetch_array($consultaFacturas, MYSQLI_BOTH)){
                                         $hayMovimientos = true;
                                         $vlrAdicional = !empty($resultado['fcu_valor']) ? $resultado['fcu_valor'] : 0;
                                         $totalNeto    = Movimientos::calcularTotalNeto($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
@@ -537,25 +595,29 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                         $badgeText = $porCobrar > 0 ? 'Pendiente' : 'Pagado';
                                     ?>
                                     <tr class="movimiento-row" 
+                                        data-factura-id="<?= $resultado['fcu_id']; ?>"
                                         data-fecha="<?=strtolower($resultado['fcu_fecha']);?>"
                                         data-detalle="<?=strtolower($resultado['fcu_detalle']);?>"
                                         data-total="<?=$totalNeto;?>"
                                         data-abonos="<?=$abonos;?>"
                                         data-porcobrar="<?=$porCobrar;?>">
+                                        <td>
+                                            <i class="fa fa-chevron-right detalle-movimiento-btn" data-id="<?= $resultado['fcu_id']; ?>"></i>
+                                        </td>
                                         <td><?=$contReg;?></td>
                                         <td>
                                             <strong><?=$resultado['fcu_fecha'];?></strong>
                                         </td>
                                         <td><?=$resultado['fcu_detalle'];?></td>
-                                        <td>
+                                        <td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-total-neto="<?= $totalNeto ?>">
                                             <strong>$<?=!empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0;?></strong>
                                         </td>
-                                        <td>
+                                        <td id="abonos<?= $resultado['fcu_id']; ?>" data-abonos="<?= $abonos ?>">
                                             <span style="color: var(--info-color);">
                                                 $<?=!empty($abonos) ? number_format($abonos, 0, ",", ".") : 0;?>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td id="porCobrar<?= $resultado['fcu_id']; ?>" data-por-cobrar="<?= $porCobrar ?>">
                                             <span class="badge-financiero <?=$badgeClass;?>" style="color: <?=$porCobrar > 0 ? 'var(--danger-color)' : 'var(--success-color)';?>; font-weight: 700;">
                                                 $<?=!empty($porCobrar) ? number_format($porCobrar, 0, ",", ".") : 0;?>
                                             </span>
@@ -704,6 +766,107 @@ if($config['conf_id_institucion'] == ICOLVEN) {
         if (allRows) {
             console.log('💰 Total de movimientos:', allRows.length);
         }
+        
+        // ============================================
+        // FUNCIONALIDAD DE EXPANDIR DETALLES
+        // ============================================
+        function numberFormat(number, decimals = 0, decPoint = ',', thousandsSep = '.') {
+            if (isNaN(number) || number === '' || number === null) {
+                return '';
+            }
+            number = parseFloat(number.toFixed(decimals));
+            var parts = number.toString().split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep);
+            return parts.join(decPoint);
+        }
+        
+        // Manejar clic en botón de detalle
+        $(document).on('click', '.detalle-movimiento-btn', function () {
+            var $btn = $(this);
+            var tr = $btn.closest('tr');
+            var idFactura = $btn.data('id');
+            
+            // Si ya está expandido, colapsar
+            if (tr.hasClass('detalle-abierto')) {
+                tr.next('.child').remove();
+                tr.removeClass('detalle-abierto');
+                $btn.removeClass('expanded');
+                totalizarMovimientos();
+            } else {
+                // Expandir
+                $btn.addClass('expanded');
+                tr.addClass('detalle-abierto');
+                
+                // Agregar fila de carga
+                var loadingRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">Cargando detalles...</div></td></tr>');
+                tr.after(loadingRow);
+                
+                // Cargar detalles
+                $.getJSON('../compartido/ajax-detalle-factura-estudiante.php', { idFactura: idFactura })
+                    .done(function (resp) {
+                        loadingRow.remove();
+                        if (resp && resp.success) {
+                            var detailRow = $('<tr class="child"><td colspan="7">' + resp.html + '</td></tr>');
+                            tr.after(detailRow);
+                        } else {
+                            var errorRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">No se encontraron detalles para esta factura.</div></td></tr>');
+                            tr.after(errorRow);
+                        }
+                        totalizarMovimientos();
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        loadingRow.remove();
+                        console.error('Error AJAX:', textStatus, errorThrown);
+                        var errorRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">Error al cargar los detalles. Intenta nuevamente.</div></td></tr>');
+                        tr.after(errorRow);
+                        totalizarMovimientos();
+                    });
+            }
+        });
+        
+        // Función para calcular y actualizar totales
+        function totalizarMovimientos() {
+            var totalFacturado = 0;
+            var totalAbonado = 0;
+            var totalPorCobrar = 0;
+            
+            $('.movimiento-row').each(function() {
+                var $row = $(this);
+                if ($row.hasClass('child')) {
+                    return; // Saltar filas de detalles
+                }
+                
+                var $totalNeto = $row.find('td[data-total-neto]');
+                var $abonos = $row.find('td[data-abonos]');
+                var $porCobrar = $row.find('td[data-por-cobrar]');
+                
+                if ($totalNeto.length) {
+                    var total = parseFloat($totalNeto.attr('data-total-neto')) || 0;
+                    totalFacturado += total;
+                }
+                
+                if ($abonos.length) {
+                    var abonos = parseFloat($abonos.attr('data-abonos')) || 0;
+                    totalAbonado += abonos;
+                }
+                
+                if ($porCobrar.length) {
+                    var porCobrar = parseFloat($porCobrar.attr('data-por-cobrar')) || 0;
+                    totalPorCobrar += Math.max(0, porCobrar);
+                }
+            });
+            
+            var saldo = totalAbonado - totalFacturado;
+            var saldoColor = saldo >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            
+            // Actualizar cards
+            $('#cardTotalFacturado').text('$' + numberFormat(totalFacturado, 0, ',', '.'));
+            $('#cardTotalAbonado').text('$' + numberFormat(totalAbonado, 0, ',', '.'));
+            $('#cardSaldo').text('$' + numberFormat(saldo, 0, ',', '.')).css('color', saldoColor);
+        }
+        
+        // Calcular totales al cargar
+        totalizarMovimientos();
     </script>
     <!-- end js include path -->
 </body>
