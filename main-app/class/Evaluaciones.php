@@ -510,23 +510,56 @@ class Evaluaciones extends BindSQL{
      * @return array $resultado
      */
     public static function traerRespuestaEvaluacion(mysqli $conexion, array $config, string $idEvaluacion, string $idEstudiante){
-        $sql = "SELECT
-        (SELECT count(res.res_id) FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res 
-        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp ON resp.resp_id_pregunta=res.res_id_pregunta AND resp.resp_id=res.res_id_respuesta AND resp.resp_correcta=1 AND resp.institucion=res.institucion AND resp.year=res.year 
-        WHERE res.res_id_evaluacion=? AND res.res_id_estudiante=? AND res.institucion=? AND res.year=?),
-        (SELECT count(res.res_id) FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res 
-        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp ON resp.resp_id_pregunta=res.res_id_pregunta AND resp.resp_id=res.res_id_respuesta AND resp.resp_correcta=0 AND resp.institucion=res.institucion AND resp.year=res.year
-        WHERE res.res_id_evaluacion=? AND res.res_id_estudiante=? AND res.institucion=? AND res.year=?),
-        (SELECT count(res_id) FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados 
-        WHERE res_id_evaluacion=? AND res_id_estudiante=? AND institucion=? AND year=? AND res_id_respuesta=0)";
-
-        $parametros = [$idEvaluacion, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"], $idEvaluacion, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"], $idEvaluacion, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"]];
+        // Contar respuestas correctas: preguntas donde el estudiante seleccionó una respuesta correcta
+        $sqlCorrectas = "SELECT COUNT(DISTINCT res.res_id_pregunta) 
+                        FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res 
+                        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp 
+                            ON resp.resp_id_pregunta = res.res_id_pregunta 
+                            AND resp.resp_id = res.res_id_respuesta 
+                            AND resp.resp_correcta = 1 
+                            AND resp.institucion = res.institucion 
+                            AND resp.year = res.year 
+                        WHERE res.res_id_evaluacion = ? 
+                            AND res.res_id_estudiante = ? 
+                            AND res.institucion = ? 
+                            AND res.year = ?
+                            AND res.res_id_respuesta != '0'";
         
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
-
-        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
-
-        return $resultado;
+        // Contar respuestas incorrectas: preguntas donde el estudiante seleccionó una respuesta incorrecta
+        // O donde no respondió (res_id_respuesta=0)
+        // O donde la respuesta seleccionada no existe o no es correcta
+        $sqlIncorrectas = "SELECT COUNT(DISTINCT res.res_id_pregunta) 
+                           FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res
+                           LEFT JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp 
+                               ON resp.resp_id_pregunta = res.res_id_pregunta 
+                               AND resp.resp_id = res.res_id_respuesta 
+                               AND resp.institucion = res.institucion 
+                               AND resp.year = res.year
+                           WHERE res.res_id_evaluacion = ? 
+                               AND res.res_id_estudiante = ? 
+                               AND res.institucion = ? 
+                               AND res.year = ?
+                               AND (
+                                   res.res_id_respuesta = '0' 
+                                   OR (resp.resp_id IS NOT NULL AND resp.resp_correcta = 0)
+                                   OR (resp.resp_id IS NULL AND res.res_id_respuesta != '0')
+                               )";
+        
+        $parametrosCorrectas = [$idEvaluacion, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $parametrosIncorrectas = [$idEvaluacion, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultadoCorrectas = BindSQL::prepararSQL($sqlCorrectas, $parametrosCorrectas);
+        $resultadoIncorrectas = BindSQL::prepararSQL($sqlIncorrectas, $parametrosIncorrectas);
+        
+        $filaCorrectas = mysqli_fetch_array($resultadoCorrectas, MYSQLI_NUM);
+        $filaIncorrectas = mysqli_fetch_array($resultadoIncorrectas, MYSQLI_NUM);
+        
+        $correctas = isset($filaCorrectas[0]) && $filaCorrectas[0] !== null ? (int)$filaCorrectas[0] : 0;
+        $incorrectas = isset($filaIncorrectas[0]) && $filaIncorrectas[0] !== null ? (int)$filaIncorrectas[0] : 0;
+        
+        // Mantener compatibilidad con el código existente que espera 3 valores
+        // [0] = correctas, [1] = incorrectas, [2] = sin responder (ya incluido en incorrectas)
+        return [$correctas, $incorrectas, 0];
     }
 
     /**
@@ -561,21 +594,68 @@ class Evaluaciones extends BindSQL{
      * @return array $resultado
      */
     public static function respuestasXPreguntas(mysqli $conexion, array $config, string $idEvaluacion, string $idPregunta){
-        $sql = "SELECT
-        (SELECT count(res_id) FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res
-        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp ON resp.resp_id_pregunta=res.res_id_pregunta AND resp.resp_id=res.res_id_respuesta AND resp.resp_correcta=1 AND resp.institucion=res.institucion AND resp.year=res.year
-        WHERE res.res_id_evaluacion=? AND res.res_id_pregunta=? AND res.institucion=? AND res.year=?),
-        (SELECT count(res_id) FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res
-        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp ON resp.resp_id_pregunta=res.res_id_pregunta AND resp.resp_id=res.res_id_respuesta AND resp.resp_correcta=0 AND resp.institucion=res.institucion AND resp.year=res.year
-        WHERE res.res_id_evaluacion=? AND res.res_id_pregunta=? AND res.institucion=? AND res.year=?)";
-
-        $parametros = [$idEvaluacion, $idPregunta, $config['conf_id_institucion'], $_SESSION["bd"], $idEvaluacion, $idPregunta, $config['conf_id_institucion'], $_SESSION["bd"]];
+        // Contar respuestas correctas: estudiantes que respondieron con una respuesta marcada como correcta
+        // Solo contar estudiantes que ya finalizaron la evaluación (epe_fin IS NOT NULL)
+        $sqlCorrectas = "SELECT COUNT(DISTINCT res.res_id_estudiante) 
+                        FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res
+                        INNER JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp 
+                            ON resp.resp_id_pregunta = res.res_id_pregunta 
+                            AND resp.resp_id = res.res_id_respuesta 
+                            AND resp.resp_correcta = 1 
+                            AND resp.institucion = res.institucion 
+                            AND resp.year = res.year
+                        INNER JOIN ".BD_ACADEMICA.".academico_actividad_evaluaciones_estudiantes epe
+                            ON epe.epe_id_evaluacion = res.res_id_evaluacion
+                            AND epe.epe_id_estudiante = res.res_id_estudiante
+                            AND epe.epe_fin IS NOT NULL
+                            AND epe.institucion = res.institucion
+                            AND epe.year = res.year
+                        WHERE res.res_id_evaluacion = ? 
+                            AND res.res_id_pregunta = ? 
+                            AND res.institucion = ? 
+                            AND res.year = ?
+                            AND res.res_id_respuesta != '0'";
         
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
-
-        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
-
-        return $resultado;
+        // Contar respuestas incorrectas: 
+        // Estudiantes que finalizaron la evaluación Y que respondieron incorrectamente o no respondieron
+        // IMPORTANTE: Excluir estudiantes que respondieron correctamente (ya contados en $sqlCorrectas)
+        // Solo contar estudiantes que ya finalizaron la evaluación (epe_fin IS NOT NULL)
+        $sqlIncorrectas = "SELECT COUNT(DISTINCT res.res_id_estudiante) 
+                           FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_resultados res
+                           INNER JOIN ".BD_ACADEMICA.".academico_actividad_evaluaciones_estudiantes epe
+                               ON epe.epe_id_evaluacion = res.res_id_evaluacion
+                               AND epe.epe_id_estudiante = res.res_id_estudiante
+                               AND epe.epe_fin IS NOT NULL
+                               AND epe.institucion = res.institucion
+                               AND epe.year = res.year
+                           LEFT JOIN ".BD_ACADEMICA.".academico_actividad_respuestas resp 
+                               ON resp.resp_id_pregunta = res.res_id_pregunta 
+                               AND resp.resp_id = res.res_id_respuesta 
+                               AND resp.institucion = res.institucion 
+                               AND resp.year = res.year
+                           WHERE res.res_id_evaluacion = ? 
+                               AND res.res_id_pregunta = ? 
+                               AND res.institucion = ? 
+                               AND res.year = ?
+                               AND (
+                                   res.res_id_respuesta = '0' 
+                                   OR (resp.resp_id IS NOT NULL AND resp.resp_correcta = 0)
+                                   OR (resp.resp_id IS NULL AND res.res_id_respuesta != '0')
+                               )";
+        
+        $parametrosCorrectas = [$idEvaluacion, $idPregunta, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $parametrosIncorrectas = [$idEvaluacion, $idPregunta, $config['conf_id_institucion'], $_SESSION["bd"]];
+        
+        $resultadoCorrectas = BindSQL::prepararSQL($sqlCorrectas, $parametrosCorrectas);
+        $resultadoIncorrectas = BindSQL::prepararSQL($sqlIncorrectas, $parametrosIncorrectas);
+        
+        $filaCorrectas = mysqli_fetch_array($resultadoCorrectas, MYSQLI_NUM);
+        $filaIncorrectas = mysqli_fetch_array($resultadoIncorrectas, MYSQLI_NUM);
+        
+        $correctas = isset($filaCorrectas[0]) && $filaCorrectas[0] !== null ? (int)$filaCorrectas[0] : 0;
+        $incorrectas = isset($filaIncorrectas[0]) && $filaIncorrectas[0] !== null ? (int)$filaIncorrectas[0] : 0;
+        
+        return [$correctas, $incorrectas];
     }
 
     /**

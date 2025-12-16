@@ -7,10 +7,14 @@ $idPaginaInterna = 'ES0057';
 include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");
 
-//SABER SI EL ESTUDIANTE YA HIZO LA EVALUACION
-$nume = Evaluaciones::verificarEstudianteEvaluacion($conexion, $config, $_POST["idE"], $datosEstudianteActual['mat_id']);
+//SABER SI EL ESTUDIANTE YA TERMINÓ LA EVALUACION (verificar si epe_fin está establecido)
+$sqlVerificar = "SELECT epe_fin FROM ".BD_ACADEMICA.".academico_actividad_evaluaciones_estudiantes 
+                 WHERE epe_id_estudiante=? AND epe_id_evaluacion=? AND institucion=? AND year=? AND epe_fin IS NOT NULL";
+$parametrosVerificar = [$datosEstudianteActual['mat_id'], $_POST["idE"], $config['conf_id_institucion'], $_SESSION["bd"]];
+$resultadoVerificar = BindSQL::prepararSQL($sqlVerificar, $parametrosVerificar);
+$evaluacionTerminada = mysqli_num_rows($resultadoVerificar) > 0;
 
-if($nume>0 and $_POST["envioauto"]=='0'){
+if($evaluacionTerminada && $_POST["envioauto"]=='0'){
 
 	include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=200";</script>';
@@ -38,7 +42,7 @@ while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
 	if($preguntas['preg_tipo_pregunta']==3){
 		$idPregunta = $preguntas['preg_id'];
 		$destino = "../files/evaluaciones";
-		if($_FILES['file'.$idPregunta]['name']!=""){
+		if(isset($_FILES['file'.$idPregunta]) && $_FILES['file'.$idPregunta]['name']!=""){
 			$nombreInputFile = 'file'.$idPregunta;
 			$archivoSubido->validarArchivo($_FILES['file'.$idPregunta]['size'], $_FILES['file'.$idPregunta]['name']);
 			$_FILES['file'.$idPregunta]['name'];
@@ -48,9 +52,25 @@ while($preguntas = mysqli_fetch_array($preguntasConsulta, MYSQLI_BOTH)){
 			$archivoSubido->subirArchivo($destino, $archivo, $nombreInputFile);
 		}
 	}
-	if($_POST["R$contPreguntas"]=="") $_POST["R$contPreguntas"] = 0;
 	
-	Evaluaciones::guardarResultado($conexion, $config, $_POST["idE"], $datosEstudianteActual['mat_id'], $_POST["P$contPreguntas"], $_POST["R$contPreguntas"], $archivo);
+	// Validar que existan los campos P y R antes de usarlos
+	// El JavaScript envía los campos en el mismo orden que las preguntas con respuestas
+	$idPreguntaPost = isset($_POST["P$contPreguntas"]) && $_POST["P$contPreguntas"] != '' ? $_POST["P$contPreguntas"] : null;
+	$idRespuestaPost = isset($_POST["R$contPreguntas"]) && $_POST["R$contPreguntas"] != '' ? $_POST["R$contPreguntas"] : '0';
+	
+	// Si no hay respuesta, usar '0'
+	if($idRespuestaPost == "" || $idRespuestaPost === null) {
+		$idRespuestaPost = '0';
+	}
+	
+	// Solo guardar si tenemos el ID de pregunta válido
+	// Si no existe el campo P, usar el ID de la pregunta de la base de datos
+	if($idPreguntaPost === null || $idPreguntaPost == '') {
+		$idPreguntaPost = $preguntas['preg_id'];
+	}
+	
+	// Guardar el resultado
+	Evaluaciones::guardarResultado($conexion, $config, $_POST["idE"], $datosEstudianteActual['mat_id'], $idPreguntaPost, $idRespuestaPost, $archivo);
 	
 	$contPreguntas ++;
 }

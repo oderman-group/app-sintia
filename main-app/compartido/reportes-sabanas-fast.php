@@ -173,6 +173,12 @@ if (!empty($materias1)) {
 			border: 1px solid #ddd;
 			font-size: 11px;
 		}
+		.tabla-sabanas tbody td:nth-child(3) {
+			white-space: nowrap;
+			max-width: 200px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 		.tabla-sabanas tbody td.nota-cell {
 			font-weight: bold;
 			text-align: center;
@@ -270,6 +276,10 @@ if (!empty($materias1)) {
 		
 		/* Estilos de impresión */
 		@media print {
+			@page {
+				size: landscape;
+				margin: 1cm;
+			}
 			body {
 				margin: 0;
 				background-color: white;
@@ -282,10 +292,6 @@ if (!empty($materias1)) {
 			}
 			.no-print {
 				display: none !important;
-			}
-			@page {
-				size: landscape;
-				margin: 1cm;
 			}
 			.tabla-sabanas, .tabla-puestos {
 				page-break-inside: auto;
@@ -307,6 +313,12 @@ if (!empty($materias1)) {
 				writing-mode: vertical-rl;
 				text-orientation: mixed;
 				height: 100px;
+			}
+			.tabla-sabanas tbody td:nth-child(3) {
+				white-space: nowrap !important;
+				max-width: 200px !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
 			}
 			.puesto-primero {
 				background-color: #fff9e6 !important;
@@ -525,6 +537,23 @@ if (!empty($materias1)) {
 					window.print();
 				}
 			});
+		});
+		
+		// Forzar orientación landscape al imprimir (Chrome)
+		window.addEventListener('beforeprint', function() {
+			// Agregar estilos inline para forzar landscape
+			var style = document.createElement('style');
+			style.id = 'print-landscape-style';
+			style.textContent = '@page { size: landscape !important; }';
+			document.head.appendChild(style);
+		});
+		
+		window.addEventListener('afterprint', function() {
+			// Remover estilos después de imprimir
+			var style = document.getElementById('print-landscape-style');
+			if (style) {
+				style.remove();
+			}
 		});
 	</script>
 </body>

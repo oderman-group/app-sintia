@@ -50,6 +50,16 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
         $infoFiltros[] = "Incluye anuladas";
     }
     
+    if (!empty($_GET['usuario'])) {
+        $usuarioFiltro = base64_decode($_GET['usuario']);
+        $usuarioDatos = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".mysqli_real_escape_string($conexion, $usuarioFiltro)."'");
+        $usuarioInfo = mysqli_fetch_array($usuarioDatos, MYSQLI_BOTH);
+        if ($usuarioInfo) {
+            $nombreUsuario = UsuariosPadre::nombreCompletoDelUsuario($usuarioInfo);
+            $infoFiltros[] = "Usuario: " . $nombreUsuario;
+        }
+    }
+    
     if (!empty($infoFiltros)) {
         $nombreInforme .= " (" . implode(" | ", $infoFiltros) . ")";
     }
@@ -105,6 +115,15 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
                   $mostrarAnuladas = !empty($_GET['mostrarAnuladas']) && $_GET['mostrarAnuladas'] == '1';
                   if (!$mostrarAnuladas) {
                       $filtro .= " AND fc.fcu_anulado = 0";
+                  }
+                  
+                  // Filtro de usuario/cliente
+                  if (!empty($_GET['usuario']) && trim($_GET['usuario']) !== '') {
+                      $usuarioFiltro = base64_decode($_GET['usuario']);
+                      if ($usuarioFiltro !== false && $usuarioFiltro !== '' && trim($usuarioFiltro) !== '') {
+                          $usuarioSeguro = mysqli_real_escape_string($conexion, trim($usuarioFiltro));
+                          $filtro .= " AND fc.fcu_usuario = '{$usuarioSeguro}'";
+                      }
                   }
                   
 									$consulta = mysqli_query($conexion, "SELECT fc.*, uss.* FROM ".BD_FINANCIERA.".finanzas_cuentas fc
