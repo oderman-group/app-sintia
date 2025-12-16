@@ -348,7 +348,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 
 
 
-    <p>Que, <b><?=$nombre?></b> cursó en esta Institución <b><?=$grados;?></b> grado(s) de educación <?=$educacion;?>  y obtuvo las siguientes calificaciones:</p>
+    <p>Que, <b><?=$nombre?></b> identificado con documento número <b><?=!empty($estudianteActual["mat_documento"]) ? htmlspecialchars($estudianteActual["mat_documento"]) : 'N/A';?></b>, cursó en esta Institución <b><?=$grados;?></b> grado(s) de educación <?=$educacion;?>  y obtuvo las siguientes calificaciones:</p>
 
 
 
