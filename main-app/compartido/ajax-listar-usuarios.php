@@ -31,6 +31,7 @@ try {
 			OR CONCAT(TRIM(uss.uss_apellido1), TRIM(uss.uss_apellido2), TRIM(uss.uss_nombre), TRIM(uss.uss_nombre2)) LIKE '%{$term}%'
 		)";
 	}
+	// Si no hay término, devolver todos los usuarios (limitado a 50)
 	
 	$sql .= " ORDER BY uss.uss_apellido1, uss.uss_apellido2, uss.uss_nombre LIMIT 50";
 	

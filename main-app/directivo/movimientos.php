@@ -514,14 +514,30 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		$('#modalAgregarMovimiento').modal('show');
 		// Inicializar select2 para el usuario en el modal
 		setTimeout(function() {
+			// Destruir Select2 si ya está inicializado
+			if ($('#select_usuario_modal').hasClass('select2-hidden-accessible')) {
+				$('#select_usuario_modal').select2('destroy');
+			}
+			
 			$('#select_usuario_modal').select2({
 				placeholder: 'Seleccione el usuario...',
+				allowClear: true,
 				dropdownParent: $('#modalAgregarMovimiento'),
 				ajax: {
 					type: 'GET',
 					url: '../compartido/ajax-listar-usuarios.php',
+					dataType: 'json',
+					delay: 250,
+					data: function (params) {
+						return {
+							term: params.term || ''
+						};
+					},
 					processResults: function(data) {
-						data = JSON.parse(data);
+						// El endpoint ya devuelve JSON parseado
+						if (!data || !Array.isArray(data)) {
+							return { results: [] };
+						}
 						return {
 							results: $.map(data, function(item) {
 								return {
@@ -530,8 +546,10 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 								}
 							})
 						};
-					}
-				}
+					},
+					cache: true
+				},
+				minimumInputLength: 0
 			});
 		}, 300);
 	}
