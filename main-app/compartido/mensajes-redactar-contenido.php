@@ -366,11 +366,23 @@ $(document).ready(function() {
 		placeholder: 'Seleccione destinatario(s)...',
 		theme: "bootstrap",
 		multiple: true,
+		allowClear: true,
 		ajax: {
 			type: 'GET',
 			url: '../compartido/ajax-listar-usuarios.php',
+			dataType: 'json',
+			delay: 250,
+			data: function (params) {
+				return {
+					term: params.term || '',
+					todos: '1' // Solicitar todos los usuarios para enviar mensajes
+				};
+			},
 			processResults: function(data) {
-				data = JSON.parse(data);
+				// El endpoint ya devuelve JSON parseado
+				if (!data || !Array.isArray(data)) {
+					return { results: [] };
+				}
 				return {
 					results: $.map(data, function(item) {
 						return {
@@ -379,8 +391,10 @@ $(document).ready(function() {
 						}
 					})
 				};
-			}
-		}
+			},
+			cache: true
+		},
+		minimumInputLength: 0
 	});
 });
 
