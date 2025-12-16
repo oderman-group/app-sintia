@@ -111,6 +111,11 @@ if (empty($porcentajesPeriodos)) {
 		
 		/* ==================== ESTILOS PARA IMPRESIÓN ==================== */
 		@media print {
+			@page {
+				size: landscape;
+				margin: 1cm;
+			}
+			
 			.no-print {
 				display: none !important;
 			}
@@ -692,5 +697,22 @@ if (empty($porcentajesPeriodos)) {
   <?php include("../compartido/footer-informes.php");
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php"); ?>
 <?php } ?>
+
+<script>
+	// Forzar orientación horizontal al imprimir (especialmente para Chrome)
+	window.addEventListener('beforeprint', function() {
+		var style = document.createElement('style');
+		style.id = 'print-landscape';
+		style.innerHTML = '@page { size: landscape !important; }';
+		document.head.appendChild(style);
+	});
+	
+	window.addEventListener('afterprint', function() {
+		var style = document.getElementById('print-landscape');
+		if (style) {
+			style.remove();
+		}
+	});
+</script>
 </body>
 </html>
