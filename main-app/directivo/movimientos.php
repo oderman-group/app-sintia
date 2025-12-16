@@ -530,7 +530,8 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 					delay: 250,
 					data: function (params) {
 						return {
-							term: params.term || ''
+							term: params.term || '',
+							todos: '1' // Solicitar todos los usuarios para crear nueva transacción
 						};
 					},
 					processResults: function(data) {
