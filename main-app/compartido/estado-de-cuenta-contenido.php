@@ -29,11 +29,15 @@
 											if(empty($resumen[1])){
 												$resumen[1]=0;
 											}
+											// Validar que los valores no sean null antes de formatear
+											$resumen0 = $resumen[0] ?? 0;
+											$resumen3 = $resumen[3] ?? 0;
+											$saldoFormateado = $saldo ?? 0;
 											?>
-											<p><b><?=strtoupper($frases[313][$datosUsuarioActual['uss_idioma']]);?>:</b> $<?=number_format($resumen[0],0,",",".");?></p>
-											<p><b><?=strtoupper($frases[413][$datosUsuarioActual['uss_idioma']]);?>:</b> $<?=number_format($resumen[3],0,",",".");?></p>
+											<p><b><?=strtoupper($frases[313][$datosUsuarioActual['uss_idioma']]);?>:</b> $<?=number_format((float)$resumen0, 0, ",", ".");?></p>
+											<p><b><?=strtoupper($frases[413][$datosUsuarioActual['uss_idioma']]);?>:</b> $<?=number_format((float)$resumen3, 0, ",", ".");?></p>
 											<hr>
-											<p><b><?=strtoupper($frases[315][$datosUsuarioActual['uss_idioma']]);?>:</b> <span style="color: <?=$colorSaldo;?>;">$<?=number_format($saldo,0,",",".");?></span></p>
+											<p><b><?=strtoupper($frases[315][$datosUsuarioActual['uss_idioma']]);?>:</b> <span style="color: <?=$colorSaldo;?>;">$<?=number_format((float)$saldoFormateado, 0, ",", ".");?></span></p>
 											<p style="color: blueviolet;"><?=$mensajeSaldo;?></p>
 										</div>
 									</div>

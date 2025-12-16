@@ -373,6 +373,58 @@
                 </div>
             </div>
             
+            <?php
+            // Verificar si se puede hacer autologin (mismas condiciones que en usuarios.php)
+            $puedeAutologin = false;
+            $tieneMatricula = false;
+            
+            // Verificar si el usuario es estudiante y tiene matrícula
+            if ($datosEditar['uss_tipo'] == TIPO_ESTUDIANTE) {
+                try {
+                    $consultaMatricula = mysqli_query($conexion, 
+                        "SELECT COUNT(*) as cantidad 
+                         FROM ".BD_ACADEMICA.".academico_matriculas 
+                         WHERE mat_id_usuario = '".mysqli_real_escape_string($conexion, $datosEditar['uss_id'])."' 
+                         AND institucion = {$config['conf_id_institucion']} 
+                         AND year = {$_SESSION["bd"]} 
+                         AND mat_eliminado = 0 
+                         AND (mat_estado_matricula = 1 OR mat_estado_matricula = 2)");
+                    if ($consultaMatricula) {
+                        $datosMatricula = mysqli_fetch_array($consultaMatricula, MYSQLI_BOTH);
+                        $tieneMatricula = !empty($datosMatricula['cantidad']) && $datosMatricula['cantidad'] > 0;
+                    }
+                } catch (Exception $e) {
+                    $tieneMatricula = false;
+                }
+            }
+            
+            // Condiciones para autologin (igual que en usuarios.php)
+            if (
+                ($datosUsuarioActual['uss_tipo'] == TIPO_DEV && $datosEditar['uss_tipo'] != TIPO_DEV) ||
+                ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO && $datosEditar['uss_tipo'] != TIPO_DEV && $datosEditar['uss_tipo'] != TIPO_DIRECTIVO && !isset($_SESSION['admin']) && !isset($_SESSION['devAdmin']))
+            ) {
+                if (($datosEditar['uss_tipo'] == TIPO_ESTUDIANTE && $tieneMatricula) || $datosEditar['uss_tipo'] != TIPO_ESTUDIANTE) {
+                    $puedeAutologin = true;
+                }
+            }
+            ?>
+            
+            <?php if ($puedeAutologin) { ?>
+            <hr>
+            <div class="form-group row">
+                <label class="col-sm-2 control-label">Acciones</label>
+                <div class="col-sm-4">
+                    <a href="auto-login.php?user=<?= base64_encode($datosEditar['uss_id']); ?>&tipe=<?= base64_encode($datosEditar['uss_tipo']); ?>" 
+                       class="btn btn-primary">
+                        <i class="fa fa-sign-in"></i> Autologin
+                    </a>
+                    <small class="form-text text-muted">
+                        <i class="fa fa-info-circle"></i> Iniciar sesión como este usuario en una nueva pestaña.
+                    </small>
+                </div>
+            </div>
+            <?php } ?>
+            
             <hr>
             <h5 class="mb-3" style="color: #6017dc;"><i class="fa fa-info-circle"></i> Datos Adicionales del Usuario</h5>
             
