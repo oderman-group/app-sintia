@@ -21,7 +21,7 @@ $acudiente2 = isset($datosEstudianteActual["mat_acudiente2"]) ? UsuariosPadre::s
 	
 	<label class="col-sm-2 control-label">Documento</label>
 	<div class="col-sm-3">
-		<input type="text" name="documentoA2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2['uss_usuario'])){ echo $acudiente2['uss_usuario'];}?>" <?=$disabledPermiso;?>>
+		<input type="text" name="documentoA2" class="form-control" autocomplete="off" value="<?php if(isset($acudiente2['uss_documento'])){ echo $acudiente2['uss_documento'];}?>" <?=$disabledPermiso;?>>
 	</div>
 </div>
 	

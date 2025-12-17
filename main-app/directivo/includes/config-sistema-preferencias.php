@@ -118,6 +118,23 @@
                         </div>
                     </div>
 
+                    <div class="form-group-modern">
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label">
+                                <i class="fa fa-users"></i>
+                                Solicitar segundo acudiente 
+                                <span class="required-indicator">*</span>
+                            </label>
+                            <div class="col-sm-9">
+                                <select class="form-control" name="solicitarAcudiente2" style="max-width: 200px;" <?=$disabledPermiso;?>>
+                                    <option value="SI" <?php if(($datosConfiguracion['conf_solicitar_acudiente_2'] ?? 'NO') == 'SI'){ echo "selected";} ?>>✓ SÍ, solicitar segundo acudiente</option>
+                                    <option value="NO" <?php if(($datosConfiguracion['conf_solicitar_acudiente_2'] ?? 'NO') == 'NO'){ echo "selected";} ?>>✗ NO, solo primer acudiente</option>
+                                </select>
+                                <small class="form-text text-muted">Define si se debe solicitar información de un segundo acudiente en los formularios de matrícula</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Save Button -->
                     <div class="save-button-container">
                         <?php $botones = new botonesGuardar("dev-instituciones.php",Modulos::validarPermisoEdicion() || $datosUsuarioActual['uss_tipo'] == TIPO_DEV); ?>

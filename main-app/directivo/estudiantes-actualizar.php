@@ -242,63 +242,101 @@ if ($_POST["documentoA"]!="") {
 
 
 //ACTUALIZAR EL ACUDIENTE 2
+// Obtener datos del estudiante para validar que el acudiente 2 no sea el mismo que el acudiente 1
+$datosEstudianteParaValidar = Estudiantes::obtenerDatosEstudiante($_POST["id"]);
+$idAcudiente1Actual = !empty($datosEstudianteParaValidar['mat_acudiente']) ? $datosEstudianteParaValidar['mat_acudiente'] : null;
+
 if (!empty($_POST["idAcudiente2"])) {
+	// Validar que el acudiente 2 no sea el mismo que el acudiente 1
+	if (!empty($idAcudiente1Actual) && $_POST["idAcudiente2"] == $idAcudiente1Actual) {
+		// Si el ID del acudiente 2 es el mismo que el del acudiente 1, no hacer nada
+		// Esto previene que se duplique el acudiente
+	} else {
+		$update = [
+			"uss_usuario" => $_POST["documentoA2"],
+			"uss_nombre" => mysqli_real_escape_string($conexion, $_POST["nombreA2"]),
+			"uss_email" => $_POST["email"] ?? '',
+			"uss_ocupacion" => $_POST["ocupacionA2"] ?? '',
+			"uss_genero" => $_POST["generoA2"] ?? '',
+			"uss_celular" => $_POST["celular"] ?? '',
+			"uss_lugar_expedicion" => $_POST["lugardA2"] ?? '',
+			"uss_direccion" => $_POST["direccion"] ?? '',
+			"uss_apellido1" => mysqli_real_escape_string($conexion, $_POST["apellido1A2"] ?? ''),
+			"uss_apellido2" => mysqli_real_escape_string($conexion, $_POST["apellido2A2"] ?? ''),
+			"uss_nombre2" => mysqli_real_escape_string($conexion, $_POST["nombre2A2"] ?? ''),
+			"uss_documento" => $_POST["documentoA2"]
+		];
 
-    $update = [
-		"uss_usuario" => $_POST["documentoA2"],
-		"uss_nombre" => $_POST["nombreA2"],
-		"uss_email" => $_POST["email"],
-		"uss_ocupacion" => $_POST["ocupacionA2"],
-		"uss_genero" => $_POST["generoA2"],
-		"uss_celular" => $_POST["celular"],
-		"uss_lugar_expedicion" => $_POST["lugardA2"],
-		"uss_direccion" => $_POST["direccion"],
-		"uss_apellido1" => $_POST["apellido1A2"],
-		"uss_apellido2" => $_POST["apellido2A2"],
-		"uss_nombre2" => $_POST["nombre2A2"],
-		"uss_documento" => $_POST["documentoA2"]
-	];
-
-    UsuariosPadre::actualizarUsuarios($config, $_POST["idAcudiente2"], $update);
+		UsuariosPadre::actualizarUsuarios($config, $_POST["idAcudiente2"], $update);
+	}
 } else {
 	if (!empty($_POST["documentoA2"])) {
-	
-		try {
-			$existeAcudiente2 = Usuarios::validarExistenciaUsuario($_POST["documentoA2"]);
-		} catch (Exception $e) {
-			include("../compartido/error-catch-to-report.php");
-		}
-
-		if ($existeAcudiente2 > 0) {
-	
+		// Validar que el documento del acudiente 2 sea diferente al del acudiente 1
+		$documentoAcudiente1 = '';
+		if (!empty($idAcudiente1Actual)) {
 			try {
-				$acudiente2 = Usuarios::obtenerDatosUsuario($_POST["documentoA2"]);
+				$acudiente1Datos = Usuarios::obtenerDatosUsuario($idAcudiente1Actual);
+				if (!empty($acudiente1Datos)) {
+					$documentoAcudiente1 = $acudiente1Datos['uss_documento'] ?? '';
+				}
+			} catch (Exception $e) {
+				include("../compartido/error-catch-to-report.php");
+			}
+		}
+		
+		// Si el documento del acudiente 2 es el mismo que el del acudiente 1, no crear/actualizar
+		if (!empty($documentoAcudiente1) && $_POST["documentoA2"] == $documentoAcudiente1) {
+			// No hacer nada, el acudiente 2 no puede tener el mismo documento que el acudiente 1
+		} else {
+			try {
+				$existeAcudiente2 = Usuarios::validarExistenciaUsuario($_POST["documentoA2"]);
 			} catch (Exception $e) {
 				include("../compartido/error-catch-to-report.php");
 			}
 
-			$update = [
-				"uss_usuario" => $_POST["documentoA2"],
-				"uss_nombre" => $_POST["nombreA2"],
-				"uss_email" => $_POST["email"],
-				"uss_ocupacion" => $_POST["ocupacionA2"],
-				"uss_genero" => $_POST["generoA2"],
-				"uss_celular" => $_POST["celular"],
-				"uss_lugar_expedicion" => $_POST["lugardA2"],
-				"uss_direccion" => $_POST["direccion"],
-				"uss_apellido1" => $_POST["apellido1A2"],
-				"uss_apellido2" => $_POST["apellido2A2"],
-				"uss_nombre2" => $_POST["nombre2A2"],
-				"uss_documento" => $_POST["documentoA2"]
-			];
-			UsuariosPadre::actualizarUsuarios($config, $acudiente2['uss_id'], $update);
-			$idAcudiente2 = $acudiente2['uss_id'];
-		} else {
-			$idAcudiente2 = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_portada, uss_idioma, uss_tema, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, institucion, year, uss_id", [$_POST["documentoA2"],$clavePorDefectoUsuarios,3,$_POST["nombreA2"],0,$_POST["ocupacionA2"],$_POST["email"],0,$_POST["generoA2"],$_POST["celular"], 'default.png', 'default.png', 1, 'green', $_POST["lugardA2"], $_POST["direccion"], $_POST["apellido1A2"], $_POST["apellido2A2"], $_POST["nombre2A2"],$_POST["documentoA2"], $config['conf_id_institucion'], $_SESSION["bd"]]);
-		}
+			if ($existeAcudiente2 > 0) {
+				try {
+					$acudiente2 = Usuarios::obtenerDatosUsuario($_POST["documentoA2"]);
+				} catch (Exception $e) {
+					include("../compartido/error-catch-to-report.php");
+				}
 
-		$update = ['mat_acudiente2' => $idAcudiente2];
-		Estudiantes::actualizarMatriculasPorId($config, $_POST["id"], $update);
+				// Validar que el usuario encontrado no sea el acudiente 1
+				if (!empty($acudiente2) && (!empty($idAcudiente1Actual) && $acudiente2['uss_id'] != $idAcudiente1Actual)) {
+					$update = [
+						"uss_usuario" => $_POST["documentoA2"],
+						"uss_nombre" => mysqli_real_escape_string($conexion, $_POST["nombreA2"]),
+						"uss_email" => $_POST["email"] ?? '',
+						"uss_ocupacion" => $_POST["ocupacionA2"] ?? '',
+						"uss_genero" => $_POST["generoA2"] ?? '',
+						"uss_celular" => $_POST["celular"] ?? '',
+						"uss_lugar_expedicion" => $_POST["lugardA2"] ?? '',
+						"uss_direccion" => $_POST["direccion"] ?? '',
+						"uss_apellido1" => mysqli_real_escape_string($conexion, $_POST["apellido1A2"] ?? ''),
+						"uss_apellido2" => mysqli_real_escape_string($conexion, $_POST["apellido2A2"] ?? ''),
+						"uss_nombre2" => mysqli_real_escape_string($conexion, $_POST["nombre2A2"] ?? ''),
+						"uss_documento" => $_POST["documentoA2"]
+					];
+					UsuariosPadre::actualizarUsuarios($config, $acudiente2['uss_id'], $update);
+					$idAcudiente2 = $acudiente2['uss_id'];
+				} else if (!empty($acudiente2) && !empty($idAcudiente1Actual) && $acudiente2['uss_id'] == $idAcudiente1Actual) {
+					// Si el usuario encontrado es el acudiente 1, no hacer nada
+					$idAcudiente2 = null;
+				} else {
+					// Crear nuevo acudiente 2
+					$idAcudiente2 = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_portada, uss_idioma, uss_tema, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, institucion, year, uss_id", [$_POST["documentoA2"],$clavePorDefectoUsuarios,3,mysqli_real_escape_string($conexion,$_POST["nombreA2"]),0,$_POST["ocupacionA2"] ?? '',$_POST["email"] ?? '',0,$_POST["generoA2"] ?? '',$_POST["celular"] ?? '', 'default.png', 'default.png', 1, 'green', $_POST["lugardA2"] ?? '', $_POST["direccion"] ?? '', mysqli_real_escape_string($conexion,$_POST["apellido1A2"] ?? ''), mysqli_real_escape_string($conexion,$_POST["apellido2A2"] ?? ''), mysqli_real_escape_string($conexion,$_POST["nombre2A2"] ?? ''),$_POST["documentoA2"], $config['conf_id_institucion'], $_SESSION["bd"]]);
+				}
+			} else {
+				// Crear nuevo acudiente 2
+				$idAcudiente2 = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_portada, uss_idioma, uss_tema, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, institucion, year, uss_id", [$_POST["documentoA2"],$clavePorDefectoUsuarios,3,mysqli_real_escape_string($conexion,$_POST["nombreA2"]),0,$_POST["ocupacionA2"] ?? '',$_POST["email"] ?? '',0,$_POST["generoA2"] ?? '',$_POST["celular"] ?? '', 'default.png', 'default.png', 1, 'green', $_POST["lugardA2"] ?? '', $_POST["direccion"] ?? '', mysqli_real_escape_string($conexion,$_POST["apellido1A2"] ?? ''), mysqli_real_escape_string($conexion,$_POST["apellido2A2"] ?? ''), mysqli_real_escape_string($conexion,$_POST["nombre2A2"] ?? ''),$_POST["documentoA2"], $config['conf_id_institucion'], $_SESSION["bd"]]);
+			}
+
+			// Solo actualizar mat_acudiente2 si se creó/actualizó un acudiente 2 válido y diferente al acudiente 1
+			if (!empty($idAcudiente2) && (!empty($idAcudiente1Actual) && $idAcudiente2 != $idAcudiente1Actual || empty($idAcudiente1Actual))) {
+				$update = ['mat_acudiente2' => $idAcudiente2];
+				Estudiantes::actualizarMatriculasPorId($config, $_POST["id"], $update);
+			}
+		}
 	}
 }
 

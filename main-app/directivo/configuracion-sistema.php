@@ -72,11 +72,257 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
     
-    <!-- 🛩️ Cockpit Theme - Aviation Control Panel -->
-    <link href="../css/cockpit-theme.css?v=<?=time()?>" rel="stylesheet" type="text/css" />
-    
     <style>
-        /* Ajustes finos específicos de esta página si son necesarios */
+        /* Estilos profesionales para configuración del sistema */
+        .config-page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 8px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        .config-page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .config-page-header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+            color: #ecf0f1;
+        }
+
+        .nav-tabs-modern {
+            border-bottom: 2px solid #e0e6ed;
+            margin-bottom: 25px;
+        }
+
+        .nav-tabs-modern .nav-link {
+            color: #555;
+            font-weight: 500;
+            padding: 12px 20px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-modern .nav-link:hover {
+            color: #2c3e50;
+            border-bottom-color: #bdc3c7;
+            background: #f8f9fa;
+        }
+
+        .nav-tabs-modern .nav-link.active {
+            color: #2c3e50;
+            border-bottom-color: #2c3e50;
+            background: transparent;
+            font-weight: 600;
+        }
+
+        .tab-content-modern {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c3e50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-overlay p {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Lightbox - Oculto por defecto */
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100000;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: rotate(90deg);
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+            animation: zoomIn 0.3s ease-out;
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 95vh;
+            width: auto;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-title {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 100000;
+            display: none;
+        }
+
+        .lightbox-overlay.active .lightbox-title:not(:empty) {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Popover preview large */
+        .popover-preview-large {
+            max-width: 600px !important;
+            width: 600px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            background: #fff;
+        }
+
+        .popover-preview-large .popover-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: 2px solid #e0e0e0;
+            font-weight: 600;
+        }
+
+        .popover-preview-large .popover-body {
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Imagen de preview */
+        .preview-image-large {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .preview-image-large:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+
+        @media (max-width: 768px) {
+            .popover-preview-large {
+                max-width: 95vw !important;
+                width: 95vw;
+            }
+            
+            .popover-preview-large .popover-body {
+                padding: 15px;
+                max-height: 70vh;
+            }
+        }
     </style>
 </head>
 <!-- END HEAD -->
@@ -92,22 +338,15 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
             <div class="page-content-wrapper">
                 <div class="page-content">
                     
-                    <!-- 🛩️ Cockpit Control Header -->
+                    <!-- Header Profesional -->
                     <div class="config-page-header">
-                        <div class="header-content">
-                            <h1>
-                                <i class="fa fa-dashboard"></i>
-                                PANEL DE CONTROL - <?= strtoupper($frases[17][$datosUsuarioActual['uss_idioma']]); ?>
-                            </h1>
-                            <p>
-                                <span class="led-indicator green"></span>
-                                SISTEMA ACTIVO | <?= strtoupper($datosConfiguracion['ins_siglas'] ?? 'SINTIA'); ?> | AÑO <?=$year?> | CONTROLADOR: <?= strtoupper($datosUsuarioActual['uss_usuario']); ?>
-                            </p>
-                        </div>
-                        <div class="status-badge">
-                            <span class="led-indicator green"></span>
-                            ONLINE
-                        </div>
+                        <h1>
+                            <i class="fa fa-cog"></i>
+                            <?= $frases[17][$datosUsuarioActual['uss_idioma']]; ?>
+                        </h1>
+                        <p>
+                            <?= strtoupper($datosConfiguracion['ins_siglas'] ?? 'SINTIA'); ?> | Año <?=$year?>
+                        </p>
                     </div>
 
                     <?php 
@@ -198,64 +437,6 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
         <p>PROCESANDO...</p>
     </div>
     
-    <!-- 🛩️ Cockpit Entry Screen - Pantalla de Entrada al Centro de Mando -->
-    <div class="cockpit-entry-overlay" id="cockpitEntry">
-        <div class="cockpit-entry-container">
-            <!-- Scanner Lines -->
-            <div class="scan-line scan-line-1"></div>
-            <div class="scan-line scan-line-2"></div>
-            
-            <!-- Logo Radar -->
-            <div class="radar-container">
-                <div class="radar-circle"></div>
-                <div class="radar-scan"></div>
-                <div class="radar-center">
-                    <i class="fa fa-dashboard"></i>
-                </div>
-            </div>
-            
-            <!-- Mensaje de Bienvenida -->
-            <div class="entry-message">
-                <h1 class="entry-title">
-                    <span class="led-indicator green"></span>
-                    ACCESO AUTORIZADO
-                </h1>
-                <div class="entry-subtitle">CONTROLADOR: <?= strtoupper($datosUsuarioActual['uss_usuario']); ?></div>
-                
-                <div class="entry-description">
-                    <p>Estás a punto de acceder al <strong>CENTRO DE MANDO</strong> del sistema SINTIA.</p>
-                    <p>Desde este panel de control aeronáutico podrás:</p>
-                    <ul class="entry-features">
-                        <li><i class="fa fa-check-circle"></i> Ajustar configuraciones generales del sistema</li>
-                        <li><i class="fa fa-check-circle"></i> Personalizar comportamiento y preferencias</li>
-                        <li><i class="fa fa-check-circle"></i> Configurar informes y reportes</li>
-                        <li><i class="fa fa-check-circle"></i> Gestionar permisos y seguridad</li>
-                        <li><i class="fa fa-check-circle"></i> Personalizar estilos y apariencia</li>
-                    </ul>
-                </div>
-                
-                <div class="entry-warning">
-                    <i class="fa fa-exclamation-triangle"></i>
-                    Los cambios realizados afectarán la configuración de <strong><?= $datosConfiguracion['ins_siglas'] ?? 'la institución'; ?></strong> para el año <strong><?=$year?></strong>
-                </div>
-                
-                <button type="button" class="btn-enter-cockpit" id="btnEnterCockpit">
-                    <span class="btn-led"></span>
-                    <i class="fa fa-arrow-circle-right"></i>
-                    INGRESAR AL PANEL DE CONTROL
-                    <span class="btn-arrow">›››</span>
-                </button>
-                
-                <div class="entry-footer">
-                    <span class="system-status">
-                        <span class="status-dot"></span>
-                        SISTEMAS: OPERATIVOS
-                    </span>
-                    <span class="system-time" id="systemTime"></span>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
@@ -312,70 +493,17 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
                 scrollTop: $('.config-page-header').offset().top - 100
             }, 500);
         });
-        
-        // ========================================
-        // 🛩️ COCKPIT ENTRY SCREEN CONTROLLER
-        // ========================================
-        
-        $(document).ready(function() {
-            // Actualizar reloj del sistema en tiempo real
-            function updateSystemTime() {
-                const now = new Date();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-                $('#systemTime').text(hours + ':' + minutes + ':' + seconds + ' UTC-5');
-            }
-            
-            // Actualizar cada segundo
-            updateSystemTime();
-            setInterval(updateSystemTime, 1000);
-            
-            // Manejar clic en el botón de entrada
-            $('#btnEnterCockpit').on('click', function() {
-                const $btn = $(this);
-                const $overlay = $('#cockpitEntry');
-                
-                // Cambiar texto del botón
-                $btn.html('<i class="fa fa-spinner fa-spin"></i> INICIANDO SISTEMAS...');
-                $btn.css('pointer-events', 'none');
-                
-                // Simular secuencia de inicio (como pre-vuelo)
-                setTimeout(function() {
-                    $btn.html('<i class="fa fa-check-circle"></i> SISTEMAS VERIFICADOS');
-                    $btn.css('border-color', 'var(--led-green)');
-                    $btn.css('color', 'var(--led-green)');
-                }, 800);
-                
-                setTimeout(function() {
-                    $btn.html('<i class="fa fa-plane"></i> ACCEDIENDO AL PANEL...');
-                }, 1600);
-                
-                // Ocultar overlay con animación
-                setTimeout(function() {
-                    $overlay.addClass('hidden');
-                    
-                    // Guardar en sessionStorage que ya vio la intro
-                    sessionStorage.setItem('cockpitIntroShown', 'true');
-                }, 2400);
-            });
-            
-            // Verificar si ya vio la intro en esta sesión
-            if (sessionStorage.getItem('cockpitIntroShown') === 'true') {
-                $('#cockpitEntry').addClass('hidden');
-            }
-        });
     </script>
     
-    <!-- 🖼️ Lightbox Moderno para Imágenes -->
+    <!-- Lightbox para Imágenes -->
     <div class="lightbox-overlay" id="lightboxOverlay">
         <div class="lightbox-close" id="lightboxClose">
             <i class="fa fa-times"></i>
         </div>
         <div class="lightbox-content">
-            <img src="" alt="Vista previa" class="lightbox-image" id="lightboxImage">
+            <img src="" alt="" class="lightbox-image" id="lightboxImage">
         </div>
-        <div class="lightbox-title" id="lightboxTitle">Vista Previa</div>
+        <div class="lightbox-title" id="lightboxTitle"></div>
     </div>
     
     <script>
@@ -391,7 +519,11 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
             
             // Configurar lightbox
             $('#lightboxImage').attr('src', imgSrc);
-            $('#lightboxTitle').text(imgAlt);
+            if (imgAlt && imgAlt.trim() !== '') {
+                $('#lightboxTitle').text(imgAlt).show();
+            } else {
+                $('#lightboxTitle').text('').hide();
+            }
             
             // Mostrar lightbox con animación
             $('#lightboxOverlay').addClass('active');
