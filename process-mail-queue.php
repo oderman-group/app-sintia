@@ -125,8 +125,11 @@ if (defined('EMAIL_METHOD')) {
 echo "\n";
 
 try {
-    // Reclamar correos pendientes
-    $correos = MailQueue::reclamarPendientes($batchSize);
+    // Obtener el entorno actual para filtrar correos
+    $entornoActual = defined('ENVIROMENT') ? ENVIROMENT : $entorno;
+    
+    // Reclamar correos pendientes SOLO del entorno actual
+    $correos = MailQueue::reclamarPendientes($batchSize, $entornoActual);
     
     if (empty($correos)) {
         echo "No hay correos pendientes en la cola.\n";

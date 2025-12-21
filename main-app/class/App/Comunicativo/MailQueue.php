@@ -37,14 +37,32 @@ class MailQueue
         }
 
         $pdo  = self::conexion();
-        $sql  = "INSERT INTO " . self::TABLA . "
-            (mq_estado, mq_prioridad, mq_destinatario, mq_destinatario_cc, mq_destinatario_bcc,
-             mq_asunto, mq_contenido_html, mq_contenido_texto, mq_adjuntos, mq_remitente,
-             mq_respuesta_servidor, mq_intentos, mq_max_intentos, mq_fecha_programada,
-             mq_usuario_id, mq_institucion_id)
-            VALUES
-            (:estado, :prioridad, :destino, :cc, :bcc, :asunto, :html, :texto, :adjuntos,
-             :remitente, NULL, 0, :maxIntentos, :fechaProgramada, :usuarioId, :institucionId)";
+        
+        // Obtener el entorno actual (PROD, TEST, LOCAL)
+        $entorno = defined('ENVIROMENT') ? ENVIROMENT : 'PROD';
+        
+        // Verificar si la columna mq_entorno existe
+        $tieneCampoEntorno = self::tieneCampoEntorno($pdo);
+        
+        if ($tieneCampoEntorno) {
+            $sql  = "INSERT INTO " . self::TABLA . "
+                (mq_estado, mq_prioridad, mq_destinatario, mq_destinatario_cc, mq_destinatario_bcc,
+                 mq_asunto, mq_contenido_html, mq_contenido_texto, mq_adjuntos, mq_remitente,
+                 mq_respuesta_servidor, mq_intentos, mq_max_intentos, mq_fecha_programada,
+                 mq_usuario_id, mq_institucion_id, mq_entorno)
+                VALUES
+                (:estado, :prioridad, :destino, :cc, :bcc, :asunto, :html, :texto, :adjuntos,
+                 :remitente, NULL, 0, :maxIntentos, :fechaProgramada, :usuarioId, :institucionId, :entorno)";
+        } else {
+            $sql  = "INSERT INTO " . self::TABLA . "
+                (mq_estado, mq_prioridad, mq_destinatario, mq_destinatario_cc, mq_destinatario_bcc,
+                 mq_asunto, mq_contenido_html, mq_contenido_texto, mq_adjuntos, mq_remitente,
+                 mq_respuesta_servidor, mq_intentos, mq_max_intentos, mq_fecha_programada,
+                 mq_usuario_id, mq_institucion_id)
+                VALUES
+                (:estado, :prioridad, :destino, :cc, :bcc, :asunto, :html, :texto, :adjuntos,
+                 :remitente, NULL, 0, :maxIntentos, :fechaProgramada, :usuarioId, :institucionId)";
+        }
 
         $stmt = $pdo->prepare($sql);
         $estadoCola = $payload['estado'] ?? self::ESTADO_PENDIENTE;
@@ -62,6 +80,13 @@ class MailQueue
         self::bindNullable($stmt, ':fechaProgramada', $payload['fecha_programada'] ?? null);
         self::bindNullable($stmt, ':usuarioId', $payload['usuario_id'] ?? null);
         self::bindNullable($stmt, ':institucionId', $payload['institucion_id'] ?? null);
+        
+        // Si el campo entorno existe, agregarlo
+        if ($tieneCampoEntorno) {
+            $entornoPayload = $payload['entorno'] ?? $entorno;
+            $stmt->bindValue(':entorno', $entornoPayload, PDO::PARAM_STR);
+        }
+        
         $stmt->execute();
 
         return (int)$pdo->lastInsertId();
@@ -71,9 +96,10 @@ class MailQueue
      * Reclama correos pendientes marcándolos como procesando.
      *
      * @param int $limite
+     * @param string|null $entorno Filtrar por entorno (PROD, TEST, LOCAL). Si es null, no filtra.
      * @return array
      */
-    public static function reclamarPendientes(int $limite = 100): array
+    public static function reclamarPendientes(int $limite = 100, ?string $entorno = null): array
     {
         if ($limite <= 0) {
             return [];
@@ -81,16 +107,34 @@ class MailQueue
 
         $pdo   = self::conexion();
         $tabla = self::TABLA;
+        
+        // Verificar si la columna mq_entorno existe
+        $tieneCampoEntorno = self::tieneCampoEntorno($pdo);
+        
+        // Construir condición WHERE
+        $whereConditions = [
+            "mq_estado = :estadoPendiente",
+            "(mq_fecha_programada IS NULL OR mq_fecha_programada <= NOW())",
+            "mq_intentos < mq_max_intentos"
+        ];
+        
+        // Si se especifica un entorno y el campo existe, filtrar por entorno
+        if ($entorno !== null && $tieneCampoEntorno) {
+            $whereConditions[] = "mq_entorno = :entorno";
+        }
+
+        $whereClause = implode(" AND ", $whereConditions);
 
         $stmtSeleccion = $pdo->prepare("
             SELECT mq_id FROM {$tabla}
-            WHERE mq_estado = :estadoPendiente
-              AND (mq_fecha_programada IS NULL OR mq_fecha_programada <= NOW())
-              AND mq_intentos < mq_max_intentos
+            WHERE {$whereClause}
             ORDER BY mq_prioridad ASC, mq_fecha_creacion ASC
             LIMIT :limite
         ");
         $stmtSeleccion->bindValue(':estadoPendiente', self::ESTADO_PENDIENTE, PDO::PARAM_STR);
+        if ($entorno !== null && $tieneCampoEntorno) {
+            $stmtSeleccion->bindValue(':entorno', $entorno, PDO::PARAM_STR);
+        }
         $stmtSeleccion->bindValue(':limite', $limite, PDO::PARAM_INT);
         $stmtSeleccion->execute();
 
@@ -370,6 +414,29 @@ class MailQueue
         $estadisticas['total_fallidos'] = $estadisticas['historial_error'] + $estadisticas['cola_error'];
         
         return $estadisticas;
+    }
+
+    /**
+     * Verifica si la tabla tiene el campo mq_entorno.
+     */
+    private static function tieneCampoEntorno(PDO $pdo): bool
+    {
+        static $cache = null;
+        
+        if ($cache !== null) {
+            return $cache;
+        }
+        
+        try {
+            $tabla = self::TABLA;
+            $stmt = $pdo->query("SHOW COLUMNS FROM {$tabla} LIKE 'mq_entorno'");
+            $cache = $stmt->rowCount() > 0;
+        } catch (Exception $e) {
+            // Si hay error, asumir que no existe
+            $cache = false;
+        }
+        
+        return $cache;
     }
 
     /**
