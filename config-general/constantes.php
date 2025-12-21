@@ -223,7 +223,31 @@ define('PAQUETES', 'PAQUETES');
 //CUANDO SE EJECUTA POR CONSOLA (CLI)
 if (php_sapi_name() === 'cli') {
 
-    $_ENV = $argv[1] ?? 'PROD';
+    // Primero intentar leer desde variable de entorno
+    $_ENV = getenv('ENV');
+    
+    // Si no está en variable de entorno, buscar en argumentos
+    if (empty($_ENV)) {
+        // Buscar --env= en los argumentos
+        if (isset($argv) && is_array($argv)) {
+            foreach ($argv as $arg) {
+                if (strpos($arg, '--env=') === 0) {
+                    $_ENV = strtoupper(trim(substr($arg, 6)));
+                    break;
+                }
+            }
+        }
+        
+        // Si aún no se encontró, usar $argv[1] como fallback
+        if (empty($_ENV)) {
+            $_ENV = $argv[1] ?? 'PROD';
+        }
+    }
+    
+    // Validar que sea un entorno válido
+    if (!in_array($_ENV, ['PROD', 'TEST', 'LOCAL'])) {
+        $_ENV = 'PROD';
+    }
 
     switch ($_ENV) {
         case 'LOCAL':

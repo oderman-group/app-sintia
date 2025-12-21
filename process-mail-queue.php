@@ -63,17 +63,37 @@ $entorno = 'PROD';
 // Primero buscar --env para establecerlo antes de incluir constantes
 foreach ($argv as $arg) {
     if (strpos($arg, '--env=') === 0) {
-        $entorno = strtoupper(substr($arg, 6));
+        $entorno = strtoupper(trim(substr($arg, 6)));
         break;
     }
 }
 
+// Validar que el entorno sea válido
+if (!in_array($entorno, ['PROD', 'TEST', 'LOCAL'])) {
+    $entorno = 'PROD';
+}
+
 // Establecer entorno como primer argumento para que constantes.php lo detecte
+// IMPORTANTE: Establecer tanto en $argv como en $_SERVER['argv'] y también como variable global
 $argv[1] = $entorno;
-$_SERVER['argv'][1] = $entorno;
+if (isset($_SERVER['argv'])) {
+    $_SERVER['argv'][1] = $entorno;
+}
+// Establecer también como variable de entorno para asegurar que se lea correctamente
+putenv("ENV={$entorno}");
 
 // Incluir constantes y clases (debe ir después de establecer $argv[1])
 require_once(__DIR__ . "/config-general/constantes.php");
+
+// Verificar que el entorno se estableció correctamente
+if (defined('ENVIROMENT')) {
+    echo "Entorno detectado: " . ENVIROMENT . "\n";
+    echo "Método de email: " . (defined('EMAIL_METHOD') ? EMAIL_METHOD : 'NO DEFINIDO') . "\n";
+} else {
+    echo "ADVERTENCIA: ENVIROMENT no está definido. Forzando PROD.\n";
+    define('ENVIROMENT', 'PROD');
+    define('EMAIL_METHOD', 'NORMAL');
+}
 
 // Ahora parsear --batch
 foreach ($argv as $arg) {
@@ -95,7 +115,14 @@ date_default_timezone_set("America/New_York");
 
 echo "[" . date('Y-m-d H:i:s') . "] Iniciando procesamiento de cola de correos...\n";
 echo "Lote: {$batchSize} correos\n";
-echo "Entorno: {$entorno}\n\n";
+echo "Entorno solicitado: {$entorno}\n";
+if (defined('ENVIROMENT')) {
+    echo "Entorno detectado: " . ENVIROMENT . "\n";
+}
+if (defined('EMAIL_METHOD')) {
+    echo "Método de email: " . EMAIL_METHOD . "\n";
+}
+echo "\n";
 
 try {
     // Reclamar correos pendientes
@@ -123,6 +150,12 @@ try {
             // Configuración SMTP
             $mail->SMTPDebug = 0;
             $mail->isSMTP();
+            
+            // Verificar método de email (solo en el primer correo)
+            if ($enviados === 0 && $errores === 0) {
+                echo "  [DEBUG] EMAIL_METHOD definido: " . (defined('EMAIL_METHOD') ? EMAIL_METHOD : 'NO DEFINIDO') . "\n";
+                echo "  [DEBUG] ENVIROMENT definido: " . (defined('ENVIROMENT') ? ENVIROMENT : 'NO DEFINIDO') . "\n";
+            }
             
             if (EMAIL_METHOD == 'MAILPIT') {
                 $mail->Host = EMAIL_SERVER_MAILPIT;
