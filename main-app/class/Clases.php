@@ -93,6 +93,8 @@ class Clases  extends Servicios{
         $parametros = [$codigo, $_SESSION["id"], $POST["idClase"], mysqli_real_escape_string($conexion,$POST["contenido"]), $POST["idPadre"], $config['conf_id_institucion'], $_SESSION["bd"]];
 
         $resultado = BindSQL::prepararSQL($sql, $parametros);
+        
+        return $codigo; // ✅ Retornar el código generado
     }
     
     /**
@@ -179,7 +181,7 @@ class Clases  extends Servicios{
      * @param array $POST
      */
     public static function cambiarEstadoClase(mysqli $conexion, array $config, array $POST){
-        $sql = "UPDATE ".BD_ACADEMICA.".academico_clases SET cls_disponible=? WHERE cls_id=? AND institucion=? AND year={$_SESSION["bd"]}";
+        $sql = "UPDATE ".BD_ACADEMICA.".academico_clases SET cls_disponible=? WHERE cls_id=? AND institucion=? AND year=?";
 
         $parametros = [$POST["valor"], $POST["idR"], $config['conf_id_institucion'], $_SESSION["bd"]];
         

@@ -4,44 +4,66 @@ class Archivos {
 
 	
 
-	function validarArchivo($archivoSize, $archivoName){
+	function validarArchivo($archivoSize, $archivoName, $archivoTmpName = null){
 
-		include("../../config-general/config.php");
+		include(ROOT_PATH."/config-general/config.php");
 
 		$maxPeso = $config['conf_max_peso_archivos'];
 
 		$explode=explode(".", $archivoName);
-		$extension = end($explode);
+		$extension = strtolower(end($explode));
 
-		if($extension == 'exe' or $extension == 'php' or $extension == 'js' or $extension == 'html' or $extension == 'htm'){
+		// Lista ampliada de extensiones prohibidas (seguridad mejorada)
+		$extensionesProhibidas = [
+			'exe', 'php', 'php3', 'php4', 'php5', 'phtml', 'phar',
+			'js', 'html', 'htm', 'bat', 'cmd', 'com', 'sh',
+			'vbs', 'jar', 'scr', 'msi', 'app', 'deb', 'rpm',
+			'asp', 'aspx', 'jsp', 'cgi', 'pl', 'py', 'rb',
+			'sql', 'db', 'dbf', 'mdb'
+		];
 
-			echo "Este archivo con extensión <b>.".$extension."</b> no está permitido.";
-
+		if(in_array($extension, $extensionesProhibidas)){
+			echo "Este archivo con extensión <b>.".$extension."</b> no está permitido por razones de seguridad.";
 			exit();
+		}
 
+		// Validación adicional de MIME type si se proporciona archivo temporal
+		if($archivoTmpName !== null && file_exists($archivoTmpName)){
+			$finfo = finfo_open(FILEINFO_MIME_TYPE);
+			$mimeType = finfo_file($finfo, $archivoTmpName);
+			finfo_close($finfo);
+			
+			// MIME types peligrosos
+			$mimesPeligrosos = [
+				'application/x-msdownload', 
+				'application/x-msdos-program',
+				'application/x-executable',
+				'application/x-httpd-php',
+				'text/html',
+				'text/javascript',
+				'application/javascript',
+				'application/x-sh',
+				'application/x-sql'
+			];
+			
+			if(in_array($mimeType, $mimesPeligrosos)){
+				echo "El tipo de archivo no está permitido por razones de seguridad.";
+				exit();
+			}
 		}
 
 		$pesoMB = round($archivoSize/1048576,2);
-		$urlReferencia = parse_url($_SERVER['HTTP_REFERER']);
+		$urlReferencia = parse_url($_SERVER['HTTP_REFERER'] ?? '');
     
-		$URLREGRESO = $_SERVER['HTTP_REFERER']."?error=ER_DT_17&pesoMB={$pesoMB}";
+		$URLREGRESO = ($_SERVER['HTTP_REFERER'] ?? 'javascript:history.back()')."?error=ER_DT_17&pesoMB={$pesoMB}";
 		if (isset($urlReferencia['query']) && !empty($urlReferencia['query'])) {
-			
 			$URLREGRESO = $_SERVER['HTTP_REFERER']."&error=ER_DT_17&pesoMB={$pesoMB}";
 		}
-		
 
 		if($pesoMB>$maxPeso){
-
 			echo '<script type="text/javascript">window.location.href="'.$URLREGRESO.'";</script>';
 			exit();
-
 		}
-
-
-
-
-
 	}
 
 	
@@ -91,13 +113,13 @@ class UsuariosFunciones{
 
 		
 
-		$fotoUsr = '../files/fotos/default.png';
+		$fotoUsr = BASE_URL.'/main-app/files/fotos/default.png';
 
 		
 
-		if($foto!="" and file_exists('../files/fotos/'.$foto)){
+		if($foto!="" and file_exists(ROOT_PATH.'/main-app/files/fotos/'.$foto)){
 
-			$fotoUsr = '../files/fotos/'.$foto;
+			$fotoUsr = BASE_URL.'/main-app/files/fotos/'.$foto;
 
 		}
 
@@ -117,17 +139,17 @@ class UsuariosFunciones{
 
 		switch($tipoUsuario){	
 
-			case 1: $url = '../directivo/'.$paginaRedireccion; break;
+			case 1: $url = BASE_URL.'/main-app/directivo/'.$paginaRedireccion; break;
 
-			case 2: $url = '../docente/'.$paginaRedireccion; break;
+			case 2: $url = BASE_URL.'/main-app/docente/'.$paginaRedireccion; break;
 
-			case 3: $url = '../acudiente/'.$paginaRedireccion; break;
+			case 3: $url = BASE_URL.'/main-app/acudiente/'.$paginaRedireccion; break;
 
-			case 4: $url = '../estudiante/'.$paginaRedireccion; break;
+			case 4: $url = BASE_URL.'/main-app/estudiante/'.$paginaRedireccion; break;
 
-			case 5: $url = '../directivo/'.$paginaRedireccion; break;
+			case 5: $url = BASE_URL.'/main-app/directivo/'.$paginaRedireccion; break;
 
-			default: $url = '../controlador/salir.php'; break;
+			default: $url = BASE_URL.'/main-app/controlador/salir.php'; break;
 
 	  	}
 
@@ -150,17 +172,11 @@ class Cargas {
 	
 
 	function verificarNumCargas($num, $idioma=1){
-		include("../../config-general/idiomas.php");
+		include(ROOT_PATH."/config-general/idiomas.php");
 
 		if($num>0){
 
 ?>
-
-	<div class="alert alert-warning">
-
-		<i class="icon-exclamation-sign"></i><strong><?=$frases[119][$idioma];?>:</strong> <?=$frases[328][$idioma];?>
-
-	</div>
 
 <?php
 
@@ -208,19 +224,19 @@ function validarClave($clave) {
 function validarUsuarioActual($datosUsuarioActual) {
 	switch ($datosUsuarioActual['uss_tipo']) {
 		case 5:
-			$destinos = "../directivo/";
+			$destinos = BASE_URL."/main-app/directivo/";
 			break;
 		case 3:
-			$destinos = "../acudiente/";
+			$destinos = BASE_URL."/main-app/acudiente/";
 			break;
 		case 4:
-			$destinos =  "../estudiante/";
+			$destinos =  BASE_URL."/main-app/estudiante/";
 			break;
 		case 2:
-			$destinos = "../docente/";
+			$destinos = BASE_URL."/main-app/docente/";
 			break;
 		case 1:
-			$destinos = "../directivo/";
+			$destinos = BASE_URL."/main-app/directivo/";
 			break;	
 
 	default:

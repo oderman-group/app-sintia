@@ -17,8 +17,10 @@ require_once(ROOT_PATH . "/main-app/class/CargaAcademica.php");
 require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
 ?>
     <style>
-
-
+        /* ========================================
+           ESTILOS MEJORADOS PARA MODAL CAMBIAR GRUPO
+           ======================================== */
+        
         .slider {
             position: absolute;
             cursor: pointer;
@@ -31,14 +33,153 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
             font-weight: bold;
             color: white;
         }
-
-
-      
-        p {
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: bold;
+        
+        /* Card para información del estudiante */
+        .info-estudiante-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
+        
+        .info-estudiante-card h5 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .info-estudiante-card .detalle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .info-estudiante-card .detalle i {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        /* Card para la tabla de notas */
+        .notas-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .notas-card h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        /* Tabla de notas mejorada */
+        .notas-card table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .notas-card table thead th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 13px;
+        }
+        
+        .notas-card table tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        
+        .notas-card table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .notas-card table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Toggle switch mejorado */
+        .toggle-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-container label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        /* Formulario más espaciado */
+        .form-group.row {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            color: #495057;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-group label i {
+            margin-right: 8px;
+            color: #667eea;
+        }
+        
+        .form-control {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        /* Select2 styling */
+        .select2-container--default .select2-selection--single {
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            height: 42px;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 42px;
+            padding-left: 15px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .info-estudiante-card {
+                padding: 15px;
+            }
+            
+            .notas-card {
+                padding: 15px;
+            }
+            
+            .notas-card table thead th,
+            .notas-card table tbody td {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+        }
     </style>
 
 <div class="col-sm-12">
@@ -51,6 +192,9 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
     
 
     $e = Estudiantes::obtenerDatosEstudiante($id);
+    $gradoActualId = (string)($e["mat_grado"] ?? '');
+    $grupoActualId = (string)($e["mat_grupo"] ?? '');
+    $sinGrupoAsignado = ($gradoActualId === '' || $grupoActualId === '');
 
     $cambiar = "";
     if (!empty($_GET["cambiar"])) {
@@ -62,69 +206,66 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
     <form action="estudiantes-cambiar-grupo-estudiante.php" method="post" class="form-horizontal" enctype="multipart/form-data">
         <input type="hidden" value="<?= $e['mat_id']; ?>" name="estudiante">
 
-
-        <div class="form-group row">
-            <label class="col-sm-1 control-label">Estudiante</label>
-            <div class="col-sm-1">
-                <input type="text" name="codigoE" class="form-control" autocomplete="off" value="<?= $e['mat_id']; ?>" readonly>
+        <!-- Card con información del estudiante -->
+        <div class="info-estudiante-card">
+            <h5><i class="fa fa-user-graduate"></i> Información del Estudiante</h5>
+            <div class="detalle">
+                <i class="fa fa-id-badge"></i>
+                <span><strong>ID:</strong> <?= $e['mat_id']; ?> | <strong>Nombre:</strong> <?= Estudiantes::NombreCompletoDelEstudiante($e); ?></span>
             </div>
-
-            <div class="col-sm-10">
-                <input type="text" name="nombre" class="form-control" autocomplete="off" value="<?= Estudiantes::NombreCompletoDelEstudiante($e); ?>" readonly>
+            <?php $gradoActual = $gradoActualId !== '' ? Grados::obtenerGrado($gradoActualId) : ['gra_id' => 'N/A', 'gra_nombre' => 'Sin grado']; ?>
+            <div class="detalle">
+                <i class="fa fa-graduation-cap"></i>
+                <span><strong>Curso Actual:</strong> <?= $gradoActual["gra_id"]; ?> - <?= $gradoActual["gra_nombre"]; ?></span>
             </div>
         </div>
 
+        <!-- Selección de grupo -->
         <div class="form-group row">
-            <label class="col-sm-1 control-label">Curso</label>
-
-            <?php
-            $gradoActual = Grados::obtenerGrado($e["mat_grado"]);
-            ?>
-            <div class="col-sm-1">
-                <input type="text" name="cursoActual" class="form-control" autocomplete="off" value="<?= $gradoActual["gra_id"] ?>" readonly>
-            </div>
-            <div class="col-sm-10">
-                <input type="text" class="form-control" autocomplete="off" value="<?= $gradoActual["gra_nombre"] ?>" readonly>
-            </div>
-
-        </div>
-
-        <div class="form-group row">
-            <label class="col-sm-1 control-label">Grupo</label>
-            <div class="col-sm-5">
-                <select class="form-control  select2" id="estudianteGrupo" name="grupoNuevo"   onchange="traerCargaCursoGrupo('<?= $gradoActual['gra_id'] ?>',this.value)" required>
+            <label class="col-sm-3 control-label"><i class="fa fa-users"></i> Nuevo Grupo</label>
+            <div class="col-sm-9">
+                <select class="form-control select2" id="estudianteGrupo" name="grupoNuevo" onchange="traerCargaCursoGrupo('<?= $gradoActual['gra_id'] ?>',this.value)" required>
                     <?php
-                    $opcionesConsulta = CargaAcademica::listarGruposCursos([$e["mat_grado"]]);
+                    $opcionesConsulta = !$sinGrupoAsignado ? CargaAcademica::listarGruposCursos([$gradoActualId]) : [];
                     foreach ($opcionesConsulta as $gru) {
                         if ($gru["car_grupo"] == $e['mat_grupo'])
-                            echo '<option value="' . $gru["car_grupo"] . '" selected style="color:blue; font-weight:bold;">Actual: ' . $gru["gru_nombre"] . '</option>';
+                            echo '<option value="' . $gru["car_grupo"] . '" selected style="color:blue; font-weight:bold;">✓ Actual: ' . $gru["gru_nombre"] . '</option>';
                         else
                             echo '<option value="' . $gru["car_grupo"] . '">' . $gru["gru_nombre"] . '</option>';
                     }
+                    if ($sinGrupoAsignado) {
+                        echo '<option value="" selected>Estudiante sin grupo actual</option>';
+                    }
                     ?>
                 </select>
-               
             </div>
-            <?php if (empty($cambiar)) {?>
-            <div class="col-sm-6" >
-                <div class="input-group spinner col-sm-12" style="padding-top: 5px;">
-                    <label class="control-label" style="margin-right: 10px;" > Desea tranferir las notas?</label>
-					<label class="switchToggle"> 
-						<input type="checkbox" id="pasarNotas"  onchange="mostrarNotas()" name="pasarNotas"  checked >
-						<span class="slider green round">
-                        SI &nbsp;&nbsp; NO
-                        </span>
-					</label>
-				</div>
-            </div>
-            <?php }else{ ?> 
-                <input type='hidden' name='pasarNotas' value='si'>
-            <?php } ?>
         </div>
-        <div class="form-group row" id="rowNotas" >
-            <label class="col-sm-1 control-label"></label>
-            <div class="col-sm-11">
-                <table style="width:100%;">
+
+        <!-- Toggle para transferir notas -->
+        <?php if (empty($cambiar)) {?>
+        <div class="toggle-container">
+            <div class="d-flex align-items-center justify-content-between">
+                <label class="mb-0"><i class="fa fa-clipboard-list"></i> ¿Desea transferir las notas?</label>
+                <label class="switchToggle"> 
+                    <input type="checkbox" id="pasarNotas" onchange="mostrarNotas()" name="pasarNotas" checked>
+                    <span class="slider green round">SI &nbsp;&nbsp; NO</span>
+                </label>
+            </div>
+        </div>
+        <?php } else { ?> 
+            <input type='hidden' name='pasarNotas' value='si'>
+        <?php } ?>
+        <!-- Tabla de notas -->
+        <div id="rowNotas">
+            <div class="notas-card">
+                <?php if ($sinGrupoAsignado) { ?>
+                    <div class="alert alert-warning">
+                        El estudiante no tiene curso y grupo asignados actualmente, por lo que no hay notas para transferir.
+                    </div>
+                <?php } ?>
+                <?php if (!$sinGrupoAsignado) { ?>
+                <h6><i class="fa fa-clipboard-list"></i> Notas por Período y Relación de Materias</h6>
+                <table>
 
                     <thead>
 
@@ -146,11 +287,15 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
                         $filtroLimite = '';
 
 
-                        $consulta = CargaAcademica::consultarEstudianteMateriasNotasPeridos($e['mat_grado'], $e['mat_id'], $e['mat_grupo']);
-                        $consultaR = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $e['mat_grado'], $e['mat_grupo']);
+                        $consulta = [];
+                        $consultaR = null;
+                        if (!$sinGrupoAsignado) {
+                            $consulta = CargaAcademica::consultarEstudianteMateriasNotasPeridos($gradoActualId, $e['mat_id'], $grupoActualId);
+                            $consultaR = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActualId, $grupoActualId);
+                        }
                         $cargasArray = array();
                         $cargasDisponibles = [];
-                        if (!empty($consulta)) {
+                        if (!empty($consulta) && $consultaR) {
                             while ($fila = $consultaR->fetch_assoc()) {
                                 $cargasArray[]       = $fila;
                                 $cargasDisponibles[] = $fila;
@@ -233,10 +378,11 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
                         <?php } ?>
                     </tbody>
                 </table>
-                <select class="form-control  select2 "  id="listaCargasGrado" hidden >
+                <?php } ?>
+                <select class="form-control select2" id="listaCargasGrado" hidden>
                 <?php foreach ($cargasArray as $cargaGrupo) {?>
-                    <option value="<?= $cargaGrupo['car_id']; ?>" ><?= $cargaGrupo['car_id']."$".$cargaGrupo['car_materia'] . "$" . strtoupper($cargaGrupo['mat_nombre']). "$" .$cargaGrupo['uss_nombre']; ?></option>
-                    <?php } ?>
+                    <option value="<?= $cargaGrupo['car_id']; ?>"><?= $cargaGrupo['car_id']."$".$cargaGrupo['car_materia'] . "$" . strtoupper($cargaGrupo['mat_nombre']). "$" .$cargaGrupo['uss_nombre']; ?></option>
+                <?php } ?>
                 </select>
             </div>
         </div>
@@ -443,4 +589,5 @@ require_once(ROOT_PATH . "/main-app/class/componentes/botones-guardar.php");
             });
         });
 }
+</script>
 </script>

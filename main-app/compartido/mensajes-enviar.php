@@ -43,7 +43,7 @@ try {
     */
     if (
         (
-            ($config['conf_id_institucion'] == ICOLVEN || $config['conf_id_institucion'] == DEVELOPER) 
+            (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MENSAJES_CORREO)) 
             && $datosUsuarioActual['uss_tipo'] != TIPO_ESTUDIANTE
         )
         || $_GET["receptor"] == Administrativo_Usuario_Usuario::USUARIO_DEFAULT_SINTIA

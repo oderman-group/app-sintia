@@ -6,6 +6,15 @@ $tiempo_final = microtime(true);
 $tiempo = $tiempo_final - $tiempo_inicial;
 $tiempoMostrar = round($tiempo,3);
 
+$memoria_fin_script  = memory_get_usage();
+$memoria_pico_script = memory_get_peak_usage();
+
+$memoria_consumida = $memoria_fin_script - $memoria_inicio_script;
+
+// Guardar en Megabytes (MB)
+$memoria_consumida_mb = $memoria_consumida / (1024 * 1024);
+$memoria_pico_mb = $memoria_pico_script / (1024 * 1024);
+
 $idLogin=null;
 if(isset($_SESSION['admin'])){
     $idLogin=$_SESSION['admin'];
@@ -52,7 +61,11 @@ try {
         hil_institucion, 
         hil_pagina_anterior, 
         hil_tiempo_carga, 
-        hil_usuario_autologin)
+        hil_usuario_autologin,
+        hil_momento,
+        hil_uso_memoria_mb,
+        hil_pico_memoria_mb
+        )
     VALUES(
         '".$_SESSION['id']."', 
         '".$_SERVER['PHP_SELF']."?".mysqli_real_escape_string($conexion,$_SERVER['QUERY_STRING'])."".mysqli_real_escape_string($conexion,$post)."', 
@@ -62,7 +75,10 @@ try {
         '".$config['conf_id_institucion']."', 
         '".$REFERER."', 
         '".$tiempoMostrar."', 
-        '".$idLogin."'
+        '".$idLogin."',
+        'FIN',
+        '".$memoria_consumida_mb."',
+        '".$memoria_pico_mb."'
     )");
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");

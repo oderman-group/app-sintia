@@ -3,8 +3,6 @@ include("session.php");
 include("verificar-carga.php");
 
 Modulos::validarAccesoDirectoPaginas();
-$idPaginaInterna = 'DC0091';
-include("../compartido/historial-acciones-guardar.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Clases.php");
 require_once(ROOT_PATH."/main-app/class/Evaluaciones.php");
@@ -13,7 +11,11 @@ require_once(ROOT_PATH."/main-app/class/Actividades.php");
 $mensajeNot = 'Hubo un error al guardar las cambios';
 
 //Actualizar respuesta de una pregunta
-if($_POST["operacion"]==1){
+if ($_POST["operacion"] == 1) {
+
+	$idPaginaInterna = 'DC0091';
+	include("../compartido/historial-acciones-guardar.php");
+
 	Evaluaciones::actualizarRespuesta($conexion, $config, $_POST);
 
 	include("../compartido/guardar-historial-acciones.php");
@@ -21,7 +23,11 @@ if($_POST["operacion"]==1){
 }
 
 //Agregar respuesta a una pregunta
-if($_POST["operacion"] == 2){
+if ($_POST["operacion"] == 2) {
+
+	$idPaginaInterna = 'DC0047';
+	include("../compartido/historial-acciones-guardar.php");
+
     try {
         Evaluaciones::guardarRespuesta($config, $_POST);
         $mensajeNot = 'La respuesta se ha agregado correctamente.';
@@ -33,7 +39,10 @@ if($_POST["operacion"] == 2){
 }
 
 //Clase disponible o no
-if($_POST["operacion"]==3){
+if ($_POST["operacion"] == 3) {
+
+	$idPaginaInterna = 'DC0048';
+	include("../compartido/historial-acciones-guardar.php");
 	
 	Clases::cambiarEstadoClase($conexion, $config, $_POST);
 
@@ -42,7 +51,10 @@ if($_POST["operacion"]==3){
 }
 
 //Impedir retrasos o no en las actividades
-if($_POST["operacion"]==4){
+if ($_POST["operacion"] == 4) {
+
+	$idPaginaInterna = 'DC0049';
+	include("../compartido/historial-acciones-guardar.php");
 	
 	Actividades::impedirRetrasoActividad($conexion, $config, $_POST);
 

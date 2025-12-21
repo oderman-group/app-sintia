@@ -123,14 +123,25 @@ include("../../config-general/consulta-usuario-actual.php");?>
   </head>
   <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
   <?php
-  $consulta = mysqli_query($conexion, "SELECT * FROM negocios_pedidos WHERE ped_id='".$_GET["ref"]."'");
-  $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+  // Migrado a PDO - Consultas preparadas
+  require_once(ROOT_PATH."/main-app/class/Conexion.php");
+  $conexionPDO = Conexion::newConnection('PDO');
+  
+  $sql = "SELECT * FROM negocios_pedidos WHERE ped_id=?";
+  $stmt = $conexionPDO->prepare($sql);
+  $stmt->bindParam(1, $_GET["ref"], PDO::PARAM_STR);
+  $stmt->execute();
+  $resultado = $stmt->fetch(PDO::FETCH_BOTH);
+  
   //DATOS DEL USUARIO
   $resultado2 = UsuariosPadre::sesionUsuario($resultado[2]);
   if($resultado2[15]=='F') $g = 'a'; else $g = 'o';
-  //DATOS DEL USUARIO
-  $consulta3 = mysqli_query($conexion, "SELECT * FROM negocios_items_pedidos WHERE item_codigo_pedido='".$resultado[0]."'");
-  $num3 = mysqli_num_rows($consulta3);
+  
+  $sql3 = "SELECT * FROM negocios_items_pedidos WHERE item_codigo_pedido=?";
+  $stmt3 = $conexionPDO->prepare($sql3);
+  $stmt3->bindParam(1, $resultado[0], PDO::PARAM_STR);
+  $stmt3->execute();
+  $num3 = $stmt3->rowCount();
   ?>
     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#0099CC">
       <tbody>

@@ -11,7 +11,7 @@ class Boletin {
     public const BOLETIN_TIPO_NOTA_NORMAL                 = 1; // Calculada por el sistema de acuerdo a las notas en las actividades.
     public const BOLETIN_TIPO_NOTA_RECUPERACION_PERIODO   = 2; // La hace el docente o el directivo.
     public const BOLETIN_TIPO_NOTA_RECUPERACION_INDICADOR = 3; // La hace el docente por los indicadores.
-    public const BOLETIN_TIPO_NOTA_DIRECTIVA              = 4; // La Colocar el directivo directamente.
+    public const BOLETIN_TIPO_NOTA_DIRECTIVA              = 4; // La Coloca el directivo directamente.
 
     public const ESTADO_ABIERTO  = 'ABIERTO';
     public const ESTADO_GENERADO = 'GENERADO';
@@ -332,9 +332,11 @@ class Boletin {
             }
 
         } catch (Exception $e) {
-            echo "Excepción capturada: ".$e->getMessage();
+            Utilidades::writeLog('Se jodió esta vaina porque '.$e->getMessage());
+
+            echo "Ocurrió un error mientras se obtenía el puesto y promedio del estudiante.";
             // Puedes loggear el error o manejarlo de otra forma
-            exit();
+            //exit();
         }
 
         return $resultado;
@@ -1606,6 +1608,7 @@ class Boletin {
                     are.ar_id,                   
                     car.car_id,                    
                     gra.gra_nombre,
+                    gra.gra_nivel,
                     gru.gru_nombre,
                   	ar_nombre,
                     mate.mat_id as id_materia,
@@ -1813,23 +1816,40 @@ class Boletin {
         global $conexion, $config;
 
         $year = empty($year) ?  $_SESSION["bd"] : $year;
-        $in_periodos = implode(', ', $periodos);
-        $in_estudiantes = implode(', ', $estudinates);
+        
+        // Validar que los arrays no estén vacíos
+        if(empty($periodos) || empty($estudinates)){
+            // Retornar un resultado vacío si no hay datos
+            $sql = "SELECT * FROM " . BD_ACADEMICA . ".vista_matriculas_cursos_individual WHERE 1=0";
+            $parametros = [];
+            $resultado = BindSQL::prepararSQL($sql, $parametros);
+            return $resultado;
+        }
+        
+        // Construir placeholders para IN clauses
+        $placeholders_periodos = implode(', ', array_fill(0, count($periodos), '?'));
+        $placeholders_estudiantes = implode(', ', array_fill(0, count($estudinates), '?'));
+        
         if(!$traerIndicadores){
             $sql ="SELECT * FROM  " . BD_ACADEMICA . ".vista_matriculas_cursos_individual 
 								WHERE  matcur_id_institucion       = ?
 								AND    matcur_years                = ?
-								AND    matcur_id_matricula         IN ($in_estudiantes)
-								AND    bol_periodo                 IN ($in_periodos)";
+								AND    matcur_id_matricula         IN ($placeholders_estudiantes)
+								AND    bol_periodo                 IN ($placeholders_periodos)";
         }else{
             $sql = "
             SELECT * FROM  " . BD_ACADEMICA . ".vista_matriculas_cursos_individual_indicadores 
 								WHERE  matcur_id_institucion       = ?
 								AND    matcur_years                = ?
-								AND    matcur_id_matricula         IN ($in_estudiantes)
-								AND    ipc_periodo           IN ($in_periodos)";
+								AND    matcur_id_matricula         IN ($placeholders_estudiantes)
+								AND    ipc_periodo           IN ($placeholders_periodos)";
         }
+        
+        // Construir parámetros: institución, year, estudiantes, periodos
         $parametros = [(int)$config['conf_id_institucion'], $year];
+        $parametros = array_merge($parametros, $estudinates);
+        $parametros = array_merge($parametros, $periodos);
+        
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
@@ -2095,6 +2115,262 @@ class Boletin {
         return $msj; //
     }
     
+    /**
+     * Calcula el promedio de un área considerando porcentajes de materias según configuración.
+     * 
+     * Este método centraliza el cálculo de promedios de área, considerando:
+     * - Si conf_agregar_porcentaje_asignaturas = 'SI' y hay mat_valor: promedio ponderado
+     * - Si no: promedio simple (todas las materias valen lo mismo)
+     * 
+     * @param array  $config          Configuración de la institución
+     * @param string $estudianteId    ID del estudiante
+     * @param string $areaId          ID del área
+     * @param array  $periodos        Array de períodos [1,2,3] o [1,2,3,4]
+     * @param string $grado           ID del grado
+     * @param string $grupo           ID del grupo
+     * @param string $yearBd          Año académico (opcional)
+     * @return array Array con promedios por período y promedio acumulado: 
+     *               ['periodos' => [1 => 4.5, 2 => 4.8], 'acumulado' => 4.65]
+     */
+    public static function calcularPromedioAreaCompleto(
+        array  $config,
+        string $estudianteId,
+        string $areaId,
+        array  $periodos,
+        string $grado,
+        string $grupo,
+        string $yearBd = ''
+    ): array {
+        global $conexion;
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $resultado = ['periodos' => [], 'acumulado' => 0];
+        
+        // Obtener cargas del área
+        $cargas = CargaAcademica::traerCargasAreasPorCursoGrupo($config, $grado, $grupo, $areaId, $year);
+        
+        $usarPorcentajes = ($config['conf_agregar_porcentaje_asignaturas'] == 'SI');
+        $sumaPorPeriodo = [];
+        $sumaPorcentajesPorPeriodo = [];
+        $cantidadMateriasPorPeriodo = [];
+        
+        // Inicializar arrays por período
+        foreach ($periodos as $periodo) {
+            $sumaPorPeriodo[$periodo] = 0;
+            $sumaPorcentajesPorPeriodo[$periodo] = 0;
+            $cantidadMateriasPorPeriodo[$periodo] = 0;
+        }
+        
+        // Almacenar cargas en array para poder iterar múltiples veces si es necesario
+        $cargasArray = [];
+        while ($carga = mysqli_fetch_array($cargas, MYSQLI_BOTH)) {
+            $cargasArray[] = $carga;
+        }
+        
+        // Recorrer cargas y calcular promedios
+        foreach ($cargasArray as $carga) {
+            $matValor = !empty($carga['mat_valor']) ? floatval($carga['mat_valor']) : 100;
+            
+            foreach ($periodos as $periodo) {
+                $notaBoletin = self::traerNotaBoletinCargaPeriodo($config, $periodo, $estudianteId, $carga['car_id'], $year);
+                $nota = !empty($notaBoletin['bol_nota']) ? floatval($notaBoletin['bol_nota']) : 0;
+                
+                if ($nota > 0) {
+                    if ($usarPorcentajes && $matValor > 0) {
+                        // Promedio ponderado: suma(nota * porcentaje/100)
+                        $sumaPorPeriodo[$periodo] += $nota * ($matValor / 100);
+                        $sumaPorcentajesPorPeriodo[$periodo] += ($matValor / 100);
+                    } else {
+                        // Promedio simple
+                        $sumaPorPeriodo[$periodo] += $nota;
+                        $cantidadMateriasPorPeriodo[$periodo]++;
+                    }
+                }
+            }
+        }
+        
+        // Calcular promedio por período
+        foreach ($periodos as $periodo) {
+            if ($usarPorcentajes && $sumaPorcentajesPorPeriodo[$periodo] > 0) {
+                $resultado['periodos'][$periodo] = $sumaPorPeriodo[$periodo] / $sumaPorcentajesPorPeriodo[$periodo];
+            } elseif ($cantidadMateriasPorPeriodo[$periodo] > 0) {
+                $resultado['periodos'][$periodo] = $sumaPorPeriodo[$periodo] / $cantidadMateriasPorPeriodo[$periodo];
+            } else {
+                $resultado['periodos'][$periodo] = 0;
+            }
+        }
+        
+        // Calcular promedio acumulado (promedio de promedios por período)
+        $sumaAcumulada = 0;
+        $cantidadPeriodos = 0;
+        foreach ($resultado['periodos'] as $promedioPeriodo) {
+            if ($promedioPeriodo > 0) {
+                $sumaAcumulada += $promedioPeriodo;
+                $cantidadPeriodos++;
+            }
+        }
+        
+        if ($cantidadPeriodos > 0) {
+            $resultado['acumulado'] = $sumaAcumulada / $cantidadPeriodos;
+        }
+        
+        return $resultado;
+    }
+    
+    /**
+     * Calcula el promedio de una materia considerando períodos y porcentajes de período.
+     * 
+     * Este método centraliza el cálculo de promedios de materia, considerando:
+     * - Notas por período
+     * - Porcentajes de período según configuración del grado
+     * - Nivelaciones si aplican
+     * 
+     * @param array  $config          Configuración de la institución
+     * @param string $estudianteId   ID del estudiante
+     * @param string $cargaId         ID de la carga académica
+     * @param array  $periodos        Array de períodos [1,2,3] o [1,2,3,4]
+     * @param string $gradoId         ID del grado (para obtener porcentajes de período)
+     * @param string $yearBd          Año académico (opcional)
+     * @param bool   $incluirNivelaciones Si incluir nivelaciones en el cálculo
+     * @return array Array con promedios por período, definitiva y nivelación:
+     *               ['periodos' => [1 => 4.5, 2 => 4.8], 'definitiva' => 4.65, 'nivelacion' => 0]
+     */
+    public static function calcularPromedioMateriaCompleto(
+        array  $config,
+        string $estudianteId,
+        string $cargaId,
+        array  $periodos,
+        string $gradoId,
+        string $yearBd = '',
+        bool   $incluirNivelaciones = true
+    ): array {
+        global $conexion;
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $resultado = ['periodos' => [], 'definitiva' => 0, 'nivelacion' => 0];
+        
+        $sumaNotasPonderadas = 0;
+        $sumaPorcentajes = 0;
+        
+        // Obtener notas por período
+        foreach ($periodos as $periodo) {
+            $notaBoletin = self::traerNotaBoletinCargaPeriodo($config, $periodo, $estudianteId, $cargaId, $year);
+            $nota = !empty($notaBoletin['bol_nota']) ? floatval($notaBoletin['bol_nota']) : 0;
+            $resultado['periodos'][$periodo] = $nota;
+            
+            if ($nota > 0) {
+                // Obtener porcentaje del período
+                $porcentajePeriodo = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $gradoId, $periodo);
+                $porcentaje = !empty($porcentajePeriodo['gvp_valor']) ? floatval($porcentajePeriodo['gvp_valor']) : (100 / count($periodos));
+                
+                // Calcular definitiva ponderada: suma(nota * porcentaje_periodo/100)
+                $sumaNotasPonderadas += $nota * ($porcentaje / 100);
+                $sumaPorcentajes += ($porcentaje / 100);
+            }
+        }
+        
+        // Calcular definitiva
+        if ($sumaPorcentajes > 0) {
+            $resultado['definitiva'] = $sumaNotasPonderadas / $sumaPorcentajes;
+        }
+        
+        // Verificar nivelación si aplica
+        if ($incluirNivelaciones) {
+            $nivelacion = Calificaciones::nivelacionEstudianteCarga($conexion, $config, $estudianteId, $cargaId, $year);
+            if ($nivelacion && mysqli_num_rows($nivelacion) > 0) {
+                $datosNivelacion = mysqli_fetch_array($nivelacion, MYSQLI_BOTH);
+                $notaNivelacion = !empty($datosNivelacion['niv_nota']) ? floatval($datosNivelacion['niv_nota']) : 0;
+                if ($notaNivelacion > $resultado['definitiva']) {
+                    $resultado['nivelacion'] = $notaNivelacion;
+                    $resultado['definitiva'] = $notaNivelacion;
+                }
+            }
+        }
+        
+        return $resultado;
+    }
+    
+    /**
+     * Calcula el promedio general de un estudiante considerando todas sus áreas.
+     * 
+     * Este método calcula el promedio general del estudiante basado en los promedios
+     * de todas sus áreas, considerando la configuración de porcentajes.
+     * 
+     * @param array  $config          Configuración de la institución
+     * @param string $estudianteId   ID del estudiante
+     * @param array  $periodos        Array de períodos [1,2,3] o [1,2,3,4]
+     * @param string $grado          ID del grado
+     * @param string $grupo           ID del grupo
+     * @param string $yearBd          Año académico (opcional)
+     * @return array Array con promedios por período y promedio general:
+     *               ['periodos' => [1 => 4.5, 2 => 4.8], 'general' => 4.65]
+     */
+    public static function calcularPromedioGeneralEstudiante(
+        array  $config,
+        string $estudianteId,
+        array  $periodos,
+        string $grado,
+        string $grupo,
+        string $yearBd = ''
+    ): array {
+        global $conexion;
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $resultado = ['periodos' => [], 'general' => 0];
+        
+        // Obtener todas las áreas del curso/grupo
+        $areas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $grado, $grupo, $year);
+        $areasUnicas = [];
+        
+        while ($area = mysqli_fetch_array($areas, MYSQLI_BOTH)) {
+            if (!in_array($area['ar_id'], $areasUnicas)) {
+                $areasUnicas[] = $area['ar_id'];
+            }
+        }
+        
+        $sumaPorPeriodo = [];
+        $cantidadAreasPorPeriodo = [];
+        
+        // Inicializar arrays por período
+        foreach ($periodos as $periodo) {
+            $sumaPorPeriodo[$periodo] = 0;
+            $cantidadAreasPorPeriodo[$periodo] = 0;
+        }
+        
+        // Calcular promedio por área y acumular
+        foreach ($areasUnicas as $areaId) {
+            $promedioArea = self::calcularPromedioAreaCompleto($config, $estudianteId, $areaId, $periodos, $grado, $grupo, $year);
+            
+            foreach ($periodos as $periodo) {
+                if (isset($promedioArea['periodos'][$periodo]) && $promedioArea['periodos'][$periodo] > 0) {
+                    $sumaPorPeriodo[$periodo] += $promedioArea['periodos'][$periodo];
+                    $cantidadAreasPorPeriodo[$periodo]++;
+                }
+            }
+        }
+        
+        // Calcular promedio general por período
+        foreach ($periodos as $periodo) {
+            if ($cantidadAreasPorPeriodo[$periodo] > 0) {
+                $resultado['periodos'][$periodo] = $sumaPorPeriodo[$periodo] / $cantidadAreasPorPeriodo[$periodo];
+            } else {
+                $resultado['periodos'][$periodo] = 0;
+            }
+        }
+        
+        // Calcular promedio general acumulado
+        $sumaGeneral = 0;
+        $cantidadPeriodos = 0;
+        foreach ($resultado['periodos'] as $promedioPeriodo) {
+            if ($promedioPeriodo > 0) {
+                $sumaGeneral += $promedioPeriodo;
+                $cantidadPeriodos++;
+            }
+        }
+        
+        if ($cantidadPeriodos > 0) {
+            $resultado['general'] = $sumaGeneral / $cantidadPeriodos;
+        }
+        
+        return $resultado;
+    }
     
 }
 

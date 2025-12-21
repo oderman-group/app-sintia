@@ -31,6 +31,7 @@ $tabActual = "#general";
 
 if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_GENERAL) {
     $datos["conf_periodo"] = $_POST["periodo"];
+    $datos["conf_max_peso_archivos"] = $_POST["pesoArchivos"];
 
     $tabActual = "#general";
 }
@@ -44,9 +45,6 @@ if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_COMPORTAMIENTO) {
     $datos["conf_agregar_porcentaje_asignaturas"]         = $_POST["porcenAsigna"];
     $datos["conf_notas_categoria"]                        = $_POST["estiloNotas"];
     $datos["conf_forma_mostrar_notas"]                    = $_POST["formaNotas"];
-    $datos["conf_porcentaje_completo_generar_informe"]    = $_POST["generarInforme"];
-    $datos["conf_observaciones_multiples_comportamiento"] = $_POST["observacionesMultiples"];
-    $datos["conf_max_peso_archivos"]                      = $_POST["pesoArchivos"];
 
     $tabActual = "#comportamiento-sistema";
 }
@@ -56,6 +54,7 @@ if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_PREFERENCIAS) {
     $datos["conf_num_registros"]                           = $_POST["numRegistros"];
     $datos["conf_mostrar_estudiantes_cancelados"]          = $_POST["mostrarEstudiantesCancelados"];
     $datos["conf_ocultar_panel_lateral_notas_estudiantes"] = $_POST["mostrarNotasPanelLateral"];
+    $datos["conf_solicitar_acudiente_2"]                   = $_POST["solicitarAcudiente2"] ?? 'NO';
 
     $tabActual = "#preferencias";
 }
@@ -75,6 +74,8 @@ if ($_POST["configTab"] == BDT_Configuracion::CONFIG_SISTEMA_INFORMES) {
     $datos["conf_reporte_sabanas_nota_indocador"]           = $_POST["notasReporteSabanas"];
     $datos["conf_promedio_libro_final"]                     = $_POST["promedioLibroFinal"];
     $datos["conf_firma_inasistencia_planilla_notas_doc"]    = $_POST["firmaAsistencia"];
+    $datos["conf_porcentaje_completo_generar_informe"]      = $_POST["generarInforme"];
+    $datos["conf_observaciones_multiples_comportamiento"]   = $_POST["observacionesMultiples"];
 
     $tabActual = "#informes";
 }

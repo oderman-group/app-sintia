@@ -17,7 +17,7 @@ if (!empty($_GET["busqueda"])) {
 }
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -25,7 +25,7 @@ if (!empty($_GET["busqueda"])) {
     <div class="navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#FFF;">Filtrar por categorías<span class="fa fa-angle-down"></span></a>
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#000;">Filtrar por categorías<span class="fa fa-angle-down"></span></a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
                     $categorias = mysqli_query($conexion, "SELECT * FROM " . $baseDatosMarketPlace . ".categorias_productos");
@@ -39,7 +39,7 @@ if (!empty($_GET["busqueda"])) {
                 </div>
             </li>
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#FFF;">Filtrar por Estado de compra<span class="fa fa-angle-down"></span></a>
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color:#000;">Filtrar por Estado de compra<span class="fa fa-angle-down"></span></a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
                     foreach($estadoCompra as $key => $value) {

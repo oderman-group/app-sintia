@@ -12,6 +12,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 require_once("../class/Estudiantes.php");
 require_once("../class/servicios/GradoServicios.php");
+require_once(ROOT_PATH."/main-app/class/Modulos.php");
 
 $idMatricula="";
 if(!empty($_GET["id"])){
@@ -32,6 +33,59 @@ $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
+
+// Verificar si el estudiante está en estado "En inscripción"
+$estadoEnInscripcion = ($datosEstudianteActual['mat_estado_matricula'] == Estudiantes::ESTADO_EN_INSCRIPCION);
+if ($estadoEnInscripcion) {
+	// Si está en estado de inscripción, deshabilitar todos los campos
+	$disabledPermiso = "disabled";
+}
+
+/**
+ * Catálogos reutilizables para reducir consultas repetidas.
+ */
+$opcionesGeneralesPorGrupo = [];
+$catalogoCiudades = [];
+$gruposOpcionesNecesarios = [1, 2, 3, 4, 5];
+
+try {
+	$idsGrupos = implode(',', $gruposOpcionesNecesarios);
+	$consultaOpciones = mysqli_query(
+		$conexion,
+		"SELECT ogen_id, ogen_nombre, ogen_grupo 
+		 FROM {$baseDatosServicios}.opciones_generales 
+		 WHERE ogen_grupo IN ({$idsGrupos})
+		 ORDER BY ogen_grupo, ogen_nombre"
+	);
+	if ($consultaOpciones) {
+		while ($fila = mysqli_fetch_assoc($consultaOpciones)) {
+			$grupo = (int) $fila['ogen_grupo'];
+			if (!isset($opcionesGeneralesPorGrupo[$grupo])) {
+				$opcionesGeneralesPorGrupo[$grupo] = [];
+			}
+			$opcionesGeneralesPorGrupo[$grupo][] = $fila;
+		}
+	}
+} catch (Exception $e) {
+	include("../compartido/error-catch-to-report.php");
+}
+
+try {
+	$consultaCiudades = mysqli_query(
+		$conexion,
+		"SELECT ciu_id, TRIM(ciu_codigo) AS ciu_codigo, ciu_nombre, dep_nombre 
+		 FROM {$baseDatosServicios}.localidad_ciudades
+		 INNER JOIN {$baseDatosServicios}.localidad_departamentos ON dep_id = ciu_departamento
+		 ORDER BY ciu_nombre"
+	);
+	if ($consultaCiudades) {
+		while ($ciudad = mysqli_fetch_assoc($consultaCiudades)) {
+			$catalogoCiudades[] = $ciudad;
+		}
+	}
+} catch (Exception $e) {
+	include("../compartido/error-catch-to-report.php");
+}
 ?>
 
 	<!-- steps -->
@@ -42,6 +96,155 @@ if(!Modulos::validarPermisoEdicion()){
 	<!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+	
+	<style>
+		/* ========================================
+		   ESTILOS PARA BOTÓN DE ACCIONES
+		   ======================================== */
+		
+		/* Botón de tres puntos verticales */
+		.btn-acciones-menu {
+			background: transparent;
+			border: 1px solid #dee2e6;
+			padding: 8px 12px;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: all 0.2s ease;
+			font-size: 18px;
+			color: #666;
+		}
+		
+		.btn-acciones-menu:hover {
+			background: #f5f5f5;
+			color: #333;
+			border-color: #667eea;
+		}
+		
+		.btn-acciones-menu:active {
+			background: #e0e0e0;
+		}
+		
+		/* Panel flotante de acciones (estilo minimalista vertical) */
+		.acciones-panel {
+			display: none;
+			position: fixed;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+			border: 1px solid #e0e0e0;
+			padding: 8px 0;
+			min-width: 240px;
+			max-width: 280px;
+			max-height: 400px;
+			overflow-y: auto;
+			z-index: 10000;
+			animation: slideIn 0.15s ease-out;
+		}
+		
+		@keyframes slideIn {
+			from {
+				opacity: 0;
+				transform: scale(0.95) translateY(-10px);
+			}
+			to {
+				opacity: 1;
+				transform: scale(1) translateY(0);
+			}
+		}
+		
+		.acciones-panel.show {
+			display: block;
+		}
+		
+		/* Lista vertical de opciones */
+		.acciones-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		
+		/* Item de acción individual (estilo lista) */
+		.accion-item {
+			display: flex;
+			align-items: center;
+			padding: 12px 16px;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			text-decoration: none;
+			color: #333;
+			border-left: 3px solid transparent;
+		}
+		
+		.accion-item:hover {
+			background: #f8f9fa;
+			border-left-color: #667eea;
+			text-decoration: none;
+			color: #333;
+		}
+		
+		.accion-item:active {
+			background: #e9ecef;
+		}
+		
+		.accion-icon {
+			width: 32px;
+			height: 32px;
+			border-radius: 6px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-right: 12px;
+			font-size: 14px;
+			color: #fff;
+			flex-shrink: 0;
+		}
+		
+		.accion-name {
+			font-size: 14px;
+			color: #333;
+			font-weight: 400;
+			line-height: 1.4;
+			flex: 1;
+		}
+		
+		.accion-item:hover .accion-name {
+			font-weight: 500;
+		}
+		
+		/* Overlay para cerrar el panel */
+		.acciones-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 9999;
+		}
+		
+		.acciones-overlay.show {
+			display: block;
+		}
+		
+		/* Scrollbar personalizado para el panel */
+		.acciones-panel::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb {
+			background: #888;
+			border-radius: 10px;
+		}
+		
+		.acciones-panel::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
+	</style>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -83,6 +286,9 @@ if(!Modulos::validarPermisoEdicion()){
  			<?php include("../compartido/menu.php");?>
             <div class="page-content-wrapper">
                 <div class="page-content">
+                    <!-- Token CSRF para operaciones de eliminación -->
+                    <?php echo Csrf::campoHTML(); ?>
+                    
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
@@ -95,6 +301,34 @@ if(!Modulos::validarPermisoEdicion()){
                         </div>
                     </div>
 
+					<?php
+					// Definir permisos para las acciones
+					$permisoEditarEstudiante = Modulos::validarSubRol(['DT0078']);
+					$permisoEditarUsuario = Modulos::validarSubRol(['DT0008']);
+					$permisoCrearSion = Modulos::validarSubRol(['DT0280']);
+					$permisoCambiarGrupo = Modulos::validarSubRol(['DT0083']);
+					$permisoRetirar = Modulos::validarSubRol(['DT0074']);
+					$permisoReservar = Modulos::validarSubRol(['DT0079']);
+					$permisoEliminar = Modulos::validarSubRol(['DT0015']);
+					$permisoCrearUsuario = Modulos::validarSubRol(['DT0017']);
+					$permisoAutoLogin = Modulos::validarSubRol(['DT0006']);
+					$permisoBoletines = Modulos::validarSubRol(['DT0101']);
+					$permisoLibroMatricula = Modulos::validarSubRol(['DT0100']);
+					$permisoInformeParcial = Modulos::validarSubRol(['DT0223']);
+					$permisoHojaMatricula = Modulos::validarSubRol(['DT0099']);
+					$permisoAspectos = Modulos::validarSubRol(['DT0122']);
+					$permisoAdjuntarDocumento = Modulos::validarSubRol(['DT0292']);
+					
+					// Verificar si tiene grado y grupo
+					$tieneGradoGrupo = !empty($datosEstudianteActual['mat_grado']) && !empty($datosEstudianteActual['mat_grupo']);
+					
+					// Determinar si es retirar o restaurar
+					$retirarRestaurar = 'Retirar';
+					if ($datosEstudianteActual['mat_estado_matricula'] == CANCELADO) {
+						$retirarRestaurar = 'Restaurar';
+					}
+					?>
+					
 					<div class="row mb-3">
                     	<div class="col-sm-12">
 							<div class="btn-group">
@@ -103,69 +337,252 @@ if(!Modulos::validarPermisoEdicion()){
 										Agregar nuevo <i class="fa fa-plus"></i>
 									</a>
 								<?php }?>
+								
+								<!-- Botón de acciones del estudiante -->
+								<?php if ($estadoEnInscripcion) { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" disabled style="opacity: 0.5; cursor: not-allowed;" title="Estudiante en proceso de inscripción - Solo lectura">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } else { ?>
+									<button type="button" class="btn btn-info btn-acciones-menu" onclick="mostrarPanelAcciones(this, '<?= $datosEstudianteActual['mat_id']; ?>')" title="Más acciones">
+										<i class="fa fa-ellipsis-v"></i> Acciones
+									</button>
+								<?php } ?>
+								
+								<!-- Dropdown oculto con las opciones (para que el JS lo use) -->
+								<div style="display: none;">
+									<ul class="dropdown-menu" role="menu" id="Acciones_<?= $datosEstudianteActual['mat_id']; ?>">
+										<?php if (Modulos::validarPermisoEdicion()) { ?>
+											
+											<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && $permisoCrearSion) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea transferir este estudiante a SION?','question','estudiantes-crear-sion.php?id=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Transferir a SION</a></li>
+											<?php } ?>
+
+											<?php if (!empty($datosEstudianteActual['uss_id']) && $permisoEditarUsuario) { ?>
+												<li><a href="usuarios-editar.php?id=<?= base64_encode($datosEstudianteActual['uss_id']); ?>">Editar usuario</a></li>
+											<?php } ?>
+
+											<?php if ($tieneGradoGrupo && $permisoCambiarGrupo) { ?>
+												<li><a href="javascript:void(0);" data-toggle="modal" onclick="cambiarGrupo('<?= base64_encode($datosEstudianteActual['mat_id']) ?>')">Cambiar de grupo</a></li>
+											<?php } ?>
+											
+											<?php if ($permisoRetirar && !empty($datosEstudianteActual['mat_id'])) { ?>
+												<li><a href="javascript:void(0);" data-toggle="modal" onclick="retirar('<?= base64_encode($datosEstudianteActual['mat_id']) ?>')"><?= $retirarRestaurar ?></a></li>
+											<?php } ?>
+											
+											<?php if ($tieneGradoGrupo && $permisoReservar) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea reservar el cupo para este estudiante?','question','estudiantes-reservar-cupo.php?idEstudiante=<?= base64_encode($datosEstudianteActual['mat_id']); ?>')">Reservar cupo</a></li>
+											<?php } ?>
+
+											<?php if ($permisoEliminar) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro de ejecutar esta acción?','question','estudiantes-eliminar.php?idE=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&idU=<?= base64_encode($datosEstudianteActual["uss_id"]); ?>')">Eliminar</a></li>
+											<?php } ?>
+
+											<?php if ($permisoCrearUsuario) { ?>
+												<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Está seguro de ejecutar esta acción?','question','estudiantes-crear-usuario-estudiante.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>')">Generar usuario</a></li>
+											<?php } ?>
+
+											<?php if (!empty($datosEstudianteActual['uss_usuario']) && $permisoAutoLogin) { ?>
+												<li><a href="auto-login.php?user=<?= base64_encode($datosEstudianteActual['uss_id']); ?>&tipe=<?= base64_encode(4) ?>">Autologin</a></li>
+											<?php } ?>
+
+										<?php } ?>
+
+										<?php if ($tieneGradoGrupo) { ?>
+											<?php if ($permisoBoletines && ($datosEstudianteActual['mat_estado_matricula'] != NO_MATRICULADO && $datosEstudianteActual['mat_estado_matricula'] != EN_INSCRIPCION)) { ?>
+												<?php 
+												$formatoBoletin = !empty($datosEstudianteActual['gra_formato_boletin']) ? $datosEstudianteActual['gra_formato_boletin'] : 1;
+												?>
+												<li><a href="../compartido/matricula-boletin-curso-<?= $formatoBoletin; ?>.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&periodo=<?= base64_encode($config[2]); ?>" target="_blank">Boletín</a></li>
+											<?php } ?>
+											<?php if ($permisoLibroMatricula) { ?>
+												<li><a href="../compartido/matricula-libro-curso-<?= $config['conf_libro_final'] ?>.php?id=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>&periodo=<?= base64_encode($config[2]); ?>" target="_blank">Libro Final</a></li>
+											<?php } ?>
+											<?php if ($permisoInformeParcial) { ?>
+												<li><a href="../compartido/informe-parcial.php?estudiante=<?= base64_encode($datosEstudianteActual["mat_id"]); ?>" target="_blank">Informe parcial</a></li>
+											<?php } ?>
+										<?php } ?>
+
+										<?php if (!empty($datosEstudianteActual['mat_matricula']) && $permisoHojaMatricula) { ?>
+											<li><a href="../compartido/matriculas-formato3.php?ref=<?= base64_encode($datosEstudianteActual["mat_matricula"]); ?>" target="_blank">Hoja de matrícula</a></li>
+										<?php } ?>
+
+										<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA) && !empty($datosEstudianteActual['mat_codigo_tesoreria'])) { ?>
+											<li><a href="http://sion.icolven.edu.co/Services/ServiceIcolven.svc/GenerarEstadoCuenta/<?= $datosEstudianteActual['mat_codigo_tesoreria']; ?>/<?= date('Y'); ?>" target="_blank">SION - Estado de cuenta</a></li>
+										<?php } ?>
+
+										<?php if (!empty($datosEstudianteActual['uss_usuario'])) { ?>
+											<?php if ($permisoAspectos) { ?>
+												<li><a href="aspectos-estudiantiles.php?idR=<?= base64_encode($datosEstudianteActual['uss_id']); ?>">Ficha estudiantil</a></li>
+											<?php } ?>
+										<?php } ?>
+										
+										<?php if ($permisoAdjuntarDocumento) { ?>
+											<li><a href="matriculas-adjuntar-documentos.php?id=<?= base64_encode($datosEstudianteActual['uss_id']); ?>&idMatricula=<?= base64_encode($datosEstudianteActual['mat_id']); ?>">Adjuntar documentos</a></li>
+										<?php } ?>
+									</ul>
+								</div>
 							</div>
 						</div>
 					</div>
 
                     <span style="color: blue; font-size: 15px;" id="nDocu"></span>
-                    <!-- wizard with validation-->
+
+                    <!-- Horizontal Tabs -->
                     <div class="row">
                     	<div class="col-sm-12">
-							<?php include("../../config-general/mensajes-informativos.php"); ?>
-							<?php
-							if($config['conf_id_institucion'] == ICOLVEN){
-								if(isset($_GET['msgsion']) AND $_GET['msgsion']!=''){
-									$aler='alert-success';
-									$mensajeSion=base64_decode($_GET['msgsion']);
-									if(base64_decode($_GET['stadsion'])!=true){
-										$aler='alert-danger';
-									}
-								?>
-									<div class="alert alert-block <?=$aler;?>">
-										<button type="button" class="close" data-dismiss="alert">×</button>
-										<h4 class="alert-heading">SION!</h4>
-										<p><?=$mensajeSion;?></p>
-									</div>
-								<?php 
-								}
-							}
-							if(isset($_GET['msgsintia'])){
-								$aler='alert-success';
-								if(base64_decode($_GET['stadsintia'])!=true){
-								$aler='alert-danger';
-								}
-							?>
-							<div class="alert alert-block <?=$aler;?>">
-								<button type="button" class="close" data-dismiss="alert">×</button>
-								<h4 class="alert-heading">SINTIA!</h4>
-								<p><?=base64_decode($_GET['msgsintia']);?></p>
-							</div>
-							<?php }?>
-                             <div class="card-box">
-                                 <div class="card-head">
-                                     <header>Matrículas</header>
-                                 </div>
-                                 <div class="card-body">
-                                 	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-actualizar.php" method="post" enctype="multipart/form-data">
-									<input type="hidden" name="id" value="<?=$idMatricula;?>">
-									<input type="hidden" name="idU" value="<?=$datosEstudianteActual["mat_id_usuario"];?>">
-									  
-										<h3>Información personal</h3>
-									    <?php include("includes/info-personal.php");?>
-										
-										<h3>Información académica</h3>
-										<?php include("includes/info-academica.php");?>
-											
-										<h3>Información del Acudiente</h3>
-										<fieldset>
-											<?php include("includes/acudiente-1.php");?>
+       <?php include("../../config-general/mensajes-informativos.php"); ?>
+       <?php
+       if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)){
+        if(isset($_GET['msgsion']) AND $_GET['msgsion']!=''){
+         $aler='alert-success';
+         $mensajeSion=base64_decode($_GET['msgsion']);
+         if(base64_decode($_GET['stadsion'])!=true){
+          $aler='alert-danger';
+         }
+        ?>
+         <div class="alert alert-block <?=$aler;?>">
+          <button type="button" class="close" data-dismiss="alert">×</button>
+          <h4 class="alert-heading">SION!</h4>
+          <p><?=$mensajeSion;?></p>
+          <?php if(base64_decode($_GET['stadsion'])==true){ ?>
+          <div style="margin-top: 15px;">
+           <a href="estudiantes.php" class="btn btn-info btn-sm"><i class="fa fa-list"></i> Ver Listado de Estudiantes</a>
+          </div>
+          <?php } ?>
+         </div>
+        <?php
+        }
+       }
+       if(isset($_GET['msgsintia'])){
+        $aler='alert-success';
+        if(base64_decode($_GET['stadsintia'])!=true){
+        $aler='alert-danger';
+        }
+       ?>
+       <div class="alert alert-block <?=$aler;?>">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <h4 class="alert-heading">SINTIA!</h4>
+        <p><?=base64_decode($_GET['msgsintia']);?></p>
+        <?php if(base64_decode($_GET['stadsintia'])==true){ ?>
+        <div style="margin-top: 15px;">
+         <a href="estudiantes.php" class="btn btn-info btn-sm"><i class="fa fa-list"></i> Ver Listado de Estudiantes</a>
+        </div>
+        <?php } ?>
+       </div>
+       <?php }?>
 
-											<?php include("includes/acudiente-2.php");?>
-											
-										</fieldset>
-										
-									</form>
+                    <!-- Alerta para estudiantes en estado de inscripción -->
+                    <?php if ($estadoEnInscripcion) { ?>
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Estudiante en Proceso de Inscripción</h4>
+                        <p class="mb-2">
+                            <strong>Este estudiante se encuentra en estado "En inscripción".</strong>
+                        </p>
+                        <p class="mb-2">
+                            Los campos del formulario están deshabilitados y no se pueden realizar modificaciones hasta que el estudiante cambie a otro estado.
+                        </p>
+                        <hr>
+                        <p class="mb-0">
+                            <i class="fa fa-info-circle"></i> 
+                            Para gestionar el estado de inscripción, dirígete al módulo de <a href="inscripciones.php" class="alert-link font-weight-bold">Inscripciones</a>.
+                        </p>
+                    </div>
+                    <?php } ?>
+
+                             <!-- Nav tabs -->
+                             <ul class="nav nav-tabs" id="estudianteTabs" role="tablist">
+                                 <li class="nav-item">
+                                     <a class="nav-link active" id="formulario-tab" data-toggle="tab" href="#formulario" role="tab" aria-controls="formulario" aria-selected="true">Formulario</a>
+                                 </li>
+                                 <?php
+                                 $mostrarMaterias = !empty($datosEstudianteActual['mat_grupo']) && in_array($datosEstudianteActual['mat_estado_matricula'], [1, 2]);
+                                 if($mostrarMaterias){
+                                 ?>
+                                 <li class="nav-item">
+                                     <a class="nav-link" id="materias-tab" data-toggle="tab" href="#materias" role="tab" aria-controls="materias" aria-selected="false">Materias</a>
+                                 </li>
+                                 <?php } ?>
+                                 <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INSCRIPCIONES)){ ?>
+                                 <li class="nav-item">
+                                     <a class="nav-link" id="documentos-tab" data-toggle="tab" href="#documentos" role="tab" aria-controls="documentos" aria-selected="false">Documentos de Inscripción</a>
+                                 </li>
+                                 <?php } ?>
+                             </ul>
+
+                             <!-- Tab panes -->
+                             <div class="tab-content" id="estudianteTabContent">
+                                 <div class="tab-pane fade show active" id="formulario" role="tabpanel" aria-labelledby="formulario-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Matrículas</header>
+                                         </div>
+                                         <div class="card-body">
+                                         	<form name="example_advanced_form" id="example-advanced-form" action="estudiantes-actualizar.php" method="post" enctype="multipart/form-data">
+           <input type="hidden" name="id" value="<?=$idMatricula;?>">
+           <input type="hidden" name="idU" value="<?=$datosEstudianteActual["mat_id_usuario"];?>">
+
+           <h3>Información personal</h3>
+              <?php include("includes/info-personal.php");?>
+
+           <h3>Información académica</h3>
+           <?php include("includes/info-academica.php");?>
+
+           <h3>Información del Acudiente</h3>
+           <fieldset>
+            <?php include("includes/acudiente-1.php");?>
+
+            <?php include("includes/acudiente-2.php");?>
+
+           </fieldset>
+
+           </form>
+                                         </div>
+                                     </div>
                                  </div>
+
+                                 <?php if($mostrarMaterias){ ?>
+                                 <div class="tab-pane fade" id="materias" role="tabpanel" aria-labelledby="materias-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Materias del Estudiante</header>
+                                         </div>
+                                         <div class="card-body">
+                                             <div id="materias-content">
+                                                 <div class="text-center">
+                                                     <div class="spinner-border" role="status">
+                                                         <span class="sr-only">Cargando...</span>
+                                                     </div>
+                                                     <p>Cargando materias...</p>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <?php } ?>
+
+                                 <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INSCRIPCIONES)){ ?>
+                                 <div class="tab-pane fade" id="documentos" role="tabpanel" aria-labelledby="documentos-tab">
+                                     <div class="card-box">
+                                         <div class="card-head">
+                                             <header>Documentos de Inscripción</header>
+                                         </div>
+                                         <div class="card-body">
+                                             <div id="documentos-content">
+                                                 <div class="text-center">
+                                                     <div class="spinner-border" role="status">
+                                                         <span class="sr-only">Cargando...</span>
+                                                     </div>
+                                                     <p>Cargando documentos...</p>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <?php } ?>
                              </div>
                          </div>
                     </div>
@@ -209,7 +626,443 @@ if(!Modulos::validarPermisoEdicion()){
 	<!-- notifications -->
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.js"></script>
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js"></script>
-    <!-- end js include path -->
+
+	<script>
+		$(document).ready(function() {
+			// Load subjects when the tab is clicked
+			$('#materias-tab').on('shown.bs.tab', function (e) {
+				loadMaterias();
+			});
+
+			function loadMaterias() {
+			    var idEstudiante = '<?php echo base64_encode($idMatricula); ?>';
+			    $('#materias-content').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div><p>Cargando materias...</p></div>');
+
+			    $.ajax({
+			        url: 'ajax-estudiantes-materias.php',
+			        type: 'GET',
+			        data: { idEstudiante: idEstudiante },
+			        success: function(response) {
+			            $('#materias-content').html(response);
+			        },
+			        error: function(xhr, status, error) {
+			            $('#materias-content').html('<div class="alert alert-danger">Error al cargar las materias. Por favor, inténtelo de nuevo.</div>');
+			            console.error('Error loading subjects:', error);
+			        }
+			    });
+			}
+
+			// Load documents when the tab is clicked
+			$('#documentos-tab').on('shown.bs.tab', function (e) {
+			    loadDocumentos();
+			});
+
+			window.loadDocumentos = function() {
+			    var idEstudiante = '<?php echo base64_encode($idMatricula); ?>';
+			    $('#documentos-content').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div><p>Cargando documentos...</p></div>');
+
+			    $.ajax({
+			        url: 'ajax-estudiantes-documentos.php',
+			        type: 'GET',
+			        data: { idEstudiante: idEstudiante },
+			        success: function(response) {
+			            var data = response;
+			            if (data.success) {
+			                var buttonHtml = '<button type="button" class="btn btn-primary mb-3" onclick="loadDocumentos()"><i class="fas fa-sync-alt"></i> Actualizar documentos</button>';
+			                var tableHtml = '<table class="table table-striped table-bordered table-hover">';
+			                tableHtml += '<thead><tr><th>Documento</th><th>Estado</th></tr></thead>';
+			                tableHtml += '<tbody>';
+			                for (var key in data.documentos) {
+			                    var doc = data.documentos[key];
+			                    tableHtml += '<tr>';
+			                    tableHtml += '<td>' + doc.titulo + '</td>';
+			                    if (doc.estado === 'Subido') {
+			                        var fileUrl = (doc.titulo === "Comprobante de Pago") ? '../../main-app/admisiones/files/comprobantes/' + doc.archivo : '../../main-app/admisiones/files/otros/' + doc.archivo;
+			                        tableHtml += '<td><a href="' + fileUrl + '" target="_blank" class="btn btn-sm btn-success">Descargar</a></td>';
+			                    } else {
+			                        tableHtml += '<td><span class="badge badge-warning">Pendiente</span></td>';
+			                    }
+			                    tableHtml += '</tr>';
+			                }
+			                tableHtml += '</tbody></table>';
+			                $('#documentos-content').html(buttonHtml + tableHtml);
+			            } else {
+			                $('#documentos-content').html('<div class="alert alert-warning">' + data.message + '</div>');
+			            }
+			        },
+			        error: function(xhr, status, error) {
+			            alert('Error al cargar los documentos. Por favor, inténtelo de nuevo.');
+			            console.error('Error loading documents:', error);
+			        }
+			    });
+			}
+			
+			// ========================================
+			// VALIDACIÓN DE FECHA DE NACIMIENTO
+			// ========================================
+			
+			// Validación de fecha de nacimiento del estudiante (mínimo 1 año)
+			var today = new Date();
+			var maxDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+			var $picker = $(".form_date[data-link-field='dtp_input1']");
+			
+			if ($picker.length && typeof $picker.datetimepicker === 'function') {
+				$picker.datetimepicker('setEndDate', maxDate);
+				
+				// Validación inmediata al cambiar la fecha
+				var $hidden = $("#dtp_input1");
+				var $input = $picker.find('input.form-control');
+				var $error = $("#fNacError");
+				var $group = $("#fNacGroup");
+				
+				var showError = function(msg){
+					if(msg){ $error.text(msg); }
+					$error.show();
+					$input.attr('aria-invalid','true');
+					$group.addClass('has-error');
+				};
+				
+				var clearError = function(){
+					$error.hide();
+					$input.attr('aria-invalid','false');
+					$group.removeClass('has-error');
+				};
+				
+				var validateDate = function(){
+					var val = $hidden.val();
+					if(!val){ clearError(); return; }
+					var parts = val.split('-');
+					if(parts.length !== 3){
+						$hidden.val('');
+						$input.val('');
+						showError('Fecha de nacimiento inválida.');
+						return;
+					}
+					var selected = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+					var todayLocal = new Date();
+					var max = new Date(todayLocal.getFullYear() - 1, todayLocal.getMonth(), todayLocal.getDate());
+					if(selected > max){
+						$hidden.val('');
+						$input.val('');
+						showError('La fecha de nacimiento no puede ser futura ni menor de 1 año.');
+						return;
+					}
+					clearError();
+				};
+				
+				$hidden.on('change', validateDate);
+				$picker.on('changeDate', validateDate);
+			}
+			
+			// ========================================
+			// LOADING/BARRA DE PROGRESO AL GUARDAR
+			// ========================================
+			
+			var $form = $('#example-advanced-form');
+			var $loadingOverlay = null;
+			var $progressBar = null;
+			
+			// Crear overlay de loading
+			function crearLoadingOverlay() {
+				if ($loadingOverlay) {
+					return; // Ya existe
+				}
+				
+				$loadingOverlay = $('<div id="loading-overlay-estudiante" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 99999; display: none; align-items: center; justify-content: center; flex-direction: column; flex-wrap: nowrap;">' +
+					'<div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; margin: auto;">' +
+					'<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin: 0 auto 20px auto;">' +
+					'<span class="sr-only">Cargando...</span>' +
+					'</div>' +
+					'<h4 style="color: #333; margin-bottom: 15px;">Actualizando matrícula...</h4>' +
+					'<p style="color: #666; margin-bottom: 20px;">Por favor espere mientras se procesan los datos.</p>' +
+					'<div class="progress" style="height: 25px; border-radius: 5px; overflow: hidden;">' +
+					'<div id="progress-bar-estudiante" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">' +
+					'<span id="progress-text-estudiante" style="line-height: 25px; font-weight: bold; color: white;">0%</span>' +
+					'</div>' +
+					'</div>' +
+					'</div>' +
+					'</div>');
+				
+				$('body').append($loadingOverlay);
+				$progressBar = $('#progress-bar-estudiante');
+			}
+			
+			// Función para simular progreso
+			function simularProgreso() {
+				var progreso = 0;
+				var intervalo = setInterval(function() {
+					progreso += Math.random() * 15;
+					if (progreso > 90) {
+						progreso = 90; // No llegar al 100% hasta que termine realmente
+					}
+					$progressBar.css('width', progreso + '%').attr('aria-valuenow', progreso);
+					$('#progress-text-estudiante').text(Math.round(progreso) + '%');
+				}, 200);
+				
+				return intervalo;
+			}
+			
+			// Interceptar submit del formulario
+			$form.on('submit', function(e) {
+				// Prevenir submit si el estudiante está en estado de inscripción
+				<?php if ($estadoEnInscripcion) { ?>
+				e.preventDefault();
+				e.stopPropagation();
+				$.toast({
+					heading: 'Acción no permitida',
+					text: 'No se pueden realizar modificaciones a estudiantes en estado "En inscripción".',
+					showHideTransition: 'slide',
+					icon: 'warning',
+					position: 'top-right',
+					hideAfter: 5000
+				});
+				return false;
+				<?php } ?>
+				
+				// Crear overlay si no existe
+				crearLoadingOverlay();
+				
+				// Establecer estilos de flexbox antes de mostrar
+				$loadingOverlay.css({
+					'display': 'flex',
+					'align-items': 'center',
+					'justify-content': 'center',
+					'flex-direction': 'column',
+					'opacity': '0'
+				});
+				
+				// Mostrar el overlay con animación de opacidad
+				$loadingOverlay.show().animate({
+					'opacity': '1'
+				}, 300);
+				
+				// Iniciar simulación de progreso
+				var intervaloProgreso = simularProgreso();
+				
+				// Guardar intervalo para poder limpiarlo si es necesario
+				$form.data('intervalo-progreso', intervaloProgreso);
+				
+				// Completar al 100% cuando la página se recargue (después del submit)
+				// Esto se manejará en el servidor, pero por si acaso dejamos un timeout
+				setTimeout(function() {
+					if ($progressBar) {
+						$progressBar.css('width', '100%').attr('aria-valuenow', 100);
+						$('#progress-text-estudiante').text('100%');
+					}
+				}, 1000);
+			});
+			
+			// Si hay un error y se recarga la página, ocultar el loading
+			$(window).on('beforeunload', function() {
+				if ($loadingOverlay) {
+					$loadingOverlay.fadeOut(100);
+				}
+			});
+});
+
+	// ========================================
+	// SISTEMA DE PANEL DE ACCIONES FLOTANTE
+	// ========================================
+	
+	// Variable global para almacenar el panel actual
+	window.currentAccionesPanel = null;
+	
+	// Función para mostrar el panel de acciones
+	window.mostrarPanelAcciones = function(btn, estudianteId) {
+		// Cerrar cualquier panel abierto
+		cerrarPanelAcciones();
+		
+		// Crear el overlay
+		var overlay = $('<div class="acciones-overlay show"></div>');
+		$('body').append(overlay);
+		
+		// Obtener el contenido del dropdown correspondiente
+		var dropdownMenu = $('#Acciones_' + estudianteId);
+		if (!dropdownMenu.length) {
+			console.error('No se encontró el menú de acciones para el estudiante:', estudianteId);
+			return;
+		}
+		
+		// Crear el panel
+		var panel = $('<div class="acciones-panel show"></div>');
+		var lista = $('<div class="acciones-list"></div>');
+		
+		// Mapeo de iconos y colores por acción (más sutiles)
+		var accionesConfig = {
+			'Editar matrícula': { icon: 'fa-edit', color: '#667eea' },
+			'Edición rápida': { icon: 'fa-bolt', color: '#f5576c' },
+			'Transferir a SION': { icon: 'fa-exchange-alt', color: '#00f2fe' },
+			'Cambiar de grupo': { icon: 'fa-users', color: '#38f9d7' },
+			'Editar usuario': { icon: 'fa-user-edit', color: '#fa709a' },
+			'Retirar': { icon: 'fa-user-times', color: '#ee5a6f' },
+			'Restaurar': { icon: 'fa-undo', color: '#96fbc4' },
+			'Reservar cupo': { icon: 'fa-bookmark', color: '#fdbb2d' },
+			'Eliminar': { icon: 'fa-trash', color: '#eb3349' },
+			'Generar usuario': { icon: 'fa-user-plus', color: '#6a11cb' },
+			'Autologin': { icon: 'fa-sign-in-alt', color: '#37ecba' },
+			'Boletín': { icon: 'fa-file-alt', color: '#667eea' },
+			'Libro Final': { icon: 'fa-book', color: '#a18cd1' },
+			'Informe parcial': { icon: 'fa-chart-line', color: '#84fab0' },
+			'Hoja de matrícula': { icon: 'fa-file-contract', color: '#ffecd2' },
+			'SION - Estado de cuenta': { icon: 'fa-money-bill-wave', color: '#a1c4fd' },
+			'Ficha estudiantil': { icon: 'fa-id-card', color: '#fccb90' },
+			'Adjuntar documentos': { icon: 'fa-paperclip', color: '#e0c3fc' }
+		};
+		
+		// Convertir los items del dropdown en items de lista vertical
+		dropdownMenu.find('li').each(function() {
+			var link = $(this).find('a');
+			if (link.length) {
+				var texto = link.text().trim();
+				var href = link.attr('href');
+				var onclick = link.attr('onclick');
+				
+				// Buscar configuración de icono
+				var config = null;
+				for (var key in accionesConfig) {
+					if (texto.includes(key)) {
+						config = accionesConfig[key];
+						break;
+					}
+				}
+				
+				// Configuración por defecto si no se encuentra
+				if (!config) {
+					config = { icon: 'fa-cog', color: '#95a5a6' };
+				}
+				
+				// Crear el item
+				var item = $('<a class="accion-item"></a>');
+				if (href && href !== 'javascript:void(0);') {
+					item.attr('href', href);
+					if (link.attr('target')) {
+						item.attr('target', link.attr('target'));
+					}
+				} else if (onclick) {
+					item.attr('href', 'javascript:void(0);');
+					item.attr('onclick', onclick);
+				}
+				
+				// Icono con color sólido
+				var iconDiv = $('<div class="accion-icon"></div>').css('background', config.color);
+				iconDiv.html('<i class="fa ' + config.icon + '"></i>');
+				
+				var nameSpan = $('<span class="accion-name"></span>').text(texto);
+				
+				item.append(iconDiv).append(nameSpan);
+				
+				// Al hacer clic, cerrar el panel
+				item.on('click', function() {
+					cerrarPanelAcciones();
+				});
+				
+				lista.append(item);
+			}
+		});
+		
+		panel.append(lista);
+		
+		// Posicionar el panel cerca del botón
+		var btnOffset = $(btn).offset();
+		var btnHeight = $(btn).outerHeight();
+		var btnWidth = $(btn).outerWidth();
+		
+		// Agregar el panel al body temporalmente para obtener sus dimensiones
+		$('body').append(panel);
+		
+		var panelWidth = panel.outerWidth();
+		var panelHeight = panel.outerHeight();
+		var windowWidth = $(window).width();
+		var windowHeight = $(window).height();
+		
+		// Calcular posición óptima (debajo del botón)
+		var topPos = btnOffset.top + btnHeight + 5;
+		var leftPos = btnOffset.left;
+		
+		// Ajustar si se sale por la derecha
+		if (leftPos + panelWidth > windowWidth - 20) {
+			leftPos = windowWidth - panelWidth - 20;
+		}
+		
+		// Ajustar si se sale por la izquierda
+		if (leftPos < 20) {
+			leftPos = 20;
+		}
+		
+		// Ajustar verticalmente si se sale por abajo
+		if (topPos + panelHeight > windowHeight - 20) {
+			topPos = btnOffset.top - panelHeight - 5;
+		}
+		
+		// Ajustar verticalmente si se sale por arriba
+		if (topPos < 20) {
+			topPos = 20;
+		}
+		
+		// Aplicar posición
+		panel.css({
+			top: topPos + 'px',
+			left: leftPos + 'px'
+		});
+		
+		// Guardar referencia
+		window.currentAccionesPanel = panel;
+		
+		// Cerrar al hacer clic en el overlay
+		overlay.on('click', cerrarPanelAcciones);
+	};
+	
+	// Función para cerrar el panel
+	window.cerrarPanelAcciones = function() {
+		$('.acciones-overlay').remove();
+		if (window.currentAccionesPanel) {
+			window.currentAccionesPanel.remove();
+			window.currentAccionesPanel = null;
+		}
+	};
+	
+	// Cerrar al hacer scroll
+	$(window).on('scroll', function() {
+		if (window.currentAccionesPanel) {
+			cerrarPanelAcciones();
+		}
+	});
+	
+	// Cerrar al presionar ESC
+	$(document).on('keydown', function(e) {
+		if (e.key === 'Escape' && window.currentAccionesPanel) {
+			cerrarPanelAcciones();
+		}
+	});
+	
+	// ========================================
+	// FUNCIONES PARA ABRIR MODALES
+	// ========================================
+	
+	// Función para abrir el modal de cambiar grupo
+	function cambiarGrupo(idMatricula) {
+		var titulo = 'Cambiar de Grupo';
+		var url = 'estudiantes-cambiar-grupo-modal.php';
+		var data = { id: idMatricula };
+		abrirModal(titulo, url, data, null, '95%');
+	}
+	
+	// Función para abrir el modal de retirar/restaurar estudiante
+	function retirar(idMatricula) {
+		var titulo = 'Retirar / Restaurar Estudiante';
+		var url = 'estudiantes-retirar-modal.php';
+		var data = { id: idMatricula };
+		abrirModal(titulo, url, data, null, '800px');
+	}
+	</script>
+
+	   <!-- end js include path -->
+	   
+	   <!-- Funciones JS globales -->
+	   <script src="../compartido/funciones.js"></script>
+	   
+	   <!-- Modal Centralizado -->
+	   <?php include("../compartido/modal-centralizado.php"); ?>
 
 </body>
 

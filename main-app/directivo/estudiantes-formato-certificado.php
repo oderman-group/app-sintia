@@ -16,6 +16,8 @@
     if(isset($_POST["hasta"])){$hasta=base64_encode($_POST["hasta"]);}
     $estampilla="";
     if(isset($_POST["estampilla"])){$estampilla=base64_encode($_POST["estampilla"]);}
+    $sin_encabezado="";
+    if(isset($_POST["sin_encabezado"])){$sin_encabezado=base64_encode($_POST["sin_encabezado"]);}
 
     $ext = 1298;
     if (empty($_POST["certificado"])) {
@@ -43,6 +45,9 @@
     $ruta="informes-todos.php?error=ER_DT_9";
     if($ext != 1298){
         $ruta="../compartido/matricula-certificado-areas".$ext.".php?id=".$id."&desde=".$desde."&hasta=".$hasta."&estampilla=".$estampilla;
+        if(!empty($sin_encabezado)){
+            $ruta .= "&sin_encabezado=".$sin_encabezado;
+        }
     }
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="'.$ruta.'";</script>';

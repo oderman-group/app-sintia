@@ -23,11 +23,75 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
 
+<style>
+/* Overlay de bloqueo mientras se guarda */
+#overlay-guardando-nota {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(30, 41, 59, 0.85);
+	z-index: 99999;
+	backdrop-filter: blur(6px);
+}
+
+.overlay-content-nota {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: white;
+	padding: 45px 50px;
+	border-radius: 20px;
+	text-align: center;
+	box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+	min-width: 320px;
+}
+
+.overlay-content-nota .spinner {
+	width: 70px;
+	height: 70px;
+	border: 5px solid #e2e8f0;
+	border-top-color: #667eea;
+	border-radius: 50%;
+	margin: 0 auto 25px;
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+.overlay-content-nota h3 {
+	color: #2d3748;
+	margin: 0 0 10px 0;
+	font-size: 22px;
+	font-weight: 700;
+}
+
+.overlay-content-nota p {
+	color: #718096;
+	margin: 0;
+	font-size: 15px;
+}
+</style>
+
 </head>
 
 <!-- END HEAD -->
 
 <?php include("../compartido/body.php");?>
+
+<!-- Overlay de bloqueo mientras se guarda la nota -->
+<div id="overlay-guardando-nota">
+	<div class="overlay-content-nota">
+		<div class="spinner"></div>
+		<h3>💾 Guardando Nota...</h3>
+		<p>Por favor espera, no cierres esta ventana</p>
+	</div>
+</div>
 
     <div class="page-wrapper">
 
@@ -257,18 +321,50 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 														$consulta = Estudiantes::listarEstudiantesParaDocentes($filtroDocentesParaListarEstudiantes);
 													}
 													
-													$contReg = 1;
+													$contReg   = 1;
 													$colorNota = "black";
+													// ============================================
+													// PRE-CARGAR TODAS LAS CALIFICACIONES DE LA
+													// ACTIVIDAD PARA EVITAR UNA CONSULTA POR FILA
+													// ============================================
+													$calificacionesActividad = [];
+													$calificacionesResult = Calificaciones::traerCalificacionActividad($config, $idR);
+													while ($filaCal = mysqli_fetch_array($calificacionesResult, MYSQLI_BOTH)) {
+														$calificacionesActividad[$filaCal['cal_id_estudiante']] = $filaCal;
+													}
+
+													// Pre-cargar tabla de desempeño cualitativo si aplica
+													$listaDesemp = [];
+													if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+														$tablaNotasRes = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
+														while ($filaDes = mysqli_fetch_array($tablaNotasRes, MYSQLI_BOTH)) {
+															$listaDesemp[] = $filaDes;
+														}
+														mysqli_free_result($tablaNotasRes);
+													}
+
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
+														$notas = null;
+														$estiloNotaFinal = "";
+														$colorNota = "black";
+
 														if ($calificacion['act_registrada']==1) {
+				
+															 // Usar calificaciones precargadas (si existen)
+															$notas = $calificacionesActividad[$resultado['mat_id']] ?? null;
 
-															 //Consulta de calificaciones si ya la tienen puestas.
-															$notas = Calificaciones::traerCalificacionActividadEstudiante($config, $idR, $resultado['mat_id']);
+															if (!empty($notas['cal_nota']) && $notas['cal_nota'] < $config[5]) {
+																$colorNota = $config[6];
+															} elseif (!empty($notas['cal_nota']) && $notas['cal_nota'] >= $config[5]) {
+																$colorNota = $config[7];
+															}
 
-															if (!empty($notas['cal_nota']) && $notas['cal_nota'] < $config[5]) $colorNota = $config[6]; 
-															elseif(!empty($notas['cal_nota']) && $notas['cal_nota'] >= $config[5]) $colorNota = $config[7];
-
+															// Si la institución usa escala cualitativa, obtener nombre desde la lista precargada
+															if (!empty($notas['cal_nota']) && $config['conf_forma_mostrar_notas'] == CUALITATIVA && !empty($listaDesemp)) {
+																$desemp = Boletin::obtenerDatosTipoDeNotasCargadas($listaDesemp, $notas['cal_nota']);
+																$estiloNotaFinal = !empty($desemp['notip_nombre']) ? $desemp['notip_nombre'] : "";
+															}
 														}
 
 														$fotoEst = $usuariosClase->verificarFoto($resultado['uss_foto']);
@@ -287,13 +383,7 @@ $calificacion = Actividades::consultarDatosActividadesIndicador($config, $idR);
 
 													$objetoEnviar = htmlentities($arrayDatos);
                         
-													$estiloNotaFinal="";
-													if(!empty($notas['cal_nota']) && $config['conf_forma_mostrar_notas'] == CUALITATIVA){		
-														$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notas['cal_nota']);
-														$estiloNotaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-													}
-
-													$notaActual = !empty($notas['cal_nota']) ? $notas['cal_nota'] : '';
+													$notaActual = (!empty($notas) && isset($notas['cal_nota'])) ? $notas['cal_nota'] : '';
 
 													?>
 

@@ -10,7 +10,7 @@ require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
     $descripcionPaquete = !empty($resultado['plns_descripcion']) ? $resultado['plns_descripcion'] : "";
 
     try {
-        $consultaTipoUsuario = mysqli_query($conexion, "SELECT pes_nombre FROM ".BD_ADMIN.".general_perfiles WHERE pes_id='".$datosUsuarioActual['uss_tipo']."'");
+        $consultaTipoUsuario = mysqli_query($conexion, "SELECT pes_nombre FROM ".BD_ADMIN.".general_perfiles WHERE pes_id='".$datosUsuarioActual['uss_tipo']."' AND pes_disponible = 1");
     } catch(Exception $e) {
         include("../compartido/error-catch-to-report.php");
     }

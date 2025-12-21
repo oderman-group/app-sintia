@@ -44,14 +44,14 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
 									<nav>
 										<div class="nav nav-tabs" id="nav-tab" role="tablist">
 
-											<a class="nav-item nav-link" id="nav-clases-tab" data-toggle="tab" href="#nav-clases" role="tab" aria-controls="nav-clases" aria-selected="true" onClick="listarInformacion('lista-clases.php', 'nav-clases')">Clases</a>
+											<a class="nav-item nav-link" id="nav-clases-tab" data-toggle="tab" href="#nav-clases" role="tab" aria-controls="nav-clases" aria-selected="true" onClick="guardarTabActivoClases(1); listarInformacion('lista-clases.php', 'nav-clases')">Clases</a>
 
-											<a class="nav-item nav-link" id="nav-unidades-tab" data-toggle="tab" href="#nav-unidades" role="tab" aria-controls="nav-unidades" aria-selected="true" onClick="listarInformacion('lista-unidades-tematicas.php', 'nav-unidades')">Unidades temáticas</a>
+											<a class="nav-item nav-link" id="nav-unidades-tab" data-toggle="tab" href="#nav-unidades" role="tab" aria-controls="nav-unidades" aria-selected="true" onClick="guardarTabActivoClases(2); listarInformacion('lista-unidades-tematicas.php', 'nav-unidades')">Unidades temáticas</a>
 
-											<a class="nav-item nav-link" id="nav-plan-clase-tab" data-toggle="tab" href="#nav-plan-clase" role="tab" aria-controls="plan-clase" aria-selected="false">Plan de clase</a>
+											<a class="nav-item nav-link" id="nav-plan-clase-tab" data-toggle="tab" href="#nav-plan-clase" role="tab" aria-controls="plan-clase" aria-selected="false" onClick="guardarTabActivoClases(3);">Plan de clase</a>
 
 											<?php if(isset($datosCargaActual) && $datosCargaActual['car_tematica'] == 1){?>
-												<a class="nav-item nav-link" id="nav-tematica-tab" data-toggle="tab" href="#nav-tematica" role="tab" aria-controls="plan-tematica" aria-selected="false" onClick="listarInformacion('lista-tematica.php', 'nav-tematica')">Temática del periodo</a>
+												<a class="nav-item nav-link" id="nav-tematica-tab" data-toggle="tab" href="#nav-tematica" role="tab" aria-controls="plan-tematica" aria-selected="false" onClick="guardarTabActivoClases(4); listarInformacion('lista-tematica.php', 'nav-tematica')">Temática del periodo</a>
 											<?php }?>
 
 										</div>
@@ -72,36 +72,72 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
 									</div>
 
 									<script>
+										// ============================================
+										// PERSISTENCIA DE TABS CON LOCALSTORAGE (CLASES)
+										// ============================================
+										function guardarTabActivoClases(tabNumero) {
+											localStorage.setItem('clases_tab_activo', tabNumero);
+											
+											// Actualizar URL sin recargar
+											var url = new URL(window.location);
+											url.searchParams.set('tab', tabNumero);
+											window.history.pushState({}, '', url);
+											
+											console.log('✅ Tab de clases guardado en localStorage:', tabNumero);
+										}
+										
+										function obtenerTabACargarClases() {
+											// 1. Prioridad: parámetro URL
+											var params = new URLSearchParams(window.location.search);
+											var tabURL = params.get('tab');
+											if (tabURL !== null) {
+												console.log('📂 Tab de clases desde URL:', tabURL);
+												localStorage.setItem('clases_tab_activo', tabURL);
+												return parseInt(tabURL);
+											}
+											
+											// 2. Fallback: localStorage
+											var tabLocalStorage = localStorage.getItem('clases_tab_activo');
+											if (tabLocalStorage !== null) {
+												console.log('📂 Tab de clases desde localStorage:', tabLocalStorage);
+												return parseInt(tabLocalStorage);
+											}
+											
+											// 3. Default: Tab 1
+											console.log('📂 Tab de clases por defecto: 1');
+											return 1;
+										}
+										
 										document.addEventListener('DOMContentLoaded', function() {
+											console.log('🔵 Inicializando tabs de clases');
 											
-											// Obtén la cadena de búsqueda de la URL
-											var queryString = window.location.search;
-
-											// Crea un objeto URLSearchParams a partir de la cadena de búsqueda
-											var params = new URLSearchParams(queryString);
-											var tab = params.get('tab');
+											var tabACargar = obtenerTabACargarClases();
 											
-											if ( tab == 2 ) {
-												listarInformacion('lista-unidades-tematicas.php', 'nav-unidades');
-												document.getElementById('nav-unidades-tab').classList.add('active');
-												document.getElementById('nav-unidades').classList.add('show', 'active');
+											switch(tabACargar) {
+												case 2:
+													console.log('📂 Cargando tab 2');
+													listarInformacion('lista-unidades-tematicas.php', 'nav-unidades');
+													document.getElementById('nav-unidades-tab').classList.add('active');
+													document.getElementById('nav-unidades').classList.add('show', 'active');
+													break;
+												case 3:
+													console.log('📂 Cargando tab 3');
+													document.getElementById('nav-plan-clase-tab').classList.add('active');
+													document.getElementById('nav-plan-clase').classList.add('show', 'active');
+													break;
+												case 4:
+													console.log('📂 Cargando tab 4');
+													listarInformacion('lista-tematica.php', 'nav-tematica');
+													document.getElementById('nav-tematica-tab').classList.add('active');
+													document.getElementById('nav-tematica').classList.add('show', 'active');
+													break;
+												default:
+													console.log('📂 Cargando tab 1');
+													listarInformacion('lista-clases.php', 'nav-clases');
+													document.getElementById('nav-clases-tab').classList.add('active');
+													document.getElementById('nav-clases').classList.add('show', 'active');
+													break;
 											}
-											else if ( tab == 3 ) {
-												document.getElementById('nav-plan-clase-tab').classList.add('active');
-												document.getElementById('nav-plan-clase').classList.add('show', 'active');
-											}
-											else if ( tab == 4 ) {
-												listarInformacion('lista-tematica.php', 'nav-tematica');
-												document.getElementById('nav-tematica-tab').classList.add('active');
-												document.getElementById('nav-tematica').classList.add('show', 'active');
-											}
-											else {
-												listarInformacion('lista-clases.php', 'nav-clases');
-												document.getElementById('nav-clases-tab').classList.add('active');
-												document.getElementById('nav-clases').classList.add('show', 'active');
-											}
-
-											
 										});
 									</script>
 									

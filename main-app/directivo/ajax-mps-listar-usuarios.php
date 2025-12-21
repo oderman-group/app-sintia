@@ -1,8 +1,14 @@
 <?php 
 include("session.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
-$instiConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_id='".$_POST['insti']."'");
-$insti = mysqli_fetch_array($instiConsulta, MYSQLI_BOTH);
+// Migrado a PDO - Consulta preparada
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+$sql = "SELECT * FROM ".$baseDatosServicios.".instituciones WHERE ins_id=?";
+$stmt = $conexionPDO->prepare($sql);
+$stmt->bindParam(1, $_POST['insti'], PDO::PARAM_STR);
+$stmt->execute();
+$insti = $stmt->fetch(PDO::FETCH_ASSOC);
 $year= date('Y');
 ?>
 <!--select2-->

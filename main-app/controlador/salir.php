@@ -92,6 +92,7 @@ if ($isLegitimateLogout) {
 // Ahora sí, incluir conexión y demás
 include("../modelo/conexion.php");
 require_once(ROOT_PATH."/main-app/class/Autenticate.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 $idPaginaInterna = 'GN0002';
 
@@ -107,7 +108,9 @@ if (!empty($_SESSION["datosUsuario"])) {
 $auth = Autenticate::getInstance();
 
 if (empty($_SESSION["id"])) {
-	$urlRedirect = "../index.php?error=4&urlDefault=".$_GET["urlDefault"]."&directory=".$_GET["directory"];
+	$urlDefault = $_GET["urlDefault"] ?? '';
+	$directory = $_GET["directory"] ?? '';
+	$urlRedirect = "../index.php?error=4&urlDefault=".$urlDefault."&directory=".$directory;
 	error_log("⚠️ SALIR.PHP: La sesión está vacía, sacamos al usuario");
 	error_log("   └─ URL Redirect: " . $urlRedirect);
 	$auth->cerrarSesion($urlRedirect);
@@ -119,6 +122,10 @@ try {
 
 	mysqli_query($conexion, "UPDATE ".BD_GENERAL.".usuarios SET uss_estado=0, uss_ultima_salida=now() 
 	WHERE uss_id='".$_SESSION["id"]."' AND institucion={$_SESSION["idInstitucion"]} AND year={$_SESSION["bd"]}");
+
+	// Registrar logout en auditoría
+	$usuarioNombre = isset($_SESSION['datosUsuario']['uss_usuario']) ? $_SESSION['datosUsuario']['uss_usuario'] : $_SESSION["id"];
+	AuditoriaLogger::registrarLogout($_SESSION["id"], $usuarioNombre);
 
 	error_log("✅ SALIR.PHP: Historial guardado - Usuario cerró sesión correctamente");
 	error_log("   └─ Usuario ID: " . $_SESSION["id"]);

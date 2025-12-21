@@ -12,6 +12,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_configuracion.php");
 require_once ROOT_PATH.'/main-app/class/App/Academico/Calificacion.php';
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
 
 $year = $_SESSION["bd"];
 if (!empty($_GET['year'])) {
@@ -24,14 +25,17 @@ if (!empty($_GET['id'])) {
 }
 
 try {
-    $consultaConfiguracion = mysqli_query($conexion, "SELECT configuracion.*, ins_siglas, ins_years FROM " . $baseDatosServicios . ".configuracion 
-    INNER JOIN " . $baseDatosServicios . ".instituciones ON ins_id=conf_id_institucion
-    WHERE conf_id_institucion='" . $id . "' AND conf_agno='" . $year . "'");
+	$sqlConfig = "SELECT configuracion.*, ins_siglas, ins_years 
+		FROM {$baseDatosServicios}.configuracion 
+		INNER JOIN {$baseDatosServicios}.instituciones ON ins_id = conf_id_institucion
+		WHERE conf_id_institucion = ? AND conf_agno = ?";
+
+	$consultaConfiguracion = BindSQL::prepararSQL($sqlConfig, [$id, $year]);
+	$datosConfiguracion = $consultaConfiguracion ? mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH) : [];
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
+	$datosConfiguracion = [];
 }
-
-$datosConfiguracion = mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH);
 
 $disabledPermiso = "";
 
@@ -67,6 +71,259 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
     <!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        /* Estilos profesionales para configuración del sistema */
+        .config-page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 8px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        .config-page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .config-page-header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+            color: #ecf0f1;
+        }
+
+        .nav-tabs-modern {
+            border-bottom: 2px solid #e0e6ed;
+            margin-bottom: 25px;
+        }
+
+        .nav-tabs-modern .nav-link {
+            color: #555;
+            font-weight: 500;
+            padding: 12px 20px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-modern .nav-link:hover {
+            color: #2c3e50;
+            border-bottom-color: #bdc3c7;
+            background: #f8f9fa;
+        }
+
+        .nav-tabs-modern .nav-link.active {
+            color: #2c3e50;
+            border-bottom-color: #2c3e50;
+            background: transparent;
+            font-weight: 600;
+        }
+
+        .tab-content-modern {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c3e50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-overlay p {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* Lightbox - Oculto por defecto */
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100000;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: rotate(90deg);
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 95vw;
+            max-height: 95vh;
+            animation: zoomIn 0.3s ease-out;
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 95vh;
+            width: auto;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-title {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 100000;
+            display: none;
+        }
+
+        .lightbox-overlay.active .lightbox-title:not(:empty) {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Popover preview large */
+        .popover-preview-large {
+            max-width: 600px !important;
+            width: 600px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            background: #fff;
+        }
+
+        .popover-preview-large .popover-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: 2px solid #e0e0e0;
+            font-weight: 600;
+        }
+
+        .popover-preview-large .popover-body {
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Imagen de preview */
+        .preview-image-large {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+            cursor: zoom-in;
+        }
+
+        .preview-image-large:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+
+        @media (max-width: 768px) {
+            .popover-preview-large {
+                max-width: 95vw !important;
+                width: 95vw;
+            }
+            
+            .popover-preview-large .popover-body {
+                padding: 15px;
+                max-height: 70vh;
+            }
+        }
+    </style>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -80,35 +337,31 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
 			<!-- start page content -->
             <div class="page-content-wrapper">
                 <div class="page-content">
-                    <div class="page-bar">
-                        <div class="page-title-breadcrumb">
-                            <div class=" pull-left">
-                                <div class="page-title"><?= $frases[17][$datosUsuarioActual['uss_idioma']]; ?> del Sistema </div>
-                                <?php include("../compartido/texto-manual-ayuda.php"); ?>
-                            </div>
-                            <ol class="breadcrumb page-breadcrumb pull-right">
-                                <?php
-                                    if($idPaginaInterna == 'DV0032'){
-                                        echo '<li><a class="parent-item" href="javascript:void(0);" name="dev-instituciones.php" onClick="deseaRegresar(this)">Insituciones</a>&nbsp;<i class="fa fa-angle-right"></i></li>';
-                                    }
-                                ?>
-                                <li class="active"><?= $frases[17][$datosUsuarioActual['uss_idioma']]; ?> del Sistema </li>
-                            </ol>
-                        </div>
+                    
+                    <!-- Header Profesional -->
+                    <div class="config-page-header">
+                        <h1>
+                            <i class="fa fa-cog"></i>
+                            <?= $frases[17][$datosUsuarioActual['uss_idioma']]; ?>
+                        </h1>
+                        <p>
+                            <?= strtoupper($datosConfiguracion['ins_siglas'] ?? 'SINTIA'); ?> | Año <?=$year?>
+                        </p>
                     </div>
-                    <?php //include_once("includes/formulario-configuracion-contenido.php"); ?>
 
                     <?php 
                     $tabs = [
                         'general' => [
                             'name' => 'General',
+                            'icon' => 'fa-home',
                             'aria-selected' => 'true',
                             'active' => 'active',
                             'show' => 'show',
                             'page-content' => 'includes/formulario-configuracion-contenido.php',
                         ], 
                         'comportamiento-sistema' => [
-                            'name' => 'Comportamiento del sistema',
+                            'name' => 'Comportamiento',
+                            'icon' => 'fa-sliders',
                             'aria-selected' => 'false',
                             'active' => '',
                             'show' => '',
@@ -116,13 +369,15 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
                         ],
                         'preferencias' => [
                             'name' => 'Preferencias',
+                            'icon' => 'fa-heart',
                             'aria-selected' => 'false',
                             'active' => '',
                             'show' => '',
                             'page-content' => 'includes/config-sistema-preferencias.php',
                         ],
                         'informes' => [
-                            'name' => 'Informes y reportes',
+                            'name' => 'Informes',
+                            'icon' => 'fa-file-text',
                             'aria-selected' => 'false',
                             'active' => '',
                             'show' => '',
@@ -130,13 +385,15 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
                         ],
                         'permisos' => [
                             'name' => 'Permisos',
+                            'icon' => 'fa-shield',
                             'aria-selected' => 'false',
                             'active' => '',
                             'show' => '',
                             'page-content' => 'includes/config-sistema-permisos.php',
                         ],
                         'estilos-apariencia' => [
-                            'name' => 'Estilos y apariencia',
+                            'name' => 'Estilos',
+                            'icon' => 'fa-paint-brush',
                             'aria-selected' => 'false',
                             'active' => '',
                             'show' => '',
@@ -145,15 +402,20 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
                     ];
                     ?>
 
+                    <!-- Modern Tabs -->
                     <nav>
-                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <div class="nav nav-tabs nav-tabs-modern" id="nav-tab" role="tablist">
                             <?php foreach ($tabs as $tab => $datos): ?>
-                                <a class="nav-item nav-link <?=$datos['active'];?>" data-toggle="tab" href="#<?=$tab;?>" role="tab" aria-selected="<?=$datos['aria-selected'];?>"><?=$datos['name'];?></a>
+                                <a class="nav-item nav-link <?=$datos['active'];?>" data-toggle="tab" href="#<?=$tab;?>" role="tab" aria-selected="<?=$datos['aria-selected'];?>">
+                                    <i class="fa <?=$datos['icon'];?>"></i>
+                                    <?=$datos['name'];?>
+                                </a>
                             <?php endforeach;?>
                         </div>
                     </nav>
 
-                    <div class="tab-content" id="nav-tabContent">
+                    <!-- Tab Content -->
+                    <div class="tab-content tab-content-modern" id="nav-tabContent">
                         <?php foreach ($tabs as $tab => $datos): ?>
                             <div class="tab-pane fade <?=$datos['show'];?> <?=$datos['active'];?>" id="<?=$tab;?>" role="tabpanel">
                                 <?php include_once($datos['page-content']);?>
@@ -168,6 +430,14 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>
     </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>PROCESANDO...</p>
+    </div>
+    
+    
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
     <script src="../../config-general/assets/plugins/popper/popper.js" ></script>
@@ -206,8 +476,87 @@ $disabledCamposConfiguracion = $hayRegistroEnCalificaciones ? 'readonly' : '';
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );
         CKEDITOR.replace( 'editor2' );
+        
+        // Initialize tooltips
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+        
+        // Show loading overlay on form submit
+        $('form').on('submit', function() {
+            $('#loadingOverlay').addClass('active');
+        });
+        
+        // Smooth scroll to top when changing tabs
+        $('.nav-tabs-modern .nav-link').on('click', function() {
+            $('html, body').animate({
+                scrollTop: $('.config-page-header').offset().top - 100
+            }, 500);
+        });
+    </script>
+    
+    <!-- Lightbox para Imágenes -->
+    <div class="lightbox-overlay" id="lightboxOverlay">
+        <div class="lightbox-close" id="lightboxClose">
+            <i class="fa fa-times"></i>
+        </div>
+        <div class="lightbox-content">
+            <img src="" alt="" class="lightbox-image" id="lightboxImage">
+        </div>
+        <div class="lightbox-title" id="lightboxTitle"></div>
+    </div>
+    
+    <script>
+    // Sistema de Lightbox para Imágenes
+    $(document).ready(function() {
+        // Click en cualquier imagen con clase preview-image-large
+        $(document).on('click', '.preview-image-large', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const imgSrc = $(this).attr('src');
+            const imgAlt = $(this).closest('.popover-content').find('label').text() || 'Vista Previa';
+            
+            // Configurar lightbox
+            $('#lightboxImage').attr('src', imgSrc);
+            if (imgAlt && imgAlt.trim() !== '') {
+                $('#lightboxTitle').text(imgAlt).show();
+            } else {
+                $('#lightboxTitle').text('').hide();
+            }
+            
+            // Mostrar lightbox con animación
+            $('#lightboxOverlay').addClass('active');
+            
+            // Prevenir scroll del body
+            $('body').css('overflow', 'hidden');
+        });
+        
+        // Cerrar lightbox al hacer click en X
+        $('#lightboxClose').on('click', function() {
+            cerrarLightbox();
+        });
+        
+        // Cerrar lightbox al hacer click en el fondo oscuro
+        $('#lightboxOverlay').on('click', function(e) {
+            if (e.target === this) {
+                cerrarLightbox();
+            }
+        });
+        
+        // Cerrar lightbox con tecla ESC
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#lightboxOverlay').hasClass('active')) {
+                cerrarLightbox();
+            }
+        });
+        
+        function cerrarLightbox() {
+            $('#lightboxOverlay').removeClass('active');
+            $('body').css('overflow', 'auto');
+        }
+    });
     </script>
 </body>
 
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

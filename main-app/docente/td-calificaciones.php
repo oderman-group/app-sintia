@@ -7,9 +7,26 @@ if (!empty($notasResultado['cal_fecha_modificada'])) {
     $infoNotaModificada = '<br>
     <i class="fa fa-info-circle" title="Fecha de última modificación: '.$notasResultado['cal_fecha_modificada'].PHP_EOL.'Cantidad de modificaciones: '.$notasResultado['cal_cantidad_modificaciones'].PHP_EOL.'Nota anterior: '.$notasResultado['cal_nota_anterior'].'"></i>';
 }
+
+// ============================================
+// LÓGICA DE RESALTADO PARA NOTAS FALTANTES
+// ============================================
+$actividadRegistrada = !empty($rA['act_registrada']) && $rA['act_registrada'] == 1;
+$notaVacia = empty($notasResultado['cal_nota']) || $notasResultado['cal_nota'] === '' || $notasResultado['cal_nota'] === null;
+
+$bgCelda = '';
+$claseNotaFaltante = '';
+$estiloInputNotaFaltante = '';
+
+if ($notaVacia && $actividadRegistrada) {
+    $bgCelda = 'background: linear-gradient(135deg, #fff9e6 0%, #ffedd5 100%); border-left: 3px solid #f59e0b;';
+    $claseNotaFaltante = 'celda-nota-faltante';
+    $estiloInputNotaFaltante = 'background: #fff7ed; border: 2px solid #fb923c; font-weight: 600;';
+}
+// ============================================
 ?>
 
-<td style="text-align:center;" id="columna_<?=$resultado['mat_id']."-".$rA['act_id'];?>">
+<td style="text-align:center; <?=$bgCelda;?>" class="<?=$claseNotaFaltante;?>" id="columna_<?=$resultado['mat_id']."-".$rA['act_id'];?>">
     <input 
         size="5"
         id="<?=$resultado['mat_id']."-".$rA['act_id'];?>" 
@@ -24,9 +41,16 @@ if (!empty($notasResultado['cal_fecha_modificada'])) {
         value="<?php if(!empty($notasResultado['cal_nota'])) echo $notasResultado['cal_nota'];?>"
         onChange="notasGuardar(this, 'fila_<?=$resultado['mat_id'];?>', 'tabla_notas')" 
         tabindex="<?=10+$contReg;?>" 
-        style="font-size: 13px; text-align: center; color:<?=$colorNota;?>;" 
+        style="font-size: 13px; text-align: center; color:<?=$colorNota;?>; <?=$estiloInputNotaFaltante;?>" 
         <?=$habilitado;?>
-        title="<?php if(!empty($notasResultado['cal_nota'])) echo 'Valor en decimal: '.$notasResultado['cal_nota_equivalente_cien'];?>"
+        placeholder="<?php if($notaVacia && $actividadRegistrada) echo '⚠️'; ?>"
+        title="<?php 
+            if(!empty($notasResultado['cal_nota'])) { 
+                echo 'Valor en decimal: '.$notasResultado['cal_nota_equivalente_cien']; 
+            } else if($notaVacia && $actividadRegistrada) {
+                echo 'Nota faltante - Esta actividad requiere calificación';
+            }
+        ?>"
     >
 
     <?=$infoNotaModificada;?>

@@ -64,6 +64,7 @@
     <script src="../../config-general/assets/plugins/summernote/summernote.js" ></script>
     <script src="../../config-general/assets/js/pages/summernote/summernote-data.js" ></script>
 
+	<!-- Feed Moderno JS ya está incluido en noticias-contenido.php -->
 	
     <!-- end js include path -->
 </body>

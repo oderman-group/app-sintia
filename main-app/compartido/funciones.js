@@ -39,7 +39,7 @@ function hayInternet() {
 
 		if(localStorage.getItem("internet") == 1 || localStorage.getItem("internet") == null) {
             Swal.fire({
-                title: 'AVISPATE que se ha perdido la conexión!', 
+                title: 'Se ha perdido la conexión!', 
                 text: 'Se ha perdido tu conexión a internet. Por favor verifica antes de continuar trabajando en la plataforma.', 
                 icon: 'error',
                 backdrop: `
@@ -123,9 +123,22 @@ function deseaRegresar(dato){
                         }
                          document.getElementById("overlay").style.display = "none"
                     }else{
-                        fetch(varHeref, {
-                            method: method
-                        })
+                        // Agregar token CSRF según el método
+                        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                        let urlFinal = varHeref;
+                        let fetchOptions = { method: method };
+                        
+                        if (method === 'GET') {
+                            const separator = urlFinal.includes('?') ? '&' : '?';
+                            urlFinal = urlFinal + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                        } else {
+                            // Para POST, agregar en el body
+                            const formData = new FormData();
+                            formData.append('csrf_token', csrfToken);
+                            fetchOptions.body = formData;
+                        }
+                        
+                        fetch(urlFinal, fetchOptions)
                         .then(response => response.text()) // Convertir la respuesta a texto
                         .then(data => {
                             if (idRegistroTabla != null) {
@@ -152,7 +165,11 @@ function deseaRegresar(dato){
                     }
                     
                 } else {
-                    window.location.href=varHeref;
+                    // Agregar token CSRF a la URL para protección
+                    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                    const separator = varHeref.includes('?') ? '&' : '?';
+                    const urlWithToken = varHeref + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                    window.location.href=urlWithToken;
                 }
             }
 
@@ -246,13 +263,18 @@ function deseaGenerarIndicadores(dato) {
  * @param {Array} dato 
  */
 function deseaEliminar(dato) {
+    
+    let varObjet = undefined;
 
-    if (dato.title !== '') {
-
-        let variable = (dato.title);
-        var varObjet = JSON.parse(variable);
-        var input = document.getElementById(parseInt(varObjet.idInput));
-
+    if (dato.title !== '' && dato.title !== undefined) {
+        try {
+            let variable = (dato.title);
+            varObjet = JSON.parse(variable);
+            var input = document.getElementById(parseInt(varObjet.idInput));
+        } catch (e) {
+            console.log('ℹ️ No hay datos JSON en title (o no es válido), continuando con eliminación simple');
+            // No es un error crítico, simplemente no hay datos extra
+        }
     }
 
     var url = dato.name;
@@ -275,10 +297,13 @@ function deseaEliminar(dato) {
         `,
     }).then((result) => {
         if (result.isConfirmed) {
+            
+            // Variable para el overlay (scope accesible en then y catch)
+            let overlay = null;
 
             if (elementoGlobalBloquear) {
                 elementoGlobalBloquear.style.position = 'relative';
-                var overlay = document.createElement('div');
+                overlay = document.createElement('div');
                 overlay.style.position = 'absolute';
                 overlay.style.top = 0;
                 overlay.style.left = 0;
@@ -303,7 +328,70 @@ function deseaEliminar(dato) {
                     }
                 }
 
-                axios.get(url).then(function(response) {
+                // Agregar token CSRF a la URL para protección
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                const separator = url.includes('?') ? '&' : '?';
+                const urlWithToken = url + separator + 'csrf_token=' + encodeURIComponent(csrfToken);
+                
+                axios.get(urlWithToken)
+                .then(function(response) {
+                    // Verificar si la respuesta es JSON
+                    const data = response.data;
+                    
+                    console.log('✅ Respuesta de eliminación:', data);
+                    
+                    // Manejar respuesta JSON estructurada
+                    if (data && typeof data === 'object' && data.hasOwnProperty('success')) {
+                        // Remover overlay de carga
+                        if (elementoGlobalBloquear && overlay) {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        }
+                        
+                        if (data.success) {
+                            // ÉXITO: Mostrar toast y eliminar el registro
+                            if (typeof $.toast === 'function') {
+                                $.toast({
+                                    heading: 'Eliminado Exitosamente',
+                                    text: data.message || 'El registro ha sido eliminado correctamente',
+                                    showHideTransition: 'slide',
+                                    icon: 'success',
+                                    position: 'top-right',
+                                    hideAfter: 4000
+                                });
+                            }
+                            
+                            // Animar y eliminar el registro visual
+                            if (registro) {
+                                registro.classList.add('animate__animated', 'animate__fadeOutRight');
+                                setTimeout(() => {
+                                    registro.style.display = "none";
+                                    registro.remove();
+                                }, 800);
+                            }
+                        } else {
+                            // ERROR: Mostrar mensaje de error
+                            if (typeof $.toast === 'function') {
+                                $.toast({
+                                    heading: 'Error al Eliminar',
+                                    text: data.message || 'No se pudo eliminar el registro',
+                                    showHideTransition: 'slide',
+                                    icon: 'error',
+                                    position: 'top-right',
+                                    hideAfter: 6000
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error al Eliminar',
+                                    text: data.message || 'No se pudo eliminar el registro'
+                                });
+                            }
+                        }
+                        return;
+                    }
+                    
+                    // FALLBACK: Si no es JSON estructurado, usar lógica antigua
+                    console.log('⚠️ Respuesta no es JSON estructurado, usando lógica legacy');
                     if (typeof varObjet !== "undefined") {
                         // handle success
                         if (varObjet.tipo === 1) {
@@ -344,6 +432,22 @@ function deseaEliminar(dato) {
                         if (varObjet.tipo === 2 || varObjet.tipo === 5) {
                             document.getElementById(id).style.display = "none";
                             input.value = "";
+                            
+                            // ✅ RECALCULAR DEFINITIVA Y PROMEDIOS DESPUÉS DE ELIMINAR NOTA
+                            if (typeof recalcularDefinitiva === 'function') {
+                                const codEst = input.getAttribute('data-cod-estudiante');
+                                if (codEst) {
+                                    setTimeout(() => {
+                                        recalcularDefinitiva(codEst);
+                                    }, 100);
+                                }
+                            }
+                            
+                            if (typeof recalcularPromedios === 'function') {
+                                setTimeout(() => {
+                                    recalcularPromedios();
+                                }, 200);
+                            }
                         }
 
                         if (varObjet.tipo === 3) {
@@ -362,26 +466,53 @@ function deseaEliminar(dato) {
                             publicacion.classList.add('animate__animated', 'animate__bounceOutRight', 'animate__delay-0.5s');
                             
                         }
-                    }
-
-                        $.toast({
-                            heading: 'Acción realizada',
-                            text: 'El registro fue eliminado correctamente.',
-                            position: 'bottom-right',
-                            showHideTransition: 'slide',
-                            loaderBg: '#26c281',
-                            icon: 'success',
-                            hideAfter: 5000,
-                            stack: 6
-                        });
-
-                        if (elementoGlobalBloquear) {
-                            elementoGlobalBloquear.removeChild(overlay);
+                        
+                        // Toast legacy para tipos antiguos
+                        if (typeof $.toast === 'function') {
+                            $.toast({
+                                heading: 'Acción realizada',
+                                text: 'El registro fue eliminado correctamente.',
+                                position: 'bottom-right',
+                                showHideTransition: 'slide',
+                                loaderBg: '#26c281',
+                                icon: 'success',
+                                hideAfter: 5000,
+                                stack: 6
+                            });
                         }
 
+                        if (elementoGlobalBloquear && overlay) {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        }
+                    }
+
                 }).catch(function(error) {
-                    // handle error
-                    console.error(error);
+                    console.error('❌ Error en eliminación:', error);
+                    
+                    // Remover overlay de carga
+                    if (elementoGlobalBloquear && overlay) {
+                        try {
+                            elementoGlobalBloquear.removeChild(overlay);
+                        } catch(e) {}
+                    }
+                    
+                    // Mostrar error al usuario
+                    if (typeof $.toast === 'function') {
+                        $.toast({
+                            heading: 'Error de Conexión',
+                            text: 'No se pudo completar la eliminación. Verifica tu conexión e intenta de nuevo.',
+                            showHideTransition: 'slide',
+                            icon: 'error',
+                            position: 'top-right',
+                            hideAfter: 6000
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de Conexión',
+                            text: 'No se pudo completar la eliminación. Verifica tu conexión e intenta de nuevo.'
+                        });
+                    }
                 });
             } else {
                 window.location.href = url;
@@ -547,35 +678,99 @@ function crearNoticia() {
     });
 }
 
-const estudiantesPorEstados = {};
+// Evitar redeclaración de la variable
+if (typeof window.estudiantesPorEstados === 'undefined') {
+    window.estudiantesPorEstados = {};
+}
+const estudiantesPorEstados = window.estudiantesPorEstados;
 
 function cambiarEstadoMatricula(data) {
     let idHref = 'estadoMatricula'+data.id_estudiante;
-    let href   = document.getElementById(idHref);
+    let badge  = document.getElementById(idHref);
     
     if (!estudiantesPorEstados.hasOwnProperty(data.id_estudiante)) {
         estudiantesPorEstados[data.id_estudiante] = data.estado_matricula;
     }
 
-    if(estudiantesPorEstados[data.id_estudiante] == 1) {
-        href.innerHTML = `<span class="text-warning">No Matriculado</span>`;
-        estudiantesPorEstados[data.id_estudiante] = 4;
-    } else {
-        href.innerHTML = `<span class="text-success">Matriculado</span>`;
-        estudiantesPorEstados[data.id_estudiante] = 1;
+    // Mapeo de estados a badges
+    const estadosInfo = {
+        1: { clase: 'badge badge-success', texto: 'Matriculado' },
+        2: { clase: 'badge badge-warning', texto: 'Asistente' },
+        3: { clase: 'badge badge-danger', texto: 'Cancelado' },
+        4: { clase: 'badge badge-secondary', texto: 'No Matriculado' },
+        5: { clase: 'badge badge-info', texto: 'En inscripción' }
+    };
+
+    const estadoActual = parseInt(estudiantesPorEstados[data.id_estudiante]);
+    let nuevoEstado = null;
+
+    // Determinar el siguiente estado válido según las reglas:
+    // - En Inscripción (5): No puede modificarse
+    // - Asistente (2): Solo puede cambiar a Matriculado (1)
+    // - No matriculado (4): Solo puede cambiar a Matriculado (1)
+    // - Matriculado (1): Puede cambiar a otros estados, pero no a No matriculado (4)
+    // - Cancelado (3): Se gestiona automáticamente
+
+    if (estadoActual === 5) {
+        // En Inscripción: No puede modificarse
+        alert('El estado "En inscripción" no puede modificarse. Se gestiona automáticamente desde el módulo de admisiones.');
+        return;
     }
 
-    let datos = "nuevoEstado="+estudiantesPorEstados[data.id_estudiante]+
+    if (estadoActual === 3) {
+        // Cancelado: Se gestiona automáticamente
+        alert('El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.');
+        return;
+    }
+
+    if (estadoActual === 2) {
+        // Asistente: Solo puede cambiar a Matriculado (1)
+        nuevoEstado = 1;
+    } else if (estadoActual === 4) {
+        // No matriculado: Solo puede cambiar a Matriculado (1)
+        nuevoEstado = 1;
+    } else if (estadoActual === 1) {
+        // Matriculado: NO puede cambiar a Asistente (2) ni a No matriculado (4)
+        // No se permite cambiar desde Matriculado a otros estados desde aquí
+        alert('El estado "Matriculado" no puede cambiarse desde aquí. Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".');
+        return;
+    } else {
+        // Para cualquier otro estado, intentar cambiar a Matriculado
+        nuevoEstado = 1;
+    }
+
+    // Actualizar el badge con el nuevo estado
+    const estadoInfo = estadosInfo[nuevoEstado];
+    
+    badge.className = estadoInfo.clase;
+    badge.textContent = estadoInfo.texto;
+    estudiantesPorEstados[data.id_estudiante] = nuevoEstado;
+
+    let datos = "nuevoEstado="+nuevoEstado+
                 "&idEstudiante="+data.id_estudiante;
 
     $.ajax({
         type: "POST",
         url: "ajax-cambiar-estado-matricula.php",
         data: datos,
-        success: function(data){
-            $('#respuestaCambiarEstado').empty().hide().html(data).show(1);
+        success: function(response){
+            $('#respuestaCambiarEstado').empty().hide().html(response).show(1);
+        },
+        error: function(xhr, status, error) {
+            // Si hay error, revertir el cambio visual
+            const estadoInfoActual = estadosInfo[estadoActual];
+            badge.className = estadoInfoActual.clase;
+            badge.textContent = estadoInfoActual.texto;
+            estudiantesPorEstados[data.id_estudiante] = estadoActual;
+            
+            // Mostrar mensaje de error
+            $('#respuestaCambiarEstado').empty().hide().html(
+                '<div class="alert alert-danger">' +
+                '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                '<p><strong>Error:</strong> No se pudo cambiar el estado de la matrícula.</p>' +
+                '</div>'
+            ).show(1);
         }
-
     });
 }
 
@@ -905,11 +1100,14 @@ function mostrarModalCompraModulos(idModulo, year) {
         document.getElementById('nombreModulo').value = "MÓDULO "+data.nombreModulo;
         document.getElementById('idModulo').value = idModulo;
 
-        socket.emit("enviar_mensajes_modulos_dev", {
-            year: year,
-            asunto: 'Un usuario está interesado en el módulo '+data.nombreModulo,
-            contenido: data.mensaje
-        });
+        // 🛡️ PROTECCIÓN: Solo ejecutar si socket está disponible (WebSocket habilitado)
+        if (typeof socket !== 'undefined') {
+            socket.emit("enviar_mensajes_modulos_dev", {
+                year: year,
+                asunto: 'Un usuario está interesado en el módulo '+data.nombreModulo,
+                contenido: data.mensaje
+            });
+        }
 
         $("#modalComprarModulo").modal("show");
     })
@@ -1024,4 +1222,4 @@ function mtdDesactivarLoadPagina() {
     document.getElementById("overlay").style.display = "none";
 }
 
-document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);
+//document.addEventListener('DOMContentLoaded', contadorUsuariosBloqueados);

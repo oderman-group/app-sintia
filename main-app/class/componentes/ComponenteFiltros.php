@@ -134,7 +134,7 @@ class ComponenteFiltro
         global $frases, $datosUsuarioActual, $Plataforma;
         // Generar HTML del componente
         $html = "
-        <nav class='navbar navbar-expand-lg navbar-dark' style='background-color: #41c4c4;'>
+        <nav class='navbar navbar-expand-lg navbar-dark' style='background-color: #ffffff;'>
             <ul class='navbar-nav mr-auto'>";
         if (!empty($this->opciones)) {
             foreach ($this->opciones as $opcion) {
@@ -175,13 +175,13 @@ class ComponenteFiltro
             }
         }
         if (!empty($this->filtros) &&  !empty($this->opciones)) {
-            $html .= " <li class='nav-item'> <a class='nav-link' href='javascript:void(0);' style='color:#FFF;'>|</a></li>";
+            $html .= " <li class='nav-item'> <a class='nav-link' href='javascript:void(0);' style='color:#000;'>|</a></li>";
         }
         if (!empty($this->filtros)) {
 
             foreach ($this->filtros as $filtro) {
                 $html .= " <li class='nav-item dropdown'>
-                <a class='nav-link dropdown-toggle' href='javascript:void(0);' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false' style='color:#FFF;'>
+                <a class='nav-link dropdown-toggle' href='javascript:void(0);' id='navbarDropdown' role='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false' style='color:#000;'>
                 {$filtro[self::COMPB_FILTRO_TEXTO]}  ";
                 // if(!empty($filtro[self::COMPB_FILTRO_SELECT])){
                 //     $html .= ": {$filtro[self::COMPB_FILTRO_LISTA][$filtro[self::COMPB_FILTRO_SELECT]][self::COMPB_FILTRO_LISTA_TEXTO]} ";
@@ -227,7 +227,7 @@ class ComponenteFiltro
                         }else{
                             $style = !empty($item[self::COMPB_FILTRO_LISTA_STYLE]) ? "style='{$item[self::COMPB_FILTRO_LISTA_STYLE]}'" : "";
                             $styleSelect = !empty($item[self::COMPB_FILTRO_LISTA_ID]) && $item[self::COMPB_FILTRO_LISTA_ID] == $decode ? "style='color: orange;'" : "";
-                            $html .= "<a class='dropdown-item' href='{$item[self::COMPB_FILTRO_LISTA_URL]}{$parametros}'  {$style} {$styleSelect}>{$item[self::COMPB_FILTRO_LISTA_TEXTO]}</a>";
+                            $html .= "<a class='dropdown-item filtro-async' href='javascript:void(0);' data-url='{$item[self::COMPB_FILTRO_LISTA_URL]}' data-parametros='{$parametros}' {$style} {$styleSelect}>{$item[self::COMPB_FILTRO_LISTA_TEXTO]}</a>";
                         }
                     }
                     $html .= "</form>";
@@ -285,10 +285,10 @@ class ComponenteFiltro
             <li class='nav-item'> <a class='nav-link' href='{$_SERVER['PHP_SELF']}' style='color:{$Plataforma->colorUno}'>Quitar filtros</a></li>";
         }
 
-        $html .= "   
+        $html .= "
             </ul>
             <style>
-                    
+
                     #input_{$this->id}::placeholder {
                         text-align: left;
                     }
@@ -297,26 +297,27 @@ class ComponenteFiltro
                         text-align: left;
                     }
             </style> ";
-        
+
         $display=$this->buscador?'block':'none';
-        $html .= " 
+        $html .= "
             <div class='form-inline my-2 my-lg-0' style='display:$display;'>
-                <input id='input_{$this->id}' class='form-control mr-sm-2' style='width: 250px' type='search' 
-                data-toggle='tooltip' 
-                   data-placement='right' 
+                <input id='input_{$this->id}' class='form-control mr-sm-2' style='width: 250px' type='search'
+                data-toggle='tooltip'
+                   data-placement='right'
                    title='{$frases[431][$datosUsuarioActual['uss_idioma']]}'
                 placeholder='{$frases[430][$datosUsuarioActual['uss_idioma']]}' aria-label='Search' name='busqueda' >
                 <button id='btn_{$this->id}' onclick='{$this->id}_buscar(true)' class='btn deepPink-bgcolor my-2 my-sm-0' type='buttom'>{$frases[8][$datosUsuarioActual['uss_idioma']]}</button>
             </div>";
-            
-        $html .= "    
+
+        $html .= "
         </nav>
         <script type='text/javascript'>
+        var filtrosActuales = JSON.parse('{$this->filtrosGet}');
         function cargarJquery() {
-          $(document).ready(function() {			
-              $('[data-toggle=".'popover'."]').popover();
-              $('[data-toggle=".'tooltip'."]').tooltip();
-           
+          $(document).ready(function() {
+              $('[data-toggle=\"popover\"]').popover();
+              $('[data-toggle=\"tooltip\"]').tooltip();
+
           });
         };
         input_{$this->id}.addEventListener('keyup', function(event) {
@@ -333,14 +334,14 @@ class ComponenteFiltro
             document.getElementById('gifCarga').style.display = 'block';
             var valor = document.getElementById('input_{$this->id}').value;
             var filtro2 = {'{$filtro[self::COMPB_FILTRO_GET]}Seleccionados' : {$filtro[self::COMPB_FILTRO_GET]}Seleccionados};
-            var urlbase = '{$this->urlBase}'; 
+            var urlbase = '{$this->urlBase}';
             if(valor.length > 2){
                 var data = {
                     'valor': (valor),
                     'filtro2': (filtro2),
                     'url': '{$this->urlFilter}'
                 };
-                data.filtros =JSON.parse('{$this->filtrosGet}');
+                data.filtros = filtrosActuales;
                 {$this->id}_ejecutarFetch(urlbase,data);
             }else if(valor.length == 0){
                 var data = {
@@ -348,7 +349,7 @@ class ComponenteFiltro
                     'filtro2': (filtro2),
                     'url': '{$this->urlFilter}'
                 };
-                data.filtros =JSON.parse('{$this->filtrosGet}');
+                data.filtros = filtrosActuales;
                 {$this->id}_ejecutarFetch(urlbase,data);
             }else if(buscar){
                 var data = {
@@ -356,17 +357,17 @@ class ComponenteFiltro
                     'filtro2': (filtro2),
                     'url': '{$this->urlFilter}'
                 };
-                data.filtros =JSON.parse('{$this->filtrosGet}');
+                data.filtros = filtrosActuales;
                 {$this->id}_ejecutarFetch(urlbase,data);
 
             }
-            
-           
+
+
         }
         function {$this->id}_ejecutarFetch(url,data){
             fetch(url, {
-                method: 'POST', // or 'PUT'
-                body: JSON.stringify(data), // data can be `string` or {object}!
+                method: 'POST',
+                body: JSON.stringify(data),
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -380,17 +381,17 @@ class ComponenteFiltro
         }
         function {$this->id}_responseHtml(dato){
             var tbody = document.getElementById('{$this->id}_result');
-           
-            tbody.innerHTML = ''; 
+
+            tbody.innerHTML = '';
             var data = {
                 'data': (dato),
                 'url': '{$this->urlHtml}'
             };
-            data.filtros =JSON.parse('{$this->filtrosGet}');
-            var url = '{$this->urlBase}'; 
+            data.filtros = filtrosActuales;
+            var url = '{$this->urlBase}';
             fetch(url, {
-                method: 'POST', // or 'PUT'
-                body: JSON.stringify(data), // data can be `string` or {object}!
+                method: 'POST',
+                body: JSON.stringify(data),
                 headers: {
                     'Content-Type': 'text/html'
                 },
@@ -398,10 +399,10 @@ class ComponenteFiltro
             .then((res) => res.text()).catch((error) => console.error('Error:', error))
             .catch((error) => console.error('Error:', error))
             .then(
-                function(response) { 
+                function(response) {
                         if ($.fn.DataTable.isDataTable('#example1')) {
-                            $('#example1').DataTable().clear().destroy(); // Destruir y limpiar
-                        }                     
+                            $('#example1').DataTable().clear().destroy();
+                        }
                        tbody.innerHTML = response;
                        cargarJquery();
                         $('#example1').DataTable();
@@ -412,6 +413,21 @@ class ComponenteFiltro
         }
         $html .= "});
         }
+
+        // Función para manejar filtros asíncronos
+        $(document).on('click', '.filtro-async', function() {
+            var urlCompleta = $(this).data('url') + $(this).data('parametros');
+            // Parsear la URL para extraer parámetros
+            var url = new URL(urlCompleta, window.location.origin);
+            var params = {};
+            for (let [key, value] of url.searchParams) {
+                params[key] = value;
+            }
+            // Actualizar filtrosActuales con los nuevos parámetros
+            filtrosActuales = Object.assign({}, filtrosActuales, params);
+            // Ejecutar búsqueda
+            {$this->id}_buscar(true);
+        });
 
         </script>
         ";

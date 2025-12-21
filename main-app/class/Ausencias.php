@@ -36,6 +36,35 @@ class Ausencias {
     }
 
     /**
+     * Trae todas las ausencias de una clase para todos los estudiantes
+     * y las organiza en un mapa [idEstudiante] => datosAusencia.
+     *
+     * Esta función se usa para optimizar pantallas donde se muestran
+     * las ausencias de toda la clase, evitando una consulta por estudiante.
+     */
+    public static function traerAusenciasClaseMapa(
+        array  $config,
+        string $idClase,
+        string $yearBd = ""
+    ): array {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT * FROM " . BD_ACADEMICA . ".academico_ausencias 
+                WHERE aus_id_clase=? AND institucion=? AND year=?";
+
+        $parametros = [$idClase, $config['conf_id_institucion'], $year];
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+
+        $mapa = [];
+        while ($fila = mysqli_fetch_array($resultado, MYSQLI_BOTH)) {
+            $mapa[$fila['aus_id_estudiante']] = $fila;
+        }
+
+        return $mapa;
+    }
+
+    /**
      * Este método ejecuta una consulta SQL para obtener la suma total de ausencias de un estudiante
      * en una carga académica determinada, considerando un período específico.
      *
@@ -69,6 +98,49 @@ class Ausencias {
         $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         return $resultado;
+    }
+
+    /**
+     * Este método ejecuta una consulta SQL para obtener la suma total de ausencias acumuladas
+     * de un estudiante en una carga académica determinada (suma de todas las clases de esa carga).
+     *
+     * @param array   $config       Configuración de la aplicación.
+     * @param string  $idCarga      Identificador de la carga académica.
+     * @param string  $idEstudiante Identificador del estudiante del que se desean obtener las ausencias.
+     * @param string  $yearBd       Año de la base de datos (opcional). Si no se proporciona, se utiliza el valor de sesión.
+     * @return int                  Retorna la suma total de ausencias acumuladas, o 0 si no hay ausencias.
+     **/
+    public static function traerAusenciasAcumuladasEstudiante(
+        array   $config,
+        string  $idCarga,
+        string  $idEstudiante,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT SUM(aus.aus_ausencias) as total_ausencias
+                FROM ".BD_ACADEMICA.".academico_ausencias aus
+                INNER JOIN ".BD_ACADEMICA.".academico_clases cls ON cls.cls_id = aus.aus_id_clase 
+                    AND cls.institucion = ? AND cls.year = ?
+                WHERE cls.cls_id_carga = ?
+                AND aus.aus_id_estudiante = ?
+                AND aus.institucion = ?
+                AND aus.year = ?";
+
+        $parametros = [
+            $config['conf_id_institucion'], 
+            $year, 
+            $idCarga, 
+            $idEstudiante, 
+            $config['conf_id_institucion'], 
+            $year
+        ];
+        
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+        
+        return !empty($datos['total_ausencias']) ? (int)$datos['total_ausencias'] : 0;
     }
 
     /**

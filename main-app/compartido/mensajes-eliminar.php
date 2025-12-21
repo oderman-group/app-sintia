@@ -6,15 +6,26 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 include(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 $usuariosClase = new UsuariosFunciones;
 
+// Migrado a PDO - Consultas preparadas
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
+$conexionPDO = Conexion::newConnection('PDO');
+$idMensaje = base64_decode($_GET["idR"]);
+
 if (base64_decode($_GET["elm"]) == 1) {
     try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_emails SET ema_eliminado_de=1 WHERE ema_id='" . base64_decode($_GET["idR"]) . "'");
+        $sql = "UPDATE ".$baseDatosServicios.".social_emails SET ema_eliminado_de=1 WHERE ema_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $idMensaje, PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
 } else {
     try{
-        mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".social_emails SET ema_eliminado_para=1 WHERE ema_id='" . base64_decode($_GET["idR"]) . "'");
+        $sql = "UPDATE ".$baseDatosServicios.".social_emails SET ema_eliminado_para=1 WHERE ema_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $idMensaje, PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }

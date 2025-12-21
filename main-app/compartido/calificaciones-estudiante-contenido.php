@@ -69,12 +69,11 @@
 
                     <div class="row">
 
-                        <div class="col-md-12">
+                                <div class="col-md-12">
 
                             <div class="row">
-
                                 
-
+                                <?php if($datosUsuarioActual['uss_tipo']!=TIPO_ESTUDIANTE){ ?>
 								<div class="col-md-4 col-lg-3">
 
 									
@@ -235,13 +234,7 @@
 
 									<?php 
 
-									//ESTUDIANTES
-
-									if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){
-
-										include("filtro-cargas.php");
-
-									}
+									//ESTUDIANTES - Los filtros ahora están en el sidebar flotante
 
 									?>
 
@@ -252,34 +245,31 @@
 									
 
 								</div>
+								<?php } ?>
 
 									
 
-								<div class="col-md-8 col-lg-9">
+								<div class="col-md-<?= $datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE ? '12' : '8 col-lg-9'; ?>">
 
-                                    <div class="card card-topline-purple">
+                                    <div class="grades-card-modern">
 
-                                        <div class="card-head">
+                                        <div class="grades-card-header">
 
-                                            <header><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></header>
-
-                                            <div class="tools">
-
-                                                <a class="fa fa-repeat btn-color box-refresh" href="javascript:;"></a>
-
-			                                    <a class="t-collapse btn-color fa fa-chevron-down" href="javascript:;"></a>
-
-			                                    <a class="t-close btn-color fa fa-times" href="javascript:;"></a>
-
-                                            </div>
+                                            <h3><i class="fa fa-graduation-cap mr-2"></i><?=$frases[6][$datosUsuarioActual['uss_idioma']];?></h3>
+                                            
+                                            <?php if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){ ?>
+                                            <button class="filter-fab" id="filterFab" title="Filtros">
+                                                <i class="fa fa-filter"></i>
+                                            </button>
+                                            <?php } ?>
 
                                         </div>
 
-                                        <div class="card-body ">
+                                        <div class="grades-card-body">
 
                                         <div class="table-responsive">
 
-                                            <table class="table table-striped custom-table table-hover">
+                                            <table class="table-modern">
 
                                                 <thead>
 
@@ -306,51 +296,80 @@
                                                 <tbody>
 
 													<?php
-													$consulta = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
+													// PRE-CARGAR ACTIVIDADES DE LA CARGA / PERIODO
+													$actividades = [];
+													$consultaAct = Actividades::consultaActividadesCarga($config, $cargaConsultaActual, $periodoConsultaActual);
 													if(!empty($_GET["indicador"])){
-														$consulta = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+														$consultaAct = Actividades::consultaActividadesCargaIndicador($config, base64_decode($_GET["indicador"]), $cargaConsultaActual, $periodoConsultaActual);
+													}
+													while ($rowAct = mysqli_fetch_array($consultaAct, MYSQLI_BOTH)) {
+														$actividades[] = $rowAct;
 													}
 
-													 $contReg = 1;
+													// PRE-CARGAR TODAS LAS CALIFICACIONES DE LA CARGA / PERIODO
+													$calificacionesMapa = Calificaciones::traerCalificacionesCargaPeriodo(
+														$config,
+														$cargaConsultaActual,
+														$periodoConsultaActual
+													);
+													$calificacionesEst = $calificacionesMapa[$datosEstudianteActual['mat_id']] ?? [];
 
-													 $acumulaValor = 0;
+													// PRE-CARGAR INDICADORES DE LA CARGA / PERIODO
+													$indicadoresMapa = [];
+													$consultaInd = Indicadores::traerCargaIndicadorPorPeriodo(
+														$conexion,
+														$config,
+														$cargaConsultaActual,
+														$periodoConsultaActual
+													);
+													while ($rowInd = mysqli_fetch_array($consultaInd, MYSQLI_BOTH)) {
+														// ai_ind_id es el ID del indicador en la tabla de indicadores
+														$indicadoresMapa[$rowInd['ai_ind_id']] = $rowInd;
+													}
 
-													 $sumaNota = 0;
+													$contReg = 1;
+													$acumulaValor = 0;
+													$sumaNota = 0;
+													$porcentajeActualActividad = 0;
 
-													 $porcentajeActualActividad = 0;
-													 while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+													foreach ($actividades as $resultado){
+														$idActividad = $resultado['act_id'];
 
-														$nota = Calificaciones::traerCalificacionActividadEstudiante($config, $resultado['act_id'], $datosEstudianteActual['mat_id']);
+														$nota      = $calificacionesEst[$idActividad] ?? null;
+														$porNuevo  = ($resultado['act_valor'] / 100);
+														$acumulaValor += $porNuevo;
 
-														$porNuevo = ($resultado['act_valor'] / 100);
-
-														$acumulaValor = ($acumulaValor + $porNuevo);
-
-														$notaMultiplicada=0;
-														$nota3="";
-														$nota4="";
-														if(!empty($nota['cal_nota'])){
-															$nota3=$nota['cal_nota'];
-															$nota4=$nota['cal_observaciones'];
-															$notaMultiplicada = ($nota['cal_nota'] * $porNuevo);
+														$notaMultiplicada = 0;
+														$nota3            = "";
+														$nota4            = "";
+														if (!empty($nota['cal_nota'])) {
+															$nota3           = $nota['cal_nota'];
+															$nota4           = $nota['cal_observaciones'];
+															$notaMultiplicada= ((float)$nota['cal_nota'] * $porNuevo);
 														}
 
-														$sumaNota = ($sumaNota + $notaMultiplicada);
-														$porcentajeActualActividad +=$resultado['act_valor'];
+														$sumaNota += $notaMultiplicada;
+														$porcentajeActualActividad += $resultado['act_valor'];
 
-														//COLOR DE CADA NOTA
+														// COLOR DE CADA NOTA
+														if (!empty($nota['cal_nota']) && $nota['cal_nota'] < $config[5]) {
+															$colorNota = $config[6];
+														} else {
+															$colorNota = $config[7];
+														}
 
-														if(!empty($nota['cal_nota']) && $nota['cal_nota']<$config[5]) $colorNota = $config[6];
+														$indicadorName = $indicadoresMapa[$resultado['act_id_tipo']] ?? null; 
 
-														else $colorNota = $config[7];
+														$notaFinal = $nota3;
+														if($config['conf_forma_mostrar_notas'] == CUALITATIVA && $nota3 !== ''){
+															$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota3);
+															$notaFinal  = !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+														}
 
-														$indicadorName = Indicadores::traerIndicadoresDatosRelacion($resultado['act_id_tipo']); 
-
-															$notaFinal=$nota3;
-															if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-																$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $nota3);
-																$notaFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
-															}
+														$textoIndicador = '';
+														if (!empty($indicadorName)) {
+															$textoIndicador = $indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";
+														}
 
 													 ?>
 
@@ -364,7 +383,11 @@
 
 														<td>
 															<?=$resultado['act_descripcion'];?><br>
-															<span style="font-size: 10px; color: blue;"><b>INDICADOR:</b> <?=$indicadorName['ind_nombre']." (".$indicadorName['ipc_valor']."%)";?></span>
+															<?php if($textoIndicador !== '') { ?>
+																<span class="badge-indicador">
+																	<i class="fa fa-tag"></i> <?=$textoIndicador;?>
+																</span>
+															<?php } ?>
 														</td>
 
 														<td><?=$resultado['act_fecha'];?></td>
@@ -377,28 +400,38 @@
 
                                                     </tr>
 
-													<?php 
-
-														 $contReg++;
-
-													  }
-
-														//DEFINITIVAS
-
-														$carga = $cargaConsultaActual;
-
-														$periodo = $periodoConsultaActual;
-
-														$estudiante = $datosEstudianteActual['mat_id'];
-
-														include("../definitivas.php");
-
-														$definitivaFinal=$definitiva;
-														if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-															$estiloNotaDefinitiva = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitiva);
-															$definitivaFinal= !empty($estiloNotaDefinitiva['notip_nombre']) ? $estiloNotaDefinitiva['notip_nombre'] : "";
+														<?php 
+															$contReg++;
 														}
 
+														// DEFINITIVA CALCULADA UNA SOLA VEZ
+														$definitiva      = 0;
+														$colorDefinitiva = 'black';
+														if ($acumulaValor > 0) {
+															$definitiva = round(($sumaNota / $acumulaValor), $config['conf_decimales_notas']);
+
+															if ($definitiva < $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_perdida'];
+															} elseif ($definitiva == $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_ganada'];
+															} elseif ($definitiva > $config['conf_nota_minima_aprobar']) {
+																$colorDefinitiva = $config['conf_color_ganada'];
+															}
+
+															// Añadir ".0" a enteros dentro del rango
+															for($i = $config['conf_nota_desde']; $i <= $config['conf_nota_hasta']; $i++){
+																if($definitiva == $i){
+																	$definitiva = $definitiva.".0";
+																	break;
+																}
+															}
+														}
+
+														$definitivaFinal = $definitiva;
+														if($config['conf_forma_mostrar_notas'] == CUALITATIVA && $definitivaFinal !== ''){
+															$estiloNotaDefinitiva = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitivaFinal);
+															$definitivaFinal= !empty($estiloNotaDefinitiva['notip_nombre']) ? $estiloNotaDefinitiva['notip_nombre'] : "";
+														}
 													  ?>
 
                                                 </tbody>
@@ -448,3 +481,153 @@
                     </div>
 
                 </div>
+
+<style>
+/* Estilos modernos para la tabla de calificaciones */
+.grades-card-modern {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.grades-card-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grades-card-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.grades-card-header h3 i {
+    margin-right: 10px;
+}
+
+.grades-card-body {
+    padding: 0;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table-modern {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.table-modern thead {
+    background: #f8f9fa;
+}
+
+.table-modern thead th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.table-modern tbody tr {
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.table-modern tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table-modern tbody td {
+    padding: 16px 20px;
+    color: #495057;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.table-modern tbody td:first-child {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.table-modern tfoot tr {
+    background: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
+
+.table-modern tfoot td {
+    padding: 18px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #212529;
+}
+
+.badge-indicador {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #5a6c7d;
+    background: #e3f2fd;
+    border-radius: 12px;
+    border: 1px solid #bbdefb;
+}
+
+.badge-indicador i {
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+/* Botón flotante de filtros para estudiantes */
+.filter-fab {
+    background: white;
+    color: #667eea;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.filter-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-modern thead th,
+    .table-modern tbody td,
+    .table-modern tfoot td {
+        padding: 12px 15px;
+        font-size: 13px;
+    }
+    
+    .grades-card-header {
+        padding: 15px 20px;
+    }
+    
+    .grades-card-header h3 {
+        font-size: 18px;
+    }
+}
+</style>

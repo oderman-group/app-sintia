@@ -90,6 +90,19 @@ error_log("🔵 AJAX-MENSAJES FIN - Time: " . microtime(true));
                                 </li>
                             </ul>
 
+							<script type="text/javascript">
+								// Actualizar badge INTERNO en Aplicaciones de Sintia (con número)
+								<?php if($mensajesNumero>0){?>
+									$('#mensajes_numero_app').empty().html(<?=$mensajesNumero;?>).show();
+									// Actualizar badge EXTERNO en el ícono principal (solo dot, sin número)
+									$('#badge_apps_mensajes').css('display', 'block');
+								<?php } else {?>
+									$('#mensajes_numero_app').empty().hide();
+									// Ocultar badge externo si no hay mensajes
+									$('#badge_apps_mensajes').hide();
+								<?php }?>
+							</script>
+							
 							<?php if($mensajesNumero>0){?>
 							<script type="text/javascript">
 								var numero=<?=$mensajesNumero;?>;
@@ -98,7 +111,7 @@ error_log("🔵 AJAX-MENSAJES FIN - Time: " . microtime(true));
 								function avisoMsjs(){									
 								  $.toast({
 										heading: 'Notificación',  
-										text: 'Tienes <?=$mensajesNumero;?> mensajes nuevos. Revisalos en el icono del sobre, que está en la parte superior.',
+										text: 'Tienes <?=$mensajesNumero;?> mensajes nuevos. Revisalos en Aplicaciones de Sintia.',
 										position: 'bottom-right',
                 						showHideTransition: 'slide',
 										loaderBg:'#ff6849',

@@ -29,23 +29,56 @@ include("../compartido/historial-acciones-guardar.php");
 		$archivo = $_POST["logoAnterior"];
 	}
 
+	// Migrado a PDO - Consultas preparadas
 	try{
-		mysqli_query($conexion, "UPDATE ".$baseDatosServicios.".general_informacion SET info_rector='" . $_POST["rectorI"] . "', info_secretaria_academica='" . $_POST["secretarioI"] . "', info_logo='" . $archivo . "', info_nit='" . $_POST["nitI"] . "', info_nombre='" . $_POST["nomInstI"] . "', info_direccion='" . $_POST["direccionI"] . "', info_telefono='" . $_POST["telI"] . "', info_clase='" . $_POST["calseI"] . "', info_caracter='" . $_POST["caracterI"] . "',info_calendario='" . $_POST["calendarioI"] . "', info_jornada='" . $_POST["jornadaI"] . "', info_horario='" . $_POST["horarioI"] . "', info_niveles='" . $_POST["nivelesI"] . "', info_modalidad='" . $_POST["modalidadI"] . "', info_propietario='" . $_POST["propietarioI"] . "', info_coordinador_academico='" . $_POST["coordinadorI"] . "', info_tesorero='" . $_POST["tesoreroI"] . "', info_ciudad='" . $_POST["ciudad"] . "', info_dane='" . $_POST["dane"] . "', info_resolucion='" . $_POST["resolucion"] . "', info_decreto_plan_estudio='" . $_POST["decretos"] . "'
-		WHERE info_id=" . $_POST["idCI"] . ";");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		$conexionPDO = Conexion::newConnection('PDO');
+		
+		$sql = "UPDATE ".$baseDatosServicios.".general_informacion SET 
+		        info_rector=?, info_secretaria_academica=?, info_logo=?, info_nit=?, info_nombre=?, 
+		        info_direccion=?, info_telefono=?, info_clase=?, info_caracter=?, info_calendario=?, 
+		        info_jornada=?, info_horario=?, info_niveles=?, info_modalidad=?, info_propietario=?, 
+		        info_coordinador_academico=?, info_tesorero=?, info_ciudad=?, info_dane=?, 
+		        info_resolucion=?, info_decreto_plan_estudio=?
+		        WHERE info_id=?";
+		$stmt = $conexionPDO->prepare($sql);
+		$stmt->bindParam(1, $_POST["rectorI"], PDO::PARAM_STR);
+		$stmt->bindParam(2, $_POST["secretarioI"], PDO::PARAM_STR);
+		$stmt->bindParam(3, $archivo, PDO::PARAM_STR);
+		$stmt->bindParam(4, $_POST["nitI"], PDO::PARAM_STR);
+		$stmt->bindParam(5, $_POST["nomInstI"], PDO::PARAM_STR);
+		$stmt->bindParam(6, $_POST["direccionI"], PDO::PARAM_STR);
+		$stmt->bindParam(7, $_POST["telI"], PDO::PARAM_STR);
+		$stmt->bindParam(8, $_POST["calseI"], PDO::PARAM_STR);
+		$stmt->bindParam(9, $_POST["caracterI"], PDO::PARAM_STR);
+		$stmt->bindParam(10, $_POST["calendarioI"], PDO::PARAM_STR);
+		$stmt->bindParam(11, $_POST["jornadaI"], PDO::PARAM_STR);
+		$stmt->bindParam(12, $_POST["horarioI"], PDO::PARAM_STR);
+		$stmt->bindParam(13, $_POST["nivelesI"], PDO::PARAM_STR);
+		$stmt->bindParam(14, $_POST["modalidadI"], PDO::PARAM_STR);
+		$stmt->bindParam(15, $_POST["propietarioI"], PDO::PARAM_STR);
+		$stmt->bindParam(16, $_POST["coordinadorI"], PDO::PARAM_STR);
+		$stmt->bindParam(17, $_POST["tesoreroI"], PDO::PARAM_STR);
+		$stmt->bindParam(18, $_POST["ciudad"], PDO::PARAM_STR);
+		$stmt->bindParam(19, $_POST["dane"], PDO::PARAM_STR);
+		$stmt->bindParam(20, $_POST["resolucion"], PDO::PARAM_STR);
+		$stmt->bindParam(21, $_POST["decretos"], PDO::PARAM_STR);
+		$stmt->bindParam(22, $_POST["idCI"], PDO::PARAM_STR);
+		$stmt->execute();
+		
+		$sqlInfo = "SELECT * FROM ".$baseDatosServicios.".general_informacion
+		            LEFT JOIN ".$baseDatosServicios.".localidad_ciudades ON ciu_id=info_ciudad
+		            LEFT JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
+		            WHERE info_institucion=? AND info_year=?";
+		$stmtInfo = $conexionPDO->prepare($sqlInfo);
+		$stmtInfo->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
+		$stmtInfo->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
+		$stmtInfo->execute();
+		$informacion_inst = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+		$_SESSION["informacionInstConsulta"] = $informacion_inst;
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}
-
-	try{
-		$informacionInstConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_informacion
-		LEFT JOIN ".$baseDatosServicios.".localidad_ciudades ON ciu_id=info_ciudad
-		LEFT JOIN ".$baseDatosServicios.".localidad_departamentos ON dep_id=ciu_departamento
-		WHERE info_institucion='" . $config['conf_id_institucion'] . "' AND info_year='" . $_SESSION["bd"] . "'");
-	} catch (Exception $e) {
-		include("../compartido/error-catch-to-report.php");
-	}
-	$informacion_inst = mysqli_fetch_array($informacionInstConsulta, MYSQLI_BOTH);
-	$_SESSION["informacionInstConsulta"] = $informacion_inst;
 
 	include("../compartido/guardar-historial-acciones.php");
 	echo '<script type="text/javascript">window.location.href="' . $_SERVER['HTTP_REFERER'] . '";</script>';

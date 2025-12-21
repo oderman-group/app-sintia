@@ -48,12 +48,34 @@ while($matriculadosDatos = mysqli_fetch_array($matriculadosPorCurso, MYSQLI_BOTH
 	<?php
 		//exit();
 	}
+// Configuración de visualización y tamaño del logo, y puesto del curso
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+$mostrarLogoEncabezado = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_encabezado']) ? (int)$_GET['mostrar_logo_encabezado'] : 0)
+    : 1; // Por defecto visible
+$mostrarPuestoCurso = $formularioEnviado 
+    ? (isset($_GET['mostrar_puesto_curso']) ? (int)$_GET['mostrar_puesto_curso'] : 0)
+    : 1; // Por defecto visible
+
+// Tamaño del logo (ancho y alto en px, alto 0 = auto)
+$logoAncho = $formularioEnviado && isset($_GET['logo_ancho']) && is_numeric($_GET['logo_ancho'])
+    ? (int)$_GET['logo_ancho']
+    : 200; // Por defecto 200px
+$logoAlto = $formularioEnviado && isset($_GET['logo_alto']) && is_numeric($_GET['logo_alto'])
+    ? (int)$_GET['logo_alto']
+    : 150; // Por defecto 150px
+
 $contp = 1;
-$puestoCurso = 0;	
-$puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
-foreach($puestos as $puesto){
-	if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){$puestoCurso = $contp;}
-	$contp ++;
+$puestoCurso = 0;
+$numMatriculados = 0;
+if($mostrarPuestoCurso){
+    $puestos = Boletin::obtenerPuestoYpromedioEstudiante($periodoActual,$matriculadosDatos['mat_grado'], $matriculadosDatos['mat_grupo'], $year);
+    $numMatriculados = count($puestos);
+    foreach($puestos as $puesto){
+        if($puesto['estudiante_id']==$matriculadosDatos['mat_id']){$puestoCurso = $contp;}
+        $contp ++;
+    }
 }
 //======================= DATOS DEL ESTUDIANTE MATRICULADO =========================
 $usr =Estudiantes::obtenerDatosEstudiantesParaBoletin($matriculadosDatos['mat_id'],$year);
@@ -63,6 +85,8 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
+	<title>Boletín Formato 10</title>
+	<link rel="shortcut icon" href="../sintia-icono.png" />
 	<meta name="tipo_contenido"  content="text/html;" http-equiv="content-type" charset="utf-8">
 	<style>
     	#saltoPagina{PAGE-BREAK-AFTER: always;}
@@ -72,14 +96,53 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 
 <body style="font-family:Arial; font-size:9px;">
 
+<!-- Formulario de configuración -->
+<div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_REQUEST["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_REQUEST["curso"]).'">';
+        if(!empty($_REQUEST["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_REQUEST["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_logo_encabezado" value="1" <?= $mostrarLogoEncabezado ? 'checked' : '' ?>>
+            Mostrar logo del encabezado
+        </label>
+        <div style="margin: 15px 0;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Tamaño del Logo:</label>
+            <label style="display: block; margin-bottom: 5px;">
+                Ancho (px): <input type="number" name="logo_ancho" value="<?= $logoAncho ?>" min="1" style="width: 60px;">
+            </label>
+            <label style="display: block; margin-bottom: 5px;">
+                Alto (px, 0=auto): <input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="0" style="width: 60px;">
+            </label>
+        </div>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_puesto_curso" value="1" <?= $mostrarPuestoCurso ? 'checked' : '' ?>>
+            Mostrar puesto del curso
+        </label>
+        <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+    </form>
+</div>
+<style>
+    @media print {
+        .config-boletin-form { display: none !important; }
+    }
+</style>
+
 <div>
 	
-	<!--<div align="center" style="margin-bottom: 10px;"><img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="350"></div>-->
-	
+	<?php if($mostrarLogoEncabezado): ?>
 	<div align="center" style="margin-bottom: 10px;">
-    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" height="150" width="200"><br>
+    <img src="../files/images/logo/<?=$informacion_inst["info_logo"]?>" width="<?= $logoAncho ?>" <?= $logoAlto > 0 ? 'height="'.$logoAlto.'"' : '' ?>><br>
     <!-- <?=$informacion_inst["info_nombre"]?><br>
     BOLETÍN DE CALIFICACIONES<br> --></div>
+	<?php endif; ?>
     
 	<div style="width:100%">
         <table width="100%" cellspacing="5" cellpadding="5" border="1" rules="all">
@@ -87,7 +150,7 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
                 <td>C&oacute;digo:<br> <?=strpos($datosUsr["mat_documento"], '.') !== true && is_numeric($datosUsr["mat_documento"]) ? number_format($datosUsr["mat_documento"],0,",",".") : $datosUsr["mat_documento"];?></td>
                 <td>Nombre:<br> <?=$nombre?></td>
                 <td>Grado:<br> <?=$datosUsr["gra_nombre"]." ".$datosUsr["gru_nombre"];?></td>
-                <td>Puesto Curso:<br> <?=$puestoCurso;?></td>
+                <td>Puesto Curso:<br> <?php if($mostrarPuestoCurso): ?><?=$puestoCurso;?><?php else: ?>&nbsp;<?php endif; ?></td>
             </tr>
             
             <tr>
@@ -109,12 +172,8 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
             
             <?php  
 			for($j=1;$j<=$periodoActual;$j++){
-				$periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosUsr['gra_id'], $j);
-				
-				$porcentajeGrado=25;
-				if(!empty($periodosCursos['gvp_valor'])){
-					$porcentajeGrado=$periodosCursos['gvp_valor'];
-				}
+				// OPTIMIZACIÓN: Obtener porcentaje del mapa pre-cargado
+				$porcentajeGrado = $porcentajesPeriodoMapa[$j] ?? 25;
 			?>
                 <td width="3%" colspan="2"><a href="<?=$_SERVER['PHP_SELF'];?>?id=<?=$datosUsr['mat_id'];?>&periodo=<?=$j?>" style="color:#000; text-decoration:none;">Periodo <?=$j."<br>(".$porcentajeGrado."%)"?></a></td>
             <?php }?>
@@ -138,6 +197,194 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 	$materiasPerdidas = 0;
 	$colspan = 2 + (2 * $periodoActual);
     $conAreas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $datosUsr['mat_grado'], $datosUsr['mat_grupo'], $year);
+	
+	// ============================================
+	// OPTIMIZACIONES: Pre-cargar datos para evitar N+1 queries
+	// ============================================
+	
+	// OPTIMIZACIÓN 1: Pre-cargar porcentajes por período
+	$porcentajesPeriodoMapa = []; // [periodo] => porcentaje
+	for($j=1; $j<=$periodoActual; $j++){
+		$periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosUsr['gra_id'], $j);
+		$porcentajesPeriodoMapa[$j] = !empty($periodosCursos['gvp_valor']) ? (float)$periodosCursos['gvp_valor'] : 25;
+	}
+	
+	// OPTIMIZACIÓN 2: Pre-cargar todas las notas del boletín para este estudiante y todos los períodos
+	$notasBoletinMapa = []; // [carga][periodo] => datos_nota
+	try {
+		$sqlNotas = "SELECT bol_carga, bol_periodo, bol_nota, bol_observaciones_boletin, notip_nombre
+					 FROM " . BD_ACADEMICA . ".academico_boletin bol
+					 LEFT JOIN " . BD_ACADEMICA . ".academico_notas_tipos notip 
+					     ON notip.notip_categoria = '".mysqli_real_escape_string($conexion, $config['conf_notas_categoria'])."'
+					     AND bol.bol_nota >= notip.notip_desde 
+					     AND bol.bol_nota <= notip.notip_hasta
+					     AND notip.institucion = bol.institucion
+					     AND notip.year = bol.year
+					 WHERE bol.bol_estudiante = ?
+					   AND bol.institucion = ?
+					   AND bol.year = ?
+					   AND bol.bol_periodo <= ?";
+		$paramNotas = [
+			$datosUsr['mat_id'],
+			$config['conf_id_institucion'],
+			$year,
+			$periodoActual
+		];
+		$resNotas = BindSQL::prepararSQL($sqlNotas, $paramNotas);
+		while ($rowNota = mysqli_fetch_array($resNotas, MYSQLI_BOTH)) {
+			$idCarga = $rowNota['bol_carga'];
+			$per = (int)$rowNota['bol_periodo'];
+			if (!isset($notasBoletinMapa[$idCarga])) {
+				$notasBoletinMapa[$idCarga] = [];
+			}
+			$notasBoletinMapa[$idCarga][$per] = $rowNota;
+		}
+	} catch (Exception $eNotas) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 3: Pre-cargar todas las ausencias para este estudiante y todos los períodos
+	$ausenciasMapa = []; // [carga][periodo] => suma_ausencias
+	try {
+		// Obtener todas las cargas del estudiante
+		$idsCargas = [];
+		mysqli_data_seek($conAreas, 0);
+		while ($areaTemp = mysqli_fetch_array($conAreas, MYSQLI_BOTH)) {
+			$conCargasTemp = CargaAcademica::traerCargasAreasPorCursoGrupo($config, $datosUsr['mat_grado'], $datosUsr['mat_grupo'], $areaTemp['ar_id'], $year);
+			while ($cargaTemp = mysqli_fetch_array($conCargasTemp, MYSQLI_BOTH)) {
+				if (!in_array($cargaTemp['car_id'], $idsCargas)) {
+					$idsCargas[] = $cargaTemp['car_id'];
+				}
+			}
+		}
+		mysqli_data_seek($conAreas, 0);
+		
+		if (!empty($idsCargas)) {
+			$idEstudianteEsc = mysqli_real_escape_string($conexion, $datosUsr['mat_id']);
+			$inCargas = implode(',', array_map('intval', $idsCargas));
+			$institucion = (int)$config['conf_id_institucion'];
+			$yearEsc = mysqli_real_escape_string($conexion, $year);
+			$periodoEsc = (int)$periodoActual;
+			
+			for($j=1; $j<=$periodoEsc; $j++){
+				$sqlAusencias = "SELECT cls.cls_id_carga, SUM(aus.aus_ausencias) as total_ausencias
+								 FROM " . BD_ACADEMICA . ".academico_clases cls
+								 INNER JOIN " . BD_ACADEMICA . ".academico_ausencias aus 
+								     ON aus.aus_id_clase = cls.cls_id 
+								     AND aus.aus_id_estudiante = '{$idEstudianteEsc}'
+								     AND aus.institucion = cls.institucion 
+								     AND aus.year = cls.year
+								 WHERE cls.cls_id_carga IN ({$inCargas})
+								   AND cls.cls_periodo = {$j}
+								   AND cls.institucion = {$institucion}
+								   AND cls.year = '{$yearEsc}'
+								 GROUP BY cls.cls_id_carga";
+				
+				$consultaAusencias = mysqli_query($conexion, $sqlAusencias);
+				if($consultaAusencias){
+					while($rowAus = mysqli_fetch_array($consultaAusencias, MYSQLI_BOTH)){
+						$idCarga = $rowAus['cls_id_carga'];
+						if (!isset($ausenciasMapa[$idCarga])) {
+							$ausenciasMapa[$idCarga] = [];
+						}
+						$ausenciasMapa[$idCarga][$j] = (float)$rowAus['total_ausencias'];
+					}
+				}
+			}
+		}
+	} catch (Exception $eAus) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 4: Pre-cargar indicadores y notas de indicadores para todas las cargas
+	$indicadoresMapa = []; // [car_id] => array de indicadores
+	$notasIndicadoresMapa = []; // [car_id][indicador] => nota
+	try {
+		mysqli_data_seek($conAreas, 0);
+		while ($areaTemp = mysqli_fetch_array($conAreas, MYSQLI_BOTH)) {
+			$conCargasTemp = CargaAcademica::traerCargasAreasPorCursoGrupo($config, $datosUsr['mat_grado'], $datosUsr['mat_grupo'], $areaTemp['ar_id'], $year);
+			while ($cargaTemp = mysqli_fetch_array($conCargasTemp, MYSQLI_BOTH)) {
+				$idCarga = $cargaTemp['car_id'];
+				if (!isset($indicadoresMapa[$idCarga])) {
+					$indicadoresMapa[$idCarga] = [];
+					$indicadoresTemp = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $idCarga, $periodoActual, $year);
+					while ($indTemp = mysqli_fetch_array($indicadoresTemp, MYSQLI_BOTH)) {
+						$indicadoresMapa[$idCarga][] = $indTemp;
+						// Pre-cargar nota del indicador
+						$notaIndTemp = Calificaciones::consultaNotaIndicadores($config, $indTemp['ipc_indicador'], $idCarga, $datosUsr['mat_id'], $periodoActual, $year);
+						if (!isset($notasIndicadoresMapa[$idCarga])) {
+							$notasIndicadoresMapa[$idCarga] = [];
+						}
+						$notasIndicadoresMapa[$idCarga][$indTemp['ipc_indicador']] = $notaIndTemp;
+					}
+				}
+			}
+		}
+		mysqli_data_seek($conAreas, 0);
+	} catch (Exception $eInd) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 5: Pre-cargar promedios por período
+	$promediosPeriodosMapa = []; // [periodo] => promedio
+	try {
+		$idEstudianteEsc = mysqli_real_escape_string($conexion, $datosUsr['mat_id']);
+		$gradoEsc = mysqli_real_escape_string($conexion, $datosUsr['mat_grado']);
+		$grupoEsc = mysqli_real_escape_string($conexion, $datosUsr['mat_grupo']);
+		$institucion = (int)$config['conf_id_institucion'];
+		$yearEsc = mysqli_real_escape_string($conexion, $year);
+		
+		for($j=1; $j<=$periodoActual; $j++){
+			$sqlPromedio = "SELECT ROUND(AVG(bol_nota),2) as promedio 
+							FROM ".BD_ACADEMICA.".academico_boletin bol
+							INNER JOIN ".BD_ACADEMICA.".academico_cargas car 
+								ON car_id=bol_carga 
+								AND car_curso='{$gradoEsc}' 
+								AND car_grupo='{$grupoEsc}' 
+								AND car.institucion={$institucion} 
+								AND car.year='{$yearEsc}'
+							INNER JOIN ".BD_ACADEMICA.".academico_materias mat 
+								ON mat_id=car_materia 
+								AND mat_sumar_promedio='SI' 
+								AND mat.institucion={$institucion} 
+								AND mat.year='{$yearEsc}'
+							WHERE bol_estudiante='{$idEstudianteEsc}' 
+								AND bol_periodo='{$j}' 
+								AND bol.institucion={$institucion} 
+								AND bol.year='{$yearEsc}'";
+			$consultaPromedio = mysqli_query($conexion, $sqlPromedio);
+			if($consultaPromedio){
+				$rowProm = mysqli_fetch_array($consultaPromedio, MYSQLI_BOTH);
+				$promediosPeriodosMapa[$j] = !empty($rowProm['promedio']) ? (float)$rowProm['promedio'] : 0;
+			}
+		}
+	} catch (Exception $eProm) {
+		include("../compartido/error-catch-to-report.php");
+	}
+	
+	// OPTIMIZACIÓN 6: Pre-cargar cache de notas cualitativas
+	$notasCualitativasCache = [];
+	if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+		$consultaNotasTipo = mysqli_query($conexion, 
+			"SELECT notip_desde, notip_hasta, notip_nombre 
+			 FROM ".BD_ACADEMICA.".academico_notas_tipos 
+			 WHERE notip_categoria='".mysqli_real_escape_string($conexion, $config['conf_notas_categoria'])."' 
+			 AND institucion=".(int)$config['conf_id_institucion']." 
+			 AND year='".mysqli_real_escape_string($conexion, $year)."' 
+			 ORDER BY notip_desde ASC");
+		if($consultaNotasTipo){
+			while($tipoNota = mysqli_fetch_array($consultaNotasTipo, MYSQLI_BOTH)){
+				// Pre-cargar cache para todos los valores posibles (de 0.1 en 0.1)
+				for($i = $tipoNota['notip_desde']; $i <= $tipoNota['notip_hasta']; $i += 0.1){
+					$key = number_format((float)$i, $config['conf_decimales_notas'], '.', '');
+					if(!isset($notasCualitativasCache[$key])){
+						$notasCualitativasCache[$key] = $tipoNota['notip_nombre'];
+					}
+				}
+			}
+		}
+	}
+	
 	while($datosAreas = mysqli_fetch_array($conAreas, MYSQLI_BOTH)){
 	?>
     <tbody>
@@ -162,54 +409,67 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 			$promedioMateria = 0;
 			$sumaPorcentaje = 0;
 			for($j=1;$j<=$periodoActual;$j++){
-				$periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosUsr['gra_id'], $j);
-				
-				$porcentajeGrado=25;
-				if(!empty($periodosCursos['gvp_valor'])){
-					$porcentajeGrado=$periodosCursos['gvp_valor'];
-				}
-
+				// OPTIMIZACIÓN: Obtener porcentaje del mapa pre-cargado
+				$porcentajeGrado = $porcentajesPeriodoMapa[$j] ?? 25;
 				$decimal = $porcentajeGrado/100;
 				
-                $datosBoletin = Boletin::traerNotaBoletinCargaPeriodo($config, $j, $datosUsr['mat_id'], $datosCargas['car_id'], $year);
+				// OPTIMIZACIÓN: Obtener nota del mapa pre-cargado
+				$datosBoletin = $notasBoletinMapa[$datosCargas['car_id']][$j] ?? null;
+				if($datosBoletin === null){
+					// Fallback: consulta individual si no está en el mapa
+					$resTemp = Boletin::traerNotaBoletinCargaPeriodo($config, $j, $datosUsr['mat_id'], $datosCargas['car_id'], $year);
+					if($resTemp){
+						$datosBoletin = mysqli_fetch_array($resTemp, MYSQLI_BOTH);
+					} else {
+						$datosBoletin = ['bol_nota' => 0, 'notip_nombre' => ''];
+					}
+				}
 				
-				$consultaAusencias=mysqli_query($conexion, "SELECT sum(aus_ausencias) FROM ".BD_ACADEMICA.".academico_clases cls 
-                INNER JOIN ".BD_ACADEMICA.".academico_ausencias aus ON aus.aus_id_clase=cls.cls_id AND aus.aus_id_estudiante<='".$datosUsr['mat_id']."' AND aus.institucion={$config['conf_id_institucion']} AND aus.year={$year}
-                WHERE cls.cls_id_carga='".$datosCargas['car_id']."' AND cls.cls_periodo='".$j."' AND cls.institucion={$config['conf_id_institucion']} AND cls.year={$year}");
-				$datosAusencias = mysqli_fetch_array($consultaAusencias, MYSQLI_BOTH);
+				// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado (aunque no se usan en este archivo, las pre-cargamos por si acaso)
+				$datosAusencias = [0 => ($ausenciasMapa[$datosCargas['car_id']][$j] ?? 0)];
 				
-				$promedioMateria +=$datosBoletin['bol_nota']*$decimal;
+				$promedioMateria += !empty($datosBoletin['bol_nota']) ? (float)$datosBoletin['bol_nota']*$decimal : 0;
 				$sumaPorcentaje += $decimal;
 				$colorFondoNota = '';
-				if($datosBoletin['bol_nota']!="" and $datosBoletin['bol_nota']<$config["conf_nota_minima_aprobar"]){$colorFondoNota = 'tomato';}
+				if(!empty($datosBoletin['bol_nota']) && $datosBoletin['bol_nota']<$config["conf_nota_minima_aprobar"]){$colorFondoNota = 'tomato';}
             ?>
 
-                <td align="center" style="background-color: <?=$colorFondoNota;?>;"><?=$datosBoletin['bol_nota'];?></td>
-                <td align="center"><?=$datosBoletin['notip_nombre'];?></td>
+                <td align="center" style="background-color: <?=$colorFondoNota;?>;"><?=!empty($datosBoletin['bol_nota']) ? Boletin::notaDecimales((float)$datosBoletin['bol_nota']) : '';?></td>
+                <td align="center"><?=!empty($datosBoletin['notip_nombre']) ? $datosBoletin['notip_nombre'] : '';?></td>
             <?php 
 			}
-			$promedioMateria = ($promedioMateria / $sumaPorcentaje);
-			$promedioMateria = round(($promedioMateria), $config['conf_decimales_notas']);
+			$promedioMateria = $sumaPorcentaje > 0 ? ($promedioMateria / $sumaPorcentaje) : 0;
+			// Formatear promedio de la materia con decimales configurados
+			$promedioMateriaFormateado = Boletin::notaDecimales($promedioMateria);
 			
 			$colorFondoPromedioM = '';
-			if($promedioMateria!="" and $promedioMateria<$config["conf_nota_minima_aprobar"]){$colorFondoPromedioM = 'tomato'; $materiasPerdidas++;}
+			if($promedioMateria!="" && $promedioMateria<$config["conf_nota_minima_aprobar"]){$colorFondoPromedioM = 'tomato'; $materiasPerdidas++;}
 			
-			$promediosMateriaEstiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioMateria, $year);
+			// OPTIMIZACIÓN: Usar cache de notas cualitativas
+			$notaMateriaRedondeada = number_format($promedioMateria, $config['conf_decimales_notas'], '.', '');
+			$promediosMateriaEstiloNota = isset($notasCualitativasCache[$notaMateriaRedondeada]) 
+				? ['notip_nombre' => $notasCualitativasCache[$notaMateriaRedondeada]] 
+				: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioMateria, $year);
+			if($promediosMateriaEstiloNota === null){
+				$promediosMateriaEstiloNota = ['notip_nombre' => ''];
+			}
 			?>
-            <td align="center" style="background-color: <?=$colorFondoPromedioM;?>"><?=$promedioMateria;?></td>
+            <td align="center" style="background-color: <?=$colorFondoPromedioM;?>"><?=$promedioMateriaFormateado;?></td>
             <td align="center"><?=$promediosMateriaEstiloNota['notip_nombre'];?></td>
 
         </tr>
 		
 		
 		<?php
-		$indicadores = Indicadores::traerCargaIndicadorPorPeriodo($conexion, $config, $datosCargas['car_id'], $periodoActual, $year);
-		while($ind = mysqli_fetch_array($indicadores, MYSQLI_BOTH)){
-			$calificacionesIndicadores = Calificaciones::consultaNotaIndicadores($config, $ind['ipc_indicador'], $datosCargas['car_id'], $datosUsr['mat_id'], $periodoActual, $year);
+		// OPTIMIZACIÓN: Obtener indicadores del mapa pre-cargado
+		$indicadores = $indicadoresMapa[$datosCargas['car_id']] ?? [];
+		foreach($indicadores as $ind){
+			// OPTIMIZACIÓN: Obtener nota del indicador del mapa pre-cargado
+			$calificacionesIndicadores = $notasIndicadoresMapa[$datosCargas['car_id']][$ind['ipc_indicador']] ?? [0 => 0];
 		?>
 		<!-- INDICADORES -->
 		<tr>
-            <td><?=$ind['ipc_indicador'].") ".$ind['ind_nombre'];?></td>
+            <td><?=$ind['ind_nombre'];?></td>
             <td align="center"><?=$ind['ipc_valor']."%";?></td> 
             <?php 
 			$promedioMateria = 0;
@@ -217,10 +477,19 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 
 				$notaIndicadorFinal="&nbsp;";
 				if($j==$periodoActual){
-					$notaIndicadorFinal=$calificacionesIndicadores[0];
-					if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-						$estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $calificacionesIndicadores[0], $year);
-						$notaIndicadorFinal= !empty($estiloNota['notip_nombre']) ? $estiloNota['notip_nombre'] : "";
+					if(!empty($calificacionesIndicadores[0])){
+						// Formatear nota del indicador con decimales configurados
+						$notaIndicadorFormateada = Boletin::notaDecimales((float)$calificacionesIndicadores[0]);
+						$notaIndicadorFinal = $notaIndicadorFormateada;
+						if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
+							// OPTIMIZACIÓN: Usar cache de notas cualitativas
+							$notaIndRedondeada = number_format((float)$calificacionesIndicadores[0], $config['conf_decimales_notas'], '.', '');
+							$notaIndicadorFinal = isset($notasCualitativasCache[$notaIndRedondeada]) 
+								? $notasCualitativasCache[$notaIndRedondeada] 
+								: "";
+						}
+					} else {
+						$notaIndicadorFinal = "&nbsp;";
 					}
 				}
             ?>
@@ -252,16 +521,21 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 
             <?php 
             for($j=1;$j<=$periodoActual;$j++){
-				$consultaPromediosPeriodos=mysqli_query($conexion, "SELECT ROUND(AVG(bol_nota),2) as promedio FROM ".BD_ACADEMICA.".academico_boletin  bol
-                INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=bol_carga AND car_curso='".$datosUsr['mat_grado']."' AND car_grupo='".$datosUsr['mat_grupo']."' AND car.institucion={$config['conf_id_institucion']} AND car.year={$year}
-                INNER JOIN ".BD_ACADEMICA.".academico_materias mat ON mat_id=car_materia AND mat_sumar_promedio='SI' AND mat.institucion={$config['conf_id_institucion']} AND mat.year={$year}
-                WHERE bol_estudiante='".$datosUsr['mat_id']."' AND bol_periodo='".$j."' AND bol.institucion={$config['conf_id_institucion']} AND bol.year={$year}");
-				$promediosPeriodos = mysqli_fetch_array($consultaPromediosPeriodos, MYSQLI_BOTH);
+				// OPTIMIZACIÓN: Obtener promedio del mapa pre-cargado
+				$promedioPeriodo = $promediosPeriodosMapa[$j] ?? 0;
+				$promedioPeriodoFormateado = Boletin::notaDecimales($promedioPeriodo);
 				
-				$promediosEstiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promediosPeriodos['promedio'], $year);
+				// OPTIMIZACIÓN: Usar cache de notas cualitativas
+				$promedioRedondeado = number_format($promedioPeriodo, $config['conf_decimales_notas'], '.', '');
+				$promediosEstiloNota = isset($notasCualitativasCache[$promedioRedondeado]) 
+					? ['notip_nombre' => $notasCualitativasCache[$promedioRedondeado]] 
+					: Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioPeriodo, $year);
+				if($promediosEstiloNota === null){
+					$promediosEstiloNota = ['notip_nombre' => ''];
+				}
             ?>
-                <td><?=$promediosPeriodos['promedio'];?></td>
-                <td><?=$promediosEstiloNota['notip_nombre'];?></td>
+                <td><?=$promedioPeriodoFormateado;?></td>
+                <td><?=!empty($promediosEstiloNota['notip_nombre']) ? $promediosEstiloNota['notip_nombre'] : '';?></td>
             <?php }?>
 
             <td>-</td>

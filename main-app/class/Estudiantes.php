@@ -11,10 +11,11 @@ class Estudiantes {
 
     public const MAXIMOS_ESTUDIANTES_CURSO = 50;
     
-    public const CREAR_MATRICULA   = 'CREAR_MATRICULA';
-    public const IMPORTAR_EXCEL    = 'IMPORTAR_EXCEL';
-    public const AUTO_INSCRIPCION  = 'AUTO_INSCRIPCION';
-    public const MOVIDO            = 'MOVIDO';
+    public const CREAR_MATRICULA    = 'CREAR_MATRICULA';
+    public const IMPORTAR_EXCEL     = 'IMPORTAR_EXCEL';
+    public const IMPORTAR_EXCEL_JOB = 'IMPORTAR_EXCEL_JOB';
+    public const AUTO_INSCRIPCION   = 'AUTO_INSCRIPCION';
+    public const MOVIDO             = 'MOVIDO';
 
     // Estados de la matrícula de un estudiante
     public const ESTADO_MATRICULADO    = 1;
@@ -101,18 +102,27 @@ class Estudiantes {
                         AND gru.institucion     = mat.institucion 
                         AND gru.year            = mat.year
 
-                        LEFT JOIN ".BD_ADMIN.".opciones_generales 
-                        ON ogen_id              = mat.mat_genero
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_tipo_doc
+                        ON og_tipo_doc.ogen_id  = mat.mat_tipo_documento
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_genero
+                        ON og_genero.ogen_id    = mat.mat_genero
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_estrato
+                        ON og_estrato.ogen_id   = mat.mat_estrato
+                        
+                        LEFT JOIN ".BD_ADMIN.".opciones_generales og_tipo_sangre
+                        ON og_tipo_sangre.ogen_id = mat.mat_tipo_sangre
                         
                         LEFT JOIN ".BD_ADMIN.".localidad_ciudades 
                         ON ciu_id               = mat.mat_lugar_nacimiento
-
+                        
                         LEFT JOIN ".BD_GENERAL.".usuarios  acud
                         ON acud.institucion          = mat.institucion
 						AND acud.year                = mat.year
 						AND acud.uss_id              = mat.mat_acudiente
                         
-                        WHERE mat.mat_eliminado IN (0, '".$eliminados."') 
+                        WHERE mat.mat_eliminado IN (0, ?) 
                         AND mat.institucion     = ? 
                         AND mat.year            = ?
                         
@@ -123,7 +133,7 @@ class Estudiantes {
 
                         {$filtroLimite}";
         
-                $parametros = [$config['conf_id_institucion'], $_SESSION["bd"]];
+                $parametros = [$eliminados, $config['conf_id_institucion'], $_SESSION["bd"]];
                 
                 $resultado = BindSQL::prepararSQL($sql, $parametros);
             }else{
@@ -362,8 +372,11 @@ class Estudiantes {
         $resultado = [];
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $doctSinPuntos = strpos($estudiante, '.') == true ? str_replace('.', '', $estudiante) : $estudiante;
-        $doctConPuntos = strpos($estudiante, '.') !== true && is_numeric($estudiante) ? str_replace('.', '', $estudiante) : $estudiante;
+        // Validar que estudiante no sea null o vacío
+        $estudianteStr = !empty($estudiante) ? (string)$estudiante : '';
+        
+        $doctSinPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') !== false ? str_replace('.', '', $estudianteStr) : $estudianteStr;
+        $doctConPuntos = !empty($estudianteStr) && strpos($estudianteStr, '.') === false && is_numeric($estudianteStr) ? str_replace('.', '', $estudianteStr) : $estudianteStr;
 
         try {
             $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat
@@ -376,9 +389,7 @@ class Estudiantes {
             $parametros = [$estudiante, $doctSinPuntos, $doctConPuntos, $estudiante, $config['conf_id_institucion'], $year];
             $consulta = BindSQL::prepararSQL($sql, $parametros);
             $num = mysqli_num_rows($consulta);
-            if($num == 0){
-                echo "Estás intentando obtener datos de un estudiante que no existe: ".$estudiante."<br>";
-            }
+            // Removido el mensaje de error - el código que llama a esta función debe validar si el estudiante existe
             $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
         } catch (Exception $e) {
             echo "Excepción catpurada: ".$e->getMessage();
@@ -397,9 +408,14 @@ class Estudiantes {
      */
     public static function NombreCompletoDelEstudiante(array $estudiante){
         global $config;
+        $nombre = '';
+        
         switch ($config['conf_orden_nombre_estudiantes']) {
             case '2':
-                $nombre = trim($estudiante['mat_nombres']);
+                // Orden: Apellidos + Nombres
+                if (!empty($estudiante['mat_nombres'])) {
+                    $nombre = trim($estudiante['mat_nombres']);
+                }
                 if (!empty($estudiante['mat_nombre2'])) {
                     $nombre .= " " . trim($estudiante['mat_nombre2']);
                 }
@@ -411,8 +427,11 @@ class Estudiantes {
                 }
                 break;
             case '1':
-                $nombre = trim($estudiante['mat_nombres']);
-                
+            default:
+                // Orden: Nombres + Apellidos
+                if (!empty($estudiante['mat_nombres'])) {
+                    $nombre = trim($estudiante['mat_nombres']);
+                }
                 if (!empty($estudiante['mat_nombre2'])) {
                     $nombre .= " " . trim($estudiante['mat_nombre2']);
                 }
@@ -422,12 +441,10 @@ class Estudiantes {
                 if (!empty($estudiante['mat_segundo_apellido'])) {
                     $nombre .= " " .trim($estudiante['mat_segundo_apellido']);
                 }
-                
-               
                 break;
         }
 
-        return strtoupper($nombre);
+        return !empty($nombre) ? strtoupper($nombre) : 'SIN NOMBRE';
     }
 
     /**
@@ -661,6 +678,91 @@ class Estudiantes {
     }
 
     /**
+     * Valida si un cambio de estado de matrícula es permitido según las reglas de negocio.
+     * 
+     * Reglas de validación:
+     * - En Inscripción (5): No puede modificarse (se gestiona automáticamente)
+     * - Asistente (2): Solo puede cambiar a Matriculado (1)
+     * - No matriculado (4): Solo puede cambiar a Matriculado (1)
+     * - Matriculado (1): No puede cambiar a No matriculado (4)
+     * - Cancelado (3): Se gestiona automáticamente desde otros módulos
+     * 
+     * @param int $estadoActual Estado actual de la matrícula del estudiante
+     * @param int $estadoNuevo Estado nuevo que se desea asignar
+     * 
+     * @return array Array con las claves:
+     *               - 'valido' (bool): true si el cambio es permitido, false en caso contrario
+     *               - 'mensaje' (string): Mensaje descriptivo del error si el cambio no es permitido, vacío si es válido
+     */
+    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo): array
+    {
+        // Si el estado no cambia, es válido
+        if ($estadoActual === $estadoNuevo) {
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // En Inscripción (5): No puede modificarse
+        if ($estadoActual === self::ESTADO_EN_INSCRIPCION) {
+            return [
+                'valido' => false,
+                'mensaje' => 'El estado "En inscripción" no puede modificarse. Se gestiona automáticamente desde el módulo de admisiones.'
+            ];
+        }
+
+        // Cancelado (3): Se gestiona automáticamente desde otros módulos
+        if ($estadoActual === self::ESTADO_CANCELADO) {
+            return [
+                'valido' => false,
+                'mensaje' => 'El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.'
+            ];
+        }
+
+        // Asistente (2): Solo puede cambiar a Matriculado (1)
+        if ($estadoActual === self::ESTADO_ASISTENTE) {
+            if ($estadoNuevo !== self::ESTADO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Asistente" solo puede cambiar a estado "Matriculado".'
+                ];
+            }
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // No matriculado (4): Solo puede cambiar a Matriculado (1)
+        if ($estadoActual === self::ESTADO_NO_MATRICULADO) {
+            if ($estadoNuevo !== self::ESTADO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "No matriculado" solo puede cambiar a estado "Matriculado".'
+                ];
+            }
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2)
+        if ($estadoActual === self::ESTADO_MATRICULADO) {
+            if ($estadoNuevo === self::ESTADO_NO_MATRICULADO) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Matriculado" no puede cambiar a estado "No matriculado".'
+                ];
+            }
+            if ($estadoNuevo === self::ESTADO_ASISTENTE) {
+                return [
+                    'valido' => false,
+                    'mensaje' => 'Un estudiante en estado "Matriculado" no puede cambiar a estado "Asistente". Solo los estudiantes en estado "Asistente" pueden cambiar a "Matriculado".'
+                ];
+            }
+            // Matriculado puede cambiar a otros estados (Cancelado, etc.) pero no a Asistente ni No matriculado
+            return ['valido' => true, 'mensaje' => ''];
+        }
+
+        // Si no se cumple ninguna regla específica, permitir el cambio por defecto
+        // (para estados futuros o casos especiales)
+        return ['valido' => true, 'mensaje' => ''];
+    }
+
+    /**
      * Este metodo me actualiza el estado de un estudiante
      * @param string $idEstudiante
      * @param int $estadoMatricula
@@ -703,7 +805,9 @@ class Estudiantes {
      */
     public static function estudiantesMatriculados(
         string    $filtro      = '',
-        string $yearBd    = ''
+        string $yearBd    = '',
+        int $limit = 0,
+        int $offset = 0
     )
     {
         global $config;
@@ -711,15 +815,25 @@ class Estudiantes {
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
         $filtroCancelados = $config['conf_mostrar_estudiantes_cancelados'] == NO ? "AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.")" : " AND mat.mat_estado_matricula IN (".MATRICULADO.", ".ASISTENTE.", ".CANCELADO.")";
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas mat 
+        $limitClause = "";
+        if ($limit > 0) {
+            $limitClause = "LIMIT $limit";
+            if ($offset > 0) {
+                $limitClause .= " OFFSET $offset";
+            }
+        }
+
+        $sql = "SELECT mat.*, gra.gra_nombre, gra.gra_id, gra.gra_periodos, gru.gru_nombre, gru.gru_id
+        FROM ".BD_ACADEMICA.".academico_matriculas mat
         INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON mat.mat_grupo=gru.gru_id AND gru.institucion=mat.institucion AND gru.year=mat.year
-        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year 
-        WHERE mat.mat_eliminado=0 {$filtroCancelados} AND mat.institucion=? AND mat.year=? {$filtro} 
+        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON mat.mat_grado=gra.gra_id AND gra.institucion=mat.institucion AND gra.year=mat.year
+        WHERE mat.mat_eliminado=0 {$filtroCancelados} AND mat.institucion=? AND mat.year=? {$filtro}
         GROUP BY mat.mat_id
-        ORDER BY mat.mat_grupo, mat.mat_primer_apellido";
+        ORDER BY mat.mat_grupo, mat.mat_primer_apellido
+        {$limitClause}";
 
         $parametros = [$config['conf_id_institucion'], $year];
-        
+
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
         return $resultado;
@@ -752,9 +866,9 @@ class Estudiantes {
         $resultado = [];
         $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_matriculas am
+        $sql = "SELECT am.*, gru.*, gra.*, gra.gra_nivel FROM ".BD_ACADEMICA.".academico_matriculas am
         INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON am.mat_grupo=gru.gru_id AND gru.institucion=am.institucion AND gru.year=am.year
-        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON am.mat_grado=gra_id AND gra.institucion=am.institucion AND gra.year=am.year 
+        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON am.mat_grado=gra.gra_id AND gra.institucion=am.institucion AND gra.year=am.year 
         WHERE am.mat_id=? AND am.institucion=? AND am.year=?";
 
         $parametros = [$estudiante, $config['conf_id_institucion'], $year];
@@ -1209,6 +1323,20 @@ class Estudiantes {
         $grupoActual   = !empty($POST["grupoActual"]) ? $POST["grupoActual"] : null;
 
         try {
+            // Validar cambio de estado si se está modificando
+            if (!empty($id) && !empty($matestM)) {
+                $datosEstudianteActual = self::obtenerDatosEstudiante($id);
+                if (!empty($datosEstudianteActual)) {
+                    $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
+                    $estadoNuevo = (int)$matestM;
+                    
+                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+                    
+                    if (!$validacion['valido']) {
+                        throw new Exception($validacion['mensaje']);
+                    }
+                }
+            }
             
             $consulta = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
             mat_tipo_documento    = :tipoD, 
@@ -1476,24 +1604,31 @@ class Estudiantes {
 
         if (!empty($selectConsulta)) {
             $stringSelect = implode(", ", $selectConsulta);
-        };
+            // Si gra_nombre no está explícitamente en el SELECT, agregarlo
+            if (strpos($stringSelect, 'gra_nombre') === false && strpos($stringSelect, 'gra.gra_nombre') === false) {
+                $stringSelect .= ", gra.gra_nombre as gra_nombre";
+            }
+        } else {
+            // Si no hay selectConsulta, agregar gra_nombre al SELECT *
+            $stringSelect .= ", gra.gra_nombre as gra_nombre";
+        }
 
-        $sql = " SELECT 
-                 $stringSelect  
+        $sql = " SELECT DISTINCT
+                 $stringSelect
                  FROM ".BD_ACADEMICA.".academico_matriculas mat
 
                  INNER JOIN ".BD_ADMISIONES.".aspirantes asp
-                 ON asp_id    = mat.mat_solicitud_inscripcion
-                 AND asp_oculto = '".BDT_Aspirante::ESTADO_OCULTO_FALSO."'
+                 ON asp.asp_id = mat.mat_solicitud_inscripcion
+                 AND asp.asp_institucion = ?
                  
                  LEFT JOIN ".BD_ACADEMICA.".academico_grados gra 
-                 ON gra_id            = asp_grado 
-                 AND gra.institucion  = mat.institucion 
-                 AND gra.year         = mat.year
+                 ON gra.gra_id = asp.asp_grado 
+                 AND gra.institucion = mat.institucion
+                 AND gra.year = mat.year
 
                  WHERE mat.mat_estado_matricula = ".EN_INSCRIPCION." 
-                 AND mat.institucion            = ? 
-                 AND mat.year                   = ? 
+                 AND mat.institucion = ? 
+                 AND mat.year = ? 
                 
                  {$filtro}
                  
@@ -1501,7 +1636,7 @@ class Estudiantes {
                  
                  {$limite}";
 
-        $parametros = [$config['conf_id_institucion'], $year];
+        $parametros = [$config['conf_id_institucion'], $config['conf_id_institucion'], $year];
         
         $resultado = BindSQL::prepararSQL($sql, $parametros);
 
@@ -1877,7 +2012,11 @@ class Estudiantes {
         try {
             $sql = "
             SELECT 
-                mat.mat_id
+                mat.mat_id,
+                mat.mat_nombres,
+                mat.mat_nombre2,
+                mat.mat_primer_apellido,
+                mat.mat_segundo_apellido
             FROM ".BD_ACADEMICA.".academico_matriculas mat
             WHERE
                 mat_grado='".$datosCargaActual['car_curso']."'

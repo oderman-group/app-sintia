@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #41c4c4;">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
 	<!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
 	</button>
@@ -15,7 +15,9 @@
 			</li>
 		</ul> 
 	</div> -->
+	<?php if (!empty($resultado) && isset($resultado['fcu_id']) && !empty($resultado['fcu_id'])) { ?>
 	<a href="movimientos-factura-venta.php?id=<?=base64_encode($resultado['fcu_id']);?>" class="btn btn-danger" target="_blank">
 		<i class="fa fa-print"></i> Imprimir factura
 	</a>
+	<?php } ?>
 </nav><br>

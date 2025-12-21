@@ -362,7 +362,7 @@ class Asignaturas {
     )
     {
         $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_materias am
-        INNER JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id=am.mat_area AND ar.institucion=am.institucion AND ar.year=am.year
+        LEFT JOIN ".BD_ACADEMICA.".academico_areas ar ON ar.ar_id=am.mat_area AND ar.institucion=am.institucion AND ar.year=am.year
         WHERE am.institucion=? AND am.year=? {$filtro}
         ORDER BY am.mat_nombre";
 

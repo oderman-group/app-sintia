@@ -2,45 +2,127 @@
 require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
 require_once(ROOT_PATH."/main-app/class/Plataforma.php");
 require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+require_once ROOT_PATH.'/main-app/class/Tables/BDT_tablas.php';
+require_once ROOT_PATH.'/main-app/class/Tables/BDT_JoinImplements.php';
+require_once ROOT_PATH.'/main-app/class/Tables/BDT_Join.php';
 
-class Modulos {
+class Modulos extends BDT_Tablas implements BDT_JoinImplements{
 
-    public const MODULO_ACADEMICO                 = 1;
-    public const MODULO_FINANCIERO                = 2;
-    public const MODULO_DISCIPLINARIO             = 3;
-    public const MODULO_ADMINISTRATIVO            = 4;
-    public const MODULO_COMUNICATIVO              = 5;
-    public const MODULO_MERCADEO                  = 6;
-    public const MODULO_GENERAL                   = 7;
-    public const MODULO_ADMISIONES                = 8;
-    public const MODULO_RESERVA_CUPO              = 9;
-    public const MODULO_MEDIA_TECNICA             = 10;
-    public const MODULO_CLASES                    = 11; //También incluye las unidades temáticas
-    public const MODULO_EVALUACIONES              = 12;
-    public const MODULO_FOROS                     = 13;
-    public const MODULO_ACTIVIDAES                = 14; //Tareas para la casa
-    public const MODULO_CRONOGRAMA                = 15;
-    public const MODULO_SUB_ROLES                 = 16;
-    public const MODULO_MI_CUENTA                 = 17;
-    public const MODULO_CUESTIONARIOS             = 18;
-    public const MODULO_CARPETAS                  = 19;
-    public const MODULO_MARKETPLACE               = 20;
-    public const MODULO_IMPORTAR_INFO             = 21;
-    public const MODULO_INFORMES_BASE             = 22;
-    public const MODULO_CUALITATIVO               = 23; //Calificaciones cualitativas (Con descripción o solo desempeño)
-    public const MODULO_API_SION                  = 24; //Se conecta con el sistema SION de la UNAC
-    public const MODULO_NOT_NOTAS_BAJAS           = 25; //Envía un mensaje por correo al acudiente cuando un estudiante obtiene una nota baja.
-    public const MODULO_NOT_DISCIPLINA            = 26; //Envía un mensaje por correo al acudiente cuando un estudiante le hacen un reporte disciplinario
-    public const MODULO_MENSAJES_CORREO           = 27; //Envía un mensaje por correo a los usuarios cuando se envían mensajes por el correo interno
-    public const MODULO_RECUPERAR_INDICADOR       = 28; //Permite a los docentes insertar recuperación a los indicadores de los estudiantes
-    public const MODULO_ADJUNTAR_DOCUMENTOS       = 29; //Permite adjuntar documentos a los estudiantes
-    public const MODULO_FACTURA_RECURRENTES       = 30;
-    public const MODULO_REPORTE_FIN_GRAFICO       = 31; //Reportes gráficos en las finanzas
-    public const MODULO_AI_GENERAR_IMAGEN_MT      = 32; //Genera imagenes para los cursos de media técnica
-    public const MODULO_AI_GENERAR_DESCRIPCION_MT = 33; //Genera descripciones para los cursos de media técnica
-    public const MODULO_CHAT_ATENCION             = 34;
-    public const MODULO_AI_INDICADORES            = 35; //Permite a los docentes generar indicadores para sus cursos y asignaturas
-    public const MODULO_NOTIFICACIONES            = 36; //Ver y suscribir usuarios los tipos de notificaciones
+    public static $schema = BD_ADMIN;
+
+    public static $tableName = 'modulos';
+
+    public static $primaryKey = 'mod_id';
+    
+    public static $tableAs = 'modulo'; //El alias no puede ser una palabra reservada SQL
+
+    use BDT_Join;
+
+    public const MODULO_ACADEMICO                           = 1;
+    public const MODULO_FINANCIERO                          = 2;
+    public const MODULO_DISCIPLINARIO                       = 3;
+    public const MODULO_ADMINISTRATIVO                      = 4;
+    public const MODULO_PUBLICACIONES                       = 5;
+    public const MODULO_MERCADEO                            = 6;
+    public const MODULO_GENERAL                             = 7;
+    public const MODULO_INSCRIPCIONES                       = 8;
+    public const MODULO_RESERVA_CUPO                        = 9;
+
+    public const MODULO_MEDIA_TECNICA                       = 10;
+    public const MODULO_CLASES                              = 11; //También incluye las unidades temáticas
+    public const MODULO_EVALUACIONES                        = 12;
+    public const MODULO_FOROS                               = 13;
+    public const MODULO_ACTIVIDAES                          = 14; //Tareas para la casa
+    public const MODULO_CRONOGRAMA                          = 15;
+    public const MODULO_SUB_ROLES                           = 16;
+    public const MODULO_MI_CUENTA                           = 17;
+    public const MODULO_CUESTIONARIOS                       = 18;
+    public const MODULO_CARPETAS                            = 19;
+
+    public const MODULO_MARKETPLACE                         = 20;
+    public const MODULO_IMPORTAR_INFORMACION_ACADEMICA      = 21;
+    public const MODULO_INFORMES_ACADEMICOS_BASICOS         = 22;
+    public const MODULO_CUALITATIVO                         = 23; //Calificaciones cualitativas (Con descripción o solo desempeño)
+    public const MODULO_API_SION_ACADEMICA                  = 24; //Se conecta con el sistema SION de la UNAC
+    public const MODULO_NOTIFICACIONES_NOTAS_BAJAS          = 25; //Envía un mensaje por correo al acudiente cuando un estudiante obtiene una nota baja.
+    public const MODULO_NOTIFICACIONES_REPORTES_CONVIVENCIA = 26; //Envía un mensaje por correo al acudiente cuando un estudiante le hacen un reporte disciplinario
+    public const MODULO_MENSAJES_CORREO                     = 27; //Envía un mensaje por correo a los usuarios cuando se envían mensajes por el correo interno
+    public const MODULO_RECUPERAR_INDICADOR                 = 28; //Permite a los docentes insertar recuperación a los indicadores de los estudiantes
+    public const MODULO_ADJUNTAR_DOCUMENTOS                 = 29; //Permite adjuntar documentos a los usuarios
+
+    public const MODULO_FACTURA_RECURRENTES                 = 30;
+    public const MODULO_REPORTES_FINANCIEROS_GRAFICOS       = 31; //Reportes gráficos en las finanzas
+    public const MODULO_AI_GENERAR_IMAGEN_MT                = 32; //Genera imagenes para los cursos de media técnica
+    public const MODULO_INFORMES_ADMIN_BASICOS              = 33; 
+    public const MODULO_CHAT_ATENCION                       = 34;
+    public const MODULO_AI_INDICADORES                      = 35; //Permite a los docentes generar indicadores para sus cursos y asignaturas
+    public const MODULO_TIPOS_NOTIFICACIONES                = 36; //Ver y suscribir usuarios los tipos de notificaciones
+    public const MODULO_INFORMES_ACADEMICOS_AVANZADOS       = 37;
+    public const MODULO_INFORMES_CONVIVENCIA_BASICOS        = 38; 
+    public const MODULO_INFORMES_FINANCIEROS_BASICOS        = 39;
+
+    public const MODULO_INFORMES_INSCRIPCIONES_BASICOS      = 40; 
+    public const MODULO_AREAS                               = 41; 
+    public const MODULO_ASIGNATURAS                         = 42; 
+    public const MODULO_AYUDA_AVANZADA                      = 43; 
+    public const MODULO_CALIFICACIONES                      = 44; 
+    public const MODULO_CARGAS_ACADEMICAS                   = 45; 
+    public const MODULO_SMS                                 = 46;
+    public const MODULO_COMPORTAMIENTO                      = 47; 
+    public const MODULO_CONFIGURACION                       = 48; 
+    public const MODULO_CORREO_INTERNO                      = 49;
+
+    public const MODULO_CREDENCIALES                        = 50; 
+    public const MODULO_CURSO_Y_GRADOS                      = 51; 
+    public const MODULO_DEMO_SINTIA                         = 52; 
+    public const MODULO_ESTILOS_NOTAS                       = 53; 
+    public const MODULO_FALTAS_Y_CATEGORIAS                 = 54; 
+    public const MODULO_FEEDBACK_SINTIA                     = 55; 
+    public const MODULO_FIRMAS_DIGITALES                    = 56; 
+    public const MODULO_HERRAMIENTAS                        = 57; 
+    public const MODULO_HORARIOS                            = 58; 
+    public const MODULO_IMPUESTOS                           = 59;
+
+    public const MODULO_INDICADORES                         = 60; 
+    public const MODULO_INDICADORES_INCLUSION               = 61; 
+    public const MODULO_MATRICULAS                          = 62; 
+    public const MODULO_NOTIFICACIONES_INTERNAS             = 63; 
+    public const MODULO_OBSERVACIONES_BOLETIN               = 64; 
+    public const MODULO_MATRICULAS_PASOS                    = 65; 
+    public const MODULO_PREFERENCIAS                        = 66; 
+    public const MODULO_PUBLICIDAD_SINTIA                   = 67; 
+    public const MODULO_SEDES                               = 68; 
+    public const MODULO_SERVICIOS_SINTIA                    = 69; 
+
+    public const MODULO_TEMATICA                            = 70; 
+    public const MODULO_TRANSACCIONES                       = 71; 
+    public const MODULO_USO_SINTIA                          = 72; 
+    public const MODULO_USUARIOS                            = 73; 
+    public const MODULO_AI_GENERAR_DESCRIPCION_MT           = 74; //Genera imagenes para los cursos de media técnica
+    public const MODULO_COMUNICADOS                         = 75; //Permite enviar comunicados a usuarios por Email, SMS y WhatsApp
+    public const MODULO_GRBAR_VIDEO_CLASE                   = 76; //Permite GRABAR un video para adjuntar a la clase
+
+    //TODO: Esto es un workaround para los 9 clientes actuales para mantener la retrocompatibilidad.
+    public const MODULOS_GLOBALES_PERMITIDOS_ACTUALMENTE = [
+        SELF::MODULO_GENERAL, //Aplica para todos los clientes.
+        SELF::MODULO_MI_CUENTA, //Aplica para todos los clientes.
+        SELF::MODULO_CONFIGURACION, //Aplica para todos los clientes.
+        SELF::MODULO_PREFERENCIAS, //Aplica para todos los clientes.
+        SELF::MODULO_USO_SINTIA, //Aplica para todos los clientes.
+        SELF::MODULO_USUARIOS, //Aplica para todos los clientes.
+        SELF::MODULO_INFORMES_ACADEMICOS_BASICOS,
+        SELF::MODULO_INFORMES_ADMIN_BASICOS,
+        SELF::MODULO_AREAS,
+        SELF::MODULO_ASIGNATURAS,
+        SELF::MODULO_CURSO_Y_GRADOS,
+        SELF::MODULO_AYUDA_AVANZADA,
+        SELF::MODULO_CALIFICACIONES,
+        SELF::MODULO_CARGAS_ACADEMICAS,
+        SELF::MODULO_CORREO_INTERNO,
+        SELF::MODULO_ESTILOS_NOTAS,
+        SELF::MODULO_INDICADORES,
+        SELF::MODULO_MATRICULAS
+    ];
 
     /**
      * Verifica los permisos de acceso a una página interna según el ID de la página.
@@ -67,9 +149,11 @@ class Modulos {
     {
 
         $datosPaginaActual = self::datosPaginaActual($idPaginaInterna);
+
         if( empty($datosPaginaActual) ) {
             return false;
         }
+
         return true;
 
     }
@@ -128,11 +212,13 @@ class Modulos {
      * Utiliza los modulos activos para la institución cargados en la sesion al momento
      * de la autenticación.
      * 
-     * Todo: Se debe hacer una limpieza del parametro idInstitucion, ya que no es más necesario.
+     * 
      */
-    public static function verificarModulosDeInstitucion(int|null $idInstitucion = null, int $idModulo): bool
+    public static function verificarModulosDeInstitucion(int $idModulo): bool
     {
-        return !empty($_SESSION["modulos"]) && array_key_exists($idModulo, $_SESSION["modulos"]);
+        return !empty($_SESSION["modulos"]) && 
+                array_key_exists($idModulo, $_SESSION["modulos"]) || 
+                (in_array($idModulo, Modulos::MODULOS_GLOBALES_PERMITIDOS_ACTUALMENTE));
     }
 
     /**
@@ -179,7 +265,11 @@ class Modulos {
     public static function validarPermisoEdicion(){
         global $config;
 
-        if($config['conf_permiso_edicion_years_anteriores']==0){
+        if(
+            isset($config['conf_permiso_edicion_years_anteriores']) && 
+            $config['conf_permiso_edicion_years_anteriores']==0 && 
+            $_SESSION["bd"] <> date("Y")
+        ) {
             return false;
         }
         return true;
@@ -275,23 +365,29 @@ class Modulos {
      */
     public static function datosPaginaActual($idPaginaInterna): array
     {
-        global $conexion, $baseDatosServicios, $config;
+        global $conexion, $config;
 
-        $consultaPaginaActualUsuarios = mysqli_query($conexion, "SELECT pp.* 
+        $sql = "SELECT pp.*, md.* 
         FROM ".BD_ADMIN.".paginas_publicidad pp
-        INNER JOIN ".BD_ADMIN.".instituciones_modulos 
+        INNER JOIN ".BD_ADMIN.".instituciones_modulos im
             ON ipmod_modulo=pagp_modulo 
             AND ipmod_institucion='".$config['conf_id_institucion']."'
+        INNER JOIN ".BD_ADMIN.".modulos md
+            ON md.mod_id=im.ipmod_modulo
         WHERE pagp_id='".$idPaginaInterna."'
         UNION
-        SELECT pp.* FROM ".BD_ADMIN.".paginas_publicidad pp
+        SELECT pp.*, md.* FROM ".BD_ADMIN.".paginas_publicidad pp
         INNER JOIN ".BD_ADMIN.".instituciones_paquetes_extras 
             ON paqext_institucion='".$config['conf_id_institucion']."' 
             AND paqext_id_paquete=pagp_modulo 
             AND paqext_tipo='".MODULOS."'
+        INNER JOIN ".BD_ADMIN.".modulos md
+            ON md.mod_id=pp.pagp_modulo
         WHERE 
             pagp_id='".$idPaginaInterna."'
-        ");
+        "; 
+
+        $consultaPaginaActualUsuarios = mysqli_query($conexion, $sql);
 
         $paginaActualUsuario = mysqli_fetch_array($consultaPaginaActualUsuarios, MYSQLI_BOTH);
 

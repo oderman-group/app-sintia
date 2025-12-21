@@ -112,7 +112,7 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
         <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px;" rowspan="2">Documento</td>
         <td align="center" style="font-weight:bold; background:<?=$Plataforma->colorUno;?>; color:#FFF; font-size:12px; width: 200px;" rowspan="2">Estudiante</td>
       <?php
-        for($i=1;$i<=4;$i++){
+        for($i=1;$i<=$config['conf_periodos_maximos'];$i++){
       ?>
         <td rowspan="2" class="vertical" style="background:<?=$Plataforma->colorTres;?>; height:20px;"><?= $i.". ".$materiaSiglas; ?></td>
       <?php
@@ -137,7 +137,36 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
           <td align="center" colspan="7">Inasistencia</td>
         <?php } ?>
         <?php
+          // Pre-cargar estudiantes de la carga
           $estudiantes = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($resultadoCargas);
+
+          // Pre-cargar todas las notas de boletín de esta carga y año en un mapa [estudiante][periodo] => fila
+          $mapaNotas = [];
+          try {
+            $sqlNotas = "SELECT bol_estudiante, bol_periodo, bol_nota
+                         FROM " . BD_ACADEMICA . ".academico_boletin
+                         WHERE bol_carga = ?
+                           AND institucion = ?
+                           AND year = ?";
+
+            $paramNotas = [
+              $resultadoCargas['car_id'],
+              $config['conf_id_institucion'],
+              $_SESSION['bd']
+            ];
+
+            $resNotas = BindSQL::prepararSQL($sqlNotas, $paramNotas);
+            while ($rowNota = mysqli_fetch_array($resNotas, MYSQLI_BOTH)) {
+              $idEst = $rowNota['bol_estudiante'];
+              $per   = (int)$rowNota['bol_periodo'];
+              if (!isset($mapaNotas[$idEst])) {
+                $mapaNotas[$idEst] = [];
+              }
+              $mapaNotas[$idEst][$per] = $rowNota;
+            }
+          } catch (Exception $eNotas) {
+            include("../compartido/error-catch-to-report.php");
+          }
 
           $n = 1;
 
@@ -150,26 +179,27 @@ require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
         <td style="width: 20%;"><?= Estudiantes::NombreCompletoDelEstudiante($e)?></td>
       <?php
         $acomuladoNota=0;
-        for($i=1;$i<=4;$i++){
-          $nota = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $e['mat_id'], $resultadoCargas['car_id']);
+        for($i=1;$i<=$config['conf_periodos_maximos'];$i++){
+          // Usar notas precargadas en lugar de consultar por cada actividad
+          $notaFila = $mapaNotas[$e['mat_id']][$i] ?? null;
 
-          $notaEstudiante="";
-          if(!empty($nota['bol_nota'])){
-            $notaEstudiante=round($nota['bol_nota'], $config['conf_decimales_notas']);
-            $acomuladoNota+=$notaEstudiante;
+          $notaEstudiante = "";
+          if(!empty($notaFila['bol_nota'])){
+            $notaEstudiante = round($notaFila['bol_nota'], $config['conf_decimales_notas']);
+            $acomuladoNota += $notaEstudiante;
           }
           
-          $estiloNota='style="background:'.$Plataforma->colorTres.';"';
-          if($notaEstudiante!="" AND $notaEstudiante<$config['conf_nota_minima_aprobar']){
-              $estiloNota='style="font-weight:bold; color:#FFF; background:'.$Plataforma->colorDos.';"';
+          $estiloNota = 'style="background:'.$Plataforma->colorTres.';"';
+          if($notaEstudiante !== "" && $notaEstudiante < $config['conf_nota_minima_aprobar']){
+              $estiloNota = 'style="font-weight:bold; color:#FFF; background:'.$Plataforma->colorDos.';"';
           }
 
-          $notaEstudianteFinal=$notaEstudiante;
-          $title='';
-          if($notaEstudiante!="" && $config['conf_forma_mostrar_notas'] == CUALITATIVA){
+          $notaEstudianteFinal = $notaEstudiante;
+          $title = '';
+          if($notaEstudiante !== "" && $config['conf_forma_mostrar_notas'] == CUALITATIVA){
             $title='title="Nota Cuantitativa: '.$notaEstudiante.'"';
             $estiloNotaEstudiante = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaEstudiante);
-            $notaEstudianteFinal= !empty($estiloNotaEstudiante['notip_nombre']) ? $estiloNotaEstudiante['notip_nombre'] : "";
+            $notaEstudianteFinal  = !empty($estiloNotaEstudiante['notip_nombre']) ? $estiloNotaEstudiante['notip_nombre'] : "";
           }
       ?>
         <td align="center" <?=$estiloNota?> <?=$title;?> ><?=$notaEstudianteFinal?></td>

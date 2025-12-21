@@ -288,17 +288,28 @@ function tipoFolder(dato){
 }	
 
 	/**
-     * Esta funcion genera una alerta validadno la nota ingresada
-     * 
-     * @param nota
-     * @return boolean 
-     */
-function alertValidarNota(nota) {	
-	if (nota > <?=$config[4];?> || isNaN(nota) || nota < <?=$config[3];?>) {
-		Swal.fire('Nota '+nota+' no es valida','Ingrese un valor numérico entre <?=$config[3];?> y <?=$config[4];?>');
+	    * Esta funcion genera una alerta validadno la nota ingresada
+	    *
+	    * @param nota
+	    * @return boolean
+	    */
+function alertValidarNota(nota) {
+	if (nota === '' || nota === null || nota === undefined) {
+		Swal.fire('Campo requerido','Por favor ingrese una nota válida.');
 		return true;
-	} 
-	
+	}
+
+	if (isNaN(nota)) {
+		Swal.fire('Valor no numérico','La nota debe ser un número válido.');
+		return true;
+	}
+
+	var notaNum = parseFloat(nota);
+	if (notaNum > <?=$config[4];?> || notaNum < <?=$config[3];?>) {
+		Swal.fire('Nota fuera de rango','Ingrese un valor numérico entre <?=$config[3];?> y <?=$config[4];?>');
+		return true;
+	}
+
 	return false;
 }
 
@@ -374,38 +385,71 @@ window.onload = notificaciones();
 
 
 
+// Bandera global para prevenir ejecuciones múltiples
+if (typeof mensajesEjecutando === 'undefined') {
+	var mensajesEjecutando = false;
+}
+
 function mensajes(){
+	// Prevenir ejecuciones simultáneas
+	if (mensajesEjecutando) {
+		console.warn('⚠️ mensajes() ya está en ejecución, ignorando llamada duplicada');
+		return;
+	}
+	
+	// Solo ejecutar si el elemento existe
+	if ($('#mensajes').length === 0) {
+		console.warn('⚠️ Elemento #mensajes no existe');
+		return;
+	}
+
+	mensajesEjecutando = true;
 
 	var usuario = '<?=$_SESSION["id"];?>';
 
 	var consulta = 2;
 
-	  $('#mensajes').empty().hide().html("...").show(1);
+	$('#mensajes').empty().hide().html("...").show(1);
 
-		datos = "usuario="+(usuario)+
+	datos = "usuario="+(usuario)+
 
-				"&consulta="+(consulta);
+			"&consulta="+(consulta);
 
-		$.ajax({
+	$.ajax({
 
-		   type: "POST",
+	   type: "POST",
 
-		   url: "../compartido/ajax-mensajes.php",
+	   url: "../compartido/ajax-mensajes.php",
 
-		   data: datos,
+	   data: datos,
 
-		   success: function(data){
-			   $('#mensajes').empty().hide().html(data).show(1);
-
-		   }
-
-		});
-
-
-
+	   success: function(data){
+		   // Limpiar scripts del HTML antes de insertarlo para evitar bucles
+		   var contenidoHtml = data;
+		   // Remover scripts que puedan estar causando problemas
+		   contenidoHtml = contenidoHtml.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+		   $('#mensajes').empty().hide().html(contenidoHtml).show(1);
+		   mensajesEjecutando = false;
+	   },
+	   error: function() {
+		   mensajesEjecutando = false;
+		   console.error('❌ Error al cargar mensajes');
+	   }
+	});
 }
 
-window.onload = mensajes();			
+// Deshabilitado temporalmente para evitar bucles infinitos
+// window.onload = mensajes();
+// Llamar mensajes() solo si el elemento existe y no se ha ejecutado ya
+if (typeof mensajesEjecutado === 'undefined') {
+	var mensajesEjecutado = false;
+	window.addEventListener('load', function() {
+		if (!mensajesEjecutado && $('#mensajes').length > 0) {
+			mensajesEjecutado = true;
+			mensajes();
+		}
+	});
+}			
 
 	
 
@@ -721,9 +765,21 @@ if($datosUsuarioActual['uss_tipo']==5 || $datosUsuarioActual['uss_tipo']==1){
 	
 		if(localStorage.getItem("licencia")!=1){
 	
-			function mostrarModalLicencia(){$("#modalLicencia").modal("show");}
+			function mostrarModalLicencia(){
+				try {
+					if(typeof $.fn.modal === 'function' && $("#modalLicencia").length) {
+						$("#modalLicencia").modal("show");
+					}
+				} catch(e) {
+					console.warn('Modal de licencia no disponible:', e);
+				}
+			}
+			
 			$(document).ready(function() {
-				mostrarModalLicencia();
+				// Esperar un momento para asegurar que Bootstrap esté cargado
+				setTimeout(function() {
+					mostrarModalLicencia();
+				}, 500);
 			});
 	
 		}
@@ -781,10 +837,20 @@ if($datosUsuarioActual['uss_tipo']==5){
 ?>	
 	if(localStorage.getItem("modalContratos")!=1){
 		function mostrarModalContrato(){
-			$("#modalContrato").modal("show");
+			try {
+				if(typeof $.fn.modal === 'function' && $("#modalContrato").length) {
+					$("#modalContrato").modal("show");
+				}
+			} catch(e) {
+				console.warn('Modal de contrato no disponible:', e);
+			}
 		}
+		
 		$(document).ready(function() {
-			mostrarModalContrato();
+			// Esperar un momento para asegurar que Bootstrap esté cargado
+			setTimeout(function() {
+				mostrarModalContrato();
+			}, 500);
 		});
 	}
 <?php }?>

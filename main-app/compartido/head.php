@@ -58,41 +58,43 @@ if (!empty($datosPaginaActual)) {
     <meta name="author" content="ODERMAN" />
     <title><?=$tituloDePagina;?></title>
      <!-- Estilos de LiveView  -->
-	<link rel="stylesheet" type="text/css" href="./../../librerias/modal-img-styles/estilos_redimencionar_fotos.css">
+	<link rel="stylesheet" type="text/css" href="<?=BASE_URL;?>/librerias/modal-img-styles/estilos_redimencionar_fotos.css">
     <!-- google font -->
     <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700" rel="stylesheet" type="text/css" />
-	<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+	<link href="https://api.fontshare.com/v2/css?f[]=satoshi@1,900,700,500,301,701,300,501,401,901,400&display=swap" rel="stylesheet">
 	<!-- icons -->
-    <link href="./../../config-general/fonts/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="./../../config-general/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
-	<link href="./../../config-general/fonts/material-design-icons/material-icon.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/fonts/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/fonts/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css"/>
+	<link href="<?=BASE_URL;?>/config-general/fonts/material-design-icons/material-icon.css" rel="stylesheet" type="text/css" />
 	<!--bootstrap -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<!-- <link href="./../../config-general/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" /> -->
-	<link href="./../../config-general/assets/plugins/summernote/summernote.css" rel="stylesheet">
+	<!-- <link href="<?=BASE_URL;?>/config-general/assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" /> -->
+	<link href="<?=BASE_URL;?>/config-general/assets/plugins/summernote/summernote.css" rel="stylesheet">
 	<!-- morris chart -->
-    <link href="./../../config-general/assets/plugins/morris/morris.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/plugins/morris/morris.css" rel="stylesheet" type="text/css" />
     <!-- Material Design Lite CSS -->
-	<link rel="stylesheet" href="./../../config-general/assets/plugins/material/material.min.css">
-	<link rel="stylesheet" href="./../../config-general/assets/css/material_style.css">
+	<link rel="stylesheet" href="<?=BASE_URL;?>/config-general/assets/plugins/material/material.min.css">
+	<link rel="stylesheet" href="<?=BASE_URL;?>/config-general/assets/css/material_style.css">
 	<!-- inbox style -->
-    <link href="./../../config-general/assets/css/pages/inbox.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/pages/inbox.min.css" rel="stylesheet" type="text/css" />
 	<!-- Theme Styles -->
-    <link href="./../../config-general/assets/css/theme/light/theme_style.css" rel="stylesheet" id="rt_style_components" type="text/css" />
-    <link href="./../../config-general/assets/css/plugins.min.css" rel="stylesheet" type="text/css" />
-    <link href="./../../config-general/assets/css/theme/light/style.css" rel="stylesheet" type="text/css" />
-    <link href="./../../config-general/assets/css/responsive.css" rel="stylesheet" type="text/css" />
-    <link href="./../../config-general/assets/css/theme/light/theme-color.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/theme/light/theme_style.css" rel="stylesheet" id="rt_style_components" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/plugins.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/theme/light/style.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/responsive.css" rel="stylesheet" type="text/css" />
+    <link href="<?=BASE_URL;?>/config-general/assets/css/theme/light/theme-color.css" rel="stylesheet" type="text/css" />
 	<!-- Owl Carousel Assets -->
-    <link href="./../../config-general/assets/plugins/owl-carousel/owl.carousel.css" rel="stylesheet">
-    <link href="./../../config-general/assets/plugins/owl-carousel/owl.theme.css" rel="stylesheet">
+    <link href="<?=BASE_URL;?>/config-general/assets/plugins/owl-carousel/owl.carousel.css" rel="stylesheet">
+    <link href="<?=BASE_URL;?>/config-general/assets/plugins/owl-carousel/owl.theme.css" rel="stylesheet">
 	<!-- favicon -->
     <link rel="shortcut icon" href="../sintia-icono.png" />
 	<!-- Jquery Toast css -->
-	<link rel="stylesheet" href="./../../config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.css">
-	<script src="./../../config-general/assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
-    <link rel="stylesheet" href="./../../config-general/assets/plugins/sweetalert/sweetalert2.all.min.css">
-	<link rel="stylesheet" href="./../../librerias/Zindex/z-index.css">
+	<link rel="stylesheet" href="<?=BASE_URL;?>/config-general/assets/plugins/jquery-toast/dist/jquery.toast.min.css">
+	<script src="<?=BASE_URL;?>/config-general/assets/plugins/sweetalert/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="<?=BASE_URL;?>/config-general/assets/plugins/sweetalert/sweetalert2.all.min.css">
+	<link rel="stylesheet" href="<?=BASE_URL;?>/librerias/Zindex/z-index.css">
+	<!-- Fix para iconos de calendario -->
+	<link href="<?=BASE_URL;?>/config-general/assets/css/datepicker-fontawesome-fix.css" rel="stylesheet" type="text/css" />
 
 	<!-- libreria de animate.style -->
 	<link
@@ -100,34 +102,40 @@ if (!empty($datosPaginaActual)) {
     href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
 	/>
 	
+	<!-- Sintia Menu Icons CSS - DEBE IR AL FINAL PARA SOBRESCRIBIR OTROS ESTILOS -->
+    <link href="<?=BASE_URL;?>/config-general/assets/css/sintia-menu-icons.css?v=2.3" rel="stylesheet" type="text/css"/>
+	
+	<!-- Buscador General CSS -->
+    <link href="<?=BASE_URL;?>/main-app/css/buscador-general.css?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/css/buscador-general.css'); ?>" rel="stylesheet" type="text/css"/>
+	
 	<?php 
 	//SE INCLUYE PARA EL FORMULARIO QUE SOLICITA LOS DATOS
 	if($datosUsuarioActual['uss_solicitar_datos']==1){
 	?>
 		<!--bootstrap -->
-		<link href="./../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
-		<link href="./../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
 		<!-- Theme Styles -->
-		<link href="./../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
+		<link href="<?=BASE_URL;?>/config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
 		<!-- dropzone -->
-		<link href="./../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
 		<!--tagsinput-->
-		<link href="./../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
 		<!--select2-->
-		<link href="./../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
-		<link href="./../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
+		<link href="<?=BASE_URL;?>/config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 		<script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
    
 	<?php }?>
 	
 	<!-- Para la vista guiada -->
-    <link href="./../../librerias/vista-tour/introjs.css" rel="stylesheet">
-	<script type="text/javascript" src="./../../librerias/vista-tour/intro.js"></script>
-	<script src="https://kit.fontawesome.com/e84fa1cf78.js" crossorigin="anonymous"></script>
+    <link href="<?=BASE_URL;?>/librerias/vista-tour/introjs.css" rel="stylesheet">
+	<script type="text/javascript" src="<?=BASE_URL;?>/librerias/vista-tour/intro.js"></script>
+	<!-- <script src="https://kit.fontawesome.com/e84fa1cf78.js" crossorigin="anonymous"></script> 404 -->
 	
 	
 	
-	<script src="./../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
+	<script src="<?=BASE_URL;?>/config-general/assets/plugins/jquery/jquery.min.js" ></script>
 	
 	
 	<!-- Firebase App (the core Firebase SDK) is always required and must be listed first --
@@ -150,20 +158,37 @@ function getFileVersion($filePath) {
 }
 ?>
 
+<!-- Configuración global de la institución para JavaScript -->
+<script>
+	// Variables de configuración de la institución disponibles para JavaScript
+	window.CONFIG_INSTITUCION = {
+		notaMinimaAprobar: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_minima_aprobar']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_minima_aprobar'] : 3.5; ?>,
+		notaMaxima: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_hasta']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_hasta'] : 5.0; ?>,
+		notaMinima: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_nota_desde']) ? (float)$_SESSION['datosUnicosInstitucion']['config']['conf_nota_desde'] : 1.0; ?>,
+		idInstitucion: <?php echo isset($_SESSION['datosUnicosInstitucion']['config']['conf_id_institucion']) ? (int)$_SESSION['datosUnicosInstitucion']['config']['conf_id_institucion'] : 0; ?>
+	};
+	
+	// Debug: Mostrar configuración cargada
+	console.log('✅ Configuración de la institución cargada:', window.CONFIG_INSTITUCION);
+</script>
+
 <!-- Mis funciones JS -->
-<script src="../compartido/funciones.js?v=<?php echo getFileVersion('../compartido/funciones.js'); ?>" ></script>
-<script src="../js/Utilidades.js?v=<?php echo getFileVersion('../js/Utilidades.js'); ?>" ></script>
-<script src="../js/Estudiantes.js?v=<?php echo getFileVersion('../js/Estudiantes.js'); ?>" ></script>
-<script src="../js/Docentes.js?v=<?php echo getFileVersion('../js/Docentes.js'); ?>" ></script>
-<script src="../js/Calificaciones.js?v=<?php echo getFileVersion('../js/Calificaciones.js'); ?>" ></script>
-<script src="../js/Movimientos.js?v=<?php echo getFileVersion('../js/Movimientos.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/compartido/funciones.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/compartido/funciones.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Utilidades.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Utilidades.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Estudiantes.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Estudiantes.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Docentes.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Docentes.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Calificaciones.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Calificaciones.js'); ?>" ></script>
+<script src="<?=BASE_URL;?>/main-app/js/Movimientos.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/Movimientos.js'); ?>" ></script>
+
+<!-- Buscador General JS -->
+<script src="<?=BASE_URL;?>/main-app/js/buscador-general.js?v=<?php echo getFileVersion(ROOT_PATH.'/main-app/js/buscador-general.js'); ?>" ></script>
 	
 	<?php 
-	include("sintia-funciones-js.php");
+	require_once(ROOT_PATH."/main-app/compartido/sintia-funciones-js.php");
 	?>
 
 	<?php 
-	require_once("sintia-funciones.php");
+	require_once(ROOT_PATH."/main-app/compartido/sintia-funciones.php");
 	//Instancia de Clases generales
 	$usuariosClase = new UsuariosFunciones();
 	?>

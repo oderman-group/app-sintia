@@ -130,10 +130,20 @@ $contadorEstudiantes = 0;
         //METODO QUE ME TRAE EL NOMBRE COMPLETO DEL ESTUDIANTE
         $nombreEstudainte = Estudiantes::NombreCompletoDelEstudiante($matriculadosDatos);
 	
-        if($matriculadosDatos["mat_grado"]>=12 && $matriculadosDatos["mat_grado"]<=15) {$educacion = "PREESCOLAR";}	
-        elseif($matriculadosDatos["mat_grado"]>=1 && $matriculadosDatos["mat_grado"]<=5) {$educacion = "PRIMARIA";}	
-        elseif($matriculadosDatos["mat_grado"]>=6 && $matriculadosDatos["mat_grado"]<=9) {$educacion = "SECUNDARIA";}
-        elseif($matriculadosDatos["mat_grado"]>=10 && $matriculadosDatos["mat_grado"]<=11) {$educacion = "MEDIA";}	
+        // Determinar tipo de educación basado en el grado
+        $educacion = "BÁSICA"; // Valor por defecto
+        if(!empty($matriculadosDatos["mat_grado"])){
+            $matGrado = (int)$matriculadosDatos["mat_grado"];
+            if($matGrado >= 12 && $matGrado <= 15) {
+                $educacion = "PREESCOLAR";
+            } elseif($matGrado >= 1 && $matGrado <= 5) {
+                $educacion = "PRIMARIA";
+            } elseif($matGrado >= 6 && $matGrado <= 9) {
+                $educacion = "SECUNDARIA";
+            } elseif($matGrado >= 10 && $matGrado <= 11) {
+                $educacion = "MEDIA";
+            }
+        }	
 
 ?>
 
@@ -227,6 +237,13 @@ $contadorEstudiantes = 0;
             </thead>
             <?php
                 $notasBoletin = Boletin::traerNotaBoletinEstudiante($config, $matriculadosDatos['mat_id'], $year);
+                
+                // Cargar tipos de notas para usar en formatoNota
+                $tiposNotas = [];
+                $cosnultaTiposNotas = Boletin::listarTipoDeNotas($config["conf_notas_categoria"], $year);
+                while ($row = $cosnultaTiposNotas->fetch_assoc()) {
+                    $tiposNotas[] = $row;
+                }
 
                 if (!empty($notasBoletin)) {
             ?>
@@ -269,23 +286,11 @@ $contadorEstudiantes = 0;
                                                                                                                     $datosMaterias["car_id"], $year
                                                                                 );
                                                 $notaMateriasPeriodos       = $datosPeriodos['bol_nota'] ?? null;
-                                                $notaMateriasPeriodos       = !empty($notaMateriasPeriodos) ? round($notaMateriasPeriodos, 1) : 0;
+                                                $notaMateriasPeriodos       = !empty($notaMateriasPeriodos) ? (float)$notaMateriasPeriodos : 0;
                                                 $notaMateriasPeriodosTotal += $notaMateriasPeriodos;
 
-                                                $notaMateriasPeriodosFinal = $notaMateriasPeriodos;
-
-                                                if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-                                                    $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaMateriasPeriodos,$year);
-                                                    $notaMateriasPeriodosFinal = !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                                    if ($notaMateriasPeriodos < 10) {
-                                                        $notaMateriasPeriodosFinal="Bajo";
-                                                    }
-
-                                                    if ($notaMateriasPeriodos > 50) {
-                                                        $notaMateriasPeriodosFinal = "Superior";
-                                                    }
-
-                                                }
+                                                // Formatear nota según configuración de decimales y tipo de visualización
+                                                $notaMateriasPeriodosFinal = Boletin::formatoNota($notaMateriasPeriodos, $tiposNotas);
 
                                                 if (empty($datosPeriodos['bol_periodo'])) {
                                                     $ultimoPeriodo -= 1;
@@ -299,23 +304,24 @@ $contadorEstudiantes = 0;
 
                                         //ACOMULADO PARA LAS MATERIAS
                                         $periodoCalcular = $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $ultimoPeriodo : $config["conf_periodos_maximos"];
-                                        $notaAcomuladoMateria = $notaMateriasPeriodosTotal / $periodoCalcular;
-                                        $notaAcomuladoMateria = round($notaAcomuladoMateria,1);
-
-                                        if (strlen($notaAcomuladoMateria) === 1 || $notaAcomuladoMateria == 10){
-                                            $notaAcomuladoMateria = $notaAcomuladoMateria.".0";
+                                        $notaAcomuladoMateria = $periodoCalcular > 0 ? ($notaMateriasPeriodosTotal / $periodoCalcular) : 0;
+                                        
+                                        // Formatear nota según configuración de decimales
+                                        $notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateria);
+                                        
+                                        // Obtener desempeño usando los rangos reales de la BD
+                                        $estiloNotaAcomuladoMaterias = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria, $year);
+                                        if($estiloNotaAcomuladoMaterias === null || !is_array($estiloNotaAcomuladoMaterias)){
+                                            $estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
                                         }
-
-                                        $estiloNotaAcomuladoMaterias = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateria,$year);
-                                        if($notaAcomuladoMateria<10){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Bajo";
-                                        }
-                                        if($notaAcomuladoMateria>50){
-                                            $estiloNotaAcomuladoMaterias['notip_nombre']="Superior";
+                                        
+                                        // Si es cualitativa, usar el nombre del desempeño
+                                        if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                                            $notaAcomuladoMateriaFormateada = !empty($estiloNotaAcomuladoMaterias['notip_nombre']) ? $estiloNotaAcomuladoMaterias['notip_nombre'] : $notaAcomuladoMateriaFormateada;
                                         }
                                     ?>
-                                    <td align="center"><?=$notaAcomuladoMateria?></td>
-                                    <td align="center"><?=$estiloNotaAcomuladoMaterias['notip_nombre']?></td>
+                                    <td align="center"><?=$notaAcomuladoMateriaFormateada?></td>
+                                    <td align="center"><?=!empty($estiloNotaAcomuladoMaterias['notip_nombre']) ? $estiloNotaAcomuladoMaterias['notip_nombre'] : ''?></td>
                                 </tr>
                     <?php
                             $ih="";
@@ -324,7 +330,7 @@ $contadorEstudiantes = 0;
                             }
 
                             //NOTA PARA LAS AREAS
-                            if(!empty($datosMaterias['notaArea'])) $notaArea+=round($datosMaterias['notaArea'], 1);
+                            if(!empty($datosMaterias['notaArea'])) $notaArea+=(float)$datosMaterias['notaArea'];
 
                         } //FIN WHILE DE LAS MATERIAS
                     ?>
@@ -342,7 +348,7 @@ $contadorEstudiantes = 0;
                                 for($i=1;$i<=$periodoActual;$i++){
                                         $consultaAreasPeriodos = CargaAcademica::consultaAreasPeriodos($config, $i, $matriculadosDatos['mat_id'], $datosAreas['ar_id'], $year);
                                         $datosAreasPeriodos=mysqli_fetch_array($consultaAreasPeriodos, MYSQLI_BOTH);
-                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? round($datosAreasPeriodos['notaArea'], 1) : 0;
+                                        $notaAreasPeriodos = !empty($datosAreasPeriodos['notaArea']) ? (float)$datosAreasPeriodos['notaArea'] : 0;
                                         $notaAreasPeriodosTotal+=$notaAreasPeriodos;
 
                                         switch($i){
@@ -364,18 +370,8 @@ $contadorEstudiantes = 0;
                                             $ultimoPeriodoAreas -= 1;
                                         }
 
-                                        $notaAreasPeriodosFinal = $notaAreasPeriodos;
-
-                                        if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-                                            $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAreasPeriodos,$year);
-                                            $notaAreasPeriodosFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                            if($notaAreasPeriodos<10){
-                                                $notaAreasPeriodosFinal="Bajo";
-                                            }
-                                            if($notaAreasPeriodos>50){
-                                                $notaAreasPeriodosFinal="Superior";
-                                            }
-                                        }
+                                        // Formatear nota según configuración de decimales y tipo de visualización
+                                        $notaAreasPeriodosFinal = Boletin::formatoNota($notaAreasPeriodos, $tiposNotas);
                             ?>
 
                             <td align="center" style="background: #9ed8ed"><?=$notaAreasPeriodosFinal;?></td>
@@ -384,27 +380,29 @@ $contadorEstudiantes = 0;
                         
                                 //ACOMULADO PARA LAS AREAS
                                 $periodoCalcular = $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $ultimoPeriodoAreas : $config["conf_periodos_maximos"];
-                                $notaAcomuladoArea = $notaAreasPeriodosTotal / $periodoCalcular;
-                                $notaAcomuladoArea = round($notaAcomuladoArea,1);
-                                if (strlen($notaAcomuladoArea) === 1 || $notaAcomuladoArea == 10) {
-                                    $notaAcomuladoArea = $notaAcomuladoArea.".0";
+                                $notaAcomuladoArea = $periodoCalcular > 0 ? ($notaAreasPeriodosTotal / $periodoCalcular) : 0;
+                                
+                                // Formatear nota según configuración de decimales
+                                $notaAcomuladoAreaFormateada = Boletin::notaDecimales($notaAcomuladoArea);
+                                
+                                // Obtener desempeño usando los rangos reales de la BD
+                                $estiloNotaAcomuladoAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea, $year);
+                                // Inicializar como array vacío si es null
+                                if($estiloNotaAcomuladoAreas === null || !is_array($estiloNotaAcomuladoAreas)){
+                                    $estiloNotaAcomuladoAreas = ['notip_nombre' => ''];
                                 }
-
-                                $estiloNotaAcomuladoAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoArea,$year);
-                                if ($notaAcomuladoArea < 10) {
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Bajo";
-                                }
-
-                                if ($notaAcomuladoArea > 50) {
-                                    $estiloNotaAcomuladoAreas['notip_nombre']="Superior";
+                                
+                                // Si es cualitativa, usar el nombre del desempeño
+                                if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+                                    $notaAcomuladoAreaFormateada = !empty($estiloNotaAcomuladoAreas['notip_nombre']) ? $estiloNotaAcomuladoAreas['notip_nombre'] : $notaAcomuladoAreaFormateada;
                                 }
 
 								if($notaAcomuladoArea < $config['conf_nota_minima_aprobar']){
 									$materiasPerdidas++;
 								}
                             ?>
-                            <td align="center"><?=$notaAcomuladoArea?></td>
-                            <td align="center"><?=$estiloNotaAcomuladoAreas['notip_nombre']?></td>
+                            <td align="center"><?=$notaAcomuladoAreaFormateada?></td>
+                            <td align="center"><?=!empty($estiloNotaAcomuladoAreas['notip_nombre']) ? $estiloNotaAcomuladoAreas['notip_nombre'] : ''?></td>
                         </tr>
                     <?php
 
@@ -420,12 +418,12 @@ $contadorEstudiantes = 0;
                         } //FIN WHILE DE LAS AREAS
 
                         //PROMEDIO DE LAS AREAS
-                        $promedioGeneral           += ($sumaPromedioGeneral/$numAreas);
-                        $promedioGeneral           = round($promedioGeneral,1);
-                        $estiloNotaPromedioGeneral = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneral,$year);
-
-                        if ($promedioGeneral < 10) {
-                            $estiloNotaPromedioGeneral['notip_nombre'] = "Bajo";
+                        $promedioGeneral           += ($numAreas > 0 ? ($sumaPromedioGeneral/$numAreas) : 0);
+                        $promedioGeneralFormateado = Boletin::notaDecimales($promedioGeneral);
+                        $estiloNotaPromedioGeneral = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneral, $year);
+                        
+                        if($estiloNotaPromedioGeneral === null || !is_array($estiloNotaPromedioGeneral)){
+                            $estiloNotaPromedioGeneral = ['notip_nombre' => ''];
                         }
                     ?>
             </tbody>
@@ -453,24 +451,12 @@ $contadorEstudiantes = 0;
                             }
 
                             //PROMEDIO DE LAS AREAS PERIODOS ANTERIORES
-                            $promedioGeneralPeriodos = ($sumaPromedioGeneralPeriodos/$numAreas);
-                            $promedioGeneralPeriodos = round($promedioGeneralPeriodos,1);
+                            $promedioGeneralPeriodos = ($numAreas > 0 ? ($sumaPromedioGeneralPeriodos/$numAreas) : 0);
 							
 							$promedioGeneralPeriodosTotal += $promedioGeneralPeriodos;
 
-                            $promedioGeneralPeriodosFinal = $promedioGeneralPeriodos;
-
-                            if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
-                                $estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $promedioGeneralPeriodos,$year);
-                                $promedioGeneralPeriodosFinal = !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-                                if ($promedioGeneralPeriodos < 10) {
-                                    $promedioGeneralPeriodosFinal="Bajo";
-                                }
-
-                                if ($promedioGeneralPeriodos > 50) {
-                                    $promedioGeneralPeriodosFinal="Superior";
-                                }
-                            }
+                            // Formatear nota según configuración de decimales y tipo de visualización
+                            $promedioGeneralPeriodosFinal = Boletin::formatoNota($promedioGeneralPeriodos, $tiposNotas);
                     ?>
                     <td align="center"><?=$promedioGeneralPeriodosFinal;?></td>
                     <?php
@@ -478,29 +464,20 @@ $contadorEstudiantes = 0;
                         
 						//ACOMULADO GENERAL
                         $periodoCalcular = $config["conf_promedio_libro_final"] == BDT_Configuracion::PERIODOS_CURSADOS ? $ultimoPeriodoAreas : $config["conf_periodos_maximos"];
-						$notaAcomuladoTotal = $promedioGeneralPeriodosTotal / $periodoCalcular ;
-						$notaAcomuladoTotal = round($notaAcomuladoTotal,1);
-						if(strlen($notaAcomuladoTotal) === 1 || $notaAcomuladoTotal == 10){
-							$notaAcomuladoTotal = $notaAcomuladoTotal.".0";
-						}
-						$estiloNotaAcomuladoTotal = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoTotal,$year);
-						if($notaAcomuladoTotal<10){
-							$estiloNotaAcomuladoTotal['notip_nombre']="Bajo";
-						}
-						if($notaAcomuladoTotal>50){
-							$estiloNotaAcomuladoTotal['notip_nombre']="Superior";
+						$notaAcomuladoTotal = $periodoCalcular > 0 ? ($promedioGeneralPeriodosTotal / $periodoCalcular) : 0;
+						
+						// Formatear nota según configuración de decimales
+						$notaAcomuladoTotalFormateada = Boletin::notaDecimales($notaAcomuladoTotal);
+						
+						// Obtener desempeño usando los rangos reales de la BD
+						$estiloNotaAcomuladoTotal = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoTotal, $year);
+						if($estiloNotaAcomuladoTotal === null || !is_array($estiloNotaAcomuladoTotal)){
+							$estiloNotaAcomuladoTotal = ['notip_nombre' => ''];
 						}
 
-						$notaAcomuladoTotalFinal=$notaAcomuladoTotal;
+						$notaAcomuladoTotalFinal = $notaAcomuladoTotalFormateada;
 						if($config['conf_forma_mostrar_notas'] == CUALITATIVA){
-							$estiloNotaAreas = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoTotal,$year);
-							$notaAcomuladoTotalFinal= !empty($estiloNotaAreas['notip_nombre']) ? $estiloNotaAreas['notip_nombre'] : "";
-							if($notaAcomuladoTotal<10){
-								$notaAcomuladoTotalFinal="Bajo";
-							}
-							if($notaAcomuladoTotal>50){
-								$notaAcomuladoTotalFinal="Superior";
-							}
+							$notaAcomuladoTotalFinal = !empty($estiloNotaAcomuladoTotal['notip_nombre']) ? $estiloNotaAcomuladoTotal['notip_nombre'] : $notaAcomuladoTotalFormateada;
 						}
                     ?>
                     <td align="center"><?=$notaAcomuladoTotalFinal?></td>

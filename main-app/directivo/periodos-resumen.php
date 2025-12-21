@@ -28,7 +28,7 @@ if(!Modulos::validarPermisoEdicion()){
   var codEst = enviada.id;
   var per = enviada.name;
   var notaAnterior = enviada.alt;
-  var carga = <?=$cargaConsultaActual;?>;
+  var carga = <?=json_encode($cargaConsultaActual);?>;
   
   var casilla = document.getElementById(codEst);
   
@@ -60,7 +60,7 @@ function niv(enviada){
   var nota = enviada.value;
   var codEst = enviada.id;
   var per = enviada.name;
-  var carga = <?=$cargaConsultaActual;?>;
+  var carga = <?=json_encode($cargaConsultaActual);?>;
   if (alertValidarNota(nota)) {
 		return false;
 	}
@@ -153,16 +153,13 @@ function niv(enviada){
 														<th><?=$frases[61][$datosUsuarioActual['uss_idioma']];?></th>
 
 														<?php
-															$p = 1;
-															while($p<=$datosCargaActual['gra_periodos']){
+															// Precalcular porcentajes de todos los periodos una sola vez
+															$porcentajesPeriodos = [];
+															for ($p = 1; $p <= $datosCargaActual['gra_periodos']; $p++) {
 																$periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosCargaActual['car_curso'], $p);
-																
-																$porcentajeGrado=25;
-																if(!empty($periodosCursos['gvp_valor'])){
-																	$porcentajeGrado=$periodosCursos['gvp_valor'];
-																}
+																$porcentajeGrado = !empty($periodosCursos['gvp_valor']) ? $periodosCursos['gvp_valor'] : 25;
+																$porcentajesPeriodos[$p] = $porcentajeGrado;
 																echo '<th style="text-align:center;">'.$p.'P<br>('.$porcentajeGrado.'%)</th>';
-																$p++;
 															}
 														?> 
 														<th style="text-align:center;"><?=$frases[117][$datosUsuarioActual['uss_idioma']];?></th>
@@ -174,6 +171,17 @@ function niv(enviada){
 													$contReg = 1;
 													$filtro = " AND mat_grado='".$datosCargaActual['car_curso']."' AND mat_grupo='".$datosCargaActual['car_grupo']."'";
 													$consulta = Estudiantes::escogerConsultaParaListarEstudiantesParaDocentes($datosCargaActual);
+
+													// Pre-cargar tipos de nota para modo cualitativo, si aplica
+													$listaDesemp = [];
+													if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
+														$tablaNotasRes = Boletin::listarTipoDeNotas($config["conf_notas_categoria"]);
+														while ($filaDes = mysqli_fetch_array($tablaNotasRes, MYSQLI_BOTH)) {
+															$listaDesemp[] = $filaDes;
+														}
+														mysqli_free_result($tablaNotasRes);
+													}
+
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 													?>
                                                     
@@ -186,35 +194,68 @@ function niv(enviada){
 														 $sumatoria = 0;
 														 $decimal = 0;
 														 $n = 0;
+														 // contador de periodos con nota
+														 $iteradorPeriodosConNota = 0;
+
 														 for($i=1; $i<=$datosCargaActual['gra_periodos']; $i++){
-															$periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosCargaActual['car_curso'], $i);
-															
-															$porcentajeGrado=25;
-															if(!empty($periodosCursos['gvp_valor'])){
-																$porcentajeGrado=$periodosCursos['gvp_valor'];
-															}
-															 $decimal = $porcentajeGrado/100;
+															$porcentajeGrado = $porcentajesPeriodos[$i] ?? 25;
+															$decimal         = $porcentajeGrado / 100;
 															 
-															//LAS CALIFICACIONES
+															// LAS CALIFICACIONES
 															$notasResultado = Boletin::traerNotaBoletinCargaPeriodo($config, $i, $resultado['mat_id'], $cargaConsultaActual);
+
 															if(!empty($notasResultado)){
 																$n++;
-																$definitiva += $notasResultado['bol_nota']*$decimal;
+																if (!empty($notasResultado['bol_nota'])) {
+																	$iteradorPeriodosConNota++;
+																	$definitiva += $notasResultado['bol_nota'] * $decimal;
+																	$sumatoria  += $decimal;
+																}
 															}
-															if(!empty($notasResultado['bol_nota']) && $notasResultado['bol_nota']<$config[5])$color = $config[6]; elseif(!empty($notasResultado['bol_nota']) && $notasResultado['bol_nota']>=$config[5]) $color = $config[7];
-															 
-															if(isset($notasResultado) && $notasResultado['bol_tipo']==2) {$tipo = '<span style="color:red; font-size:9px;">Rec. Periodo('.$notasResultado['bol_nota_anterior'].')</span>';}
-															elseif(isset($notasResultado) && $notasResultado['bol_tipo']==3) {$tipo = '<span style="color:red; font-size:9px;">Rec. Indicador('.$notasResultado['bol_nota_anterior'].')</span>';}
-															 elseif(isset($notasResultado) && $notasResultado['bol_tipo']==4) {$tipo = '<span style="color:red; font-size:9px;">Directiva('.$notasResultado['bol_nota_anterior'].')</span>';}
-															elseif(isset($notasResultado) && $notasResultado['bol_tipo']==1) {$tipo = '<span style="color:blue; font-size:9px;">'.$frases[122][$datosUsuarioActual['uss_idioma']].'</span>';} 
-															 else $tipo='';
-															$notaPeriodo="";
-															if(!empty($notasResultado['bol_nota']))$notaPeriodo=$notasResultado['bol_nota'];
 
+															// Color por periodo (evitar usar variable compartida)
+															$colorPeriodo = "#616161";
+															if(!empty($notasResultado['bol_nota']) && $notasResultado['bol_nota'] < $config[5]) {
+																$colorPeriodo = $config[6];
+															} elseif(!empty($notasResultado['bol_nota']) && $notasResultado['bol_nota'] >= $config[5]) {
+																$colorPeriodo = $config[7];
+															}
+															 
+															$tipo = '';
+															if(isset($notasResultado) && !empty($notasResultado['bol_nota'])) {
+																switch ($notasResultado['bol_tipo']) {
+																	case Boletin::BOLETIN_TIPO_NOTA_NORMAL:
+																		$tipo = '<span style="color:blue; font-size:9px;">'.$frases[122][$datosUsuarioActual['uss_idioma']].'</span>';
+																		break;
+																	case Boletin::BOLETIN_TIPO_NOTA_RECUPERACION_PERIODO:
+																		$tipo = '<span style="color:red; font-size:9px;">Rec. Periodo('.$notasResultado['bol_nota_anterior'].')</span>';
+																		break;
+																	case Boletin::BOLETIN_TIPO_NOTA_RECUPERACION_INDICADOR:
+																		$tipo = '<span style="color:red; font-size:9px;">Rec. Indicador('.$notasResultado['bol_nota_anterior'].')</span>';
+																		break;
+																	case Boletin::BOLETIN_TIPO_NOTA_DIRECTIVA:
+																		$tipo = '<span style="color:red; font-size:9px;">Directiva('.$notasResultado['bol_nota_anterior'].')</span>';
+																		break;
+																	default:
+																		$tipo = '';
+																		break;
+																}
+															}
+
+															$notaPeriodo = "";
+															if(!empty($notasResultado['bol_nota'])) {
+																$notaPeriodo = Utilidades::setFinalZero($notasResultado['bol_nota']);
+															}
 
 														?>
 															<td style="text-align:center;">
-																<a href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($i);?>&carga=<?=base64_encode($cargaConsultaActual);?>" style="text-decoration:underline; color:<?=$color;?>;"><?=$notaPeriodo?></a><br><?=$tipo;?><br>
+																<a 
+																	href="calificaciones-estudiante.php?usrEstud=<?=base64_encode($resultado['mat_id_usuario']);?>&periodo=<?=base64_encode($i);?>&carga=<?=base64_encode($cargaConsultaActual);?>" 
+																	style="text-decoration:underline; color:<?=$colorPeriodo;?>;"
+																>
+																	<?=$notaPeriodo?>
+																</a>
+																<br><?=$tipo;?><br>
 																<?php if(Modulos::validarPermisoEdicion()){?>
 																	<input size="5" name="<?=$i?>" id="<?=$resultado['mat_id'];?>" value="" alt="<?php if(!empty($notasResultado['bol_nota'])) echo $notasResultado['bol_nota'];?>" onChange="def(this)" tabindex="2" style="text-align: center;" <?=$disabledPermiso;?>><br>
 																	<span style="font-size:9px; color:rgb(0,0,153);"><?php if(!empty($notasResultado['bol_observaciones'])) echo $notasResultado['bol_observaciones'];?></span>
@@ -238,21 +279,21 @@ function niv(enviada){
 														 //CALCULAR NOTA MINIMA EN EL ULTIMO PERIODO PARA APROBAR LA MATERIA
 														 //PREGUNTAMOS SI ESTAMOS EN EL PERIODO PENULTIMO O ULTIMO
 														 if($config[2]==$datosCargaActual['gra_periodos']){
-															 $notaMinima = ($config[5]-$definitiva);
-															 $periodosCursos = Grados::traerPorcentajePorPeriodosGrados($conexion, $config, $datosCargaActual['car_curso'], $datosCargaActual['gra_periodos']);
-															 
-															$porcentajeGrado=25;
-															if(!empty($periodosCursos['gvp_valor'])){
-																$porcentajeGrado=$periodosCursos['gvp_valor'];
-															}
-															 $decimal2 = $porcentajeGrado/100;
-															 $notaMinima = round(($notaMinima / $decimal2), $config['conf_decimales_notas']);
-															 if($notaMinima<=0){
-																$notaMinima = "-";
+															$notaMinima = ($config[5]-$definitiva);
+
+															$porcentajeUltimo = $porcentajesPeriodos[$datosCargaActual['gra_personal'] ?? $datosCargaActual['gra_periodos']] ?? 25;
+															$decimal2         = $porcentajeUltimo / 100;
+
+															$notaMinima = $decimal2 > 0
+																? round(($notaMinima / $decimal2), $config['conf_decimales_notas'])
+																: 0;
+
+															if($notaMinima<=0){
+																$notaMinima   = "-";
 																$colorFaltante = "green";
-															 }else{
-																if($notaMinima<=$config[4]) $colorFaltante = "blue"; else $colorFaltante = "red"; 
-															 }
+															}else{
+																$colorFaltante = ($notaMinima<=$config[4]) ? "blue" : "red"; 
+															}
 														 }else{
 															$notaMinima = "-";
 															$colorFaltante = "black";

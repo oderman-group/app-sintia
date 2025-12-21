@@ -23,6 +23,13 @@ try {
     $resultadoCurso = GradoServicios::consultarCurso(base64_decode($_GET["id"]));
     $resultadoCargaCurso = CargaServicios::cantidadCursos(base64_decode($_GET["id"]));
     $hidden = $resultadoCurso['gra_tipo'] == GRADO_INDIVIDUAL ? "" : "hidden";
+    
+    // Validar si hay registros académicos en general (no por curso específico)
+    $hayNotasRegistradas = Grados::hayRegistrosAcademicos($config);
+    $disabledPeriodos = $hayNotasRegistradas ? 'readonly' : '';
+    $disabledCamposNotas = $hayNotasRegistradas ? 'readonly' : '';
+    $disabledSelectNotas = $hayNotasRegistradas ? 'disabled' : '';
+    
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
@@ -92,6 +99,9 @@ if (!Modulos::validarPermisoEdicion()) {
                                     <a class="nav-item nav-link show active" id="nav-informacion-tab" data-toggle="tab" href="#nav-informacion" role="tab" aria-controls="nav-informacion" aria-selected="true">
                                         <h5> <?= $frases[119][$datosUsuarioActual['uss_idioma']]; ?> </h5>
                                     </a>
+                                    <a class="nav-item nav-link" id="nav-periodos-tab" data-toggle="tab" href="#nav-periodos" role="tab" aria-controls="nav-periodos" aria-selected="false">
+                                        <h5>Periodos y Porcentajes</h5>
+                                    </a>
                                     <?php if (array_key_exists(10, $arregloModulos)) { ?>
                                         <a <?= $hidden ?> class="nav-item nav-link" onclick="habilitarInput()" id="nav-configuracion-tab" data-toggle="tab" href="#nav-configuracion" role="tab" aria-controls="nav-configuracion" aria-selected="false">
                                             <h5> Configuracion del curso </h5>
@@ -112,93 +122,129 @@ if (!Modulos::validarPermisoEdicion()) {
                                                 <input type="hidden" id="id_curso" name="id_curso" value="<?= base64_decode($_GET["id"]) ?>">
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Codigo</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Codigo
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Identificador único del curso en el sistema. Este campo es de solo lectura y no puede ser modificado.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-2">
                                                         <input type="text" name="codigoC" readonly class="form-control" value="<?= $resultadoCurso["gra_codigo"]; ?>" <?= $disabledPermiso; ?>>
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Nombre Curso</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Nombre Curso
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Nombre completo del curso o grado académico. Este nombre aparecerá en boletines, reportes y listados del sistema.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-10">
-                                                        <input type="text" id="nombreC" name="nombreC" class="form-control" required value="<?= $resultadoCurso["gra_nombre"]; ?>" <?= $disabledPermiso; ?>>
+                                                        <input type="text" id="nombreC" name="nombreC" class="form-control" required value="<?= $resultadoCurso["gra_nombre"]; ?>" <?= $disabledPermiso; ?> <?= $disabledCamposNotas; ?>>
+                                                        <?php if ($hayNotasRegistradas) { ?>
+                                                            <small class="form-text text-warning">
+                                                                <i class="fa fa-exclamation-triangle"></i> No se puede modificar porque ya existen notas registradas.
+                                                            </small>
+                                                        <?php } ?>
                                                     </div>
                                                 </div>
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Formato Boletin</label>
-                                                    <div class="col-sm-2">
-                                                        <select id="tipoBoletin" class="form-control  select2" name="formatoB" onchange="cambiarTipo()" required <?= $disabledPermiso; ?>>
-                                                            <option value="">Seleccione una opción</option>
-                                                            <?php
-                                                            try {
-                                                                $consultaBoletin = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".opciones_generales WHERE ogen_grupo=15");
-                                                            } catch (Exception $e) {
-                                                                include("../compartido/error-catch-to-report.php");
-                                                            }
-                                                            while ($datosBoletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH)) {
-                                                            ?>
-                                                                <option value="<?= $datosBoletin['ogen_id']; ?>" <?php if ($resultadoCurso["gra_formato_boletin"] == $datosBoletin['ogen_id']) {
-                                                                                                                        echo 'selected';
-                                                                                                                    } ?>><?= $datosBoletin['ogen_nombre']; ?></option>
-                                                            <?php } ?>
-                                                        </select>
-                                                    </div>
-                                                    <button type="button" titlee="Ver formato del boletin" class="btn btn-sm" data-toggle="popover"><i class="fa fa-eye"></i></button>
-                                                    <script>
-                                                        $(document).ready(function() {
-                                                            $('[data-toggle="popover"]').popover({
-                                                                html: true, // Habilitar contenido HTML
-                                                                content: function() {
-                                                                    valor = document.getElementById("tipoBoletin");
-                                                                    return '<div id="myPopover" class="popover-content"><label id="lbl_tipo">Formato tipo ' + valor.value + '</label>' +
-                                                                        '<img id="img-boletin" src="../files/images/boletines/tipo' + valor.value + '.png" class="w-100" />' +
-                                                                        '</div>';
+                                                    <label class="col-sm-2 control-label">
+                                                        Formato Boletin
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Define el formato visual del boletín de calificaciones para este curso. Cada formato tiene un diseño diferente en la presentación de las notas.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
+                                                    <div class="col-sm-10">
+                                                        <div style="display: flex; gap: 10px; align-items: center;">
+                                                            <select id="tipoBoletin" class="form-control select2" name="formatoB" onchange="cambiarTipoBoletin()" required <?= $disabledPermiso; ?> style="max-width: 300px;">
+                                                                <option value="">Seleccione una opción</option>
+                                                                <?php
+                                                                try {
+                                                                    $consultaBoletin = mysqli_query($conexion, "SELECT * FROM " . $baseDatosServicios . ".opciones_generales WHERE ogen_grupo=15");
+                                                                } catch (Exception $e) {
+                                                                    include("../compartido/error-catch-to-report.php");
                                                                 }
-                                                            });
-                                                        });
-
-                                                        function cambiarTipo() {
-                                                            var imagen_boletin = document.getElementById('img-boletin');
-                                                            if (imagen_boletin) {
-                                                                var valor = document.getElementById("tipoBoletin");
-                                                                var lbl_tipo = document.getElementById('lbl_tipo');
-                                                                imagen_boletin.src = "../files/images/boletines/tipo" + valor.value + ".png";
-                                                                lbl_tipo.textContent = 'Formato tipo ' + valor.value;
-                                                            }
-                                                        }
-                                                    </script>
-                                                </div>
-
-                                                <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Nota Minima</label>
-                                                    <div class="col-sm-2">
-                                                        <input type="text" name="notaMin" class="form-control" value="<?= $resultadoCurso["gra_nota_minima"]; ?>" <?= $disabledPermiso; ?>>
+                                                                while ($datosBoletin = mysqli_fetch_array($consultaBoletin, MYSQLI_BOTH)) {
+                                                                ?>
+                                                                    <option value="<?= $datosBoletin['ogen_id']; ?>" <?php if ($resultadoCurso["gra_formato_boletin"] == $datosBoletin['ogen_id']) {
+                                                                                                                            echo 'selected';
+                                                                                                                        } ?>><?= $datosBoletin['ogen_nombre']; ?></option>
+                                                                <?php } ?>
+                                                            </select>
+                                                            <button type="button" title="Ver formato boletín" class="btn btn-primary btn-sm" id="btnVistaPreviaBoletin" style="padding: 10px 20px;">
+                                                                <i class="fa fa-eye"></i> Vista Previa
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Periodos</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Nota Minima
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Nota mínima requerida para aprobar el curso. Los estudiantes que obtengan una calificación inferior a este valor no aprobarán el curso.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-2">
-                                                        <input type="text" name="periodosC" class="form-control" value="<?= $resultadoCurso["gra_periodos"]; ?>" <?= $disabledPermiso; ?>>
+                                                        <input type="text" name="notaMin" class="form-control" value="<?= $resultadoCurso["gra_nota_minima"]; ?>" <?= $disabledPermiso; ?> <?= $disabledCamposNotas; ?>>
+                                                        <?php if ($hayNotasRegistradas) { ?>
+                                                            <small class="form-text text-warning">
+                                                                <i class="fa fa-exclamation-triangle"></i> No se puede modificar porque ya existen notas registradas.
+                                                            </small>
+                                                        <?php } ?>
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Valor Matricula</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Periodos
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Número de períodos académicos que tiene el curso durante el año escolar. Generalmente son 4 períodos, pero puede variar según la configuración institucional. <?= $hayNotasRegistradas ? 'Este campo está deshabilitado porque ya existen notas registradas para este curso.' : ''; ?>">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
+                                                    <div class="col-sm-2">
+                                                        <input type="text" name="periodosC" class="form-control" value="<?= $resultadoCurso["gra_periodos"]; ?>" <?= $disabledPermiso; ?> <?= $disabledPeriodos; ?>>
+                                                        <?php if ($hayNotasRegistradas) { ?>
+                                                            <small class="form-text text-warning">
+                                                                <i class="fa fa-exclamation-triangle"></i> No se puede modificar porque ya existen notas registradas.
+                                                            </small>
+                                                        <?php } ?>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-group row">
+                                                    <label class="col-sm-2 control-label">
+                                                        Valor Matricula
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Valor económico de la matrícula para este curso. Este valor se utilizará en procesos de facturación y reportes financieros.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-2">
                                                         <input type="text" name="valorM" class="form-control" value="<?= $resultadoCurso["gra_valor_matricula"]; ?>" <?= $disabledPermiso; ?>>
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Valor Pension</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Valor Pension
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Valor económico de la pensión mensual para este curso. Este valor se utilizará en procesos de facturación y reportes financieros.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-2">
                                                         <input type="text" name="valorP" class="form-control" value="<?= $resultadoCurso["gra_valor_pension"]; ?>" <?= $disabledPermiso; ?>>
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Curso Siguiente</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Curso Siguiente
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Define el curso al que los estudiantes avanzarán después de completar este curso. Útil para establecer la secuencia académica y procesos de promoción automática.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-6">
                                                         <?php
                                                         $opcionesConsulta = Grados::listarGrados(1);
@@ -219,7 +265,12 @@ if (!Modulos::validarPermisoEdicion()) {
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Curso Anterior</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Curso Anterior
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Define el curso del cual provienen los estudiantes que ingresan a este curso. Útil para establecer la secuencia académica y procesos de promoción automática.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-6">
                                                         <?php
                                                         $opcionesConsulta = Grados::listarGrados(1);
@@ -240,9 +291,14 @@ if (!Modulos::validarPermisoEdicion()) {
                                                 </div>
 
                                                 <div class="form-group row">
-                                                    <label class="col-sm-2 control-label">Nivel Educativo</label>
+                                                    <label class="col-sm-2 control-label">
+                                                        Nivel Educativo
+                                                        <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Nivel educativo al que pertenece el curso según la estructura del sistema educativo: Preescolar, Básica Primaria, Básica Secundaria o Media.">
+                                                            <i class="fa fa-info-circle text-info"></i>
+                                                        </button>
+                                                    </label>
                                                     <div class="col-sm-6">
-                                                        <select class="form-control  select2" name="nivel" <?= $disabledPermiso; ?>>
+                                                        <select class="form-control  select2" name="nivel" <?= $disabledPermiso; ?> <?= $disabledSelectNotas; ?>>
                                                             <option value="">Seleccione una opción</option>
                                                             <option value="1" <?php if ($resultadoCurso['gra_nivel'] == 1) {
                                                                                     echo 'selected';
@@ -257,13 +313,23 @@ if (!Modulos::validarPermisoEdicion()) {
                                                                                     echo 'selected';
                                                                                 } ?>>Educación Media</option>
                                                         </select>
+                                                        <?php if ($hayNotasRegistradas) { ?>
+                                                            <small class="form-text text-warning">
+                                                                <i class="fa fa-exclamation-triangle"></i> No se puede modificar porque ya existen notas registradas.
+                                                            </small>
+                                                        <?php } ?>
                                                     </div>
                                                 </div>
                                                 <?php if ($datosUsuarioActual['uss_tipo'] == 1) { ?>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Estado</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Estado
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Estado del curso en el sistema. Activo: el curso está disponible para uso. Inactivo: el curso está deshabilitado y no se puede utilizar.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
                                                         <div class="col-sm-2">
-                                                            <select class="form-control  select2" name="estado" <?= $disabledPermiso; ?>>
+                                                            <select class="form-control  select2" name="estado" <?= $disabledPermiso; ?> <?= $disabledSelectNotas; ?>>
                                                                 <option value="">Seleccione una opción</option>
                                                                 <option value="1" <?php if ($resultadoCurso['gra_estado'] == 1) {
                                                                                         echo 'selected';
@@ -272,6 +338,11 @@ if (!Modulos::validarPermisoEdicion()) {
                                                                                         echo 'selected';
                                                                                     } ?>>Inactivo</option>
                                                             </select>
+                                                            <?php if ($hayNotasRegistradas) { ?>
+                                                                <small class="form-text text-warning">
+                                                                    <i class="fa fa-exclamation-triangle"></i> No se puede modificar porque ya existen notas registradas.
+                                                                </small>
+                                                            <?php } ?>
                                                         </div>
                                                     </div>
                                                 <?php
@@ -279,7 +350,12 @@ if (!Modulos::validarPermisoEdicion()) {
                                                 if (array_key_exists(10, $arregloModulos)) {
                                                 ?>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Tipo de grado</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Tipo de grado
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Grupal: curso tradicional con grupos de estudiantes. Individual: curso personalizado donde cada estudiante tiene su propio ritmo y configuración. Este campo solo se puede modificar si el curso no tiene cargas académicas asignadas.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
                                                         <div class="col-sm-2">
                                                             <?php
                                                             if ($resultadoCargaCurso["cargas_curso"] < 1) {
@@ -316,6 +392,142 @@ if (!Modulos::validarPermisoEdicion()) {
                                                 ?>
 
 
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tab Periodos y Porcentajes -->
+                                    <div class="tab-pane fade" id="nav-periodos" role="tabpanel" aria-labelledby="nav-periodos-tab">
+                                        <div class="panel">
+                                            <div class="panel-body">
+                                                <?php if ($hayNotasRegistradas) { ?>
+                                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                        <h4 class="alert-heading"><i class="fa fa-exclamation-triangle"></i> Notas Registradas</h4>
+                                                        <p class="mb-2">
+                                                            <strong>Este curso tiene notas registradas en el sistema.</strong>
+                                                        </p>
+                                                        <p class="mb-0">
+                                                            Los porcentajes de períodos no pueden ser modificados porque ya existen registros en las tablas <strong>academico_boletin</strong> o <strong>academico_actividades</strong>.
+                                                        </p>
+                                                    </div>
+                                                <?php } ?>
+                                                
+                                                <div class="form-group row">
+                                                    <label class="col-sm-12 control-label">
+                                                        <h5><i class="fa fa-calendar"></i> Configuración de Porcentajes por Período</h5>
+                                                        <p class="text-muted">Configure el porcentaje que representa cada período académico en el cálculo de la nota definitiva del curso.</p>
+                                                    </label>
+                                                </div>
+                                                
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-hover" id="tablaPeriodos">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th style="width: 100px;">Período</th>
+                                                                <th>Porcentaje (%)</th>
+                                                                <th style="width: 120px;">Acciones</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="tbodyPeriodos">
+                                                            <?php
+                                                            $numPeriodos = !empty($resultadoCurso["gra_periodos"]) ? (int)$resultadoCurso["gra_periodos"] : 4;
+                                                            $cursoId = base64_decode($_GET["id"]);
+                                                            
+                                                            // Obtener porcentajes existentes
+                                                            $porcentajesExistentes = [];
+                                                            $year = $_SESSION["bd"];
+                                                            $sqlPorcentajes = "SELECT * FROM " . BD_ACADEMICA . ".academico_grados_periodos 
+                                                                              WHERE gvp_grado = ? AND institucion = ? AND year = ? 
+                                                                              ORDER BY gvp_periodo ASC";
+                                                            $parametrosPorcentajes = [$cursoId, (int)$_SESSION["idInstitucion"], $year];
+                                                            $resultadoPorcentajes = BindSQL::prepararSQL($sqlPorcentajes, $parametrosPorcentajes);
+                                                            while ($filaPorcentaje = mysqli_fetch_array($resultadoPorcentajes, MYSQLI_BOTH)) {
+                                                                $porcentajesExistentes[$filaPorcentaje['gvp_periodo']] = $filaPorcentaje;
+                                                            }
+                                                            
+                                                            $sumaPorcentajes = 0;
+                                                            for ($p = 1; $p <= $numPeriodos; $p++) {
+                                                                $porcentajeExistente = isset($porcentajesExistentes[$p]) ? $porcentajesExistentes[$p] : null;
+                                                                $valorPorcentaje = !empty($porcentajeExistente['gvp_valor']) ? $porcentajeExistente['gvp_valor'] : '';
+                                                                $gvpId = !empty($porcentajeExistente['gvp_id']) ? $porcentajeExistente['gvp_id'] : '';
+                                                                $sumaPorcentajes += !empty($valorPorcentaje) ? (float)$valorPorcentaje : 0;
+                                                            ?>
+                                                                <tr data-periodo="<?= $p; ?>" data-gvp-id="<?= $gvpId; ?>">
+                                                                    <td class="text-center">
+                                                                        <strong>Período <?= $p; ?></strong>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="input-group">
+                                                                            <input type="number" 
+                                                                                   class="form-control porcentaje-periodo" 
+                                                                                   id="porcentaje_<?= $p; ?>" 
+                                                                                   value="<?= $valorPorcentaje; ?>" 
+                                                                                   min="0" 
+                                                                                   max="100" 
+                                                                                   step="0.01"
+                                                                                   placeholder="Ej: 25.00"
+                                                                                   <?= $disabledPermiso; ?> 
+                                                                                   <?= $disabledPeriodos; ?>
+                                                                                   data-periodo="<?= $p; ?>">
+                                                                            <div class="input-group-append">
+                                                                                <span class="input-group-text">%</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-center">
+                                                                        <?php if (empty($disabledPermiso) && empty($disabledPeriodos)) { ?>
+                                                                            <button type="button" 
+                                                                                    class="btn btn-sm btn-primary btn-guardar-periodo" 
+                                                                                    data-periodo="<?= $p; ?>"
+                                                                                    title="Guardar porcentaje">
+                                                                                <i class="fa fa-save"></i> Guardar
+                                                                            </button>
+                                                                        <?php } else { ?>
+                                                                            <span class="badge badge-secondary">Solo lectura</span>
+                                                                        <?php } ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php } ?>
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td class="text-right"><strong>Total:</strong></td>
+                                                                <td>
+                                                                    <div class="input-group">
+                                                                        <input type="text" 
+                                                                               class="form-control" 
+                                                                               id="totalPorcentajes" 
+                                                                               value="<?= number_format($sumaPorcentajes, 2); ?>" 
+                                                                               readonly 
+                                                                               style="font-weight: bold; <?= abs($sumaPorcentajes - 100) > 0.01 ? 'color: #dc3545;' : 'color: #28a745;'; ?>">
+                                                                        <div class="input-group-append">
+                                                                            <span class="input-group-text">%</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <?php if (abs($sumaPorcentajes - 100) > 0.01) { ?>
+                                                                        <small class="form-text text-danger">
+                                                                            <i class="fa fa-exclamation-circle"></i> La suma de porcentajes debe ser igual a 100%
+                                                                        </small>
+                                                                    <?php } else { ?>
+                                                                        <small class="form-text text-success">
+                                                                            <i class="fa fa-check-circle"></i> La suma de porcentajes es correcta
+                                                                        </small>
+                                                                    <?php } ?>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                                
+                                                <div class="alert alert-info mt-3">
+                                                    <i class="fa fa-info-circle"></i> 
+                                                    <strong>Nota:</strong> La suma de todos los porcentajes debe ser igual a 100%. 
+                                                    Si no se especifican porcentajes, el sistema distribuirá equitativamente (100% / número de períodos).
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -397,13 +609,23 @@ if (!Modulos::validarPermisoEdicion()) {
                                                         </div>
                                                     </div>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Precio</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Precio
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Precio del curso para cursos individuales. Este valor se utilizará en procesos de facturación y venta de cursos.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
                                                         <div class="col-sm-4">
                                                             <input type="number" name="precio" class="form-control" value="<?= $resultadoCurso["gra_price"]; ?>" <?= $disabledPermiso; ?>>
                                                         </div>
                                                     </div>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Minimo de estudiantes</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Minimo de estudiantes
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Número mínimo de estudiantes requeridos para que el curso se active. Si no se alcanza este mínimo, el curso puede permanecer inactivo o cancelarse.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
 
                                                         <div class="input-group spinner col-sm-2">
                                                             <span class="input-group-btn">
@@ -421,7 +643,12 @@ if (!Modulos::validarPermisoEdicion()) {
 
                                                     </div>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Maximo de estudiantes</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Maximo de estudiantes
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Número máximo de estudiantes permitidos en el curso. Una vez alcanzado este límite, no se podrán inscribir más estudiantes.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
 
                                                         <div class="input-group spinner col-sm-2">
                                                             <span class="input-group-btn">
@@ -439,7 +666,12 @@ if (!Modulos::validarPermisoEdicion()) {
 
                                                     </div>
                                                     <div class="form-group row">
-                                                        <label class="col-sm-2 control-label">Duracion en horas</label>
+                                                        <label class="col-sm-2 control-label">
+                                                            Duracion en horas
+                                                            <button type="button" class="btn btn-sm btn-link p-0 ml-1" data-toggle="tooltip" data-placement="right" title="Duración total del curso expresada en horas. Este valor representa el tiempo estimado que tomará completar el curso.">
+                                                                <i class="fa fa-info-circle text-info"></i>
+                                                            </button>
+                                                        </label>
                                                         <div class="input-group spinner col-sm-2">
                                                             <span class="input-group-btn">
                                                                 <button class="btn btn-info" data-dir="dwn" type="button">
@@ -987,5 +1219,475 @@ if (!Modulos::validarPermisoEdicion()) {
 <script src="../../config-general/assets/plugins/select2/js/select2.js"></script>
 <script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
 <!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
+
+<!-- 🖼️ Lightbox Moderno para Imágenes -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+    <div class="lightbox-close" id="lightboxClose">
+        <i class="fa fa-times"></i>
+    </div>
+    <div class="lightbox-content">
+        <img src="" alt="Vista previa" class="lightbox-image" id="lightboxImage">
+    </div>
+    <div class="lightbox-title" id="lightboxTitle">Vista Previa</div>
+</div>
+
+<style>
+/* ========================================
+   LIGHTBOX MODERNO
+   ======================================== */
+
+.lightbox-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 99999;
+    animation: fadeIn 0.3s ease-out;
+    backdrop-filter: blur(10px);
+}
+
+.lightbox-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    animation: zoomIn 0.3s ease-out;
+}
+
+.lightbox-image {
+    max-width: 100%;
+    max-height: 95vh;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 100000;
+}
+
+.lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg);
+}
+
+.lightbox-title {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 100000;
+}
+
+/* Popover preview large */
+.popover-preview-large {
+    max-width: 600px !important;
+    width: 600px;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    background: #fff;
+}
+
+.popover-preview-large .popover-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+}
+
+.popover-preview-large .popover-body {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Imagen de preview */
+.preview-image-large {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+}
+
+.preview-image-large:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .popover-preview-large {
+        max-width: 95vw !important;
+        width: 95vw;
+    }
+    
+    .popover-preview-large .popover-body {
+        padding: 15px;
+        max-height: 70vh;
+    }
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    // Inicializar tooltips de Bootstrap
+    if (typeof $.fn.tooltip !== 'undefined') {
+        $('[data-toggle="tooltip"]').tooltip({
+            html: true,
+            placement: 'right',
+            container: 'body'
+        });
+    }
+    
+    // ========================================
+    // POPOVER VISTA PREVIA BOLETÍN
+    // ========================================
+    // Inicializar popover para vista previa de boletín (después de que Bootstrap esté cargado)
+    // Usar setTimeout para asegurar que Bootstrap esté completamente cargado
+    setTimeout(function() {
+        if (typeof $.fn.popover !== 'undefined') {
+        $('#btnVistaPreviaBoletin').popover({
+            html: true,
+            trigger: 'click',
+            placement: 'right',
+            template: '<div class="popover popover-preview-large" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
+            content: function () {
+                var valorB = document.getElementById("tipoBoletin");
+                if (!valorB || !valorB.value) {
+                    return '<div class="popover-content"><p class="text-muted">Seleccione un formato de boletín primero.</p></div>';
+                }
+                const imagePath = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/tipo'+valorB.value+'.png';
+                return '<div id="myPopoverBol" class="popover-content"><label id="lbl_tipo_bol" style="font-weight: 600; margin-bottom: 10px; display: block;">Estilo Boletín '+valorB.value+'</label>'+
+                    '<img id="img-boletin-true" src="'+imagePath+'" class="preview-image-large" onerror="this.src=\'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/default.png\'; this.onerror=null;" />'+'</div>';
+            }
+        });
+        
+        // Cerrar popover al hacer click fuera
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#btnVistaPreviaBoletin, .popover').length) {
+                $('#btnVistaPreviaBoletin').popover('hide');
+            }
+        });
+    }
+    
+    // Función para actualizar la imagen del popover cuando cambia el formato
+    window.cambiarTipoBoletin = function() {
+        var imagen_boletin = document.getElementById('img-boletin-true'); 
+        if (imagen_boletin) {
+            var valor = document.getElementById("tipoBoletin");  
+            var lbl_tipo = document.getElementById('lbl_tipo_bol');
+            if (valor && valor.value) {
+                const imagePath = "https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/tipo"+valor.value+".png";
+                imagen_boletin.src = imagePath;
+                imagen_boletin.onerror = function() {
+                    this.src = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/default.png';
+                    this.onerror = null;
+                };
+                if (lbl_tipo) {
+                    lbl_tipo.textContent='Estilo Boletín '+valor.value;
+                }
+            }
+        }
+    };
+    
+    // Actualizar popover cuando cambia el select
+    $('#tipoBoletin').on('change', function() {
+        cambiarTipoBoletin();
+        // Si el popover está abierto, actualizarlo
+        if (typeof $.fn.popover !== 'undefined' && $('#btnVistaPreviaBoletin').data('bs.popover')) {
+            var popoverInstance = $('#btnVistaPreviaBoletin').data('bs.popover');
+            if (popoverInstance && popoverInstance.tip && $(popoverInstance.tip).is(':visible')) {
+                $('#btnVistaPreviaBoletin').popover('dispose');
+                $('#btnVistaPreviaBoletin').popover({
+                    html: true,
+                    trigger: 'click',
+                    placement: 'right',
+                    template: '<div class="popover popover-preview-large" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
+                    content: function () {
+                        var valorB = document.getElementById("tipoBoletin");
+                        if (!valorB || !valorB.value) {
+                            return '<div class="popover-content"><p class="text-muted">Seleccione un formato de boletín primero.</p></div>';
+                        }
+                        const imagePath = 'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/tipo'+valorB.value+'.png';
+                        return '<div id="myPopoverBol" class="popover-content"><label id="lbl_tipo_bol" style="font-weight: 600; margin-bottom: 10px; display: block;">Estilo Boletín '+valorB.value+'</label>'+
+                            '<img id="img-boletin-true" src="'+imagePath+'" class="preview-image-large" onerror="this.src=\'https://main.plataformasintia.com/app-sintia/main-app/files/images/boletines/default.png\'; this.onerror=null;" />'+'</div>';
+                    }
+                });
+            }
+        }
+    });
+    }, 100); // Esperar 100ms para asegurar que Bootstrap esté cargado
+    
+    // ========================================
+    // GESTIÓN DE PORCENTAJES POR PERÍODO
+    // ========================================
+    
+    // Calcular total de porcentajes
+    function calcularTotalPorcentajes() {
+        var total = 0;
+        $('.porcentaje-periodo').each(function() {
+            var valor = parseFloat($(this).val()) || 0;
+            total += valor;
+        });
+        
+        $('#totalPorcentajes').val(total.toFixed(2));
+        
+        // Cambiar color según si suma 100
+        if (Math.abs(total - 100) > 0.01) {
+            $('#totalPorcentajes').css('color', '#dc3545');
+            $('#totalPorcentajes').closest('td').find('small').remove();
+            $('#totalPorcentajes').closest('td').append(
+                '<small class="form-text text-danger">' +
+                '<i class="fa fa-exclamation-circle"></i> La suma de porcentajes debe ser igual a 100%' +
+                '</small>'
+            );
+        } else {
+            $('#totalPorcentajes').css('color', '#28a745');
+            $('#totalPorcentajes').closest('td').find('small').remove();
+            $('#totalPorcentajes').closest('td').append(
+                '<small class="form-text text-success">' +
+                '<i class="fa fa-check-circle"></i> La suma de porcentajes es correcta' +
+                '</small>'
+            );
+        }
+    }
+    
+    // Calcular total al cambiar cualquier porcentaje
+    $(document).on('input change', '.porcentaje-periodo', function() {
+        calcularTotalPorcentajes();
+    });
+    
+    // Guardar porcentaje de un período
+    $(document).on('click', '.btn-guardar-periodo', function() {
+        var btn = $(this);
+        var periodo = btn.data('periodo');
+        var fila = btn.closest('tr');
+        var gvpId = fila.data('gvp-id');
+        var porcentaje = parseFloat($('#porcentaje_' + periodo).val());
+        var cursoId = '<?= base64_decode($_GET["id"]); ?>';
+        
+        // Validar que el porcentaje esté entre 0 y 100
+        if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+            $.toast({
+                heading: 'Error de validación',
+                text: 'El porcentaje debe ser un número entre 0 y 100.',
+                showHideTransition: 'slide',
+                icon: 'error',
+                position: 'top-right',
+                hideAfter: 5000
+            });
+            return;
+        }
+        
+        // Validar que la suma de porcentajes no exceda 100%
+        var sumaActual = 0;
+        $('.porcentaje-periodo').each(function() {
+            var valor = parseFloat($(this).val()) || 0;
+            sumaActual += valor;
+        });
+        
+        // Obtener el valor actual del período que se está guardando
+        var porcentajeActualPeriodo = parseFloat($('#porcentaje_' + periodo).val()) || 0;
+        
+        // Calcular la nueva suma (restar el valor actual y sumar el nuevo)
+        var nuevaSuma = sumaActual - porcentajeActualPeriodo + porcentaje;
+        
+        if (nuevaSuma > 100.01) { // Permitir un pequeño margen de error por redondeo
+            $.toast({
+                heading: 'Error de validación',
+                text: 'La suma de porcentajes excedería el 100%. Suma actual: ' + sumaActual.toFixed(2) + '%, nuevo valor: ' + porcentaje.toFixed(2) + '%, total sería: ' + nuevaSuma.toFixed(2) + '%',
+                showHideTransition: 'slide',
+                icon: 'error',
+                position: 'top-right',
+                hideAfter: 7000
+            });
+            btn.prop('disabled', false);
+            btn.html(iconoOriginal);
+            return;
+        }
+        
+        // Deshabilitar botón y mostrar loading
+        btn.prop('disabled', true);
+        var iconoOriginal = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin"></i> Guardando...');
+        
+        // Enviar datos por AJAX
+        $.ajax({
+            url: 'cursos-guardar-porcentaje-periodo.php',
+            type: 'POST',
+            data: {
+                curso_id: cursoId,
+                periodo: periodo,
+                porcentaje: porcentaje,
+                gvp_id: gvpId || ''
+            },
+            dataType: 'json',
+            success: function(response) {
+                btn.prop('disabled', false);
+                btn.html(iconoOriginal);
+                
+                if (response.success) {
+                    // Actualizar el data-gvp-id de la fila si es nuevo registro
+                    if (response.gvp_id) {
+                        fila.data('gvp-id', response.gvp_id);
+                    }
+                    
+                    $.toast({
+                        heading: 'Éxito',
+                        text: response.message || 'Porcentaje guardado correctamente.',
+                        showHideTransition: 'slide',
+                        icon: 'success',
+                        position: 'top-right',
+                        hideAfter: 3000
+                    });
+                    
+                    // Recalcular total
+                    calcularTotalPorcentajes();
+                    
+                    // Recargar la página después de 1 segundo para mostrar los datos actualizados
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    $.toast({
+                        heading: 'Error',
+                        text: response.message || 'No se pudo guardar el porcentaje.',
+                        showHideTransition: 'slide',
+                        icon: 'error',
+                        position: 'top-right',
+                        hideAfter: 5000
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                btn.prop('disabled', false);
+                btn.html(iconoOriginal);
+                
+                console.error('Error AJAX:', error);
+                $.toast({
+                    heading: 'Error de conexión',
+                    text: 'No se pudo conectar con el servidor. Intente nuevamente.',
+                    showHideTransition: 'slide',
+                    icon: 'error',
+                    position: 'top-right',
+                    hideAfter: 5000
+                });
+            }
+        });
+    });
+    
+    // Calcular total inicial
+    calcularTotalPorcentajes();
+    
+    // ========================================
+    // INICIALIZACIÓN DE TABS
+    // ========================================
+    // Asegurar que los tabs funcionen correctamente
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // Recalcular porcentajes cuando se muestra el tab de períodos
+        if ($(e.target).attr('href') === '#nav-periodos') {
+            calcularTotalPorcentajes();
+        }
+    });
+    
+    // Sistema de Lightbox para Imágenes
+    // Click en cualquier imagen con clase preview-image-large
+    $(document).on('click', '.preview-image-large', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const imgSrc = $(this).attr('src');
+        const imgAlt = $(this).closest('.popover-content').find('label').text() || 'Vista Previa';
+        
+        // Configurar lightbox
+        $('#lightboxImage').attr('src', imgSrc);
+        $('#lightboxTitle').text(imgAlt);
+        
+        // Mostrar lightbox con animación
+        $('#lightboxOverlay').addClass('active');
+        
+        // Prevenir scroll del body
+        $('body').css('overflow', 'hidden');
+    });
+    
+    // Cerrar lightbox al hacer click en X
+    $('#lightboxClose').on('click', function() {
+        cerrarLightbox();
+    });
+    
+    // Cerrar lightbox al hacer click en el fondo oscuro
+    $('#lightboxOverlay').on('click', function(e) {
+        if (e.target === this) {
+            cerrarLightbox();
+        }
+    });
+    
+    // Cerrar lightbox con tecla ESC
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && $('#lightboxOverlay').hasClass('active')) {
+            cerrarLightbox();
+        }
+    });
+    
+    function cerrarLightbox() {
+        $('#lightboxOverlay').removeClass('active');
+        $('body').css('overflow', 'auto');
+    }
+});
+</script>
 
 </html>

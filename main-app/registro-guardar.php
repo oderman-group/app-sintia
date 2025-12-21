@@ -1,10 +1,109 @@
 <?php
+// Configuración segura de sesiones
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_samesite', 'Lax');
+
+// TEMPORAL: Desactivar OPcache para este archivo (eliminar después de probar)
+if (function_exists('opcache_invalidate')) {
+    opcache_invalidate(__FILE__, true);
+}
+
+// LOG MUY TEMPRANO - Versión del archivo
+error_log("🔵🔵🔵 REGISTRO-GUARDAR.PHP - VERSIÓN ACTUALIZADA - ".date('Y-m-d H:i:s')." 🔵🔵🔵");
+
 session_start();
 require_once("../conexion.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");
 require_once(ROOT_PATH."/main-app/class/EnviarEmail.php");
 require_once(ROOT_PATH . "/main-app/class/Notificacion.php");
 
 $notificacion = new Notificacion();
+
+// LOG DE INICIO (ANTES de CSRF para ver si llega al archivo)
+error_log("========================================");
+error_log("INICIO DE REGISTRO-GUARDAR.PHP");
+error_log("POST recibido: " . print_r(array_keys($_POST), true));
+error_log("Verificando usosSintia en POST: " . (isset($_POST['usosSintia']) ? 'SÍ EXISTE' : 'NO EXISTE'));
+if(isset($_POST['usosSintia'])) {
+	error_log("usosSintia recibido: " . print_r($_POST['usosSintia'], true));
+}
+error_log("========================================");
+
+// VALIDAR TOKEN CSRF
+verificarTokenCSRF(false); // false = no es AJAX, redirige si falla
+
+error_log("CSRF validado correctamente, continuando...");
+
+/**
+ * VALIDACIÓN DE RECAPTCHA v3
+ */
+$recaptchaToken = isset($_POST['recaptchaToken']) ? $_POST['recaptchaToken'] : '';
+$recaptchaValid = false;
+
+if (!empty($recaptchaToken)) {
+    $secretKey = '6LfH9KkqAAAAAI3vc_wWTW0EfV0qGVs2cVXe8gGc'; // Clave secreta de reCAPTCHA
+    
+    $recaptchaUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    $recaptchaData = [
+        'secret' => $secretKey,
+        'response' => $recaptchaToken,
+        'remoteip' => $_SERVER['REMOTE_ADDR']
+    ];
+    
+    $options = [
+        'http' => [
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method' => 'POST',
+            'content' => http_build_query($recaptchaData)
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $verify = file_get_contents($recaptchaUrl, false, $context);
+    $captchaSuccess = json_decode($verify);
+    
+    // Verificar score de reCAPTCHA (debe ser > 0.5 para considerarse humano)
+    if ($captchaSuccess->success && $captchaSuccess->score >= 0.5) {
+        $recaptchaValid = true;
+    }
+}
+
+// Si la validación de reCAPTCHA falla, registrar advertencia pero continuar
+// (reCAPTCHA es opcional para no bloquear registros legítimos por problemas técnicos)
+if (!$recaptchaValid) {
+    error_log("Advertencia: reCAPTCHA no validado para registro - IP: " . $_SERVER['REMOTE_ADDR']);
+}
+
+/**
+ * VALIDACIÓN DE CÓDIGO DE VERIFICACIÓN
+ */
+$idRegistro = isset($_POST['idRegistro']) ? (int)$_POST['idRegistro'] : 0;
+
+if ($idRegistro > 0) {
+    $consultaCodigo = mysqli_query($conexion, "SELECT * FROM " . BD_GENERAL . ".usuarios_codigo_verificacion 
+        WHERE codv_id='{$idRegistro}' AND codv_verificado=1 AND codv_usuario_asociado IS NULL LIMIT 1");
+    
+    if (mysqli_num_rows($consultaCodigo) == 0) {
+        $_SESSION['mensajeError'] = "Código de verificación no válido. Por favor verifica tu email.";
+        header("Location: registro.php?" . http_build_query($_POST));
+        exit();
+    }
+    
+    $datosCodigoVerificacion = mysqli_fetch_array($consultaCodigo, MYSQLI_BOTH);
+    
+    // Verificar que el código no haya expirado
+    $fechaExpiracion = strtotime($datosCodigoVerificacion['codv_fecha_expiracion']);
+    if (time() > $fechaExpiracion) {
+        $_SESSION['mensajeError'] = "El código de verificación ha expirado. Por favor solicita uno nuevo.";
+        header("Location: registro.php?" . http_build_query($_POST));
+        exit();
+    }
+} else {
+    $_SESSION['mensajeError'] = "Código de verificación requerido.";
+    header("Location: registro.php?" . http_build_query($_POST));
+    exit();
+}
 
 $fecha=date("Y-m-d");
 $fechaCompleta = date("Y-m-d H:i:s");
@@ -12,6 +111,34 @@ $nombreInsti = $_POST['nombreIns'];
 $siglasInst = $_POST['siglasInst'];
 $year = date("Y");
 $bdInstitucion=BD_PREFIX.$siglasInst;
+
+// CAPTURAR USOS DE SINTIA TEMPRANO (antes de transacción para no perderlos)
+error_log("========== CAPTURANDO USOS DE SINTIA ==========");
+error_log("¿Existe usosSintia en POST? " . (isset($_POST['usosSintia']) ? 'SÍ' : 'NO'));
+
+$usosSintia = isset($_POST['usosSintia']) && is_array($_POST['usosSintia']) ? $_POST['usosSintia'] : [];
+error_log("Usos capturados (count): " . count($usosSintia));
+error_log("Usos capturados (array): " . json_encode($usosSintia));
+
+$usosSintiaTextos = [];
+$mapeoUsos = [
+	'academico' => 'Gestión Académica',
+	'administrativo' => 'Gestión Administrativa',
+	'comunicacion' => 'Comunicación',
+	'integral' => 'Gestión Integral'
+];
+
+foreach($usosSintia as $uso) {
+	error_log("Procesando uso: " . $uso);
+	if(isset($mapeoUsos[$uso])) {
+		$usosSintiaTextos[] = $mapeoUsos[$uso];
+		error_log("Texto agregado: " . $mapeoUsos[$uso]);
+	}
+}
+
+$usoSintiaTexto = !empty($usosSintiaTextos) ? implode(', ', $usosSintiaTextos) : 'No especificado';
+error_log("TEXTO FINAL DE USOS: " . $usoSintiaTexto);
+error_log("===============================================");
 
 try {
 	mysqli_query($conexion, "BEGIN");
@@ -34,7 +161,7 @@ try {
 			'ins_years' => $year . "," . $year,
 			'ins_notificaciones_acudientes' => 0,
 			'ins_siglas' => $siglasInst,
-			'ins_id_plan' => $_POST['plan'],
+			'ins_id_plan' => 1, // Plan básico por defecto
 			'ins_year_default' => $year,
 			'ins_tipo' => SCHOOL
 		);
@@ -57,26 +184,59 @@ try {
 		exit();
 	}
 	$idInsti = mysqli_insert_id($conexion);
+	
+	error_log("INSTITUCIÓN CREADA CON ID: " . $idInsti);
+	error_log("Procediendo a relacionar módulos...");
 
-	//BUSCAMOS MODULOS DEL PLAN ESCOGIDO
+	//RELACIONAR MÓDULOS (solo visibles, activos y con mod_default_install = 1)
 	try{
-		$consultaModulos = mysqli_query($conexion, "SELECT plns_modulos FROM ".BD_ADMIN.".planes_sintia WHERE plns_id='".$_POST['plan']."'");
+		require_once(ROOT_PATH."/main-app/class/Conexion.php");
+		
+		error_log("Auto-registro - Iniciando relación de módulos para institución: " . $idInsti);
+		
+		// Solo instalar módulos que estén visibles, activos y con mod_default_install = 1
+		$consultaModulos = mysqli_query($conexion, "SELECT mod_id FROM ".BD_ADMIN.".modulos 
+			WHERE mod_estado = 1 
+			AND mod_visible = 1 
+			AND mod_default_install = 1");
+		
+		if (!$consultaModulos) {
+			error_log("Auto-registro - Error en query de módulos: " . mysqli_error($conexion));
+			throw new Exception('Error al consultar módulos: ' . mysqli_error($conexion));
+		}
+		
+		$numModulos = mysqli_num_rows($consultaModulos);
+		error_log("Auto-registro - Módulos encontrados (visibles, activos y con mod_default_install=1): " . $numModulos);
+		
+		if ($consultaModulos && $numModulos > 0) {
+			$valoresModulos = [];
+			while ($modulo = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH)) {
+				$valoresModulos[] = "($idInsti, ".$modulo['mod_id'].")";
+			}
+			
+			error_log("Auto-registro - Valores a insertar: " . count($valoresModulos));
+			
+			if (!empty($valoresModulos)) {
+				$sqlModulos = "INSERT INTO ".BD_ADMIN.".instituciones_modulos (ipmod_institucion, ipmod_modulo) 
+							   VALUES " . implode(',', $valoresModulos);
+				
+				error_log("Auto-registro - SQL módulos: " . substr($sqlModulos, 0, 200) . "...");
+				
+				$resultadoModulos = mysqli_query($conexion, $sqlModulos);
+				
+				if (!$resultadoModulos) {
+					error_log("Auto-registro - Error al insertar módulos: " . mysqli_error($conexion));
+					throw new Exception('Error al insertar módulos: ' . mysqli_error($conexion));
+				}
+				
+				$filasAfectadas = mysqli_affected_rows($conexion);
+				error_log("Auto-registro - Módulos insertados: " . $filasAfectadas);
+			}
+		} else {
+			error_log("Auto-registro - ADVERTENCIA: No se encontraron módulos activos");
+		}
 	} catch (Exception $e) {
-		echo $e->getMessage();
-		exit();
-	}
-	$datosModulos = mysqli_fetch_array($consultaModulos, MYSQLI_BOTH);
-	$arrayModulos = explode(",", $datosModulos['plns_modulos']);
-	$modulosInsertar = "";
-	foreach ($arrayModulos as $idModulo) {
-		$modulosInsertar .= '('.$idInsti.','.$idModulo.'),';
-	}
-	$modulosInsertar = substr($modulosInsertar,0,-1);
-
-	//GUADAMOS LOS MODULOS
-	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_ADMIN.".instituciones_modulos (ipmod_institucion,ipmod_modulo) VALUES $modulosInsertar");
-	} catch (Exception $e) {
+		error_log("Auto-registro - EXCEPCIÓN en módulos: " . $e->getMessage());
 		echo $e->getMessage();
 		exit();
 	}
@@ -170,14 +330,14 @@ try {
 		exit();
 	}
 	
-	//TODOS LOS USUARIOS
+	//TODOS LOS USUARIOS (con tema blanco por defecto)
 	try{
-		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2, uss_estado, uss_foto, uss_portada, uss_idioma, uss_tema, uss_perfil, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_celular, uss_genero, uss_ultimo_ingreso, uss_ultima_salida, uss_telefono, uss_bloqueado, uss_tipo_documento, uss_documento, institucion, year) VALUES 
-		('1','sintia-".$idInsti."',SHA1('sintia2014$'),1,'ADMINISTRACIÓN', NULL, 'SINTIA', NULL,0,'default.png','default.png',1,'orange','','Administrador','soporte@plataformasintia.com','2022-12-06',1298,'(313) 591-2073',126,'2023-01-26 05:56:36','2023-01-26 05:55:46','853755',0, NULL, NULL,'".$idInsti."','".$year."'),
-		('2','directivo-".$idInsti."',SHA1('12345678'),5,'".$_POST['nombre']."',NULL,'".$_POST['apellidos']."',NULL,0,'default.png','default.png',1,'orange','','DIRECTIVO', '".$_POST['email']."',NULL, 1298, '".$_POST['celular']."',126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
-		('3','pruebaDC-".$idInsti."',SHA1('12345678'),2,'USUARIO', NULL,'DOCENTE', NULL,0,'default.png','default.png',1,'orange','','DOCENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
-		('4','pruebaAC-".$idInsti."',SHA1('12345678'),3,'USUARIO', NULL,'ACUDIENTE', NULL,0,'default.png','default.png',1,'orange','','ACUDIENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."'),
-		('5','pruebaES-".$idInsti."',SHA1('12345678'),4,'USUARIO', NULL,'ESTUDIANTE', NULL,0,'default.png','default.png',1,'orange','','ESTUDIANTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'".$idInsti."','".$year."');");
+		mysqli_query($conexion, "INSERT INTO ".BD_GENERAL.".usuarios(uss_id, uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_nombre2, uss_apellido1, uss_apellido2, uss_estado, uss_foto, uss_portada, uss_idioma, uss_tema, uss_perfil, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_celular, uss_genero, uss_ultimo_ingreso, uss_ultima_salida, uss_telefono, uss_bloqueado, uss_tipo_documento, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year) VALUES 
+		('1','sintia-".$idInsti."',SHA1('sintia2014$'),1,'ADMINISTRACIÓN', NULL, 'SINTIA', NULL,0,'default.png','default.png',1,'orange','','Administrador','soporte@plataformasintia.com','2022-12-06',1298,'(313) 591-2073',126,'2023-01-26 05:56:36','2023-01-26 05:55:46','853755',0, NULL, NULL,'white-sidebar-color','header-white','logo-white','".$idInsti."','".$year."'),
+		('2','directivo-".$idInsti."',SHA1('12345678'),5,'".$_POST['nombre']."',NULL,'".$_POST['apellidos']."',NULL,0,'default.png','default.png',1,'orange','','DIRECTIVO', '".$_POST['email']."',NULL, 1298, '".$_POST['celular']."',126,NULL,NULL,NULL,0, NULL, NULL,'white-sidebar-color','header-white','logo-white','".$idInsti."','".$year."'),
+		('3','pruebaDC-".$idInsti."',SHA1('12345678'),2,'USUARIO', NULL,'DOCENTE', NULL,0,'default.png','default.png',1,'orange','','DOCENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'white-sidebar-color','header-white','logo-white','".$idInsti."','".$year."'),
+		('4','pruebaAC-".$idInsti."',SHA1('12345678'),3,'USUARIO', NULL,'ACUDIENTE', NULL,0,'default.png','default.png',1,'orange','','ACUDIENTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'white-sidebar-color','header-white','logo-white','".$idInsti."','".$year."'),
+		('5','pruebaES-".$idInsti."',SHA1('12345678'),4,'USUARIO', NULL,'ESTUDIANTE', NULL,0,'default.png','default.png',1,'orange','','ESTUDIANTE',NULL,NULL,0,NULL,126,NULL,NULL,NULL,0, NULL, NULL,'white-sidebar-color','header-white','logo-white','".$idInsti."','".$year."');");
 	} catch (Exception $e) {
 		echo $e->getMessage();
 		exit();
@@ -210,7 +370,7 @@ try {
 
 	//DEMO
 	try{
-		mysqli_query($conexion, "INSERT INTO demo(demo_fecha_ingreso, demo_usuario, demo_ip, demo_cantidad, demo_correo_enviado, demo_fecha_ultimo_correo, demo_nocorreos, demo_plan, demo_institucion)VALUES(now(), '2', '" . $_SERVER["REMOTE_ADDR"] . "', 0, 1, now(), 0, '" . $_POST["plan"] . "', '".$idInsti."')");
+		mysqli_query($conexion, "INSERT INTO demo(demo_fecha_ingreso, demo_usuario, demo_ip, demo_cantidad, demo_correo_enviado, demo_fecha_ultimo_correo, demo_nocorreos, demo_plan, demo_institucion)VALUES(now(), '2', '" . $_SERVER["REMOTE_ADDR"] . "', 0, 1, now(), 0, '1', '".$idInsti."')");
 	} catch (Exception $e) {
 		echo $e->getMessage();
 		exit();
@@ -227,16 +387,29 @@ try {
 $data = [
 	'institucion_id'   => $idInsti,
 	'institucion_agno' => $year,
+	'institucion_nombre' => $nombreInsti,
 	'usuario_id'       => '2',
 	'usuario_email'    => $_POST['email'],
 	'usuario_nombre'   => $_POST["nombre"]." ".$_POST["apellidos"],
 	'usuario_usuario'  => "directivo-".$idInsti,
-	'usuario_clave'    => '12345678'
+	'usuario_clave'    => '12345678',
+	'uso_sintia'       => $usoSintiaTexto, // MÚLTIPLES usos separados por coma
+	'url_acceso'       => REDIRECT_ROUTE.'/index.php?inst='.base64_encode($idInsti).'&year='.base64_encode($year)
 ];
+
+// Log para debugging del correo
+error_log("Auto-registro - Data del correo: " . print_r($data, true));
+
 $asunto = $_POST["nombre"] . ', Bienvenido a la Plataforma SINTIA';
 $bodyTemplateRoute = ROOT_PATH.'/config-general/plantilla-email-bienvenida.php';
 
-EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute,null,null);
+try {
+	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute,null,null);
+	error_log("Auto-registro - Correo de bienvenida enviado exitosamente a: " . $_POST['email']);
+} catch(Exception $emailError) {
+	error_log("Auto-registro - ERROR al enviar correo: " . $emailError->getMessage());
+	// No detener el proceso si falla el correo
+}
 
 $datos = [
 	'codv_usuario_asociado'    	=> '2',

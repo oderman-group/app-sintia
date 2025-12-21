@@ -10,7 +10,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-$cfg=Movimientos::configuracionFinanzas($conexion, $config);
+$cfg = Movimientos::configuracionFinanzas($conexion, $config);
+if (!is_array($cfg)) {
+	$cfg = [];
+}
 
 $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
@@ -63,14 +66,14 @@ if(!Modulos::validarPermisoEdicion()){
                                 <div class="panel-body">
 
 									<form name="formularioGuardar" action="configuracion-finanzas-guardar.php" method="post" enctype="multipart/form-data">
-                                        <input type="hidden" name="id" value="<?=$cfg['id'];?>">
+                                        <input type="hidden" name="id" value="<?= $cfg['id'] ?? ''; ?>">
 
                                         <p class="h3">General</p>
 
                                         <div class="form-group row">
                                             <label class="col-sm-3 control-label">Consecutivo Inicial <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Este será el numero inicial para el consecutivo de los documetos a imprimir."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-8">
-                                                <input type="number" name="consecutivo" class="form-control col-sm-2" value="<?=$cfg['consecutive_start'];?>" <?=$disabledPermiso;?>>
+                                                <input type="number" name="consecutivo" class="form-control col-sm-2" value="<?= $cfg['consecutive_start'] ?? ''; ?>" <?=$disabledPermiso;?>>
                                             </div>
                                         </div>
 
@@ -80,7 +83,7 @@ if(!Modulos::validarPermisoEdicion()){
                                             <label class="col-sm-3 control-label">Firma <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta firma se mostrara en los documentos a imprimir."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-4">
                                                 <?php
-                                                    if(!empty($cfg['signature']) && file_exists('../files/firmas/'.$cfg['signature'])){
+                                                if(!empty($cfg['signature']) && file_exists('../files/firmas/'.$cfg['signature'])){
                                                 ?>
                                                     <img src="../files/firmas/<?=$cfg['signature'];?>" alt="<?=$cfg['signature'];?>" style="width: 200px; height: 150px;">
                                                 <?php } ?>
@@ -91,7 +94,7 @@ if(!Modulos::validarPermisoEdicion()){
                                         <div class="form-group row">
                                             <label class="col-sm-3 control-label">T&C  <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Estos T&C se veran reflejados en el pie de la factura."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-9">
-                                                <textarea cols="80" id="editor1" name="pieFactura" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?=$cfg['invoice_footer'];?></textarea>
+                                                <textarea cols="80" id="editor1" name="pieFactura" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?= $cfg['invoice_footer'] ?? ''; ?></textarea>
                                             </div>
                                         </div>
 
@@ -145,6 +148,4 @@ if(!Modulos::validarPermisoEdicion()){
         CKEDITOR.replace( 'editor1' );
     </script>
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

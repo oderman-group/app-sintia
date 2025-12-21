@@ -7,7 +7,7 @@
  
  :root {
   --sidebar-color: #ffffff;
-  --sidebar-font-color: #4680ff;
+  --sidebar-font-color: #41c4c4;
   --logo-color: #222c3c;
   --header-color: #6017dc;
 }
@@ -157,7 +157,6 @@
 /* White sidebar color */
 .white-sidebar-color .sidemenu-container {
     background-color: #ffffff;
-    margin-top: 45px;
 }
 .white-sidebar-color .sidemenu-container .sidemenu>li.active.open>a,
 .white-sidebar-color .sidemenu-container .sidemenu>li.active>a,
@@ -165,7 +164,7 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li.active>a {
     background-color: #F4F6F9;
     border-top-color: transparent;
-    color: #4680ff;
+    color: #41c4c4;
 }
 /* .white-sidebar-color .sidemenu-container .sidemenu>li>a{
 	color: #555;
@@ -178,13 +177,13 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a{
 	background-color: #F4F6F9;
     border-top-color: transparent;
-    color: #4680ff;
+    color: #6017dc;
 }
 .white-sidebar-color .user-panel,
 .white-sidebar-color .txtOnline,
 .white-sidebar-color .sidemenu-container .sidemenu>li>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li>a{
-	color: #444;
+	color: #000000;
 }
 .white-sidebar-color .sidemenu-container .sidemenu>li.open>a>.arrow.open:before, 
 .white-sidebar-color .sidemenu-container .sidemenu>li.open>a>.arrow:before, 
@@ -198,7 +197,7 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a>.arrow.open:before, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a>.arrow:before, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu>li:hover>a>i{
-	color: #4680ff;
+	color: #41c4c4;
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu{
@@ -206,7 +205,7 @@
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li>a{
-	color : #444;
+	color : #000000;
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li.active>a, 
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li.open>a, 
@@ -214,7 +213,7 @@
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li.active>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li.open>a, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu .sub-menu>li:hover>a{
-	color: #4680ff;
+	color: #6017dc;
 }
 .white-sidebar-color .page-container{
 	background-color : #ffffff;
@@ -223,7 +222,7 @@
 	margin-top: 0px !important; 
 }
 .white-sidebar-color .sidemenu-hover-submenu li:hover a>.arrow{
-	    border-right: 8px solid #4680ff;
+	    border-right: 8px solid #41c4c4;
 }
 .white-sidebar-color .sidemenu-hover-submenu li:hover>.sub-menu{
 	background-color: #F5F5F5;
@@ -233,10 +232,10 @@
 .white-sidebar-color .sidemenu-container .sidemenu li.active>a>.arrow:before, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu li.active>a>.arrow.open:before, 
 .white-sidebar-color .sidemenu-closed.sidemenu-container-fixed .sidemenu-container:hover .sidemenu li.active>a>.arrow:before{
-	color: #4680ff;
+	color: #41c4c4;
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li:hover>a>i{
-    color: #4680ff;
+    color: #41c4c4;
 }
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li>a>.arrow.open:before, 
 .white-sidebar-color .sidemenu-container .sidemenu .sub-menu>li>a>.arrow:before, 
@@ -839,12 +838,12 @@
 }
 .header-white .page-header.navbar .hor-menu .navbar-nav>li.active>a,
 .header-white .page-header.navbar .hor-menu .navbar-nav>li.current>a {
-    color: #4680ff;
+    color: #6017dc;
     background-color: transparent;
 }
 .header-white .page-header.navbar .hor-menu .navbar-nav>li.active>a>i,
 .header-white .page-header.navbar .hor-menu .navbar-nav>li.current>a>i {
-    color: #4680ff;
+    color: #6017dc;
 }
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li>a, 
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li>a>i{
@@ -860,7 +859,7 @@
 } */
 .header-white .page-header.navbar .hor-menu .navbar-nav>li.mega-menu-dropdown>.dropdown-menu .mega-menu-content .mega-menu-submenu li>a:hover{
 	text-decoration: none;
-    color: #46a2ff;
+    color: #41c4c4;
 }
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li:hover>a {
     color: #000000;
@@ -869,7 +868,7 @@
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li.active>a:hover,
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li.current>a,
 .header-white .page-header.navbar .hor-menu .navbar-nav>li .dropdown-menu li.current>a:hover {
-    color: #46a2ff;
+    color: #6017dc;
     background: transparent;
 }
 .header-white #headerSettingButton {

@@ -12,8 +12,15 @@
         exit();
     }
 
+    // Migrado a PDO - Consulta preparada
     try{
-        mysqli_query($conexion, "UPDATE " . $baseDatosMarketPlace . ".categorias_productos SET catp_nombre='".$_POST["nombre"]."' WHERE catp_id='".$_POST["idR"]."'");
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $sql = "UPDATE " . $baseDatosMarketPlace . ".categorias_productos SET catp_nombre=? WHERE catp_id=?";
+        $stmt = $conexionPDO->prepare($sql);
+        $stmt->bindParam(1, $_POST["nombre"], PDO::PARAM_STR);
+        $stmt->bindParam(2, $_POST["idR"], PDO::PARAM_STR);
+        $stmt->execute();
     } catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
 	}

@@ -28,12 +28,12 @@ if (!isset($idSession) || $idSession=="") {
 	error_log("⚠️ CONSULTA-USUARIO: idSession no estaba definida, tomada de SESSION[id]: " . ($idSession ?? 'NULL'));
 }
 
-// PROTECCIÓN: Verificar que datosUsuario exista antes de usarla
+// Asignar datos del usuario desde la sesión
 $datosUsuarioActual = $_SESSION["datosUsuario"] ?? null;
 
-// FALLBACK DE SEGURIDAD: Si datosUsuario está vacío, intentar recargar desde BD
+// FALLBACK DE SEGURIDAD: Si datosUsuario está vacío, recargarlo desde BD
 if (empty($datosUsuarioActual) && !empty($idSession)) {
-	error_log("🔴 CONSULTA-USUARIO: datosUsuario VACÍO - Intentando recargar desde BD - Usuario: " . $idSession);
+	error_log("⚠️ FALLBACK ACTIVADO - Recargando datos de usuario desde BD - ID: " . $idSession . " - Página: " . ($_SERVER['PHP_SELF'] ?? 'UNKNOWN') . " - Year: " . $_SESSION["bd"]);
 	
 	$datosUsuarioActual = UsuariosPadre::sesionUsuario($idSession);
 	

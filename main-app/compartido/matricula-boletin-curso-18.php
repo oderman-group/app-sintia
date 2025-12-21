@@ -136,16 +136,65 @@ $colspan = 5 + $celdas;
 
 <?php include("../compartido/agrupar-datos-boletin-periodos-mejorado.php") ?>
 
+<?php
+// Configuración de visualización de elementos
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+$mostrarEncabezado = $formularioEnviado 
+    ? (isset($_GET['mostrar_encabezado']) ? (int)$_GET['mostrar_encabezado'] : 0)
+    : 1; // Por defecto visible
+$mostrarFirmas = $formularioEnviado 
+    ? (isset($_GET['mostrar_firmas']) ? (int)$_GET['mostrar_firmas'] : 0)
+    : 1; // Por defecto visible
+$mostrarIndicadores = $formularioEnviado 
+    ? (isset($_GET['mostrar_indicadores']) ? (int)$_GET['mostrar_indicadores'] : 0)
+    : 1; // Por defecto visible
+?>
+
 <body style="font-family:Arial;">
+<div class="config-boletin-form" style="position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #34495e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; max-width: 300px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <h4 style="margin-top: 0; color: #34495e;">⚙️ Configuración del Boletín</h4>
+    <form method="GET" id="configBoletinForm">
+        <?php
+        // Mantener todos los parámetros GET existentes
+        if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+        if(!empty($_GET["periodo"])) echo '<input type="hidden" name="periodo" value="'.htmlspecialchars($_GET["periodo"]).'">';
+        if(!empty($_GET["curso"])) echo '<input type="hidden" name="curso" value="'.htmlspecialchars($_GET["curso"]).'">';
+        if(!empty($_GET["grupo"])) echo '<input type="hidden" name="grupo" value="'.htmlspecialchars($_GET["grupo"]).'">';
+        if(!empty($_GET["year"])) echo '<input type="hidden" name="year" value="'.htmlspecialchars($_GET["year"]).'">';
+        echo '<input type="hidden" name="config_aplicada" value="1">';
+        ?>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_encabezado" value="1" <?= $mostrarEncabezado ? 'checked' : '' ?>>
+            Mostrar encabezado completo
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_firmas" value="1" <?= $mostrarFirmas ? 'checked' : '' ?>>
+            Mostrar firmas del pie de página
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_indicadores" value="1" <?= $mostrarIndicadores ? 'checked' : '' ?>>
+            Mostrar segunda hoja (Indicadores de desempeño)
+        </label>
+        <button type="submit" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">Aplicar Configuración</button>
+    </form>
+</div>
+<style>
+    @media print {
+        .config-boletin-form { display: none !important; }
+    }
+</style>
     <?php foreach ($estudiantes  as  $estudiante) {
         $totalNotasPeriodo = [];
         $fallasPeriodo     = [];
         $materiasPerdidas  =0;
     ?>
+        <?php if($mostrarEncabezado): ?>
         <div align="center" style="margin-bottom:20px;">
             <img src="../files/images/logo/<?= $informacion_inst["info_logo"] ?>" height="50"><br>
             <?= $informacion_inst["info_nombre"] ?><br>BOLETÍN DE CALIFICACIONES<br>
         </div>
+        <?php endif; ?>
         <table width="100%" cellspacing="5" cellpadding="5" border="0" rules="none">
             <tr>
                 <td>Documento:<br> <?= strpos($estudiante["mat_documento"], '.') !== true && is_numeric($estudiante["mat_documento"]) ? number_format($estudiante["mat_documento"], 0, ",", ".") : $estudiante["mat_documento"]; ?></td>
@@ -240,10 +289,11 @@ $colspan = 5 + $celdas;
                 $promedioFinal     = 0; 
                 $porcentajePeriodo = 0;
                 for ($i = 1; $i <= $periodoSeleccionado; $i++) {
-                    $periodo=$estudiante["promedios_generales"][$i] ;
+                    $periodo = isset($estudiante["promedios_generales"][$i]) ? $estudiante["promedios_generales"][$i] : [];
                     Utilidades::valordefecto($periodo["nota_materia_promedio"],0);
                     $promedio          =  $periodo["nota_materia_promedio"] ;
                     $promedio          =  Boletin::notaDecimales($promedio, $tiposNotas);
+                    Utilidades::valordefecto($periodo["porcentaje_periodo"],0);
                     $porcentajePeriodo =  $periodo["porcentaje_periodo"] ;
                     $promedioFinal     += $periodoFinal? $promedio * ($porcentajePeriodo/100): $promedio/$periodoSeleccionado;
                     ?>
@@ -262,14 +312,17 @@ $colspan = 5 + $celdas;
                 <td colspan="3" style="text-align:left;  font-size:12px;">AUSENCIAS</td>
 
                 <?php $fallasFinal=0;
-                  foreach ($estudiante["promedios_generales"] as $promedios_generales) {
-                    $suma_ausencias =  $promedios_generales["suma_ausencias"] ;
-                    $fallasFinal    += $suma_ausencias;
+                  if (!empty($estudiante["promedios_generales"]) && is_array($estudiante["promedios_generales"])) {
+                      foreach ($estudiante["promedios_generales"] as $promedios_generales) {
+                          Utilidades::valordefecto($promedios_generales["suma_ausencias"], 0);
+                          $suma_ausencias = $promedios_generales["suma_ausencias"];
+                          $fallasFinal    += $suma_ausencias;
                 ?>
 
                     <td colspan="2" style=" font-size:12px;"><?= $suma_ausencias ?> Aús.</td>
                 <?php
-                }
+                      }
+                  }
                 ?>
                 <td colspan="2" style=" font-size:12px;"><?= $fallasFinal ?> Aús.</td>
             </tr>
@@ -318,8 +371,12 @@ $colspan = 5 + $celdas;
         <div style="font-weight:bold;">
         <?= Boletin::mensajeFinalEstudainte($periodoSeleccionado,$materiasPerdidas,$estudiante["nombre"],$estudiante["genero"],$promedioFinal)?>
         </div>
+        <?php if($mostrarFirmas): ?>
         <?php include("../compartido/firmas-informes.php");?>
-        <p>&nbsp;</p>
+        <?php endif; ?>
+        <?php if($mostrarIndicadores): ?>
+        <!-- Salto de página antes de la segunda hoja (Indicadores de desempeño) -->
+        <div id="saltoPagina"></div>
         <table width="100%" cellspacing="5" cellpadding="5" rules="all" border="1" align="center" style="font-size:10px;">
             <thead>
                 <tr style="font-weight:bold; text-align:center; background-color: #00adefad;">
@@ -348,10 +405,13 @@ $colspan = 5 + $celdas;
             }
             ?>
         </table>
+        <?php endif; ?>
         <?php 
-        
-        include("../compartido/footer-informes.php");      
+        if($mostrarFirmas || $mostrarIndicadores) {
+            include("../compartido/footer-informes.php");
+        }
         ?>
+        <!-- Salto de página al final de cada estudiante (antes del siguiente) -->
         <div id="saltoPagina"></div>
     <?php  }  ?>
 </body>

@@ -157,6 +157,7 @@ $(document).ready(function() {
 
 
                                 <form name="formularioGuardar" id="myForm" action="usuarios-guardar.php" method="post">
+                                <?php echo Csrf::campoHTML(); ?>
                                 
                                 <h4>Credenciales de acceso a la plataforma</h4>
                                 <div class="form-group row">
@@ -164,7 +165,7 @@ $(document).ready(function() {
                                         <div class="col-sm-4">
                                             <?php
                                             try{
-												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles");
+												$opcionesConsulta = mysqli_query($conexion, "SELECT * FROM ".$baseDatosServicios.".general_perfiles WHERE pes_disponible = 1");
                                             } catch (Exception $e) {
                                                 include("../compartido/error-catch-to-report.php");
                                             }
@@ -362,7 +363,4 @@ $(document).ready(function() {
     <script src="../../config-general/assets/js/pages/select2/select2-init.js"></script>
     <!-- end js include path -->
     </body>
-
-    <!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
-
     </html>

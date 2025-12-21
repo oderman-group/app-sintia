@@ -7,6 +7,7 @@ require_once("../class/SubRoles.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/EnviarEmail.php");
+require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaLogger.php");
 
 $archivoSubido = new Archivos;
 
@@ -14,6 +15,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
+
+// Verificar token CSRF
+Csrf::verificar();
 
 if (!empty($_FILES['fotoUss']['name'])) {
 	$archivoSubido->validarArchivo($_FILES['fotoUss']['size'], $_FILES['fotoUss']['name']);
@@ -32,7 +36,7 @@ if (!empty($_FILES['fotoUss']['name'])) {
 	$update = ['uss_foto' => $archivo];
 	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 	
-	if($_POST["tipoUsuario"]==4){
+	if($_POST["tipoUsuario"] == TIPO_ESTUDIANTE){
 		$update = ['mat_foto' => $archivo];
 		Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
 	}
@@ -44,6 +48,9 @@ $intentosFallidos = filter_var($_POST["intentosFallidos"], FILTER_VALIDATE_INT, 
 if ($intentosFallidos === false) {
     $intentosFallidos = 0;
 }
+
+// Obtener datos actuales del usuario ANTES de actualizar
+$datosAntesActualizar = UsuariosPadre::sesionUsuario($_POST["idR"]);
 
 $update = [
     "uss_usuario" => $_POST["usuario"],
@@ -63,7 +70,31 @@ $update = [
     "uss_nombre2" => mysqli_real_escape_string($conexion, $_POST["nombre2"]),
     "uss_documento" => $_POST["documento"]
 ];
+
+// Manejar desbloqueo de usuario
+// Si el campo hidden bloqueado tiene valor '0', significa que se desbloqueó
+if (isset($_POST["bloqueado"]) && $_POST["bloqueado"] == '0') {
+    $update["uss_bloqueado"] = 0;
+    $update["uss_intentos_fallidos"] = 0; // Resetear intentos fallidos al desbloquear
+}
+
 UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
+
+// Registrar auditoría si cambió el email
+if (!empty($datosAntesActualizar) && $datosAntesActualizar['uss_email'] !== strtolower($_POST["email"])) {
+	AuditoriaLogger::registrarEdicion(
+		'USUARIOS',
+		$_POST["idR"],
+		'Cambió email del usuario: ' . $_POST["usuario"],
+		[
+			'usuario' => $_POST["usuario"],
+			'email_anterior' => $datosAntesActualizar['uss_email'],
+			'email_nuevo' => strtolower($_POST["email"]),
+			'nombre_completo' => $_POST["nombre"] . ' ' . $_POST["apellido1"],
+			'admin' => $_SESSION["id"]
+		]
+	);
+}
 
 if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 
@@ -81,12 +112,25 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 	];
 	UsuariosPadre::actualizarUsuarios($config, $_POST["idR"], $update);
 
+	// Registrar auditoría de cambio de contraseña por admin
+	AuditoriaLogger::registrarEdicion(
+		'SEGURIDAD',
+		$_POST["idR"],
+		'Admin cambió contraseña del usuario: ' . $_POST["usuario"],
+		[
+			'accion' => 'cambio_clave_admin',
+			'usuario_afectado' => $_POST["usuario"],
+			'email' => $_POST["email"],
+			'admin' => $_SESSION["id"]
+		]
+	);
+
 	$data = [
 		'institucion_id'   => $_SESSION["idInstitucion"],
 		'institucion_agno' => $_SESSION["bd"],
 		'usuario_id'       => $_POST["idR"],
 		'usuario_email'    => $_POST["email"],
-		'usuario_nombre'   => $datosUsuario['uss_nombre'],
+		'usuario_nombre'   => $_POST["nombre"] . ' ' . $_POST["apellido1"],
 		'usuario_usuario'  => $_POST["usuario"],
 		'nueva_clave'      => $_POST["clave"],
 	];
@@ -97,16 +141,36 @@ if (!empty($_POST["clave"]) && $_POST["cambiarClave"] == 1) {
 }
 
 
-if ($_POST["tipoUsuario"] == 4) {
-	$update = ['mat_email' => strtolower($_POST["email"])];
-	Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $update);
+// Si es un estudiante (tipo 4), sincronizar campos compartidos con la matrícula
+if ($_POST["tipoUsuario"] == TIPO_ESTUDIANTE) {
+	$updateMatricula = [
+		'mat_email' => strtolower($_POST["email"]),
+		'mat_documento' => $_POST["documento"],
+		'mat_nombres' => mysqli_real_escape_string($conexion, $_POST["nombre"]),
+		'mat_nombre2' => mysqli_real_escape_string($conexion, $_POST["nombre2"] ?? ''),
+		'mat_primer_apellido' => mysqli_real_escape_string($conexion, $_POST["apellido1"]),
+		'mat_segundo_apellido' => mysqli_real_escape_string($conexion, $_POST["apellido2"] ?? ''),
+		'mat_celular' => $_POST["celular"] ?? '',
+		'mat_telefono' => $_POST["telefono"] ?? '',
+		'mat_direccion' => $_POST["direccion"] ?? '',
+		'mat_tipo_documento' => $_POST["tipoD"],
+		'mat_lugar_expedicion' => $_POST["lExpedicion"] ?? '',
+		'mat_genero' => $_POST["genero"]
+	];
+	
+	// Si hay fecha de nacimiento en el usuario, también sincronizarla
+	// Nota: La fecha de nacimiento no está en el formulario de usuarios-editar.php para estudiantes
+	// pero si se actualiza desde otro lugar, se sincronizará
+	
+	Estudiantes::actualizarMatriculasPorIdUsuario($config, $_POST["idR"], $updateMatricula);
 }
-try{
-if(!empty($_POST["subroles"])){	
-	$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
-}else{
-	$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
-}
+
+try {
+	if (!empty($_POST["subroles"])) {	
+		$listaRoles=SubRoles::actualizarRolesUsuario($_POST["idR"],$_POST["subroles"]);
+	} else {
+		$listaRoles=SubRoles::eliminarSubrolesUsuarios($_POST["idR"]);
+	}
 } catch (Exception $e) {
 	include("../compartido/error-catch-to-report.php");
 }

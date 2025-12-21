@@ -146,6 +146,127 @@ if(!Modulos::validarPermisoEdicion()){
     <script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
     <!-- end js include path -->
+    
+    <script>
+    // Inicializar estado de validación al cargar la página
+    $(document).ready(function() {
+        // Asegurar que todos los campos estén habilitados al cargar (a menos que haya validaciones pendientes)
+        if (typeof habilitarCamposFormularioEditar === 'function') {
+            // Solo habilitar si no hay validaciones que indiquen duplicados
+            usuarioValidadoEditar = true;
+            documentoValidadoEditar = true;
+            habilitarCamposFormularioEditar(true);
+        }
+        
+        // Asegurar que el campo de contraseña esté deshabilitado al cargar la página
+        const campoClave = document.getElementById('clave');
+        const checkbox = document.getElementById('cambiarClave');
+        
+        if (campoClave) {
+            campoClave.disabled = true;
+            campoClave.setAttribute('readonly', 'readonly');
+            campoClave.classList.add('bg-light');
+        }
+        
+        // Si el checkbox existe, asegurar que esté desmarcado inicialmente
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    });
+    
+    // Función para manejar el desbloqueo de usuario
+    function manejarDesbloqueo(checkbox) {
+        const bloqueadoInput = document.getElementById('bloqueado');
+        const bloqueadoActual = bloqueadoInput.value;
+        
+        if (bloqueadoActual == '1') {
+            // Usuario está bloqueado
+            if (!checkbox.checked) {
+                // Switch desactivado = desbloquear (establecer bloqueado = 0)
+                bloqueadoInput.value = '0';
+                console.log('Usuario será desbloqueado');
+            } else {
+                // Si está activado, mantener bloqueado
+                bloqueadoInput.value = '1';
+            }
+        } else {
+            // Usuario está desbloqueado - no permitir bloquear
+            checkbox.checked = false;
+            checkbox.disabled = true;
+            alert('No se puede bloquear un usuario desde esta página. El bloqueo debe realizarse desde la lista de usuarios.');
+        }
+    }
+    
+    // Función para habilitar/deshabilitar el campo de contraseña
+    function habilitarClave() {
+        const checkbox = document.getElementById('cambiarClave');
+        const campoClave = document.getElementById('clave');
+        
+        if (checkbox && campoClave) {
+            if (checkbox.checked) {
+                // Si el switch está activado, habilitar el campo
+                campoClave.disabled = false;
+                campoClave.removeAttribute('readonly');
+                campoClave.classList.remove('bg-light');
+                campoClave.focus();
+            } else {
+                // Si el switch está desactivado, deshabilitar el campo y limpiar su valor
+                campoClave.disabled = true;
+                campoClave.setAttribute('readonly', 'readonly');
+                campoClave.classList.add('bg-light');
+                campoClave.value = '';
+            }
+        }
+    }
+    
+    // Función para validar número de celular (solo números, 10 dígitos)
+    function validarNumeroCelular(input) {
+        // Remover cualquier carácter que no sea número
+        let valor = input.value.replace(/[^0-9]/g, '');
+        
+        // Limitar a 10 dígitos
+        if (valor.length > 10) {
+            valor = valor.substring(0, 10);
+        }
+        
+        // Actualizar el valor del input
+        input.value = valor;
+        
+        // Validar y mostrar mensaje
+        const $validacion = $('#validacion_celular');
+        if (valor.length === 0) {
+            $validacion.html('').removeClass('text-success text-danger');
+        } else if (valor.length === 10) {
+            $validacion.html('<i class="fa fa-check"></i> Número válido').removeClass('text-danger').addClass('text-success');
+        } else {
+            $validacion.html('<i class="fa fa-exclamation-triangle"></i> Debe tener 10 dígitos').removeClass('text-success').addClass('text-danger');
+        }
+    }
+    
+    // Función para validar número de teléfono (solo números, 7 dígitos)
+    function validarNumeroTelefono(input) {
+        // Remover cualquier carácter que no sea número
+        let valor = input.value.replace(/[^0-9]/g, '');
+        
+        // Limitar a 7 dígitos
+        if (valor.length > 7) {
+            valor = valor.substring(0, 7);
+        }
+        
+        // Actualizar el valor del input
+        input.value = valor;
+        
+        // Validar y mostrar mensaje
+        const $validacion = $('#validacion_telefono');
+        if (valor.length === 0) {
+            $validacion.html('').removeClass('text-success text-danger');
+        } else if (valor.length === 7) {
+            $validacion.html('<i class="fa fa-check"></i> Número válido').removeClass('text-danger').addClass('text-success');
+        } else {
+            $validacion.html('<i class="fa fa-exclamation-triangle"></i> Debe tener 7 dígitos').removeClass('text-success').addClass('text-danger');
+        }
+    }
+    </script>
 </body>
 
 <!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->

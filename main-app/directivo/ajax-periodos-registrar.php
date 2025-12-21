@@ -7,12 +7,13 @@ $data = [
 	'nombreEst'       => null,
 	'codNota'         => null,
 	'nota'            => $_POST["nota"],
-	'notaAnterior'    => $_POST["notaAnterior"],
+	'notaAnterior'    => $_POST["notaAnterior"] ?? null,
 	'tipoNota'        => 2,
 	'target'          => Calificaciones::TIPO_GUARDAR_RECUPERACION_PERIODO,
 	'carga'           => $_POST["carga"],
 	'periodo'         => $_POST["per"],
 	'observaciones'   => 'Recuperación de periodo desde el directivo. RP.',
+	'datosCargaActual'=> null, // Se carga en direccionarCalificacion si es necesario
 ];
 
 $datosMensaje = Calificaciones::direccionarCalificacion($data);
