@@ -17,8 +17,14 @@ $aspirante = $pdoI->prepare($aspiranteConsulta);
 $aspirante->bindParam(':id', $id, PDO::PARAM_INT);
 $aspirante->execute();
 $datosAspirante = $aspirante->fetch();
-$datosFecha = explode("-", $datosAspirante['asp_fecha']);
-$yearAspirante = $datosFecha[0];
+
+// Verificar que se encontró el aspirante
+if (!$datosAspirante || empty($datosAspirante['asp_id'])) {
+    redireccionMal('respuestas-usuario.php', 4);
+}
+
+$datosFecha = explode("-", $datosAspirante['asp_fecha'] ?? date('Y-m-d'));
+$yearAspirante = !empty($datosFecha[0]) ? $datosFecha[0] : date("Y");
 $yearConsultar = $config['conf_agno'];
 if ($yearAspirante < date("Y")){
     $yearConsultar = $yearAspirante;
@@ -45,13 +51,24 @@ $est->execute();
 $num = $est->rowCount();
 $datos = $est->fetch();
 
-//Documentos
-$datosDocumentos = Inscripciones::traerDocumentos($pdoI, $config, $datos['mat_id'], $yearConsultar);
+// Inicializar $datos como array vacío si no se encontró nada
+if (!$datos) {
+    $datos = [];
+}
+
+//Documentos - Solo traer documentos si existe mat_id
+$matId = !empty($datos['mat_id']) ? (string)$datos['mat_id'] : '';
+if (!empty($matId)) {
+    $datosDocumentos = Inscripciones::traerDocumentos($pdoI, $config, $matId, $yearConsultar);
+} else {
+    $datosDocumentos = [];
+}
 
 //Padre
 $padreQuery = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id = :id AND institucion= :idInstitucion AND year= :year";
 $padre = $pdoI->prepare($padreQuery);
-$padre->bindParam(':id', $datos['mat_padre'], PDO::PARAM_STR);
+$padreId = !empty($datos['mat_padre']) ? $datos['mat_padre'] : '';
+$padre->bindParam(':id', $padreId, PDO::PARAM_STR);
 $padre->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
 $padre->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
 $padre->execute();
@@ -60,7 +77,8 @@ $datosPadre = $padre->fetch();
 //Madre
 $madreQuery = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id = :id AND institucion= :idInstitucion AND year= :year";
 $madre = $pdoI->prepare($madreQuery);
-$madre->bindParam(':id', $datos['mat_madre'], PDO::PARAM_STR);
+$madreId = !empty($datos['mat_madre']) ? $datos['mat_madre'] : '';
+$madre->bindParam(':id', $madreId, PDO::PARAM_STR);
 $madre->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_INT);
 $madre->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
 $madre->execute();
@@ -589,13 +607,13 @@ $discapacidades = [
         <?php include("alertas.php"); ?>
         
         <form action="formulario-guardar.php" method="POST" enctype="multipart/form-data" id="formularioDatosAdmision">
-            <input type="hidden" name="idMatricula" value="<?= $datos['mat_id']; ?>">
+            <input type="hidden" name="idMatricula" value="<?= $datos['mat_id'] ?? ''; ?>">
             <input type="hidden" name="solicitud" value="<?= $id; ?>">
-            <input type="hidden" name="idAcudiente" value="<?= $datos['mat_acudiente']; ?>">
-            <input type="hidden" name="idPadre" value="<?= $datos['mat_padre']; ?>">
-            <input type="hidden" name="idMadre" value="<?= $datos['mat_madre']; ?>">
-            <input type="hidden" name="idInst" value="<?=$_GET['idInst']?>">
-            <input type="hidden" name="fotoA" value="<?= $datos['mat_foto']; ?>">
+            <input type="hidden" name="idAcudiente" value="<?= $datos['mat_acudiente'] ?? ''; ?>">
+            <input type="hidden" name="idPadre" value="<?= $datos['mat_padre'] ?? ''; ?>">
+            <input type="hidden" name="idMadre" value="<?= $datos['mat_madre'] ?? ''; ?>">
+            <input type="hidden" name="idInst" value="<?=$_GET['idInst'] ?? '';?>">
+            <input type="hidden" name="fotoA" value="<?= $datos['mat_foto'] ?? ''; ?>">
             
             <!-- Header -->
             <div class="wizard-header">
@@ -647,14 +665,14 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Nombres <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="nombre" value="<?= $datos['mat_nombres']; ?>" required>
+                                <input type="text" class="form-control" name="nombre" value="<?= $datos['mat_nombres'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Primer Apellido <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="primerApellidos" value="<?= $datos['mat_primer_apellido']; ?>" required>
+                                <input type="text" class="form-control" name="primerApellidos" value="<?= $datos['mat_primer_apellido'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
