@@ -644,7 +644,7 @@ function convertAndValidateExcelDate($fecha) {
 }
 
 // Función para procesar archivo inmediatamente
-function processExcelImmediately($file, $actualizarCampo) {
+function processExcelImmediately($file, $actualizarCampo, $estadoMatricula = 1) {
     try {
         $spreadsheet = IOFactory::load($file['tmp_name']);
         $worksheet = $spreadsheet->getActiveSheet();
@@ -794,7 +794,7 @@ function processExcelImmediately($file, $actualizarCampo) {
                     }
                 } else {
                     // Crear nuevo estudiante usando función segura
-                    $resultadoCreacion = createNewStudentSafe($rowData, $fechaNacimiento);
+                    $resultadoCreacion = createNewStudentSafe($rowData, $fechaNacimiento, $estadoMatricula);
                     
                     if (is_array($resultadoCreacion) && $resultadoCreacion['success']) {
                         $results['created']++;
@@ -845,7 +845,7 @@ function processExcelImmediately($file, $actualizarCampo) {
  * Crea nuevo estudiante con consulta SQL directa y segura
  * Retorna: ['success' => bool, 'usuarios' => ['estudiante' => [...], 'acudiente' => [...]]]
  */
-function createNewStudentSafe($rowData, $fechaNacimiento = null) {
+function createNewStudentSafe($rowData, $fechaNacimiento = null, $estadoMatricula = 1) {
     try {
         global $conexionPDO, $config;
         
@@ -913,6 +913,7 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             mat_estrato, 
             mat_tipo_sangre, 
             mat_eps,
+            mat_estado_matricula,
             mat_estado_agno, 
             institucion, 
             year, 
@@ -938,6 +939,7 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
             :estrato,
             :tipoSangre,
             :eps,
+            :estadoMatricula,
             3,
             :institucion,
             :year,
@@ -969,6 +971,12 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
         $institucion = $config['conf_id_institucion'];
         $year = $config['conf_agno'];
         $formaCreacion = Estudiantes::IMPORTAR_EXCEL;
+        
+        // Validar y establecer estado de matrícula (1 = Matriculado, 4 = No matriculado)
+        $estadoMatriculaInt = (int)$estadoMatricula;
+        if ($estadoMatriculaInt !== 1 && $estadoMatriculaInt !== 4) {
+            $estadoMatriculaInt = 1; // Por defecto Matriculado si el valor no es válido
+        }
         
         $stmt->bindParam(':mat_id', $matId, PDO::PARAM_STR);
         $stmt->bindParam(':mat_matricula', $matricula, PDO::PARAM_STR);
@@ -1009,6 +1017,7 @@ function createNewStudentSafe($rowData, $fechaNacimiento = null) {
         
         $stmt->bindParam(':tipoSangre', $tipoSangre, PDO::PARAM_STR);
         $stmt->bindParam(':eps', $eps, PDO::PARAM_STR);
+        $stmt->bindParam(':estadoMatricula', $estadoMatriculaInt, PDO::PARAM_INT);
         $stmt->bindParam(':institucion', $institucion, PDO::PARAM_STR);
         $stmt->bindParam(':year', $year, PDO::PARAM_STR);
         $stmt->bindParam(':formaCreacion', $formaCreacion, PDO::PARAM_STR);
@@ -1304,8 +1313,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Obtener campos a actualizar
     $actualizarCampo = isset($_POST['actualizarCampo']) ? $_POST['actualizarCampo'] : [];
     
+    // Obtener estado de matrícula (1 = Matriculado, 4 = No matriculado)
+    $estadoMatricula = isset($_POST['estadoMatricula']) ? (int)$_POST['estadoMatricula'] : 1;
+    if ($estadoMatricula !== 1 && $estadoMatricula !== 4) {
+        $estadoMatricula = 1; // Por defecto Matriculado si el valor no es válido
+    }
+    
     // Debug: Verificar qué campos se están enviando
     error_log("DEBUG actualizarCampo recibido: " . json_encode($actualizarCampo));
+    error_log("DEBUG estadoMatricula recibido: " . $estadoMatricula);
     error_log("DEBUG POST completo: " . json_encode($_POST));
     
     // Determinar modo de procesamiento
@@ -1314,7 +1330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($modo === 'inmediato') {
         // Procesamiento inmediato
         try {
-            $results = processExcelImmediately($_FILES['planilla'], $actualizarCampo);
+            $results = processExcelImmediately($_FILES['planilla'], $actualizarCampo, $estadoMatricula);
             
             jsonResponse([
                 'success' => true,
@@ -1342,7 +1358,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $parametros = array(
                 "nombreArchivo" => $nombreArchivo,
-                "actualizarCampo" => $actualizarCampo
+                "actualizarCampo" => $actualizarCampo,
+                "estadoMatricula" => $estadoMatricula
             );
             
             try {
