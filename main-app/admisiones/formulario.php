@@ -4,6 +4,11 @@ include("php-funciones.php");
 require_once(ROOT_PATH."/main-app/class/Inscripciones.php");
 require_once(ROOT_PATH."/main-app/class/Tables/BDT_opciones_generales.php");
 
+// Función helper para acceder de forma segura a $datos
+function getDato($array, $key, $default = '') {
+    return isset($array[$key]) ? $array[$key] : $default;
+}
+
 $id="";
 if(!empty($_GET["id"])){ $id=base64_decode($_GET["id"]);}
 
@@ -73,6 +78,9 @@ $padre->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_I
 $padre->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
 $padre->execute();
 $datosPadre = $padre->fetch();
+if (!$datosPadre) {
+    $datosPadre = [];
+}
 
 //Madre
 $madreQuery = "SELECT * FROM ".BD_GENERAL.".usuarios WHERE uss_id = :id AND institucion= :idInstitucion AND year= :year";
@@ -83,6 +91,9 @@ $madre->bindParam(':idInstitucion', $config['conf_id_institucion'], PDO::PARAM_I
 $madre->bindParam(':year', $yearConsultar, PDO::PARAM_STR);
 $madre->execute();
 $datosMadre = $madre->fetch();
+if (!$datosMadre) {
+    $datosMadre = [];
+}
 
 $discapacidades = [
     1 => 'Ninguna',
@@ -617,8 +628,8 @@ $discapacidades = [
             
             <!-- Header -->
             <div class="wizard-header">
-                <?php if (!empty($datos['mat_foto']) and file_exists('files/fotos/' . $datos['mat_foto'])): ?>
-                    <img src="files/fotos/<?= $datos['mat_foto']; ?>" class="aspirante-foto" alt="Foto del aspirante">
+                <?php if (!empty($datos['mat_foto'] ?? '') and file_exists('files/fotos/' . ($datos['mat_foto'] ?? ''))): ?>
+                    <img src="files/fotos/<?= $datos['mat_foto'] ?? ''; ?>" class="aspirante-foto" alt="Foto del aspirante">
                 <?php endif; ?>
                 
                 <h1><i class="fas fa-clipboard-list"></i> Formulario Completo de Admisión</h1>
@@ -679,7 +690,7 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Segundo Apellido</label>
-                                <input type="text" class="form-control" name="segundoApellidos" value="<?= $datos['mat_segundo_apellido']; ?>">
+                                <input type="text" class="form-control" name="segundoApellidos" value="<?= $datos['mat_segundo_apellido'] ?? ''; ?>">
                             </div>
                         </div>
                     </div>
@@ -690,8 +701,8 @@ $discapacidades = [
                                 <label>Género <span class="required">*</span></label>
                                 <select class="form-control" name="genero" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="127" <?php if ($datos['mat_genero'] == 127) echo "selected"; ?>>Femenino</option>
-                                    <option value="126" <?php if ($datos['mat_genero'] == 126) echo "selected"; ?>>Masculino</option>
+                                    <option value="127" <?php if (($datos['mat_genero'] ?? '') == 127) echo "selected"; ?>>Femenino</option>
+                                    <option value="126" <?php if (($datos['mat_genero'] ?? '') == 126) echo "selected"; ?>>Masculino</option>
                                 </select>
                             </div>
                         </div>
@@ -701,13 +712,13 @@ $discapacidades = [
                                 <label>Tipo de documento <span class="required">*</span></label>
                                 <select class="form-control" name="tipoDoc" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="105" <?php if ($datos['mat_tipo_documento'] == 105) echo "selected"; ?>>Cédula de ciudadanía</option>
-                                    <option value="106" <?php if ($datos['mat_tipo_documento'] == 106) echo "selected"; ?>>NUIP</option>
-                                    <option value="107" <?php if ($datos['mat_tipo_documento'] == 107) echo "selected"; ?>>Tarjeta de identidad</option>
-                                    <option value="108" <?php if ($datos['mat_tipo_documento'] == 108) echo "selected"; ?>>Registro civil o NUIP</option>
-                                    <option value="109" <?php if ($datos['mat_tipo_documento'] == 109) echo "selected"; ?>>Cédula de Extranjería</option>
-                                    <option value="110" <?php if ($datos['mat_tipo_documento'] == 110) echo "selected"; ?>>Pasaporte</option>
-                                    <option value="139" <?php if ($datos['mat_tipo_documento'] == 139) echo "selected"; ?>>PEP</option>
+                                    <option value="105" <?php if (($datos['mat_tipo_documento'] ?? '') == 105) echo "selected"; ?>>Cédula de ciudadanía</option>
+                                    <option value="106" <?php if (($datos['mat_tipo_documento'] ?? '') == 106) echo "selected"; ?>>NUIP</option>
+                                    <option value="107" <?php if (($datos['mat_tipo_documento'] ?? '') == 107) echo "selected"; ?>>Tarjeta de identidad</option>
+                                    <option value="108" <?php if (($datos['mat_tipo_documento'] ?? '') == 108) echo "selected"; ?>>Registro civil o NUIP</option>
+                                    <option value="109" <?php if (($datos['mat_tipo_documento'] ?? '') == 109) echo "selected"; ?>>Cédula de Extranjería</option>
+                                    <option value="110" <?php if (($datos['mat_tipo_documento'] ?? '') == 110) echo "selected"; ?>>Pasaporte</option>
+                                    <option value="139" <?php if (($datos['mat_tipo_documento'] ?? '') == 139) echo "selected"; ?>>PEP</option>
                                 </select>
                             </div>
                         </div>
@@ -715,7 +726,7 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de documento <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="numeroDoc" value="<?= $datos['mat_documento']; ?>" required>
+                                <input type="text" class="form-control" name="numeroDoc" value="<?= $datos['mat_documento'] ?? ''; ?>" required>
                             </div>
                         </div>
                     </div>
@@ -733,7 +744,7 @@ $discapacidades = [
                                     ");
                                     while($ciudad = mysqli_fetch_array($ciudadesConsulta, MYSQLI_BOTH)){
                                     ?>
-                                    <option value="<?=$ciudad['ciu_id'];?>" <?php if($ciudad['ciu_id']==$datos['mat_lugar_expedicion']){echo "selected";}?>><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
+                                    <option value="<?=$ciudad['ciu_id'];?>" <?php if($ciudad['ciu_id']==($datos['mat_lugar_expedicion'] ?? '')){echo "selected";}?>><?=$ciudad['ciu_nombre'].", ".$ciudad['dep_nombre'];?></option>
                                     <?php }?>
                                 </select>
                             </div>
@@ -753,7 +764,7 @@ $discapacidades = [
                                     ");
                                     while($ciudad2 = mysqli_fetch_array($ciudadesConsulta2, MYSQLI_BOTH)){
                                     ?>
-                                    <option value="<?=$ciudad2['ciu_id'];?>" <?php if($ciudad2['ciu_id']==$datos['mat_lugar_nacimiento']){echo "selected";}?>><?=$ciudad2['ciu_nombre'].", ".$ciudad2['dep_nombre'];?></option>
+                                    <option value="<?=$ciudad2['ciu_id'];?>" <?php if($ciudad2['ciu_id']==($datos['mat_lugar_nacimiento'] ?? '')){echo "selected";}?>><?=$ciudad2['ciu_nombre'].", ".$ciudad2['dep_nombre'];?></option>
                                     <?php }?>
                                 </select>
                             </div>
@@ -762,7 +773,7 @@ $discapacidades = [
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Fecha de Nacimiento <span class="required">*</span></label>
-                                <input type="date" class="form-control" name="fechaNacimiento" value="<?= $datos['mat_fecha_nacimiento']; ?>" required>
+                                <input type="date" class="form-control" name="fechaNacimiento" value="<?= $datos['mat_fecha_nacimiento'] ?? ''; ?>" required>
                             </div>
                         </div>
                     </div>
@@ -772,12 +783,12 @@ $discapacidades = [
                             <div class="form-group">
                                 <label>Grupo étnico <span class="required">*</span></label>
                                 <select class="form-control" name="grupoEtnico" required>
-                                    <option value="1" <?php if ($datos['mat_etnia'] == 1) echo "selected"; ?>>Ninguno</option>
-                                    <option value="2" <?php if ($datos['mat_etnia'] == 2) echo "selected"; ?>>Negro, mulato, afrocolombiano</option>
-                                    <option value="3" <?php if ($datos['mat_etnia'] == 3) echo "selected"; ?>>Raizal</option>
-                                    <option value="4" <?php if ($datos['mat_etnia'] == 4) echo "selected"; ?>>Indígena</option>
-                                    <option value="5" <?php if ($datos['mat_etnia'] == 5) echo "selected"; ?>>Rom (Gitano)</option>
-                                    <option value="6" <?php if ($datos['mat_etnia'] == 6) echo "selected"; ?>>Palenquero</option>
+                                    <option value="1" <?php if (($datos['mat_etnia'] ?? '') == 1) echo "selected"; ?>>Ninguno</option>
+                                    <option value="2" <?php if (($datos['mat_etnia'] ?? '') == 2) echo "selected"; ?>>Negro, mulato, afrocolombiano</option>
+                                    <option value="3" <?php if (($datos['mat_etnia'] ?? '') == 3) echo "selected"; ?>>Raizal</option>
+                                    <option value="4" <?php if (($datos['mat_etnia'] ?? '') == 4) echo "selected"; ?>>Indígena</option>
+                                    <option value="5" <?php if (($datos['mat_etnia'] ?? '') == 5) echo "selected"; ?>>Rom (Gitano)</option>
+                                    <option value="6" <?php if (($datos['mat_etnia'] ?? '') == 6) echo "selected"; ?>>Palenquero</option>
                                 </select>
                             </div>
                         </div>
@@ -787,7 +798,7 @@ $discapacidades = [
                                 <label>Limitación o discapacidad <span class="required">*</span></label>
                                 <select class="form-control" name="discapacidad" required>
                                     <?php foreach ($discapacidades as $idDisc => $discapacidad): ?>
-                                        <option value="<?= $idDisc; ?>" <?php if ($datos['mat_tiene_discapacidad'] == $idDisc) echo "selected"; ?>><?= $discapacidad; ?></option>
+                                        <option value="<?= $idDisc; ?>" <?php if (($datos['mat_tiene_discapacidad'] ?? '') == $idDisc) echo "selected"; ?>><?= $discapacidad; ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -797,9 +808,9 @@ $discapacidades = [
                             <div class="form-group">
                                 <label>Tipo de situación <span class="required">*</span></label>
                                 <select class="form-control" name="tipoSituacion" required>
-                                    <option value="1" <?php if ($datos['mat_tipo_situacion'] == 1) echo "selected"; ?>>Ninguna</option>
-                                    <option value="2" <?php if ($datos['mat_tipo_situacion'] == 2) echo "selected"; ?>>Desplazado</option>
-                                    <option value="3" <?php if ($datos['mat_tipo_situacion'] == 3) echo "selected"; ?>>Desmovilizado</option>
+                                    <option value="1" <?php if (($datos['mat_tipo_situacion'] ?? '') == 1) echo "selected"; ?>>Ninguna</option>
+                                    <option value="2" <?php if (($datos['mat_tipo_situacion'] ?? '') == 2) echo "selected"; ?>>Desplazado</option>
+                                    <option value="3" <?php if (($datos['mat_tipo_situacion'] ?? '') == 3) echo "selected"; ?>>Desmovilizado</option>
                                 </select>
                             </div>
                         </div>
@@ -809,14 +820,14 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Dirección <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="direccion" value="<?= $datos['mat_direccion']; ?>" required>
+                                <input type="text" class="form-control" name="direccion" value="<?= $datos['mat_direccion'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Barrio <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="barrio" value="<?= $datos['mat_barrio']; ?>" required>
+                                <input type="text" class="form-control" name="barrio" value="<?= $datos['mat_barrio'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
@@ -832,7 +843,7 @@ $discapacidades = [
                                     ");
                                     while($ciudad3 = mysqli_fetch_array($ciudadesConsulta3, MYSQLI_BOTH)){
                                     ?>
-                                    <option value="<?=$ciudad3['ciu_id'];?>" <?php if($ciudad3['ciu_id']==$datos['mat_ciudad_actual']){echo "selected";}?>><?=$ciudad3['ciu_nombre'].", ".$ciudad3['dep_nombre'];?></option>
+                                    <option value="<?=$ciudad3['ciu_id'];?>" <?php if($ciudad3['ciu_id']==($datos['mat_ciudad_actual'] ?? '')){echo "selected";}?>><?=$ciudad3['ciu_nombre'].", ".$ciudad3['dep_nombre'];?></option>
                                     <?php }?>
                                 </select>
                             </div>
@@ -849,7 +860,7 @@ $discapacidades = [
                                     $grados->execute();
                                     while($datosGrado = $grados->fetch()){
                                     ?>
-                                        <option value="<?= $datosGrado['gra_id']; ?>" <?php if ($datos['mat_grado'] == $datosGrado['gra_id']) echo "selected"; ?>><?= $datosGrado['gra_nombre']; ?></option>
+                                        <option value="<?= $datosGrado['gra_id']; ?>" <?php if (($datos['mat_grado'] ?? '') == $datosGrado['gra_id']) echo "selected"; ?>><?= $datosGrado['gra_nombre']; ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
@@ -858,7 +869,7 @@ $discapacidades = [
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Razón por la que desea ingresar <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="razonPlantel" value="<?= $datos['mat_razon_ingreso_plantel']; ?>" required>
+                                <input type="text" class="form-control" name="razonPlantel" value="<?= $datos['mat_razon_ingreso_plantel'] ?? ''; ?>" required>
                             </div>
                         </div>
                     </div>
@@ -867,21 +878,21 @@ $discapacidades = [
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Colegio donde cursó su último año</label>
-                                <input type="text" class="form-control" name="coleAnoAnterior" value="<?= $datos['mat_institucion_procedencia']; ?>">
+                                <input type="text" class="form-control" name="coleAnoAnterior" value="<?= $datos['mat_institucion_procedencia'] ?? ''; ?>">
                             </div>
                         </div>
                         
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Lugar</label>
-                                <input type="text" class="form-control" name="lugar" value="<?= $datos['mat_lugar_colegio_procedencia']; ?>">
+                                <input type="text" class="form-control" name="lugar" value="<?= $datos['mat_lugar_colegio_procedencia'] ?? ''; ?>">
                             </div>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label>Motivo de retiro del colegio anterior</label>
-                        <input type="text" class="form-control" name="motivo" value="<?= $datos['mat_motivo_retiro_anterior']; ?>">
+                        <input type="text" class="form-control" name="motivo" value="<?= $datos['mat_motivo_retiro_anterior'] ?? ''; ?>">
                     </div>
                 </div>
                 
@@ -898,7 +909,7 @@ $discapacidades = [
                         <div class="col-md-5">
                             <div class="form-group">
                                 <label>Nombres y Apellidos del padre <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="nombrePadre" value="<?= $datosPadre['uss_nombre']; ?>" required>
+                                <input type="text" class="form-control" name="nombrePadre" value="<?= $datosPadre['uss_nombre'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
@@ -907,13 +918,13 @@ $discapacidades = [
                                 <label>Tipo de Documento <span class="required">*</span></label>
                                 <select class="form-control" name="tipoDocumentoPadre" required>
                                     <option value="">Seleccionar...</option>
-                                    <option value="105" <?php if ($datosPadre['uss_tipo_documento'] == 105) echo "selected"; ?>>Cédula de ciudadanía</option>
-                                    <option value="106" <?php if ($datosPadre['uss_tipo_documento'] == 106) echo "selected"; ?>>NUIP</option>
-                                    <option value="107" <?php if ($datosPadre['uss_tipo_documento'] == 107) echo "selected"; ?>>Tarjeta de identidad</option>
-                                    <option value="108" <?php if ($datosPadre['uss_tipo_documento'] == 108) echo "selected"; ?>>Registro civil o NUIP</option>
-                                    <option value="109" <?php if ($datosPadre['uss_tipo_documento'] == 109) echo "selected"; ?>>Cédula de Extranjería</option>
-                                    <option value="110" <?php if ($datosPadre['uss_tipo_documento'] == 110) echo "selected"; ?>>Pasaporte</option>
-                                    <option value="139" <?php if ($datosPadre['uss_tipo_documento'] == 139) echo "selected"; ?>>PEP</option>
+                                    <option value="105" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 105) echo "selected"; ?>>Cédula de ciudadanía</option>
+                                    <option value="106" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 106) echo "selected"; ?>>NUIP</option>
+                                    <option value="107" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 107) echo "selected"; ?>>Tarjeta de identidad</option>
+                                    <option value="108" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 108) echo "selected"; ?>>Registro civil o NUIP</option>
+                                    <option value="109" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 109) echo "selected"; ?>>Cédula de Extranjería</option>
+                                    <option value="110" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 110) echo "selected"; ?>>Pasaporte</option>
+                                    <option value="139" <?php if (($datosPadre['uss_tipo_documento'] ?? '') == 139) echo "selected"; ?>>PEP</option>
                                 </select>
                             </div>
                         </div>
@@ -921,7 +932,7 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Número de Documento <span class="required">*</span></label>
-                                <input type="text" class="form-control" value="<?= $datosPadre['uss_usuario']; ?>" name="documentoPadre" required>
+                                <input type="text" class="form-control" value="<?= $datosPadre['uss_usuario'] ?? ''; ?>" name="documentoPadre" required>
                             </div>
                         </div>
                     </div>
@@ -930,14 +941,14 @@ $discapacidades = [
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Religión <span class="required">*</span></label>
-                                <input type="text" class="form-control" name="religionPadre" value="<?= $datosPadre['uss_religion']; ?>" required>
+                                <input type="text" class="form-control" name="religionPadre" value="<?= $datosPadre['uss_religion'] ?? ''; ?>" required>
                             </div>
                         </div>
                         
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Teléfono</label>
-                                <input type="text" class="form-control" name="telfonoPadre" value="<?= $datosPadre['uss_telefono']; ?>">
+                                <input type="text" class="form-control" name="telfonoPadre" value="<?= $datosPadre['uss_telefono'] ?? ''; ?>">
                             </div>
                         </div>
                         
@@ -1174,9 +1185,9 @@ $discapacidades = [
                                         <span>Click para subir foto</span>
                                     </label>
                                 </div>
-                                <?php if (!empty($datos['mat_foto']) and file_exists('files/fotos/' . $datos['mat_foto'])): ?>
-                                    <a href="files/fotos/<?= $datos['mat_foto']; ?>" target="_blank" class="file-link">
-                                        <i class="fas fa-check-circle"></i> <?= $datos['mat_foto']; ?>
+                                <?php if (!empty($datos['mat_foto'] ?? '') and file_exists('files/fotos/' . ($datos['mat_foto'] ?? ''))): ?>
+                                    <a href="files/fotos/<?= $datos['mat_foto'] ?? ''; ?>" target="_blank" class="file-link">
+                                        <i class="fas fa-check-circle"></i> <?= $datos['mat_foto'] ?? ''; ?>
                                     </a>
                                 <?php endif; ?>
                             </div>
