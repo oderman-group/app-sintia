@@ -434,9 +434,11 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                     // Calcular resumen financiero usando los mismos métodos que la tabla
                     $consultaFacturas = mysqli_query($conexion, "SELECT * FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
                         WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
+                        AND fc.fcu_status != '".EN_PROCESO."'
+                        AND fc.fcu_status != '".ANULADA."'
                         AND fc.institucion={$_SESSION['idInstitucion']} 
                         AND fc.year='{$_SESSION["bd"]}' 
-                        ORDER BY fc.id_nuevo DESC");
+                        ORDER BY fc.fcu_id DESC");
                     
                     $totalFacturado = 0;
                     $totalAbonado = 0;
@@ -512,6 +514,18 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                             <div class="resumen-card-message">
                                 <?=$mensajeSaldo;?>
                             </div>
+                            <?php 
+                            // Indicador de estado de pago general
+                            $estadoPagoGeneral = ($totalAbonado >= $totalFacturado) ? 'pagado' : 'pendiente';
+                            $colorEstadoGeneral = ($estadoPagoGeneral == 'pagado') ? '#27ae60' : '#e74c3c';
+                            $iconoEstadoGeneral = ($estadoPagoGeneral == 'pagado') ? 'fa-check-circle' : 'fa-exclamation-circle';
+                            ?>
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ecf0f1;">
+                                <span style="display: inline-flex; align-items: center; gap: 5px; color: <?=$colorEstadoGeneral;?>; font-weight: 600;">
+                                    <i class="fa <?=$iconoEstadoGeneral;?>"></i>
+                                    Estado: <?=strtoupper($estadoPagoGeneral == 'pagado' ? 'Al día' : 'Pendiente');?>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -577,6 +591,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                         <th><?=$frases[107][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[413][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[418][$datosUsuarioActual['uss_idioma']];?></th>
+                                        <th>Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="movimientosTableBody">
@@ -620,6 +635,17 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                         <td id="porCobrar<?= $resultado['fcu_id']; ?>" data-por-cobrar="<?= $porCobrar ?>">
                                             <span class="badge-financiero <?=$badgeClass;?>" style="color: <?=$porCobrar > 0 ? 'var(--danger-color)' : 'var(--success-color)';?>; font-weight: 700;">
                                                 $<?=!empty($porCobrar) ? number_format($porCobrar, 0, ",", ".") : 0;?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $estadoPagoFactura = ($abonos >= $totalNeto) ? 'pagado' : 'pendiente';
+                                            $colorEstadoFactura = ($estadoPagoFactura == 'pagado') ? '#27ae60' : '#e74c3c';
+                                            $iconoEstadoFactura = ($estadoPagoFactura == 'pagado') ? 'fa-check-circle' : 'fa-exclamation-circle';
+                                            ?>
+                                            <span style="display: inline-flex; align-items: center; gap: 5px; color: <?=$colorEstadoFactura;?>; font-weight: 600;">
+                                                <i class="fa <?=$iconoEstadoFactura;?>"></i>
+                                                <?=strtoupper($estadoPagoFactura == 'pagado' ? 'Al día' : 'Pendiente');?>
                                             </span>
                                         </td>
                                     </tr>

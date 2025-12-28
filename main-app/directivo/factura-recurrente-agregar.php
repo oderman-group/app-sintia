@@ -24,11 +24,13 @@ $idRecurrente=Utilidades::generateCode("FCR");
     <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
 	<!-- dropzone -->
     <link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
-    <!--tagsinput-->
+	<!--tagsinput-->
     <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
     <!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Movimientos Mejorado CSS -->
+    <link href="../css/movimientos-mejorado.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -125,13 +127,21 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                             <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
                                                 <select class="form-control select2" id="metodoPago" name="metodoPago" required <?=$disabledPermiso;?>>
-                                                    <option value="" >Seleccione una opción</option>
-                                                    <option value="EFECTIVO" >Efectivo</option>
-                                                    <option value="CHEQUE" >Cheque</option>
-                                                    <option value="T_DEBITO" >T. Débito</option>
-                                                    <option value="T_CREDITO" >T. Crédito</option>
-                                                    <option value="TRANSFERENCIA" >Transferencia</option>
-                                                    <option value="OTROS" >Otras Formas de pago</option>
+                                                    <?php
+                                                    require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+                                                    $mediosPago = MediosPago::obtenerMediosPago();
+                                                    echo '<option value="">Seleccione una opción</option>' . "\n";
+                                                    foreach ($mediosPago as $codigo => $nombre) {
+                                                        echo '<option value="' . htmlspecialchars($codigo) . '" data-metodo="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </div>
+                                            
+                                            <label class="col-sm-2 control-label">Cuenta Bancaria</label>
+                                            <div class="col-sm-4">
+                                                <select class="form-control select2" id="cuenta_bancaria_recurrente" name="cuenta_bancaria_id" <?=$disabledPermiso;?>>
+                                                    <option value="">Seleccione una cuenta (opcional)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -151,24 +161,40 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                         <script>
                                             $(document).ready(function() {
                                                 $('#select_usuario').select2({
-                                                placeholder: 'Seleccione el usuario...',
-                                                theme: "bootstrap",
-                                                multiple: false,
+                                                    placeholder: 'Seleccione el usuario...',
+                                                    theme: "bootstrap",
+                                                    multiple: false,
                                                     ajax: {
-                                                        type: 'GET',
-                                                        url: '../compartido/ajax-listar-usuarios.php',
-                                                        processResults: function(data) {
-                                                            data = JSON.parse(data);
+                                                        url: '../compartido/ajax-listar-usuarios.php?todos=1',
+                                                        dataType: 'json',
+                                                        delay: 250,
+                                                        data: function (params) {
                                                             return {
-                                                                results: $.map(data, function(item) {
-                                                                    return {
-                                                                        id: item.value,
-                                                                        text: item.label
-                                                                    }
-                                                                })
+                                                                term: params.term || '',
+                                                                todos: '1'
                                                             };
-                                                        }
-                                                    }
+                                                        },
+                                                        processResults: function(data) {
+                                                            try {
+                                                                if (typeof data === 'string') {
+                                                                    data = JSON.parse(data);
+                                                                }
+                                                                return {
+                                                                    results: $.map(data, function(item) {
+                                                                        return {
+                                                                            id: item.value,
+                                                                            text: item.label
+                                                                        };
+                                                                    })
+                                                                };
+                                                            } catch(e) {
+                                                                console.error('Error al procesar resultados:', e);
+                                                                return { results: [] };
+                                                            }
+                                                        },
+                                                        cache: true
+                                                    },
+                                                    minimumInputLength: 0
                                                 });
                                             });
                                         </script>
@@ -178,17 +204,18 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                             <div class="panel-body">
 
                                                 <div class="table-scrollable">
-                                                    <table class="display" style="width:100%;" id="tablaItems">
-                                                        <thead>
+                                                    <table class="table table-bordered table-hover" style="width:100%; margin-bottom: 0;" id="tablaItems">
+                                                        <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                                             <tr>
-                                                                <th>#</th>
-                                                                <th>Item</th>
-                                                                <th>Precio</th>
-                                                                <th>Desc %</th>
-                                                                <th>Impuesto</th>
-                                                                <th>Descripción</th>
-                                                                <th>Cant.</th>
-                                                                <th>Total</th>
+                                                                <th style="color: white; border: none;">#</th>
+                                                                <th style="color: white; border: none;">Item</th>
+                                                                <th style="color: white; border: none;">Precio</th>
+                                                                <th style="color: white; border: none;">Desc %</th>
+                                                                <th style="color: white; border: none; width: 150px; max-width: 150px;">Impuesto</th>
+                                                                <th style="color: white; border: none;">Descripción</th>
+                                                                <th style="color: white; border: none;">Cant.</th>
+                                                                <th style="color: white; border: none;">Total</th>
+                                                                <th style="color: white; border: none;"></th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="mostrarItems">
@@ -197,27 +224,36 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                             <tr>
                                                                 <td id="idItemNuevo"></td>
                                                                 <td>
-                                                                    <div class="col-sm-5" style="padding: 0px;">
-                                                                        <select class="form-control  select2" id="items" onchange="guardarNuevoItem(this)" <?=$disabledPermiso;?>>
-                                                                            <option value="">Seleccione una opción</option>
-                                                                            <?php
-                                                                                $consulta= Movimientos::listarItems($conexion, $config);
-                                                                                while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                                                                            ?>
-                                                                            <option value="<?=$datosConsulta['id']?>" name="<?=$datosConsulta['price']?>"><?=$datosConsulta['name']?></option>
+                                                                    <div class="col-sm-12" style="padding: 0px;">
+                                                                        <div style="display: flex; gap: 5px;">
+                                                                            <select class="form-control select2" id="items" onchange="guardarNuevoItem(this)" style="flex: 1;" <?=$disabledPermiso;?>>
+                                                                                <option value="">Seleccione una opción</option>
+                                                                                <?php
+                                                                                    $consulta= Movimientos::listarItems($conexion, $config);
+                                                                                    while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
+                                                                                        $tipoItem = $datosConsulta['item_type'] ?? 'D';
+                                                                                        $tipoTexto = $tipoItem == 'C' ? 'Crédito' : 'Débito';
+                                                                                ?>
+                                                                                <option value="<?=$datosConsulta['item_id'] ?? ''?>" name="<?=$datosConsulta['price']?>" data-tipo="<?=$tipoItem?>" data-nombre="<?=htmlspecialchars($datosConsulta['name'])?>"><?=$datosConsulta['name']?> - $<?=number_format($datosConsulta['price'] ?? 0, 0, ",", ".")?> (<?=$tipoTexto?>)</option>
+                                                                                <?php } ?>
+                                                                            </select>
+                                                                            <?php if(Modulos::validarPermisoEdicion()){?>
+                                                                            <button type="button" class="btn btn-sm btn-success" onclick="abrirModalCrearItem()" title="Crear nuevo item" style="white-space: nowrap;">
+                                                                                <i class="fa fa-plus"></i>
+                                                                            </button>
                                                                             <?php } ?>
-                                                                        </select>
+                                                                        </div>
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="number" min="0" id="precioNuevo" data-precio="0" onchange="actualizarSubtotal('idNuevo')" value="0" disabled>
+                                                                    <input type="number" min="0" id="precioNuevo" data-precio="0" onchange="actualizarSubtotal('idNuevo')" value="0" <?=$disabledPermiso;?>>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" id="descuentoNuevo" data-total-precio="0" data-precio-item-anterior="0" data-descuento-anterior="0" onchange="actualizarSubtotal('idNuevo')" value="0" disabled>
+                                                                    <input type="text" id="descuentoNuevo" data-total-precio="0" data-precio-item-anterior="0" data-descuento-anterior="0" onchange="actualizarSubtotal('idNuevo')" value="0" <?=$disabledPermiso;?>>
                                                                 </td>
                                                                 <td>
                                                                     <div class="col-sm-12" style="padding: 0px;">
-                                                                        <select class="form-control  select2" id="impuestoNuevo" onchange="actualizarSubtotal('idNuevo')" <?=$disabledPermiso;?> disabled>
+                                                                        <select class="form-control  select2" id="impuestoNuevo" onchange="actualizarSubtotal('idNuevo')" <?=$disabledPermiso;?>>
                                                                             <option value="0" name="0">Ninguno - (0%)</option>
                                                                             <?php
                                                                                 $consulta= Movimientos::listarImpuestos($conexion, $config);
@@ -229,11 +265,9 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <textarea  id="descripNueva" cols="30" rows="1" onchange="guardarDescripcion('idNuevo')" disabled></textarea>
+                                                                    <textarea  id="descripNueva" cols="30" rows="1" onchange="guardarDescripcion('idNuevo')" <?=$disabledPermiso;?>></textarea>
                                                                 </td>
-                                                                <td>
-                                                                    <input type="number" min="0" id="cantidadItemNuevo" data-cantidad="1" onchange="actualizarSubtotal('idNuevo')" value="1" style="width: 50px;" disabled>
-                                                                </td>
+                                                                <td><input type="number" min="0" id="cantidadItemNuevo" data-cantidad="1" onchange="actualizarSubtotal('idNuevo')" value="1" style="width: 50px;" <?=$disabledPermiso;?>></td>
                                                                 <td id="subtotalNuevo" data-subtotal-anterior="0">$0</td>
                                                                 <td id="eliminarNuevo"></td>
                                                             </tr>
@@ -241,30 +275,32 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                         <tfoot id="tfootTotalizar">
                                                             <?php if(Modulos::validarPermisoEdicion()){?>
                                                                 <tr>
-                                                                    <td colspan="9">
-                                                                        <button type="button" title="Agregar nueva línea para item" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" data-toggle="tooltip" onclick="nuevoItem()" data-placement="right" ><i class="fa fa-plus"></i> Agregar línea</button>
+                                                                    <td colspan="9" style="padding: 15px;">
+                                                                        <button type="button" title="Agregar nueva línea para item" class="btn btn-sm btn-primary" data-toggle="tooltip" onclick="nuevoItem()" data-placement="right">
+                                                                            <i class="fa fa-plus"></i> Agregar línea
+                                                                        </button>
                                                                     </td>
                                                                 </tr>
                                                             <?php }?>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL:</td>
-                                                                <td align="left" colspan="2"id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
+                                                                <td align="left" colspan="2" id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
-                                                                <td align="left" colspan="2"id="valorAdicional" data-valor-adicional="0">$0</td>
+                                                                <td align="left" colspan="2" id="valorAdicional" data-valor-adicional="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">DESCUENTO:</td>
-                                                                <td align="left" colspan="2"id="valorDescuento" data-valor-descuento="0">$0</td>
+                                                                <td align="left" colspan="2" id="valorDescuento" data-valor-descuento="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">IMPUESTO:</td>
-                                                                <td align="left" colspan="2"id="valorImpuesto">$0</td>
+                                                                <td align="left" colspan="2" id="valorImpuesto">$0</td>
                                                             </tr>
                                                             <tr style="font-size: 15px; font-weight:bold;">
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">TOTAL NETO:</td>
-                                                                <td align="left" colspan="2"id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
+                                                                <td align="left" colspan="2" id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
@@ -332,11 +368,60 @@ $idRecurrente=Utilidades::generateCode("FCR");
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
     <!-- end js include path -->
     <script src="../ckeditor/ckeditor.js"></script>
+    
+    <!-- Movimientos JS -->
+    <script src="../js/Movimientos.js"></script>
 
     <script>
+        // Función para cargar todas las cuentas bancarias activas
+        // Una misma cuenta bancaria puede registrar ingresos o egresos de diferentes tipos de pago
+        function cargarCuentasBancariasRecurrente() {
+            $('#cuenta_bancaria_recurrente').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+            
+            $.ajax({
+                url: 'ajax-cargar-cuentas-bancarias.php',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.cuentas) {
+                        $.each(response.cuentas, function(index, cuenta) {
+                            $('#cuenta_bancaria_recurrente').append(
+                                $('<option></option>')
+                                    .attr('value', cuenta.id)
+                                    .text(cuenta.nombre)
+                            );
+                        });
+                    }
+                },
+                error: function() {
+                    console.log('Error al cargar cuentas bancarias');
+                }
+            });
+        }
+        
+        // Cargar cuentas bancarias al cargar la página
+        $(document).ready(function() {
+            cargarCuentasBancariasRecurrente();
+        });
+        
         // Replace the <textarea id="editor1"> with a CKEditor 4
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );
+        
+        // Función para abrir modal de crear item (si existe)
+        function abrirModalCrearItem() {
+            if ($('#modalCrearItem').length) {
+                $('#modalCrearItem').modal('show');
+            } else {
+                // Si no existe el modal, redirigir a la página de crear item
+                window.location.href = 'items-agregar.php';
+            }
+        }
+        
+        $(document).ready(function() {
+            // Inicializar totalizar para calcular correctamente los items crédito/débito
+            totalizar();
+        });
     </script>
 </body>
 

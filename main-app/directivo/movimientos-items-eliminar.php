@@ -7,9 +7,10 @@ include(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 try{
     require_once(ROOT_PATH."/main-app/class/Conexion.php");
     $conexionPDO = Conexion::newConnection('PDO');
-    $sql = "DELETE FROM ".BD_FINANCIERA.".transaction_items WHERE id=? AND institucion=? AND year=?";
+    $sql = "DELETE FROM ".BD_FINANCIERA.".transaction_items WHERE id_autoincremental=? AND institucion=? AND year=?";
     $stmt = $conexionPDO->prepare($sql);
-    $stmt->bindParam(1, $_GET["idR"], PDO::PARAM_STR);
+    $idEliminar = (int)$_GET["idR"];
+    $stmt->bindParam(1, $idEliminar, PDO::PARAM_INT);
     $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
     $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
     $stmt->execute();

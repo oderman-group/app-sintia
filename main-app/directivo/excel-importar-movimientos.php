@@ -5,6 +5,7 @@ require_once("../class/Estudiantes.php");
 require '../../librerias/Excel/vendor/autoload.php';
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/UsuariosPadre.php");
+require_once(ROOT_PATH."/main-app/class/Conexion.php");
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -40,6 +41,10 @@ if($extension == 'xlsx'){
 			$movimientosCreados     = array();
 			$movimientosNoCreados   = array();
 			$usuariosBloqueados    	= array();
+			
+			// Crear conexión PDO para las eliminaciones
+			$conexionPDO = Conexion::newConnection('PDO');
+			$conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 			while($f<=$numFilas){
 
@@ -80,7 +85,49 @@ if($extension == 'xlsx'){
 
 					if(!empty($idUsuario)){
 						try{
-							mysqli_query($conexion, "DELETE FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario='".$idUsuario."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+							// Primero obtener los fcu_id de las facturas que se van a eliminar
+							$sqlFacturas = "SELECT fcu_id FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario=:idUsuario AND institucion=:institucion AND year=:year";
+							$stmtFacturas = $conexionPDO->prepare($sqlFacturas);
+							$stmtFacturas->bindParam(':idUsuario', $idUsuario, PDO::PARAM_STR);
+							$stmtFacturas->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+							$stmtFacturas->bindParam(':year', $_SESSION["bd"], PDO::PARAM_INT);
+							$stmtFacturas->execute();
+							
+							$fcuIds = [];
+							while ($factura = $stmtFacturas->fetch(PDO::FETCH_ASSOC)) {
+								$fcuIds[] = (int)$factura['fcu_id'];
+							}
+							
+							if (!empty($fcuIds)) {
+								// Construir placeholders para la consulta IN
+								$placeholders = implode(',', array_fill(0, count($fcuIds), '?'));
+								
+								// Eliminar primero los transaction_items relacionados
+								$sqlItems = "DELETE FROM ".BD_FINANCIERA.".transaction_items WHERE id_transaction IN ({$placeholders}) AND institucion=? AND year=?";
+								$stmtItems = $conexionPDO->prepare($sqlItems);
+								$paramsItems = array_merge($fcuIds, [$config['conf_id_institucion'], $_SESSION["bd"]]);
+								for ($i = 0; $i < count($paramsItems); $i++) {
+									$stmtItems->bindValue($i + 1, $paramsItems[$i], is_int($paramsItems[$i]) ? PDO::PARAM_INT : PDO::PARAM_STR);
+								}
+								$stmtItems->execute();
+								
+								// Eliminar los pagos relacionados (payments_invoiced)
+								$sqlPagos = "DELETE FROM ".BD_FINANCIERA.".payments_invoiced WHERE invoiced IN ({$placeholders}) AND institucion=? AND year=?";
+								$stmtPagos = $conexionPDO->prepare($sqlPagos);
+								$paramsPagos = array_merge($fcuIds, [$config['conf_id_institucion'], $_SESSION["bd"]]);
+								for ($i = 0; $i < count($paramsPagos); $i++) {
+									$stmtPagos->bindValue($i + 1, $paramsPagos[$i], is_int($paramsPagos[$i]) ? PDO::PARAM_INT : PDO::PARAM_STR);
+								}
+								$stmtPagos->execute();
+							}
+							
+							// Ahora sí eliminar las facturas
+							$sqlEliminar = "DELETE FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_usuario=:idUsuario AND institucion=:institucion AND year=:year";
+							$stmtEliminar = $conexionPDO->prepare($sqlEliminar);
+							$stmtEliminar->bindParam(':idUsuario', $idUsuario, PDO::PARAM_STR);
+							$stmtEliminar->bindParam(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
+							$stmtEliminar->bindParam(':year', $_SESSION["bd"], PDO::PARAM_INT);
+							$stmtEliminar->execute();
 						} catch (Exception $e) {
 							include("../compartido/error-catch-to-report.php");
 						}
@@ -106,7 +153,7 @@ if($extension == 'xlsx'){
 							}
 						}
 
-						$idInsercion=Utilidades::generateCode("FCU");
+						$idInsercion=Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'finanzas_cuentas');
 						$sql .="('" .$idInsercion . "', now(), '".$_POST["detalle"]."', '".$arrayIndividual['fcu_valor']."', '".$tipo."', '".$arrayIndividual['fcu_observaciones']."', '".$idUsuario."', 0, {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
 
 						$movimientosCreados["FILA_".$f] = $arrayIndividual['fcu_usuario'];

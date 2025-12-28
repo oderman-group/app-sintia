@@ -4,8 +4,9 @@
     try{
         $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas fc
         INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=fcu_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-        WHERE fcu_id=fcu_id AND fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]} $filtro
-        ORDER BY fcu_id");
+        WHERE fcu_id=fcu_id 
+        AND fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]} $filtro
+        ORDER BY fcu_id DESC");
     } catch (Exception $e) {
         include("../compartido/error-catch-to-report.php");
     }

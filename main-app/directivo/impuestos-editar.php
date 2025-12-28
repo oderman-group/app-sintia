@@ -20,7 +20,17 @@ if (!empty($_GET['id'])) {
     $id = base64_decode($_GET['id']);
 }
 
-$resultado = Movimientos::traerDatosImpuestos($conexion, $config, $id);
+$datosImpuesto = Movimientos::traerDatosImpuestos($conexion, $config, $id);
+
+// Inicializar con valores por defecto si no se encontró el impuesto
+if (empty($datosImpuesto) || !is_array($datosImpuesto)) {
+    $datosImpuesto = [
+        'type_tax' => '',
+        'name' => '',
+        'fee' => '',
+        'description' => ''
+    ];
+}
 ?>
 
 	<!--bootstrap -->
@@ -74,10 +84,10 @@ $resultado = Movimientos::traerDatosImpuestos($conexion, $config, $id);
                                             <div class="col-sm-4">
                                                 <select class="form-control select2" name="typeTax" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-                                                    <option value="<?=IVA?>" <?= $resultado['type_tax'] == IVA ? "selected" : ""; ?>>IVA</option>
-                                                    <option value="<?=ICO?>" <?= $resultado['type_tax'] == ICO ? "selected" : ""; ?>>ICO</option>
-                                                    <option value="<?=ICUI?>" <?= $resultado['type_tax'] == ICUI ? "selected" : ""; ?>>ICUI</option>
-                                                    <option value="<?=OTRO?>" <?= $resultado['type_tax'] == OTRO ? "selected" : ""; ?>>OTRO</option>
+                                                    <option value="<?=IVA?>" <?= ($datosImpuesto['type_tax'] ?? '') == IVA ? "selected" : ""; ?>>IVA</option>
+                                                    <option value="<?=ICO?>" <?= ($datosImpuesto['type_tax'] ?? '') == ICO ? "selected" : ""; ?>>ICO</option>
+                                                    <option value="<?=ICUI?>" <?= ($datosImpuesto['type_tax'] ?? '') == ICUI ? "selected" : ""; ?>>ICUI</option>
+                                                    <option value="<?=OTRO?>" <?= ($datosImpuesto['type_tax'] ?? '') == OTRO ? "selected" : ""; ?>>OTRO</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -85,14 +95,14 @@ $resultado = Movimientos::traerDatosImpuestos($conexion, $config, $id);
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="text" name="name" class="form-control" required <?=$disabledPermiso;?> value="<?= $resultado['name'] ?>">
+                                                <input type="text" name="name" class="form-control" required <?=$disabledPermiso;?> value="<?= htmlspecialchars($datosImpuesto['name'] ?? '', ENT_QUOTES); ?>">
                                             </div>
                                         </div>
 
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[426][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="text" name="fee" class="form-control" onchange="validarInput(this)" required <?=$disabledPermiso;?> value="<?= $resultado['fee'] ?>">
+                                                <input type="text" name="fee" class="form-control" onchange="validarInput(this)" required <?=$disabledPermiso;?> value="<?= htmlspecialchars($datosImpuesto['fee'] ?? '', ENT_QUOTES); ?>">
                                             </div>
                                             <span id="resp" style="display:none"></span>
                                         </div>
@@ -100,7 +110,7 @@ $resultado = Movimientos::traerDatosImpuestos($conexion, $config, $id);
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[50][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-4">
-                                                <textarea cols="80" name="description" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?= $resultado['description'] ?></textarea>
+                                                <textarea cols="80" name="description" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?= htmlspecialchars($datosImpuesto['description'] ?? '', ENT_QUOTES); ?></textarea>
                                             </div>
                                         </div>
                                         

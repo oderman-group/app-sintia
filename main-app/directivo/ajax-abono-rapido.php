@@ -72,7 +72,7 @@ try {
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $conexionPDO->beginTransaction();
 
-    $codigoAbono = Utilidades::generateCode('ABO');
+    $codigoAbono = Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'payments_invoiced');
 
     $sqlPayment = "INSERT INTO ".BD_FINANCIERA.".payments
         (registration_date, responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, institucion, year)

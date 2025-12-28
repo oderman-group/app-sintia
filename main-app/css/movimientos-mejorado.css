@@ -51,6 +51,20 @@
     }
 }
 
+/* Items tipo crédito - visualización diferenciada */
+.item-credito {
+    background-color: #fff3cd !important; /* Fondo amarillo claro */
+}
+
+.item-credito td {
+    font-style: italic;
+}
+
+.item-credito td:nth-child(8) { /* Columna de subtotal */
+    color: #dc3545; /* Color rojo para valores negativos */
+    font-weight: bold;
+}
+
 .kpi-value {
     font-size: 28px;
     font-weight: bold;

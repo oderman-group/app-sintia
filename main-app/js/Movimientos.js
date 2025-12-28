@@ -37,6 +37,7 @@ function actualizarSubtotal(id) {
     var subtotalElement = document.getElementById('subtotalNuevo');
     var descuentoElement = document.getElementById('descuentoNuevo');
     var impuestoElement = document.getElementById('impuestoNuevo');
+    var rowElement = null; // Para obtener el tipo de item
     if(id !== 'idNuevo'){
         var idItem=id
         // Obtener los elementos
@@ -45,6 +46,8 @@ function actualizarSubtotal(id) {
         var subtotalElement = document.getElementById('subtotal'+id);
         var descuentoElement = document.getElementById('descuento'+id);
         var impuestoElement = document.getElementById('impuesto'+id);
+        // Obtener la fila para acceder al data-item-type
+        rowElement = document.getElementById('reg'+id);
     }
     
     var regex = /^[0-9]+(\.[0-9]+)?$/;
@@ -62,7 +65,12 @@ function actualizarSubtotal(id) {
         var vlrDescuentoAnterior = vlrDescuento * cantidad;
 
         var subtotal = (precio-vlrDescuento) * cantidad;
-        var subtotalFormat = "$"+numberFormat(subtotal, 0, ',', '.');
+        
+        // Determinar si es crédito para mostrar signo negativo
+        var itemType = rowElement ? (rowElement.getAttribute('data-item-type') || 'D') : (subtotalElement ? (subtotalElement.getAttribute('data-item-type') || 'D') : 'D');
+        var isCredito = (itemType === 'C');
+        var signoNegativo = isCredito ? '-' : '';
+        var subtotalFormat = signoNegativo+"$"+numberFormat(subtotal, 0, ',', '.');
         
         fetch('../directivo/ajax-cambiar-subtotal.php?subtotal='+(subtotal)+'&cantidad='+(cantidad)+'&precio='+(precio)+'&idItem='+(idItem)+'&porcentajeDescuento='+(porcentajeDescuento)+'&impuesto='+(impuesto), {
             method: 'GET'
@@ -72,10 +80,16 @@ function actualizarSubtotal(id) {
             precioElement.dataset.precio = precio;
             cantidadElement.dataset.cantidad = cantidad;
             descuentoElement.dataset.descuentoAnterior = porcentajeDescuento;
+            
+            // Recalcular el total después de actualizar el subtotal
+            totalizar();
 
             subtotalElement.innerHTML = '';
             subtotalElement.appendChild(document.createTextNode(subtotalFormat));
             subtotalElement.dataset.subtotalAnterior = subtotal;
+            if (itemType) {
+                subtotalElement.setAttribute('data-item-type', itemType);
+            }
 
             totalizar();
 
@@ -201,39 +215,115 @@ function guardarNuevoItem(selectElement) {
     fetch('../directivo/ajax-guardar-items.php?idTransaction=' + idTransaction + '&idItem=' + idItem + '&itemModificar=' + itemModificar + '&subtotal=' + subtotal + '&cantidad=' + cantidad + '&precio=' + precio + '&typeTransaction=' + typeTransaction, {
         method: 'GET'
     })
-    .then(response => response.json()) // Convertir la respuesta a objeto JSON
+    .then(response => {
+        // Verificar si la respuesta es JSON válida
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text || 'Error en la respuesta del servidor');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
+        // Verificar si hay error en la respuesta
+        if (data.error) {
+            throw new Error(data.message || 'Error desconocido');
+        }
+
         // Actualizar los elementos del DOM con los datos recibidos
         itemElement.innerHTML = '';
         itemElement.appendChild(document.createTextNode(data.idInsercion));
 
+        // Usar precio del servidor si está disponible, sino usar el del select
+        var precioFinal = data.precio || precio;
         precioElement.disabled = false;
-        precioElement.value = precio;
-        precioElement.dataset.precio = precio;
-        precioElement.dataset.precioAnterior = precio;
+        precioElement.value = precioFinal;
+        precioElement.dataset.precio = precioFinal;
+        precioElement.dataset.precioAnterior = precioFinal;
 
-        descripElement.disabled = false;
+        // Actualizar descripción si está disponible
+        if (data.descripcion) {
+            descripElement.disabled = false;
+            descripElement.value = data.descripcion;
+        } else {
+            descripElement.disabled = false;
+        }
+        
         cantidadElement.disabled = false;
 
+        // Determinar si es crédito para mostrar signo negativo en el subtotal
+        var itemType = data.item_type || 'D';
+        var isCredito = (itemType === 'C');
+        var signoNegativo = isCredito ? '-' : '';
+        var subtotalFormatFinal = signoNegativo + "$" + numberFormat(subtotal, 0, ',', '.');
+        
         subtotalElement.innerHTML = '';
-        subtotalElement.appendChild(document.createTextNode(subtotalFormat));
+        subtotalElement.appendChild(document.createTextNode(subtotalFormatFinal));
         subtotalElement.dataset.subtotalAnterior = subtotal;
+        subtotalElement.setAttribute('data-item-type', itemType);
 
         descuentoElement.disabled = false;
+        descuentoElement.value = 0;
         
         impuestoElement.disabled = false;
 
-        if (data.creado == 0) {
+        // Si es un item nuevo, establecer valores por defecto
+        if (data.creado == 1) {
+            // Establecer el impuesto del item si existe
+            if (data.tax && data.tax != '0') {
+                impuestoElement.value = data.tax;
+                // Actualizar el contenedor de Select2 usando jQuery
+                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                    $(impuestoElement).val(data.tax).trigger('change');
+                } else {
+                    var taxOption = impuestoElement.querySelector('option[value="' + data.tax + '"]');
+                    if (taxOption && impuestoContainer) {
+                        impuestoContainer.innerHTML = taxOption.textContent;
+                    }
+                }
+            } else {
+                impuestoElement.value = 0;
+                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                    $(impuestoElement).val(0).trigger('change');
+                } else if (impuestoContainer) {
+                    impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                }
+            }
+            
+            // Si es un item nuevo, agregar la fila a la tabla inmediatamente
+            // Esto permite que totalizar() pueda calcular correctamente en tiempo real
+            var filaNueva = itemElement.closest('tr');
+            if (filaNueva) {
+                // Agregar atributo data-item-type a la fila para que totalizar() lo detecte
+                filaNueva.setAttribute('data-item-type', itemType);
+                // Agregar clase si es crédito
+                if (isCredito) {
+                    filaNueva.classList.add('item-credito');
+                } else {
+                    filaNueva.classList.remove('item-credito');
+                }
+            }
+        } else {
+            // Si está modificando, mantener valores anteriores
             descuentoElement.value = 0;
-
             impuestoElement.value = 0;
-            impuestoContainer.innerHTML = 'Ninguno - (0%)';
+            if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                $(impuestoElement).val(0).trigger('change');
+            } else if (impuestoContainer) {
+                impuestoContainer.innerHTML = 'Ninguno - (0%)';
+            }
         }
 
         var html='<a href="#" title="Eliminar item nuevo" name="movimientos-items-eliminar.php?idR='+data.idInsercion+'" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" data-toggle="tooltip" onClick="deseaEliminarNuevoItem(this)" data-placement="right">X</a>';
         idEliminarNuevo.innerHTML = html;
 
-        totalizar();
+        // Recalcular subtotal con el impuesto si existe
+        if (data.tax && data.tax != '0' && data.creado == 1) {
+            actualizarSubtotal('idNuevo');
+        } else {
+            // Llamar a totalizar() para recalcular el total considerando el nuevo item
+            totalizar();
+        }
 
         $.toast({
             heading: 'Acción realizada',
@@ -249,6 +339,16 @@ function guardarNuevoItem(selectElement) {
     .catch(error => {
         // Manejar errores
         console.error('Error:', error);
+        $.toast({
+            heading: 'Error',
+            text: 'Error al guardar el item: ' + error.message,
+            position: 'bottom-right',
+            showHideTransition: 'slide',
+            loaderBg: '#ff0039',
+            icon: 'error',
+            hideAfter: 8000,
+            stack: 6
+        });
     });
 }
 
@@ -1061,15 +1161,52 @@ function totalizarMovimientos() {
     var elementPorCobrarNetoCompra = document.getElementById('porCobrarNetoCompra');
     elementPorCobrarNetoCompra.innerHTML = '';
     elementPorCobrarNetoCompra.appendChild(document.createTextNode(porCobrarNetoCompraFinal));
+
+    // Actualizar footer de la tabla con sumas separadas por tipo de factura
+    
+    // Footer para Facturas de Venta
+    var footerTotalVenta = document.getElementById('footerTotalVenta');
+    var footerCobradoVenta = document.getElementById('footerCobradoVenta');
+    var footerPorCobrarVenta = document.getElementById('footerPorCobrarVenta');
+
+    if (footerTotalVenta) {
+        footerTotalVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
+    }
+    if (footerCobradoVenta) {
+        footerCobradoVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
+    }
+    if (footerPorCobrarVenta) {
+        footerPorCobrarVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
+    }
+
+    // Footer para Facturas de Compra
+    var footerTotalCompra = document.getElementById('footerTotalCompra');
+    var footerCobradoCompra = document.getElementById('footerCobradoCompra');
+    var footerPorCobrarCompra = document.getElementById('footerPorCobrarCompra');
+
+    if (footerTotalCompra) {
+        footerTotalCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
+    }
+    if (footerCobradoCompra) {
+        footerCobradoCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
+    }
+    if (footerPorCobrarCompra) {
+        footerPorCobrarCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
+    }
 }
 
 /**
  * Esta funcion me calcula los totales de una factura
+ * Considera items tipo crédito (C) que restan del total
  */
 function totalizar(){
     var tabla = document.getElementById('tablaItems');
+    if (!tabla) {
+        return; // Si no existe la tabla, salir
+    }
 
-    var totalPrecio = 0;
+    var totalPrecioDebitos = 0;  // Items tipo Débito (D) - suman
+    var totalPrecioCreditos = 0; // Items tipo Crédito (C) - restan
     var totalDescuento = 0;
     var totalImpuesto = 0;
     var nuevostr  = "";
@@ -1080,27 +1217,62 @@ function totalizar(){
                 continue;
             }
 
-            var precio = parseFloat(fila.cells[2].querySelector('input').value);
-            var porcentajeDescuento = parseFloat(fila.cells[3].querySelector('input').value);
-            var cantidad = parseFloat(fila.cells[6].querySelector('input').value);
-            var selectImpuesto = fila.cells[4].querySelector('select');
+            // Obtener el tipo de item (D= Débito, C= Crédito)
+            // Primero intentar desde el atributo data-item-type de la fila
+            var itemType = fila.getAttribute('data-item-type');
+            
+            // Si no está en la fila, intentar desde el subtotal (columna 7)
+            if (!itemType && fila.cells[7]) {
+                itemType = fila.cells[7].getAttribute('data-item-type');
+            }
+            
+            // Si aún no se encuentra, usar 'D' por defecto
+            if (!itemType) {
+                itemType = 'D';
+            }
+            
+            var isCredito = (itemType === 'C');
+
+            // Obtener los elementos de la fila con validación
+            var precioInput = fila.cells[2] ? fila.cells[2].querySelector('input') : null;
+            var descuentoInput = fila.cells[3] ? fila.cells[3].querySelector('input') : null;
+            var cantidadInput = fila.cells[6] ? fila.cells[6].querySelector('input') : null;
+            var selectImpuesto = fila.cells[4] ? fila.cells[4].querySelector('select') : null;
+            
+            // Validar que los elementos existan
+            if (!precioInput || !descuentoInput || !cantidadInput || !selectImpuesto) {
+                continue;
+            }
+
+            var precio = parseFloat(precioInput.value) || 0;
+            var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
+            var cantidad = parseFloat(cantidadInput.value) || 0;
             var opcionSeleccionada = selectImpuesto.selectedOptions[0];
-            var impuestoValue = opcionSeleccionada.value;
-            var impuestoValor = parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto'));
-            var impuestoName = opcionSeleccionada.getAttribute('data-name-impuesto');
+            var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
+            var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
+            var impuestoName = opcionSeleccionada ? opcionSeleccionada.getAttribute('data-name-impuesto') : '';
 
             var precioNeto = (precio * cantidad);
-            var totalPrecio = totalPrecio + precioNeto;
+            
+            // Separar débitos y créditos
+            if (isCredito) {
+                totalPrecioCreditos = totalPrecioCreditos + precioNeto;
+            } else {
+                totalPrecioDebitos = totalPrecioDebitos + precioNeto;
+            }
 
-            var descuento = precioNeto * (porcentajeDescuento / 100)
-            var totalDescuento = totalDescuento + descuento;
+            var descuento = precioNeto * (porcentajeDescuento / 100);
+            totalDescuento = totalDescuento + descuento;
 
             if (impuestoValue > 0) {
                 var impuesto = (precioNeto - descuento) * (impuestoValor / 100);
-                var totalImpuesto = totalImpuesto + impuesto;
+                totalImpuesto = totalImpuesto + impuesto;
             }
         }
     }
+
+    // Calcular total neto: débitos - créditos
+    var totalPrecio = totalPrecioDebitos - totalPrecioCreditos;
 
     //SUBTOTAL NETO
     var totalPrecioFinal = "$"+numberFormat(totalPrecio, 0, ',', '.');
@@ -1128,7 +1300,7 @@ function totalizar(){
     idImpuesto.innerHTML = '';
     idImpuesto.appendChild(document.createTextNode(impuestoFinal));
     
-    //TOTAL NETO
+    //TOTAL NETO: (Débitos - Créditos + Valor Adicional - Descuentos) + Impuestos
     var totalNeto = ((totalPrecio + vlrAdicional) - totalDescuento) + totalImpuesto;
     var totalNetoFinal = "$"+numberFormat(totalNeto, 0, ',', '.');
     var idTotalNeto = document.getElementById('totalNeto');

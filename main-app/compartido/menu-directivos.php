@@ -117,7 +117,7 @@
 										</div>
 										<span class="title"><?=$frases[89][$datosUsuarioActual['uss_idioma']];?></span> <span class="arrow"></span>
 									</a>
-									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0104", "DT0106", "DT0128", "DT0105", "DT0258", "DT0259", "DT0261", "DT0264", "DT0265", "DT0267", "DT0273", "DT0275", "DT0276", "DT0278", "DT0294", "DT0295", "DT0297"]) ?>>
+									<ul class="sub-menu" <?php agregarClass(SUB_MENU,["DT0104", "DT0106", "DT0128", "DT0105", "DT0258", "DT0259", "DT0261", "DT0264", "DT0265", "DT0267", "DT0273", "DT0275", "DT0276", "DT0277", "DT0278", "DT0279", "DT0280", "DT0281", "DT0294", "DT0295", "DT0297"]) ?>>
 										<?php
 											if(Modulos::validarSubRol(["DT0104"])){
 										?>
@@ -147,6 +147,14 @@
 											if(Modulos::validarSubRol(["DT0273"])){
 										?>
 											<li <?php agregarClass(MENU,["DT0273"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "configuracion-finanzas.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[17][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+										<?php 
+											}
+											if(Modulos::validarSubRol(["DT0278"]) && Modulos::validarPermisoEdicion()){
+										?>
+											<li <?php agregarClass(MENU,["DT0278", "DT0279", "DT0280", "DT0281"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "cuentas-bancarias.php", MENU) ?> class="nav-link "> <span class="title">Cuentas Bancarias</span></a></li>
+										<?php }?>
+										<?php if(Modulos::validarSubRol(["DT0277"])){?>
+											<li <?php agregarClass(MENU,["DT0277"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_TRANSACCIONES, "lotes-facturacion.php", MENU) ?> class="nav-link "> <span class="title">Lotes de Facturación</span></a></li>
 										<?php 
 											}
 											if(Modulos::validarSubRol(["DT0305"])){

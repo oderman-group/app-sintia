@@ -34,6 +34,15 @@
         $filtro .= " AND (fcu_fecha BETWEEN '" . $_GET["desde"] . "' AND '" . $_GET["hasta"] . "' OR fcu_fecha LIKE '%" . $_GET["hasta"] . "%')";
     }
     
+    // Filtro por ID de factura específica (cuando se viene desde lote-detalle.php)
+    if (!empty($_GET['id'])) {
+        $idFactura = base64_decode($_GET['id']);
+        if (!empty($idFactura) && is_numeric($idFactura)) {
+            $idFactura = (int)$idFactura;
+            $filtro .= " AND fc.fcu_id=".$idFactura;
+        }
+    }
+    
     // Filtro para ocultar anuladas por defecto
     $mostrarAnuladas = !empty($_GET['mostrarAnuladas']) && $_GET['mostrarAnuladas'] == '1';
     if (!$mostrarAnuladas) {
@@ -83,6 +92,9 @@ $filtroTipo = [
     ]
 
 ];
+$estiloResaltadoEnProceso = '';
+if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(EN_PROCESO)) $estiloResaltadoEnProceso = 'style="color: '.$Plataforma->colorUno.';"';
+
 $filtroEstado = [
     [
         ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => POR_COBRAR,
@@ -93,6 +105,12 @@ $filtroEstado = [
         ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => COBRADA,
         ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'Cobradas',
         ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoFil=" . base64_encode(COBRADA) . "&usuario=" . base64_encode($usuario) . "&desde=" . $desde . "&hasta=" . $hasta . "&tipo=" . base64_encode($tipo) . "&estadoM=" . base64_encode($estadoM) . "&fecha=" . base64_encode($fecha) . $paramMostrarAnuladas
+    ],
+    [
+        ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => EN_PROCESO,
+        ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'En Proceso',
+        ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoFil=" . base64_encode(EN_PROCESO) . "&usuario=" . base64_encode($usuario) . "&desde=" . $desde . "&hasta=" . $hasta . "&tipo=" . base64_encode($tipo) . "&estadoM=" . base64_encode($estadoM) . "&fecha=" . base64_encode($fecha) . $paramMostrarAnuladas,
+        ComponenteFiltro::COMPB_FILTRO_LISTA_STYLE => $estiloResaltadoEnProceso
     ],
     [
         ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'Ver Todos',
@@ -183,10 +201,22 @@ if (!empty($queryActual)) {
 		<i class="fa fa-print"></i> Informe morosos
 	</a>
 
+	<?php if (Modulos::validarSubRol(['DT0240'])) { ?>
+	<a href="javascript:void(0);" onclick="abrirModal('Informe por Cuenta Bancaria','informes-cuentas-bancarias-filtro-modal.php')" class="btn btn-info btn-sm" title="Informe de movimientos por cuenta bancaria">
+		<i class="fa fa-university"></i> Informe Cuentas Bancarias
+	</a>
+	<?php } ?>
+
 	<?php if (Modulos::validarPermisoEdicion()) { ?>
 	<button class="btn btn-primary btn-sm" onclick="recordarSaldoSeleccionados()" title="Recordar saldo pendiente por correo">
 		<i class="fa fa-envelope"></i> Recordar saldo
 	</button>
+	<?php } ?>
+
+	<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0104'])) { ?>
+	<a href="facturacion-masiva.php" class="btn btn-success btn-sm" title="Crear factura masiva por grado o grupo">
+		<i class="fa fa-file-text-o"></i> Crear Factura Masiva
+	</a>
 	<?php } ?>
 
 	<?php if (Modulos::validarPermisoEdicion() &&  Modulos::validarSubRol(['DT0106'])) { ?>

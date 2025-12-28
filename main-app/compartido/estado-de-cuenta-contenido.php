@@ -152,7 +152,7 @@
             WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
             AND fc.institucion={$_SESSION['idInstitucion']} 
             AND fc.year='{$_SESSION["bd"]}' 
-            ORDER BY fc.id_nuevo DESC");
+            ORDER BY fc.fcu_id DESC");
         
         $totalFacturado = 0;
         $totalAbonado = 0;

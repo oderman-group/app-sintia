@@ -38,10 +38,214 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     
                     <div class="row">
                         <div class="col-md-12">
+                            <?php require_once(ROOT_PATH."/config-general/mensajes-informativos.php"); ?>
+                            
+                            <?php
+                                            // Calcular resúmenes por método de pago y por tipo de factura (venta/compra)
+                                            $resumenMetodos = [];
+                                            $totalGeneralVentas = 0;
+                                            $totalGeneralCompras = 0;
+                                            $totalAbonosVentas = 0;
+                                            $totalAbonosCompras = 0;
+                                            
+                                            try {
+                                                // Resumen por método de pago (abonos a facturas de venta)
+                                                $consultaResumenVentas = mysqli_query($conexion, "SELECT 
+                                                    pi.payment_method,
+                                                    COUNT(DISTINCT pi.id) as cantidad_abonos,
+                                                    SUM(COALESCE(CAST(pi.payment AS DECIMAL(10,2)), 0)) as total_abonado
+                                                FROM ".BD_FINANCIERA.".payments_invoiced pi
+                                                INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id=pi.invoiced
+                                                    AND fc.institucion=pi.institucion AND fc.year=pi.year
+                                                WHERE pi.is_deleted = 0 
+                                                    AND pi.institucion = {$config['conf_id_institucion']} 
+                                                    AND pi.year = {$_SESSION["bd"]}
+                                                    AND pi.type_payments = 'INVOICE'
+                                                    AND fc.fcu_tipo = 1
+                                                GROUP BY pi.payment_method
+                                                ORDER BY total_abonado DESC");
+                                                
+                                                if ($consultaResumenVentas) {
+                                                    while ($resumen = mysqli_fetch_array($consultaResumenVentas, MYSQLI_BOTH)) {
+                                                        $metodo = $resumen['payment_method'] ?? 'Sin método';
+                                                        $cantidad = intval($resumen['cantidad_abonos']);
+                                                        $total = floatval($resumen['total_abonado']);
+                                                        
+                                                        if (!isset($resumenMetodos[$metodo])) {
+                                                            $resumenMetodos[$metodo] = [
+                                                                'cantidad_ventas' => 0,
+                                                                'total_ventas' => 0,
+                                                                'cantidad_compras' => 0,
+                                                                'total_compras' => 0
+                                                            ];
+                                                        }
+                                                        
+                                                        $resumenMetodos[$metodo]['cantidad_ventas'] += $cantidad;
+                                                        $resumenMetodos[$metodo]['total_ventas'] += $total;
+                                                        
+                                                        $totalGeneralVentas += $total;
+                                                        $totalAbonosVentas += $cantidad;
+                                                    }
+                                                }
+                                                
+                                                // Resumen por método de pago (abonos a facturas de compra)
+                                                $consultaResumenCompras = mysqli_query($conexion, "SELECT 
+                                                    pi.payment_method,
+                                                    COUNT(DISTINCT pi.id) as cantidad_abonos,
+                                                    SUM(COALESCE(CAST(pi.payment AS DECIMAL(10,2)), 0)) as total_abonado
+                                                FROM ".BD_FINANCIERA.".payments_invoiced pi
+                                                INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id=pi.invoiced
+                                                    AND fc.institucion=pi.institucion AND fc.year=pi.year
+                                                WHERE pi.is_deleted = 0 
+                                                    AND pi.institucion = {$config['conf_id_institucion']} 
+                                                    AND pi.year = {$_SESSION["bd"]}
+                                                    AND pi.type_payments = 'INVOICE'
+                                                    AND fc.fcu_tipo = 2
+                                                GROUP BY pi.payment_method
+                                                ORDER BY total_abonado DESC");
+                                                
+                                                if ($consultaResumenCompras) {
+                                                    while ($resumen = mysqli_fetch_array($consultaResumenCompras, MYSQLI_BOTH)) {
+                                                        $metodo = $resumen['payment_method'] ?? 'Sin método';
+                                                        $cantidad = intval($resumen['cantidad_abonos']);
+                                                        $total = floatval($resumen['total_abonado']);
+                                                        
+                                                        if (!isset($resumenMetodos[$metodo])) {
+                                                            $resumenMetodos[$metodo] = [
+                                                                'cantidad_ventas' => 0,
+                                                                'total_ventas' => 0,
+                                                                'cantidad_compras' => 0,
+                                                                'total_compras' => 0
+                                                            ];
+                                                        }
+                                                        
+                                                        $resumenMetodos[$metodo]['cantidad_compras'] += $cantidad;
+                                                        $resumenMetodos[$metodo]['total_compras'] += $total;
+                                                        
+                                                        $totalGeneralCompras += $total;
+                                                        $totalAbonosCompras += $cantidad;
+                                                    }
+                                                }
+                                                
+                                                $totalGeneral = $totalGeneralVentas + $totalGeneralCompras;
+                                                $totalAbonos = $totalAbonosVentas + $totalAbonosCompras;
+                                                $diferencia = $totalGeneralVentas - $totalGeneralCompras; // Diferencia entre ingresos y egresos
+                                                
+                                            } catch (Exception $e) {
+                                                include("../compartido/error-catch-to-report.php");
+                                            }
+                                            ?>
+
+                            <!-- Resumen de Abonos - Cards principales -->
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col-md-3">
+                                    <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #2ecc71; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                        <div style="color: #2ecc71; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                            <i class="fa fa-arrow-circle-down"></i> INGRESOS
+                                        </div>
+                                        <div style="color: #7f8c8d; font-size: 10px; font-weight: 600; margin-bottom: 10px;">(Abonos a Facturas de Venta)</div>
+                                        <div style="color: #2ecc71; font-size: 28px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalGeneralVentas ?? 0), 0, ",", ".")?></div>
+                                        <div style="color: #95a5a6; font-size: 12px; margin-top: 8px;"><?=$totalAbonosVentas?> abonos</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #e74c3c; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                        <div style="color: #e74c3c; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                            <i class="fa fa-arrow-circle-up"></i> EGRESOS
+                                        </div>
+                                        <div style="color: #7f8c8d; font-size: 10px; font-weight: 600; margin-bottom: 10px;">(Abonos a Facturas de Compra)</div>
+                                        <div style="color: #e74c3c; font-size: 28px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalGeneralCompras ?? 0), 0, ",", ".")?></div>
+                                        <div style="color: #95a5a6; font-size: 12px; margin-top: 8px;"><?=$totalAbonosCompras?> abonos</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #3498db; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                        <div style="color: #3498db; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                            <i class="fa fa-calculator"></i> TOTAL GENERAL MOVIDO
+                                        </div>
+                                        <div style="color: #7f8c8d; font-size: 10px; font-weight: 600; margin-bottom: 10px;">(Ingresos + Egresos)</div>
+                                        <div style="color: #3498db; font-size: 28px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalGeneral ?? 0), 0, ",", ".")?></div>
+                                        <div style="color: #95a5a6; font-size: 12px; margin-top: 8px;"><?=$totalAbonos?> abonos</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid <?=$diferencia >= 0 ? '#2ecc71' : '#e74c3c'?>; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                        <div style="color: <?=$diferencia >= 0 ? '#2ecc71' : '#e74c3c'?>; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                            <i class="fa fa-balance-scale"></i> DIFERENCIA
+                                        </div>
+                                        <div style="color: #7f8c8d; font-size: 10px; font-weight: 600; margin-bottom: 10px;">(Ingresos - Egresos)</div>
+                                        <div style="color: <?=$diferencia >= 0 ? '#2ecc71' : '#e74c3c'?>; font-size: 28px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($diferencia ?? 0), 0, ",", ".")?></div>
+                                        <div style="color: #95a5a6; font-size: 12px; margin-top: 8px;"><?=$diferencia >= 0 ? 'Superávit' : 'Déficit'?></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumen por métodos de pago -->
+                            <?php if (!empty($resumenMetodos)) { ?>
+                            <div class="row" style="margin-bottom: 20px;">
+                                <div class="col-sm-12">
+                                    <h5 style="margin-bottom: 15px; font-weight: 600; color: #2c3e50;">
+                                        <i class="fa fa-bar-chart"></i> Resumen por Método de Pago
+                                    </h5>
+                                    <div class="row">
+                                        <?php 
+                                        $coloresBorder = ['#3498db', '#f39c12', '#9b59b6', '#e67e22', '#1abc9c'];
+                                        $i = 0;
+                                        foreach ($resumenMetodos as $metodo => $datos) { 
+                                            $colorBorder = $coloresBorder[$i % count($coloresBorder)];
+                                            $totalMetodo = ($datos['total_ventas'] ?? 0) + ($datos['total_compras'] ?? 0);
+                                            $cantidadMetodo = ($datos['cantidad_ventas'] ?? 0) + ($datos['cantidad_compras'] ?? 0);
+                                            $porcentaje = $totalGeneral > 0 ? round(($totalMetodo / $totalGeneral) * 100, 1) : 0;
+                                            
+                                            // Calcular diferencia (ingresos - egresos)
+                                            $diferenciaMetodo = ($datos['total_ventas'] ?? 0) - ($datos['total_compras'] ?? 0);
+                                            
+                                            // Determinar tipo: Ingresos, Egresos o Mixto
+                                            $tieneVentas = ($datos['total_ventas'] ?? 0) > 0;
+                                            $tieneCompras = ($datos['total_compras'] ?? 0) > 0;
+                                            $tipoCard = '';
+                                            $colorTipo = '';
+                                            if ($tieneVentas && $tieneCompras) {
+                                                $tipoCard = 'Mixto (Ingresos + Egresos)';
+                                                $colorTipo = '#9b59b6';
+                                            } elseif ($tieneVentas) {
+                                                $tipoCard = 'Ingresos';
+                                                $colorTipo = '#2ecc71';
+                                            } elseif ($tieneCompras) {
+                                                $tipoCard = 'Egresos';
+                                                $colorTipo = '#e74c3c';
+                                            }
+                                            $i++;
+                                        ?>
+                                        <div class="col-md-3" style="margin-bottom: 15px;">
+                                            <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid <?=$colorBorder?>; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                <div style="color: <?=$colorBorder?>; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                                    <?=$metodo?>
+                                                </div>
+                                                <div style="color: <?=$colorTipo?>; font-size: 10px; font-weight: 600; margin-bottom: 10px;">
+                                                    <i class="fa fa-info-circle"></i> <?=$tipoCard?>
+                                                </div>
+                                                <div style="color: #2c3e50; font-size: 24px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalMetodo), 0, ",", ".")?></div>
+                                                <div style="color: #95a5a6; font-size: 11px; margin-top: 8px;">
+                                                    <?=$cantidadMetodo?> abonos (<?=$porcentaje?>%)<br>
+                                                    <small style="font-size: 10px; display: block; margin-top: 5px;">
+                                                        <span style="color: #2ecc71;">Ingresos: $<?=number_format(floatval($datos['total_ventas'] ?? 0), 0, ",", ".")?></span><br>
+                                                        <span style="color: #e74c3c;">Egresos: $<?=number_format(floatval($datos['total_compras'] ?? 0), 0, ",", ".")?></span><br>
+                                                        <span style="color: <?=$diferenciaMetodo >= 0 ? '#2ecc71' : '#e74c3c'?>; font-weight: 600; margin-top: 3px; display: inline-block;">
+                                                            <i class="fa fa-balance-scale"></i> Diferencia: $<?=number_format(floatval($diferenciaMetodo), 0, ",", ".")?>
+                                                        </span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php } ?>
+
                             <div class="row">
-								
 								<div class="col-md-8 col-lg-12">
-                                <?php require_once(ROOT_PATH."/config-general/mensajes-informativos.php"); ?>
                                     <div class="card card-topline-purple">
                                         <div class="card-head">
                                             <header><?=$frases[413][$datosUsuarioActual['uss_idioma']];?></header>
@@ -59,89 +263,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0265'])) { ?>
                                                             <a href="abonos-agregar.php" class="btn deepPink-bgcolor"> Agregar nuevo <i class="fa fa-plus"></i></a>
                                                         <?php } ?>
+                                                        <button type="button" class="btn btn-info" onclick="abrirModalArqueoCaja()" title="Generar informe de arqueo de caja">
+                                                            <i class="fa fa-file-text"></i> Arqueo de Caja
+                                                        </button>
 													</div>
 												</div>
 											</div>
-
-                                            <?php
-                                            // Calcular resúmenes por método de pago
-                                            $resumenMetodos = [];
-                                            $totalGeneral = 0;
-                                            $totalAbonos = 0;
-                                            
-                                            try {
-                                                $consultaResumen = mysqli_query($conexion, "SELECT 
-                                                    pay.payment_method,
-                                                    COUNT(DISTINCT pay.id) as cantidad_abonos,
-                                                    SUM(COALESCE(pi.payment, 0)) as total_abonado
-                                                FROM ".BD_FINANCIERA.".payments pay
-                                                LEFT JOIN ".BD_FINANCIERA.".payments_invoiced pi 
-                                                    ON pi.payments = pay.cod_payment 
-                                                    AND pi.institucion = pay.institucion 
-                                                    AND pi.year = pay.year
-                                                WHERE pay.is_deleted = 0 
-                                                    AND pay.institucion = {$config['conf_id_institucion']} 
-                                                    AND pay.year = {$_SESSION["bd"]}
-                                                GROUP BY pay.payment_method
-                                                ORDER BY total_abonado DESC");
-                                                
-                                                if ($consultaResumen) {
-                                                    while ($resumen = mysqli_fetch_array($consultaResumen, MYSQLI_BOTH)) {
-                                                        $metodo = $resumen['payment_method'] ?? 'Sin método';
-                                                        $cantidad = intval($resumen['cantidad_abonos']);
-                                                        $total = floatval($resumen['total_abonado']);
-                                                        
-                                                        $resumenMetodos[$metodo] = [
-                                                            'cantidad' => $cantidad,
-                                                            'total' => $total
-                                                        ];
-                                                        
-                                                        $totalGeneral += $total;
-                                                        $totalAbonos += $cantidad;
-                                                    }
-                                                }
-                                            } catch (Exception $e) {
-                                                include("../compartido/error-catch-to-report.php");
-                                            }
-                                            ?>
-
-                                            <!-- Resumen por métodos de pago -->
-                                            <div class="row" style="margin-bottom: 20px;">
-                                                <div class="col-sm-12">
-                                                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 20px;">
-                                                        <h5 style="color: white; margin-bottom: 15px; font-weight: 600;">
-                                                            <i class="fa fa-bar-chart"></i> Resumen de Abonos por Método de Pago
-                                                        </h5>
-                                                        <div class="row">
-                                                            <div class="col-md-3">
-                                                                <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
-                                                                    <div style="color: rgba(255,255,255,0.8); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Total General</div>
-                                                                    <div style="color: white; font-size: 24px; font-weight: 700; margin-top: 5px;">$<?=number_format($totalGeneral, 0, ",", ".")?></div>
-                                                                    <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 5px;"><?=$totalAbonos?> abonos</div>
-                                                                </div>
-                                                            </div>
-                                                            <?php 
-                                                            $coloresBg = ['rgba(46, 204, 113, 0.2)', 'rgba(52, 152, 219, 0.2)', 'rgba(241, 196, 15, 0.2)', 'rgba(155, 89, 182, 0.2)', 'rgba(230, 126, 34, 0.2)'];
-                                                            $coloresBorder = ['rgba(46, 204, 113, 0.4)', 'rgba(52, 152, 219, 0.4)', 'rgba(241, 196, 15, 0.4)', 'rgba(155, 89, 182, 0.4)', 'rgba(230, 126, 34, 0.4)'];
-                                                            $i = 0;
-                                                            foreach ($resumenMetodos as $metodo => $datos) { 
-                                                                $colorBg = $coloresBg[$i % count($coloresBg)];
-                                                                $colorBorder = $coloresBorder[$i % count($coloresBorder)];
-                                                                $porcentaje = $totalGeneral > 0 ? round(($datos['total'] / $totalGeneral) * 100, 1) : 0;
-                                                                $i++;
-                                                            ?>
-                                                            <div class="col-md-3">
-                                                                <div style="background: <?=$colorBg?>; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid <?=$colorBorder?>;">
-                                                                    <div style="color: rgba(255,255,255,0.9); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;"><?=$metodo?></div>
-                                                                    <div style="color: white; font-size: 20px; font-weight: 700; margin-top: 5px;">$<?=number_format($datos['total'], 0, ",", ".")?></div>
-                                                                    <div style="color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 5px;"><?=$datos['cantidad']?> abonos (<?=$porcentaje?>%)</div>
-                                                                </div>
-                                                            </div>
-                                                            <?php } ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
 											
                                     <style>
                                         .expand-btn {
@@ -287,8 +414,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 $vaucher = '<a href="'.REDIRECT_ROUTE.'/files/comprobantes/'.$voucherAbono.'" target="_blank" class="link">'.$voucherAbono.'</a>';
                                                             }
 
-                                                            $abonos = Movimientos::calcularTotalAbonadoCliente($conexion, $config, $resultado['invoiced'], $resultado['cod_payment']);
-
                                                             $arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
                                                             $arrayDatos = json_encode($arrayEnviar);
                                                             $objetoEnviar = htmlentities($arrayDatos);
@@ -305,12 +430,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             $totalFacturasPorCobrar = 0;
                                                             $totalValorAplicado = 0;
 
-                                                            if (!empty($resultado['cod_payment']) && $tipoTransaccion === INVOICE) {
+                                                            if (!empty($resultado['id']) && $tipoTransaccion === 'INVOICE') {
                                                                 try {
-                                                                    $consultaFacturasAbono = mysqli_query($conexion, "SELECT pi.*, fc.fcu_id, fc.fcu_fecha, fc.fcu_detalle, fc.fcu_observaciones, fc.fcu_status, fc.id_nuevo, fc.fcu_valor
+                                                                    $consultaFacturasAbono = mysqli_query($conexion, "SELECT pi.*, fc.fcu_id, fc.fcu_fecha, fc.fcu_detalle, fc.fcu_observaciones, fc.fcu_status, fc.fcu_consecutivo, fc.fcu_valor, fc.fcu_tipo
                                                                         FROM ".BD_FINANCIERA.".payments_invoiced pi
                                                                         INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id=pi.invoiced
-                                                                        WHERE pi.payments='{$resultado['cod_payment']}'
+                                                                        WHERE pi.id='{$resultado['id']}'
                                                                         AND pi.institucion={$config['conf_id_institucion']}
                                                                         AND pi.year={$_SESSION["bd"]}
                                                                         AND fc.institucion={$config['conf_id_institucion']}
@@ -354,13 +479,14 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                            'abonos' => $abonosFactura,
                                                                            'por_cobrar' => $porCobrarFactura,
                                                                            'valor_aplicado' => $valorAplicado,
-                                                                           'items' => $itemsFactura
+                                                                           'items' => $itemsFactura,
+                                                                           'fcu_tipo' => intval($facturaAbono['fcu_tipo'] ?? 1) // 1 = venta, 2 = compra
                                                                        ];
                                                                    }
                                                                }
                                                             }
 
-                                                            if (!empty($resultado['cod_payment']) && $tipoTransaccion === ACCOUNT) {
+                                                            if (!empty($resultado['cod_payment']) && $tipoTransaccion === 'ACCOUNT') {
                                                                 $consultaConceptos = Movimientos::listarConceptos($conexion, $config, $resultado['cod_payment']);
                                                                 if ($consultaConceptos && mysqli_num_rows($consultaConceptos) > 0) {
                                                                     while ($concepto = mysqli_fetch_array($consultaConceptos, MYSQLI_BOTH)) {
@@ -369,45 +495,80 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 }
                                                             }
 
+                                                            // Obtener el valor del abono específico (después de procesar facturas)
+                                                            $valorAbono = floatval($resultado['payment'] ?? 0);
+                                                            // Si no está en resultado, intentar desde datosAbonoCompleto
+                                                            if ($valorAbono == 0 && !empty($datosAbonoCompleto['payment'])) {
+                                                                $valorAbono = floatval($datosAbonoCompleto['payment']);
+                                                            }
+                                                            // Si aún no hay valor y hay facturas asociadas, usar el total aplicado
+                                                            if ($valorAbono == 0 && !empty($totalValorAplicado)) {
+                                                                $valorAbono = $totalValorAplicado;
+                                                            }
+                                                            // Si aún no hay valor, intentar desde valorAbono de datosAbonoCompleto
+                                                            if ($valorAbono == 0 && !empty($datosAbonoCompleto['valorAbono'])) {
+                                                                $valorAbono = floatval($datosAbonoCompleto['valorAbono']);
+                                                            }
+
                                                             $accionesPermitidas = Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0267','DT0269']);
                                                             $colspanDetalle = $accionesPermitidas ? 10 : 9;
                                                     ?>
-													<tr id="reg<?=$resultado['id'];?>" class="abono-row" data-detail="detalle<?=$resultado['id'];?>">
+													<?php 
+													$abonoAnulado = (!empty($resultado['is_deleted']) && $resultado['is_deleted'] == 1);
+													$claseFilaAnulada = $abonoAnulado ? 'abono-anulado' : '';
+													$estiloFilaAnulada = $abonoAnulado ? 'style="opacity: 0.6; background-color: #fff3cd;"' : '';
+													?>
+													<?php
+													// Determinar el tipo de factura para el footer (solo para facturas de tipo INVOICE)
+													$tipoFacturaAbono = null;
+													if ($tipoTransaccion === 'INVOICE' && !empty($facturasAsociadas)) {
+														// Si hay facturas asociadas, usar el tipo de la primera (en teoría todas deberían ser del mismo tipo)
+														$tipoFacturaAbono = $facturasAsociadas[0]['fcu_tipo'] ?? 1;
+													}
+													?>
+													<tr id="reg<?=$resultado['id'];?>" class="abono-row <?=$claseFilaAnulada?>" data-detail="detalle<?=$resultado['id'];?>" data-tipo-factura="<?=$tipoFacturaAbono?>" data-tipo-transaccion="<?=$tipoTransaccion?>" data-valor-abono="<?=$valorAbono?>" <?=$estiloFilaAnulada?>>
                                                         <td>
                                                             <i class="fa fa-chevron-right expand-btn" id="expand<?=$resultado['id'];?>"></i>
                                                         </td>
-                                                        <td><?=$contReg;?></td>
+                                                        <td>
+                                                            <?=$contReg;?>
+                                                            <?php if ($abonoAnulado) { ?>
+                                                                <span class="badge badge-warning" style="margin-left: 5px;" title="Abono anulado">ANULADO</span>
+                                                            <?php } ?>
+                                                        </td>
 														<td><?=$resultado['registration_date'];?></td>
 														<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></td>
 														<td><?=$clienteNombre;?></td>
                                                         <td>
                                                             <?php if (!empty($facturasAsociadas) && count($facturasAsociadas) == 1) {
                                                                 $facturaId = $facturasAsociadas[0]['datos']['fcu_id'];
-                                                                $facturaConsec = $facturasAsociadas[0]['datos']['id_nuevo'];
+                                                                $facturaCodigo = $facturasAsociadas[0]['datos']['fcu_id'] ?? 'N/A';
                                                             ?>
                                                                 <a href="movimientos-editar.php?id=<?=base64_encode($facturaId)?>" style="text-decoration: underline; color: #667eea; font-weight: 600;" title="Ver detalle de factura">
-                                                                    <?=$facturaConsec?>
+                                                                    <?=$facturaCodigo?>
                                                                 </a>
+                                                            <?php } elseif (!empty($facturasAsociadas) && count($facturasAsociadas) > 1) { ?>
+                                                                <span style="color: #667eea; font-weight: 600;" title="Ver detalles expandidos"><?=count($facturasAsociadas)?> facturas</span>
                                                             <?php } else { ?>
-                                                                <?=$resultado['numeroFactura'] ?? 'N/A';?>
+                                                                <?=$resultado['fcu_id_factura'] ?? $resultado['numeroFactura'] ?? 'N/A';?>
                                                             <?php } ?>
                                                         </td>
-														<td>$<?=number_format($abonos,0,",",".")?></td>
+														<td>$<?=number_format(floatval($valorAbono ?? 0),0,",",".")?></td>
 														<td><?=$resultado['payment_method'];?></td>
 														<td><?=$vaucher;?></td>
 														
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0267','DT0269'])){?>
                                                             <td>
                                                                 <div class="btn-group">
-                                                                    <button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
-                                                                    <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
+                                                                    <button type="button" class="btn btn-primary" <?=$abonoAnulado ? 'disabled' : '';?>><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
+                                                                    <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown" <?=$abonoAnulado ? 'disabled' : '';?>>
                                                                         <i class="fa fa-angle-down"></i>
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
-																		<?php if(Modulos::validarSubRol(['DT0267'])){?>
+																		<?php if(Modulos::validarSubRol(['DT0267']) && !$abonoAnulado){?>
                                                                             <li><a href="abonos-editar.php?id=<?=base64_encode($resultado['id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
-                                                                        <?php } if(Modulos::validarSubRol(['DT0269'])){?>
-                                                                            <li><a href="javascript:void(0);" title="<?=$objetoEnviar;?>" id="<?=$resultado['id'];?>" name="abonos-eliminar.php?id=<?=base64_encode($resultado['id']);?>" onClick="deseaEliminar(this)"><?=$frases[174][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                        <?php } if(Modulos::validarSubRol(['DT0269']) && !$abonoAnulado){?>
+                                                                            <li><a href="abonos-anular.php?id=<?=base64_encode($resultado['id']);?>">Anular</a></li>
 																		<?php } if( Modulos::validarSubRol(['DT0271']) ){?>
 																			<li><a href="abonos-recibo-caja.php?id=<?=base64_encode($resultado['id']);?>" target="_blank"><?=$frases[57][$datosUsuarioActual['uss_idioma']];?></a></li>
 																		<?php }?>
@@ -423,16 +584,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <div class="abono-details-summary">
                                                             <div class="item">
                                                                 <span>Total del Abono</span>
-                                                                <strong>$<?=number_format($abonos, 0, ",", ".");?></strong>
+                                                                <strong>$<?=number_format(floatval($valorAbono ?? 0), 0, ",", ".");?></strong>
                                                             </div>
                                                             <?php if ($tipoTransaccion === INVOICE && !empty($facturasAsociadas)) { ?>
                                                             <div class="item">
                                                                 <span>Total Neto Facturas</span>
-                                                                <strong>$<?=number_format($totalFacturasNeto, 0, ",", ".");?></strong>
+                                                                <strong>$<?=number_format(floatval($totalFacturasNeto ?? 0), 0, ",", ".");?></strong>
                                                             </div>
                                                             <div class="item">
                                                                 <span>Saldo Pendiente</span>
-                                                                <strong>$<?=number_format($totalFacturasPorCobrar, 0, ",", ".");?></strong>
+                                                                <strong>$<?=number_format(floatval($totalFacturasPorCobrar ?? 0), 0, ",", ".");?></strong>
                                                             </div>
                                                             <?php } else { ?>
                                                             <div class="item">
@@ -450,11 +611,27 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             <div class="col-md-6 abono-details-section">
                                                                 <h6>Información del Abono</h6>
                                                                 <ul class="detalle-item-list">
-                                                                    <li><span>Código único:</span> <?=$resultado['cod_payment'] ?? 'N/A';?></li>
+                                                                    <li><span>Código único:</span> <?=$resultado['id'] ?? $resultado['cod_payment'] ?? 'N/A';?></li>
                                                                     <li><span>Fecha de registro:</span> <?=$fechaRegistro ?? 'N/A';?></li>
                                                                     <li><span>Responsable:</span> <?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></li>
                                                                     <li><span>Tipo de transacción:</span> <?=($tipoTransaccion === INVOICE ? 'Factura de venta' : 'Cuenta contable');?></li>
                                                                     <li><span>Método de pago:</span> <?=$resultado['payment_method'] ?? 'N/A';?></li>
+                                                                    <?php if (!empty($datosAbonoCompleto['payment_cuenta_bancaria_id'])) { ?>
+                                                                    <li><span>Cuenta bancaria:</span> 
+                                                                        <strong><?=htmlspecialchars($datosAbonoCompleto['cuenta_bancaria_nombre'] ?? 'N/A');?></strong>
+                                                                        <?php if (!empty($datosAbonoCompleto['cuenta_bancaria_numero'])) { ?>
+                                                                            <br><small class="texto-secundario">Número: <?=htmlspecialchars($datosAbonoCompleto['cuenta_bancaria_numero']);?></small>
+                                                                        <?php } ?>
+                                                                        <?php if (!empty($datosAbonoCompleto['cuenta_bancaria_banco'])) { ?>
+                                                                            <br><small class="texto-secundario">Banco: <?=htmlspecialchars($datosAbonoCompleto['cuenta_bancaria_banco']);?></small>
+                                                                        <?php } ?>
+                                                                        <?php if (!empty($datosAbonoCompleto['cuenta_bancaria_tipo'])) { ?>
+                                                                            <br><small class="texto-secundario">Tipo: <?=htmlspecialchars($datosAbonoCompleto['cuenta_bancaria_tipo']);?></small>
+                                                                        <?php } ?>
+                                                                    </li>
+                                                                    <?php } else { ?>
+                                                                    <li><span>Cuenta bancaria:</span> <span class="texto-secundario">No especificada</span></li>
+                                                                    <?php } ?>
                                                                     <li><span>Comprobante:</span> <?=$vaucher !== 'N/A' ? $vaucher : '<span class="texto-secundario">No adjunto</span>';?></li>
                                                                 </ul>
                                                             </div>
@@ -490,13 +667,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                         $estadoTexto = ($estado == 'COBRADA') ? 'Cobrada' : 'Por Cobrar';
                                                                     ?>
                                                                     <tr>
-                                                                        <td><?=$datosFactura['id_nuevo'] ?? 'N/A';?></td>
+                                                                        <td><?=$datosFactura['fcu_id'] ?? 'N/A';?></td>
                                                                         <td><?=$datosFactura['fcu_fecha'] ?? 'N/A';?></td>
                                                                         <td><?=htmlspecialchars($datosFactura['fcu_detalle'] ?? 'Sin concepto');?></td>
-                                                                        <td>$<?=number_format($factura['total_neto'], 0, ",", ".");?></td>
-                                                                        <td style="color: green;">$<?=number_format($factura['abonos'], 0, ",", ".");?></td>
-                                                                        <td style="color: #e74c3c;">$<?=number_format($factura['por_cobrar'], 0, ",", ".");?></td>
-                                                                        <td>$<?=number_format($factura['valor_aplicado'], 0, ",", ".");?></td>
+                                                                        <td>$<?=number_format(floatval($factura['total_neto'] ?? 0), 0, ",", ".");?></td>
+                                                                        <td style="color: green;">$<?=number_format(floatval($factura['abonos'] ?? 0), 0, ",", ".");?></td>
+                                                                        <td style="color: #e74c3c;">$<?=number_format(floatval($factura['por_cobrar'] ?? 0), 0, ",", ".");?></td>
+                                                                        <td>$<?=number_format(floatval($factura['valor_aplicado'] ?? 0), 0, ",", ".");?></td>
                                                                         <td><span class="badge-estado <?=$badgeClass;?>"><?=$estadoTexto;?></span></td>
                                                                     </tr>
                                                                     <?php } ?>
@@ -525,9 +702,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     ?>
                                                                     <tr>
                                                                         <td><?=htmlspecialchars($concepto['description'] ?? 'N/A');?></td>
-                                                                        <td>$<?=number_format($valorConcepto, 0, ",", ".");?></td>
-                                                                        <td><?=number_format($cantidad, 0, ",", ".");?></td>
-                                                                        <td>$<?=number_format($subtotal, 0, ",", ".");?></td>
+                                                                        <td>$<?=number_format(floatval($valorConcepto ?? 0), 0, ",", ".");?></td>
+                                                                        <td><?=number_format(floatval($cantidad ?? 0), 0, ",", ".");?></td>
+                                                                        <td>$<?=number_format(floatval($subtotal ?? 0), 0, ",", ".");?></td>
                                                                     </tr>
                                                                     <?php } ?>
                                                                 </tbody>
@@ -543,6 +720,22 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													  }
 													  ?>
                                                 </tbody>
+                                                <tfoot>
+                                                    <tr style="background-color: #f0f9ff; border-top: 2px solid #2ecc71;">
+                                                        <td colspan="6" align="right" style="font-weight: bold; padding: 8px; color: #2ecc71;">
+                                                            <i class="fa fa-arrow-circle-down"></i> TOTAL ABONOS A FACTURAS DE VENTA (INGRESOS):
+                                                        </td>
+                                                        <td align="right" style="font-weight: bold; color: #2ecc71;" id="footerTotalVenta">$0</td>
+                                                        <td colspan="3"></td>
+                                                    </tr>
+                                                    <tr style="background-color: #fff7ed; border-top: 1px solid #e74c3c;">
+                                                        <td colspan="6" align="right" style="font-weight: bold; padding: 8px; color: #e74c3c;">
+                                                            <i class="fa fa-arrow-circle-up"></i> TOTAL ABONOS A FACTURAS DE COMPRA (EGRESOS):
+                                                        </td>
+                                                        <td align="right" style="font-weight: bold; color: #e74c3c;" id="footerTotalCompra">$0</td>
+                                                        <td colspan="3"></td>
+                                                    </tr>
+                                                </tfoot>
                                             </table>
                                             </div>
                                             <div class="detalles-abonos-cache" style="display:none;">
@@ -589,6 +782,74 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
     <script>
+        /**
+         * Función para formatear números con separadores de miles
+         */
+        function numberFormat(number, decimals = 0, decPoint = ',', thousandsSep = '.') {
+            if (isNaN(number) || number === '' || number === null) {
+                return '0';
+            }
+            number = parseFloat(number);
+            var n = number.toFixed(decimals);
+            var x = n.split('.');
+            var x1 = x[0];
+            var x2 = x.length > 1 ? decPoint + x[1] : '';
+            var regex = /(\d+)(\d{3})/;
+            while (regex.test(x1)) {
+                x1 = x1.replace(regex, '$1' + thousandsSep + '$2');
+            }
+            return x1 + x2;
+        }
+
+        /**
+         * Calcula y actualiza los totales del footer de abonos
+         * Distingue entre abonos a facturas de venta (ingresos) y compra (egresos)
+         */
+        function totalizarAbonosFooter() {
+            var tabla = document.getElementById('example1');
+            if (!tabla) {
+                return;
+            }
+
+            var totalVentas = 0;
+            var totalCompras = 0;
+
+            // Iterar sobre todas las filas visibles en DataTable
+            var table = $('#example1').DataTable();
+            table.rows({ search: 'applied' }).every(function() {
+                var row = this.node();
+                if (!row) return;
+
+                // Saltar filas de detalles expandidas
+                if ($(row).hasClass('child')) {
+                    return;
+                }
+
+                // Obtener tipo de transacción y tipo de factura usando attr para valores null
+                var tipoTransaccion = $(row).attr('data-tipo-transaccion');
+                var tipoFacturaStr = $(row).attr('data-tipo-factura');
+                var valorAbonoStr = $(row).attr('data-valor-abono');
+                
+                var tipoFactura = tipoFacturaStr !== null && tipoFacturaStr !== '' && tipoFacturaStr !== 'null' ? parseInt(tipoFacturaStr) : null;
+                var valorAbono = valorAbonoStr ? parseFloat(valorAbonoStr) || 0 : 0;
+
+                // Solo contar abonos a facturas (INVOICE), no cuentas contables (ACCOUNT)
+                if (tipoTransaccion === 'INVOICE' && tipoFactura !== null && !isNaN(tipoFactura)) {
+                    if (tipoFactura == 1) {
+                        // Factura de venta (ingreso)
+                        totalVentas += valorAbono;
+                    } else if (tipoFactura == 2) {
+                        // Factura de compra (egreso)
+                        totalCompras += valorAbono;
+                    }
+                }
+            });
+
+            // Actualizar el footer
+            document.getElementById('footerTotalVenta').textContent = '$' + numberFormat(totalVentas, 0, ',', '.');
+            document.getElementById('footerTotalCompra').textContent = '$' + numberFormat(totalCompras, 0, ',', '.');
+        }
+
         $(document).ready(function(){
             if ($.fn.DataTable.isDataTable('#example1')) {
                 $('#example1').DataTable().destroy();
@@ -601,8 +862,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     { "orderable": false, "searchable": false, "targets": -1 }
                     <?php }?>
                 ],
-                "order": [[1, 'desc']]
+                "order": [[1, 'desc']],
+                "drawCallback": function(settings) {
+                    // Recalcular totales cada vez que se redibuja la tabla
+                    totalizarAbonosFooter();
+                }
             });
+
+            // Calcular totales iniciales
+            totalizarAbonosFooter();
 
             $('#example1 tbody').on('click', '.expand-btn', function () {
                 var $icon = $(this);
@@ -619,7 +887,95 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     $icon.addClass('expanded');
                 }
             });
+
+            // Recalcular cuando se filtre o busque
+            $('#example1').on('search.dt', function() {
+                setTimeout(totalizarAbonosFooter, 100);
+            });
         });
+    </script>
+    
+    <!-- Modal para Arqueo de Caja -->
+    <div class="modal fade" id="modalArqueoCaja" tabindex="-1" role="dialog" aria-labelledby="modalArqueoCajaLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modalArqueoCajaLabel">Generar Arqueo de Caja</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="formArqueoCaja" method="GET" action="../compartido/reporte-arqueo-caja.php" target="_blank">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fechaDesde">Fecha Desde:</label>
+                                    <input type="date" class="form-control" id="fechaDesde" name="desde" value="<?= date('Y-m-01') ?>" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fechaHasta">Fecha Hasta:</label>
+                                    <input type="date" class="form-control" id="fechaHasta" name="hasta" value="<?= date('Y-m-t') ?>" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoMovimiento">Tipo de Movimiento:</label>
+                            <select class="form-control" id="tipoMovimiento" name="tipo">
+                                <option value="">Todos</option>
+                                <option value="<?= base64_encode('1') ?>">Solo Ingresos</option>
+                                <option value="<?= base64_encode('2') ?>">Solo Egresos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="metodosPago">Métodos de Pago (Seleccione uno o más):</label>
+                            <select class="form-control" id="metodosPago" name="metodos_pago[]" multiple size="5" style="min-height: 120px;">
+                                <?php
+                                require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+                                $mediosPago = MediosPago::obtenerMediosPago();
+                                foreach ($mediosPago as $codigo => $nombre) {
+                                    echo '<option value="'.htmlspecialchars($codigo, ENT_QUOTES).'">'.htmlspecialchars($nombre, ENT_QUOTES).'</option>';
+                                }
+                                ?>
+                            </select>
+                            <small class="form-text text-muted">Mantenga presionada la tecla Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples opciones. Deje sin seleccionar para incluir todos.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="cuentasBancarias">Cuentas Bancarias (Seleccione una o más):</label>
+                            <select class="form-control" id="cuentasBancarias" name="cuentas_bancarias[]" multiple size="5" style="min-height: 120px;">
+                                <?php
+                                $consultaCuentas = Movimientos::listarCuentasBancarias($conexion, $config, null, true);
+                                if ($consultaCuentas) {
+                                    while ($cuenta = mysqli_fetch_array($consultaCuentas, MYSQLI_BOTH)) {
+                                        $nombreCuenta = $cuenta['cba_nombre'] . (!empty($cuenta['cba_banco']) ? ' - ' . $cuenta['cba_banco'] : '');
+                                        echo '<option value="'.htmlspecialchars($cuenta['cba_id'], ENT_QUOTES).'">'.htmlspecialchars($nombreCuenta, ENT_QUOTES).'</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
+                            <small class="form-text text-muted">Mantenga presionada la tecla Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples opciones. Deje sin seleccionar para incluir todas.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="generarArqueoCaja()">Generar Informe</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function abrirModalArqueoCaja() {
+            $('#modalArqueoCaja').modal('show');
+        }
+        
+        function generarArqueoCaja() {
+            $('#formArqueoCaja').submit();
+            $('#modalArqueoCaja').modal('hide');
+        }
     </script>
 
 </body>

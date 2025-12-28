@@ -14,7 +14,7 @@ if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
 
-$codigoUnico=Utilidades::generateCode("ABO");
+$codigoUnico=Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'payments_invoiced');
 ?>
 
 	<!--bootstrap -->
@@ -140,7 +140,7 @@ $codigoUnico=Utilidades::generateCode("ABO");
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[424][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-5">
-                                                <select class="form-control select2" id="select_cliente" name="cliente" onchange="mostrarTipoTransaccion()" required <?=$disabledPermiso;?>>
+                                                <select class="form-control select2" id="select_cliente" name="cliente" required <?=$disabledPermiso;?>>
                                                 </select>
                                             </div>
                                             
@@ -156,55 +156,89 @@ $codigoUnico=Utilidades::generateCode("ABO");
                                         <script>
                                             $(document).ready(function() {
                                                 $('#select_cliente').select2({
-                                                placeholder: 'Seleccione el usuario...',
-                                                theme: "bootstrap",
-                                                multiple: false,
+                                                    placeholder: 'Seleccione el usuario...',
+                                                    theme: "bootstrap",
+                                                    multiple: false,
+                                                    allowClear: true,
                                                     ajax: {
-                                                        type: 'GET',
                                                         url: '../compartido/ajax-listar-usuarios.php',
+                                                        type: 'GET',
+                                                        dataType: 'json',
+                                                        delay: 250,
+                                                        data: function (params) {
+                                                            return {
+                                                                term: params.term || '',
+                                                                todos: '1' // Cargar todos los usuarios, no solo los que tienen facturas
+                                                            };
+                                                        },
                                                         processResults: function(data) {
+                                                            // Limpiar selecciones previas cuando se carga un nuevo usuario
                                                             var radios = document.getElementsByName('tipoTransaccion');
-                                                            
                                                             for (var i = 0; i < radios.length; i++) {
                                                                 if (radios[i].checked) {
                                                                     radios[i].checked = false;
                                                                 }
                                                             }
-                                                            $('#mostrarFacturas').empty().hide().html('').show(1);
+                                                            $('#mostrarFacturas').empty().hide();
                                                             document.getElementById("divFacturas").style.display="none";
                                                             document.getElementById("divCuentasContables").style.display="none";
                                                             document.getElementById("divTipoTransaccion").style.display="none";
-                                                            data = JSON.parse(data);
+                                                            
+                                                            // data ya es un objeto JSON parseado por jQuery
                                                             return {
                                                                 results: $.map(data, function(item) {
                                                                     return {
                                                                         id: item.value,
                                                                         text: item.label
-                                                                    }
+                                                                    };
                                                                 })
                                                             };
-                                                        }
+                                                        },
+                                                        cache: true
+                                                    },
+                                                    minimumInputLength: 0
+                                                });
+                                                
+                                                // Cargar usuarios al abrir el dropdown (sin necesidad de escribir)
+                                                $('#select_cliente').on('select2:open', function() {
+                                                    if ($('#select_cliente').val() === null || $('#select_cliente').val() === '') {
+                                                        $('#select_cliente').data('select2').trigger('query', {term: ''});
+                                                    }
+                                                });
+                                                
+                                                // Cuando se selecciona un usuario, mostrar el tipo de transacción
+                                                $('#select_cliente').on('change', function() {
+                                                    if ($(this).val()) {
+                                                        mostrarTipoTransaccion();
                                                     }
                                                 });
                                             });
                                         </script>
 										
 										<div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?></label>
+                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">*</span></label>
                                             <div class="col-sm-3">
                                                 <select class="form-control select2" id="metodoPago" name="metodoPago" required <?=$disabledPermiso;?>>
-                                                    <option value="" >Seleccione una opción</option>
-													<option value="EFECTIVO" >Efectivo</option>
-													<option value="CHEQUE" >Cheque</option>
-													<option value="T_DEBITO" >T. Débito</option>
-													<option value="T_CREDITO" >T. Crédito</option>
-													<option value="TRANSFERENCIA" >Transferencia</option>
-													<option value="OTROS" >Otras Formas de pago</option>
+                                                    <?php
+                                                    require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+                                                    $mediosPago = MediosPago::obtenerMediosPago();
+                                                    echo '<option value="">Seleccione una opción</option>' . "\n";
+                                                    foreach ($mediosPago as $codigo => $nombre) {
+                                                        echo '<option value="' . htmlspecialchars($codigo) . '" data-metodo="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+                                                    }
+                                                    ?>
                                                 </select>
                                             </div>
                                             
-                                            <label class="col-sm-2 control-label"><?=$frases[345][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-4">
+                                            <label class="col-sm-2 control-label">Cuenta Bancaria</label>
+                                            <div class="col-sm-2">
+                                                <select class="form-control select2" id="cuenta_bancaria_abono" name="cuenta_bancaria_id" <?=$disabledPermiso;?>>
+                                                    <option value="">Seleccione una cuenta (opcional)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <label class="col-sm-1 control-label"><?=$frases[345][$datosUsuarioActual['uss_idioma']];?></label>
+                                            <div class="col-sm-2">
                                                 <input type="file" name="comprobante" class="form-control" <?=$disabledPermiso;?>>
                                             </div>
 										</div>
@@ -410,6 +444,37 @@ $codigoUnico=Utilidades::generateCode("ABO");
             }
         }
         
+        // Función para cargar todas las cuentas bancarias activas
+        // Una misma cuenta bancaria puede registrar ingresos o egresos de diferentes tipos de pago
+        function cargarCuentasBancariasAbono() {
+            $('#cuenta_bancaria_abono').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+            
+            $.ajax({
+                url: 'ajax-cargar-cuentas-bancarias.php',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.cuentas) {
+                        $.each(response.cuentas, function(index, cuenta) {
+                            $('#cuenta_bancaria_abono').append(
+                                $('<option></option>')
+                                    .attr('value', cuenta.id)
+                                    .text(cuenta.nombre)
+                            );
+                        });
+                    }
+                },
+                error: function() {
+                    console.log('Error al cargar cuentas bancarias');
+                }
+            });
+        }
+        
+        // Cargar cuentas bancarias al cargar la página
+        $(document).ready(function() {
+            cargarCuentasBancariasAbono();
+        });
+        
         // Interceptar submit del formulario para validar y recopilar abonos
         $(document).ready(function() {
             $('#formularioGuardar').on('submit', function(e) {
@@ -479,24 +544,35 @@ $codigoUnico=Utilidades::generateCode("ABO");
                 } else if (tipoTransaccion === '<?=ACCOUNT?>') {
                     // Procesar conceptos contables
                     var conceptos = [];
-                    var concepto = $('#idConcepto').text().trim();
-                    var precio = parseFloat($('#precioNuevo').val()) || 0;
-                    var cantidad = parseFloat($('#cantidadNuevo').val()) || 1;
-                    var descripcion = $('#descripNueva').val().trim();
                     
-                    if (concepto && precio > 0) {
+                    // Obtener el concepto del select (no del texto del td)
+                    var concepto = $('#concepto').val();
+                    
+                    // Obtener valores de los campos (incluso si están disabled)
+                    var precioElement = $('#precioNuevo');
+                    var cantidadElement = $('#cantidadNuevo');
+                    var descripElement = $('#descripNueva');
+                    
+                    // Leer los valores directamente (funciona aunque estén disabled)
+                    var precio = parseFloat(precioElement.val()) || 0;
+                    var cantidad = parseFloat(cantidadElement.val()) || 1;
+                    var descripcion = descripElement.val() ? descripElement.val().trim() : '';
+                    
+                    // Si el concepto está seleccionado y hay un precio válido
+                    if (concepto && concepto !== '' && precio > 0) {
+                        var subtotalCalculado = precio * cantidad;
                         conceptos.push({
                             concepto: concepto,
                             precio: precio,
                             cantidad: cantidad,
-                            subtotal: precio * cantidad,
+                            subtotal: subtotalCalculado,
                             descripcion: descripcion
                         });
                     }
                     
                     if (conceptos.length === 0) {
                         e.preventDefault();
-                        alert('Debes seleccionar un concepto contable e ingresar un valor.');
+                        alert('Debes seleccionar un concepto contable e ingresar un valor mayor a 0.');
                         return false;
                     }
                     
