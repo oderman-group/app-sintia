@@ -1215,8 +1215,8 @@ function totalizar(){
         return; // Si no existe la tabla, salir
     }
 
-    var totalPrecioDebitos = 0;  // Items tipo Débito (D) - suman
-    var totalPrecioCreditos = 0; // Items tipo Crédito (C) - restan
+    var totalSubtotalDebitos = 0;  // Subtotal de items tipo Débito (D) - suman (ya con descuentos aplicados)
+    var totalSubtotalCreditos = 0; // Subtotal de items tipo Crédito (C) - restan (ya con descuentos aplicados)
     var totalDescuento = 0;
     var totalImpuesto = 0;
     var nuevostr  = "";
@@ -1243,46 +1243,67 @@ function totalizar(){
             
             var isCredito = (itemType === 'C');
 
-            // Obtener los elementos de la fila con validación
+            // Obtener el subtotal ya calculado de la celda (columna 7, índice 7)
+            var subtotalCell = fila.cells[7];
+            if (!subtotalCell) {
+                continue;
+            }
+            
+            // Obtener el subtotal del atributo data-subtotal-anterior o del texto
+            var subtotalValue = 0;
+            if (subtotalCell.getAttribute('data-subtotal-anterior')) {
+                subtotalValue = parseFloat(subtotalCell.getAttribute('data-subtotal-anterior')) || 0;
+            } else {
+                // Si no tiene el atributo, intentar extraer del texto (quitar el signo $ y formateo)
+                var subtotalText = subtotalCell.textContent.trim();
+                // Remover $ y puntos de miles, reemplazar coma decimal por punto
+                subtotalText = subtotalText.replace(/^\$?\s*-?/, '').replace(/\./g, '').replace(',', '.');
+                subtotalValue = parseFloat(subtotalText) || 0;
+                // Si el texto tiene signo negativo, aplicar signo negativo
+                if (subtotalCell.textContent.trim().startsWith('-')) {
+                    subtotalValue = -Math.abs(subtotalValue);
+                }
+            }
+            
+            // Separar débitos y créditos usando los subtotales ya calculados
+            // Los subtotales ya incluyen los descuentos aplicados
+            if (isCredito) {
+                // Los créditos se suman como valores positivos para luego restarlos
+                totalSubtotalCreditos = totalSubtotalCreditos + Math.abs(subtotalValue);
+            } else {
+                // Los débitos se suman como valores positivos
+                totalSubtotalDebitos = totalSubtotalDebitos + Math.abs(subtotalValue);
+            }
+
+            // Obtener los elementos para calcular descuentos e impuestos
             var precioInput = fila.cells[2] ? fila.cells[2].querySelector('input') : null;
             var descuentoInput = fila.cells[3] ? fila.cells[3].querySelector('input') : null;
             var cantidadInput = fila.cells[6] ? fila.cells[6].querySelector('input') : null;
             var selectImpuesto = fila.cells[4] ? fila.cells[4].querySelector('select') : null;
             
-            // Validar que los elementos existan
-            if (!precioInput || !descuentoInput || !cantidadInput || !selectImpuesto) {
-                continue;
-            }
+            // Calcular descuento e impuesto solo si los elementos existen
+            if (precioInput && descuentoInput && cantidadInput && selectImpuesto) {
+                var precio = parseFloat(precioInput.value) || 0;
+                var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
+                var cantidad = parseFloat(cantidadInput.value) || 0;
+                var opcionSeleccionada = selectImpuesto.selectedOptions[0];
+                var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
+                var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
 
-            var precio = parseFloat(precioInput.value) || 0;
-            var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
-            var cantidad = parseFloat(cantidadInput.value) || 0;
-            var opcionSeleccionada = selectImpuesto.selectedOptions[0];
-            var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
-            var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
-            var impuestoName = opcionSeleccionada ? opcionSeleccionada.getAttribute('data-name-impuesto') : '';
+                var precioNeto = (precio * cantidad);
+                var descuento = precioNeto * (porcentajeDescuento / 100);
+                totalDescuento = totalDescuento + descuento;
 
-            var precioNeto = (precio * cantidad);
-            
-            // Separar débitos y créditos
-            if (isCredito) {
-                totalPrecioCreditos = totalPrecioCreditos + precioNeto;
-            } else {
-                totalPrecioDebitos = totalPrecioDebitos + precioNeto;
-            }
-
-            var descuento = precioNeto * (porcentajeDescuento / 100);
-            totalDescuento = totalDescuento + descuento;
-
-            if (impuestoValue > 0) {
-                var impuesto = (precioNeto - descuento) * (impuestoValor / 100);
-                totalImpuesto = totalImpuesto + impuesto;
+                if (impuestoValue > 0) {
+                    var impuesto = (precioNeto - descuento) * (impuestoValor / 100);
+                    totalImpuesto = totalImpuesto + impuesto;
+                }
             }
         }
     }
 
-    // Calcular total neto: débitos - créditos
-    var totalPrecio = totalPrecioDebitos - totalPrecioCreditos;
+    // Calcular subtotal neto: débitos - créditos (ya incluyen descuentos aplicados)
+    var totalPrecio = totalSubtotalDebitos - totalSubtotalCreditos;
 
     //SUBTOTAL NETO
     var totalPrecioFinal = "$"+numberFormat(totalPrecio, 0, ',', '.');
@@ -1310,8 +1331,9 @@ function totalizar(){
     idImpuesto.innerHTML = '';
     idImpuesto.appendChild(document.createTextNode(impuestoFinal));
     
-    //TOTAL NETO: (Débitos - Créditos + Valor Adicional - Descuentos) + Impuestos
-    var totalNeto = ((totalPrecio + vlrAdicional) - totalDescuento) + totalImpuesto;
+    //TOTAL NETO: (Subtotal ya incluye descuentos) + Valor Adicional + Impuestos
+    // Nota: El subtotal ya incluye los descuentos aplicados en cada item, por lo que no se restan aquí
+    var totalNeto = totalPrecio + vlrAdicional + totalImpuesto;
     var totalNetoFinal = "$"+numberFormat(totalNeto, 0, ',', '.');
     var idTotalNeto = document.getElementById('totalNeto');
     idTotalNeto.innerHTML = '';

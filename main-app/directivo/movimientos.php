@@ -514,17 +514,30 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 						<label>Valor del abono</label>
 						<input type="number" min="0" step="1" class="form-control" id="abonoRapidoValor" name="valor" required>
 					</div>
-					<div class="form-group">
-						<label>Método de pago</label>
-						<select class="form-control" id="abonoRapidoMetodo" name="metodo" required>
-							<option value="">Seleccione...</option>
-							<option value="EFECTIVO">Efectivo</option>
-							<option value="CHEQUE">Cheque</option>
-							<option value="T_DEBITO">T. Débito</option>
-							<option value="T_CREDITO">T. Crédito</option>
-							<option value="TRANSFERENCIA">Transferencia</option>
-							<option value="OTROS">Otras formas</option>
-						</select>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Método de pago <span style="color: red;">*</span></label>
+								<select class="form-control" id="abonoRapidoMetodo" name="metodo" required>
+									<option value="">Seleccione una opción</option>
+									<?php
+									require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+									$mediosPago = MediosPago::obtenerMediosPago();
+									foreach ($mediosPago as $codigo => $nombre) {
+										echo '<option value="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Cuenta Bancaria</label>
+								<select class="form-control" id="abonoRapidoCuentaBancaria" name="cuenta_bancaria_id">
+									<option value="">Seleccione una cuenta (opcional)</option>
+								</select>
+							</div>
+						</div>
 					</div>
 					<div class="form-group">
 						<label>Observaciones</label>
@@ -958,8 +971,46 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		$('#abonoRapidoSaldoPendiente').text('$' + saldoPendiente);
 		$('#abonoRapidoValor').val('');
 		$('#abonoRapidoMetodo').val('');
+		$('#abonoRapidoCuentaBancaria').val('');
 		$('#abonoRapidoObservaciones').val('');
+		$('#abonoRapidoComprobante').val('');
+		// Cargar cuentas bancarias
+		cargarCuentasBancariasAbonoRapido();
 		$('#modalAbonoRapido').modal('show');
+	}
+	
+	// Limpiar campos al cerrar el modal
+	$('#modalAbonoRapido').on('hidden.bs.modal', function() {
+		$('#abonoRapidoValor').val('');
+		$('#abonoRapidoMetodo').val('');
+		$('#abonoRapidoCuentaBancaria').val('');
+		$('#abonoRapidoObservaciones').val('');
+		$('#abonoRapidoComprobante').val('');
+	});
+	
+	// Función para cargar cuentas bancarias en el modal de abono rápido
+	function cargarCuentasBancariasAbonoRapido() {
+		$('#abonoRapidoCuentaBancaria').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+		
+		$.ajax({
+			url: 'ajax-cargar-cuentas-bancarias.php',
+			type: 'POST',
+			dataType: 'json',
+			success: function(response) {
+				if (response.success && response.cuentas) {
+					$.each(response.cuentas, function(index, cuenta) {
+						$('#abonoRapidoCuentaBancaria').append(
+							$('<option></option>')
+								.attr('value', cuenta.id)
+								.text(cuenta.nombre)
+						);
+					});
+				}
+			},
+			error: function() {
+				console.log('Error al cargar cuentas bancarias');
+			}
+		});
 	}
 
 	$('#formAbonoRapido').on('submit', function(e){
@@ -987,6 +1038,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		}
 
 		var formData = new FormData(this);
+		
 		$.ajax({
 			url: 'ajax-abono-rapido.php',
 			method: 'POST',
