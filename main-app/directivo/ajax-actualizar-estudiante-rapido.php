@@ -6,6 +6,7 @@ ob_clean();
 ob_start();
 include("session.php");
 require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
+require_once(ROOT_PATH . "/main-app/class/UsuariosPadre.php");
 
 function jsonResponse($data) {
     while (ob_get_level()) { ob_end_clean(); }
@@ -95,6 +96,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             jsonResponse(['success' => false, 'message' => 'Formato de email inválido.']);
         }
         
+        // Obtener datos del estudiante para obtener mat_id_usuario y documento actual
+        $datosEstudiante = Estudiantes::obtenerDatosEstudiante($matId);
+        if (empty($datosEstudiante)) {
+            jsonResponse(['success' => false, 'message' => 'Estudiante no encontrado.']);
+        }
+        
+        $matIdUsuario = !empty($datosEstudiante['mat_id_usuario']) ? $datosEstudiante['mat_id_usuario'] : null;
+        $documentoActual = !empty($datosEstudiante['mat_documento']) ? $datosEstudiante['mat_documento'] : '';
+        
         // Crear consulta SQL para actualizar
         // mat_lugar_expedicion y mat_lugar_nacimiento ahora almacenan IDs de ciudad
         $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
@@ -165,6 +175,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($filasAfectadas === 0) {
             jsonResponse(['success' => false, 'message' => 'No se encontró el estudiante o no hubo cambios en los datos.']);
+        }
+        
+        // Sincronizar campos compartidos con la tabla usuarios (si existe mat_id_usuario)
+        if (!empty($matIdUsuario)) {
+            try {
+                // Obtener documento actualizado (si no cambió, usar el que ya tenía)
+                // Necesitamos obtener el documento actualizado desde la BD o usar el documento actual
+                // Como el documento no se actualiza en la edición rápida, usamos el documento actual
+                
+                // Construir array de actualización para usuarios (solo campos compartidos)
+                $updateUsuario = [];
+                
+                // Solo actualizar campos que fueron modificados o que siempre deben sincronizarse
+                if (!empty($fechaNacimiento)) {
+                    $updateUsuario['uss_fecha_nacimiento'] = $fechaNacimiento;
+                }
+                if (!empty($primerNombre)) {
+                    $updateUsuario['uss_nombre'] = $primerNombre;
+                }
+                if ($segundoNombre !== null) {
+                    $updateUsuario['uss_nombre2'] = $segundoNombre;
+                }
+                if (!empty($primerApellido)) {
+                    $updateUsuario['uss_apellido1'] = $primerApellido;
+                }
+                if ($segundoApellido !== null) {
+                    $updateUsuario['uss_apellido2'] = $segundoApellido;
+                }
+                if ($email !== null) {
+                    $updateUsuario['uss_email'] = strtolower($email);
+                }
+                if ($tipoDocumentoInt !== null) {
+                    $updateUsuario['uss_tipo_documento'] = $tipoDocumentoInt;
+                }
+                if ($celular !== null) {
+                    $updateUsuario['uss_celular'] = $celular;
+                }
+                if ($telefono !== null) {
+                    $updateUsuario['uss_telefono'] = $telefono;
+                }
+                if ($direccion !== null) {
+                    $updateUsuario['uss_direccion'] = $direccion;
+                }
+                if ($lugarExpedicion !== null) {
+                    $updateUsuario['uss_lugar_expedicion'] = $lugarExpedicion;
+                }
+                if ($generoInt !== null) {
+                    $updateUsuario['uss_genero'] = $generoInt;
+                }
+                // Documento y usuario siempre se sincronizan (para mantener consistencia)
+                // El documento no se cambia en edición rápida, pero se asegura que esté sincronizado
+                if (!empty($documentoActual)) {
+                    $updateUsuario['uss_usuario'] = $documentoActual;
+                    $updateUsuario['uss_documento'] = $documentoActual;
+                }
+                
+                // Actualizar tabla usuarios con los campos compartidos
+                // Se actualizan todos los campos compartidos para mantener sincronización completa
+                if (!empty($updateUsuario)) {
+                    UsuariosPadre::actualizarUsuarios($config, $matIdUsuario, $updateUsuario);
+                }
+            } catch (Exception $e) {
+                // Registrar error pero no fallar la actualización principal
+                error_log("Error al sincronizar datos con tabla usuarios: " . $e->getMessage());
+                // Continuar, la actualización de academico_matriculas ya se hizo
+            }
         }
         
         jsonResponse(['success' => true, 'message' => 'Estudiante actualizado correctamente. Se modificaron ' . $filasAfectadas . ' registro(s).']);

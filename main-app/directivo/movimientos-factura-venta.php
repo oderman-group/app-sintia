@@ -18,15 +18,22 @@ if (!empty($_GET["id"])) {
 $configFinanzas=Movimientos::configuracionFinanzas($conexion, $config);
 
 try{
-    $consulta = mysqli_query($conexion, "SELECT fcu.*, uss.*, ciu.*, dep.*, fcu.id_nuevo AS id_nuevo_finanzas  FROM ".BD_FINANCIERA.".finanzas_cuentas fcu
+    $consulta = mysqli_query($conexion, "SELECT fcu.*, uss.*, ciu.*, dep.*, fcu.fcu_id AS id_nuevo_finanzas  FROM ".BD_FINANCIERA.".finanzas_cuentas fcu
     INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=fcu_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
     LEFT JOIN ".BD_ADMIN.".localidad_ciudades ciu ON ciu_id=uss_lugar_nacimiento
     LEFT JOIN ".BD_ADMIN.".localidad_departamentos dep ON dep_id=ciu_departamento
-    WHERE fcu_id='".$id."' AND fcu.institucion={$config['conf_id_institucion']} AND fcu.year={$_SESSION["bd"]}");
+    WHERE fcu.fcu_id='".mysqli_real_escape_string($conexion, $id)."' AND fcu.institucion={$config['conf_id_institucion']} AND fcu.year={$_SESSION["bd"]}");
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
 $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+
+// Validar que la factura no esté en EN_PROCESO o ANULADA
+if (empty($resultado) || 
+    (isset($resultado['fcu_status']) && ($resultado['fcu_status'] == EN_PROCESO || $resultado['fcu_status'] == ANULADA))) {
+    echo '<script type="text/javascript">alert("No se puede imprimir esta factura. Solo se pueden imprimir facturas confirmadas (POR_COBRAR o COBRADA)."); window.location.href="movimientos.php";</script>';
+    exit();
+}
 
 $fecha        = explode ("-", $resultado['fcu_fecha']);
 $dia          = $fecha[2];  
@@ -140,9 +147,14 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                         if($numItems>0){
                             while ($fila = mysqli_fetch_array($itemsConsulta, MYSQLI_BOTH)) {
 
-                                $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, $fila['tax']);
+                                $resultadoTax = [];
+                                if (!empty($fila['tax']) && $fila['tax'] != 0) {
+                                    $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                                }
 
-                                $impuestoItem = $fila['tax'] != 0 ? $resultadoTax['type_tax']." (".$resultadoTax['fee']."%)" : "NINGUNO (0%)";
+                                $impuestoItem = (!empty($fila['tax']) && $fila['tax'] != 0 && !empty($resultadoTax)) 
+                                    ? $resultadoTax['type_tax']." (".$resultadoTax['fee']."%)" 
+                                    : "NINGUNO (0%)";
                     ?>
                         <tr>
                             <td colspan="2"><?=$fila['name'];?><?php if ( !empty($fila['description']) ){ echo "(".$fila['description'].")"; } ?></td>
@@ -158,9 +170,9 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                             $descuento = ($fila['priceTransaction'] * ($fila['discount'] / 100));
                             $totalDescuento += $descuento;
 
-                            $tax = !empty($resultadoTax['fee']) ? $resultadoTax['fee'] : 0;
+                            $tax = (!empty($resultadoTax) && !empty($resultadoTax['fee'])) ? $resultadoTax['fee'] : 0;
                             $impuesto = (($fila['priceTransaction'] * $fila['cantity']) - $descuento) * ($tax / 100);
-                            if ($fila['tax'] > 0) {
+                            if (!empty($fila['tax']) && $fila['tax'] > 0 && !empty($resultadoTax)) {
                                 $datosImpuestos = [
                                     "name" =>$resultadoTax['type_tax'],
                                     "fee" =>$resultadoTax['fee'],

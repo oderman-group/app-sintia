@@ -32,11 +32,16 @@ if ($numFacturas > 0) {
         
         $disabled = $porCobrar < 1 ? "disabled" : "";
         
-        // Obtener items de la factura
+        // Obtener items de la factura con nombre del item
         $itemsFactura = [];
         try {
-            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name 
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, 
+                i.name as item_name, 
+                i.item_type,
+                tax.fee as tax_fee, 
+                tax.name as tax_name 
                 FROM ".BD_FINANCIERA.".transaction_items ti
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id=ti.id_item AND i.institucion=ti.institucion AND i.year=ti.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
                 WHERE ti.id_transaction='{$resultado['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}");
             if ($consultaItems) {
@@ -56,7 +61,7 @@ if ($numFacturas > 0) {
             <i class="fa fa-chevron-right expand-btn" onclick="toggleFacturaDetails('<?=$resultado['fcu_id'];?>')" id="expand<?=$resultado['fcu_id'];?>"></i>
         </td>
         <td title="<?=$detalleFactura;?>">
-            <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=$resultado['id_nuevo'] ?? '';?></span>
+            <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=$resultado['fcu_id'] ?? '';?></span>
         </td>
         <td><?=$resultado['fcu_fecha'] ?? '';?></td>
         <td id="totalNeto<?=$resultado['fcu_id'];?>" data-total-neto="<?=$totalNeto?>">$<?=number_format($totalNeto, 0, ",", ".")?></td>
@@ -150,30 +155,50 @@ if ($numFacturas > 0) {
                             </thead>
                             <tbody>
                                 <?php 
-                                $subtotalItems = 0;
+                                $totalDebitos = 0;
+                                $totalCreditos = 0;
                                 foreach ($itemsFactura as $item) {
                                     $precio = floatval($item['price'] ?? 0);
                                     $cantidad = floatval($item['cantity'] ?? 0);
                                     $descuento = floatval($item['discount'] ?? 0);
                                     $taxFee = floatval($item['tax_fee'] ?? 0);
+                                    $itemType = isset($item['item_type']) ? $item['item_type'] : 'D';
+                                    $isCredito = ($itemType === 'C');
+                                    
                                     $subtotal = $precio * $cantidad * (1 - $descuento / 100);
                                     if ($item['tax'] != 0 && $taxFee > 0) {
                                         $subtotal = $subtotal * (1 + $taxFee / 100);
                                     }
-                                    $subtotalItems += $subtotal;
+                                    
+                                    // Separar débitos y créditos
+                                    if ($isCredito) {
+                                        $totalCreditos += $subtotal;
+                                    } else {
+                                        $totalDebitos += $subtotal;
+                                    }
+                                    
+                                    $rowClass = $isCredito ? 'item-credito' : '';
+                                    $nombreItem = ($item['item_name'] ?? '') ?: ($item['description'] ?? 'N/A');
+                                    if ($isCredito) {
+                                        $nombreItem .= ' (Crédito)';
+                                    }
+                                    $signoSubtotal = $isCredito ? '-' : '';
                                 ?>
-                                <tr>
-                                    <td><?=htmlspecialchars($item['description'] ?? 'N/A');?></td>
+                                <tr class="<?=$rowClass;?>">
+                                    <td><?=htmlspecialchars($nombreItem);?></td>
                                     <td><?=number_format($cantidad, 0, ",", ".")?></td>
                                     <td>$<?=number_format($precio, 0, ",", ".")?></td>
                                     <td><?=number_format($descuento, 0, ",", ".")?>%</td>
                                     <td><?=$taxFee > 0 ? number_format($taxFee, 0, ",", ".").'%' : 'N/A';?></td>
-                                    <td style="font-weight: bold;">$<?=number_format($subtotal, 0, ",", ".")?></td>
+                                    <td style="font-weight: bold;"><?=$signoSubtotal;?>$<?=number_format($subtotal, 0, ",", ".")?></td>
                                 </tr>
                                 <?php } ?>
+                                <?php 
+                                $totalNetoItems = $totalDebitos - $totalCreditos;
+                                ?>
                                 <tr style="background: #f8f9fa; font-weight: bold;">
                                     <td colspan="5" align="right">Total Items:</td>
-                                    <td>$<?=number_format($subtotalItems, 0, ",", ".")?></td>
+                                    <td>$<?=number_format($totalNetoItems, 0, ",", ".")?></td>
                                 </tr>
                             </tbody>
                         </table>

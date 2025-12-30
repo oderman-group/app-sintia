@@ -23,6 +23,7 @@ $idFactura     = $_POST['idFactura'] ?? '';
 $valorAbono    = isset($_POST['valor']) ? floatval($_POST['valor']) : 0;
 $metodoPago    = $_POST['metodo'] ?? '';
 $observaciones = $_POST['observaciones'] ?? '';
+$cuentaBancariaId = !empty($_POST['cuenta_bancaria_id']) ? intval($_POST['cuenta_bancaria_id']) : null;
 $voucher = '';
 
 if (empty($idFactura) || $valorAbono <= 0 || empty($metodoPago)) {
@@ -71,33 +72,33 @@ try {
     $conexionPDO = Conexion::newConnection('PDO');
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $conexionPDO->beginTransaction();
+    
 
-    $codigoAbono = Utilidades::generateCode('ABO');
-
-    $sqlPayment = "INSERT INTO ".BD_FINANCIERA.".payments
-        (registration_date, responsible_user, invoiced, cod_payment, type_payments, payment_method, observation, voucher, note, institucion, year)
-        VALUES (NOW(), :responsable, :invoiced, :codigo, 'INVOICE', :metodo, :observaciones, :voucher, :nota, :institucion, :year)";
-    $stmtPayment = $conexionPDO->prepare($sqlPayment);
-    $stmtPayment->bindValue(':responsable', $_SESSION['id'], PDO::PARAM_INT);
-    $stmtPayment->bindValue(':invoiced', $factura['fcu_usuario'], PDO::PARAM_STR);
-    $stmtPayment->bindValue(':codigo', $codigoAbono, PDO::PARAM_STR);
-    $stmtPayment->bindValue(':metodo', $metodoPago, PDO::PARAM_STR);
-    $stmtPayment->bindValue(':observaciones', $observaciones, PDO::PARAM_STR);
-    $stmtPayment->bindValue(':voucher', $voucher, PDO::PARAM_STR);
-    $stmtPayment->bindValue(':nota', '', PDO::PARAM_STR);
-    $stmtPayment->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
-    $stmtPayment->bindValue(':year', $_SESSION['bd'], PDO::PARAM_INT);
-    $stmtPayment->execute();
-
-    $sqlPaymentInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced
-        (payment, invoiced, payments, institucion, year)
-        VALUES (:valor, :factura, :codigo, :institucion, :year)";
+    // Insertar con todos los campos necesarios siguiendo el patrón de Movimientos::guardarAbonos()
+    $sqlPaymentInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
+        responsible_user, payment_user, type_payments, payment_tipo, payment_method, 
+        payment_cuenta_bancaria_id, invoiced, payment, observation, attachment, 
+        fecha_registro, institucion, year
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmtPaymentInv = $conexionPDO->prepare($sqlPaymentInvoiced);
-    $stmtPaymentInv->bindValue(':valor', $valorAbono, PDO::PARAM_STR);
-    $stmtPaymentInv->bindValue(':factura', $idFactura, PDO::PARAM_STR);
-    $stmtPaymentInv->bindValue(':codigo', $codigoAbono, PDO::PARAM_STR);
-    $stmtPaymentInv->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
-    $stmtPaymentInv->bindValue(':year', $_SESSION['bd'], PDO::PARAM_INT);
+    
+    $fechaRegistro = date('Y-m-d H:i:s');
+    $paymentTipo = 'INGRESO'; // Los abonos son siempre ingresos
+    $paymentUser = $factura['fcu_usuario'] ?? null; // Usuario de la factura
+    
+    $stmtPaymentInv->bindValue(1, $_SESSION['id'], PDO::PARAM_STR); // responsible_user
+    $stmtPaymentInv->bindValue(2, $paymentUser, $paymentUser ? PDO::PARAM_STR : PDO::PARAM_NULL); // payment_user
+    $stmtPaymentInv->bindValue(3, INVOICE, PDO::PARAM_STR); // type_payments
+    $stmtPaymentInv->bindValue(4, $paymentTipo, PDO::PARAM_STR); // payment_tipo
+    $stmtPaymentInv->bindValue(5, $metodoPago, $metodoPago ? PDO::PARAM_STR : PDO::PARAM_NULL); // payment_method
+    $stmtPaymentInv->bindValue(6, $cuentaBancariaId, $cuentaBancariaId ? PDO::PARAM_INT : PDO::PARAM_NULL); // payment_cuenta_bancaria_id
+    $stmtPaymentInv->bindValue(7, $idFactura, PDO::PARAM_INT); // invoiced (fcu_id)
+    $stmtPaymentInv->bindValue(8, $valorAbono, PDO::PARAM_STR); // payment
+    $stmtPaymentInv->bindValue(9, $observaciones, $observaciones ? PDO::PARAM_STR : PDO::PARAM_NULL); // observation
+    $stmtPaymentInv->bindValue(10, $voucher, $voucher ? PDO::PARAM_STR : PDO::PARAM_NULL); // attachment
+    $stmtPaymentInv->bindValue(11, $fechaRegistro, PDO::PARAM_STR); // fecha_registro
+    $stmtPaymentInv->bindValue(12, $config['conf_id_institucion'], PDO::PARAM_INT); // institucion
+    $stmtPaymentInv->bindValue(13, $_SESSION['bd'], PDO::PARAM_INT); // year
     $stmtPaymentInv->execute();
 
     $totalAbonadoNuevo = $totalAbonos + $valorAbono;

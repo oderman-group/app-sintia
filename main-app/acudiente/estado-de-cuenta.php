@@ -2,6 +2,9 @@
 <?php $idPaginaInterna = 'AC0022';?>
 <?php include("../compartido/head.php");?>
 <?php 
+if (!defined('FACTURA_VENTA')) {
+    require_once(ROOT_PATH."/config-general/constantes.php");
+}
 require_once(ROOT_PATH."/main-app/class/Movimientos.php"); 
 require_once(ROOT_PATH."/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH."/main-app/class/Modulos.php");
@@ -434,9 +437,11 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                     // Calcular resumen financiero usando los mismos métodos que la tabla
                     $consultaFacturas = mysqli_query($conexion, "SELECT * FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
                         WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
+                        AND fc.fcu_status != '".EN_PROCESO."'
+                        AND fc.fcu_status != '".ANULADA."'
                         AND fc.institucion={$_SESSION['idInstitucion']} 
                         AND fc.year='{$_SESSION["bd"]}' 
-                        ORDER BY fc.id_nuevo DESC");
+                        ORDER BY fc.fcu_id DESC");
                     
                     $totalFacturado = 0;
                     $totalAbonado = 0;
@@ -446,16 +451,30 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                         $vlrAdicional = !empty($factura['fcu_valor']) ? $factura['fcu_valor'] : 0;
                         $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $vlrAdicional);
                         $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
+                        $tipoFactura = (int)($factura['fcu_tipo'] ?? 1);
+                        
+                        // Si es factura de compra (tipo 2), el valor se invierte (le deben al usuario)
+                        if ($tipoFactura == FACTURA_COMPRA) {
+                            $totalNeto = -abs($totalNeto); // Convertir a negativo (saldo a favor)
+                        }
+                        
                         $porCobrar = $totalNeto - $abonos;
                         
                         $totalFacturado += $totalNeto;
                         $totalAbonado += $abonos;
-                        $totalPorCobrar += max(0, $porCobrar);
+                        
+                        // Por cobrar: solo sumar valores positivos (lo que debe pagar), valores negativos son saldo a favor
+                        if ($porCobrar > 0) {
+                            $totalPorCobrar += $porCobrar;
+                        }
                     }
                     
+                    // Saldo final: total abonado - total facturado
+                    // Si saldo es positivo = le deben al usuario (saldo a favor) - se muestra en verde
+                    // Si saldo es negativo = el usuario debe (deuda) - se muestra en rojo
+                    $saldo = $totalAbonado - $totalFacturado;
                     $deuda = $totalFacturado;
                     $recibido = $totalAbonado;
-                    $saldo = ($recibido - $deuda);
                     
                     $mensajeSaldo = $frases[309][$datosUsuarioActual['uss_idioma']];
                     $saldoClass = 'saldo';
@@ -489,6 +508,10 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                             <p class="resumen-card-value" id="cardTotalFacturado" style="color: var(--danger-color);">
                                 $<?=number_format($deuda, 0, ",", ".");?>
                             </p>
+                            <div class="resumen-card-message" style="font-size: 11px; margin-top: 8px;">
+                                <i class="fa fa-info-circle" style="font-size: 10px;"></i>
+                                Suma de todas las facturas (ventas menos compras)
+                            </div>
                         </div>
 
                         <div class="resumen-card recibido">
@@ -499,6 +522,10 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                             <p class="resumen-card-value" id="cardTotalAbonado" style="color: var(--info-color);">
                                 $<?=number_format($recibido, 0, ",", ".");?>
                             </p>
+                            <div class="resumen-card-message" style="font-size: 11px; margin-top: 8px;">
+                                <i class="fa fa-info-circle" style="font-size: 10px;"></i>
+                                Total de pagos y abonos realizados
+                            </div>
                         </div>
 
                         <div class="resumen-card <?=$saldoClass;?>">
@@ -512,9 +539,39 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                             <div class="resumen-card-message">
                                 <?=$mensajeSaldo;?>
                             </div>
+                            <div class="resumen-card-message" style="font-size: 11px; margin-top: 8px; border-top: 1px solid #ecf0f1; padding-top: 8px;">
+                                <i class="fa fa-calculator" style="font-size: 10px;"></i>
+                                <strong>Cálculo:</strong> Total Abonado - Total Facturado<br>
+                                <span style="font-size: 10px; color: #7f8c8d;">
+                                    <?php if ($saldo >= 0): ?>
+                                        Saldo positivo = Le deben (a favor)
+                                    <?php else: ?>
+                                        Saldo negativo = Usted debe (deuda)
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                            <?php 
+                            // Indicador de estado de pago general
+                            $estadoPagoGeneral = ($totalAbonado >= $totalFacturado) ? 'pagado' : 'pendiente';
+                            $colorEstadoGeneral = ($estadoPagoGeneral == 'pagado') ? '#27ae60' : '#e74c3c';
+                            $iconoEstadoGeneral = ($estadoPagoGeneral == 'pagado') ? 'fa-check-circle' : 'fa-exclamation-circle';
+                            ?>
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ecf0f1;">
+                                <span style="display: inline-flex; align-items: center; gap: 5px; color: <?=$colorEstadoGeneral;?>; font-weight: 600;">
+                                    <i class="fa <?=$iconoEstadoGeneral;?>"></i>
+                                    Estado: <?=strtoupper($estadoPagoGeneral == 'pagado' ? 'Al día' : 'Pendiente');?>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Botón para imprimir estado de cuenta -->
+                    <div style="text-align: right; margin-bottom: 15px;">
+                        <a href="estado-de-cuenta-imprimir.php" target="_blank" class="btn-modern btn-info-modern">
+                            <i class="fa fa-print"></i> Imprimir Estado de Cuenta
+                        </a>
+                    </div>
+                    
                     <!-- Acciones Especiales -->
                     <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {?>
                     <div class="acciones-especiales">
@@ -574,9 +631,11 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                         <th>#</th>
                                         <th><?=$frases[51][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[162][$datosUsuarioActual['uss_idioma']];?></th>
+                                        <th>Tipo</th>
                                         <th><?=$frases[107][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[413][$datosUsuarioActual['uss_idioma']];?></th>
                                         <th><?=$frases[418][$datosUsuarioActual['uss_idioma']];?></th>
+                                        <th>Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="movimientosTableBody">
@@ -589,18 +648,31 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                         $vlrAdicional = !empty($resultado['fcu_valor']) ? $resultado['fcu_valor'] : 0;
                                         $totalNeto    = Movimientos::calcularTotalNeto($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
                                         $abonos       = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
-                                        $porCobrar    = $totalNeto - $abonos;
+                                        $tipoFactura = (int)($resultado['fcu_tipo'] ?? 1);
                                         
-                                        $badgeClass = $porCobrar > 0 ? 'badge-pendiente' : 'badge-pagado';
-                                        $badgeText = $porCobrar > 0 ? 'Pendiente' : 'Pagado';
+                                        // Si es factura de compra (tipo 2), el valor se invierte (le deben al usuario)
+                                        $totalNetoMostrar = $totalNeto;
+                                        if ($tipoFactura == FACTURA_COMPRA) {
+                                            $totalNetoMostrar = -abs($totalNeto); // Convertir a negativo para mostrar
+                                        }
+                                        
+                                        $porCobrar    = $totalNetoMostrar - $abonos;
+                                        
+                                        // Color y formato según el tipo:
+                                        // - Si porCobrar > 0: debe (rojo)
+                                        // - Si porCobrar < 0: le deben (verde/saldo a favor)
+                                        // - Si porCobrar = 0: saldado (negro)
+                                        $badgeClass = $porCobrar > 0 ? 'badge-pendiente' : ($porCobrar < 0 ? 'badge-pagado' : 'badge-pagado');
+                                        $badgeText = $porCobrar > 0 ? 'Pendiente' : ($porCobrar < 0 ? 'Saldo a favor' : 'Pagado');
                                     ?>
                                     <tr class="movimiento-row" 
                                         data-factura-id="<?= $resultado['fcu_id']; ?>"
                                         data-fecha="<?=strtolower($resultado['fcu_fecha']);?>"
                                         data-detalle="<?=strtolower($resultado['fcu_detalle']);?>"
-                                        data-total="<?=$totalNeto;?>"
+                                        data-total="<?=$totalNetoMostrar;?>"
                                         data-abonos="<?=$abonos;?>"
-                                        data-porcobrar="<?=$porCobrar;?>">
+                                        data-porcobrar="<?=$porCobrar;?>"
+                                        data-tipo-factura="<?= $tipoFactura ?>">
                                         <td>
                                             <i class="fa fa-chevron-right detalle-movimiento-btn" data-id="<?= $resultado['fcu_id']; ?>"></i>
                                         </td>
@@ -609,8 +681,19 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                             <strong><?=$resultado['fcu_fecha'];?></strong>
                                         </td>
                                         <td><?=$resultado['fcu_detalle'];?></td>
-                                        <td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-total-neto="<?= $totalNeto ?>">
-                                            <strong>$<?=!empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0;?></strong>
+                                        <td>
+                                            <?php if ($tipoFactura == FACTURA_COMPRA): ?>
+                                                <span class="badge-financiero" style="background: #ffeaa7; color: #d63031;">Compra</span>
+                                            <?php else: ?>
+                                                <span class="badge-financiero" style="background: #d5f4e6; color: #00b894;">Venta</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $tipoFactura ?>" data-total-neto="<?= $totalNetoMostrar ?>">
+                                            <?php if ($tipoFactura == FACTURA_COMPRA): ?>
+                                                <strong style="color: var(--success-color);">-$<?= !empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0 ?></strong>
+                                            <?php else: ?>
+                                                <strong>$<?= !empty($totalNetoMostrar) ? number_format($totalNetoMostrar, 0, ",", ".") : 0 ?></strong>
+                                            <?php endif; ?>
                                         </td>
                                         <td id="abonos<?= $resultado['fcu_id']; ?>" data-abonos="<?= $abonos ?>">
                                             <span style="color: var(--info-color);">
@@ -618,8 +701,25 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                                             </span>
                                         </td>
                                         <td id="porCobrar<?= $resultado['fcu_id']; ?>" data-por-cobrar="<?= $porCobrar ?>">
-                                            <span class="badge-financiero <?=$badgeClass;?>" style="color: <?=$porCobrar > 0 ? 'var(--danger-color)' : 'var(--success-color)';?>; font-weight: 700;">
-                                                $<?=!empty($porCobrar) ? number_format($porCobrar, 0, ",", ".") : 0;?>
+                                            <?php if ($porCobrar < 0): ?>
+                                                <span class="badge-financiero badge-pagado" style="color: var(--success-color); font-weight: 700;">
+                                                    -$<?= number_format(abs($porCobrar), 0, ",", ".") ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge-financiero <?=$badgeClass;?>" style="color: <?=$porCobrar > 0 ? 'var(--danger-color)' : 'var(--success-color)';?>; font-weight: 700;">
+                                                    $<?=number_format($porCobrar, 0, ",", ".") ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                            $estadoPagoFactura = ($abonos >= $totalNeto) ? 'pagado' : 'pendiente';
+                                            $colorEstadoFactura = ($estadoPagoFactura == 'pagado') ? '#27ae60' : '#e74c3c';
+                                            $iconoEstadoFactura = ($estadoPagoFactura == 'pagado') ? 'fa-check-circle' : 'fa-exclamation-circle';
+                                            ?>
+                                            <span style="display: inline-flex; align-items: center; gap: 5px; color: <?=$colorEstadoFactura;?>; font-weight: 600;">
+                                                <i class="fa <?=$iconoEstadoFactura;?>"></i>
+                                                <?=strtoupper($estadoPagoFactura == 'pagado' ? 'Al día' : 'Pendiente');?>
                                             </span>
                                         </td>
                                     </tr>
@@ -798,7 +898,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                 tr.addClass('detalle-abierto');
                 
                 // Agregar fila de carga
-                var loadingRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">Cargando detalles...</div></td></tr>');
+                var loadingRow = $('<tr class="child"><td colspan="9"><div class="detalle-factura-wrapper">Cargando detalles...</div></td></tr>');
                 tr.after(loadingRow);
                 
                 // Cargar detalles
@@ -806,10 +906,10 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                     .done(function (resp) {
                         loadingRow.remove();
                         if (resp && resp.success) {
-                            var detailRow = $('<tr class="child"><td colspan="7">' + resp.html + '</td></tr>');
+                            var detailRow = $('<tr class="child"><td colspan="9">' + resp.html + '</td></tr>');
                             tr.after(detailRow);
                         } else {
-                            var errorRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">No se encontraron detalles para esta factura.</div></td></tr>');
+                            var errorRow = $('<tr class="child"><td colspan="9"><div class="detalle-factura-wrapper">No se encontraron detalles para esta factura.</div></td></tr>');
                             tr.after(errorRow);
                         }
                         totalizarMovimientos();
@@ -817,7 +917,7 @@ if($config['conf_id_institucion'] == ICOLVEN) {
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         loadingRow.remove();
                         console.error('Error AJAX:', textStatus, errorThrown);
-                        var errorRow = $('<tr class="child"><td colspan="7"><div class="detalle-factura-wrapper">Error al cargar los detalles. Intenta nuevamente.</div></td></tr>');
+                        var errorRow = $('<tr class="child"><td colspan="9"><div class="detalle-factura-wrapper">Error al cargar los detalles. Intenta nuevamente.</div></td></tr>');
                         tr.after(errorRow);
                         totalizarMovimientos();
                     });

@@ -59,7 +59,7 @@ if(!Modulos::validarPermisoEdicion()){
                                 <div class="panel-body">
 									<form name="formularioGuardar" action="items-guardar.php" method="post" enctype="multipart/form-data">
 
-										<div class="form-group row">
+                                        <div class="form-group row">
                                             <label class="col-sm-1 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" name="nombre" class="form-control" required <?=$disabledPermiso;?>>
@@ -77,6 +77,16 @@ if(!Modulos::validarPermisoEdicion()){
                                                 <input type="number" min="0" value="0" name="iva" class="form-control" <?=$disabledPermiso;?>>
                                             </div>
 										</div>
+
+                                        <div class="form-group row">
+                                            <label class="col-sm-1 control-label">Tipo <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4">
+                                                <select name="item_type" class="form-control" required <?=$disabledPermiso;?>>
+                                                    <option value="D">Débito (Cargo)</option>
+                                                    <option value="C">Crédito (Descuento)</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
                                         <div class="form-group row">
                                             <label class="col-sm-12 control-label"><?=$frases[50][$datosUsuarioActual['uss_idioma']];?></label>

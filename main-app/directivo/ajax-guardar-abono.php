@@ -13,13 +13,12 @@ if($_REQUEST['type'] == INVOICE){
     if($_REQUEST['abonoAnterior'] > 0){
         try {
             $sql = "UPDATE ".BD_FINANCIERA.".payments_invoiced SET payment=? 
-                    WHERE invoiced=? AND payments=? AND institucion=? AND year=?";
+                    WHERE invoiced=? AND institucion=? AND year=?";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['abono'], PDO::PARAM_STR);
             $stmt->bindParam(2, $_REQUEST['idFactura'], PDO::PARAM_STR);
-            $stmt->bindParam(3, $_REQUEST['idAbono'], PDO::PARAM_STR);
-            $stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
@@ -27,14 +26,13 @@ if($_REQUEST['type'] == INVOICE){
         }
     }else{
         try {
-            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, payments, institucion, year) 
-                    VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, institucion, year) 
+                    VALUES (?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['abono'], PDO::PARAM_STR);
             $stmt->bindParam(2, $_REQUEST['idFactura'], PDO::PARAM_STR);
-            $stmt->bindParam(3, $_REQUEST['idAbono'], PDO::PARAM_STR);
-            $stmt->bindParam(4, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(5, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
@@ -49,16 +47,15 @@ if($_REQUEST['type'] == ACCOUNT){
         try {
             $sql = "UPDATE ".BD_FINANCIERA.".payments_invoiced 
                     SET invoiced=?, payment=?, cantity=?, subtotal=? 
-                    WHERE id=? AND payments=? AND institucion=? AND year=?";
+                    WHERE id=? AND institucion=? AND year=?";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['concepto'], PDO::PARAM_STR);
             $stmt->bindParam(2, $_REQUEST['precio'], PDO::PARAM_STR);
             $stmt->bindParam(3, $_REQUEST['cantidad'], PDO::PARAM_STR);
             $stmt->bindParam(4, $_REQUEST['subtotal'], PDO::PARAM_STR);
             $stmt->bindParam(5, $_REQUEST['conceptoModificar'], PDO::PARAM_STR);
-            $stmt->bindParam(6, $_REQUEST['idAbono'], PDO::PARAM_STR);
-            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
@@ -66,13 +63,12 @@ if($_REQUEST['type'] == ACCOUNT){
         }
     }else{
         try {
-            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, payments, institucion, year) 
-                    VALUES (?, ?, ?, ?)";
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, institucion, year) 
+                    VALUES (?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['concepto'], PDO::PARAM_STR);
-            $stmt->bindParam(2, $_REQUEST['idAbono'], PDO::PARAM_STR);
-            $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
             $idInsercion = $conexionPDO->lastInsertId();
         } catch(Exception $e) {

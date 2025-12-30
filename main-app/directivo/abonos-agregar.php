@@ -14,7 +14,8 @@ if(!Modulos::validarPermisoEdicion()){
 	$disabledPermiso = "disabled";
 }
 
-$codigoUnico=Utilidades::generateCode("ABO");
+$codigoUnico=Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'payments_invoiced');
+$fechaActual = date('Y-m-d\TH:i');
 ?>
 
 	<!--bootstrap -->
@@ -132,183 +133,81 @@ $codigoUnico=Utilidades::generateCode("ABO");
                                     </h4>
                                 </header>
                                 <div class="panel-body" style="padding: 25px;">
-									<form name="formularioGuardar" id="formularioGuardar" action="abonos-guardar.php" method="post" enctype="multipart/form-data">
-										<input type="hidden" value="<?=$codigoUnico?>" name="codigoUnicoTemporal" id="idAbono">
-										<input type="hidden" name="abonos_facturas_json" id="abonos_facturas_json">
-										<input type="hidden" name="conceptos_contables_json" id="conceptos_contables_json">
+                                    <form name="formularioGuardar" id="formularioGuardar" action="abonos-guardar.php" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" value="<?=$codigoUnico?>" name="codigoUnicoTemporal" id="idAbono">
+                                        <input type="hidden" name="tipoTransaccion" value="<?=INVOICE?>">
+                                        <input type="hidden" name="abonos_facturas_json" id="abonos_facturas_json">
+                                        <input type="hidden" name="conceptos_contables_json" value="">
 
-										<div class="form-group row">
+                                        <div class="form-group row">
                                             <label class="col-sm-2 control-label"><?=$frases[424][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-5">
-                                                <select class="form-control select2" id="select_cliente" name="cliente" onchange="mostrarTipoTransaccion()" required <?=$disabledPermiso;?>>
+                                                <select class="form-control select2" id="select_cliente" name="cliente" required <?=$disabledPermiso;?>>
                                                 </select>
                                             </div>
                                             
                                             <label class="col-sm-2 control-label"><?=$frases[51][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-3">
-                                                <?php 
-                                                $fechaActual = date('Y-m-d\TH:i');
-                                                ?>
                                                 <input type="datetime-local" name="fecha" class="form-control" value="<?=$fechaActual?>" required <?=$disabledPermiso;?>>
                                             </div>
                                         </div>
 
-                                        <script>
-                                            $(document).ready(function() {
-                                                $('#select_cliente').select2({
-                                                placeholder: 'Seleccione el usuario...',
-                                                theme: "bootstrap",
-                                                multiple: false,
-                                                    ajax: {
-                                                        type: 'GET',
-                                                        url: '../compartido/ajax-listar-usuarios.php',
-                                                        processResults: function(data) {
-                                                            var radios = document.getElementsByName('tipoTransaccion');
-                                                            
-                                                            for (var i = 0; i < radios.length; i++) {
-                                                                if (radios[i].checked) {
-                                                                    radios[i].checked = false;
-                                                                }
-                                                            }
-                                                            $('#mostrarFacturas').empty().hide().html('').show(1);
-                                                            document.getElementById("divFacturas").style.display="none";
-                                                            document.getElementById("divCuentasContables").style.display="none";
-                                                            document.getElementById("divTipoTransaccion").style.display="none";
-                                                            data = JSON.parse(data);
-                                                            return {
-                                                                results: $.map(data, function(item) {
-                                                                    return {
-                                                                        id: item.value,
-                                                                        text: item.label
-                                                                    }
-                                                                })
-                                                            };
-                                                        }
-                                                    }
-                                                });
-                                            });
-                                        </script>
-										
-										<div class="form-group row">
-                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?></label>
+                                        <div class="form-group row">
+                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">*</span></label>
                                             <div class="col-sm-3">
                                                 <select class="form-control select2" id="metodoPago" name="metodoPago" required <?=$disabledPermiso;?>>
-                                                    <option value="" >Seleccione una opción</option>
-													<option value="EFECTIVO" >Efectivo</option>
-													<option value="CHEQUE" >Cheque</option>
-													<option value="T_DEBITO" >T. Débito</option>
-													<option value="T_CREDITO" >T. Crédito</option>
-													<option value="TRANSFERENCIA" >Transferencia</option>
-													<option value="OTROS" >Otras Formas de pago</option>
+                                                    <?php
+                                                    require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+                                                    $mediosPago = MediosPago::obtenerMediosPago();
+                                                    echo '<option value="">Seleccione una opción</option>' . "\n";
+                                                    foreach ($mediosPago as $codigo => $nombre) {
+                                                        echo '<option value="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+                                                    }
+                                                    ?>
                                                 </select>
                                             </div>
                                             
-                                            <label class="col-sm-2 control-label"><?=$frases[345][$datosUsuarioActual['uss_idioma']];?></label>
-                                            <div class="col-sm-4">
+                                            <label class="col-sm-2 control-label">Cuenta Bancaria</label>
+                                            <div class="col-sm-2">
+                                                <select class="form-control select2" id="cuenta_bancaria" name="cuenta_bancaria_id" <?=$disabledPermiso;?>>
+                                                    <option value="">Seleccione una cuenta (opcional)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <label class="col-sm-1 control-label"><?=$frases[345][$datosUsuarioActual['uss_idioma']];?></label>
+                                            <div class="col-sm-2">
                                                 <input type="file" name="comprobante" class="form-control" <?=$disabledPermiso;?>>
                                             </div>
-										</div>
-
-                                        <div id="divTipoTransaccion" style="display: none;">
-                                            <div class="panel" style="margin-top: 20px;">
-                                                <header class="panel-heading panel-heading-blue">
-                                                    <h5 style="margin: 0; color: white;">
-                                                        <i class="fa fa-exchange"></i> Tipo de Transacción
-                                                    </h5>
-                                                </header>
-                                                <div class="panel-body" style="text-align: center; padding: 25px;">
-                                                    <span style="font-size: 17px; color: #333;">Ajustar este ingreso a una <b>factura de venta</b> existente en el sistema?</span><br>
-                                                    <small style="color: #666;">Recuerda que puedes registrar un ingreso sin necesidad de que este asociado a una factura de venta</small><br><br>
-                                                
-                                                    <div class="form-group row" style="align-items: center; justify-content: center;">
-                                                        <div class="col-sm-3">
-                                                            <label style="font-weight: normal; cursor: pointer; padding: 10px 20px; border: 2px solid #667eea; border-radius: 5px; display: inline-block; min-width: 120px; background: white; color: #667eea;">
-                                                                <input type="radio" name="tipoTransaccion" id="opt1" value="<?=INVOICE?>" onClick="tipoAbono(1)" style="margin-right: 8px;"> SÍ
-                                                            </label>
-                                                        </div>
-                                                        <div class="col-sm-3">
-                                                            <label style="font-weight: normal; cursor: pointer; padding: 10px 20px; border: 2px solid #667eea; border-radius: 5px; display: inline-block; min-width: 120px; background: white; color: #667eea;">
-                                                                <input type="radio" name="tipoTransaccion" id="opt2" value="<?=ACCOUNT?>" onClick="tipoAbono(2)" style="margin-right: 8px;"> NO
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="panel" id="divFacturas" style="display: none; margin-top: 20px;">
-                                                <header class="panel-heading panel-heading-blue">
-                                                    <h5 style="margin: 0; color: white;">
-                                                        <i class="fa fa-file-text-o"></i> Facturas Pendientes
-                                                    </h5>
-                                                </header>
-                                                <div class="panel-body" style="padding: 20px;">
-
-                                                    <div class="table-scrollable">
-                                                        <table class="display" style="width:100%;" id="tablaItems">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="width: 40px;"></th>
-                                                                    <th>Cod. Factura</th>
-                                                                    <th>Fecha</th>
-                                                                    <th><?=$frases[107][$datosUsuarioActual['uss_idioma']];?></th>
-                                                                    <th><?=$frases[417][$datosUsuarioActual['uss_idioma']];?></th>
-                                                                    <th><?=$frases[418][$datosUsuarioActual['uss_idioma']];?></th>
-                                                                    <th>Valor recibido</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody id="mostrarFacturas"></tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="panel" id="divCuentasContables" style="display: none;">
-                                                <header class="panel-heading panel-heading-blue"> A qué cuentas contables pertenece este ingreso?</header>
-                                                <div class="panel-body">
-
-                                                    <div class="table-scrollable">
-                                                        <table class="display" style="width:100%;">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>#</th>
-                                                                    <th>Concepto</th>
-                                                                    <th>Valor</th>
-                                                                    <th>Cant.</th>
-                                                                    <th>Descripción</th>
-                                                                    <th>Total</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td id="idConcepto"></td>
-                                                                    <td>
-                                                                        <div style="padding: 0px;">
-                                                                            <select class="form-control  select2" style="width: 100%;" id="concepto" onchange="guardarNuevoConcepto(this)" <?=$disabledPermiso;?>>
-                                                                                <option value="">Seleccione una opción</option>
-                                                                                <option value="OTROS_INGRESOS" >Otros Ingresos</option>
-                                                                            </select>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="number" min="0" id="precioNuevo" data-precio="0" onchange="actualizarSubtotalConceptos('idNuevo')" value="0" disabled>
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="number" min="0" id="cantidadNuevo" data-cantidad="1" onchange="actualizarSubtotalConceptos('idNuevo')" value="1" style="width: 50px;" disabled>
-                                                                    </td>
-                                                                    <td>
-                                                                        <textarea  id="descripNueva" cols="30" rows="1" onchange="guardarDescripcionConcepto('idNuevo')" disabled></textarea>
-                                                                    </td>
-                                                                    <td id="subtotalNuevo">$0</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <hr>
                                         </div>
 
-                                        <div class="form-group row">
+                                        <!-- Panel de Facturas Pendientes -->
+                                        <div class="panel" id="divFacturas" style="margin-top: 20px;">
+                                            <header class="panel-heading panel-heading-blue">
+                                                <h5 style="margin: 0; color: white;">
+                                                    <i class="fa fa-file-text-o"></i> Facturas Pendientes
+                                                </h5>
+                                            </header>
+                                            <div class="panel-body" style="padding: 20px;">
+                                                <div class="table-scrollable">
+                                                    <table class="display" style="width:100%;" id="tablaItems">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width: 40px;"></th>
+                                                                <th>Cod. Factura</th>
+                                                                <th>Fecha</th>
+                                                                <th><?=$frases[107][$datosUsuarioActual['uss_idioma']];?></th>
+                                                                <th><?=$frases[417][$datosUsuarioActual['uss_idioma']];?></th>
+                                                                <th><?=$frases[418][$datosUsuarioActual['uss_idioma']];?></th>
+                                                                <th>Valor recibido</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="mostrarFacturas"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row" style="margin-top: 20px;">
                                             <label class="col-sm-2 control-label"><?=$frases[109][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-4">
                                                 <textarea cols="80" id="editor1" name="obser" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>></textarea>
@@ -323,7 +222,7 @@ $codigoUnico=Utilidades::generateCode("ABO");
                                         </div>
                                         
                                         <?php require_once("../class/componentes/botones-guardar.php");
-                            				$botones = new botonesGuardar("abonos.php",Modulos::validarPermisoEdicion()); ?>
+                                            $botones = new botonesGuardar("abonos.php",Modulos::validarPermisoEdicion()); ?>
                                     </form>
                                 </div>
                             </div>
@@ -391,8 +290,9 @@ $codigoUnico=Utilidades::generateCode("ABO");
     <script src="../ckeditor/ckeditor.js"></script>
 
     <script>
-        CKEDITOR.replace( 'editor1' );
-        CKEDITOR.replace( 'editor2' );
+        // Inicializar CKEditor
+        CKEDITOR.replace('editor1');
+        CKEDITOR.replace('editor2');
         
         // Función global para expandir/contraer detalles de facturas
         function toggleFacturaDetails(facturaId) {
@@ -410,99 +310,169 @@ $codigoUnico=Utilidades::generateCode("ABO");
             }
         }
         
-        // Interceptar submit del formulario para validar y recopilar abonos
+        // Función para cargar cuentas bancarias
+        function cargarCuentasBancariasAbono(selectId) {
+            $('#' + selectId).empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+            
+            $.ajax({
+                url: 'ajax-cargar-cuentas-bancarias.php',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.cuentas) {
+                        $.each(response.cuentas, function(index, cuenta) {
+                            $('#' + selectId).append(
+                                $('<option></option>')
+                                    .attr('value', cuenta.id)
+                                    .text(cuenta.nombre)
+                            );
+                        });
+                    }
+                },
+                error: function() {
+                    console.log('Error al cargar cuentas bancarias');
+                }
+            });
+        }
+        
+        // Configurar Select2 para cliente
+        $(document).ready(function() {
+            // Deshabilitar botón inicialmente (hasta que se carguen facturas)
+            var btnGuardar = $('#formularioGuardar').find('#btnGuardarFormulario');
+            btnGuardar.prop('disabled', true);
+            
+            // Cargar cuentas bancarias
+            cargarCuentasBancariasAbono('cuenta_bancaria');
+            
+            // Select2 para cliente
+            $('#select_cliente').select2({
+                placeholder: 'Seleccione el usuario...',
+                theme: "bootstrap",
+                multiple: false,
+                allowClear: true,
+                ajax: {
+                    url: '../compartido/ajax-listar-usuarios.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            term: params.term || '',
+                            todos: '1'
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: $.map(data, function(item) {
+                                return {
+                                    id: item.value,
+                                    text: item.label
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+            
+            // Cuando se selecciona un usuario, cargar facturas
+            $('#select_cliente').on('change', function() {
+                if ($(this).val()) {
+                    var idAbono = $('#idAbono').val();
+                    var idUsuario = $(this).val();
+                    // Deshabilitar botón mientras se cargan las facturas
+                    btnGuardar.prop('disabled', true).attr('title', 'Cargando facturas...');
+                    $('#mostrarFacturas').empty().hide().html("<tr><td colspan='7' align='center' style='font-size: 17px; font-weight:bold;'>Cargando Facturas...</td></tr>").show(1);
+                    
+                    fetch('../directivo/ajax-traer-facturas.php?idUsuario=' + idUsuario + '&idAbono=' + idAbono, {
+                        method: 'GET'
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        $('#mostrarFacturas').empty().hide().html(data).show(1);
+                        
+                        // Verificar si hay facturas (inputs con clase input-abono-factura)
+                        var tieneFacturas = $('#mostrarFacturas').find('.input-abono-factura').length > 0;
+                        
+                        if (tieneFacturas) {
+                            // Hay facturas, habilitar botón
+                            btnGuardar.prop('disabled', false).removeAttr('title');
+                        } else {
+                            // No hay facturas, deshabilitar botón
+                            btnGuardar.prop('disabled', true).attr('title', 'El cliente seleccionado no tiene facturas pendientes por pagar');
+                        }
+                        
+                        setTimeout(function() {
+                            totalizarAbonos();
+                        }, 100);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        btnGuardar.prop('disabled', true).attr('title', 'Error al cargar facturas');
+                    });
+                } else {
+                    // No hay cliente seleccionado, deshabilitar botón
+                    $('#mostrarFacturas').empty().hide();
+                    btnGuardar.prop('disabled', true).removeAttr('title');
+                }
+            });
+            
+            // Cargar usuarios al abrir el dropdown
+            $('#select_cliente').on('select2:open', function() {
+                if ($('#select_cliente').val() === null || $('#select_cliente').val() === '') {
+                    $('#select_cliente').data('select2').trigger('query', {term: ''});
+                }
+            });
+        });
+        
+        // Manejo del submit del formulario
         $(document).ready(function() {
             $('#formularioGuardar').on('submit', function(e) {
-                var tipoTransaccion = $('input[name="tipoTransaccion"]:checked').val();
+                var abonosFacturas = [];
+                var totalAbonar = 0;
+                var erroresValidacion = [];
                 
-                // Validar que se seleccionó un tipo de transacción
-                if (!tipoTransaccion) {
+                // Recorrer todos los inputs de abono en la tabla
+                $('input.input-abono-factura').each(function() {
+                    var valorAbono = parseFloat($(this).val()) || 0;
+                    var idFactura = $(this).attr('data-id-factura');
+                    
+                    if (valorAbono > 0) {
+                        // Validar que el abono no exceda el saldo pendiente
+                        var saldoPendiente = parseFloat($(this).attr('max')) || 0;
+                        
+                        if (valorAbono > saldoPendiente) {
+                            var nombreFactura = $(this).closest('tr').find('td:eq(1)').text();
+                            erroresValidacion.push('Factura ' + nombreFactura + ': El abono ($' + 
+                                valorAbono.toLocaleString() + ') excede el saldo pendiente ($' + 
+                                saldoPendiente.toLocaleString() + ')');
+                        } else {
+                            abonosFacturas.push({
+                                idFactura: idFactura,
+                                valorAbono: valorAbono
+                            });
+                            totalAbonar += valorAbono;
+                        }
+                    }
+                });
+                
+                // Si hay errores de validación, mostrarlos y detener el submit
+                if (erroresValidacion.length > 0) {
                     e.preventDefault();
-                    alert('Por favor selecciona si el abono se asociará a una factura o no.');
+                    alert('⚠️ Errores de validación:\n\n' + erroresValidacion.join('\n\n'));
                     return false;
                 }
                 
-                // Solo procesar si es tipo INVOICE
-                if (tipoTransaccion === '<?=INVOICE?>') {
-                    var abonosFacturas = [];
-                    var totalAbonar = 0;
-                    var erroresValidacion = [];
-                    
-                    // Recorrer todos los inputs de abono en la tabla
-                    $('input.input-abono-factura').each(function() {
-                        var valorAbono = parseFloat($(this).val()) || 0;
-                        var idFactura = $(this).attr('data-id-factura');
-                        
-                        console.log('Procesando factura:', idFactura, 'valor:', valorAbono);
-                        
-                        if (valorAbono > 0) {
-                            // Validar que el abono no exceda el saldo pendiente
-                            var saldoPendiente = parseFloat($(this).attr('max')) || 0;
-                            
-                            if (valorAbono > saldoPendiente) {
-                                var nombreFactura = $(this).closest('tr').find('td:eq(1)').text();
-                                erroresValidacion.push('Factura ' + nombreFactura + ': El abono ($' + 
-                                    valorAbono.toLocaleString() + ') excede el saldo pendiente ($' + 
-                                    saldoPendiente.toLocaleString() + ')');
-                            } else {
-                                abonosFacturas.push({
-                                    idFactura: idFactura,
-                                    valorAbono: valorAbono
-                                });
-                                totalAbonar += valorAbono;
-                                console.log('Abono agregado:', {idFactura: idFactura, valorAbono: valorAbono});
-                            }
-                        }
-                    });
-                    
-                    console.log('Total abonos recopilados:', abonosFacturas.length);
-                    console.log('JSON a enviar:', JSON.stringify(abonosFacturas));
-                    
-                    // Si hay errores de validación, mostrarlos y detener el submit
-                    if (erroresValidacion.length > 0) {
-                        e.preventDefault();
-                        alert('⚠️ Errores de validación:\n\n' + erroresValidacion.join('\n\n'));
-                        return false;
-                    }
-                    
-                    // Validar que al menos se haya ingresado un abono
-                    if (abonosFacturas.length === 0) {
-                        e.preventDefault();
-                        alert('Debes ingresar al menos un valor de abono a una factura.');
-                        return false;
-                    }
-                    
-                    // Guardar en campo hidden como JSON
-                    $('#abonos_facturas_json').val(JSON.stringify(abonosFacturas));
-                    $('#conceptos_contables_json').val('');
-                    
-                } else if (tipoTransaccion === '<?=ACCOUNT?>') {
-                    // Procesar conceptos contables
-                    var conceptos = [];
-                    var concepto = $('#idConcepto').text().trim();
-                    var precio = parseFloat($('#precioNuevo').val()) || 0;
-                    var cantidad = parseFloat($('#cantidadNuevo').val()) || 1;
-                    var descripcion = $('#descripNueva').val().trim();
-                    
-                    if (concepto && precio > 0) {
-                        conceptos.push({
-                            concepto: concepto,
-                            precio: precio,
-                            cantidad: cantidad,
-                            subtotal: precio * cantidad,
-                            descripcion: descripcion
-                        });
-                    }
-                    
-                    if (conceptos.length === 0) {
-                        e.preventDefault();
-                        alert('Debes seleccionar un concepto contable e ingresar un valor.');
-                        return false;
-                    }
-                    
-                    $('#conceptos_contables_json').val(JSON.stringify(conceptos));
-                    $('#abonos_facturas_json').val('');
+                // Validar que al menos se haya ingresado un abono
+                if (abonosFacturas.length === 0) {
+                    e.preventDefault();
+                    alert('Debes ingresar al menos un valor de abono a una factura.');
+                    return false;
                 }
+                
+                // Guardar en campo hidden como JSON
+                $('#abonos_facturas_json').val(JSON.stringify(abonosFacturas));
                 
                 // Continuar con el submit normal
                 return true;

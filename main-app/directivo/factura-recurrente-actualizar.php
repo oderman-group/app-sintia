@@ -11,9 +11,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-Movimientos::actualizarRecurrente($conexion, $config, $_POST);
-
-include("../compartido/guardar-historial-acciones.php");
-
-echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_2&id='.base64_encode($_POST['id']).'";</script>';
+try {
+    Movimientos::actualizarRecurrente($conexion, $config, $_POST);
+    include("../compartido/guardar-historial-acciones.php");
+    echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_2&id='.base64_encode($_POST['id']).'";</script>';
+} catch (Exception $e) {
+    echo '<script type="text/javascript">alert("Error: '.htmlspecialchars($e->getMessage()).'"); window.location.href="factura-recurrente-editar.php?error=ER_DT_CREATE&id='.base64_encode($_POST['id']).'";</script>';
+}
 exit();

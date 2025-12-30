@@ -490,7 +490,11 @@ if($config['conf_servidor']==1){
             require_once(ROOT_PATH."/main-app/class/Grados.php");
             
             // Sección de Cargas Normales
-            $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
+            // Asegurar que mat_grado y mat_grupo sean strings válidos
+            $idGrado = !empty($datosEstudianteActual['mat_grado']) ? (string)$datosEstudianteActual['mat_grado'] : '';
+            $idGrupo = !empty($datosEstudianteActual['mat_grupo']) ? (string)$datosEstudianteActual['mat_grupo'] : '';
+            
+            $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $idGrado, $idGrupo);
             $nCargas = mysqli_num_rows($cCargas);
             if($nCargas > 0){
                 $hasItems = false;

@@ -24,7 +24,7 @@ try {
 
     $sql = "SELECT 
                 fc.fcu_id,
-                fc.id_nuevo,
+                fc.fcu_consecutivo,
                 fc.fcu_usuario,
                 fc.fcu_valor,
                 fc.fcu_tipo,
@@ -50,11 +50,12 @@ try {
         $saldoPendiente = $totalNeto - $totalAbonos;
 
         if ($saldoPendiente > 0 && !empty($row['fcu_usuario'])) {
+            $consecutivoFactura = !empty($row['fcu_consecutivo']) ? $row['fcu_consecutivo'] : $row['fcu_id'];
             UsuariosPadre::bloquearUsuario(
                 $config,
                 $row['fcu_usuario'],
                 1,
-                "Bloqueo automático por saldo pendiente en factura {$row['id_nuevo']}"
+                "Bloqueo automático por saldo pendiente en factura {$consecutivoFactura}"
             );
             $bloqueados[] = $row['fcu_usuario'];
         }

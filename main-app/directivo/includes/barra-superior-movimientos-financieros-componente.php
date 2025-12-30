@@ -34,6 +34,15 @@
         $filtro .= " AND (fcu_fecha BETWEEN '" . $_GET["desde"] . "' AND '" . $_GET["hasta"] . "' OR fcu_fecha LIKE '%" . $_GET["hasta"] . "%')";
     }
     
+    // Filtro por ID de factura específica (cuando se viene desde lote-detalle.php)
+    if (!empty($_GET['id'])) {
+        $idFactura = base64_decode($_GET['id']);
+        if (!empty($idFactura) && is_numeric($idFactura)) {
+            $idFactura = (int)$idFactura;
+            $filtro .= " AND fc.fcu_id=".$idFactura;
+        }
+    }
+    
     // Filtro para ocultar anuladas por defecto
     $mostrarAnuladas = !empty($_GET['mostrarAnuladas']) && $_GET['mostrarAnuladas'] == '1';
     if (!$mostrarAnuladas) {
@@ -54,16 +63,86 @@
     $paramMostrarAnuladas = $mostrarAnuladas ? "&mostrarAnuladas=1" : "";
     
     require_once(ROOT_PATH."/main-app/class/componentes/ComponenteFiltros.php");
+
+// Preparar URLs y variables necesarias para las opciones del menú
+$urlMostrarAnuladas = $_SERVER['PHP_SELF'] . "?";
+$params = $_GET;
+$params['mostrarAnuladas'] = '1';
+$urlMostrarAnuladas .= http_build_query($params);
+
+$urlOcultarAnuladas = $_SERVER['PHP_SELF'] . "?";
+$params = $_GET;
+unset($params['mostrarAnuladas']);
+$urlOcultarAnuladas .= http_build_query($params);
+
+$urlReporteMorosos = 'movimientos-reporte-morosos.php';
+$queryActual = $_GET;
+if (!empty($queryActual)) {
+    $urlReporteMorosos .= '?' . http_build_query($queryActual);
+}
+
+// Construir las páginas del menú
+$paginas = [
+    [
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '<i class="fa fa-upload"></i> Importar saldos',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL   => 'movimientos-importar.php',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_PERMISO => Modulos::validarSubRol(['DT0105'])
+    ]
+];
+
+// Agregar Mostrar/Ocultar Facturas Anuladas
+$paginas[] = [
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => $mostrarAnuladas ? '<i class="fa fa-eye-slash"></i> Ocultar Facturas Anuladas' : '<i class="fa fa-eye"></i> Mostrar Facturas Anuladas',
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL   => $mostrarAnuladas ? $urlOcultarAnuladas : $urlMostrarAnuladas
+];
+
+// Agregar Bloquear usuarios con saldo pendiente
+if (Modulos::validarPermisoEdicion()) {
+    $paginas[] = [
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '<i class="fa fa-user-slash"></i> Bloquear usuarios con saldo pendiente',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_ACTION => 'bloquearUsuariosPendientes()',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL => 'javascript:void(0);'
+    ];
+}
+
+// Agregar Recordar saldo
+if (Modulos::validarPermisoEdicion()) {
+    $paginas[] = [
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '<i class="fa fa-envelope"></i> Recordar saldo',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_ACTION => 'recordarSaldoSeleccionados()',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL => 'javascript:void(0);'
+    ];
+}
+
+// Agregar divisor antes de los informes
+$paginas[] = [
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '',
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL => 'javascript:void(0);',
+    'divider' => true
+];
+
+// Agregar Informe morosos (al final) - usar action con window.open
+$urlReporteMorososEscapada = htmlspecialchars($urlReporteMorosos, ENT_QUOTES, 'UTF-8');
+$paginas[] = [
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '<i class="fa fa-print"></i> Informe morosos',
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL   => 'javascript:void(0);',
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS_ACTION => "window.open(\"{$urlReporteMorososEscapada}\", \"_blank\")"
+];
+
+// Agregar Informe Cuentas Bancarias (al final)
+if (Modulos::validarSubRol(['DT0240'])) {
+    $paginas[] = [
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => '<i class="fa fa-university"></i> Informe Cuentas Bancarias',
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_ACTION => "abrirModal(\"Informe por Cuenta Bancaria\",\"informes-cuentas-bancarias-filtro-modal.php\")",
+        ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL => 'javascript:void(0);'
+    ];
+}
+
 $opciones[0] = [
     ComponenteFiltro::COMPB_OPCIONES_TEXTO   => 'Menú movimiento financiero',
     ComponenteFiltro::COMPB_OPCIONES_URL     => 'movimientos-importar.php',
-    ComponenteFiltro::COMPB_OPCIONES_PERMISO => Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0105']),
-    ComponenteFiltro::COMPB_OPCIONES_PAGINAS => $paginas = [
-        [
-            ComponenteFiltro::COMPB_OPCIONES_PAGINAS_TEXTO => 'Importar saldos',
-            ComponenteFiltro::COMPB_OPCIONES_PAGINAS_URL   => 'movimientos-importar.php'
-        ]
-    ]
+    ComponenteFiltro::COMPB_OPCIONES_PERMISO => true,
+    ComponenteFiltro::COMPB_OPCIONES_PAGINAS => $paginas
 ];
 $filtroTipo = [
     [
@@ -83,6 +162,9 @@ $filtroTipo = [
     ]
 
 ];
+$estiloResaltadoEnProceso = '';
+if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(EN_PROCESO)) $estiloResaltadoEnProceso = 'style="color: '.$Plataforma->colorUno.';"';
+
 $filtroEstado = [
     [
         ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => POR_COBRAR,
@@ -93,6 +175,12 @@ $filtroEstado = [
         ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => COBRADA,
         ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'Cobradas',
         ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoFil=" . base64_encode(COBRADA) . "&usuario=" . base64_encode($usuario) . "&desde=" . $desde . "&hasta=" . $hasta . "&tipo=" . base64_encode($tipo) . "&estadoM=" . base64_encode($estadoM) . "&fecha=" . base64_encode($fecha) . $paramMostrarAnuladas
+    ],
+    [
+        ComponenteFiltro::COMPB_FILTRO_LISTA_ID    => EN_PROCESO,
+        ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'En Proceso',
+        ComponenteFiltro::COMPB_FILTRO_LISTA_URL   => $_SERVER['PHP_SELF'] . "?estadoFil=" . base64_encode(EN_PROCESO) . "&usuario=" . base64_encode($usuario) . "&desde=" . $desde . "&hasta=" . $hasta . "&tipo=" . base64_encode($tipo) . "&estadoM=" . base64_encode($estadoM) . "&fecha=" . base64_encode($fecha) . $paramMostrarAnuladas,
+        ComponenteFiltro::COMPB_FILTRO_LISTA_STYLE => $estiloResaltadoEnProceso
     ],
     [
         ComponenteFiltro::COMPB_FILTRO_LISTA_TEXTO => 'Ver Todos',
@@ -142,51 +230,15 @@ $filtros[2] = [
 $barraSuperior = new ComponenteFiltro('movimientos', 'filter-movimientos.php','movimientos-tbody.php', $filtros, $opciones,'mostrarResultado', false);
 $barraSuperior->generarComponente();
 
-// Botón para mostrar/ocultar facturas anuladas
-$mostrarAnuladas = !empty($_GET['mostrarAnuladas']) && $_GET['mostrarAnuladas'] == '1';
-$urlMostrarAnuladas = $_SERVER['PHP_SELF'] . "?";
-$params = $_GET;
-$params['mostrarAnuladas'] = '1';
-$urlMostrarAnuladas .= http_build_query($params);
-
-$urlOcultarAnuladas = $_SERVER['PHP_SELF'] . "?";
-$params = $_GET;
-unset($params['mostrarAnuladas']);
-$urlOcultarAnuladas .= http_build_query($params);
-
+// Solo mantener los botones de crear facturas en la barra de acciones
 $colorPrimario = isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea';
 $colorSecundario = isset($Plataforma->colorDos) ? $Plataforma->colorDos : '#764ba2';
-$urlReporteMorosos = 'movimientos-reporte-morosos.php';
-$queryActual = $_GET;
-if (!empty($queryActual)) {
-    $urlReporteMorosos .= '?' . http_build_query($queryActual);
-}
 ?>
 <div class="movimientos-actions-bar" style="margin: 12px 0; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
-	<?php if ($mostrarAnuladas) { ?>
-		<a href="<?= $urlOcultarAnuladas ?>" class="btn btn-warning btn-sm">
-			<i class="fa fa-eye-slash"></i> Ocultar Facturas Anuladas
-		</a>
-	<?php } else { ?>
-		<a href="<?= $urlMostrarAnuladas ?>" class="btn btn-info btn-sm">
-			<i class="fa fa-eye"></i> Mostrar Facturas Anuladas
-		</a>
-	<?php } ?>
-
-	<?php if (Modulos::validarPermisoEdicion()) { ?>
-	<button class="btn btn-warning btn-sm" onclick="bloquearUsuariosPendientes()" title="Bloquear usuarios con saldo pendiente">
-		<i class="fa fa-user-slash"></i> Bloquear usuarios con saldo pendiente
-	</button>
-	<?php } ?>
-
-	<a href="<?= $urlReporteMorosos ?>" target="_blank" class="btn btn-success btn-sm" title="Imprimir informe de morosos">
-		<i class="fa fa-print"></i> Informe morosos
+	<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0104'])) { ?>
+	<a href="facturacion-masiva.php" class="btn btn-success btn-sm" title="Crear factura masiva por grado o grupo">
+		<i class="fa fa-file-text-o"></i> Crear Factura Masiva
 	</a>
-
-	<?php if (Modulos::validarPermisoEdicion()) { ?>
-	<button class="btn btn-primary btn-sm" onclick="recordarSaldoSeleccionados()" title="Recordar saldo pendiente por correo">
-		<i class="fa fa-envelope"></i> Recordar saldo
-	</button>
 	<?php } ?>
 
 	<?php if (Modulos::validarPermisoEdicion() &&  Modulos::validarSubRol(['DT0106'])) { ?>

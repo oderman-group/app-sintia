@@ -62,6 +62,8 @@
 	if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(COBRADA)) $estiloResaltadoCobrado = 'style="color: '.$Plataforma->colorUno.';"';
 	$estiloResaltadoPorCobrar = '';
 	if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(POR_COBRAR)) $estiloResaltadoPorCobrar = 'style="color: '.$Plataforma->colorUno.';"';
+	$estiloResaltadoEnProceso = '';
+	if (isset($_GET['estadoFil']) && $_GET['estadoFil'] == base64_encode(EN_PROCESO)) $estiloResaltadoEnProceso = 'style="color: '.$Plataforma->colorUno.';"';
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +79,20 @@
 					</a>
 					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
 					<?php if( Modulos::validarSubRol(['DT0105']) ){?>
-						<a class="dropdown-item" href="movimientos-importar.php">Importar saldos</a>
+						<a class="dropdown-item" href="movimientos-importar.php"><i class="fa fa-upload"></i> Importar saldos</a>
+					<?php }?>
+					<?php if( Modulos::validarSubRol(['DT0104']) ){?>
+						<a class="dropdown-item" href="items.php"><i class="fa fa-list"></i> Administrar Items</a>
+					<?php }?>
+					<?php if( Modulos::validarSubRol(['DT0104']) && Modulos::validarPermisoEdicion() ){?>
+						<a class="dropdown-item" href="facturacion-masiva.php"><i class="fa fa-file-text-o"></i> Facturación Masiva</a>
+					<?php }?>
+					<?php if( Modulos::validarSubRol(['DT0104']) && Modulos::validarPermisoEdicion() ){?>
+						<a class="dropdown-item" href="cuentas-bancarias.php"><i class="fa fa-university"></i> Cuentas Bancarias</a>
+					<?php }?>
+					<?php if( Modulos::validarSubRol(['DT0240']) ){?>
+						<a class="dropdown-item" href="javascript:void(0);" onclick="abrirModal('Informe de Movimientos','informes-movimientos-filtro-modal.php')"><i class="fa fa-file-pdf-o"></i> Informe con Arqueo de Caja</a>
+						<a class="dropdown-item" href="javascript:void(0);" onclick="abrirModal('Informe por Cuenta Bancaria','informes-cuentas-bancarias-filtro-modal.php')"><i class="fa fa-university"></i> Informe por Cuenta Bancaria</a>
 					<?php }?>
 					</div>
 				</li>
@@ -106,6 +121,7 @@
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">	
 					<a class="dropdown-item" href="<?=$_SERVER['PHP_SELF'];?>?estadoFil=<?= base64_encode(POR_COBRAR); ?>&usuario=<?= base64_encode($usuario); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?php if(isset($_GET["tipo"])) echo $_GET["tipo"];?>&busqueda=<?= $busqueda; ?>&estadoM=<?= base64_encode($estadoM); ?>&fecha=<?= base64_encode($fecha); ?>" <?=$estiloResaltadoPorCobrar;?>>Por Cobrar</a>
 					<a class="dropdown-item" href="<?=$_SERVER['PHP_SELF'];?>?estadoFil=<?= base64_encode(COBRADA); ?>&usuario=<?= base64_encode($usuario); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?php if(isset($_GET["tipo"])) echo $_GET["tipo"];?>&busqueda=<?= $busqueda; ?>&estadoM=<?= base64_encode($estadoM); ?>&fecha=<?= base64_encode($fecha); ?>" <?=$estiloResaltadoCobrado;?>>Cobradas</a>
+					<a class="dropdown-item" href="<?=$_SERVER['PHP_SELF'];?>?estadoFil=<?= base64_encode(EN_PROCESO); ?>&usuario=<?= base64_encode($usuario); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?php if(isset($_GET["tipo"])) echo $_GET["tipo"];?>&busqueda=<?= $busqueda; ?>&estadoM=<?= base64_encode($estadoM); ?>&fecha=<?= base64_encode($fecha); ?>" <?=$estiloResaltadoEnProceso;?>>En Proceso</a>
 					<a class="dropdown-item" href="<?=$_SERVER['PHP_SELF'];?>">Ver todos</a>
 
 				</div>

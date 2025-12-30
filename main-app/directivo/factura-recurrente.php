@@ -90,7 +90,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															$fechaFinal = $fechaBDFinal->format('d/m/Y');
 														}
 
-														$vlrAdicional = !empty($resultado['additional_value']) ? $resultado['additional_value'] : 0;
+														$vlrAdicional = !empty($resultado['additional_value']) ? floatval($resultado['additional_value']) : 0;
 														$totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $resultado['id'], $vlrAdicional, TIPO_RECURRING);
 
 														$arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");

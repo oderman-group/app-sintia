@@ -299,10 +299,6 @@ function eliminarDatosInstitucion($conexion, $config, $baseDatosServicios, $insI
             $stmt->execute([$insId]);
             $datosEliminados['facturas'] = $stmt->rowCount();
             
-            $stmt = $conexionPDO->prepare("DELETE FROM " . BD_FINANCIERA . ".payments WHERE institucion = ?");
-            $stmt->execute([$insId]);
-            $datosEliminados['payments'] = $stmt->rowCount();
-            
             $stmt = $conexionPDO->prepare("DELETE FROM " . BD_FINANCIERA . ".payments_invoiced WHERE institucion = ?");
             $stmt->execute([$insId]);
             $datosEliminados['payments_invoiced'] = $stmt->rowCount();
