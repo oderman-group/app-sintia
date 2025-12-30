@@ -187,7 +187,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                     <h5 style="margin-bottom: 15px; font-weight: 600; color: #2c3e50;">
                                         <i class="fa fa-bar-chart"></i> Resumen por Método de Pago
                                     </h5>
-                                    <div class="row">
+                            <div class="row">
                                         <?php 
                                         $coloresBorder = ['#3498db', '#f39c12', '#9b59b6', '#e67e22', '#1abc9c'];
                                         $i = 0;
@@ -266,9 +266,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <button type="button" class="btn btn-info" onclick="abrirModalArqueoCaja()" title="Generar informe de arqueo de caja">
                                                             <i class="fa fa-file-text"></i> Arqueo de Caja
                                                         </button>
-													</div>
-												</div>
-											</div>
+                                                    </div>
+                                                </div>
+                                            </div>
 											
                                     <style>
                                         .expand-btn {
@@ -404,8 +404,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             if (!empty($datosAbonoCompleto['cliente_nombre'])) {
                                                                 $clienteNombre = strtoupper($datosAbonoCompleto['cliente_nombre']);
                                                             } else {
-                                                                $datosCliente = UsuariosPadre::sesionUsuario($resultado["invoiced"]);
+                                                                // Validar que invoiced no sea null antes de llamar a sesionUsuario
+                                                                if (!empty($resultado["invoiced"])) {
+                                                                    $datosCliente = UsuariosPadre::sesionUsuario((string)$resultado["invoiced"]);
                                                                 $clienteNombre = UsuariosPadre::nombreCompletoDelUsuario($datosCliente);
+                                                                } else {
+                                                                    $clienteNombre = 'N/A';
+                                                                }
                                                             }
 
                                                             $voucherAbono = $datosAbonoCompleto['voucher'] ?? $resultado['voucher'] ?? '';

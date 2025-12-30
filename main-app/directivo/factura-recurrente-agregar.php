@@ -123,27 +123,6 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                     <option value="2" >Fact. Compra</option>
                                                 </select>
                                             </div>
-
-                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
-                                            <div class="col-sm-4">
-                                                <select class="form-control select2" id="metodoPago" name="metodoPago" required <?=$disabledPermiso;?>>
-                                                    <?php
-                                                    require_once(ROOT_PATH."/main-app/class/MediosPago.php");
-                                                    $mediosPago = MediosPago::obtenerMediosPago();
-                                                    echo '<option value="">Seleccione una opción</option>' . "\n";
-                                                    foreach ($mediosPago as $codigo => $nombre) {
-                                                        echo '<option value="' . htmlspecialchars($codigo) . '" data-metodo="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                            
-                                            <label class="col-sm-2 control-label">Cuenta Bancaria</label>
-                                            <div class="col-sm-4">
-                                                <select class="form-control select2" id="cuenta_bancaria_recurrente" name="cuenta_bancaria_id" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una cuenta (opcional)</option>
-                                                </select>
-                                            </div>
                                         </div>
 										
 										<div class="form-group row">
@@ -199,10 +178,9 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                             });
                                         </script>
 
-                                        <div class="panel">
+                                        <div class="panel" id="panelItems" style="display: none;">
                                             <header class="panel-heading panel-heading-blue"> Items</header>
                                             <div class="panel-body">
-
                                                 <div class="table-scrollable">
                                                     <table class="table table-bordered table-hover" style="width:100%; margin-bottom: 0;" id="tablaItems">
                                                         <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -307,6 +285,12 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                 </div>
                                             </div>
                                         </div>
+                                        
+                                        <div class="alert alert-warning" style="margin-top: 20px;">
+                                            <i class="fa fa-exclamation-triangle"></i> 
+                                            <strong>Nota:</strong> Primero guarda la factura recurrente. Después podrás agregar los items desde la página de edición.
+                                        </div>
+                                        
                                         <hr>
                                         <div class="form-group row">
                                             <label class="col-sm-12 control-label">Observaciones <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Observaciones adicionales que quieres que vea tu cliente en la factura."><i class="fa fa-info"></i></button></label>
@@ -373,37 +357,6 @@ $idRecurrente=Utilidades::generateCode("FCR");
     <script src="../js/Movimientos.js"></script>
 
     <script>
-        // Función para cargar todas las cuentas bancarias activas
-        // Una misma cuenta bancaria puede registrar ingresos o egresos de diferentes tipos de pago
-        function cargarCuentasBancariasRecurrente() {
-            $('#cuenta_bancaria_recurrente').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
-            
-            $.ajax({
-                url: 'ajax-cargar-cuentas-bancarias.php',
-                type: 'POST',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success && response.cuentas) {
-                        $.each(response.cuentas, function(index, cuenta) {
-                            $('#cuenta_bancaria_recurrente').append(
-                                $('<option></option>')
-                                    .attr('value', cuenta.id)
-                                    .text(cuenta.nombre)
-                            );
-                        });
-                    }
-                },
-                error: function() {
-                    console.log('Error al cargar cuentas bancarias');
-                }
-            });
-        }
-        
-        // Cargar cuentas bancarias al cargar la página
-        $(document).ready(function() {
-            cargarCuentasBancariasRecurrente();
-        });
-        
         // Replace the <textarea id="editor1"> with a CKEditor 4
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );

@@ -180,20 +180,20 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 								<table class="display" style="width:100%;" id="tablaItems">
 									<thead>
 										<tr>
-											<th style="width: 30px;"></th>
-											<th style="width: 40px;"><input type="checkbox" id="selectAllFacturas" title="Seleccionar todas las facturas habilitadas"></th>
-											<th>#</th>
-											<th>Consecutivo</th>
-											<th>Fecha</th>
-											<th>Detalle</th>
-											<th><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th><?= $frases[417][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th><?= $frases[418][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th>Tipo</th>
-											<th>Usuario</th>
-											<th><?= $frases[246][$datosUsuarioActual['uss_idioma']]; ?></th>
+											<th style="width: 30px; color: white;"></th>
+											<th style="width: 40px; color: white;"><input type="checkbox" id="selectAllFacturas" title="Seleccionar todas las facturas habilitadas"></th>
+											<th style="color: white;">#</th>
+											<th style="color: white;">Consecutivo</th>
+											<th style="color: white;">Fecha</th>
+											<th style="color: white;">Detalle</th>
+											<th style="color: white;"><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
+											<th style="color: white;">Cobrado/Pagado</th>
+											<th style="color: white;">Por Cobrar/Por pagar</th>
+											<th style="color: white;">Tipo</th>
+											<th style="color: white;">Usuario</th>
+											<th style="color: white;"><?= $frases[246][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
-												<th><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
+												<th style="color: white;"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<?php } ?>
 										</tr>
 									</thead>

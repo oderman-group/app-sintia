@@ -665,6 +665,16 @@ function tipoAbono(tipo){
 
 		document.getElementById("opt1").checked="";
 		document.getElementById("opt2").checked="checked";
+		
+		// Habilitar campos para que puedan ser llenados y enviados en el formulario
+		// Los campos solo se habilitarán completamente cuando se seleccione un concepto
+		// pero necesitamos asegurarnos de que puedan recibir valores
+		var precioElement = document.getElementById('precioNuevo');
+		var cantidadElement = document.getElementById('cantidadNuevo');
+		var descripElement = document.getElementById('descripNueva');
+		
+		// Los campos seguirán disabled hasta que se seleccione un concepto
+		// pero se habilitarán automáticamente cuando guardarNuevoConcepto() se ejecute
 	}
 }
 

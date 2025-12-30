@@ -389,25 +389,9 @@ if (empty($datosAbono['cod_payment'])) {
                                                                 // Cargar facturas asociadas a este abono
                                                                 if (!empty($id) && !empty($datosAbono['type_payments']) && $datosAbono['type_payments'] == INVOICE) {
                                                                     try {
-                                                                        // Primero obtener el payments del registro principal
-                                                                        $paymentsAbono = '';
-                                                                        $consultaPayments = mysqli_query($conexion, "SELECT payments FROM ".BD_FINANCIERA.".payments_invoiced 
-                                                                        WHERE id='".mysqli_real_escape_string($conexion, $id)."' 
-                                                                        AND institucion={$config['conf_id_institucion']} 
-                                                                        AND year={$_SESSION["bd"]} 
-                                                                        LIMIT 1");
-                                                                        
-                                                                        if ($consultaPayments && mysqli_num_rows($consultaPayments) > 0) {
-                                                                            $rowPayments = mysqli_fetch_array($consultaPayments, MYSQLI_BOTH);
-                                                                            $paymentsAbono = $rowPayments['payments'] ?? '';
-                                                                        }
-                                                                        
                                                                         // Buscar todas las facturas asociadas a este abono
                                                                         // Buscar por id del registro O por payments (si hay múltiples facturas)
                                                                         $whereClause = "pi.id='".mysqli_real_escape_string($conexion, $id)."'";
-                                                                        if (!empty($paymentsAbono)) {
-                                                                            $whereClause .= " OR pi.payments='".mysqli_real_escape_string($conexion, $paymentsAbono)."'";
-                                                                        }
                                                                         
                                                                         $sqlFacturas = "SELECT pi.*, fc.fcu_id, fc.fcu_fecha, fc.fcu_detalle, fc.fcu_observaciones, fc.fcu_status, fc.fcu_valor
                                                                         FROM ".BD_FINANCIERA.".payments_invoiced pi

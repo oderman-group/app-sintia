@@ -110,13 +110,16 @@ try{
     
     $sql = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(
         fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, 
-        fcu_usuario, fcu_anulado, fcu_cerrado, fcu_consecutivo, fcu_status, institucion, year
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        fcu_usuario, fcu_anulado, fcu_cerrado, fcu_consecutivo, fcu_status, 
+        fcu_created_by, fcu_origen, institucion, year
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conexionPDO->prepare($sql);
     $fcuAnulado = 0;
     $fcuCerrado = 0;
     // Estado inicial: EN_PROCESO
     $fcuStatus = EN_PROCESO;
+    $fcuCreatedBy = $_SESSION["id"];
+    $fcuOrigen = 'NORMAL';
     $stmt->bindParam(1, $_POST["fecha"], PDO::PARAM_STR); // fcu_fecha
     $stmt->bindParam(2, $_POST["detalle"], PDO::PARAM_STR);
     $stmt->bindParam(3, $_POST["valor"], PDO::PARAM_STR);
@@ -127,8 +130,10 @@ try{
     $stmt->bindParam(8, $fcuCerrado, PDO::PARAM_INT);
     $stmt->bindParam(9, $consecutivo, PDO::PARAM_STR);
     $stmt->bindParam(10, $fcuStatus, PDO::PARAM_STR);
-    $stmt->bindParam(11, $config['conf_id_institucion'], PDO::PARAM_INT);
-    $stmt->bindParam(12, $_SESSION["bd"], PDO::PARAM_INT);
+    $stmt->bindParam(11, $fcuCreatedBy, PDO::PARAM_STR);
+    $stmt->bindParam(12, $fcuOrigen, PDO::PARAM_STR);
+    $stmt->bindParam(13, $config['conf_id_institucion'], PDO::PARAM_INT);
+    $stmt->bindParam(14, $_SESSION["bd"], PDO::PARAM_INT);
     
     // Ejecutar el INSERT y capturar errores específicos
     try {

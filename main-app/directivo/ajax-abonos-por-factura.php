@@ -33,34 +33,27 @@ try {
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $sql = "SELECT 
-                p.id,
-                p.registration_date,
-                p.cod_payment,
-                p.payment_method,
-                p.observation,
-                p.note,
-                p.responsible_user,
-                p.invoiced,
+                pi.id,
+                pi.fecha_registro,
+                pi.payment_method,
+                pi.observation,
+                pi.note,
+                pi.responsible_user,
+                pi.invoiced,
                 pi.payment,
-                pi.payments,
                 u.uss_nombre,
                 u.uss_nombre2,
                 u.uss_apellido1,
                 u.uss_apellido2
             FROM ".BD_FINANCIERA.".payments_invoiced pi
-            INNER JOIN ".BD_FINANCIERA.".payments p 
-                ON p.cod_payment = pi.payments
-                AND p.institucion = :institucion
-                AND p.year = :year
-                AND p.is_deleted = 0
             LEFT JOIN ".BD_GENERAL.".usuarios u
-                ON u.uss_id = p.responsible_user
+                ON u.uss_id = pi.responsible_user
                 AND u.institucion = :institucion
                 AND u.year = :year
             WHERE pi.invoiced = :factura
               AND pi.institucion = :institucion
               AND pi.year = :year
-            ORDER BY p.registration_date DESC";
+            ORDER BY pi.fecha_registro DESC";
 
     $stmt = $conexionPDO->prepare($sql);
     $stmt->bindValue(':institucion', $config['conf_id_institucion'], PDO::PARAM_INT);
@@ -79,15 +72,14 @@ try {
 
         $abonos[] = [
             'id' => $row['id'],
-            'registration_date' => $row['registration_date'],
-            'cod_payment' => $row['cod_payment'],
+            'registration_date' => $row['fecha_registro'],
+            'cod_payment' => $row['id'],
             'payment_method' => $row['payment_method'],
             'observation' => $row['observation'],
             'note' => $row['note'],
             'responsible_user' => $row['responsible_user'],
             'responsible_name' => $nombreResponsable,
-            'payment' => $row['payment'],
-            'payments_code' => $row['payments']
+            'payment' => $row['payment']
         ];
     }
 
@@ -96,10 +88,9 @@ try {
         'data' => $abonos
     ]);
 } catch (Exception $e) {
-    include("../compartido/error-catch-to-report.php");
     echo json_encode([
         'success' => false,
-        'message' => 'Error al obtener los abonos.'
+        'message' => 'Error al obtener los abonos.' . $e
     ]);
 }
 

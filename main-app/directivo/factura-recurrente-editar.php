@@ -15,9 +15,14 @@ if (!empty($_GET['id'])) {
     $id = base64_decode($_GET['id']);;
 }
 
-$resultado = Movimientos::traerDatosRecurrentes($conexion, $config, $id);
+$datosRecurrente = Movimientos::traerDatosRecurrentes($conexion, $config, $id);
 
-$datosResponsable = UsuariosPadre::sesionUsuario($resultado['responsible_user']);
+if (empty($datosRecurrente)) {
+    echo '<script type="text/javascript">window.location.href="factura-recurrente.php?error=ER_DT_4";</script>';
+    exit();
+}
+
+$datosResponsable = UsuariosPadre::sesionUsuario($datosRecurrente['responsible_user'] ?? '');
 
 $disabledPermiso = "";
 if(!Modulos::validarPermisoEdicion()){
@@ -37,6 +42,8 @@ if(!Modulos::validarPermisoEdicion()){
     <!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Estilos para items crédito/débito -->
+    <link href="../css/movimientos-mejorado.css" rel="stylesheet" type="text/css" />
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -74,7 +81,7 @@ if(!Modulos::validarPermisoEdicion()){
 
                                    
 									<form name="formularioGuardar" action="factura-recurrente-actualizar.php" method="post">
-										<input type="hidden" value="<?=$resultado['id'];?>" name="id" id="idTransaction">
+										<input type="hidden" value="<?=$datosRecurrente['id'] ?? '';?>" name="id" id="idTransaction">
 										<input type="hidden" value="<?=TIPO_RECURRING;?>" name="typeTransaction" id="typeTransaction">
 
                                         <div class="form-group row">
@@ -82,10 +89,10 @@ if(!Modulos::validarPermisoEdicion()){
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" id="select_usuario" name="usuario" required <?=$disabledPermiso;?>>
                                                     <?php
-                                                        $datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$resultado['user']."'");
+                                                        $datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".($datosRecurrente['user'] ?? '')."'");
                                                         while($resultadosDatos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
                                                     ?>
-                                                            <option value="<?=$resultadosDatos['uss_id'];?>" <?php if($resultado['user']==$resultadosDatos['uss_id']){ echo "selected";}?>><?=UsuariosPadre::nombreCompletoDelUsuario($resultadosDatos)." (".$resultadosDatos['pes_nombre'].")";?></option>
+                                                            <option value="<?=$resultadosDatos['uss_id'];?>" <?php if(($datosRecurrente['user'] ?? '')==$resultadosDatos['uss_id']){ echo "selected";}?>><?=UsuariosPadre::nombreCompletoDelUsuario($resultadosDatos)." (".$resultadosDatos['pes_nombre'].")";?></option>
                                                     <?php }?>
                                                 </select>
                                             </div>
@@ -100,12 +107,12 @@ if(!Modulos::validarPermisoEdicion()){
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Fecha de inicio <span style="color: red;">(*)</span> <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Fecha en la que se crea la primer factura."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-4">
-                                                <input type="date" name="fechaInicio" class="form-control" autocomplete="off" required value="<?=$resultado['date_start'];?>" disabled>
+                                                <input type="date" name="fechaInicio" class="form-control" autocomplete="off" required value="<?=$datosRecurrente['date_start'] ?? '';?>" disabled>
                                             </div>
 
                                             <label class="col-sm-2 control-label">Fecha de finalización <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Indica el último día de la creación automática de la factura."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-4">
-                                                <input type="date" name="fechaFinal" class="form-control" autocomplete="off" value="<?=$resultado['date_finish'];?>" disabled>
+                                                <input type="date" name="fechaFinal" class="form-control" autocomplete="off" value="<?=$datosRecurrente['date_finish'] ?? '';?>" disabled>
                                             </div>
                                         </div>
 
@@ -120,7 +127,7 @@ if(!Modulos::validarPermisoEdicion()){
                                                 <select class="form-control select2-multiple" multiple name="dias[]" required <?=$disabledPermiso;?>>
                                                     <option value="" >Seleccione una opción</option>
                                                     <?php
-                                                        $dias = explode(',',$resultado['days_in_month']);
+                                                        $dias = !empty($datosRecurrente['days_in_month']) ? explode(',',$datosRecurrente['days_in_month']) : [];
                                                         $i = 1;
                                                         while ($i <= 31){
                                                             $selected = ($dias!="" && in_array($i, $dias)) ? "selected" : "";
@@ -139,21 +146,8 @@ if(!Modulos::validarPermisoEdicion()){
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="tipo" required <?=$disabledPermiso;?>>
                                                     <option value="">Seleccione una opción</option>
-                                                    <option value="1" <?php if($resultado['invoice_type']==1){ echo "selected";}?>>Fact. Venta</option>
-                                                    <option value="2" <?php if($resultado['invoice_type']==2){ echo "selected";}?>>Fact. Compra</option>
-                                                </select>
-                                            </div>
-
-                                            <label class="col-sm-2 control-label"><?=$frases[414][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
-                                            <div class="col-sm-4">
-                                                <select class="form-control select2" id="metodoPago" name="metodoPago" required <?=$disabledPermiso;?>>
-                                                    <option value="" >Seleccione una opción</option>
-                                                    <option value="EFECTIVO" <?php if($resultado['payment_method'] == "EFECTIVO"){ echo "selected";}?>>Efectivo</option>
-                                                    <option value="CHEQUE" <?php if($resultado['payment_method'] == "CHEQUE"){ echo "selected";}?>>Cheque</option>
-                                                    <option value="T_DEBITO" <?php if($resultado['payment_method'] == "T_DEBITO"){ echo "selected";}?>>T. Débito</option>
-                                                    <option value="T_CREDITO" <?php if($resultado['payment_method'] == "T_CREDITO"){ echo "selected";}?>>T. Crédito</option>
-                                                    <option value="TRANSFERENCIA" <?php if($resultado['payment_method'] == "TRANSFERENCIA"){ echo "selected";}?>>Transferencia</option>
-                                                    <option value="OTROS" <?php if($resultado['payment_method'] == "OTROS"){ echo "selected";}?>>Otras Formas de pago</option>
+                                                    <option value="1" <?php if(($datosRecurrente['invoice_type'] ?? '')==1){ echo "selected";}?>>Fact. Venta</option>
+                                                    <option value="2" <?php if(($datosRecurrente['invoice_type'] ?? '')==2){ echo "selected";}?>>Fact. Compra</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -161,12 +155,12 @@ if(!Modulos::validarPermisoEdicion()){
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Descripción general <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <textarea name="detalle" cols="70" rows="2" class="form-control" required <?=$disabledPermiso;?>><?=$resultado['detail'];?></textarea>
+                                                <textarea name="detalle" cols="70" rows="2" class="form-control" required <?=$disabledPermiso;?>><?=$datosRecurrente['detail'] ?? '';?></textarea>
                                             </div>
 
                                             <label class="col-sm-2 control-label">Valor adicional <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="<?=$resultado['additional_value'];?>" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="0" onchange="totalizar(this)">
+                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="<?=$datosRecurrente['additional_value'] ?? '0';?>" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="0" onchange="totalizar(this)">
                                             </div>
                                         </div>
 
@@ -228,15 +222,22 @@ if(!Modulos::validarPermisoEdicion()){
                                                                         $arrayEnviar = array("tipo"=>1, "restar"=>$fila['subtotal'], "descripcionTipo"=>"Para ocultar fila del registro.");
                                                                         $arrayDatos = json_encode($arrayEnviar);
                                                                         $objetoEnviar = htmlentities($arrayDatos);
+                                                                        
+                                                                        // Determinar si es item tipo crédito (C) o débito (D)
+                                                                        $itemType = isset($fila['item_type']) ? $fila['item_type'] : 'D';
+                                                                        $isCredito = ($itemType == 'C');
+                                                                        $rowClass = $isCredito ? 'item-credito' : '';
+                                                                        $nombreItem = $isCredito ? $fila['name'] . ' (Crédito)' : $fila['name'];
+                                                                        $signoSubtotal = $isCredito ? '-' : '';
                                                             ?>
-                                                                <tr id="reg<?=$fila['idtx'];?>">
+                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>">
                                                                     <td><?=$fila['idtx'];?></td>
-                                                                    <td><?=$fila['name'];?></td>
+                                                                    <td><?=$nombreItem;?></td>
                                                                     <td>
                                                                         <input type="number" min="0" id="precio<?=$fila['idtx'];?>" data-precio="<?=$fila['priceTransaction'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['priceTransaction']?>" <?=$disabledPermiso;?>>
                                                                     </td>
                                                                     <td>
-                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$descuentoAnterior?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount']?>" <?=$disabledPermiso;?>>
+                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$fila['discount'] ?? 0?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount'] ?? 0?>" <?=$disabledPermiso;?>>
                                                                     </td>
                                                                     <td>
                                                                         <div class="col-sm-12" style="padding: 0px;">
@@ -258,7 +259,7 @@ if(!Modulos::validarPermisoEdicion()){
                                                                     <td>
                                                                         <input type="number" title="cantity" min="0" id="cantidadItems<?=$fila['idtx'];?>" data-cantidad="<?=$fila['cantity'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['cantity'];?>" style="width: 50px;" <?=$disabledPermiso;?>>
                                                                     </td>
-                                                                    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>">$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
+                                                                    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>" data-item-type="<?=$itemType;?>"><?=$signoSubtotal;?>$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
                                                                     <td>
                                                                         <a href="#" title="<?=$objetoEnviar;?>" id="<?=$fila['idtx'];?>" name="movimientos-items-eliminar.php?idR=<?=$fila['idtx'];?>" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" onClick="deseaEliminarNuevoItem(this)">X</a>
                                                                     </td>
@@ -279,7 +280,7 @@ if(!Modulos::validarPermisoEdicion()){
                                                                                 $consulta= Movimientos::listarItems($conexion, $config);
                                                                                 while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                                             ?>
-                                                                            <option value="<?=$datosConsulta['id']?>" name="<?=$datosConsulta['price']?>"><?=$datosConsulta['name']?></option>
+                                                                            <option value="<?=$datosConsulta['item_id'] ?? ''?>" name="<?=$datosConsulta['price'] ?? 0?>"><?=$datosConsulta['name'] ?? ''?></option>
                                                                             <?php } ?>
                                                                         </select>
                                                                     </div>
@@ -351,7 +352,7 @@ if(!Modulos::validarPermisoEdicion()){
                                         <div class="form-group row">
                                             <label class="col-sm-12 control-label">Observaciones <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Observaciones adicionales que quieres que vea tu cliente en la factura."><i class="fa fa-info"></i></button></label>
                                             <div class="col-sm-12">
-                                                <textarea cols="80" id="editor1" name="obs" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?=$resultado['observation'];?></textarea>
+                                                <textarea cols="80" id="editor1" name="obs" class="form-control" rows="8" placeholder="Escribe tu mensaje" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?=$datosRecurrente['observation'] ?? '';?></textarea>
                                             </div>
                                         </div>
 										

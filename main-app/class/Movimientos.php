@@ -105,6 +105,35 @@ class Movimientos {
         $totalNeto = $valorAdicional;
 
         try {
+            // Para facturas recurrentes, buscar por factura_recurrente_id; para facturas normales, por id_transaction
+            $sqlWhere = "";
+            if ($tipo == TIPO_RECURRING) {
+                // Para facturas recurrentes, buscar por factura_recurrente_id
+                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
+                // Verificar si es un ID numérico o alfanumérico
+                if (is_numeric($idTransaction)) {
+                    $sqlWhere = "ti.factura_recurrente_id = {$idTransactionEscapado}";
+                } else {
+                    // Si es alfanumérico, buscar el ID numérico en recurring_invoices
+                    $sqlBuscarId = "SELECT id FROM ".BD_FINANCIERA.".recurring_invoices 
+                                   WHERE id='{$idTransactionEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND is_deleted=0 LIMIT 1";
+                    $consultaId = mysqli_query($conexion, $sqlBuscarId);
+                    $recurringData = mysqli_fetch_array($consultaId, MYSQLI_BOTH);
+                    if ($recurringData && !empty($recurringData['id'])) {
+                        $idNumerico = (int)$recurringData['id'];
+                        $sqlWhere = "ti.factura_recurrente_id = {$idNumerico}";
+                    } else {
+                        // Si no se encuentra, retornar solo el valor adicional
+                        return $totalNeto;
+                    }
+                }
+            } else {
+                // Para facturas normales, buscar por id_transaction
+                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
+                $idTransactionNum = (int)$idTransactionEscapado;
+                $sqlWhere = "ti.id_transaction = {$idTransactionNum}";
+            }
+            
             // Calcular débitos y créditos por separado
             $consulta = mysqli_query($conexion,"SELECT 
                 SUM(CASE WHEN i.item_type = 'C' THEN 0 ELSE (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END) END) AS totalDebitos,
@@ -112,15 +141,14 @@ class Movimientos {
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
                 LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
-                WHERE ti.id_transaction = {$idTransaction}
+                WHERE {$sqlWhere}
                 AND ti.type_transaction = '{$tipo}'
                 AND ti.institucion = {$config['conf_id_institucion']}
-                AND ti.year = {$_SESSION["bd"]}
-                GROUP BY ti.id_transaction");
+                AND ti.year = {$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
-        if(mysqli_num_rows($consulta)>0) {
+        if($consulta && mysqli_num_rows($consulta)>0) {
             $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
             $totalDebitos = floatval($resultado['totalDebitos'] ?? 0);
             $totalCreditos = floatval($resultado['totalCreditos'] ?? 0);
@@ -147,21 +175,53 @@ class Movimientos {
     )
     {
         try {
-            // idTransaction ahora es directamente fcu_id (INT UNSIGNED)
-            $idTransactionNum = (int)$idTransaction;
-            
             // item_id es ahora el PK de items (AUTO_INCREMENT INT UNSIGNED)
-            // id_transaction es fcu_id (INT UNSIGNED)
-            $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type
-            FROM ".BD_FINANCIERA.".transaction_items ti
-            INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
-            WHERE ti.id_transaction = {$idTransactionNum}
-            AND ti.type_transaction = '{$tipo}'
-            AND ti.institucion = {$config['conf_id_institucion']}
-            AND ti.year = {$_SESSION["bd"]}
-            ORDER BY i.item_type DESC, ti.id_autoincremental");
+            // Para TIPO_RECURRING, buscar por factura_recurrente_id, para TIPO_FACTURA por id_transaction
+            if ($tipo == TIPO_RECURRING) {
+                // Para facturas recurrentes, idTransaction puede venir como código alfanumérico
+                // Necesitamos buscar el ID numérico en recurring_invoices
+                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
+                
+                // Primero obtener el ID numérico de la factura recurrente
+                $sqlBuscarId = "SELECT id FROM ".BD_FINANCIERA.".recurring_invoices 
+                               WHERE id='{$idTransactionEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND is_deleted=0 LIMIT 1";
+                $consultaId = mysqli_query($conexion, $sqlBuscarId);
+                $recurringData = mysqli_fetch_array($consultaId, MYSQLI_BOTH);
+                
+                if ($recurringData && !empty($recurringData['id'])) {
+                    $facturaRecurrenteId = (int)$recurringData['id'];
+                    
+                    // Buscar items por factura_recurrente_id
+                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type
+                    FROM ".BD_FINANCIERA.".transaction_items ti
+                    INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
+                    WHERE ti.factura_recurrente_id = {$facturaRecurrenteId}
+                    AND ti.type_transaction = '{$tipo}'
+                    AND ti.institucion = {$config['conf_id_institucion']}
+                    AND ti.year = {$_SESSION["bd"]}
+                    ORDER BY i.item_type DESC, ti.id_autoincremental");
+                } else {
+                    // Si no se encuentra la factura recurrente, retornar consulta vacía
+                    $consulta = mysqli_query($conexion, "SELECT NULL WHERE 1=0");
+                }
+            } else {
+                // Para facturas normales, idTransaction es fcu_id (INT UNSIGNED)
+                $idTransactionNum = (int)$idTransaction;
+                
+                // id_transaction es fcu_id (INT UNSIGNED)
+                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type
+                FROM ".BD_FINANCIERA.".transaction_items ti
+                INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
+                WHERE ti.id_transaction = {$idTransactionNum}
+                AND ti.type_transaction = '{$tipo}'
+                AND ti.institucion = {$config['conf_id_institucion']}
+                AND ti.year = {$_SESSION["bd"]}
+                ORDER BY i.item_type DESC, ti.id_autoincremental");
+            }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            // Retornar consulta vacía en caso de error
+            $consulta = mysqli_query($conexion, "SELECT NULL WHERE 1=0");
         }
 
         return $consulta;
@@ -515,9 +575,6 @@ class Movimientos {
         try {
             $conexionPDO->beginTransaction();
             
-            // Generar código único para este abono (usado como referencia interna)
-            $codigoAbonoFinal = Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'payments_invoiced');
-            
             $comprobante = '';
             if (!empty($FILES['comprobante']['name'])) {
                 $destino = ROOT_PATH.'/main-app/files/comprobantes';
@@ -727,7 +784,7 @@ class Movimientos {
                 if (is_array($conceptos) && count($conceptos) > 0) {
                     $sqlConcepto = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
                         responsible_user, payment_user, type_payments, payment_tipo, payment_method,
-                        payment_cuenta_bancaria_id, invoiced, payments, payment, cantity, subtotal, description,
+                        payment_cuenta_bancaria_id, invoiced, payment, cantity, subtotal, description,
                         observation, attachment, note, fecha_registro, fecha_documento, institucion, year
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmtConcepto = $conexionPDO->prepare($sqlConcepto);
@@ -750,18 +807,17 @@ class Movimientos {
                             $stmtConcepto->bindValue(5, $paymentMethod, $paymentMethod ? PDO::PARAM_STR : PDO::PARAM_NULL);
                             $stmtConcepto->bindValue(6, $cuentaBancariaId, $cuentaBancariaId ? PDO::PARAM_INT : PDO::PARAM_NULL);
                             $stmtConcepto->bindValue(7, $invoicedValue, PDO::PARAM_NULL); // invoiced NULL para abonos independientes
-                            $stmtConcepto->bindValue(8, $codigoAbonoFinal, PDO::PARAM_STR); // payments (código del abono)
-                            $stmtConcepto->bindValue(9, $concepto['precio'], PDO::PARAM_STR); // payment
-                            $stmtConcepto->bindValue(10, intval($concepto['cantidad']), PDO::PARAM_INT); // cantity
-                            $stmtConcepto->bindValue(11, $concepto['subtotal'], PDO::PARAM_STR); // subtotal
-                            $stmtConcepto->bindValue(12, $descripcionCompleta, PDO::PARAM_STR); // description (concepto + descripción)
-                            $stmtConcepto->bindValue(13, $observacion, $observacion ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                            $stmtConcepto->bindValue(14, $comprobante, $comprobante ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                            $stmtConcepto->bindValue(15, $notas, $notas ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                            $stmtConcepto->bindValue(16, $fechaRegistro, PDO::PARAM_STR);
-                            $stmtConcepto->bindValue(17, $fechaDocumento, $fechaDocumento ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                            $stmtConcepto->bindValue(18, $config['conf_id_institucion'], PDO::PARAM_INT);
-                            $stmtConcepto->bindValue(19, $_SESSION["bd"], PDO::PARAM_INT);
+                            $stmtConcepto->bindValue(8, $concepto['precio'], PDO::PARAM_STR); // payment
+                            $stmtConcepto->bindValue(9, intval($concepto['cantidad']), PDO::PARAM_INT); // cantity
+                            $stmtConcepto->bindValue(10, $concepto['subtotal'], PDO::PARAM_STR); // subtotal
+                            $stmtConcepto->bindValue(11, $descripcionCompleta, PDO::PARAM_STR); // description (concepto + descripción)
+                            $stmtConcepto->bindValue(12, $observacion, $observacion ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                            $stmtConcepto->bindValue(13, $comprobante, $comprobante ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                            $stmtConcepto->bindValue(14, $notas, $notas ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                            $stmtConcepto->bindValue(15, $fechaRegistro, PDO::PARAM_STR);
+                            $stmtConcepto->bindValue(16, $fechaDocumento, $fechaDocumento ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                            $stmtConcepto->bindValue(17, $config['conf_id_institucion'], PDO::PARAM_INT);
+                            $stmtConcepto->bindValue(18, $_SESSION["bd"], PDO::PARAM_INT);
                             $stmtConcepto->execute();
                         }
                     }
@@ -830,7 +886,6 @@ class Movimientos {
             // Consulta mejorada para traer todos los datos del abono desde payments_invoiced consolidado
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
-                pi.payments,
                 pi.fecha_registro as registration_date, 
                 pi.fecha_documento,
                 pi.responsible_user, 
@@ -1247,10 +1302,12 @@ class Movimientos {
     {
         $fechaFinal = !empty($_POST["fechaFinal"]) ? "'{$_POST["fechaFinal"]}'" : "NULL";
         $dias = implode(',',$POST["dias"]);
-        $cuentaBancariaId = !empty($_POST["cuenta_bancaria_id"]) ? "'".mysqli_real_escape_string($conexion, $_POST["cuenta_bancaria_id"])."'" : "NULL";
 
         try{
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, payment_method, recurring_cuenta_bancaria_id, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "','" . $POST["valor"] . "','" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '" . $POST["metodoPago"] . "', $cuentaBancariaId, '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            // Las facturas recurrentes no tienen método de pago ni cuenta bancaria al crearse
+            // Estos se definen cuando se procesa el pago real
+            // Solo incluimos las columnas que existen en la tabla (sin status)
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "','" . $POST["valor"] . "','" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }
@@ -1272,17 +1329,21 @@ class Movimientos {
     {
         $resultado = [];
         try {
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".recurring_invoices ri
+            $consulta = mysqli_query($conexion, "SELECT ri.*, uss.*, ciu.*, dep.* FROM ".BD_FINANCIERA.".recurring_invoices ri
             INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=responsible_user AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
-            LEFT JOIN ".BD_ADMIN.".localidad_ciudades ON ciu_id=uss_lugar_nacimiento
-            LEFT JOIN ".BD_ADMIN.".localidad_departamentos ON dep_id=ciu_departamento
-            WHERE id='{$idRecurrente}' AND ri.institucion = {$config['conf_id_institucion']} AND ri.year = {$_SESSION["bd"]}");
+            LEFT JOIN ".BD_ADMIN.".localidad_ciudades ciu ON ciu_id=uss_lugar_nacimiento
+            LEFT JOIN ".BD_ADMIN.".localidad_departamentos dep ON dep_id=ciu_departamento
+            WHERE ri.id='{$idRecurrente}' AND ri.institucion = {$config['conf_id_institucion']} AND ri.year = {$_SESSION["bd"]}");
+            
+            if ($consulta && mysqli_num_rows($consulta) > 0) {
+                $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+            }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            return [];
         }
-        $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
 
-        return $resultado;
+        return $resultado ? $resultado : [];
     }
 
     /**
@@ -1297,10 +1358,26 @@ class Movimientos {
         array $POST
     )
     {
+        // Verificar que la factura recurrente no esté eliminada
+        $consultaEstado = mysqli_query($conexion, "SELECT is_deleted FROM ".BD_FINANCIERA.".recurring_invoices 
+                                                   WHERE id='".mysqli_real_escape_string($conexion, $POST["id"])."' 
+                                                   AND institucion={$config['conf_id_institucion']} 
+                                                   AND year={$_SESSION["bd"]} 
+                                                   LIMIT 1");
+        
+        if ($consultaEstado && mysqli_num_rows($consultaEstado) > 0) {
+            $estado = mysqli_fetch_array($consultaEstado, MYSQLI_BOTH);
+            if (!empty($estado['is_deleted']) && $estado['is_deleted'] == 1) {
+                throw new Exception("No se pueden realizar cambios en una factura recurrente eliminada.");
+            }
+        }
+        
         $dias = implode(',',$POST["dias"]);
 
         try {
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".recurring_invoices SET detail='".$POST["detalle"]."', user='".$POST["usuario"]."', days_in_month='".$dias."', payment_method='".$POST["metodoPago"]."', observation='".$POST["obs"]."', invoice_type='".$POST["tipo"]."', additional_value='".$POST["valor"]."' WHERE id='".$POST["id"]."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            // Las facturas recurrentes no tienen método de pago ni cuenta bancaria
+            // Solo actualizamos las columnas que existen en la tabla
+            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".recurring_invoices SET detail='".mysqli_real_escape_string($conexion, $POST["detalle"])."', user='".mysqli_real_escape_string($conexion, $POST["usuario"])."', days_in_month='".mysqli_real_escape_string($conexion, $dias)."', observation='".mysqli_real_escape_string($conexion, $POST["obs"])."', invoice_type='".mysqli_real_escape_string($conexion, $POST["tipo"])."', additional_value='".mysqli_real_escape_string($conexion, $POST["valor"])."' WHERE id='".mysqli_real_escape_string($conexion, $POST["id"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -1337,7 +1414,7 @@ class Movimientos {
     )
     {
         try{
-            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".recurring_invoices WHERE is_deleted=0 AND date_start <= CURDATE() AND (date_finish >= CURDATE() OR date_finish = '0000-00-00')");
+            $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".recurring_invoices WHERE is_deleted=0 AND date_start <= CURDATE() AND (date_finish >= CURDATE() OR date_finish = '0000-00-00' OR date_finish IS NULL)");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -1356,59 +1433,73 @@ class Movimientos {
         array $datosRecurrente
     )
     {
-        switch ($datosRecurrente["payment_method"]){
-            case "EFECTIVO":
-                $metodoPago= 1;
-            break;
-            case "CHEQUE":
-                $metodoPago= 2;
-            break;
-            case "T_DEBITO":
-                $metodoPago= 3;
-            break;
-            case "T_CREDITO":
-                $metodoPago= 4;
-            break;
-            case "TRANSFERENCIA":
-                $metodoPago= 5;
-            break;
-            case "OTROS":
-                $metodoPago= 6;
-            break;
-        }
+        // Las facturas recurrentes no tienen método de pago definido al crearse
+        // Se establece cuando se procesa el pago real
 
         $conexionPDO = Conexion::newConnection('PDO');
         $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $idFactura=Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'finanzas_cuentas');
-
-        try{
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_id, fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_forma_pago, fcu_cerrado, institucion, year)VALUES('" .$idFactura . "', now(),'" . $datosRecurrente["detail"] . "','" . $datosRecurrente["additional_value"] . "','" . $datosRecurrente["invoice_type"] . "','" . $datosRecurrente["observation"] . "','" . $datosRecurrente["user"] . "',0,'" . $metodoPago . "',0, {$datosRecurrente['institucion']}, '{$datosRecurrente["year"]}')");
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+        // Insertar factura generada desde recurrente
+        // fcu_id es AUTO_INCREMENT, NO se incluye en el INSERT
+        // fcu_created_by: responsable_user de la factura recurrente o $_SESSION["id"] si está disponible
+        $createdBy = !empty($datosRecurrente["responsible_user"]) ? mysqli_real_escape_string($conexion, $datosRecurrente["responsible_user"]) : (!empty($_SESSION["id"]) ? mysqli_real_escape_string($conexion, $_SESSION["id"]) : 'SYSTEM');
+        $origen = 'RECURRENTE';
+        
+        // INSERT sin fcu_id (se genera automáticamente)
+        $resultadoInsert = mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_cerrado, fcu_status, fcu_created_by, fcu_origen, institucion, year)VALUES(now(),'" . mysqli_real_escape_string($conexion, $datosRecurrente["detail"]) . "','" . $datosRecurrente["additional_value"] . "','" . $datosRecurrente["invoice_type"] . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["observation"]) . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["user"]) . "',0,0,'".POR_COBRAR."','" . $createdBy . "','" . $origen . "', {$datosRecurrente['institucion']}, '{$datosRecurrente["year"]}')");
+        
+        if (!$resultadoInsert) {
+            throw new Exception("Error al insertar factura: " . mysqli_error($conexion));
+        }
+        
+        // Obtener el ID de la factura recién creada
+        $idFactura = (int)mysqli_insert_id($conexion);
+        
+        if ($idFactura <= 0) {
+            throw new Exception("Error al obtener ID de la factura creada");
         }
 
-        try {
-            $itemsConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".transaction_items WHERE id_transaction = '{$datosRecurrente["id"]}' AND type_transaction = 'INVOICE_RECURRING' AND institucion = {$datosRecurrente["institucion"]} AND year = {$datosRecurrente["year"]}");
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+        // Para facturas recurrentes, buscar items por factura_recurrente_id
+        $facturaRecurrenteId = (int)$datosRecurrente["id"];
+        $itemsConsulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".transaction_items WHERE factura_recurrente_id = {$facturaRecurrenteId} AND type_transaction = 'INVOICE_RECURRING' AND institucion = {$datosRecurrente["institucion"]} AND year = {$datosRecurrente["year"]}");
+        
+        if (!$itemsConsulta) {
+            throw new Exception("Error al consultar items: " . mysqli_error($conexion));
         }
+        
         $numDatos = mysqli_num_rows($itemsConsulta);
 
         if ($numDatos > 0) {
-
             while ($fila = mysqli_fetch_array($itemsConsulta, MYSQLI_BOTH)) {
-
-                $idItems=Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'transaction_items');
-
-                try {
-                    mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".transaction_items(id, id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax)VALUES('".$idItems."', '" .$idFactura . "', 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".$fila['description']."', '".$fila['price']."', '".$fila['tax']."')");
-                } catch (Exception $e) {
-                    include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+                // Validar que el tax existe en la tabla taxes antes de usarlo
+                $taxValue = null;
+                if (!empty($fila['tax']) && $fila['tax'] != '0' && $fila['tax'] != '' && $fila['tax'] !== null) {
+                    // Verificar que el tax existe en la tabla taxes
+                    $taxId = (int)$fila['tax'];
+                    $consultaTax = mysqli_query($conexion, "SELECT id FROM ".BD_FINANCIERA.".taxes WHERE id={$taxId} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
+                    if ($consultaTax && mysqli_num_rows($consultaTax) > 0) {
+                        $taxValue = $taxId;
+                    }
+                    // Si no existe, $taxValue queda como NULL
                 }
-
+                
+                // Construir el INSERT con o sin tax según corresponda
+                if ($taxValue === null) {
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL)";
+                } else {
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue})";
+                }
+                
+                $resultadoItems = mysqli_query($conexion, $sqlItems);
+                
+                if (!$resultadoItems) {
+                    throw new Exception("Error al insertar item: " . mysqli_error($conexion));
+                }
             }
         }
+        
+        // Retornar el ID de la factura creada (como entero)
+        return $idFactura;
 
     }
 
@@ -1620,7 +1711,7 @@ class Movimientos {
         
         try {
             $consulta = mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".payments_invoiced
-            WHERE payments='{$codAbono}' AND institucion = {$config['conf_id_institucion']} AND year = {$_SESSION["bd"]}");
+            WHERE id='{$codAbono}' AND institucion = {$config['conf_id_institucion']} AND year = {$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
             return false;
@@ -2235,10 +2326,12 @@ class Movimientos {
                     $sqlFactura = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(
                         fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones,
                         fcu_usuario, fcu_anulado, fcu_cerrado, fcu_consecutivo,
-                        fcu_lote_id, fcu_status, institucion, year
-                    ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?)";
+                        fcu_lote_id, fcu_status, fcu_created_by, fcu_origen, institucion, year
+                    ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?)";
                     
                     $stmtFactura = $conexionPDO->prepare($sqlFactura);
+                    $fcuCreatedByLote = $_SESSION["id"];
+                    $fcuOrigenLote = 'NORMAL';
                     $stmtFactura->bindValue(1, $fechaActual, PDO::PARAM_STR);
                     $stmtFactura->bindValue(2, $detalleFactura, PDO::PARAM_STR);
                     $stmtFactura->bindValue(3, $valorTotalFactura, PDO::PARAM_STR);
@@ -2248,8 +2341,10 @@ class Movimientos {
                     $stmtFactura->bindValue(7, $consecutivo, PDO::PARAM_STR);
                     $stmtFactura->bindValue(8, $loteId, PDO::PARAM_INT);
                     $stmtFactura->bindValue(9, $estadoInicial, PDO::PARAM_STR);
-                    $stmtFactura->bindValue(10, $config['conf_id_institucion'], PDO::PARAM_INT);
-                    $stmtFactura->bindValue(11, $_SESSION["bd"], PDO::PARAM_INT);
+                    $stmtFactura->bindValue(10, $fcuCreatedByLote, PDO::PARAM_STR);
+                    $stmtFactura->bindValue(11, $fcuOrigenLote, PDO::PARAM_STR);
+                    $stmtFactura->bindValue(12, $config['conf_id_institucion'], PDO::PARAM_INT);
+                    $stmtFactura->bindValue(13, $_SESSION["bd"], PDO::PARAM_INT);
                     $stmtFactura->execute();
                     
                     // Obtener el ID de la factura generado automáticamente
