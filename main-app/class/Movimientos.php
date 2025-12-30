@@ -2553,23 +2553,28 @@ class Movimientos {
         
         $saldoInicial = !empty($POST["cba_saldo_inicial"]) ? (float)$POST["cba_saldo_inicial"] : 0.00;
         
+        // Manejar campos opcionales
+        $cbaBanco = !empty($POST["cba_banco"]) ? trim($POST["cba_banco"]) : '';
+        $cbaNumeroCuenta = !empty($POST["cba_numero_cuenta"]) ? trim($POST["cba_numero_cuenta"]) : '';
+        $cbaObservaciones = !empty($POST["cba_observaciones"]) ? trim($POST["cba_observaciones"]) : '';
+        
         try {
-            $sql = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas_bancarias (
-                cba_id, cba_nombre, cba_banco, cba_numero_cuenta, cba_tipo, 
-                cba_metodo_pago_asociado, cba_saldo_inicial, cba_activa, cba_observaciones, 
-                institucion, year, fecha_registro
+            $sql = "INSERT INTO `".BD_FINANCIERA."`.`finanzas_cuentas_bancarias` (
+                `cba_id`, `cba_nombre`, `cba_banco`, `cba_numero_cuenta`, `cba_tipo`, 
+                `cba_metodo_pago_asociado`, `cba_saldo_inicial`, `cba_activa`, `cba_observaciones`, 
+                `institucion`, `year`, `fecha_registro`
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
             $stmt->bindParam(2, $POST["cba_nombre"], PDO::PARAM_STR);
-            $stmt->bindParam(3, $POST["cba_banco"], PDO::PARAM_STR);
-            $stmt->bindParam(4, $POST["cba_numero_cuenta"], PDO::PARAM_STR);
+            $stmt->bindParam(3, $cbaBanco, PDO::PARAM_STR);
+            $stmt->bindParam(4, $cbaNumeroCuenta, PDO::PARAM_STR);
             $stmt->bindParam(5, $POST["cba_tipo"], PDO::PARAM_STR);
             $stmt->bindParam(6, $POST["cba_metodo_pago_asociado"], PDO::PARAM_STR);
             $stmt->bindValue(7, $saldoInicial, PDO::PARAM_STR);
             $stmt->bindParam(8, $activa, PDO::PARAM_INT);
-            $stmt->bindParam(9, $POST["cba_observaciones"], PDO::PARAM_STR);
+            $stmt->bindParam(9, $cbaObservaciones, PDO::PARAM_STR);
             $stmt->bindParam(10, $config['conf_id_institucion'], PDO::PARAM_INT);
             $stmt->bindParam(11, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
