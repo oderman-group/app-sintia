@@ -2828,12 +2828,11 @@ class Movimientos {
         array $POST
     ) {
         require_once(ROOT_PATH."/main-app/class/Conexion.php");
-        require_once(ROOT_PATH."/main-app/class/Utilidades.php");
         
         $conexionPDO = Conexion::newConnection('PDO');
         $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        $codigo = Utilidades::getNextIdSequence($conexionPDO, BD_FINANCIERA, 'finanzas_cuentas_bancarias');
+        // cba_id es AUTO_INCREMENT, no se debe incluir en el INSERT
         $activa = !empty($POST["cba_activa"]) ? 1 : 0;
         
         $saldoInicial = !empty($POST["cba_saldo_inicial"]) ? (float)$POST["cba_saldo_inicial"] : 0.00;
@@ -2844,27 +2843,34 @@ class Movimientos {
         $cbaObservaciones = !empty($POST["cba_observaciones"]) ? trim($POST["cba_observaciones"]) : '';
         
         try {
+            // cba_id es AUTO_INCREMENT, no se incluye en el INSERT
             $sql = "INSERT INTO `".BD_FINANCIERA."`.`finanzas_cuentas_bancarias` (
-                `cba_id`, `cba_nombre`, `cba_banco`, `cba_numero_cuenta`, `cba_tipo`, 
+                `cba_nombre`, `cba_banco`, `cba_numero_cuenta`, `cba_tipo`, 
                 `cba_metodo_pago_asociado`, `cba_saldo_inicial`, `cba_activa`, `cba_observaciones`, 
                 `institucion`, `year`, `fecha_registro`
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             
             $stmt = $conexionPDO->prepare($sql);
-            $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
-            $stmt->bindParam(2, $POST["cba_nombre"], PDO::PARAM_STR);
-            $stmt->bindParam(3, $cbaBanco, PDO::PARAM_STR);
-            $stmt->bindParam(4, $cbaNumeroCuenta, PDO::PARAM_STR);
-            $stmt->bindParam(5, $POST["cba_tipo"], PDO::PARAM_STR);
-            $stmt->bindParam(6, $POST["cba_metodo_pago_asociado"], PDO::PARAM_STR);
-            $stmt->bindValue(7, $saldoInicial, PDO::PARAM_STR);
-            $stmt->bindParam(8, $activa, PDO::PARAM_INT);
-            $stmt->bindParam(9, $cbaObservaciones, PDO::PARAM_STR);
-            $stmt->bindParam(10, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(11, $_SESSION["bd"], PDO::PARAM_INT);
+            
+            // Bindear parámetros (sin cba_id, ahora son 10 parámetros en lugar de 11)
+            $stmt->bindParam(1, $POST["cba_nombre"], PDO::PARAM_STR);
+            $stmt->bindParam(2, $cbaBanco, PDO::PARAM_STR);
+            $stmt->bindParam(3, $cbaNumeroCuenta, PDO::PARAM_STR);
+            $stmt->bindParam(4, $POST["cba_tipo"], PDO::PARAM_STR);
+            $stmt->bindParam(5, $POST["cba_metodo_pago_asociado"], PDO::PARAM_STR);
+            $stmt->bindValue(6, $saldoInicial, PDO::PARAM_STR);
+            $stmt->bindParam(7, $activa, PDO::PARAM_INT);
+            $stmt->bindParam(8, $cbaObservaciones, PDO::PARAM_STR);
+            $stmt->bindParam(9, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(10, $_SESSION["bd"], PDO::PARAM_INT);
+            
             $stmt->execute();
+            
+            // Obtener el ID generado automáticamente (AUTO_INCREMENT)
+            $codigo = (string)$conexionPDO->lastInsertId();
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
+            throw $e; // Re-lanzar para que el script que llama pueda manejarlo
         }
 
         return $codigo;
