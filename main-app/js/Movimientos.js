@@ -50,25 +50,45 @@ function actualizarSubtotal(id) {
         rowElement = document.getElementById('reg'+id);
     }
     
+    // Determinar si es crédito antes de validar
+    var itemType = rowElement ? (rowElement.getAttribute('data-item-type') || 'D') : (subtotalElement ? (subtotalElement.getAttribute('data-item-type') || 'D') : 'D');
+    var isCredito = (itemType === 'C');
+    
+    // Para items crédito, solo validar precio y cantidad (sin descuento)
     var regex = /^[0-9]+(\.[0-9]+)?$/;
+    var validacionOk = false;
+    
+    if (isCredito) {
+        // Items crédito: solo precio y cantidad, sin descuento ni impuesto
+        validacionOk = (precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && 
+                       regex.test(precioElement.value) && regex.test(cantidadElement.value));
+    } else {
+        // Items débito: precio, cantidad y descuento
+        validacionOk = (precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && 
+                       descuentoElement.value.trim() !== '' && 
+                       regex.test(precioElement.value) && regex.test(cantidadElement.value) && regex.test(descuentoElement.value));
+    }
 
-    if ((precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && descuentoElement.value.trim() !== '' && regex.test(precioElement.value) && regex.test(cantidadElement.value) && regex.test(descuentoElement.value))) {
+    if (validacionOk) {
 
         // Obtener los valores
         var precio = parseFloat(precioElement.value);
         var cantidad = parseFloat(cantidadElement.value);
-        var porcentajeDescuento= parseFloat(descuentoElement.value);
-        var impuesto= parseFloat(impuestoElement.value);
+        var porcentajeDescuento = isCredito ? 0 : (parseFloat(descuentoElement.value) || 0);
+        var impuesto = isCredito ? 0 : (parseFloat(impuestoElement.value) || 0);
 
         // Calcular el subtotal
-        var vlrDescuento = precio * (porcentajeDescuento / 100);
-        var vlrDescuentoAnterior = vlrDescuento * cantidad;
-
-        var subtotal = (precio-vlrDescuento) * cantidad;
+        var subtotal = 0;
         
-        // Determinar si es crédito para mostrar signo negativo
-        var itemType = rowElement ? (rowElement.getAttribute('data-item-type') || 'D') : (subtotalElement ? (subtotalElement.getAttribute('data-item-type') || 'D') : 'D');
-        var isCredito = (itemType === 'C');
+        if (isCredito) {
+            // Items crédito: cálculo directo sin descuentos ni impuestos
+            subtotal = precio * cantidad;
+        } else {
+            // Items débito: aplicar descuento
+            var vlrDescuento = precio * (porcentajeDescuento / 100);
+            subtotal = (precio - vlrDescuento) * cantidad;
+        }
+        
         var signoNegativo = isCredito ? '-' : '';
         var subtotalFormat = signoNegativo+"$"+numberFormat(subtotal, 0, ',', '.');
         
@@ -79,7 +99,9 @@ function actualizarSubtotal(id) {
         .then(data => {
             precioElement.dataset.precio = precio;
             cantidadElement.dataset.cantidad = cantidad;
-            descuentoElement.dataset.descuentoAnterior = porcentajeDescuento;
+            if (!isCredito && descuentoElement) {
+                descuentoElement.dataset.descuentoAnterior = porcentajeDescuento;
+            }
             
             // Recalcular el total después de actualizar el subtotal
             totalizar();
@@ -110,10 +132,13 @@ function actualizarSubtotal(id) {
         });
 
     } else {
-
+        var mensajeError = isCredito 
+            ? "Los campos de precio y cantidad no pueden ir vacío, o con letras"
+            : "Los campos de precio, descuento y cantidad no pueden ir vacío, o con letras";
+            
         Swal.fire({
             title: 'Campo Vacío',
-            text: "Los campos de precio, descuento y cantidad no pueden ir vacío, o con letras",
+            text: mensajeError,
             icon: 'warning',
             showCancelButton: false,
             confirmButtonText: 'Ok',
@@ -124,11 +149,13 @@ function actualizarSubtotal(id) {
         }).then((result) => {
             var precioAnterior = parseFloat(precioElement.getAttribute("data-precio"));
             var cantidadAnterior = parseFloat(cantidadElement.getAttribute("data-cantidad"));
-            var descuentoAnterior = parseFloat(descuentoElement.getAttribute("data-descuento-anterior"));
+            var descuentoAnterior = isCredito ? 0 : parseFloat(descuentoElement.getAttribute("data-descuento-anterior"));
             
             precioElement.value = precioAnterior;
             cantidadElement.value = cantidadAnterior;
-            descuentoElement.value = descuentoAnterior;
+            if (!isCredito && descuentoElement) {
+                descuentoElement.value = descuentoAnterior;
+            }
         })
 
     }
@@ -262,31 +289,45 @@ function guardarNuevoItem(selectElement) {
         subtotalElement.dataset.subtotalAnterior = subtotal;
         subtotalElement.setAttribute('data-item-type', itemType);
 
-        descuentoElement.disabled = false;
-        descuentoElement.value = 0;
-        
-        impuestoElement.disabled = false;
+        // Para items crédito, deshabilitar campos de descuento e impuesto
+        if (isCredito) {
+            descuentoElement.disabled = true;
+            descuentoElement.value = 0;
+            impuestoElement.disabled = true;
+            if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2-hidden-accessible')) {
+                $(impuestoElement).val(0).trigger('change');
+            } else {
+                impuestoElement.value = 0;
+            }
+        } else {
+            descuentoElement.disabled = false;
+            descuentoElement.value = 0;
+            impuestoElement.disabled = false;
+        }
 
         // Si es un item nuevo, establecer valores por defecto
         if (data.creado == 1) {
-            // Establecer el impuesto del item si existe
-            if (data.tax && data.tax != '0') {
-                impuestoElement.value = data.tax;
-                // Actualizar el contenedor de Select2 usando jQuery
-                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
-                    $(impuestoElement).val(data.tax).trigger('change');
-                } else {
-                    var taxOption = impuestoElement.querySelector('option[value="' + data.tax + '"]');
-                    if (taxOption && impuestoContainer) {
-                        impuestoContainer.innerHTML = taxOption.textContent;
+            // Para items crédito, no establecer impuesto (ya está deshabilitado)
+            if (!isCredito) {
+                // Establecer el impuesto del item si existe
+                if (data.tax && data.tax != '0') {
+                    impuestoElement.value = data.tax;
+                    // Actualizar el contenedor de Select2 usando jQuery
+                    if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                        $(impuestoElement).val(data.tax).trigger('change');
+                    } else {
+                        var taxOption = impuestoElement.querySelector('option[value="' + data.tax + '"]');
+                        if (taxOption && impuestoContainer) {
+                            impuestoContainer.innerHTML = taxOption.textContent;
+                        }
                     }
-                }
-            } else {
-                impuestoElement.value = 0;
-                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
-                    $(impuestoElement).val(0).trigger('change');
-                } else if (impuestoContainer) {
-                    impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                } else {
+                    impuestoElement.value = 0;
+                    if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                        $(impuestoElement).val(0).trigger('change');
+                    } else if (impuestoContainer) {
+                        impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                    }
                 }
             }
             
@@ -304,21 +345,23 @@ function guardarNuevoItem(selectElement) {
                 }
             }
         } else {
-            // Si está modificando, mantener valores anteriores
-            descuentoElement.value = 0;
-            impuestoElement.value = 0;
-            if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
-                $(impuestoElement).val(0).trigger('change');
-            } else if (impuestoContainer) {
-                impuestoContainer.innerHTML = 'Ninguno - (0%)';
+            // Si está modificando, mantener valores anteriores (pero si es crédito, ya están deshabilitados)
+            if (!isCredito) {
+                descuentoElement.value = 0;
+                impuestoElement.value = 0;
+                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                    $(impuestoElement).val(0).trigger('change');
+                } else if (impuestoContainer) {
+                    impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                }
             }
         }
 
         var html='<a href="#" title="Eliminar item nuevo" name="movimientos-items-eliminar.php?idR='+data.idInsercion+'" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" data-toggle="tooltip" onClick="deseaEliminarNuevoItem(this)" data-placement="right">X</a>';
         idEliminarNuevo.innerHTML = html;
 
-        // Recalcular subtotal con el impuesto si existe
-        if (data.tax && data.tax != '0' && data.creado == 1) {
+        // Recalcular subtotal con el impuesto si existe (solo para items débito)
+        if (!isCredito && data.tax && data.tax != '0' && data.creado == 1) {
             actualizarSubtotal('idNuevo');
         } else {
             // Llamar a totalizar() para recalcular el total considerando el nuevo item
@@ -1079,130 +1122,145 @@ function actualizarKPIs() {
 
 /**
  * Calcula y muestra el total neto, total abonos y total por cobrar
- * basado en los valores de la tabla 'tablaItems'.
+ * usando el método centralizado para garantizar consistencia con el KPI
  */
 function totalizarMovimientos() {
-    // Obtener el elemento de la tabla por su ID
-    var tabla = document.getElementById('tablaItems');
+    // Obtener parámetros de filtro de la URL actual
+    var urlParams = new URLSearchParams(window.location.search);
+    var filtros = {
+        mostrarAnuladas: urlParams.get('mostrarAnuladas') === '1',
+        tipo: urlParams.get('tipo') || null,
+        usuario: urlParams.get('usuario') || null,
+        desde: urlParams.get('desde') || null,
+        hasta: urlParams.get('hasta') || null
+    };
 
-    // Inicializar variables para almacenar valores totales
-    var totalNetoVenta = 0;
-    var totalAbonosVenta = 0;
-    var totalPorCobrarVenta = 0;
+    // Construir URL del endpoint con los filtros
+    var url = 'ajax-calcular-kpis-resumen.php?';
+    var params = [];
+    if (filtros.mostrarAnuladas) {
+        params.push('mostrarAnuladas=1');
+    }
+    if (filtros.tipo) {
+        params.push('tipo=' + encodeURIComponent(filtros.tipo));
+    }
+    if (filtros.usuario) {
+        params.push('usuario=' + encodeURIComponent(filtros.usuario));
+    }
+    if (filtros.desde) {
+        params.push('desde=' + encodeURIComponent(filtros.desde));
+    }
+    if (filtros.hasta) {
+        params.push('hasta=' + encodeURIComponent(filtros.hasta));
+    }
+    url += params.join('&');
 
-    var totalNetoCompra = 0;
-    var totalAbonosCompra = 0;
-    var totalPorCobrarCompra = 0;
+    // Llamar al endpoint centralizado
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response && response.success && response.kpis) {
+                var kpis = response.kpis;
+                
+                // Actualizar totales de ventas
+                var totalNetoVenta = kpis.totalVentas || 0;
+                var totalAbonosVenta = kpis.totalCobrado || 0;
+                var totalPorCobrarVenta = kpis.totalPorCobrar || 0;
+                
+                // Actualizar totales de compras
+                var totalNetoCompra = kpis.totalCompras || 0;
+                // Para compras, por ahora solo tenemos el total neto (no hay separación de abonos/por pagar en el método centralizado)
+                // Mantener la lógica anterior para compras por ahora
+                var totalAbonosCompra = 0;
+                var totalPorCobrarCompra = 0;
 
-    // Iterar a través de las filas de la tabla, comenzando desde el índice 1
-    for (let i = 1; i < tabla.rows.length; i++) {
-        // Obtener la fila actual
-        var fila = tabla.rows[i];
-        if (fila.classList.contains('child')) {
-            continue;
+                // Si la tabla existe, calcular totales de compras desde las filas (temporal hasta que se agregue al método centralizado)
+                var tabla = document.getElementById('tablaItems');
+                if (tabla) {
+                    for (let i = 1; i < tabla.rows.length; i++) {
+                        var fila = tabla.rows[i];
+                        if (fila.classList.contains('child')) {
+                            continue;
+                        }
+                        var celdaTotal = fila.querySelector('td[data-total-neto]');
+                        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
+                        if (celdaTotal.getAttribute('data-tipo') == 2) {
+                            var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
+                            var celdaAbonos = fila.querySelector('td[data-abonos]');
+                            var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
+                            if (celdaAbonos && celdaPorCobrar) {
+                                var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos')) || 0;
+                                var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar')) || 0;
+                                totalAbonosCompra += abonos;
+                                totalPorCobrarCompra += porCobrar;
+                            }
+                        }
+                    }
+                }
+
+                // Actualizar resumen de ventas
+                var elementTotalNetoVenta = document.getElementById('totalNetoVenta');
+                if (elementTotalNetoVenta) {
+                    elementTotalNetoVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
+                }
+                var elementAbonosVenta = document.getElementById('abonosNetoVenta');
+                if (elementAbonosVenta) {
+                    elementAbonosVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
+                }
+                var elementPorCobrarNetoVenta = document.getElementById('porCobrarNetoVenta');
+                if (elementPorCobrarNetoVenta) {
+                    elementPorCobrarNetoVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
+                }
+
+                // Actualizar resumen de compras
+                var elementTotalNetoCompra = document.getElementById('totalNetoCompra');
+                if (elementTotalNetoCompra) {
+                    elementTotalNetoCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
+                }
+                var elementAbonosCompra = document.getElementById('abonosNetoCompra');
+                if (elementAbonosCompra) {
+                    elementAbonosCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
+                }
+                var elementPorCobrarNetoCompra = document.getElementById('porCobrarNetoCompra');
+                if (elementPorCobrarNetoCompra) {
+                    elementPorCobrarNetoCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
+                }
+
+                // Actualizar footer de la tabla
+                var footerTotalVenta = document.getElementById('footerTotalVenta');
+                if (footerTotalVenta) {
+                    footerTotalVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
+                }
+                var footerCobradoVenta = document.getElementById('footerCobradoVenta');
+                if (footerCobradoVenta) {
+                    footerCobradoVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
+                }
+                var footerPorCobrarVenta = document.getElementById('footerPorCobrarVenta');
+                if (footerPorCobrarVenta) {
+                    footerPorCobrarVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
+                }
+
+                var footerTotalCompra = document.getElementById('footerTotalCompra');
+                if (footerTotalCompra) {
+                    footerTotalCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
+                }
+                var footerCobradoCompra = document.getElementById('footerCobradoCompra');
+                if (footerCobradoCompra) {
+                    footerCobradoCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
+                }
+                var footerPorCobrarCompra = document.getElementById('footerPorCobrarCompra');
+                if (footerPorCobrarCompra) {
+                    footerPorCobrarCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al calcular KPIs:', error);
+            // En caso de error, mantener valores en 0
         }
-
-        var celdaTotal = fila.querySelector('td[data-total-neto]');
-        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
-
-        // Obtener el valor neto total del atributo de datos
-        var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
-        // Obtenga el valor total de abonos del atributo de datos
-        var celdaAbonos = fila.querySelector('td[data-abonos]');
-        var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
-        if (!celdaAbonos || !celdaPorCobrar) { continue; }
-        var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
-        // Validar si abonos es un número válido, establecer en 0 si NaN
-        if (isNaN(abonos)) {
-            abonos = 0;
-        }
-        // Obtener el valor total por cobrar del atributo de datos
-        var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
-
-        if (celdaTotal.getAttribute('data-tipo') == 1) {
-
-            // Acumular el valor neto total del atributo de datos
-            totalNetoVenta = totalNetoVenta + total;
-            // Acumule el valor total de abonos del atributo de datos
-            totalAbonosVenta = totalAbonosVenta + abonos;
-            // Acumular el valor total por cobrar del atributo de datos
-            totalPorCobrarVenta = totalPorCobrarVenta + porCobrar;
-
-        } else if (celdaTotal.getAttribute('data-tipo') == 2) {
-
-            // Acumular el valor neto total del atributo de datos
-            totalNetoCompra = totalNetoCompra + total;
-            // Acumule el valor total de abonos del atributo de datos
-            totalAbonosCompra = totalAbonosCompra + abonos;
-            // Acumular el valor total por cobrar del atributo de datos
-            totalPorCobrarCompra = totalPorCobrarCompra + porCobrar;
-
-        }
-    }
-
-    // Actualiza total neto ventas
-    var totalNetoVentaFinal = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
-    var elementTotalNetoVenta = document.getElementById('totalNetoVenta');
-    elementTotalNetoVenta.innerHTML = '';
-    elementTotalNetoVenta.appendChild(document.createTextNode(totalNetoVentaFinal));
-    // Actualiza total abonos ventas
-    var totalAbonosVentaFinal = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
-    var elementAbonosVenta = document.getElementById('abonosNetoVenta');
-    elementAbonosVenta.innerHTML = '';
-    elementAbonosVenta.appendChild(document.createTextNode(totalAbonosVentaFinal));
-    // Actualiza total por cobrar ventas
-    var porCobrarNetoVentaFinal = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
-    var elementPorCobrarNetoVenta = document.getElementById('porCobrarNetoVenta');
-    elementPorCobrarNetoVenta.innerHTML = '';
-    elementPorCobrarNetoVenta.appendChild(document.createTextNode(porCobrarNetoVentaFinal));
-
-    // Actualiza total neto compras
-    var totalNetoCompraFinal = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
-    var elementTotalNetoCompra = document.getElementById('totalNetoCompra');
-    elementTotalNetoCompra.innerHTML = '';
-    elementTotalNetoCompra.appendChild(document.createTextNode(totalNetoCompraFinal));
-    // Actualiza total abonos compras
-    var totalAbonosCompraFinal = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
-    var elementAbonosCompra = document.getElementById('abonosNetoCompra');
-    elementAbonosCompra.innerHTML = '';
-    elementAbonosCompra.appendChild(document.createTextNode(totalAbonosCompraFinal));
-    // Actualiza total por cobrar compras
-    var porCobrarNetoCompraFinal = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
-    var elementPorCobrarNetoCompra = document.getElementById('porCobrarNetoCompra');
-    elementPorCobrarNetoCompra.innerHTML = '';
-    elementPorCobrarNetoCompra.appendChild(document.createTextNode(porCobrarNetoCompraFinal));
-
-    // Actualizar footer de la tabla con sumas separadas por tipo de factura
-    
-    // Footer para Facturas de Venta
-    var footerTotalVenta = document.getElementById('footerTotalVenta');
-    var footerCobradoVenta = document.getElementById('footerCobradoVenta');
-    var footerPorCobrarVenta = document.getElementById('footerPorCobrarVenta');
-
-    if (footerTotalVenta) {
-        footerTotalVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
-    }
-    if (footerCobradoVenta) {
-        footerCobradoVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
-    }
-    if (footerPorCobrarVenta) {
-        footerPorCobrarVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
-    }
-
-    // Footer para Facturas de Compra
-    var footerTotalCompra = document.getElementById('footerTotalCompra');
-    var footerCobradoCompra = document.getElementById('footerCobradoCompra');
-    var footerPorCobrarCompra = document.getElementById('footerPorCobrarCompra');
-
-    if (footerTotalCompra) {
-        footerTotalCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
-    }
-    if (footerCobradoCompra) {
-        footerCobradoCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
-    }
-    if (footerPorCobrarCompra) {
-        footerPorCobrarCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
-    }
+    });
 }
 
 /**
@@ -1215,11 +1273,13 @@ function totalizar(){
         return; // Si no existe la tabla, salir
     }
 
-    var totalSubtotalDebitos = 0;  // Subtotal de items tipo Débito (D) - suman (ya con descuentos aplicados)
-    var totalSubtotalCreditos = 0; // Subtotal de items tipo Crédito (C) - restan (ya con descuentos aplicados)
-    var totalDescuento = 0;
-    var totalImpuesto = 0;
-    var nuevostr  = "";
+    // Variables según la lógica correcta
+    var subtotalBruto = 0;  // 1. Suma de (precio × cantidad) de items débito ANTES de descuentos
+    var descuentosItems = 0;  // 2. Sumatoria de descuentos línea por línea en items débito
+    var descuentosComercialesGlobales = 0;  // 3. Suma de créditos ANTE_IMPUESTO
+    var impuestos = 0;  // 5. Suma de IVAs sobre base gravable de cada item débito
+    var anticiposSaldosFavor = 0;  // 7. Suma de créditos POST_IMPUESTO
+    
     for (let i = 1; i < tabla.rows.length; i++) {
         var fila = tabla.rows[i];
         if (fila.cells.length === 9) {
@@ -1228,114 +1288,170 @@ function totalizar(){
             }
 
             // Obtener el tipo de item (D= Débito, C= Crédito)
-            // Primero intentar desde el atributo data-item-type de la fila
             var itemType = fila.getAttribute('data-item-type');
-            
-            // Si no está en la fila, intentar desde el subtotal (columna 7)
             if (!itemType && fila.cells[7]) {
                 itemType = fila.cells[7].getAttribute('data-item-type');
             }
-            
-            // Si aún no se encuentra, usar 'D' por defecto
             if (!itemType) {
                 itemType = 'D';
             }
             
             var isCredito = (itemType === 'C');
-
-            // Obtener el subtotal ya calculado de la celda (columna 7, índice 7)
-            var subtotalCell = fila.cells[7];
-            if (!subtotalCell) {
-                continue;
-            }
+            var isDebito = !isCredito;
             
-            // Obtener el subtotal del atributo data-subtotal-anterior o del texto
-            var subtotalValue = 0;
-            if (subtotalCell.getAttribute('data-subtotal-anterior')) {
-                subtotalValue = parseFloat(subtotalCell.getAttribute('data-subtotal-anterior')) || 0;
-            } else {
-                // Si no tiene el atributo, intentar extraer del texto (quitar el signo $ y formateo)
-                var subtotalText = subtotalCell.textContent.trim();
-                // Remover $ y puntos de miles, reemplazar coma decimal por punto
-                subtotalText = subtotalText.replace(/^\$?\s*-?/, '').replace(/\./g, '').replace(',', '.');
-                subtotalValue = parseFloat(subtotalText) || 0;
-                // Si el texto tiene signo negativo, aplicar signo negativo
-                if (subtotalCell.textContent.trim().startsWith('-')) {
-                    subtotalValue = -Math.abs(subtotalValue);
+            // Para créditos, obtener application_time (por defecto ANTE_IMPUESTO)
+            var applicationTime = null;
+            if (isCredito) {
+                applicationTime = fila.getAttribute('data-application-time');
+                if (!applicationTime) {
+                    applicationTime = 'ANTE_IMPUESTO';
                 }
             }
-            
-            // Separar débitos y créditos usando los subtotales ya calculados
-            // Los subtotales ya incluyen los descuentos aplicados
-            if (isCredito) {
-                // Los créditos se suman como valores positivos para luego restarlos
-                totalSubtotalCreditos = totalSubtotalCreditos + Math.abs(subtotalValue);
-            } else {
-                // Los débitos se suman como valores positivos
-                totalSubtotalDebitos = totalSubtotalDebitos + Math.abs(subtotalValue);
-            }
 
-            // Obtener los elementos para calcular descuentos e impuestos
+            // Obtener elementos de la fila
             var precioInput = fila.cells[2] ? fila.cells[2].querySelector('input') : null;
             var descuentoInput = fila.cells[3] ? fila.cells[3].querySelector('input') : null;
             var cantidadInput = fila.cells[6] ? fila.cells[6].querySelector('input') : null;
             var selectImpuesto = fila.cells[4] ? fila.cells[4].querySelector('select') : null;
+            var subtotalCell = fila.cells[7];
             
-            // Calcular descuento e impuesto solo si los elementos existen
-            if (precioInput && descuentoInput && cantidadInput && selectImpuesto) {
-                var precio = parseFloat(precioInput.value) || 0;
-                var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
-                var cantidad = parseFloat(cantidadInput.value) || 0;
-                var opcionSeleccionada = selectImpuesto.selectedOptions[0];
-                var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
-                var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
+            if (!precioInput || !cantidadInput || !subtotalCell) {
+                continue;
+            }
 
-                var precioNeto = (precio * cantidad);
-                var descuento = precioNeto * (porcentajeDescuento / 100);
-                totalDescuento = totalDescuento + descuento;
-
-                if (impuestoValue > 0) {
-                    var impuesto = (precioNeto - descuento) * (impuestoValor / 100);
-                    totalImpuesto = totalImpuesto + impuesto;
+            var precio = parseFloat(precioInput.value) || 0;
+            var cantidad = parseFloat(cantidadInput.value) || 0;
+            
+            if (isDebito) {
+                // 1. Subtotal Bruto: precio × cantidad (antes de descuentos)
+                var precioPorCantidad = precio * cantidad;
+                subtotalBruto += precioPorCantidad;
+                
+                // 2. Descuentos de Items: descuento línea por línea
+                if (descuentoInput) {
+                    var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
+                    var descuentoLinea = precioPorCantidad * (porcentajeDescuento / 100);
+                    descuentosItems += descuentoLinea;
+                    
+                    // 5. Impuestos: sobre base gravable del item (después de descuento)
+                    if (selectImpuesto) {
+                        var opcionSeleccionada = selectImpuesto.selectedOptions[0];
+                        var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
+                        var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
+                        
+                        if (impuestoValue > 0 && impuestoValor > 0) {
+                            var baseGravableItem = precioPorCantidad - descuentoLinea;
+                            var impuestoItem = baseGravableItem * (impuestoValor / 100);
+                            impuestos += impuestoItem;
+                        }
+                    }
+                }
+            } else if (isCredito) {
+                // Obtener el subtotal del crédito
+                var subtotalValue = 0;
+                if (subtotalCell.getAttribute('data-subtotal-anterior')) {
+                    subtotalValue = Math.abs(parseFloat(subtotalCell.getAttribute('data-subtotal-anterior')) || 0);
+                } else {
+                    var subtotalText = subtotalCell.textContent.trim();
+                    subtotalText = subtotalText.replace(/^\$?\s*-?/, '').replace(/\./g, '').replace(',', '.');
+                    subtotalValue = Math.abs(parseFloat(subtotalText) || 0);
+                }
+                
+                // 3. Descuentos Comerciales Globales (ANTE_IMPUESTO) o 7. Anticipos (POST_IMPUESTO)
+                if (applicationTime === 'ANTE_IMPUESTO') {
+                    descuentosComercialesGlobales += subtotalValue;
+                } else {
+                    anticiposSaldosFavor += subtotalValue;
                 }
             }
         }
     }
 
-    // Calcular subtotal neto: débitos - créditos (ya incluyen descuentos aplicados)
-    var totalPrecio = totalSubtotalDebitos - totalSubtotalCreditos;
+    // 4. Subtotal Gravable: Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
+    var subtotalGrabable = subtotalBruto - descuentosItems - descuentosComercialesGlobales;
+    
+    // 6. Total Facturado: Subtotal Gravable + Impuestos
+    var totalFacturado = subtotalGrabable + impuestos;
+    
+    // VALOR ADICIONAL
+    var vlrAdicional = parseFloat(document.getElementById('vlrAdicional') ? document.getElementById('vlrAdicional').value : 0) || 0;
+    
+    // 8. Total Neto: Total Facturado - Anticipos + Valor Adicional
+    var totalNeto = totalFacturado - anticiposSaldosFavor + vlrAdicional;
 
-    //SUBTOTAL NETO
-    var totalPrecioFinal = "$"+numberFormat(totalPrecio, 0, ',', '.');
+    // Actualizar elementos del DOM según el orden del plan
+    // 1. SUBTOTAL BRUTO
+    var subtotalBrutoFinal = "$"+numberFormat(subtotalBruto, 0, ',', '.');
+    var idSubtotalBruto = document.getElementById('subtotalBruto');
+    if (idSubtotalBruto) {
+        idSubtotalBruto.innerHTML = '';
+        idSubtotalBruto.appendChild(document.createTextNode(subtotalBrutoFinal));
+    }
+
+    // 2. DESCUENTOS DE ÍTEMS (solo de items débito)
+    var negativo = descuentosItems === 0 ? '' : '-';
+    var descuentoFinal = negativo+"$"+numberFormat(descuentosItems, 0, ',', '.');
+    var idDescuento = document.getElementById('valorDescuento');
+    if (idDescuento) {
+        idDescuento.innerHTML = '';
+        idDescuento.appendChild(document.createTextNode(descuentoFinal));
+    }
+
+    // 3. DESCUENTOS COMERCIALES GLOBALES (créditos ANTE_IMPUESTO)
+    var negativoComerciales = descuentosComercialesGlobales === 0 ? '' : '-';
+    var descuentosComercialesFinal = negativoComerciales+"$"+numberFormat(descuentosComercialesGlobales, 0, ',', '.');
+    var idDescuentosComerciales = document.getElementById('descuentosComerciales');
+    if (idDescuentosComerciales) {
+        idDescuentosComerciales.innerHTML = '';
+        idDescuentosComerciales.appendChild(document.createTextNode(descuentosComercialesFinal));
+    }
+
+    // 4. SUBTOTAL GRABABLE
+    var subtotalGrabableFinal = "$"+numberFormat(subtotalGrabable, 0, ',', '.');
     var idSubtotal = document.getElementById('subtotal');
-    idSubtotal.innerHTML = '';
-    idSubtotal.appendChild(document.createTextNode(totalPrecioFinal));
+    if (idSubtotal) {
+        idSubtotal.innerHTML = '';
+        idSubtotal.appendChild(document.createTextNode(subtotalGrabableFinal));
+    }
 
-    //VALOR ADICIONAL
-    var vlrAdicional = parseFloat(document.getElementById('vlrAdicional').value);
+    // 5. IMPUESTOS
+    var impuestoFinal = "$"+numberFormat(impuestos, 0, ',', '.');
+    var idImpuesto = document.getElementById('valorImpuesto');
+    if (idImpuesto) {
+        idImpuesto.innerHTML = '';
+        idImpuesto.appendChild(document.createTextNode(impuestoFinal));
+    }
+
+    // 6. TOTAL FACTURADO
+    var totalFacturadoFinal = "$"+numberFormat(totalFacturado, 0, ',', '.');
+    var idTotalFacturado = document.getElementById('totalFacturado');
+    if (idTotalFacturado) {
+        idTotalFacturado.innerHTML = '';
+        idTotalFacturado.appendChild(document.createTextNode(totalFacturadoFinal));
+    }
+
+    // 7. ANTICIPOS O SALDOS A FAVOR (solo POST_IMPUESTO)
+    var anticiposFinal = anticiposSaldosFavor > 0 ? "-$"+numberFormat(anticiposSaldosFavor, 0, ',', '.') : "$0";
+    var idCreditos = document.getElementById('valorCreditos');
+    if (idCreditos) {
+        idCreditos.innerHTML = '';
+        idCreditos.appendChild(document.createTextNode(anticiposFinal));
+        idCreditos.style.color = anticiposSaldosFavor > 0 ? '#ff5722' : '';
+    }
+
+    // VALOR ADICIONAL
     var vlrAdicionalFinal = "$"+numberFormat(vlrAdicional, 0, ',', '.');
     var idValorAdicional = document.getElementById('valorAdicional');
-    idValorAdicional.innerHTML = '';
-    idValorAdicional.appendChild(document.createTextNode(vlrAdicionalFinal));
-
-    //TOTAL DESCUENTO
-    var negativo = totalDescuento === 0 ? '' : '-';
-    var descuentoFinal = negativo+"$"+numberFormat(totalDescuento, 0, ',', '.');
-    var idDescuento = document.getElementById('valorDescuento');
-    idDescuento.innerHTML = '';
-    idDescuento.appendChild(document.createTextNode(descuentoFinal));
-
-    //IMPUESTOS
-    var impuestoFinal = "$"+numberFormat(totalImpuesto, 0, ',', '.');
-    var idImpuesto = document.getElementById('valorImpuesto');
-    idImpuesto.innerHTML = '';
-    idImpuesto.appendChild(document.createTextNode(impuestoFinal));
+    if (idValorAdicional) {
+        idValorAdicional.innerHTML = '';
+        idValorAdicional.appendChild(document.createTextNode(vlrAdicionalFinal));
+    }
     
-    //TOTAL NETO: (Subtotal ya incluye descuentos) + Valor Adicional + Impuestos
-    // Nota: El subtotal ya incluye los descuentos aplicados en cada item, por lo que no se restan aquí
-    var totalNeto = totalPrecio + vlrAdicional + totalImpuesto;
+    // 8. TOTAL NETO A PAGAR
     var totalNetoFinal = "$"+numberFormat(totalNeto, 0, ',', '.');
     var idTotalNeto = document.getElementById('totalNeto');
-    idTotalNeto.innerHTML = '';
-    idTotalNeto.appendChild(document.createTextNode(totalNetoFinal));
+    if (idTotalNeto) {
+        idTotalNeto.innerHTML = '';
+        idTotalNeto.appendChild(document.createTextNode(totalNetoFinal));
+    }
 }

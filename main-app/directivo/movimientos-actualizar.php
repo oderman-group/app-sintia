@@ -11,8 +11,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-// Validaciones básicas (ya no se requiere "forma" - fcu_forma_pago)
-if (empty($_POST["fecha"]) or empty($_POST["detalle"]) or (isset($_POST["valor"]) && $_POST["valor"]=="") or empty($_POST["tipo"])) {
+// Validaciones básicas (ya no se requiere "forma" - fcu_forma_pago, ni "valor")
+if (empty($_POST["fecha"]) or empty($_POST["detalle"]) or empty($_POST["tipo"])) {
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
     echo '<script type="text/javascript">window.location.href="movimientos-editar.php?error=ER_DT_4&id='.urlencode(base64_encode($_POST['idU'])).'";</script>';
     exit();
@@ -119,7 +119,6 @@ try{
     // Asegurar que todos los valores sean strings válidos para mysqli_real_escape_string
     $fechaEscapada = mysqli_real_escape_string($conexion, (string)($fecha ?? ''));
     $detalleEscapado = mysqli_real_escape_string($conexion, (string)($_POST["detalle"] ?? ''));
-    $valorEscapado = mysqli_real_escape_string($conexion, (string)($_POST["valor"] ?? '0'));
     $tipoEscapado = mysqli_real_escape_string($conexion, (string)($_POST["tipo"] ?? ''));
     $obsEscapada = mysqli_real_escape_string($conexion, (string)($_POST["obs"] ?? ''));
     $usuarioEscapado = mysqli_real_escape_string($conexion, (string)($_POST["usuario"] ?? ''));
@@ -130,10 +129,10 @@ try{
     $idUEscapado = mysqli_real_escape_string($conexion, (string)($_POST['idU'] ?? ''));
     
     // Actualizar factura incluyendo el nuevo estado
+    // El campo fcu_valor (valor) ya no es editable, no se actualiza
     mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".finanzas_cuentas SET
     fcu_fecha='{$fechaEscapada}',
     fcu_detalle='{$detalleEscapado}',
-    fcu_valor='{$valorEscapado}',
     fcu_tipo='{$tipoEscapado}',
     fcu_observaciones='{$obsEscapada}',
     fcu_usuario='{$usuarioEscapado}',

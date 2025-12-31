@@ -127,13 +127,8 @@ $idRecurrente=Utilidades::generateCode("FCR");
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Descripción general <span style="color: red;">(*)</span></label>
-                                            <div class="col-sm-4">
+                                            <div class="col-sm-10">
                                                 <textarea name="detalle" cols="70" rows="2" class="form-control" required <?=$disabledPermiso;?>></textarea>
-                                            </div>
-
-                                            <label class="col-sm-2 control-label">Valor adicional <span style="color: red;">(*)</span></label>
-                                            <div class="col-sm-4">
-                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="0" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="0" onchange="totalizar(this)">
                                             </div>
 										</div>
 
@@ -261,12 +256,8 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                                 </tr>
                                                             <?php }?>
                                                             <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL:</td>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL GRABABLE:</td>
                                                                 <td align="left" colspan="2" id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
-                                                                <td align="left" colspan="2" id="valorAdicional" data-valor-adicional="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">DESCUENTO:</td>
@@ -275,6 +266,14 @@ $idRecurrente=Utilidades::generateCode("FCR");
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">IMPUESTO:</td>
                                                                 <td align="left" colspan="2" id="valorImpuesto">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">ANTICIPOS/CRÉDITOS:</td>
+                                                                <td align="left" colspan="2" id="valorCreditos" style="color: #ff5722;">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
+                                                                <td align="left" colspan="2" id="valorAdicional" data-valor-adicional="0">$0</td>
                                                             </tr>
                                                             <tr style="font-size: 15px; font-weight:bold;">
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">TOTAL NETO:</td>

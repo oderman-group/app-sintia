@@ -420,7 +420,7 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Valor adicional</label>
-													<input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" value="<?=$datosMovimiento['fcu_valor'] ?? 0;?>" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="<?=$datosMovimiento['fcu_valor'] ?? 0;?>" onchange="totalizar(this)">
+													<input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" value="0" required disabled data-vlr-adicional-anterior="0">
 												</div>
 											</div>
 										</div>
@@ -574,21 +574,30 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
                                                                         $itemType = isset($fila['item_type']) ? $fila['item_type'] : 'D';
                                                                         $isCredito = ($itemType == 'C');
                                                                         $rowClass = $isCredito ? 'item-credito' : '';
-                                                                        $nombreItem = $isCredito ? $fila['name'] . ' (Crédito)' : $fila['name'];
                                                                         $signoSubtotal = $isCredito ? '-' : '';
+                                                                        // Obtener application_time para créditos (por defecto ANTE_IMPUESTO si no existe)
+                                                                        $applicationTime = ($isCredito && isset($fila['application_time'])) ? $fila['application_time'] : ($isCredito ? 'ANTE_IMPUESTO' : null);
+                                                                        
+                                                                        // Construir nombre del item con información de aplicación para créditos
+                                                                        if ($isCredito) {
+                                                                            $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+                                                                            $nombreItem = $fila['name'] . ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
+                                                                        } else {
+                                                                            $nombreItem = $fila['name'];
+                                                                        }
                                                             ?>
-                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>">
+                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>"<?=$applicationTime ? ' data-application-time="'.$applicationTime.'"' : '';?>>
                                                                     <td><?=$fila['idtx'];?></td>
                                                                     <td><?=$nombreItem;?></td>
                                                                     <td>
                                                                         <input type="number" min="0" id="precio<?=$fila['idtx'];?>" data-precio="<?=$fila['priceTransaction'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['priceTransaction']?>" <?=$disabledPermiso;?>>
                                                                     </td>
                                                                     <td>
-                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$fila['discount']?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount']?>" <?=$disabledPermiso;?>>
+                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$fila['discount']?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount']?>" <?=$disabledPermiso;?><?=$isCredito ? ' disabled' : '';?>>
                                                                     </td>
                                                                     <td style="width: 150px; max-width: 150px;">
                                                                         <div class="col-sm-12" style="padding: 0px;">
-                                                                            <select class="form-control select2" id="impuesto<?=$fila['idtx'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" style="width: 100%;" <?=$disabledPermiso;?>>
+                                                                            <select class="form-control select2" id="impuesto<?=$fila['idtx'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" style="width: 100%;" <?=$disabledPermiso;?><?=$isCredito ? ' disabled' : '';?>>
                                                                                 <option value="0" name="0">Ninguno - (0%)</option>
                                                                                 <?php
                                                                                     $consulta= Movimientos::listarImpuestos($conexion, $config);
@@ -689,23 +698,39 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
                                                 <div class="col-md-6">
                                                     <div class="total-summary">
                                                         <div class="total-row">
-                                                            <span>SUBTOTAL:</span>
+                                                            <span>SUBTOTAL BRUTO:</span>
+                                                            <span id="subtotalBruto" data-subtotal-bruto="0">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) DESCUENTOS DE ÍTEMS:</span>
+                                                            <span id="valorDescuento" data-valor-descuento="0" style="color: #ff5722;">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) DESCUENTOS COMERCIALES GLOBALES:</span>
+                                                            <span id="descuentosComerciales" style="color: #ff5722;">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(=) SUBTOTAL GRABABLE:</span>
                                                             <span id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(+) IMPUESTOS:</span>
+                                                            <span id="valorImpuesto">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(=) TOTAL FACTURADO:</span>
+                                                            <span id="totalFacturado">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) ANTICIPOS O SALDOS A FAVOR:</span>
+                                                            <span id="valorCreditos" style="color: #ff5722;">$0</span>
                                                         </div>
                                                         <div class="total-row">
                                                             <span>VALOR ADICIONAL:</span>
                                                             <span id="valorAdicional" data-valor-adicional="0">$0</span>
                                                         </div>
                                                         <div class="total-row">
-                                                            <span>DESCUENTO:</span>
-                                                            <span id="valorDescuento" data-valor-descuento="0" style="color: #ff5722;">$0</span>
-                                                        </div>
-                                                        <div class="total-row">
-                                                            <span>IMPUESTO:</span>
-                                                            <span id="valorImpuesto">$0</span>
-                                                        </div>
-                                                        <div class="total-row">
-                                                            <span>TOTAL NETO:</span>
+                                                            <span>(=) TOTAL NETO A PAGAR:</span>
                                                             <span id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</span>
                                                         </div>
                                                     </div>
@@ -717,6 +742,16 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
                                             $(document).ready(function() {
                                                 // Inicializar totalizar para calcular correctamente los items crédito/débito
                                                 totalizar();
+                                                
+                                                // Deshabilitar campos de descuento e impuesto para items crédito existentes
+                                                $('#tablaItems tbody tr[data-item-type="C"]').each(function() {
+                                                    var $fila = $(this);
+                                                    var idItem = $fila.attr('id').replace('reg', '');
+                                                    if (idItem) {
+                                                        $('#descuento' + idItem).prop('disabled', true);
+                                                        $('#impuesto' + idItem).prop('disabled', true);
+                                                    }
+                                                });
                                                 
                                                 // Inicializar Select2 para los campos de impuesto con ancho fijo
                                                 $('#tablaItems select.select2').each(function() {

@@ -21,7 +21,9 @@ if ($numFacturas > 0) {
         }
         
         $vlrAdicional = !empty($resultado['fcu_valor']) ? floatval($resultado['fcu_valor']) : 0;
-        $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
+        // Usar el método centralizado para obtener todos los totales desglosados
+        $totalesFactura = Movimientos::calcularTotalesFactura($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
+        $totalNeto = $totalesFactura['total_neto'];
         $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
         
         // Asegurar que los valores sean números válidos
@@ -32,18 +34,20 @@ if ($numFacturas > 0) {
         
         $disabled = $porCobrar < 1 ? "disabled" : "";
         
-        // Obtener items de la factura con nombre del item
+        // Obtener items de la factura con nombre del item, application_time y ordenados (débitos primero)
         $itemsFactura = [];
         try {
             $consultaItems = mysqli_query($conexion, "SELECT ti.*, 
                 i.name as item_name, 
                 i.item_type,
+                COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time,
                 tax.fee as tax_fee, 
                 tax.name as tax_name 
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id=ti.id_item AND i.institucion=ti.institucion AND i.year=ti.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
-                WHERE ti.id_transaction='{$resultado['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}");
+                WHERE ti.id_transaction='{$resultado['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
+                ORDER BY i.item_type ASC, ti.id_autoincremental");
             if ($consultaItems) {
                 while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
                     $itemsFactura[] = $item;
@@ -118,12 +122,46 @@ if ($numFacturas > 0) {
                     </div>
                     <div class="col-md-6">
                         <h6 style="color: #667eea; font-weight: 600; margin-bottom: 10px;">
-                            <i class="fa fa-calculator"></i> Resumen Financiero
+                            <i class="fa fa-calculator"></i> Resumen Financiero Detallado
                         </h6>
                         <table class="table table-sm">
                             <tr>
-                                <td style="width: 50%; font-weight: 600;">Total Neto:</td>
-                                <td style="font-weight: bold;">$<?=number_format($totalNeto, 0, ",", ".")?></td>
+                                <td style="width: 50%; font-weight: 600;">Subtotal Bruto:</td>
+                                <td>$<?=number_format(floatval($totalesFactura['subtotal_bruto'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(-) Descuentos de Ítems:</td>
+                                <td style="color: #ff5722;">-$<?=number_format(floatval($totalesFactura['descuentos_items'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(-) Descuentos Comerciales:</td>
+                                <td style="color: #ff5722;">-$<?=number_format(floatval($totalesFactura['descuentos_comerciales_globales'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(=) Subtotal Gravable:</td>
+                                <td style="font-weight: bold;">$<?=number_format(floatval($totalesFactura['subtotal_gravable'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(+) Impuestos:</td>
+                                <td>$<?=number_format(floatval($totalesFactura['impuestos'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(=) Total Facturado:</td>
+                                <td style="font-weight: bold;">$<?=number_format(floatval($totalesFactura['total_facturado'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">(-) Anticipos/Saldos a Favor:</td>
+                                <td style="color: #ff5722;">-$<?=number_format(floatval($totalesFactura['anticipos_saldos_favor'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <?php if (floatval($totalesFactura['valor_adicional'] ?? 0) > 0) { ?>
+                            <tr>
+                                <td style="font-weight: 600;">Valor Adicional:</td>
+                                <td>$<?=number_format(floatval($totalesFactura['valor_adicional'] ?? 0), 0, ",", ".")?></td>
+                            </tr>
+                            <?php } ?>
+                            <tr style="border-top: 2px solid #667eea; background: #eef2ff;">
+                                <td style="font-weight: 700;">(=) Total Neto:</td>
+                                <td style="font-weight: 700;">$<?=number_format($totalNeto, 0, ",", ".")?></td>
                             </tr>
                             <tr>
                                 <td style="font-weight: 600;">Total Abonado:</td>
@@ -155,8 +193,6 @@ if ($numFacturas > 0) {
                             </thead>
                             <tbody>
                                 <?php 
-                                $totalDebitos = 0;
-                                $totalCreditos = 0;
                                 foreach ($itemsFactura as $item) {
                                     $precio = floatval($item['price'] ?? 0);
                                     $cantidad = floatval($item['cantity'] ?? 0);
@@ -164,42 +200,27 @@ if ($numFacturas > 0) {
                                     $taxFee = floatval($item['tax_fee'] ?? 0);
                                     $itemType = isset($item['item_type']) ? $item['item_type'] : 'D';
                                     $isCredito = ($itemType === 'C');
+                                    $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
                                     
-                                    $subtotal = $precio * $cantidad * (1 - $descuento / 100);
-                                    if ($item['tax'] != 0 && $taxFee > 0) {
-                                        $subtotal = $subtotal * (1 + $taxFee / 100);
-                                    }
-                                    
-                                    // Separar débitos y créditos
-                                    if ($isCredito) {
-                                        $totalCreditos += $subtotal;
-                                    } else {
-                                        $totalDebitos += $subtotal;
-                                    }
+                                    $subtotal = floatval($item['subtotal'] ?? 0);
                                     
                                     $rowClass = $isCredito ? 'item-credito' : '';
                                     $nombreItem = ($item['item_name'] ?? '') ?: ($item['description'] ?? 'N/A');
                                     if ($isCredito) {
-                                        $nombreItem .= ' (Crédito)';
+                                        $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+                                        $nombreItem .= ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
                                     }
                                     $signoSubtotal = $isCredito ? '-' : '';
                                 ?>
-                                <tr class="<?=$rowClass;?>">
-                                    <td><?=htmlspecialchars($nombreItem);?></td>
+                                <tr class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>">
+                                    <td><?=$nombreItem;?></td>
                                     <td><?=number_format($cantidad, 0, ",", ".")?></td>
                                     <td>$<?=number_format($precio, 0, ",", ".")?></td>
-                                    <td><?=number_format($descuento, 0, ",", ".")?>%</td>
-                                    <td><?=$taxFee > 0 ? number_format($taxFee, 0, ",", ".").'%' : 'N/A';?></td>
-                                    <td style="font-weight: bold;"><?=$signoSubtotal;?>$<?=number_format($subtotal, 0, ",", ".")?></td>
+                                    <td><?=$isCredito ? 'N/A' : number_format($descuento, 0, ",", ".") . '%';?></td>
+                                    <td><?=$isCredito ? 'N/A' : ($taxFee > 0 ? number_format($taxFee, 0, ",", ".").'%' : 'N/A');?></td>
+                                    <td style="font-weight: bold;"><?=$signoSubtotal;?>$<?=number_format(abs($subtotal), 0, ",", ".")?></td>
                                 </tr>
                                 <?php } ?>
-                                <?php 
-                                $totalNetoItems = $totalDebitos - $totalCreditos;
-                                ?>
-                                <tr style="background: #f8f9fa; font-weight: bold;">
-                                    <td colspan="5" align="right">Total Items:</td>
-                                    <td>$<?=number_format($totalNetoItems, 0, ",", ".")?></td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>

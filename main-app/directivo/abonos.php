@@ -453,7 +453,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                        											if ($consultaFacturasAbono && mysqli_num_rows($consultaFacturasAbono) > 0) {
                                                                    while ($facturaAbono = mysqli_fetch_array($consultaFacturasAbono, MYSQLI_BOTH)) {
                                                                        $vlrAdicional = !empty($facturaAbono['fcu_valor']) ? floatval($facturaAbono['fcu_valor']) : 0;
-                                                                       $totalNetoFactura = Movimientos::calcularTotalNeto($conexion, $config, $facturaAbono['fcu_id'], $vlrAdicional);
+                                                                       // Usar el método centralizado para obtener todos los totales desglosados
+                                                                       $totalesFactura = Movimientos::calcularTotalesFactura($conexion, $config, $facturaAbono['fcu_id'], $vlrAdicional);
+                                                                       $totalNetoFactura = $totalesFactura['total_neto'];
                                                                        $abonosFactura = Movimientos::calcularTotalAbonado($conexion, $config, $facturaAbono['fcu_id']);
                                                                        $porCobrarFactura = $totalNetoFactura - $abonosFactura;
 
@@ -465,10 +467,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
                                                                        $itemsFactura = [];
                                                                        try {
-                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name 
+                                                                           // Obtener items ordenados (débitos primero, créditos después) e incluir application_time
+                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.item_type, i.name as item_name, COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time
                                                                                FROM ".BD_FINANCIERA.".transaction_items ti
                                                                                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
-                                                                               WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}");
+                                                                               LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION["bd"]}
+                                                                               WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
+                                                                               ORDER BY i.item_type ASC, ti.id_autoincremental");
                                                                            if ($consultaItems) {
                                                                                while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
                                                                                    $itemsFactura[] = $item;
@@ -480,6 +485,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 
                                                                        $facturasAsociadas[] = [
                                                                            'datos' => $facturaAbono,
+                                                                           'totales' => $totalesFactura, // Incluir todos los totales desglosados
                                                                            'total_neto' => $totalNetoFactura,
                                                                            'abonos' => $abonosFactura,
                                                                            'por_cobrar' => $porCobrarFactura,
@@ -651,39 +657,149 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <?php if ($tipoTransaccion === INVOICE && !empty($facturasAsociadas)) { ?>
                                                         <div class="abono-details-section abono-details-table" style="margin-top: 20px;">
                                                             <h6>Facturas Asociadas</h6>
-                                                            <table class="table table-sm table-bordered">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Cod. Factura</th>
-                                                                        <th>Fecha</th>
-                                                                        <th>Concepto</th>
-                                                                        <th>Total Neto</th>
-                                                                        <th>Abonado</th>
-                                                                        <th>Por Cobrar</th>
-                                                                        <th>Valor del abono</th>
-                                                                        <th>Estado</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <?php foreach ($facturasAsociadas as $factura) { 
-                                                                        $datosFactura = $factura['datos'];
-                                                                        $estado = $datosFactura['fcu_status'] ?? '';
-                                                                        $badgeClass = ($estado == 'COBRADA') ? 'success' : 'warning';
-                                                                        $estadoTexto = ($estado == 'COBRADA') ? 'Cobrada' : 'Por Cobrar';
-                                                                    ?>
-                                                                    <tr>
-                                                                        <td><?=$datosFactura['fcu_id'] ?? 'N/A';?></td>
-                                                                        <td><?=$datosFactura['fcu_fecha'] ?? 'N/A';?></td>
-                                                                        <td><?=htmlspecialchars($datosFactura['fcu_detalle'] ?? 'Sin concepto');?></td>
-                                                                        <td>$<?=number_format(floatval($factura['total_neto'] ?? 0), 0, ",", ".");?></td>
-                                                                        <td style="color: green;">$<?=number_format(floatval($factura['abonos'] ?? 0), 0, ",", ".");?></td>
-                                                                        <td style="color: #e74c3c;">$<?=number_format(floatval($factura['por_cobrar'] ?? 0), 0, ",", ".");?></td>
-                                                                        <td>$<?=number_format(floatval($factura['valor_aplicado'] ?? 0), 0, ",", ".");?></td>
-                                                                        <td><span class="badge-estado <?=$badgeClass;?>"><?=$estadoTexto;?></span></td>
-                                                                    </tr>
-                                                                    <?php } ?>
-                                                                </tbody>
-                                                            </table>
+                                                            <?php foreach ($facturasAsociadas as $factura) { 
+                                                                $datosFactura = $factura['datos'];
+                                                                $estado = $datosFactura['fcu_status'] ?? '';
+                                                                $badgeClass = ($estado == 'COBRADA') ? 'success' : 'warning';
+                                                                $estadoTexto = ($estado == 'COBRADA') ? 'Cobrada' : 'Por Cobrar';
+                                                                $totales = $factura['totales'] ?? [];
+                                                                $itemsFactura = $factura['items'] ?? [];
+                                                                
+                                                                // Separar items débito y crédito
+                                                                $itemsDebito = [];
+                                                                $itemsCredito = [];
+                                                                foreach ($itemsFactura as $item) {
+                                                                    $itemType = $item['item_type'] ?? 'D';
+                                                                    if ($itemType == 'C') {
+                                                                        $itemsCredito[] = $item;
+                                                                    } else {
+                                                                        $itemsDebito[] = $item;
+                                                                    }
+                                                                }
+                                                                $itemsOrdenados = array_merge($itemsDebito, $itemsCredito);
+                                                            ?>
+                                                            <div style="margin-bottom: 25px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #fafafa;">
+                                                                <table class="table table-sm table-bordered" style="margin-bottom: 15px;">
+                                                                    <thead>
+                                                                        <tr style="background: #f5f5f5;">
+                                                                            <th>Cod. Factura</th>
+                                                                            <th>Fecha</th>
+                                                                            <th>Concepto</th>
+                                                                            <th>Total Neto</th>
+                                                                            <th>Abonado</th>
+                                                                            <th>Por Cobrar</th>
+                                                                            <th>Valor del abono</th>
+                                                                            <th>Estado</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td><strong><?=$datosFactura['fcu_id'] ?? 'N/A';?></strong></td>
+                                                                            <td><?=$datosFactura['fcu_fecha'] ?? 'N/A';?></td>
+                                                                            <td><?=htmlspecialchars($datosFactura['fcu_detalle'] ?? 'Sin concepto');?></td>
+                                                                            <td><strong>$<?=number_format(floatval($factura['total_neto'] ?? 0), 0, ",", ".");?></strong></td>
+                                                                            <td style="color: green;"><strong>$<?=number_format(floatval($factura['abonos'] ?? 0), 0, ",", ".");?></strong></td>
+                                                                            <td style="color: #e74c3c;"><strong>$<?=number_format(floatval($factura['por_cobrar'] ?? 0), 0, ",", ".");?></strong></td>
+                                                                            <td><strong>$<?=number_format(floatval($factura['valor_aplicado'] ?? 0), 0, ",", ".");?></strong></td>
+                                                                            <td><span class="badge-estado <?=$badgeClass;?>"><?=$estadoTexto;?></span></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                                
+                                                                <?php if (!empty($itemsOrdenados)) { ?>
+                                                                <div style="margin-bottom: 15px;">
+                                                                    <h6 style="font-size: 13px; font-weight: 600; color: #667eea; margin-bottom: 10px;">Ítems de la Factura</h6>
+                                                                    <table class="table table-sm table-bordered" style="font-size: 12px;">
+                                                                        <thead>
+                                                                            <tr style="background: #f5f5f5;">
+                                                                                <th>Ítem</th>
+                                                                                <th>Precio</th>
+                                                                                <th>Cantidad</th>
+                                                                                <th>Descuento</th>
+                                                                                <th>Impuesto</th>
+                                                                                <th>Subtotal</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <?php foreach ($itemsOrdenados as $item) {
+                                                                                $itemType = $item['item_type'] ?? 'D';
+                                                                                $isCredito = ($itemType == 'C');
+                                                                                $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
+                                                                                $nombreItem = htmlspecialchars($item['description'] ?? $item['item_name'] ?? 'N/A');
+                                                                                if ($isCredito) {
+                                                                                    $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+                                                                                    $nombreItem .= ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
+                                                                                }
+                                                                                $precio = floatval($item['price'] ?? 0);
+                                                                                $cantidad = floatval($item['cantity'] ?? 1);
+                                                                                $descuento = floatval($item['discount'] ?? 0);
+                                                                                $taxFee = floatval($item['tax_fee'] ?? 0);
+                                                                                $subtotal = floatval($item['subtotal'] ?? 0);
+                                                                                $signoSubtotal = $isCredito ? '-' : '';
+                                                                            ?>
+                                                                            <tr>
+                                                                                <td><?=$nombreItem;?></td>
+                                                                                <td>$<?=number_format($precio, 0, ",", ".");?></td>
+                                                                                <td><?=number_format($cantidad, 0, ",", ".");?></td>
+                                                                                <td><?=$isCredito ? 'N/A' : number_format($descuento, 0, ",", ".") . '%';?></td>
+                                                                                <td><?=$isCredito ? 'N/A' : ($taxFee > 0 ? number_format($taxFee, 0, ",", ".") . '%' : 'N/A');?></td>
+                                                                                <td><?=$signoSubtotal;?>$<?=number_format(abs($subtotal), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <?php } ?>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <?php } ?>
+                                                                
+                                                                <?php if (!empty($totales)) { ?>
+                                                                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 4px solid #667eea;">
+                                                                    <h6 style="font-size: 13px; font-weight: 600; color: #667eea; margin-bottom: 10px;">Resumen Financiero Detallado</h6>
+                                                                    <table class="table table-sm" style="margin-bottom: 0; font-size: 12px;">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600; width: 50%;">Subtotal Bruto:</td>
+                                                                                <td style="text-align: right; width: 50%;">$<?=number_format(floatval($totales['subtotal_bruto'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(-) Descuentos de Ítems:</td>
+                                                                                <td style="text-align: right; color: #ff5722;">-$<?=number_format(floatval($totales['descuentos_items'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(-) Descuentos Comerciales Globales:</td>
+                                                                                <td style="text-align: right; color: #ff5722;">-$<?=number_format(floatval($totales['descuentos_comerciales_globales'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(=) Subtotal Gravable:</td>
+                                                                                <td style="text-align: right; font-weight: 600;">$<?=number_format(floatval($totales['subtotal_gravable'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(+) Impuestos:</td>
+                                                                                <td style="text-align: right;">$<?=number_format(floatval($totales['impuestos'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(=) Total Facturado:</td>
+                                                                                <td style="text-align: right; font-weight: 600;">$<?=number_format(floatval($totales['total_facturado'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">(-) Anticipos o Saldos a Favor:</td>
+                                                                                <td style="text-align: right; color: #ff5722;">-$<?=number_format(floatval($totales['anticipos_saldos_favor'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <?php if (floatval($totales['valor_adicional'] ?? 0) > 0) { ?>
+                                                                            <tr>
+                                                                                <td style="text-align: right; font-weight: 600;">Valor Adicional:</td>
+                                                                                <td style="text-align: right;">$<?=number_format(floatval($totales['valor_adicional'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                            <?php } ?>
+                                                                            <tr style="border-top: 2px solid #667eea; background: #eef2ff;">
+                                                                                <td style="text-align: right; font-weight: 700; font-size: 13px;">(=) Total Neto a Pagar:</td>
+                                                                                <td style="text-align: right; font-weight: 700; font-size: 13px;">$<?=number_format(floatval($totales['total_neto'] ?? 0), 0, ",", ".");?></td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <?php } ?>
+                                                            </div>
+                                                            <?php } ?>
                                                         </div>
                                                         <?php } ?>
 

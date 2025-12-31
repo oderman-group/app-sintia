@@ -85,6 +85,153 @@ class Movimientos {
       return Servicios::SelectSql($sql);
     }
     /**
+     * Calcula todos los totales de una factura según la lógica legal correcta
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idTransaction
+     * @param float $valorAdicional
+     * @param string $tipo
+     * 
+     * @return array Array con todos los valores calculados:
+     *   - subtotal_bruto: Suma de (precio × cantidad) de items débito antes de descuentos
+     *   - descuentos_items: Sumatoria de descuentos línea por línea en items débito
+     *   - descuentos_comerciales_globales: Suma de créditos ANTE_IMPUESTO
+     *   - subtotal_gravable: Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
+     *   - impuestos: Sumatoria de IVAs sobre base gravable de cada item débito
+     *   - total_facturado: Subtotal Gravable + Impuestos
+     *   - anticipos_saldos_favor: Suma de créditos POST_IMPUESTO
+     *   - total_neto: Total Facturado - Anticipos + Valor Adicional
+     *   - valor_adicional: Valor adicional proporcionado
+    **/
+    public static function calcularTotalesFactura (
+        mysqli $conexion, 
+        array $config, 
+        string $idTransaction, 
+        float $valorAdicional = 0, 
+        string $tipo = TIPO_FACTURA
+    )
+    {
+        // Valores iniciales
+        $resultado = [
+            'subtotal_bruto' => 0.0,
+            'descuentos_items' => 0.0,
+            'descuentos_comerciales_globales' => 0.0,
+            'subtotal_gravable' => 0.0,
+            'impuestos' => 0.0,
+            'total_facturado' => 0.0,
+            'anticipos_saldos_favor' => 0.0,
+            'total_neto' => 0.0,
+            'valor_adicional' => $valorAdicional
+        ];
+
+        try {
+            // Construir WHERE según tipo de factura
+            $sqlWhere = "";
+            if ($tipo == TIPO_RECURRING) {
+                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
+                if (is_numeric($idTransaction)) {
+                    $sqlWhere = "ti.factura_recurrente_id = {$idTransactionEscapado}";
+                } else {
+                    $sqlBuscarId = "SELECT id FROM ".BD_FINANCIERA.".recurring_invoices 
+                                   WHERE id='{$idTransactionEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND is_deleted=0 LIMIT 1";
+                    $consultaId = mysqli_query($conexion, $sqlBuscarId);
+                    $recurringData = mysqli_fetch_array($consultaId, MYSQLI_BOTH);
+                    if ($recurringData && !empty($recurringData['id'])) {
+                        $idNumerico = (int)$recurringData['id'];
+                        $sqlWhere = "ti.factura_recurrente_id = {$idNumerico}";
+                    } else {
+                        $resultado['total_neto'] = $valorAdicional;
+                        return $resultado;
+                    }
+                }
+            } else {
+                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
+                $idTransactionNum = (int)$idTransactionEscapado;
+                $sqlWhere = "ti.id_transaction = {$idTransactionNum}";
+            }
+            
+            // Obtener todos los items con sus detalles
+            $consulta = mysqli_query($conexion, "SELECT 
+                ti.price,
+                ti.cantity,
+                ti.discount,
+                ti.subtotal,
+                ti.tax,
+                i.item_type,
+                COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time,
+                tax.fee AS tax_fee
+                FROM ".BD_FINANCIERA.".transaction_items ti
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
+                WHERE {$sqlWhere}
+                AND ti.type_transaction = '{$tipo}'
+                AND ti.institucion = {$config['conf_id_institucion']}
+                AND ti.year = {$_SESSION["bd"]}");
+            
+            if ($consulta && mysqli_num_rows($consulta) > 0) {
+                while ($item = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+                    $itemType = $item['item_type'] ?? 'D';
+                    $isDebito = ($itemType == 'D');
+                    $isCredito = ($itemType == 'C');
+                    $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
+                    
+                    $precio = floatval($item['price'] ?? 0);
+                    $cantidad = floatval($item['cantity'] ?? 0);
+                    $porcentajeDescuento = floatval($item['discount'] ?? 0);
+                    $subtotal = floatval($item['subtotal'] ?? 0);
+                    $taxFee = floatval($item['tax_fee'] ?? 0);
+                    
+                    if ($isDebito) {
+                        // 1. Subtotal Bruto: precio × cantidad (antes de descuentos)
+                        $precioPorCantidad = $precio * $cantidad;
+                        $resultado['subtotal_bruto'] += $precioPorCantidad;
+                        
+                        // 2. Descuentos de Items: descuento línea por línea
+                        $descuentoLinea = $precioPorCantidad * ($porcentajeDescuento / 100);
+                        $resultado['descuentos_items'] += $descuentoLinea;
+                        
+                        // 5. Impuestos: sobre base gravable del item (después de descuento)
+                        $baseGravableItem = $precioPorCantidad - $descuentoLinea;
+                        if ($taxFee > 0) {
+                            $impuestoItem = $baseGravableItem * ($taxFee / 100);
+                            $resultado['impuestos'] += $impuestoItem;
+                        }
+                    } elseif ($isCredito) {
+                        // 3. Descuentos Comerciales Globales (ANTE_IMPUESTO) o 7. Anticipos (POST_IMPUESTO)
+                        if ($applicationTime == 'ANTE_IMPUESTO') {
+                            $resultado['descuentos_comerciales_globales'] += abs($subtotal);
+                        } else {
+                            $resultado['anticipos_saldos_favor'] += abs($subtotal);
+                        }
+                    }
+                }
+            }
+            
+            // Calcular valores derivados
+            // 4. Subtotal Gravable: Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
+            $resultado['subtotal_gravable'] = $resultado['subtotal_bruto'] - $resultado['descuentos_items'] - $resultado['descuentos_comerciales_globales'];
+            
+            // 6. Total Facturado: Subtotal Gravable + Impuestos
+            $resultado['total_facturado'] = $resultado['subtotal_gravable'] + $resultado['impuestos'];
+            
+            // 8. Total Neto: Total Facturado - Anticipos + Valor Adicional
+            $resultado['total_neto'] = $resultado['total_facturado'] - $resultado['anticipos_saldos_favor'] + $valorAdicional;
+            
+            // Redondear todos los valores a 2 decimales
+            foreach ($resultado as $key => $value) {
+                $resultado[$key] = round($value, 2);
+            }
+            
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            // En caso de error, retornar valores con total_neto = valor_adicional
+            $resultado['total_neto'] = $valorAdicional;
+        }
+
+        return $resultado;
+    }
+
+    /**
      * Este metodo me calcula el total neto de un Movimiento
      * @param mysqli $conexion
      * @param array $config
@@ -102,60 +249,9 @@ class Movimientos {
         string $tipo = TIPO_FACTURA
     )
     {
-        $totalNeto = $valorAdicional;
-
-        try {
-            // Para facturas recurrentes, buscar por factura_recurrente_id; para facturas normales, por id_transaction
-            $sqlWhere = "";
-            if ($tipo == TIPO_RECURRING) {
-                // Para facturas recurrentes, buscar por factura_recurrente_id
-                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
-                // Verificar si es un ID numérico o alfanumérico
-                if (is_numeric($idTransaction)) {
-                    $sqlWhere = "ti.factura_recurrente_id = {$idTransactionEscapado}";
-                } else {
-                    // Si es alfanumérico, buscar el ID numérico en recurring_invoices
-                    $sqlBuscarId = "SELECT id FROM ".BD_FINANCIERA.".recurring_invoices 
-                                   WHERE id='{$idTransactionEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} AND is_deleted=0 LIMIT 1";
-                    $consultaId = mysqli_query($conexion, $sqlBuscarId);
-                    $recurringData = mysqli_fetch_array($consultaId, MYSQLI_BOTH);
-                    if ($recurringData && !empty($recurringData['id'])) {
-                        $idNumerico = (int)$recurringData['id'];
-                        $sqlWhere = "ti.factura_recurrente_id = {$idNumerico}";
-                    } else {
-                        // Si no se encuentra, retornar solo el valor adicional
-                        return $totalNeto;
-                    }
-                }
-            } else {
-                // Para facturas normales, buscar por id_transaction
-                $idTransactionEscapado = mysqli_real_escape_string($conexion, $idTransaction);
-                $idTransactionNum = (int)$idTransactionEscapado;
-                $sqlWhere = "ti.id_transaction = {$idTransactionNum}";
-            }
-            
-            // Calcular débitos y créditos por separado
-            $consulta = mysqli_query($conexion,"SELECT 
-                SUM(CASE WHEN i.item_type = 'C' THEN 0 ELSE (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END) END) AS totalDebitos,
-                SUM(CASE WHEN i.item_type = 'C' THEN (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END) ELSE 0 END) AS totalCreditos
-                FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
-                WHERE {$sqlWhere}
-                AND ti.type_transaction = '{$tipo}'
-                AND ti.institucion = {$config['conf_id_institucion']}
-                AND ti.year = {$_SESSION["bd"]}");
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-        if($consulta && mysqli_num_rows($consulta)>0) {
-            $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-            $totalDebitos = floatval($resultado['totalDebitos'] ?? 0);
-            $totalCreditos = floatval($resultado['totalCreditos'] ?? 0);
-            $totalNeto += ($totalDebitos - $totalCreditos);
-        }
-
-        return $totalNeto;
+        // Usar el método centralizado y retornar solo el total_neto
+        $totales = self::calcularTotalesFactura($conexion, $config, $idTransaction, $valorAdicional, $tipo);
+        return $totales['total_neto'];
     }
 
     /**
@@ -192,14 +288,15 @@ class Movimientos {
                     $facturaRecurrenteId = (int)$recurringData['id'];
                     
                     // Buscar items por factura_recurrente_id
-                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type
+                    // Orden: primero débitos (D), luego créditos (C)
+                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type, i.application_time
                     FROM ".BD_FINANCIERA.".transaction_items ti
                     INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                     WHERE ti.factura_recurrente_id = {$facturaRecurrenteId}
                     AND ti.type_transaction = '{$tipo}'
                     AND ti.institucion = {$config['conf_id_institucion']}
                     AND ti.year = {$_SESSION["bd"]}
-                    ORDER BY i.item_type DESC, ti.id_autoincremental");
+                    ORDER BY i.item_type ASC, ti.id_autoincremental");
                 } else {
                     // Si no se encuentra la factura recurrente, retornar consulta vacía
                     $consulta = mysqli_query($conexion, "SELECT NULL WHERE 1=0");
@@ -209,14 +306,15 @@ class Movimientos {
                 $idTransactionNum = (int)$idTransaction;
                 
                 // id_transaction es fcu_id (INT UNSIGNED)
-                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type
+                // Orden: primero débitos (D), luego créditos (C)
+                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type, i.application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                 WHERE ti.id_transaction = {$idTransactionNum}
                 AND ti.type_transaction = '{$tipo}'
                 AND ti.institucion = {$config['conf_id_institucion']}
                 AND ti.year = {$_SESSION["bd"]}
-                ORDER BY i.item_type DESC, ti.id_autoincremental");
+                ORDER BY i.item_type ASC, ti.id_autoincremental");
             }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -275,17 +373,28 @@ class Movimientos {
 
         $itemType = !empty($POST["item_type"]) ? $POST["item_type"] : 'D';
         
+        // Si es crédito, obtener application_time, sino NULL
+        $applicationTime = null;
+        if ($itemType == 'C') {
+            $applicationTime = !empty($POST["application_time"]) ? $POST["application_time"] : 'ANTE_IMPUESTO';
+        }
+        
         try {
             // id_order es AUTO_INCREMENT, no se incluye en el INSERT
-            $sql = "INSERT INTO ".BD_FINANCIERA.".items (name, price, tax, description, item_type, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO ".BD_FINANCIERA.".items (name, price, tax, description, item_type, application_time, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $POST["nombre"], PDO::PARAM_STR);
             $stmt->bindParam(2, $POST["precio"], PDO::PARAM_STR);
             $stmt->bindParam(3, $POST["iva"], PDO::PARAM_STR);
             $stmt->bindParam(4, $POST["descrip"], PDO::PARAM_STR);
             $stmt->bindParam(5, $itemType, PDO::PARAM_STR);
-            $stmt->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
+            if ($applicationTime !== null) {
+                $stmt->bindParam(6, $applicationTime, PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(6, null, PDO::PARAM_NULL);
+            }
+            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
             
             // Retornar el id_order generado (AUTO_INCREMENT)
@@ -363,6 +472,12 @@ class Movimientos {
         $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $itemType = !empty($POST["item_type"]) ? $POST["item_type"] : 'D';
+        
+        // Si es crédito, obtener application_time, sino NULL
+        $applicationTime = null;
+        if ($itemType == 'C') {
+            $applicationTime = !empty($POST["application_time"]) ? $POST["application_time"] : 'ANTE_IMPUESTO';
+        }
 
         try {
             // item_id es INT UNSIGNED, convertir a int para la consulta
@@ -375,16 +490,21 @@ class Movimientos {
             // year es char(4), convertir a string
             $year = (string)$_SESSION["bd"];
             
-            $sql = "UPDATE ".BD_FINANCIERA.".items SET name=?, price=?, tax=?, description=?, item_type=? WHERE item_id=? AND institucion=? AND year=?";
+            $sql = "UPDATE ".BD_FINANCIERA.".items SET name=?, price=?, tax=?, description=?, item_type=?, application_time=? WHERE item_id=? AND institucion=? AND year=?";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $POST["nombre"], PDO::PARAM_STR);
             $stmt->bindParam(2, $POST["precio"], PDO::PARAM_STR);
             $stmt->bindParam(3, $POST["iva"], PDO::PARAM_STR);
             $stmt->bindParam(4, $POST["descrip"], PDO::PARAM_STR);
             $stmt->bindParam(5, $itemType, PDO::PARAM_STR);
-            $stmt->bindParam(6, $itemId, PDO::PARAM_INT);
-            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(8, $year, PDO::PARAM_STR);
+            if ($applicationTime !== null) {
+                $stmt->bindParam(6, $applicationTime, PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(6, null, PDO::PARAM_NULL);
+            }
+            $stmt->bindParam(7, $itemId, PDO::PARAM_INT);
+            $stmt->bindParam(8, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(9, $year, PDO::PARAM_STR);
             $stmt->execute();
             
             // Verificar que se actualizó al menos una fila
@@ -1306,8 +1426,8 @@ class Movimientos {
         try{
             // Las facturas recurrentes no tienen método de pago ni cuenta bancaria al crearse
             // Estos se definen cuando se procesa el pago real
-            // Solo incluimos las columnas que existen en la tabla (sin status)
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "','" . $POST["valor"] . "','" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            // El campo additional_value (valor) ya no es editable, se usa 0 por defecto
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "', 0, '" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
         }
@@ -1376,8 +1496,8 @@ class Movimientos {
 
         try {
             // Las facturas recurrentes no tienen método de pago ni cuenta bancaria
-            // Solo actualizamos las columnas que existen en la tabla
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".recurring_invoices SET detail='".mysqli_real_escape_string($conexion, $POST["detalle"])."', user='".mysqli_real_escape_string($conexion, $POST["usuario"])."', days_in_month='".mysqli_real_escape_string($conexion, $dias)."', observation='".mysqli_real_escape_string($conexion, $POST["obs"])."', invoice_type='".mysqli_real_escape_string($conexion, $POST["tipo"])."', additional_value='".mysqli_real_escape_string($conexion, $POST["valor"])."' WHERE id='".mysqli_real_escape_string($conexion, $POST["id"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            // El campo additional_value (valor) ya no es editable, no se actualiza
+            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".recurring_invoices SET detail='".mysqli_real_escape_string($conexion, $POST["detalle"])."', user='".mysqli_real_escape_string($conexion, $POST["usuario"])."', days_in_month='".mysqli_real_escape_string($conexion, $dias)."', observation='".mysqli_real_escape_string($conexion, $POST["obs"])."', invoice_type='".mysqli_real_escape_string($conexion, $POST["tipo"])."' WHERE id='".mysqli_real_escape_string($conexion, $POST["id"])."' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -1483,11 +1603,24 @@ class Movimientos {
                     // Si no existe, $taxValue queda como NULL
                 }
                 
-                // Construir el INSERT con o sin tax según corresponda
+                // Obtener item_type y application_time del item desde la tabla items
+                $itemType = 'D'; // Por defecto débito
+                $applicationTime = 'NULL'; // Por defecto NULL
+                $itemIdParaConsulta = (int)$fila['id_item'];
+                $consultaItemInfo = mysqli_query($conexion, "SELECT item_type, application_time FROM ".BD_FINANCIERA.".items WHERE item_id={$itemIdParaConsulta} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
+                if ($consultaItemInfo && mysqli_num_rows($consultaItemInfo) > 0) {
+                    $itemInfo = mysqli_fetch_array($consultaItemInfo, MYSQLI_BOTH);
+                    $itemType = !empty($itemInfo['item_type']) ? mysqli_real_escape_string($conexion, $itemInfo['item_type']) : 'D';
+                    if (!empty($itemInfo['application_time'])) {
+                        $applicationTime = "'".mysqli_real_escape_string($conexion, $itemInfo['application_time'])."'";
+                    }
+                }
+                
+                // Construir el INSERT con o sin tax según corresponda, incluyendo item_type y application_time
                 if ($taxValue === null) {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL)";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL, '{$itemType}', {$applicationTime})";
                 } else {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue})";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue}, '{$itemType}', {$applicationTime})";
                 }
                 
                 $resultadoItems = mysqli_query($conexion, $sqlItems);
@@ -1553,6 +1686,122 @@ class Movimientos {
     }
 
     /**
+     * Calcula los KPIs y resumen de facturas de manera centralizada
+     * Este método debe ser usado en todas las páginas que necesiten estos cálculos para garantizar consistencia
+     * 
+     * @param mysqli $conexion
+     * @param array $config
+     * @param array $filtros Filtros opcionales:
+     *   - 'mostrarAnuladas' => bool (default: false)
+     *   - 'excluirEnProceso' => bool (default: true)
+     *   - 'tipo' => int|null (1=Factura Venta, 2=Factura Compra, null=todos)
+     *   - 'usuario' => string|null (ID del usuario)
+     *   - 'desde' => string|null (fecha desde YYYY-MM-DD)
+     *   - 'hasta' => string|null (fecha hasta YYYY-MM-DD)
+     * 
+     * @return array Array con las siguientes claves:
+     *   - 'totalVentas' => float
+     *   - 'totalCompras' => float
+     *   - 'totalPorCobrar' => float (solo facturas venta con saldo pendiente > 0)
+     *   - 'totalCobrado' => float (suma de todos los abonos de facturas venta)
+     */
+    public static function calcularKPIsResumen(
+        mysqli $conexion,
+        array $config,
+        array $filtros = []
+    )
+    {
+        $resultado = [
+            'totalVentas' => 0.0,
+            'totalCompras' => 0.0,
+            'totalPorCobrar' => 0.0,
+            'totalCobrado' => 0.0
+        ];
+
+        try {
+            // Construir filtros SQL
+            $filtroAnuladas = '';
+            if (empty($filtros['mostrarAnuladas']) || !$filtros['mostrarAnuladas']) {
+                $filtroAnuladas = " AND fc.fcu_anulado = 0";
+            }
+
+            $filtroEnProceso = '';
+            if (empty($filtros['excluirEnProceso']) || $filtros['excluirEnProceso']) {
+                $filtroEnProceso = " AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')";
+            }
+
+            $filtroTipo = '';
+            if (!empty($filtros['tipo']) && ($filtros['tipo'] == 1 || $filtros['tipo'] == 2)) {
+                $filtroTipo = " AND fc.fcu_tipo = " . intval($filtros['tipo']);
+            }
+
+            $filtroUsuario = '';
+            if (!empty($filtros['usuario'])) {
+                $usuarioEscapado = mysqli_real_escape_string($conexion, $filtros['usuario']);
+                $filtroUsuario = " AND fc.fcu_usuario = '{$usuarioEscapado}'";
+            }
+
+            $filtroFechaDesde = '';
+            if (!empty($filtros['desde'])) {
+                $fechaDesdeEscapada = mysqli_real_escape_string($conexion, $filtros['desde']);
+                $filtroFechaDesde = " AND fc.fcu_fecha >= '{$fechaDesdeEscapada}'";
+            }
+
+            $filtroFechaHasta = '';
+            if (!empty($filtros['hasta'])) {
+                $fechaHastaEscapada = mysqli_real_escape_string($conexion, $filtros['hasta']);
+                $filtroFechaHasta = " AND fc.fcu_fecha <= '{$fechaHastaEscapada}'";
+            }
+
+            // Consulta base
+            $sql = "SELECT fc.fcu_id, fc.fcu_tipo, fc.fcu_valor 
+                    FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
+                    WHERE fc.institucion = {$config['conf_id_institucion']} 
+                    AND fc.year = {$_SESSION["bd"]}
+                    {$filtroAnuladas}
+                    {$filtroEnProceso}
+                    {$filtroTipo}
+                    {$filtroUsuario}
+                    {$filtroFechaDesde}
+                    {$filtroFechaHasta}";
+
+            $consultaFacturas = mysqli_query($conexion, $sql);
+
+            if ($consultaFacturas) {
+                while ($factura = mysqli_fetch_array($consultaFacturas, MYSQLI_BOTH)) {
+                    $vlrAdicional = !empty($factura['fcu_valor']) ? floatval($factura['fcu_valor']) : 0.0;
+                    $totalNeto = self::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $vlrAdicional);
+                    $abonos = self::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
+                    $porCobrar = $totalNeto - $abonos;
+
+                    if ($factura['fcu_tipo'] == 1) {
+                        // Factura Venta
+                        $resultado['totalVentas'] += $totalNeto;
+                        // Sumar TODOS los abonos de facturas de venta (independientemente del estado)
+                        $resultado['totalCobrado'] += $abonos;
+                        // Sumar el por cobrar de todas las facturas de venta con saldo pendiente > 0
+                        if ($porCobrar > 0) {
+                            $resultado['totalPorCobrar'] += $porCobrar;
+                        }
+                    } else if ($factura['fcu_tipo'] == 2) {
+                        // Factura Compra
+                        $resultado['totalCompras'] += $totalNeto;
+                    }
+                }
+            }
+
+            // Redondear todos los valores a 2 decimales
+            foreach ($resultado as $key => $value) {
+                $resultado[$key] = round($value, 2);
+            }
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+        }
+
+        return $resultado;
+    }
+
+    /**
      * Devuelve información extendida de una factura y sus ítems
      * @param mysqli $conexion
      * @param array $config
@@ -1571,7 +1820,7 @@ class Movimientos {
         ];
 
         try {
-            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2
+            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, fc.fcu_id AS id_nuevo_movimientos
                 FROM ".BD_FINANCIERA.".finanzas_cuentas fc
                 LEFT JOIN ".BD_GENERAL.".usuarios uss
                     ON uss.uss_id = fc.fcu_usuario
@@ -1591,14 +1840,14 @@ class Movimientos {
         }
 
         try {
-            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.name as item_name, i.item_type
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.name as item_name, i.item_type, COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION['bd']}
                 LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION['bd']}
                 WHERE ti.id_transaction='{$idFactura}'
                 AND ti.institucion={$config['conf_id_institucion']}
                 AND ti.year={$_SESSION['bd']}
-                ORDER BY i.item_type DESC, ti.id_autoincremental");
+                ORDER BY i.item_type ASC, ti.id_autoincremental");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
             $consultaItems = false;
@@ -1910,10 +2159,8 @@ class Movimientos {
     )
     {
         try {
-            // Consulta corregida para calcular correctamente los totales considerando items tipo débito/crédito y taxes
+            // Usa la misma lógica de calcularTotalesFactura() para calcular el total neto
             // Solo considera facturas de venta (fcu_tipo = 1) - sin filtrar por estado para mostrar todos los clientes con facturas
-            // Usa subconsulta para calcular totalNetoItems similar a TotalIngresosEgresos
-            // Incluye todos los campos necesarios para nombreCompletoDelUsuario
             $consulta = mysqli_query($conexion, "SELECT 
                 fc.fcu_usuario as uss_id,
                 uss.uss_nombre, 
@@ -1921,35 +2168,31 @@ class Movimientos {
                 uss.uss_apellido1, 
                 uss.uss_apellido2,
                 uss.uss_id,
-                SUM(CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNetoItems, 0)) AS totalPagado
+                SUM(CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNeto, 0)) AS totalPagado
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             INNER JOIN ".BD_GENERAL.".usuarios uss ON uss.uss_id = fc.fcu_usuario 
                 AND uss.institucion = {$config['conf_id_institucion']} 
                 AND uss.year = {$_SESSION["bd"]}
             LEFT JOIN (
                 SELECT 
-                    ti.id_transaction,
-                    SUM(
-                        CASE 
-                            WHEN i.item_type = 'C' THEN 
-                                -1 * (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                            ELSE 
-                                (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                        END
-                    ) AS totalNetoItems,
-                    ti.institucion,
-                    ti.year
-                FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti.tax 
-                    AND tax.institucion = ti.institucion 
-                    AND tax.year = ti.year
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item 
-                    AND i.institucion = ti.institucion 
-                    AND i.year = ti.year
-                WHERE ti.type_transaction = '".TIPO_FACTURA."'
-                    AND ti.institucion = {$config['conf_id_institucion']} 
-                    AND ti.year = {$_SESSION["bd"]}
-                GROUP BY ti.id_transaction, ti.institucion, ti.year
+                    ti_sub.id_transaction,
+                    ti_sub.institucion,
+                    ti_sub.year,
+                    -- Total Neto = Subtotal Gravable + Impuestos - Anticipos
+                    (
+                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                    ) AS totalNeto
+                FROM ".BD_FINANCIERA.".transaction_items ti_sub
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
+                WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
+                    AND ti_sub.institucion = {$config['conf_id_institucion']} 
+                    AND ti_sub.year = {$_SESSION["bd"]}
+                GROUP BY ti_sub.id_transaction, ti_sub.institucion, ti_sub.year
             ) ti ON ti.id_transaction = fc.fcu_id 
                 AND ti.institucion = fc.institucion 
                 AND ti.year = fc.year
@@ -1982,44 +2225,56 @@ class Movimientos {
     )
     {
         try {
+            // Subconsulta que calcula el total_neto siguiendo la lógica de calcularTotalesFactura()
+            // Lógica: Total Neto = (Subtotal Gravable + Impuestos - Anticipos) + fcu_valor
+            // donde: Subtotal Gravable = Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
-                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNetoItems, 0)) ELSE 0 END) AS totalIngresos,
-                SUM(CASE WHEN fc.fcu_tipo = 2 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNetoItems, 0)) ELSE 0 END) AS totalEgresos,
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNeto, 0)) ELSE 0 END) AS totalIngresos,
+                SUM(CASE WHEN fc.fcu_tipo = 2 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNeto, 0)) ELSE 0 END) AS totalEgresos,
                 SUM(CASE WHEN fc.fcu_tipo = 1 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosVentas,
                 SUM(CASE WHEN fc.fcu_tipo = 2 THEN IFNULL(pi.totalAbonos, 0) ELSE 0 END) AS totalAbonosEgreso,
-                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNetoItems, 0)) ELSE 0 END) AS totalFacturado
+                SUM(CASE WHEN fc.fcu_tipo = 1 THEN (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNeto, 0)) ELSE 0 END) AS totalFacturado
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
-                SELECT ti.id_transaction, 
-                    SUM(
-                        CASE 
-                            WHEN i.item_type = 'C' THEN 
-                                -1 * (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                            ELSE 
-                                (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                        END
-                    ) AS totalNetoItems, 
-                    ti.institucion, 
-                    ti.year
-                FROM ".BD_FINANCIERA.".transaction_items ti 
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = ti.institucion AND i.year = ti.year
-                WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction, ti.institucion, ti.year
-            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
+                SELECT 
+                    ti_sub.id_transaction,
+                    ti_sub.institucion,
+                    ti_sub.year,
+                    -- Total Neto = Subtotal Gravable + Impuestos - Anticipos
+                    -- Subtotal Gravable = Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
+                    (
+                        -- Subtotal Bruto (precio × cantidad items débito)
+                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        -- Descuentos Items (descuento línea por línea items débito)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        -- Descuentos Comerciales Globales (items crédito ANTE_IMPUESTO)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        -- Impuestos (sobre base gravable items débito)
+                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        -- Anticipos (items crédito POST_IMPUESTO)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                    ) AS totalNeto
+                FROM ".BD_FINANCIERA.".transaction_items ti_sub
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
+                WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
+                    AND ti_sub.institucion = {$config['conf_id_institucion']}
+                    AND ti_sub.year = {$_SESSION["bd"]}
+                GROUP BY ti_sub.id_transaction, ti_sub.institucion, ti_sub.year
+            ) ti ON ti.id_transaction = fc.fcu_id AND ti.institucion = fc.institucion AND ti.year = fc.year
             LEFT JOIN (
                 SELECT pi.invoiced, pi.institucion, pi.year, SUM(CAST(pi.payment AS DECIMAL(12, 2))) AS totalAbonos
                 FROM ".BD_FINANCIERA.".payments_invoiced pi
                 WHERE pi.is_deleted = 0
-                    AND pi.institucion={$config['conf_id_institucion']} 
-                    AND pi.year={$_SESSION["bd"]}
+                    AND pi.institucion = {$config['conf_id_institucion']} 
+                    AND pi.year = {$_SESSION["bd"]}
                 GROUP BY pi.invoiced, pi.institucion, pi.year
             ) pi ON pi.invoiced = fc.fcu_id AND pi.institucion = fc.institucion AND pi.year = fc.year
             WHERE fc.fcu_anulado = 0
               AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
-              AND fc.institucion={$config['conf_id_institucion']}
-              AND fc.year={$_SESSION["bd"]}
+              AND fc.institucion = {$config['conf_id_institucion']}
+              AND fc.year = {$_SESSION["bd"]}
             GROUP BY mes
             ORDER BY mes");
         } catch (Exception $e) {
@@ -2042,33 +2297,37 @@ class Movimientos {
     )
     {
         try {
+            // Usa la misma lógica de calcularTotalesFactura() para calcular el total neto
             $consulta = mysqli_query($conexion, "SELECT 
                 LPAD(MONTH(fc.fcu_fecha), 2, '0') AS mes,
                 SUM(
                     GREATEST(
-                        (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNetoItems, 0)) - IFNULL(pi.totalAbonos, 0),
+                        (CAST(fc.fcu_valor AS DECIMAL(12, 2)) + IFNULL(ti.totalNeto, 0)) - IFNULL(pi.totalAbonos, 0),
                         0
                     )
                 ) AS totalPorCobrar
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             LEFT JOIN (
-                SELECT ti.id_transaction, 
-                    SUM(
-                        CASE 
-                            WHEN i.item_type = 'C' THEN 
-                                -1 * (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                            ELSE 
-                                (ti.subtotal + CASE WHEN ti.tax != 0 AND ti.tax IS NOT NULL THEN (ti.subtotal * (tax.fee / 100)) ELSE 0 END)
-                        END
-                    ) AS totalNetoItems, 
-                    ti.institucion, 
-                    ti.year
-                FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion = ti.institucion AND tax.year = ti.year
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = ti.institucion AND i.year = ti.year
-                WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                GROUP BY ti.id_transaction, ti.institucion, ti.year
-            ) ti ON fc.fcu_id = ti.id_transaction AND ti.institucion=fc.institucion AND ti.year=fc.year
+                SELECT 
+                    ti_sub.id_transaction,
+                    ti_sub.institucion,
+                    ti_sub.year,
+                    -- Total Neto = Subtotal Gravable + Impuestos - Anticipos
+                    (
+                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                    ) AS totalNeto
+                FROM ".BD_FINANCIERA.".transaction_items ti_sub
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
+                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
+                WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
+                    AND ti_sub.institucion = {$config['conf_id_institucion']}
+                    AND ti_sub.year = {$_SESSION["bd"]}
+                GROUP BY ti_sub.id_transaction, ti_sub.institucion, ti_sub.year
+            ) ti ON ti.id_transaction = fc.fcu_id AND ti.institucion = fc.institucion AND ti.year = fc.year
             LEFT JOIN (
                 SELECT pi.invoiced, SUM(CAST(pi.payment AS DECIMAL(12, 2))) AS totalAbonos, pi.institucion, pi.year
                 FROM ".BD_FINANCIERA.".payments_invoiced pi 
@@ -2356,8 +2615,8 @@ class Movimientos {
                         
                         $sqlItem = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
                             id_transaction, type_transaction, discount, cantity, subtotal,
-                            id_item, institucion, year, description, price, tax
-                        ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            id_item, institucion, year, description, price, tax, item_type, application_time
+                        ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                         
                         $stmtItem = $conexionPDO->prepare($sqlItem);
                         $tipoTransaction = TIPO_FACTURA;
@@ -2391,6 +2650,30 @@ class Movimientos {
                         // Usar item_id del array, que viene del POST (es item_id de la tabla items)
                         $itemIdParaInsert = (int)($item['id'] ?? $item['item_id'] ?? 0);
                         
+                        // Obtener item_type y application_time del item desde la tabla items
+                        $itemType = 'D'; // Por defecto débito
+                        $applicationTime = null;
+                        try {
+                            $sqlCheckItem = "SELECT item_type, application_time FROM ".BD_FINANCIERA.".items 
+                                           WHERE item_id=? AND institucion=? AND year=? LIMIT 1";
+                            $stmtCheckItem = $conexionPDO->prepare($sqlCheckItem);
+                            $stmtCheckItem->bindValue(1, $itemIdParaInsert, PDO::PARAM_INT);
+                            $stmtCheckItem->bindValue(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+                            $stmtCheckItem->bindValue(3, $_SESSION["bd"], PDO::PARAM_INT);
+                            $stmtCheckItem->execute();
+                            $itemResult = $stmtCheckItem->fetch(PDO::FETCH_ASSOC);
+                            if ($itemResult) {
+                                $itemType = !empty($itemResult['item_type']) ? $itemResult['item_type'] : 'D';
+                                if (!empty($itemResult['application_time'])) {
+                                    $applicationTime = $itemResult['application_time'];
+                                }
+                            }
+                        } catch (Exception $e) {
+                            // Si hay error, usar valores por defecto
+                            $itemType = 'D';
+                            $applicationTime = null;
+                        }
+                        
                         $stmtItem->bindValue(1, $fcuId, PDO::PARAM_INT);
                         $stmtItem->bindValue(2, $tipoTransaction, PDO::PARAM_STR);
                         $stmtItem->bindValue(3, $cantidadItem, PDO::PARAM_INT);
@@ -2401,6 +2684,8 @@ class Movimientos {
                         $stmtItem->bindValue(8, $descripcionItem, PDO::PARAM_STR);
                         $stmtItem->bindValue(9, $precioItem, PDO::PARAM_STR);
                         $stmtItem->bindValue(10, $taxItem, $taxItem !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+                        $stmtItem->bindValue(11, $itemType, PDO::PARAM_STR);
+                        $stmtItem->bindValue(12, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
                         $stmtItem->execute();
                     }
                     
@@ -3038,6 +3323,8 @@ class Movimientos {
                 LEFT JOIN ".BD_GENERAL.".usuarios u ON u.uss_id = fc.fcu_usuario 
                     AND u.institucion = fc.institucion AND u.year = fc.year
                 WHERE fc.fcu_lote_id = '".mysqli_real_escape_string($conexion, $loteId)."'
+                AND fc.fcu_anulado = 0
+                AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
                 AND fc.institucion = {$config['conf_id_institucion']} 
                 AND fc.year = {$_SESSION["bd"]}
                 ORDER BY fc.fcu_fecha DESC, fc.fcu_consecutivo DESC";

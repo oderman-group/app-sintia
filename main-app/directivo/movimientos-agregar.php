@@ -95,7 +95,7 @@ $codigoUnico=Utilidades::generateCode("FCN");
 
                                             <label class="col-sm-2 control-label">Valor adicional</label>
                                             <div class="col-sm-4">
-                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="0" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="0" onchange="totalizar(this)">
+                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="0" required disabled data-vlr-adicional-anterior="0">
                                             </div>
 										</div>
 
@@ -250,24 +250,28 @@ $codigoUnico=Utilidades::generateCode("FCN");
                                                                 </tr>
                                                             <?php }?>
                                                             <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL:</td>
-                                                                <td align="left" colspan="2"id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
-                                                                <td align="left" colspan="2"id="valorAdicional" data-valor-adicional="0">$0</td>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL GRABABLE:</td>
+                                                                <td align="left" colspan="2" id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">DESCUENTO:</td>
-                                                                <td align="left" colspan="2"id="valorDescuento" data-valor-descuento="0">$0</td>
+                                                                <td align="left" colspan="2" id="valorDescuento" data-valor-descuento="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">IMPUESTO:</td>
-                                                                <td align="left" colspan="2"id="valorImpuesto">$0</td>
+                                                                <td align="left" colspan="2" id="valorImpuesto">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">ANTICIPOS/CRÉDITOS:</td>
+                                                                <td align="left" colspan="2" id="valorCreditos" style="color: #ff5722;">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
+                                                                <td align="left" colspan="2" id="valorAdicional" data-valor-adicional="0">$0</td>
                                                             </tr>
                                                             <tr style="font-size: 15px; font-weight:bold;">
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">TOTAL NETO:</td>
-                                                                <td align="left" colspan="2"id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
+                                                                <td align="left" colspan="2" id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>

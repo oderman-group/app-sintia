@@ -15,7 +15,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 
 // Validaciones: ya no se requiere "forma" (fcu_forma_pago) en la creación
-if (empty($_POST["fecha"]) or empty($_POST["detalle"]) or (isset($_POST["valor"]) && $_POST["valor"]=="") or empty($_POST["tipo"])) {
+// El campo "valor" ya no es requerido, se usa 0 por defecto
+if (empty($_POST["fecha"]) or empty($_POST["detalle"]) or empty($_POST["tipo"])) {
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
     echo '<script type="text/javascript">window.location.href="movimientos-agregar.php?error=ER_DT_4";</script>';
     exit();
@@ -120,9 +121,12 @@ try{
     $fcuStatus = EN_PROCESO;
     $fcuCreatedBy = $_SESSION["id"];
     $fcuOrigen = 'NORMAL';
+    // El campo "valor" ya no es editable, se usa 0 por defecto
+    $valorAdicional = 0;
+    
     $stmt->bindParam(1, $_POST["fecha"], PDO::PARAM_STR); // fcu_fecha
     $stmt->bindParam(2, $_POST["detalle"], PDO::PARAM_STR);
-    $stmt->bindParam(3, $_POST["valor"], PDO::PARAM_STR);
+    $stmt->bindParam(3, $valorAdicional, PDO::PARAM_STR);
     $stmt->bindParam(4, $_POST["tipo"], PDO::PARAM_STR);
     $stmt->bindParam(5, $_POST["obs"], PDO::PARAM_STR);
     $stmt->bindParam(6, $_POST["usuario"], PDO::PARAM_STR);
@@ -183,104 +187,6 @@ try{
     ob_clean();
     header("Location: movimientos.php?error=ER_DT_CREATE");
     exit();
-}
-
-// Abono automático: solo si está marcado y se proporcionaron método de pago y cuenta bancaria
-if (!empty($_POST["abonoAutomatico"]) && $_POST["abonoAutomatico"] == 1) {
-    // Validar que se proporcionó método de pago
-    if (empty($_POST["forma"])) {
-        include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
-        echo '<script type="text/javascript">window.location.href="movimientos-agregar.php?error=ER_DT_METODO_PAGO_REQUERIDO";</script>';
-        exit();
-    }
-    
-    $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $fcuId, $_POST["valor"]); // Usar fcu_id
-
-    if ($totalNeto > 0) {
-        // Obtener método de pago
-        $formaPago = $_POST["forma"];
-        if (is_numeric($formaPago)) {
-            // Compatibilidad con valores numéricos antiguos
-            $mapeoNumerico = [
-                '1' => 'EFECTIVO',
-                '2' => 'CHEQUE',
-                '3' => 'T_DEBITO',
-                '4' => 'T_CREDITO',
-                '5' => 'TRANSFERENCIA',
-                '6' => 'OTROS',
-                '7' => 'NEQUI',
-                '8' => 'DAVIPLATA',
-                '9' => 'BANCOLOMBIA',
-                '10' => 'DAVIVIENDA',
-                '11' => 'BANCO_OCCIDENTE'
-            ];
-            $formaPago = $mapeoNumerico[$formaPago] ?? 'OTROS';
-        }
-        // Validar que el código sea válido
-        require_once(ROOT_PATH."/main-app/class/MediosPago.php");
-        if (!MediosPago::esCodigoValido($formaPago)) {
-            $formaPago = 'OTROS';
-        }
-
-        // Obtener cuenta bancaria (opcional)
-        $cuentaBancariaId = !empty($_POST["cuenta_bancaria_id"]) ? $_POST["cuenta_bancaria_id"] : null;
-        
-        // Preparar fecha_documento del abono (validar igual que la factura)
-        $fechaDocumentoAbono = $fechaDocumento; // Usar la misma fecha de la factura por defecto
-        if (!empty($_POST["fecha_abono"])) {
-            $fechaDocAbono = DateTime::createFromFormat('Y-m-d', $_POST["fecha_abono"]);
-            if ($fechaDocAbono !== false) {
-                $fechaActualAbono = new DateTime();
-                $fechaLimiteAbono = (clone $fechaActualAbono)->modify('-1 year');
-                if ($fechaDocAbono <= $fechaActualAbono && $fechaDocAbono >= $fechaLimiteAbono) {
-                    $fechaDocumentoAbono = $fechaDocAbono->format('Y-m-d');
-                }
-            }
-        }
-
-        // Insertar directamente en payments_invoiced consolidado
-        try {
-            $sqlInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
-                responsible_user, payment_user, type_payments, payment_tipo, payment_method,
-                payment_cuenta_bancaria_id, invoiced, payment, observation, note,
-                fecha_registro, fecha_documento, institucion, year
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)";
-            $stmtInvoiced = $conexionPDO->prepare($sqlInvoiced);
-            $tipoInvoice = INVOICE;
-            $paymentTipo = 'INGRESO';
-            $observacion = 'Abono automático';
-            
-            $stmtInvoiced->bindValue(1, $_SESSION["id"], PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(2, $_POST["usuario"], PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(3, $tipoInvoice, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(4, $paymentTipo, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(5, $formaPago, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(6, $cuentaBancariaId, $cuentaBancariaId ? PDO::PARAM_INT : PDO::PARAM_NULL);
-            $stmtInvoiced->bindValue(7, $fcuId, PDO::PARAM_INT); // Usar fcu_id (INT) - payments_invoiced.invoiced referencia finanzas_cuentas.fcu_id
-            $stmtInvoiced->bindValue(8, $totalNeto, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(9, $observacion, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(10, null, PDO::PARAM_NULL);
-            $stmtInvoiced->bindValue(11, $fechaDocumentoAbono, PDO::PARAM_STR);
-            $stmtInvoiced->bindValue(12, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmtInvoiced->bindValue(13, $_SESSION["bd"], PDO::PARAM_INT);
-            $stmtInvoiced->execute();
-        } catch (Exception $e) {
-            include("../compartido/error-catch-to-report.php");
-        }
-
-        try{
-            $sqlUpdateStatus = "UPDATE ".BD_FINANCIERA.".finanzas_cuentas SET fcu_status=? WHERE fcu_id=? AND institucion=? AND year=?";
-            $stmtUpdateStatus = $conexionPDO->prepare($sqlUpdateStatus);
-            $estadoCobrada = COBRADA;
-            $stmtUpdateStatus->bindParam(1, $estadoCobrada, PDO::PARAM_STR);
-            $stmtUpdateStatus->bindParam(2, $fcuId, PDO::PARAM_INT);
-            $stmtUpdateStatus->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmtUpdateStatus->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
-            $stmtUpdateStatus->execute();
-        } catch (Exception $e) {
-            include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
-        }
-    }
 }
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
