@@ -113,6 +113,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 																$tipoItem = $resultado['item_type'] ?? 'D';
 																if ($tipoItem == 'C') {
 																	echo '<span class="label label-success">Crédito</span>';
+																	// Mostrar application_time para créditos
+																	$applicationTime = $resultado['application_time'] ?? 'ANTE_IMPUESTO';
+																	$textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+																	echo '<br><small style="color: #666; font-size: 0.85em;">(' . $textoApplicationTime . ')</small>';
 																} else {
 																	echo '<span class="label label-info">Débito</span>';
 																}

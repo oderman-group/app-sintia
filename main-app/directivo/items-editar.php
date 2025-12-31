@@ -122,9 +122,21 @@ if (!$itemEncontrado) {
                                         <div class="form-group row">
                                             <label class="col-sm-1 control-label">Tipo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <select name="item_type" class="form-control" required <?=$disabledPermiso;?>>
+                                                <select name="item_type" id="item_type" class="form-control" required <?=$disabledPermiso;?> onchange="toggleApplicationTime()">
                                                     <option value="D" <?=($datosItem['item_type'] ?? 'D') == 'D' ? 'selected' : ''?>>Débito (Cargo)</option>
                                                     <option value="C" <?=($datosItem['item_type'] ?? 'D') == 'C' ? 'selected' : ''?>>Crédito (Descuento)</option>
+                                                </select>
+                                            </div>
+                                            <?php
+                                            $itemType = $datosItem['item_type'] ?? 'D';
+                                            $applicationTime = $datosItem['application_time'] ?? ($itemType == 'C' ? 'ANTE_IMPUESTO' : null);
+                                            $showApplicationTime = ($itemType == 'C');
+                                            ?>
+                                            <label class="col-sm-1 control-label" id="label_application_time" style="display: <?=$showApplicationTime ? '' : 'none';?>;">Aplicación <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4" id="div_application_time" style="display: <?=$showApplicationTime ? '' : 'none';?>;">
+                                                <select name="application_time" id="application_time" class="form-control" <?=$disabledPermiso;?>>
+                                                    <option value="ANTE_IMPUESTO" <?=($applicationTime == 'ANTE_IMPUESTO') ? 'selected' : ''?>>Antes del Impuesto</option>
+                                                    <option value="POST_IMPUESTO" <?=($applicationTime == 'POST_IMPUESTO') ? 'selected' : ''?>>Después del Impuesto</option>
                                                 </select>
                                             </div>
                                         </div>

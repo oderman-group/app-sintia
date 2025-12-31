@@ -177,20 +177,37 @@ $itemsLote = json_decode($datosLote['lote_items'], true);
 														$fechaBD = new DateTime($factura['fcu_fecha']);
 														$fecha = $fechaBD->format('d/m/Y');
 														
-														$valorFactura = floatval($factura['fcu_valor'] ?? 0);
-														$totalItems = floatval($factura['total_items'] ?? 0);
-														$totalNeto = $valorFactura + $totalItems;
-														$abonado = floatval($factura['total_abonado'] ?? 0);
+														$valorAdicional = floatval($factura['fcu_valor'] ?? 0);
+														$totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $valorAdicional);
+														// Usar el método centralizado para calcular el total abonado (consistencia)
+														$abonado = Movimientos::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
 														$porCobrar = $totalNeto - $abonado;
 														
 														$totalFacturado += $totalNeto;
 														$totalAbonado += $abonado;
 														
+														// Determinar estado de la factura (ya filtradas anuladas y en proceso)
 														$estadoFactura = $factura['fcu_status'] ?? POR_COBRAR;
-														$estadoClass = $estadoFactura == COBRADA ? 'label-success' : 'label-warning';
-														$estadoTexto = $estadoFactura == COBRADA ? 'Cobrada' : 'Por Cobrar';
+														$estadoClass = 'label-warning'; // Por defecto
+														$estadoTexto = 'Por Cobrar'; // Por defecto
+														
+														switch($estadoFactura) {
+															case COBRADA:
+																$estadoClass = 'label-success';
+																$estadoTexto = 'Cobrada';
+																break;
+															case POR_COBRAR:
+															default:
+																$estadoClass = 'label-warning';
+																$estadoTexto = 'Por Cobrar';
+																break;
+														}
 														
 														$facturaIdEncoded = base64_encode($factura['fcu_id']);
+														
+														// Variables para la tabla
+														$valorFactura = $totalNeto; // El valor de la factura es el total neto calculado
+														$totalItems = 0; // Esta columna se mantiene vacía como en el tfoot
 													?>
 													<tr>
                                                         <td><?=$contReg;?></td>

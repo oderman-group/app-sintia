@@ -81,9 +81,16 @@ if(!Modulos::validarPermisoEdicion()){
                                         <div class="form-group row">
                                             <label class="col-sm-1 control-label">Tipo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <select name="item_type" class="form-control" required <?=$disabledPermiso;?>>
+                                                <select name="item_type" id="item_type" class="form-control" required <?=$disabledPermiso;?> onchange="toggleApplicationTime()">
                                                     <option value="D">Débito (Cargo)</option>
                                                     <option value="C">Crédito (Descuento)</option>
+                                                </select>
+                                            </div>
+                                            <label class="col-sm-1 control-label" id="label_application_time" style="display: none;">Aplicación <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4" id="div_application_time" style="display: none;">
+                                                <select name="application_time" id="application_time" class="form-control" <?=$disabledPermiso;?>>
+                                                    <option value="ANTE_IMPUESTO">Antes del Impuesto</option>
+                                                    <option value="POST_IMPUESTO">Después del Impuesto</option>
                                                 </select>
                                             </div>
                                         </div>
