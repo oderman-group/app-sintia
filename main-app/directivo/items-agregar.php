@@ -71,11 +71,6 @@ if(!Modulos::validarPermisoEdicion()){
                                             <div class="col-sm-4">
                                                 <input type="number" min="0" value="0" name="precio" class="form-control" required <?=$disabledPermiso;?>>
                                             </div>
-
-                                            <label class="col-sm-1 control-label"><?=$frases[382][$datosUsuarioActual['uss_idioma']];?>:</label>
-                                            <div class="col-sm-4">
-                                                <input type="number" min="0" value="0" name="iva" class="form-control" <?=$disabledPermiso;?>>
-                                            </div>
 										</div>
 
                                         <div class="form-group row">
@@ -148,6 +143,34 @@ if(!Modulos::validarPermisoEdicion()){
 
     <script>
         CKEDITOR.replace( 'editor1' );
+        
+        // Función para mostrar/ocultar campo de aplicación según el tipo de item
+        function toggleApplicationTime() {
+            var itemType = document.getElementById('item_type').value;
+            var labelApplicationTime = document.getElementById('label_application_time');
+            var divApplicationTime = document.getElementById('div_application_time');
+            var selectApplicationTime = document.getElementById('application_time');
+            
+            if (itemType === 'C') {
+                // Mostrar campo de aplicación si es Crédito
+                if (labelApplicationTime) labelApplicationTime.style.display = '';
+                if (divApplicationTime) divApplicationTime.style.display = '';
+                if (selectApplicationTime) selectApplicationTime.setAttribute('required', 'required');
+            } else {
+                // Ocultar campo de aplicación si es Débito
+                if (labelApplicationTime) labelApplicationTime.style.display = 'none';
+                if (divApplicationTime) divApplicationTime.style.display = 'none';
+                if (selectApplicationTime) {
+                    selectApplicationTime.removeAttribute('required');
+                    selectApplicationTime.value = 'ANTE_IMPUESTO'; // Resetear valor por defecto
+                }
+            }
+        }
+        
+        // Ejecutar al cargar la página para establecer el estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleApplicationTime();
+        });
     </script>
 </body>
 

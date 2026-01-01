@@ -72,25 +72,19 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<th><?=$frases[187][$datosUsuarioActual['uss_idioma']];?></th>
 														<th>Tipo</th>
 														<th><?=$frases[381][$datosUsuarioActual['uss_idioma']];?></th>
-														<th><?=$frases[382][$datosUsuarioActual['uss_idioma']];?></th>
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0261','DT0263'])){?>
                                                             <th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
                                                         <?php }?>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-													<?php
+                                                    <?php
                                                         $consulta= Movimientos::listarItems($conexion, $config);
                                                         $contReg = 1;
                                                         while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                             $price = 0;
                                                             if (!empty($resultado['price'])) {
                                                                 $price = $resultado['price'];
-                                                            }
-                                                            
-                                                            $tax = 0;
-                                                            if (!empty($resultado['tax'])) {
-                                                                $tax = $resultado['tax'];
                                                             }
 
                                                             // Usar item_id en lugar de id (según el esquema de BD actualizado)
@@ -123,7 +117,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															?>
 														</td>
 														<td>$<?=number_format($price,0,",",".")?></td>
-														<td><?=$tax;?>%</td>
 														
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0261','DT0263'])){?>
                                                             <td>

@@ -69,7 +69,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
   <table bgcolor="#FFFFFF" width="100%" cellspacing="5" cellpadding="5" rules="all" border="<?php echo $config[13] ?>" style="border:solid; border-color:<?= $Plataforma->colorUno; ?>;" align="center">
   <tr style="font-weight:bold; font-size:12px; height:30px; background:<?= $Plataforma->colorUno; ?>; color:#FFF;">
         <th>ID</th>
-        <th>Consecutivo</th>
         <th>Usuario</th>
         <th>Fecha</th>
         <th>Detalle</th>
@@ -195,7 +194,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
 									?>
   <tr style="font-size:13px;">
       <td><?=$resultado['fcu_id'];?></td>
-      <td><?=$resultado['fcu_consecutivo'] ?? $resultado['fcu_id'];?></td>
       <td><?=$nombreCompleto;?></td>
       <td><?=$resultado['fcu_fecha'];?></td>
       <td><?=$resultado['fcu_detalle'];?></td>
@@ -217,11 +215,11 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
   $totalGeneralPorCobrarFormateado = number_format($totalGeneralPorCobrar, 0, ",", ".");
   ?>
   <tr style="font-weight:bold; font-size:13px; background:#f0f0f0;">
-      <td colspan="5" align="right"><strong>TOTALES:</strong></td>
+      <td colspan="4" align="right"><strong>TOTALES:</strong></td>
       <td><strong>$<?=$totalGeneralNetoFormateado;?></strong></td>
       <td><strong>$<?=$totalGeneralAbonosFormateado;?></strong></td>
       <td><strong>$<?=$totalGeneralPorCobrarFormateado;?></strong></td>
-      <td colspan="5"></td>
+      <td colspan="4"></td>
   </tr>
   <?php
   ?>
