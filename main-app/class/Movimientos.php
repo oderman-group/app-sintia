@@ -381,20 +381,19 @@ class Movimientos {
         
         try {
             // id_order es AUTO_INCREMENT, no se incluye en el INSERT
-            $sql = "INSERT INTO ".BD_FINANCIERA.".items (name, price, tax, description, item_type, application_time, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO ".BD_FINANCIERA.".items (name, price, description, item_type, application_time, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $POST["nombre"], PDO::PARAM_STR);
             $stmt->bindParam(2, $POST["precio"], PDO::PARAM_STR);
-            $stmt->bindParam(3, $POST["iva"], PDO::PARAM_STR);
-            $stmt->bindParam(4, $POST["descrip"], PDO::PARAM_STR);
-            $stmt->bindParam(5, $itemType, PDO::PARAM_STR);
+            $stmt->bindParam(3, $POST["descrip"], PDO::PARAM_STR);
+            $stmt->bindParam(4, $itemType, PDO::PARAM_STR);
             if ($applicationTime !== null) {
-                $stmt->bindParam(6, $applicationTime, PDO::PARAM_STR);
+                $stmt->bindParam(5, $applicationTime, PDO::PARAM_STR);
             } else {
-                $stmt->bindValue(6, null, PDO::PARAM_NULL);
+                $stmt->bindValue(5, null, PDO::PARAM_NULL);
             }
-            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(6, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
             
             // Retornar el id_order generado (AUTO_INCREMENT)
@@ -490,21 +489,20 @@ class Movimientos {
             // year es char(4), convertir a string
             $year = (string)$_SESSION["bd"];
             
-            $sql = "UPDATE ".BD_FINANCIERA.".items SET name=?, price=?, tax=?, description=?, item_type=?, application_time=? WHERE item_id=? AND institucion=? AND year=?";
+            $sql = "UPDATE ".BD_FINANCIERA.".items SET name=?, price=?, description=?, item_type=?, application_time=? WHERE item_id=? AND institucion=? AND year=?";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $POST["nombre"], PDO::PARAM_STR);
             $stmt->bindParam(2, $POST["precio"], PDO::PARAM_STR);
-            $stmt->bindParam(3, $POST["iva"], PDO::PARAM_STR);
-            $stmt->bindParam(4, $POST["descrip"], PDO::PARAM_STR);
-            $stmt->bindParam(5, $itemType, PDO::PARAM_STR);
+            $stmt->bindParam(3, $POST["descrip"], PDO::PARAM_STR);
+            $stmt->bindParam(4, $itemType, PDO::PARAM_STR);
             if ($applicationTime !== null) {
-                $stmt->bindParam(6, $applicationTime, PDO::PARAM_STR);
+                $stmt->bindParam(5, $applicationTime, PDO::PARAM_STR);
             } else {
-                $stmt->bindValue(6, null, PDO::PARAM_NULL);
+                $stmt->bindValue(5, null, PDO::PARAM_NULL);
             }
-            $stmt->bindParam(7, $itemId, PDO::PARAM_INT);
-            $stmt->bindParam(8, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(9, $year, PDO::PARAM_STR);
+            $stmt->bindParam(6, $itemId, PDO::PARAM_INT);
+            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(8, $year, PDO::PARAM_STR);
             $stmt->execute();
             
             // Verificar que se actualizó al menos una fila

@@ -838,15 +838,17 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
                                 <input type="number" min="0" step="0.01" name="precio" class="form-control" required placeholder="0.00">
                             </div>
                             <div class="form-group">
-                                <label>Impuesto</label>
-                                <select class="form-control select2" name="iva">
-                                    <option value="0">Ninguno - (0%)</option>
-                                    <?php
-                                    $consulta= Movimientos::listarImpuestos($conexion, $config);
-                                    while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                                    ?>
-                                    <option value="<?=$datosConsulta['id']?>"><?=$datosConsulta['type_tax']." - (".$datosConsulta['fee']."%)"?></option>
-                                    <?php } ?>
+                                <label>Tipo <span style="color: red;">*</span></label>
+                                <select class="form-control" name="item_type" id="item_type_modal" required onchange="toggleApplicationTimeModal()">
+                                    <option value="D">Débito (Cargo)</option>
+                                    <option value="C">Crédito (Descuento)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="div_application_time_modal" style="display: none;">
+                                <label>Aplicación <span style="color: red;">*</span></label>
+                                <select class="form-control" name="application_time" id="application_time_modal">
+                                    <option value="ANTE_IMPUESTO">Antes del Impuesto</option>
+                                    <option value="POST_IMPUESTO">Después del Impuesto</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -910,7 +912,24 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
         
         // Función para abrir modal de crear item
         function abrirModalCrearItem() {
+            // Resetear formulario y campos
+            $('#formCrearItem')[0].reset();
+            $('#item_type_modal').val('D');
+            $('#div_application_time_modal').hide();
             $('#modalCrearItem').modal('show');
+        }
+        
+        // Función para mostrar/ocultar campo de aplicación según el tipo de item
+        function toggleApplicationTimeModal() {
+            var itemType = $('#item_type_modal').val();
+            if (itemType === 'C') {
+                $('#div_application_time_modal').show();
+                $('#application_time_modal').prop('required', true);
+            } else {
+                $('#div_application_time_modal').hide();
+                $('#application_time_modal').prop('required', false);
+                $('#application_time_modal').val('ANTE_IMPUESTO');
+            }
         }
         
         // Manejar el envío del formulario de crear item
