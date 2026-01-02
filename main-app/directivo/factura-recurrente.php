@@ -104,11 +104,25 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														}
 														
 														$tieneItems = ($totalItems > 0);
-														$classFila = $tieneItems ? '' : 'table-warning';
-														$badgeItems = $tieneItems ? '' : '<span class="badge badge-danger" style="margin-left: 5px;" title="Esta factura recurrente no tiene items asociados y no se generará automáticamente"><i class="fa fa-exclamation-triangle"></i> Sin items</span>';
-
 														$vlrAdicional = !empty($resultado['additional_value']) ? floatval($resultado['additional_value']) : 0;
 														$totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $resultado['id'], $vlrAdicional, TIPO_RECURRING);
+														
+														// Determinar clase de fila y badges según items y total neto
+														$tieneProblemas = false;
+														$badges = [];
+														
+														if (!$tieneItems) {
+															$tieneProblemas = true;
+															$badges[] = '<span class="badge badge-danger" style="margin-left: 5px;" title="Esta factura recurrente no tiene items asociados y no se generará automáticamente"><i class="fa fa-exclamation-triangle"></i> Sin items</span>';
+														}
+														
+														if ($totalNeto <= 0) {
+															$tieneProblemas = true;
+															$badges[] = '<span class="badge badge-warning" style="margin-left: 5px;" title="Esta factura recurrente tiene total neto menor o igual a cero y no se generará automáticamente"><i class="fa fa-exclamation-triangle"></i> Total inválido</span>';
+														}
+														
+														$classFila = $tieneProblemas ? 'table-warning' : '';
+														$badgeItems = implode('', $badges);
 
 														$arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
 														$arrayDatos = json_encode($arrayEnviar);

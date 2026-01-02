@@ -11,6 +11,18 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
+// Validar que el total neto sea mayor a 0 antes de actualizar
+if (!empty($_POST['id'])) {
+    $vlrAdicional = !empty($_POST["additional_value"]) ? floatval($_POST["additional_value"]) : 0;
+    $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $_POST['id'], $vlrAdicional, TIPO_RECURRING);
+    
+    if ($totalNeto <= 0) {
+        include("../compartido/guardar-historial-acciones.php");
+        echo '<script type="text/javascript">alert("No se puede guardar la factura recurrente. El total neto debe ser mayor a cero. Verifique que los items débito sumen más que los items crédito."); window.location.href="factura-recurrente-editar.php?error=ER_DT_TOTAL_INVALIDO&id='.base64_encode($_POST['id']).'";</script>';
+        exit();
+    }
+}
+
 try {
     Movimientos::actualizarRecurrente($conexion, $config, $_POST);
     include("../compartido/guardar-historial-acciones.php");

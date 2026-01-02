@@ -102,6 +102,16 @@ if ($accion == 'confirmar') {
         exit();
     }
     
+    // Validar que el total neto sea mayor a 0
+    $vlrAdicional = !empty($_POST["vlrAdicional"]) ? floatval($_POST["vlrAdicional"]) : 0;
+    $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $fcuIdFactura, $vlrAdicional, TIPO_FACTURA);
+    
+    if ($totalNeto <= 0) {
+        include("../compartido/guardar-historial-acciones.php");
+        echo '<script type="text/javascript">alert("No se puede confirmar la factura. El total neto debe ser mayor a cero. Verifique que los items débito sumen más que los items crédito."); window.location.href="movimientos-editar.php?error=ER_DT_TOTAL_INVALIDO&id='.urlencode(base64_encode($idFactura)).'";</script>';
+        exit();
+    }
+    
     $nuevoEstado = POR_COBRAR;
 } else {
     $nuevoEstado = EN_PROCESO;

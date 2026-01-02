@@ -226,6 +226,15 @@ try {
                 continue; // Continuar con la siguiente factura recurrente
             }
             
+            // Validar que el total neto sea mayor a 0
+            $vlrAdicional = !empty($resultadoJobs['additional_value']) ? floatval($resultadoJobs['additional_value']) : 0;
+            $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $facturaRecurrenteId, $vlrAdicional, TIPO_RECURRING);
+            
+            if ($totalNeto <= 0) {
+                echo "[ID: {$resultadoJobs['id']}] ⚠ Factura recurrente con total neto menor o igual a cero (Total: {$totalNeto}). Omitiendo generación.\n";
+                continue; // Continuar con la siguiente factura recurrente
+            }
+            
             // Iniciar transacción
             mysqli_autocommit($conexion, false);
             if (!mysqli_query($conexion, "START TRANSACTION")) {

@@ -378,7 +378,8 @@ function guardarNuevoItem(selectElement) {
             totalizar();
         }
 
-        // Actualizar estado del botón de confirmar según cantidad de items
+        // Actualizar estado del botón de confirmar según cantidad de items y total neto
+        totalizar(); // Asegurar que los totales estén actualizados
         actualizarEstadoBotonConfirmar();
 
         $.toast({
