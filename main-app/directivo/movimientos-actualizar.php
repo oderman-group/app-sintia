@@ -79,7 +79,33 @@ if ($tieneAbonos) {
 
 // Determinar acción: "guardar" mantiene EN_PROCESO, "confirmar" cambia a POR_COBRAR
 $accion = $_POST['accion'] ?? 'guardar';
-$nuevoEstado = ($accion == 'confirmar') ? POR_COBRAR : EN_PROCESO;
+
+// Si se intenta confirmar, validar que la factura tenga items
+if ($accion == 'confirmar') {
+    // Contar items de la factura
+    $consultaItems = mysqli_query($conexion, "SELECT COUNT(*) as total_items FROM ".BD_FINANCIERA.".transaction_items 
+        WHERE id_transaction = {$fcuIdFactura} 
+        AND type_transaction = '".TIPO_FACTURA."'
+        AND institucion = {$config['conf_id_institucion']} 
+        AND year = {$_SESSION["bd"]}");
+    
+    $totalItems = 0;
+    if ($consultaItems && mysqli_num_rows($consultaItems) > 0) {
+        $resultadoItems = mysqli_fetch_array($consultaItems, MYSQLI_BOTH);
+        $totalItems = intval($resultadoItems['total_items'] ?? 0);
+    }
+    
+    // Si no tiene items, no permitir confirmar
+    if ($totalItems == 0) {
+        include("../compartido/guardar-historial-acciones.php");
+        echo '<script type="text/javascript">alert("No se puede confirmar la factura. Debe tener al menos un item asociado."); window.location.href="movimientos-editar.php?error=ER_DT_SIN_ITEMS&id='.urlencode(base64_encode($idFactura)).'";</script>';
+        exit();
+    }
+    
+    $nuevoEstado = POR_COBRAR;
+} else {
+    $nuevoEstado = EN_PROCESO;
+}
 
 $fecha = $fechaDocumento;
 
