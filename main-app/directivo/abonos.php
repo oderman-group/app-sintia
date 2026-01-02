@@ -423,9 +423,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             $arrayDatos = json_encode($arrayEnviar);
                                                             $objetoEnviar = htmlentities($arrayDatos);
 
-                                                            $tipoTransaccion = $datosAbonoCompleto['type_payments'] ?? '';
-                                                            $observacionesTexto = trim(strip_tags($datosAbonoCompleto['observation'] ?? ''));
-                                                            $notasTexto = trim(strip_tags($datosAbonoCompleto['note'] ?? ''));
+                                                            $tipoTransaccion = $datosAbonoCompleto['type_payments'] ?? $resultado['type_payments'] ?? '';
+                                                            $observacionesTexto = trim(strip_tags($datosAbonoCompleto['observation'] ?? $resultado['observation'] ?? ''));
+                                                            $notasTexto = trim(strip_tags($datosAbonoCompleto['note'] ?? $resultado['note'] ?? ''));
                                                             $fechaRegistro = !empty($datosAbonoCompleto['registration_date']) ? $datosAbonoCompleto['registration_date'] : $resultado['registration_date'];
 
                                                             $facturasAsociadas = [];

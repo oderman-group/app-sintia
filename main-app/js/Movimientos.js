@@ -281,6 +281,7 @@ function guardarNuevoItem(selectElement) {
         // Determinar si es crédito para mostrar signo negativo en el subtotal
         var itemType = data.item_type || 'D';
         var isCredito = (itemType === 'C');
+        var applicationTime = isCredito ? (data.application_time || 'ANTE_IMPUESTO') : null;
         var signoNegativo = isCredito ? '-' : '';
         var subtotalFormatFinal = signoNegativo + "$" + numberFormat(subtotal, 0, ',', '.');
         
@@ -337,6 +338,12 @@ function guardarNuevoItem(selectElement) {
             if (filaNueva) {
                 // Agregar atributo data-item-type a la fila para que totalizar() lo detecte
                 filaNueva.setAttribute('data-item-type', itemType);
+                // Agregar atributo data-application-time para items crédito
+                if (isCredito && applicationTime) {
+                    filaNueva.setAttribute('data-application-time', applicationTime);
+                } else {
+                    filaNueva.removeAttribute('data-application-time');
+                }
                 // Agregar clase si es crédito
                 if (isCredito) {
                     filaNueva.classList.add('item-credito');

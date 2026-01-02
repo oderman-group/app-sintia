@@ -611,6 +611,8 @@ class Movimientos {
                 pi.attachment as voucher, 
                 pi.is_deleted,
                 pi.payment_cuenta_bancaria_id,
+                pi.observation,
+                pi.note,
                 cba.cba_nombre as cuenta_bancaria_nombre,
                 fc.fcu_id as numeroFactura,
                 fc.fcu_id as fcu_id_factura,
