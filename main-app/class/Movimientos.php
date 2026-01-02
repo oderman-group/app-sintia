@@ -2132,10 +2132,23 @@ class Movimientos {
     )
     {
         try {
-            $consulta = mysqli_query($conexion, "SELECT SUM(cantity) AS cantidadTotal, i.item_id, i.name FROM ".BD_FINANCIERA.".transaction_items ti
-            INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id=ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION["bd"]}
-            WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-            GROUP BY id_item
+            // Solo considerar items de naturaleza débito (item_type = 'D')
+            // Excluir facturas anuladas y en proceso
+            $consulta = mysqli_query($conexion, "SELECT SUM(ti.cantity) AS cantidadTotal, i.item_id, i.name 
+            FROM ".BD_FINANCIERA.".transaction_items ti
+            INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item 
+                AND i.institucion = {$config['conf_id_institucion']} 
+                AND i.year = {$_SESSION["bd"]}
+            INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id = ti.id_transaction 
+                AND fc.institucion = ti.institucion 
+                AND fc.year = ti.year
+            WHERE ti.institucion = {$config['conf_id_institucion']} 
+                AND ti.year = {$_SESSION["bd"]}
+                AND ti.type_transaction = '".TIPO_FACTURA."'
+                AND ti.item_type = 'D'
+                AND fc.fcu_anulado = 0 
+                AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
+            GROUP BY i.item_id, i.name
             ORDER BY cantidadTotal DESC");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -2196,6 +2209,7 @@ class Movimientos {
                 AND ti.year = fc.year
             WHERE fc.fcu_anulado = 0 
                 AND (fc.fcu_status IS NULL OR fc.fcu_status != '".ANULADA."')
+                AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
                 AND fc.fcu_tipo = '1'
                 AND fc.institucion = {$config['conf_id_institucion']} 
                 AND fc.year = {$_SESSION["bd"]}

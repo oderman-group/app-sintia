@@ -31,9 +31,51 @@ if (empty($idUsuario) || empty($idFactura)) {
     exit();
 }
 
+// Validar que la factura no esté en proceso ni anulada
+require_once(ROOT_PATH."/main-app/class/Movimientos.php");
+$detallesFactura = Movimientos::obtenerDetallesFactura($conexion, $config, $idFactura);
+
+if (empty($detallesFactura['factura'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Factura no encontrada.'
+    ]);
+    exit();
+}
+
+$factura = $detallesFactura['factura'];
+
+// Validar que no esté anulada
+if ((int)$factura['fcu_anulado'] === 1) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'No se puede bloquear por una factura anulada.'
+    ]);
+    exit();
+}
+
+// Validar que no esté en proceso
+if ($factura['fcu_status'] === EN_PROCESO) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'No se puede bloquear por una factura en proceso.'
+    ]);
+    exit();
+}
+
+// Validar que no esté anulada por status
+if ($factura['fcu_status'] === ANULADA) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'No se puede bloquear por una factura anulada.'
+    ]);
+    exit();
+}
+
 try {
     if (empty($motivo)) {
-        $motivo = "Saldo pendiente en factura {$idFactura}";
+        $consecutivo = $factura['fcu_consecutivo'] ?? $idFactura;
+        $motivo = "Saldo pendiente en factura {$consecutivo}";
     }
 
     UsuariosPadre::bloquearUsuario(
