@@ -123,13 +123,14 @@ try{
     $obsEscapada = mysqli_real_escape_string($conexion, (string)($_POST["obs"] ?? ''));
     $usuarioEscapado = mysqli_real_escape_string($conexion, (string)($_POST["usuario"] ?? ''));
     $anuladoEscapado = mysqli_real_escape_string($conexion, (string)($_POST["anulado"] ?? '0'));
-    $cerradoEscapado = mysqli_real_escape_string($conexion, (string)($_POST["cerrado"] ?? '0'));
+    // El campo cerrado no se modifica desde esta página, está reservado para otro proceso
     $consecutivoEscapado = mysqli_real_escape_string($conexion, (string)($consecutivo ?? ''));
     $estadoEscapado = mysqli_real_escape_string($conexion, (string)($nuevoEstado ?? ''));
     $idUEscapado = mysqli_real_escape_string($conexion, (string)($_POST['idU'] ?? ''));
     
     // Actualizar factura incluyendo el nuevo estado
     // El campo fcu_valor (valor) ya no es editable, no se actualiza
+    // El campo fcu_cerrado no se actualiza desde esta página, está reservado para otro proceso
     mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".finanzas_cuentas SET
     fcu_fecha='{$fechaEscapada}',
     fcu_detalle='{$detalleEscapado}',
@@ -137,7 +138,6 @@ try{
     fcu_observaciones='{$obsEscapada}',
     fcu_usuario='{$usuarioEscapado}',
     fcu_anulado='{$anuladoEscapado}',
-    fcu_cerrado='{$cerradoEscapado}',
     fcu_consecutivo='{$consecutivoEscapado}',
     fcu_status='{$estadoEscapado}'
     WHERE fcu_id='{$idUEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");

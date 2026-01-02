@@ -372,7 +372,18 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         .abono-details-summary .item strong {
                                             font-size: 18px;
                                         }
-                                    </style>
+                                        </style>
+									
+                                    <div class="row mb-3" style="margin-bottom: 15px;">
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="mostrarAnulados" name="mostrarAnulados" <?= !empty($_GET['mostrar_anulados']) && $_GET['mostrar_anulados'] == '1' ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="mostrarAnulados" style="cursor: pointer; font-weight: 500;">
+                                                    Mostrar abonos anulados
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
 									
                                         <div class="table-scrollable">
                                     		<table id="example1" class="display" style="width:100%;">
@@ -395,7 +406,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 <tbody>
                                                     <?php $detallesAbonos = []; ?>
 													<?php
-                                                        $consulta= Movimientos::listarAbonos($conexion, $config);
+                                                        $incluirAnulados = !empty($_GET['mostrar_anulados']) && $_GET['mostrar_anulados'] == '1';
+                                                        $consulta= Movimientos::listarAbonos($conexion, $config, $incluirAnulados);
                                                         $contReg = 1;
                                                         while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
@@ -1099,6 +1111,25 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
             $('#formArqueoCaja').submit();
             $('#modalArqueoCaja').modal('hide');
         }
+        
+        // Manejar el checkbox de mostrar abonos anulados
+        $(document).ready(function() {
+            $('#mostrarAnulados').on('change', function() {
+                var url = window.location.pathname;
+                var mostrarAnulados = $(this).is(':checked') ? '1' : '0';
+                
+                // Construir la URL con el parámetro
+                var params = new URLSearchParams(window.location.search);
+                if (mostrarAnulados == '1') {
+                    params.set('mostrar_anulados', '1');
+                } else {
+                    params.delete('mostrar_anulados');
+                }
+                
+                // Redirigir a la nueva URL
+                window.location.href = url + (params.toString() ? '?' + params.toString() : '');
+            });
+        });
     </script>
 
 </body>

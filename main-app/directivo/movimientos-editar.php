@@ -452,11 +452,12 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Cerrado?</label>
-													<select class="form-control select2" name="cerrado" required <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
+													<select class="form-control select2" name="cerrado" disabled style="background-color: #e9ecef; cursor: not-allowed;">
 														<option value="0" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==0){ echo "selected";}?>>Abierto</option>
 														<option value="1" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==1){ echo "selected";}?>>Cerrado</option>
 													</select>
+													<input type="hidden" name="cerrado" value="<?=isset($datosMovimiento['fcu_cerrado']) ? $datosMovimiento['fcu_cerrado'] : '0';?>">
+													<small class="form-text text-muted" style="font-style: italic; color: #6c757d;">Este campo está reservado para otro proceso y no puede ser modificado.</small>
 												</div>
 											</div>
 											<div class="col-md-6">

@@ -595,10 +595,13 @@ class Movimientos {
      */
     public static function listarAbonos (
         mysqli $conexion, 
-        array $config
+        array $config,
+        bool $incluirAnulados = false
     )
     {
         try {
+            $filtroAnulados = $incluirAnulados ? '' : 'AND pi.is_deleted = 0';
+            
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
                 pi.id as cod_payment,
@@ -636,6 +639,7 @@ class Movimientos {
             WHERE 
                 pi.institucion = {$config['conf_id_institucion']} 
             AND pi.year = {$_SESSION["bd"]}
+            {$filtroAnulados}
             ORDER BY pi.id DESC
             ");
         } catch (Exception $e) {
@@ -1429,9 +1433,23 @@ class Movimientos {
             // Las facturas recurrentes no tienen método de pago ni cuenta bancaria al crearse
             // Estos se definen cuando se procesa el pago real
             // El campo additional_value (valor) ya no es editable, se usa 0 por defecto
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "', 0, '" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            // El campo id es AUTO_INCREMENT, no se incluye en el INSERT
+            $fechaInicioEscapada = mysqli_real_escape_string($conexion, $POST["fechaInicio"]);
+            $detalleEscapado = mysqli_real_escape_string($conexion, $POST["detalle"]);
+            $tipoEscapado = mysqli_real_escape_string($conexion, $POST["tipo"]);
+            $obsEscapada = mysqli_real_escape_string($conexion, $POST["obs"] ?? '');
+            $usuarioEscapado = mysqli_real_escape_string($conexion, $POST["usuario"]);
+            $frecuenciaEscapada = mysqli_real_escape_string($conexion, $POST["frecuencia"]);
+            $diasEscapados = mysqli_real_escape_string($conexion, $dias);
+            
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('{$fechaInicioEscapada}', '{$detalleEscapado}', 0, '{$tipoEscapado}', '{$obsEscapada}', '{$usuarioEscapado}', {$fechaFinal}, '{$frecuenciaEscapada}', '{$diasEscapados}', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            
+            // Obtener el ID generado automáticamente
+            $idGenerado = mysqli_insert_id($conexion);
+            return $idGenerado;
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+            return null;
         }
     }
 
