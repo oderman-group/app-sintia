@@ -114,7 +114,10 @@ foreach ($facturas as $facturaId) {
 	}
 
 	$nombreUsuario = UsuariosPadre::nombreCompletoDelUsuario($datosUsuario);
-	$consecutivo = $factura['fcu_consecutivo'] ?? $factura['fcu_id'];
+	// Obtener consecutivo: usar fcu_consecutivo si existe y no está vacío, sino usar fcu_id
+	$consecutivo = (!empty($factura['fcu_consecutivo']) && trim($factura['fcu_consecutivo']) !== '') 
+		? $factura['fcu_consecutivo'] 
+		: $factura['fcu_id'];
 	$fechaFactura = !empty($factura['fcu_fecha']) ? $factura['fcu_fecha'] : '';
 	$saldoFormateado = '$' . number_format($saldoPendiente, 0, ",", ".");
 	$detalle = $factura['fcu_detalle'] ?? '';

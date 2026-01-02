@@ -468,12 +468,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                        $itemsFactura = [];
                                                                        try {
                                                                            // Obtener items ordenados (débitos primero, créditos después) e incluir application_time
-                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.item_type, i.name as item_name, COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time
+                                                                           // Usar item_name, item_type y application_time de transaction_items (copia histórica)
+                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, ti.item_type, ti.item_name, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                                                                                FROM ".BD_FINANCIERA.".transaction_items ti
                                                                                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
-                                                                               LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION["bd"]}
                                                                                WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                                                                               ORDER BY i.item_type ASC, ti.id_autoincremental");
+                                                                               ORDER BY ti.item_type ASC, ti.id_autoincremental");
                                                                            if ($consultaItems) {
                                                                                while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
                                                                                    $itemsFactura[] = $item;
@@ -725,7 +725,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                                 $itemType = $item['item_type'] ?? 'D';
                                                                                 $isCredito = ($itemType == 'C');
                                                                                 $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
-                                                                                $nombreItem = htmlspecialchars($item['description'] ?? $item['item_name'] ?? 'N/A');
+                                                                                // Nombre del item: priorizar description (de transaction_items), luego item_name (de tabla items)
+                                                                                $nombreItem = !empty($item['description']) ? $item['description'] : ($item['item_name'] ?? 'N/A');
+                                                                                $nombreItem = htmlspecialchars($nombreItem);
                                                                                 if ($isCredito) {
                                                                                     $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
                                                                                     $nombreItem .= ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
