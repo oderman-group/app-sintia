@@ -372,7 +372,18 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         .abono-details-summary .item strong {
                                             font-size: 18px;
                                         }
-                                    </style>
+                                        </style>
+									
+                                    <div class="row mb-3" style="margin-bottom: 15px;">
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="mostrarAnulados" name="mostrarAnulados" <?= !empty($_GET['mostrar_anulados']) && $_GET['mostrar_anulados'] == '1' ? 'checked' : ''; ?>>
+                                                <label class="form-check-label" for="mostrarAnulados" style="cursor: pointer; font-weight: 500;">
+                                                    Mostrar abonos anulados
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
 									
                                         <div class="table-scrollable">
                                     		<table id="example1" class="display" style="width:100%;">
@@ -395,7 +406,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 <tbody>
                                                     <?php $detallesAbonos = []; ?>
 													<?php
-                                                        $consulta= Movimientos::listarAbonos($conexion, $config);
+                                                        $incluirAnulados = !empty($_GET['mostrar_anulados']) && $_GET['mostrar_anulados'] == '1';
+                                                        $consulta= Movimientos::listarAbonos($conexion, $config, $incluirAnulados);
                                                         $contReg = 1;
                                                         while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
@@ -423,9 +435,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             $arrayDatos = json_encode($arrayEnviar);
                                                             $objetoEnviar = htmlentities($arrayDatos);
 
-                                                            $tipoTransaccion = $datosAbonoCompleto['type_payments'] ?? '';
-                                                            $observacionesTexto = trim(strip_tags($datosAbonoCompleto['observation'] ?? ''));
-                                                            $notasTexto = trim(strip_tags($datosAbonoCompleto['note'] ?? ''));
+                                                            $tipoTransaccion = $datosAbonoCompleto['type_payments'] ?? $resultado['type_payments'] ?? '';
+                                                            $observacionesTexto = trim(strip_tags($datosAbonoCompleto['observation'] ?? $resultado['observation'] ?? ''));
+                                                            $notasTexto = trim(strip_tags($datosAbonoCompleto['note'] ?? $resultado['note'] ?? ''));
                                                             $fechaRegistro = !empty($datosAbonoCompleto['registration_date']) ? $datosAbonoCompleto['registration_date'] : $resultado['registration_date'];
 
                                                             $facturasAsociadas = [];
@@ -468,12 +480,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                        $itemsFactura = [];
                                                                        try {
                                                                            // Obtener items ordenados (débitos primero, créditos después) e incluir application_time
-                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.item_type, i.name as item_name, COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time
+                                                                           // Usar item_name, item_type y application_time de transaction_items (copia histórica)
+                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, ti.item_type, ti.item_name, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                                                                                FROM ".BD_FINANCIERA.".transaction_items ti
                                                                                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
-                                                                               LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION["bd"]}
                                                                                WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                                                                               ORDER BY i.item_type ASC, ti.id_autoincremental");
+                                                                               ORDER BY ti.item_type ASC, ti.id_autoincremental");
                                                                            if ($consultaItems) {
                                                                                while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
                                                                                    $itemsFactura[] = $item;
@@ -725,7 +737,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                                 $itemType = $item['item_type'] ?? 'D';
                                                                                 $isCredito = ($itemType == 'C');
                                                                                 $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
-                                                                                $nombreItem = htmlspecialchars($item['description'] ?? $item['item_name'] ?? 'N/A');
+                                                                                // Nombre del item: priorizar description (de transaction_items), luego item_name (de tabla items)
+                                                                                $nombreItem = !empty($item['description']) ? $item['description'] : ($item['item_name'] ?? 'N/A');
+                                                                                $nombreItem = htmlspecialchars($nombreItem);
                                                                                 if ($isCredito) {
                                                                                     $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
                                                                                     $nombreItem .= ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
@@ -1097,6 +1111,25 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
             $('#formArqueoCaja').submit();
             $('#modalArqueoCaja').modal('hide');
         }
+        
+        // Manejar el checkbox de mostrar abonos anulados
+        $(document).ready(function() {
+            $('#mostrarAnulados').on('change', function() {
+                var url = window.location.pathname;
+                var mostrarAnulados = $(this).is(':checked') ? '1' : '0';
+                
+                // Construir la URL con el parámetro
+                var params = new URLSearchParams(window.location.search);
+                if (mostrarAnulados == '1') {
+                    params.set('mostrar_anulados', '1');
+                } else {
+                    params.delete('mostrar_anulados');
+                }
+                
+                // Redirigir a la nueva URL
+                window.location.href = url + (params.toString() ? '?' + params.toString() : '');
+            });
+        });
     </script>
 
 </body>

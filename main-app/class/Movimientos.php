@@ -151,17 +151,17 @@ class Movimientos {
             }
             
             // Obtener todos los items con sus detalles
+            // Usar item_type y application_time de transaction_items (copia histórica)
             $consulta = mysqli_query($conexion, "SELECT 
                 ti.price,
                 ti.cantity,
                 ti.discount,
                 ti.subtotal,
                 ti.tax,
-                i.item_type,
-                COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time,
+                ti.item_type,
+                COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time,
                 tax.fee AS tax_fee
                 FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
                 WHERE {$sqlWhere}
                 AND ti.type_transaction = '{$tipo}'
@@ -289,14 +289,15 @@ class Movimientos {
                     
                     // Buscar items por factura_recurrente_id
                     // Orden: primero débitos (D), luego créditos (C)
-                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type, i.application_time
+                    // Usar item_name, item_type y application_time de transaction_items (copia histórica)
+                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                     FROM ".BD_FINANCIERA.".transaction_items ti
-                    INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
+                    LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                     WHERE ti.factura_recurrente_id = {$facturaRecurrenteId}
                     AND ti.type_transaction = '{$tipo}'
                     AND ti.institucion = {$config['conf_id_institucion']}
                     AND ti.year = {$_SESSION["bd"]}
-                    ORDER BY i.item_type ASC, ti.id_autoincremental");
+                    ORDER BY ti.item_type ASC, ti.id_autoincremental");
                 } else {
                     // Si no se encuentra la factura recurrente, retornar consulta vacía
                     $consulta = mysqli_query($conexion, "SELECT NULL WHERE 1=0");
@@ -307,14 +308,15 @@ class Movimientos {
                 
                 // id_transaction es fcu_id (INT UNSIGNED)
                 // Orden: primero débitos (D), luego créditos (C)
-                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, i.item_id AS idit, i.name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, i.item_type, i.application_time
+                // Usar item_name, item_type y application_time de transaction_items (copia histórica)
+                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
-                INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
+                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                 WHERE ti.id_transaction = {$idTransactionNum}
                 AND ti.type_transaction = '{$tipo}'
                 AND ti.institucion = {$config['conf_id_institucion']}
                 AND ti.year = {$_SESSION["bd"]}
-                ORDER BY i.item_type ASC, ti.id_autoincremental");
+                ORDER BY ti.item_type ASC, ti.id_autoincremental");
             }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -593,10 +595,13 @@ class Movimientos {
      */
     public static function listarAbonos (
         mysqli $conexion, 
-        array $config
+        array $config,
+        bool $incluirAnulados = false
     )
     {
         try {
+            $filtroAnulados = $incluirAnulados ? '' : 'AND pi.is_deleted = 0';
+            
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
                 pi.id as cod_payment,
@@ -611,6 +616,8 @@ class Movimientos {
                 pi.attachment as voucher, 
                 pi.is_deleted,
                 pi.payment_cuenta_bancaria_id,
+                pi.observation,
+                pi.note,
                 cba.cba_nombre as cuenta_bancaria_nombre,
                 fc.fcu_id as numeroFactura,
                 fc.fcu_id as fcu_id_factura,
@@ -632,6 +639,7 @@ class Movimientos {
             WHERE 
                 pi.institucion = {$config['conf_id_institucion']} 
             AND pi.year = {$_SESSION["bd"]}
+            {$filtroAnulados}
             ORDER BY pi.id DESC
             ");
         } catch (Exception $e) {
@@ -1190,37 +1198,64 @@ class Movimientos {
         string $razonAnulacion = ''
     )
     {
+        require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaFinanciera.php");
+        
         try {
-            // Marcar como anulado (is_deleted=1) y agregar la razón de anulación en el campo note
-            $razonEscapada = mysqli_real_escape_string($conexion, $razonAnulacion);
-            $notaAnulacion = !empty($razonAnulacion) ? " [ANULADO: {$razonEscapada}]" : " [ANULADO]";
-            
-            // Obtener la nota actual para no sobrescribirla completamente
-            $consultaActual = mysqli_query($conexion, "SELECT note FROM ".BD_FINANCIERA.".payments_invoiced 
+            // Obtener datos anteriores para auditoría (antes del UPDATE - soft delete)
+            $datosAnteriores = [];
+            $consultaAnterior = mysqli_query($conexion, "SELECT id, invoiced, payment, payment_cuenta_bancaria_id, observation, note, fecha_documento, attachment, is_deleted, institucion, year FROM ".BD_FINANCIERA.".payments_invoiced 
                 WHERE id='".mysqli_real_escape_string($conexion, $idAbono)."' 
                 AND institucion={$config['conf_id_institucion']} 
                 AND year={$_SESSION["bd"]} 
                 LIMIT 1");
             
-            $notaActual = '';
-            if ($consultaActual && mysqli_num_rows($consultaActual) > 0) {
-                $datosActual = mysqli_fetch_array($consultaActual, MYSQLI_BOTH);
-                $notaActual = $datosActual['note'] ?? '';
+            if ($consultaAnterior && mysqli_num_rows($consultaAnterior) > 0) {
+                $datosAnteriores = mysqli_fetch_assoc($consultaAnterior);
             }
+            
+            // Marcar como anulado (is_deleted=1) y agregar la razón de anulación en el campo note
+            $razonEscapada = mysqli_real_escape_string($conexion, $razonAnulacion);
+            $notaAnulacion = !empty($razonAnulacion) ? " [ANULADO: {$razonEscapada}]" : " [ANULADO]";
+            
+            // Obtener la nota actual para no sobrescribirla completamente
+            $notaActual = $datosAnteriores['note'] ?? '';
             
             // Agregar la razón de anulación a la nota existente
             $notaFinal = trim($notaActual) . $notaAnulacion;
-            $fechaAnulacion = date('Y-m-d H:i:s');
-            $usuarioAnulacion = $_SESSION["id"] ?? null;
             
+            // Construir el UPDATE (solo campos que existen en la tabla)
             mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments_invoiced 
                 SET is_deleted=1, 
-                    deleted_at='".mysqli_real_escape_string($conexion, $fechaAnulacion)."',
-                    deleted_by='".mysqli_real_escape_string($conexion, $usuarioAnulacion)."',
                     note='".mysqli_real_escape_string($conexion, $notaFinal)."' 
                 WHERE id='".mysqli_real_escape_string($conexion, $idAbono)."' 
                 AND institucion={$config['conf_id_institucion']} 
                 AND year={$_SESSION["bd"]}");
+            
+            // Registrar en auditoría (soft delete se trata como UPDATE)
+            if (!empty($datosAnteriores)) {
+                $datosNuevos = $datosAnteriores;
+                $datosNuevos['is_deleted'] = 1; // Cambio a anulado
+                $datosNuevos['note'] = $notaFinal;
+                
+                $camposModificados = [
+                    'is_deleted' => [
+                        'anterior' => $datosAnteriores['is_deleted'] ?? 0,
+                        'nuevo' => 1
+                    ],
+                    'note' => [
+                        'anterior' => $datosAnteriores['note'] ?? '',
+                        'nuevo' => $notaFinal
+                    ]
+                ];
+                
+                AuditoriaFinanciera::registrarActualizacion(
+                    'payments_invoiced',
+                    (string)$idAbono,
+                    $datosAnteriores,
+                    $datosNuevos,
+                    $camposModificados
+                );
+            }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -1425,9 +1460,23 @@ class Movimientos {
             // Las facturas recurrentes no tienen método de pago ni cuenta bancaria al crearse
             // Estos se definen cuando se procesa el pago real
             // El campo additional_value (valor) ya no es editable, se usa 0 por defecto
-            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(id, date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('" .$POST["id"]. "', '" . $POST["fechaInicio"] . "','" . $POST["detalle"] . "', 0, '" . $POST["tipo"] . "','" . $POST["obs"] . "','" . $POST["usuario"] . "', $fechaFinal,'" . $POST["frecuencia"] . "', '" . $dias . "', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            // El campo id es AUTO_INCREMENT, no se incluye en el INSERT
+            $fechaInicioEscapada = mysqli_real_escape_string($conexion, $POST["fechaInicio"]);
+            $detalleEscapado = mysqli_real_escape_string($conexion, $POST["detalle"]);
+            $tipoEscapado = mysqli_real_escape_string($conexion, $POST["tipo"]);
+            $obsEscapada = mysqli_real_escape_string($conexion, $POST["obs"] ?? '');
+            $usuarioEscapado = mysqli_real_escape_string($conexion, $POST["usuario"]);
+            $frecuenciaEscapada = mysqli_real_escape_string($conexion, $POST["frecuencia"]);
+            $diasEscapados = mysqli_real_escape_string($conexion, $dias);
+            
+            mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".recurring_invoices(date_start, detail, additional_value, invoice_type, observation, user, date_finish, frequency, days_in_month, responsible_user, institucion, year)VALUES('{$fechaInicioEscapada}', '{$detalleEscapado}', 0, '{$tipoEscapado}', '{$obsEscapada}', '{$usuarioEscapado}', {$fechaFinal}, '{$frecuenciaEscapada}', '{$diasEscapados}', '{$_SESSION["id"]}', {$config['conf_id_institucion']}, {$_SESSION["bd"]})");
+            
+            // Obtener el ID generado automáticamente
+            $idGenerado = mysqli_insert_id($conexion);
+            return $idGenerado;
         } catch (Exception $e) {
             include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
+            return null;
         }
     }
 
@@ -1601,24 +1650,27 @@ class Movimientos {
                     // Si no existe, $taxValue queda como NULL
                 }
                 
-                // Obtener item_type y application_time del item desde la tabla items
+                // Obtener item_type, application_time y name del item desde la tabla items
                 $itemType = 'D'; // Por defecto débito
                 $applicationTime = 'NULL'; // Por defecto NULL
+                $itemName = ''; // Por defecto vacío
                 $itemIdParaConsulta = (int)$fila['id_item'];
-                $consultaItemInfo = mysqli_query($conexion, "SELECT item_type, application_time FROM ".BD_FINANCIERA.".items WHERE item_id={$itemIdParaConsulta} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
+                $consultaItemInfo = mysqli_query($conexion, "SELECT item_type, application_time, name FROM ".BD_FINANCIERA.".items WHERE item_id={$itemIdParaConsulta} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
                 if ($consultaItemInfo && mysqli_num_rows($consultaItemInfo) > 0) {
                     $itemInfo = mysqli_fetch_array($consultaItemInfo, MYSQLI_BOTH);
                     $itemType = !empty($itemInfo['item_type']) ? mysqli_real_escape_string($conexion, $itemInfo['item_type']) : 'D';
                     if (!empty($itemInfo['application_time'])) {
                         $applicationTime = "'".mysqli_real_escape_string($conexion, $itemInfo['application_time'])."'";
                     }
+                    $itemName = !empty($itemInfo['name']) ? mysqli_real_escape_string($conexion, $itemInfo['name']) : '';
                 }
                 
-                // Construir el INSERT con o sin tax según corresponda, incluyendo item_type y application_time
+                // Construir el INSERT con o sin tax según corresponda, incluyendo item_type, application_time y item_name
+                $itemNameEscapado = $itemName ? "'{$itemName}'" : "''";
                 if ($taxValue === null) {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL, '{$itemType}', {$applicationTime})";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
                 } else {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue}, '{$itemType}', {$applicationTime})";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue}, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
                 }
                 
                 $resultadoItems = mysqli_query($conexion, $sqlItems);
@@ -1818,7 +1870,7 @@ class Movimientos {
         ];
 
         try {
-            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, fc.fcu_id AS id_nuevo_movimientos
+            $consultaFactura = mysqli_query($conexion, "SELECT fc.*, fc.fcu_id, fc.fcu_consecutivo, uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, fc.fcu_id AS id_nuevo_movimientos
                 FROM ".BD_FINANCIERA.".finanzas_cuentas fc
                 LEFT JOIN ".BD_GENERAL.".usuarios uss
                     ON uss.uss_id = fc.fcu_usuario
@@ -1838,14 +1890,14 @@ class Movimientos {
         }
 
         try {
-            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, i.name as item_name, i.item_type, COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time
+            // Usar item_name, item_type y application_time de transaction_items (copia histórica)
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, ti.item_name, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION['bd']}
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION['bd']}
                 WHERE ti.id_transaction='{$idFactura}'
                 AND ti.institucion={$config['conf_id_institucion']}
                 AND ti.year={$_SESSION['bd']}
-                ORDER BY i.item_type ASC, ti.id_autoincremental");
+                ORDER BY ti.item_type ASC, ti.id_autoincremental");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
             $consultaItems = false;
@@ -2132,10 +2184,21 @@ class Movimientos {
     )
     {
         try {
-            $consulta = mysqli_query($conexion, "SELECT SUM(cantity) AS cantidadTotal, i.item_id, i.name FROM ".BD_FINANCIERA.".transaction_items ti
-            INNER JOIN ".BD_FINANCIERA.".items i ON i.item_id=ti.id_item AND i.institucion={$config['conf_id_institucion']} AND i.year={$_SESSION["bd"]}
-            WHERE ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-            GROUP BY id_item
+            // Solo considerar items de naturaleza débito (item_type = 'D')
+            // Excluir facturas anuladas y en proceso
+            // Usar item_name de transaction_items (copia histórica)
+            $consulta = mysqli_query($conexion, "SELECT SUM(ti.cantity) AS cantidadTotal, ti.id_item AS item_id, ti.item_name AS name 
+            FROM ".BD_FINANCIERA.".transaction_items ti
+            INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id = ti.id_transaction 
+                AND fc.institucion = ti.institucion 
+                AND fc.year = ti.year
+            WHERE ti.institucion = {$config['conf_id_institucion']} 
+                AND ti.year = {$_SESSION["bd"]}
+                AND ti.type_transaction = '".TIPO_FACTURA."'
+                AND ti.item_type = 'D'
+                AND fc.fcu_anulado = 0
+                AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
+            GROUP BY ti.id_item, ti.item_name
             ORDER BY cantidadTotal DESC");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -2178,14 +2241,13 @@ class Movimientos {
                     ti_sub.year,
                     -- Total Neto = Subtotal Gravable + Impuestos - Anticipos
                     (
-                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
-                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        + IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
                     ) AS totalNeto
                 FROM ".BD_FINANCIERA.".transaction_items ti_sub
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
                 WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
                     AND ti_sub.institucion = {$config['conf_id_institucion']} 
@@ -2196,6 +2258,7 @@ class Movimientos {
                 AND ti.year = fc.year
             WHERE fc.fcu_anulado = 0 
                 AND (fc.fcu_status IS NULL OR fc.fcu_status != '".ANULADA."')
+                AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
                 AND fc.fcu_tipo = '1'
                 AND fc.institucion = {$config['conf_id_institucion']} 
                 AND fc.year = {$_SESSION["bd"]}
@@ -2243,18 +2306,17 @@ class Movimientos {
                     -- Subtotal Gravable = Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
                     (
                         -- Subtotal Bruto (precio × cantidad items débito)
-                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
                         -- Descuentos Items (descuento línea por línea items débito)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
                         -- Descuentos Comerciales Globales (items crédito ANTE_IMPUESTO)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
                         -- Impuestos (sobre base gravable items débito)
-                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        + IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
                         -- Anticipos (items crédito POST_IMPUESTO)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
                     ) AS totalNeto
                 FROM ".BD_FINANCIERA.".transaction_items ti_sub
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
                 WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
                     AND ti_sub.institucion = {$config['conf_id_institucion']}
@@ -2312,14 +2374,13 @@ class Movimientos {
                     ti_sub.year,
                     -- Total Neto = Subtotal Gravable + Impuestos - Anticipos
                     (
-                        IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
-                        + IFNULL(SUM(CASE WHEN i.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
-                        - IFNULL(SUM(CASE WHEN i.item_type = 'C' AND COALESCE(i.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' THEN ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'ANTE_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
+                        + IFNULL(SUM(CASE WHEN ti_sub.item_type = 'D' AND tax.fee > 0 THEN (ti_sub.price * ti_sub.cantity - ti_sub.price * ti_sub.cantity * (ti_sub.discount / 100)) * (tax.fee / 100) ELSE 0 END), 0)
+                        - IFNULL(SUM(CASE WHEN ti_sub.item_type = 'C' AND COALESCE(ti_sub.application_time, 'ANTE_IMPUESTO') = 'POST_IMPUESTO' THEN ABS(ti_sub.subtotal) ELSE 0 END), 0)
                     ) AS totalNeto
                 FROM ".BD_FINANCIERA.".transaction_items ti_sub
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti_sub.id_item AND i.institucion = ti_sub.institucion AND i.year = ti_sub.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti_sub.tax AND tax.institucion = ti_sub.institucion AND tax.year = ti_sub.year
                 WHERE ti_sub.type_transaction = '".TIPO_FACTURA."'
                     AND ti_sub.institucion = {$config['conf_id_institucion']}
@@ -2613,8 +2674,8 @@ class Movimientos {
                         
                         $sqlItem = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
                             id_transaction, type_transaction, discount, cantity, subtotal,
-                            id_item, institucion, year, description, price, tax, item_type, application_time
-                        ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            id_item, institucion, year, description, price, tax, item_type, application_time, item_name
+                        ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                         
                         $stmtItem = $conexionPDO->prepare($sqlItem);
                         $tipoTransaction = TIPO_FACTURA;
@@ -2648,11 +2709,12 @@ class Movimientos {
                         // Usar item_id del array, que viene del POST (es item_id de la tabla items)
                         $itemIdParaInsert = (int)($item['id'] ?? $item['item_id'] ?? 0);
                         
-                        // Obtener item_type y application_time del item desde la tabla items
+                        // Obtener item_type, application_time y name del item desde la tabla items
                         $itemType = 'D'; // Por defecto débito
                         $applicationTime = null;
+                        $itemName = ''; // Por defecto vacío
                         try {
-                            $sqlCheckItem = "SELECT item_type, application_time FROM ".BD_FINANCIERA.".items 
+                            $sqlCheckItem = "SELECT item_type, application_time, name FROM ".BD_FINANCIERA.".items 
                                            WHERE item_id=? AND institucion=? AND year=? LIMIT 1";
                             $stmtCheckItem = $conexionPDO->prepare($sqlCheckItem);
                             $stmtCheckItem->bindValue(1, $itemIdParaInsert, PDO::PARAM_INT);
@@ -2665,11 +2727,13 @@ class Movimientos {
                                 if (!empty($itemResult['application_time'])) {
                                     $applicationTime = $itemResult['application_time'];
                                 }
+                                $itemName = !empty($itemResult['name']) ? $itemResult['name'] : '';
                             }
                         } catch (Exception $e) {
                             // Si hay error, usar valores por defecto
                             $itemType = 'D';
                             $applicationTime = null;
+                            $itemName = '';
                         }
                         
                         $stmtItem->bindValue(1, $fcuId, PDO::PARAM_INT);
@@ -2684,6 +2748,7 @@ class Movimientos {
                         $stmtItem->bindValue(10, $taxItem, $taxItem !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
                         $stmtItem->bindValue(11, $itemType, PDO::PARAM_STR);
                         $stmtItem->bindValue(12, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                        $stmtItem->bindValue(13, $itemName, PDO::PARAM_STR);
                         $stmtItem->execute();
                     }
                     

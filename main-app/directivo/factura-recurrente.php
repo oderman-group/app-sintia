@@ -90,16 +90,47 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 															$fechaFinal = $fechaBDFinal->format('d/m/Y');
 														}
 
+														// Contar items asociados a la factura recurrente
+														$consultaItems = mysqli_query($conexion, "SELECT COUNT(*) as total_items FROM ".BD_FINANCIERA.".transaction_items 
+															WHERE factura_recurrente_id = {$resultado['id']} 
+															AND type_transaction = 'INVOICE_RECURRING'
+															AND institucion = {$config['conf_id_institucion']} 
+															AND year = {$_SESSION["bd"]}");
+														
+														$totalItems = 0;
+														if ($consultaItems && mysqli_num_rows($consultaItems) > 0) {
+															$resultadoItems = mysqli_fetch_array($consultaItems, MYSQLI_BOTH);
+															$totalItems = intval($resultadoItems['total_items'] ?? 0);
+														}
+														
+														$tieneItems = ($totalItems > 0);
 														$vlrAdicional = !empty($resultado['additional_value']) ? floatval($resultado['additional_value']) : 0;
 														$totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $resultado['id'], $vlrAdicional, TIPO_RECURRING);
+														
+														// Determinar clase de fila y badges según items y total neto
+														$tieneProblemas = false;
+														$badges = [];
+														
+														if (!$tieneItems) {
+															$tieneProblemas = true;
+															$badges[] = '<span class="badge badge-danger" style="margin-left: 5px;" title="Esta factura recurrente no tiene items asociados y no se generará automáticamente"><i class="fa fa-exclamation-triangle"></i> Sin items</span>';
+														}
+														
+														if ($totalNeto <= 0) {
+															$tieneProblemas = true;
+															$badges[] = '<span class="badge badge-warning" style="margin-left: 5px;" title="Esta factura recurrente tiene total neto menor o igual a cero y no se generará automáticamente"><i class="fa fa-exclamation-triangle"></i> Total inválido</span>';
+														}
+														
+														$classFila = $tieneProblemas ? 'table-warning' : '';
+														$badgeItems = implode('', $badges);
 
 														$arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
 														$arrayDatos = json_encode($arrayEnviar);
 														$objetoEnviar = htmlentities($arrayDatos);
 													?>
-													<tr id="reg<?=$resultado['id'];?>">
+													<tr id="reg<?=$resultado['id'];?>" class="<?=$classFila;?>">
                                                         <td><?=$contReg;?></td>
-														<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></td>
+														<td><?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?><?=$badgeItems;?></td>
 														<td><?=$fechaInicial;?></td>
 														<td><?=$fechaFinal;?></td>
 														<td>$<?=number_format($totalNeto,0,",",".")?></td>

@@ -206,6 +206,35 @@ try {
         }
         
         if ($debeGenerar) {
+            // Validar que la factura recurrente tenga items asociados antes de generar
+            $facturaRecurrenteId = (int)$resultadoJobs['id'];
+            $consultaItems = mysqli_query($conexion, "SELECT COUNT(*) as total_items FROM ".BD_FINANCIERA.".transaction_items 
+                WHERE factura_recurrente_id = {$facturaRecurrenteId} 
+                AND type_transaction = 'INVOICE_RECURRING'
+                AND institucion = {$resultadoJobs['institucion']} 
+                AND year = {$resultadoJobs['year']}");
+            
+            $totalItems = 0;
+            if ($consultaItems && mysqli_num_rows($consultaItems) > 0) {
+                $resultadoItems = mysqli_fetch_array($consultaItems, MYSQLI_BOTH);
+                $totalItems = intval($resultadoItems['total_items'] ?? 0);
+            }
+            
+            // Si no tiene items, no generar la factura
+            if ($totalItems == 0) {
+                echo "[ID: {$resultadoJobs['id']}] ⚠ Factura recurrente sin items asociados. Omitiendo generación.\n";
+                continue; // Continuar con la siguiente factura recurrente
+            }
+            
+            // Validar que el total neto sea mayor a 0
+            $vlrAdicional = !empty($resultadoJobs['additional_value']) ? floatval($resultadoJobs['additional_value']) : 0;
+            $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $facturaRecurrenteId, $vlrAdicional, TIPO_RECURRING);
+            
+            if ($totalNeto <= 0) {
+                echo "[ID: {$resultadoJobs['id']}] ⚠ Factura recurrente con total neto menor o igual a cero (Total: {$totalNeto}). Omitiendo generación.\n";
+                continue; // Continuar con la siguiente factura recurrente
+            }
+            
             // Iniciar transacción
             mysqli_autocommit($conexion, false);
             if (!mysqli_query($conexion, "START TRANSACTION")) {

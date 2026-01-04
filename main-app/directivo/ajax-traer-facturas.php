@@ -37,17 +37,17 @@ if ($numFacturas > 0) {
         // Obtener items de la factura con nombre del item, application_time y ordenados (débitos primero)
         $itemsFactura = [];
         try {
+            // Usar item_name, item_type y application_time de transaction_items (copia histórica)
             $consultaItems = mysqli_query($conexion, "SELECT ti.*, 
-                i.name as item_name, 
-                i.item_type,
-                COALESCE(i.application_time, 'ANTE_IMPUESTO') AS application_time,
+                ti.item_name, 
+                ti.item_type,
+                COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time,
                 tax.fee as tax_fee, 
                 tax.name as tax_name 
                 FROM ".BD_FINANCIERA.".transaction_items ti
-                LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id=ti.id_item AND i.institucion=ti.institucion AND i.year=ti.year
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
                 WHERE ti.id_transaction='{$resultado['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
-                ORDER BY i.item_type ASC, ti.id_autoincremental");
+                ORDER BY ti.item_type ASC, ti.id_autoincremental");
             if ($consultaItems) {
                 while ($item = mysqli_fetch_array($consultaItems, MYSQLI_BOTH)) {
                     $itemsFactura[] = $item;

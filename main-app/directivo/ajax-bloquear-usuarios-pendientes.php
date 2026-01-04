@@ -32,6 +32,7 @@ try {
             FROM ".BD_FINANCIERA.".finanzas_cuentas fc
             WHERE fc.fcu_tipo = 1
               AND fc.fcu_anulado = 0
+              AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
               AND fc.institucion = :institucion
               AND fc.year = :year";
 

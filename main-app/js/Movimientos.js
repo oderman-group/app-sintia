@@ -182,6 +182,9 @@ function traerItems(){
         $('#mostrarItems').empty().hide().html(data).show(1);
 
         totalizar();
+        
+        // Actualizar estado del botón de confirmar después de recargar items
+        actualizarEstadoBotonConfirmar();
 
         $.toast({
             heading: 'Acción realizada',
@@ -281,6 +284,7 @@ function guardarNuevoItem(selectElement) {
         // Determinar si es crédito para mostrar signo negativo en el subtotal
         var itemType = data.item_type || 'D';
         var isCredito = (itemType === 'C');
+        var applicationTime = isCredito ? (data.application_time || 'ANTE_IMPUESTO') : null;
         var signoNegativo = isCredito ? '-' : '';
         var subtotalFormatFinal = signoNegativo + "$" + numberFormat(subtotal, 0, ',', '.');
         
@@ -337,6 +341,12 @@ function guardarNuevoItem(selectElement) {
             if (filaNueva) {
                 // Agregar atributo data-item-type a la fila para que totalizar() lo detecte
                 filaNueva.setAttribute('data-item-type', itemType);
+                // Agregar atributo data-application-time para items crédito
+                if (isCredito && applicationTime) {
+                    filaNueva.setAttribute('data-application-time', applicationTime);
+                } else {
+                    filaNueva.removeAttribute('data-application-time');
+                }
                 // Agregar clase si es crédito
                 if (isCredito) {
                     filaNueva.classList.add('item-credito');
@@ -367,6 +377,10 @@ function guardarNuevoItem(selectElement) {
             // Llamar a totalizar() para recalcular el total considerando el nuevo item
             totalizar();
         }
+
+        // Actualizar estado del botón de confirmar según cantidad de items y total neto
+        totalizar(); // Asegurar que los totales estén actualizados
+        actualizarEstadoBotonConfirmar();
 
         $.toast({
             heading: 'Acción realizada',
@@ -524,6 +538,9 @@ function deseaEliminarNuevoItem(dato) {
                 }
 
                 totalizar();
+
+                // Actualizar estado del botón de confirmar según cantidad de items
+                actualizarEstadoBotonConfirmar();
 
                 $.toast({
                     heading: 'Acción realizada',
@@ -1453,5 +1470,81 @@ function totalizar(){
     if (idTotalNeto) {
         idTotalNeto.innerHTML = '';
         idTotalNeto.appendChild(document.createTextNode(totalNetoFinal));
+    }
+}
+
+/**
+ * Actualiza el estado del botón de confirmar factura según la cantidad de items.
+ * Habilita el botón si hay al menos un item, lo deshabilita si no hay items.
+ */
+function actualizarEstadoBotonConfirmar() {
+    // Buscar el botón de confirmar y el mensaje
+    var btnConfirmar = document.getElementById('btnConfirmarFactura');
+    var msgItemsRequeridos = document.getElementById('msgItemsRequeridos');
+    
+    // Si no existe el botón, salir (no estamos en la página de edición de movimientos)
+    if (!btnConfirmar) {
+        return;
+    }
+    
+    // Obtener la tabla de items
+    var tablaItems = document.getElementById('tablaItems');
+    if (!tablaItems) {
+        return;
+    }
+    
+    // Obtener todos los tbody de la tabla
+    var todosTbody = tablaItems.querySelectorAll('tbody');
+    var contadorItems = 0;
+    
+    // Iterar sobre todos los tbody
+    for (var t = 0; t < todosTbody.length; t++) {
+        var tbodyActual = todosTbody[t];
+        var filas = tbodyActual.querySelectorAll('tr');
+        
+        for (var i = 0; i < filas.length; i++) {
+            var fila = filas[i];
+            // Contar solo filas que estén visibles (no tienen style.display="none" ni clase fila-oculta)
+            var style = window.getComputedStyle(fila);
+            var display = style.display;
+            var tieneClaseOculta = fila.classList.contains('fila-oculta');
+            
+            if (display === 'none' || tieneClaseOculta) {
+                continue;
+            }
+            
+            // Verificar si es una fila de item guardado (con ID que comience con "reg")
+            var tieneIdReg = fila.id && fila.id.startsWith('reg');
+            if (tieneIdReg) {
+                contadorItems++;
+                continue;
+            }
+            
+            // Si no tiene ID "reg", puede ser la fila del item nuevo
+            // Verificar si el <td id="idItemNuevo"> tiene contenido (no está vacío)
+            var idItemNuevo = fila.querySelector('#idItemNuevo');
+            if (idItemNuevo) {
+                var textoIdItem = idItemNuevo.textContent.trim();
+                // Si tiene contenido, es un item guardado
+                if (textoIdItem !== '' && textoIdItem !== '0') {
+                    contadorItems++;
+                }
+            }
+        }
+    }
+    
+    // Habilitar o deshabilitar el botón según la cantidad de items
+    if (contadorItems > 0) {
+        btnConfirmar.disabled = false;
+        btnConfirmar.title = '';
+        if (msgItemsRequeridos) {
+            msgItemsRequeridos.style.display = 'none';
+        }
+    } else {
+        btnConfirmar.disabled = true;
+        btnConfirmar.title = 'No se puede confirmar la factura sin items asociados';
+        if (msgItemsRequeridos) {
+            msgItemsRequeridos.style.display = 'block';
+        }
     }
 }

@@ -18,9 +18,14 @@ if (empty($_POST["fechaInicio"]) or empty($_POST["detalle"]) or empty($_POST["ti
     exit();
 }
 
-Movimientos::guardarRecurrentes($conexion, $config, $_POST);
+$idGenerado = Movimientos::guardarRecurrentes($conexion, $config, $_POST);
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 
-echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_1&id='.base64_encode($_POST["id"]).'";</script>';
+// Usar el ID generado automáticamente
+if ($idGenerado) {
+    echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_1&id='.base64_encode((string)$idGenerado).'";</script>';
+} else {
+    echo '<script type="text/javascript">window.location.href="factura-recurrente.php?error=ER_DT_ERROR_GUARDAR";</script>';
+}
 exit();

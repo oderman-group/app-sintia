@@ -101,6 +101,19 @@ if(Modulos::validarPermisoEdicion()
 
 // Establecer disabled según si puede editar
 $disabledPermiso = $puedeEditar ? "" : "disabled";
+
+// Contar items de la factura para validar antes de confirmar
+$numItems = 0;
+if ($puedeEditar) {
+    try {
+        $consultaItems = Movimientos::listarItemsTransaction($conexion, $config, (string)$datosMovimiento['fcu_id'], TIPO_FACTURA);
+        if ($consultaItems) {
+            $numItems = mysqli_num_rows($consultaItems);
+        }
+    } catch (Exception $e) {
+        $numItems = 0;
+    }
+}
 ?>
 
 	<!--bootstrap -->
@@ -452,11 +465,12 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Cerrado?</label>
-													<select class="form-control select2" name="cerrado" required <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
+													<select class="form-control select2" name="cerrado" disabled style="background-color: #e9ecef; cursor: not-allowed;">
 														<option value="0" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==0){ echo "selected";}?>>Abierto</option>
 														<option value="1" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==1){ echo "selected";}?>>Cerrado</option>
 													</select>
+													<input type="hidden" name="cerrado" value="<?=isset($datosMovimiento['fcu_cerrado']) ? $datosMovimiento['fcu_cerrado'] : '0';?>">
+													<small class="form-text text-muted" style="font-style: italic; color: #6c757d;">Este campo está reservado para otro proceso y no puede ser modificado.</small>
 												</div>
 											</div>
 											<div class="col-md-6">
@@ -788,9 +802,12 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
                                                     </button>
                                                     
                                                     <!-- Botón: Confirmar creación (cambia a POR_COBRAR) -->
-                                                    <button type="submit" name="accion" value="confirmar" class="btn btn-success" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                                                    <button type="submit" name="accion" value="confirmar" id="btnConfirmarFactura" class="btn btn-success" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;" <?= ($numItems == 0) ? 'disabled title="No se puede confirmar la factura sin items asociados"' : ''; ?>>
                                                         <i class="fa fa-check-circle"></i> Confirmar creación de factura
                                                     </button>
+                                                    <small id="msgItemsRequeridos" class="text-danger" style="display: <?= ($numItems == 0) ? 'block' : 'none'; ?>; margin-top: 5px;">
+                                                        <i class="fa fa-exclamation-triangle"></i> Debe agregar al menos un item para confirmar la factura
+                                                    </small>
                                                     
                                                     <a href="movimientos.php" class="btn btn-default" style="padding: 10px 20px;">
                                                         <i class="fa fa-times"></i> Cancelar
@@ -906,6 +923,11 @@ $disabledPermiso = $puedeEditar ? "" : "disabled";
     <script src="../js/Movimientos.js"></script>
     
     <script>
+        // Actualizar estado del botón de confirmar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarEstadoBotonConfirmar();
+        });
+        
         // Replace the <textarea id="editor1"> with a CKEditor 4
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );
