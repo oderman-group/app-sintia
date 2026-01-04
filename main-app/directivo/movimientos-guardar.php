@@ -14,8 +14,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-// Validaciones: ya no se requiere "forma" (fcu_forma_pago) en la creación
-// El campo "valor" ya no es requerido, se usa 0 por defecto
+// Validaciones: el campo "valor" ya no es requerido, se usa 0 por defecto
 if (empty($_POST["fecha"]) or empty($_POST["detalle"]) or empty($_POST["tipo"])) {
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
     echo '<script type="text/javascript">window.location.href="movimientos-agregar.php?error=ER_DT_4";</script>';

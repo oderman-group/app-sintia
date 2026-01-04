@@ -1198,37 +1198,64 @@ class Movimientos {
         string $razonAnulacion = ''
     )
     {
+        require_once(ROOT_PATH."/main-app/class/App/Seguridad/AuditoriaFinanciera.php");
+        
         try {
-            // Marcar como anulado (is_deleted=1) y agregar la razón de anulación en el campo note
-            $razonEscapada = mysqli_real_escape_string($conexion, $razonAnulacion);
-            $notaAnulacion = !empty($razonAnulacion) ? " [ANULADO: {$razonEscapada}]" : " [ANULADO]";
-            
-            // Obtener la nota actual para no sobrescribirla completamente
-            $consultaActual = mysqli_query($conexion, "SELECT note FROM ".BD_FINANCIERA.".payments_invoiced 
+            // Obtener datos anteriores para auditoría (antes del UPDATE - soft delete)
+            $datosAnteriores = [];
+            $consultaAnterior = mysqli_query($conexion, "SELECT id, invoiced, payment, payment_cuenta_bancaria_id, observation, note, fecha_documento, attachment, is_deleted, institucion, year FROM ".BD_FINANCIERA.".payments_invoiced 
                 WHERE id='".mysqli_real_escape_string($conexion, $idAbono)."' 
                 AND institucion={$config['conf_id_institucion']} 
                 AND year={$_SESSION["bd"]} 
                 LIMIT 1");
             
-            $notaActual = '';
-            if ($consultaActual && mysqli_num_rows($consultaActual) > 0) {
-                $datosActual = mysqli_fetch_array($consultaActual, MYSQLI_BOTH);
-                $notaActual = $datosActual['note'] ?? '';
+            if ($consultaAnterior && mysqli_num_rows($consultaAnterior) > 0) {
+                $datosAnteriores = mysqli_fetch_assoc($consultaAnterior);
             }
+            
+            // Marcar como anulado (is_deleted=1) y agregar la razón de anulación en el campo note
+            $razonEscapada = mysqli_real_escape_string($conexion, $razonAnulacion);
+            $notaAnulacion = !empty($razonAnulacion) ? " [ANULADO: {$razonEscapada}]" : " [ANULADO]";
+            
+            // Obtener la nota actual para no sobrescribirla completamente
+            $notaActual = $datosAnteriores['note'] ?? '';
             
             // Agregar la razón de anulación a la nota existente
             $notaFinal = trim($notaActual) . $notaAnulacion;
-            $fechaAnulacion = date('Y-m-d H:i:s');
-            $usuarioAnulacion = $_SESSION["id"] ?? null;
             
+            // Construir el UPDATE (solo campos que existen en la tabla)
             mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".payments_invoiced 
                 SET is_deleted=1, 
-                    deleted_at='".mysqli_real_escape_string($conexion, $fechaAnulacion)."',
-                    deleted_by='".mysqli_real_escape_string($conexion, $usuarioAnulacion)."',
                     note='".mysqli_real_escape_string($conexion, $notaFinal)."' 
                 WHERE id='".mysqli_real_escape_string($conexion, $idAbono)."' 
                 AND institucion={$config['conf_id_institucion']} 
                 AND year={$_SESSION["bd"]}");
+            
+            // Registrar en auditoría (soft delete se trata como UPDATE)
+            if (!empty($datosAnteriores)) {
+                $datosNuevos = $datosAnteriores;
+                $datosNuevos['is_deleted'] = 1; // Cambio a anulado
+                $datosNuevos['note'] = $notaFinal;
+                
+                $camposModificados = [
+                    'is_deleted' => [
+                        'anterior' => $datosAnteriores['is_deleted'] ?? 0,
+                        'nuevo' => 1
+                    ],
+                    'note' => [
+                        'anterior' => $datosAnteriores['note'] ?? '',
+                        'nuevo' => $notaFinal
+                    ]
+                ];
+                
+                AuditoriaFinanciera::registrarActualizacion(
+                    'payments_invoiced',
+                    (string)$idAbono,
+                    $datosAnteriores,
+                    $datosNuevos,
+                    $camposModificados
+                );
+            }
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
