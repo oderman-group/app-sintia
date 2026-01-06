@@ -147,6 +147,8 @@ define('ESTADO_CURSO_NO_APROBADO', 'NO APROBADO');
 
 define('COBRADA', 'COBRADA');
 define('POR_COBRAR', 'POR_COBRAR');
+define('EN_PROCESO', 'EN_PROCESO');
+define('ANULADA', 'ANULADA');
 
 define('SI', 'SI');
 define('NO', 'NO');

@@ -17,10 +17,36 @@ if(!Modulos::validarPermisoEdicion()){
 
 $id = '';
 if (!empty($_GET['id'])) {
-    $id = base64_decode($_GET['id']);
+    $idDecoded = base64_decode($_GET['id'], true);
+    if ($idDecoded === false || empty($idDecoded)) {
+        $idDecoded = base64_decode($_GET['id']);
+    }
+    $id = $idDecoded;
 }
 
-$resultado = Movimientos::traerDatosItems($conexion, $config, $id);
+if (empty($id)) {
+    echo '<script type="text/javascript">alert("ID de item no proporcionado."); window.location.href="items.php";</script>';
+    exit();
+}
+
+// Usar nombre de variable único para evitar conflictos con archivos incluidos
+$datosItem = Movimientos::traerDatosItems($conexion, $config, $id);
+
+// Validar que se encontró el item
+$itemEncontrado = !empty($datosItem) && is_array($datosItem) && !empty($datosItem['item_id']);
+if (!$itemEncontrado) {
+    // Debug: verificar qué ID se está buscando
+    error_log("Item no encontrado. ID recibido: {$id}, ID decodificado de: " . ($_GET['id'] ?? 'N/A'));
+    // Inicializar con valores por defecto para evitar warnings
+    $datosItem = [
+        'item_id' => $id,
+        'name' => '',
+        'price' => '0',
+        'tax' => '0',
+        'description' => '',
+        'item_type' => 'D'
+    ];
+}
 ?>
 
 	<!--bootstrap -->
@@ -63,6 +89,11 @@ $resultado = Movimientos::traerDatosItems($conexion, $config, $id);
                     <div class="row">
                         <div class="col-sm-12">
                                 <?php require_once(ROOT_PATH."/config-general/mensajes-informativos.php"); ?>
+                                <?php if (!$itemEncontrado) { ?>
+                                <div class="alert alert-warning">
+                                    <i class="fa fa-exclamation-triangle"></i> <strong>Advertencia:</strong> No se pudo cargar la información del item con ID: <?=htmlspecialchars($id)?>. Verifique que el item exista en la base de datos.
+                                </div>
+                                <?php } ?>
 								<div class="panel">
 									<header class="panel-heading panel-heading-purple"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?> Items</header>
                                 	<div class="panel-body">
@@ -72,26 +103,43 @@ $resultado = Movimientos::traerDatosItems($conexion, $config, $id);
                                         <div class="form-group row">
                                             <label class="col-sm-1 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" name="nombre" class="form-control" value="<?=$resultado['name']?>" required <?=$disabledPermiso;?>>
+                                                <input type="text" name="nombre" class="form-control" value="<?=htmlspecialchars($datosItem['name'] ?? '')?>" required <?=$disabledPermiso;?>>
                                             </div>
                                         </div>
 
                                         <div class="form-group row">
                                             <label class="col-sm-1 control-label"><?=$frases[381][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="number" min="0" name="precio" class="form-control" value="<?=$resultado['price']?>" required <?=$disabledPermiso;?>>
+                                                <input type="number" min="0" name="precio" class="form-control" value="<?=htmlspecialchars($datosItem['price'] ?? '0')?>" required <?=$disabledPermiso;?>>
                                             </div>
+                                        </div>
 
-                                            <label class="col-sm-1 control-label"><?=$frases[382][$datosUsuarioActual['uss_idioma']];?>:</label>
+                                        <div class="form-group row">
+                                            <label class="col-sm-1 control-label">Tipo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
-                                                <input type="number" min="0" name="iva" class="form-control" value="<?=$resultado['tax']?>" <?=$disabledPermiso;?>>
+                                                <select name="item_type" id="item_type" class="form-control" required <?=$disabledPermiso;?> onchange="toggleApplicationTime()">
+                                                    <option value="D" <?=($datosItem['item_type'] ?? 'D') == 'D' ? 'selected' : ''?>>Débito (Cargo)</option>
+                                                    <option value="C" <?=($datosItem['item_type'] ?? 'D') == 'C' ? 'selected' : ''?>>Crédito (Descuento)</option>
+                                                </select>
+                                            </div>
+                                            <?php
+                                            $itemType = $datosItem['item_type'] ?? 'D';
+                                            $applicationTime = $datosItem['application_time'] ?? ($itemType == 'C' ? 'ANTE_IMPUESTO' : null);
+                                            $showApplicationTime = ($itemType == 'C');
+                                            ?>
+                                            <label class="col-sm-1 control-label" id="label_application_time" style="display: <?=$showApplicationTime ? '' : 'none';?>;">Aplicación <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4" id="div_application_time" style="display: <?=$showApplicationTime ? '' : 'none';?>;">
+                                                <select name="application_time" id="application_time" class="form-control" <?=$disabledPermiso;?>>
+                                                    <option value="ANTE_IMPUESTO" <?=($applicationTime == 'ANTE_IMPUESTO') ? 'selected' : ''?>>Antes del Impuesto</option>
+                                                    <option value="POST_IMPUESTO" <?=($applicationTime == 'POST_IMPUESTO') ? 'selected' : ''?>>Después del Impuesto</option>
+                                                </select>
                                             </div>
                                         </div>
 
                                         <div class="form-group row">
                                             <label class="col-sm-12 control-label"><?=$frases[50][$datosUsuarioActual['uss_idioma']];?></label>
                                             <div class="col-sm-12">
-                                                <textarea cols="80" id="editor1" name="descrip" class="form-control" rows="8" placeholder="Escribe aqui la descripción para este item" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?=$resultado['description']?></textarea>
+                                                <textarea cols="80" id="editor1" name="descrip" class="form-control" rows="8" placeholder="Escribe aqui la descripción para este item" style="margin-top: 0px; margin-bottom: 0px; height: 100px; resize: none;" <?=$disabledPermiso;?>><?=htmlspecialchars($datosItem['description'] ?? '')?></textarea>
                                             </div>
                                         </div>
                                         
@@ -142,6 +190,34 @@ $resultado = Movimientos::traerDatosItems($conexion, $config, $id);
 
     <script>
         CKEDITOR.replace( 'editor1' );
+        
+        // Función para mostrar/ocultar campo de aplicación según el tipo de item
+        function toggleApplicationTime() {
+            var itemType = document.getElementById('item_type').value;
+            var labelApplicationTime = document.getElementById('label_application_time');
+            var divApplicationTime = document.getElementById('div_application_time');
+            var selectApplicationTime = document.getElementById('application_time');
+            
+            if (itemType === 'C') {
+                // Mostrar campo de aplicación si es Crédito
+                if (labelApplicationTime) labelApplicationTime.style.display = '';
+                if (divApplicationTime) divApplicationTime.style.display = '';
+                if (selectApplicationTime) selectApplicationTime.setAttribute('required', 'required');
+            } else {
+                // Ocultar campo de aplicación si es Débito
+                if (labelApplicationTime) labelApplicationTime.style.display = 'none';
+                if (divApplicationTime) divApplicationTime.style.display = 'none';
+                if (selectApplicationTime) {
+                    selectApplicationTime.removeAttribute('required');
+                    selectApplicationTime.value = 'ANTE_IMPUESTO'; // Resetear valor por defecto
+                }
+            }
+        }
+        
+        // Ejecutar al cargar la página para establecer el estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleApplicationTime();
+        });
     </script>
 </body>
 

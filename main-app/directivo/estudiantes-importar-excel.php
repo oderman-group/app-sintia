@@ -114,6 +114,17 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </div>
 
                                             <div class="form-group row">
+                                                <label class="col-sm-3 control-label">Estado de matrícula <span class="text-danger">*</span></label>
+                                                <div class="col-sm-9">
+                                                    <select class="form-control" name="estadoMatricula" id="estadoMatricula" required style="max-width: 300px;">
+                                                        <option value="1" selected>Matriculado</option>
+                                                        <option value="4">No matriculado</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Seleccione el estado de matrícula para los estudiantes a importar</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row">
                                                 <label class="col-sm-3 control-label">Modo de procesamiento <span class="text-danger">*</span></label>
                                                 <div class="col-sm-9">
                                                     <div class="radio">
@@ -123,9 +134,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         </label>
                                                     </div>
                                                     <div class="radio" style="margin-bottom: 10px;">
-                                                        <label style="cursor: pointer;">
-                                                            <input type="radio" name="modoProcesamiento" value="job" style="margin-right: 8px;">
-                                                            <strong>Procesar después (Job)</strong> - Se programará para procesar en segundo plano
+                                                        <label style="cursor: not-allowed; opacity: 0.6;">
+                                                            <input type="radio" name="modoProcesamiento" value="job" disabled style="margin-right: 8px;">
+                                                            <strong>Procesar después (Job)</strong> - <em>Temporalmente deshabilitado</em>
                                                         </label>
                                                     </div>
                                                 </div>
@@ -681,15 +692,22 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                 return false;
             }
             
-            if (modoProcesamiento === 'job') {
-                console.log('Iniciando procesamiento con job');
-                // Procesamiento tradicional con job (ahora también asíncrono)
-                processWithJob();
-            } else {
-                console.log('Iniciando procesamiento inmediato');
-                // Procesamiento inmediato con AJAX
-                processImmediately();
+            // Validar estado de matrícula
+            const estadoMatricula = $('#estadoMatricula').val();
+            if (!estadoMatricula) {
+                alert('Por favor seleccione el estado de matrícula');
+                return false;
             }
+            
+            // Validar que no se intente usar el modo job (deshabilitado)
+            if (modoProcesamiento === 'job') {
+                alert('El modo "Procesar después (Job)" está temporalmente deshabilitado. Por favor seleccione "Procesar inmediatamente".');
+                return false;
+            }
+            
+            console.log('Iniciando procesamiento inmediato');
+            // Procesamiento inmediato con AJAX
+            processImmediately();
             
             return false; // Prevenir cualquier envío adicional
         });

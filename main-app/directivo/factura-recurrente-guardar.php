@@ -11,15 +11,21 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	exit();
 }
 
-if (empty($_POST["fechaInicio"]) or empty($_POST["detalle"]) or (isset($_POST["valor"]) && $_POST["valor"]=="") or empty($_POST["tipo"]) or empty($_POST["metodoPago"])) {
+// El campo "valor" ya no es editable ni se usa en el backend
+if (empty($_POST["fechaInicio"]) or empty($_POST["detalle"]) or empty($_POST["tipo"])) {
     include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
     echo '<script type="text/javascript">window.location.href="factura-recurrente-agregar.php?error=ER_DT_4";</script>';
     exit();
 }
 
-Movimientos::guardarRecurrentes($conexion, $config, $_POST);
+$idGenerado = Movimientos::guardarRecurrentes($conexion, $config, $_POST);
 
 include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
 
-echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_1&id='.base64_encode($_POST["id"]).'";</script>';
+// Usar el ID generado automáticamente
+if ($idGenerado) {
+    echo '<script type="text/javascript">window.location.href="factura-recurrente-editar.php?success=SC_DT_1&id='.base64_encode((string)$idGenerado).'";</script>';
+} else {
+    echo '<script type="text/javascript">window.location.href="factura-recurrente.php?error=ER_DT_ERROR_GUARDAR";</script>';
+}
 exit();

@@ -1,5 +1,40 @@
 <?php
-include("bd-conexion.php");
+// Incluir constantes necesarias
+require_once($_SERVER['DOCUMENT_ROOT']."/app-sintia/config-general/constantes.php");
+
+// Verificar si hay ID de institución en GET o POST
+$idInstRaw = '';
+$idInstCodificado = '';
+$tieneIdInst = false;
+
+if (!empty($_REQUEST['idInst'])) {
+    $idInstCodificado = $_REQUEST['idInst'];
+    $tieneIdInst = true;
+    // Decodificar para mostrar en el campo si es necesario
+    $idInstRaw = base64_decode($idInstCodificado);
+} elseif (!empty($_POST['idInstRaw'])) {
+    // Si se envió el ID desde el formulario, validarlo y codificarlo
+    $idInstRaw = trim($_POST['idInstRaw']);
+    if (is_numeric($idInstRaw)) {
+        $idInstCodificado = base64_encode($idInstRaw);
+        $tieneIdInst = true;
+    }
+}
+
+// Solo incluir bd-conexion.php si hay ID de institución válido
+if ($tieneIdInst) {
+    $_REQUEST['idInst'] = $idInstCodificado;
+    include("bd-conexion.php");
+} else {
+    // Si no hay ID, definir variables por defecto para evitar errores
+    $config = [];
+    $datosInfo = ['info_nombre' => 'Plataforma SINTIA'];
+    $valorInscripcion = 0;
+    $fondoSolicitud = [];
+    $estadosSolicitud = [];
+    $progresoSolicitud = [];
+    $ordenReal = [];
+}
 
 $solicitud = '';
 $documento = '';
@@ -11,10 +46,10 @@ if (!empty($_GET["solicitud"])) {
     $documento = $_POST['documento'];
 }
 
-// Si hay solicitud, consultar datos
+// Si hay solicitud y ID de institución, consultar datos
 $datos = null;
 $num = 0;
-if (!empty($solicitud)) {
+if (!empty($solicitud) && $tieneIdInst) {
     $estQuery = "SELECT * FROM aspirantes WHERE asp_id = :id AND asp_documento = :documento";
     $est = $pdo->prepare($estQuery);
     $est->bindParam(':id', $solicitud, PDO::PARAM_INT);
@@ -540,21 +575,45 @@ if (!empty($solicitud)) {
         <!-- Formulario de búsqueda -->
         <div class="search-card">
             <form action="consultar-estado.php" method="post" id="formConsulta">
-                <input type="hidden" name="idInst" value="<?= $_REQUEST['idInst'] ?? ''; ?>">
+                <?php if ($tieneIdInst): ?>
+                    <input type="hidden" name="idInst" value="<?= htmlspecialchars($idInstCodificado); ?>">
+                    <!-- Mostrar ID de institución como información -->
+                    <div class="alert alert-info mb-3" style="border-left: 4px solid #667eea;">
+                        <strong><i class="fas fa-id-card"></i> Institución:</strong> ID <?= htmlspecialchars($idInstRaw); ?>
+                    </div>
+                <?php else: ?>
+                    <!-- Campo para ID de institución si no está presente -->
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> ID de Institución <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               name="idInstRaw" 
+                               id="idInstRaw"
+                               autocomplete="off" 
+                               required 
+                               pattern="[0-9]+"
+                               title="Solo se permiten números"
+                               value="<?= htmlspecialchars($idInstRaw); ?>" 
+                               placeholder="Ingrese el ID numérico de la institución">
+                        <small class="form-text">
+                            <i class="fas fa-info-circle"></i> Ingrese el ID numérico de su institución educativa.
+                        </small>
+                    </div>
+                <?php endif; ?>
                 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Número de Solicitud</label>
-                            <input type="number" class="form-control" name="solicitud" autocomplete="off" required value="<?= $solicitud; ?>" placeholder="Ej: 123456">
+                            <label>Número de Solicitud <?= $tieneIdInst ? '<span class="text-danger">*</span>' : ''; ?></label>
+                            <input type="number" class="form-control" name="solicitud" autocomplete="off" <?= $tieneIdInst ? 'required' : ''; ?> value="<?= htmlspecialchars($solicitud); ?>" placeholder="Ej: 123456" <?= !$tieneIdInst ? 'disabled' : ''; ?>>
                             <small class="form-text">Este número fue enviado a tu correo al momento del registro.</small>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Número de Documento del Aspirante</label>
-                            <input type="text" class="form-control" name="documento" autocomplete="off" required value="<?= $documento; ?>" placeholder="Ej: 1234567890">
+                            <label>Número de Documento del Aspirante <?= $tieneIdInst ? '<span class="text-danger">*</span>' : ''; ?></label>
+                            <input type="text" class="form-control" name="documento" autocomplete="off" <?= $tieneIdInst ? 'required' : ''; ?> value="<?= htmlspecialchars($documento); ?>" placeholder="Ej: 1234567890" <?= !$tieneIdInst ? 'disabled' : ''; ?>>
                             <small class="form-text">Documento de identidad del estudiante aspirante.</small>
                         </div>
                     </div>
@@ -569,7 +628,7 @@ if (!empty($solicitud)) {
             </form>
         </div>
         
-        <?php if (!empty($solicitud)): ?>
+        <?php if (!empty($solicitud) && $tieneIdInst): ?>
             <?php if ($num > 0 && $datos): ?>
                 <!-- Resultado encontrado -->
                 <div class="resultado-card">
@@ -669,7 +728,7 @@ if (!empty($solicitud)) {
                             <p style="color: #1976d2; margin-bottom: 24px;">
                                 Tu solicitud está lista para continuar. Completa el formulario de admisión para avanzar en el proceso.
                             </p>
-                            <a class="btn-action-primary" href="formulario.php?token=<?= md5($datos['asp_id']); ?>&id=<?= base64_encode($datos['asp_id']); ?>&idInst=<?= $_REQUEST['idInst']; ?>">
+                            <a class="btn-action-primary" href="formulario.php?token=<?= md5($datos['asp_id']); ?>&id=<?= base64_encode($datos['asp_id']); ?>&idInst=<?= htmlspecialchars($idInstCodificado); ?>">
                                 <i class="fas fa-edit"></i>
                                 <span>Completar Formulario de Admisión</span>
                             </a>
@@ -691,7 +750,7 @@ if (!empty($solicitud)) {
                             
                             <form action="enviar-comprobante.php" method="post" enctype="multipart/form-data" id="formComprobante">
                                 <input type="hidden" name="solicitud" value="<?= $solicitud; ?>">
-                                <input type="hidden" name="idInst" value="<?= $_REQUEST['idInst']; ?>">
+                                <input type="hidden" name="idInst" value="<?= htmlspecialchars($idInstCodificado); ?>">
                                 
                                 <div class="file-input-wrapper">
                                     <input type="file" id="comprobante" name="comprobante" accept="image/*,.pdf" required onchange="mostrarNombreArchivo(this)">
@@ -753,7 +812,7 @@ if (!empty($solicitud)) {
                 <p style="color: white; font-size: 15px; margin-bottom: 16px;">
                     ¿Aún no has iniciado tu proceso?
                 </p>
-                <a href="admision.php?idInst=<?= $_REQUEST['idInst']; ?>" style="color: white; text-decoration: underline; font-weight: 600; font-size: 16px;">
+                <a href="admision.php?idInst=<?= htmlspecialchars($idInstCodificado); ?>" style="color: white; text-decoration: underline; font-weight: 600; font-size: 16px;">
                     <i class="fas fa-arrow-left"></i> Iniciar Nueva Solicitud
                 </a>
             </div>
@@ -766,6 +825,21 @@ if (!empty($solicitud)) {
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
     <script>
+        // Validar que solo se ingresen números en el campo ID de institución
+        $(document).ready(function() {
+            $('#idInstRaw').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+            
+            // Si se ingresa un ID válido, habilitar los campos de solicitud y documento
+            $('#idInstRaw').on('blur', function() {
+                if ($(this).val().length > 0 && /^\d+$/.test($(this).val())) {
+                    $('input[name="solicitud"]').prop('disabled', false);
+                    $('input[name="documento"]').prop('disabled', false);
+                }
+            });
+        });
+        
         function mostrarNombreArchivo(input) {
             const fileSelected = document.getElementById('fileSelected');
             const fileName = document.getElementById('fileName');

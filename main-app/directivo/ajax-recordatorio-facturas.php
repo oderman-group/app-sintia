@@ -54,7 +54,7 @@ foreach ($facturas as $facturaId) {
 
 	if ((int)$factura['fcu_anulado'] === 1) {
 		$omitidas[] = [
-			'factura' => $factura['id_nuevo'] ?? $factura['fcu_id'],
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
 			'razon'   => 'Factura anulada'
 		];
 		continue;
@@ -62,7 +62,7 @@ foreach ($facturas as $facturaId) {
 
 	if ((int)$factura['fcu_tipo'] !== 1) {
 		$omitidas[] = [
-			'factura' => $factura['id_nuevo'] ?? $factura['fcu_id'],
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
 			'razon'   => 'Factura de compra'
 		];
 		continue;
@@ -75,29 +75,53 @@ foreach ($facturas as $facturaId) {
 
 	if ($saldoPendiente <= 0.5) {
 		$omitidas[] = [
-			'factura' => $factura['id_nuevo'] ?? $factura['fcu_id'],
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
 			'razon'   => 'Saldo pendiente en cero'
 		];
 		continue;
 	}
 
 	$datosUsuario = UsuariosPadre::sesionUsuario($factura['fcu_usuario']);
-	if (empty($datosUsuario) || empty($datosUsuario['uss_email'])) {
+	if (empty($datosUsuario)) {
 		$omitidas[] = [
-			'factura' => $factura['id_nuevo'] ?? $factura['fcu_id'],
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
+			'razon'   => 'Usuario no encontrado'
+		];
+		continue;
+	}
+
+	// Validar que el correo electrónico esté presente y sea válido
+	$correoUsuario = !empty($datosUsuario['uss_email']) ? trim($datosUsuario['uss_email']) : '';
+	
+	// Validar formato de email usando la misma función que EnviarEmail
+	// Esto evita que EnviarEmail::mensajeError() haga un redirect que rompe el flujo AJAX
+	if (empty($correoUsuario) || !is_string($correoUsuario)) {
+		$omitidas[] = [
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
 			'razon'   => 'El usuario no tiene correo registrado'
+		];
+		continue;
+	}
+	
+	// Validar formato usando la misma regex que EnviarEmail::validarEmail()
+	$regex = "/^[A-z0-9\\._-]+@[A-z0-9][A-z0-9-]*(\\.[A-z0-9_-]+)*\\.([A-z]{2,6})$/";
+	if (!preg_match($regex, $correoUsuario)) {
+		$omitidas[] = [
+			'factura' => $factura['fcu_consecutivo'] ?? $factura['fcu_id'],
+			'razon'   => 'El correo del usuario no tiene un formato válido'
 		];
 		continue;
 	}
 
 	$nombreUsuario = UsuariosPadre::nombreCompletoDelUsuario($datosUsuario);
-	$consecutivo = $factura['id_nuevo'] ?? $factura['fcu_id'];
+	// Obtener consecutivo: usar fcu_consecutivo si existe y no está vacío, sino usar fcu_id
+	$consecutivo = (!empty($factura['fcu_consecutivo']) && trim($factura['fcu_consecutivo']) !== '') 
+		? $factura['fcu_consecutivo'] 
+		: $factura['fcu_id'];
 	$fechaFactura = !empty($factura['fcu_fecha']) ? $factura['fcu_fecha'] : '';
 	$saldoFormateado = '$' . number_format($saldoPendiente, 0, ",", ".");
 	$detalle = $factura['fcu_detalle'] ?? '';
 	$asunto = 'Recordatorio de saldo pendiente - ' . $consecutivo;
-
-	$correoUsuario = trim($datosUsuario['uss_email']);
 
 	$dataEmail = [
 		'institucion_id'      => $config['conf_id_institucion'],
@@ -126,9 +150,14 @@ foreach ($facturas as $facturaId) {
 			'destinatario' => $correoUsuario
 		];
 	} catch (Exception $e) {
+		$mensajeError = $e->getMessage();
+		// Si el error es de validación de email, usar un mensaje más corto
+		if (strpos($mensajeError, 'correo electrónico inválido') !== false || strpos($mensajeError, 'Correo electrónico inválido') !== false) {
+			$mensajeError = 'Correo electrónico inválido';
+		}
 		$omitidas[] = [
 			'factura' => $consecutivo,
-			'razon'   => 'Error al enviar: ' . $e->getMessage()
+			'razon'   => 'Error al enviar: ' . $mensajeError
 		];
 	}
 }

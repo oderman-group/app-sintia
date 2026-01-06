@@ -15,7 +15,17 @@
 			</li>
 		</ul> 
 	</div> -->
-	<?php if (!empty($resultado) && isset($resultado['fcu_id']) && !empty($resultado['fcu_id'])) { ?>
+	<?php 
+	// Obtener el estado actual de la factura
+	$estadoFacturaActual = isset($resultado['fcu_status']) ? $resultado['fcu_status'] : '';
+	
+	// Solo mostrar el botón de imprimir si la factura NO está en estado EN_PROCESO y NO está anulada
+	$puedeImprimir = (!empty($resultado) && isset($resultado['fcu_id']) && !empty($resultado['fcu_id']) 
+					  && $estadoFacturaActual != EN_PROCESO 
+					  && $estadoFacturaActual != ANULADA
+					  && (!isset($resultado['fcu_anulado']) || $resultado['fcu_anulado'] == 0));
+	if ($puedeImprimir) { 
+	?>
 	<a href="movimientos-factura-venta.php?id=<?=base64_encode($resultado['fcu_id']);?>" class="btn btn-danger" target="_blank">
 		<i class="fa fa-print"></i> Imprimir factura
 	</a>

@@ -3,6 +3,7 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Movimientos.php");
+require_once(ROOT_PATH."/main-app/class/MediosPago.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -76,9 +77,13 @@ $codigoUnico=Utilidades::generateCode("FCN");
                                                 </select>
                                             </div>
 
-                                            <label class="col-sm-2 control-label">Fecha</label>
+                                            <label class="col-sm-2 control-label">Fecha del documento</label>
                                             <div class="col-sm-4">
-                                                <input type="date" name="fecha" class="form-control" autocomplete="off" required value="<?=date('Y-m-d');?>" <?=$disabledPermiso;?>>
+                                                <input type="date" name="fecha" class="form-control" autocomplete="off" required 
+                                                    value="<?=date('Y-m-d');?>" 
+                                                    max="<?=date('Y-m-d');?>" 
+                                                    min="<?=date('Y-m-d', strtotime('-1 year'));?>"
+                                                    id="fecha_documento" <?=$disabledPermiso;?>>
                                             </div>
                                         </div>
 										
@@ -90,7 +95,7 @@ $codigoUnico=Utilidades::generateCode("FCN");
 
                                             <label class="col-sm-2 control-label">Valor adicional</label>
                                             <div class="col-sm-4">
-                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="0" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="0" onchange="totalizar(this)">
+                                                <input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" autocomplete="off" value="0" required disabled data-vlr-adicional-anterior="0">
                                             </div>
 										</div>
 
@@ -103,29 +108,46 @@ $codigoUnico=Utilidades::generateCode("FCN");
 													<option value="2" >Fact. Compra</option>
                                                 </select>
                                             </div>
-
-                                            <label class="col-sm-2 control-label">Medio de pago</label>
-                                            <div class="col-sm-4">
-                                                <select class="form-control  select2" name="forma" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
-													<option value="1" >Efectivo</option>
-													<option value="2" >Cheque</option>
-													<option value="3" >T. Débito</option>
-													<option value="4" >T. Crédito</option>
-													<option value="5" >Transferencia</option>
-													<option value="6" >No aplica</option>
-                                                </select>
-                                            </div>
                                         </div>
+                                        
+                                        <!-- NOTA: Los campos de Medio de pago y Cuenta Bancaria fueron eliminados según el plan.
+                                             El medio de pago solo se registra en el abono asociado, no en la factura. -->
+                                        
                                         <div class="form-group row"> 
                                             <label class="col-sm-2 control-label">Añadir Abono Automático</label>                                       
                                             <div class="col-sm-4">
                                                 <header>
                                                     <label class="switchToggle">
-                                                        <input name="abonoAutomatico" type="checkbox" value="1">
+                                                        <input name="abonoAutomatico" type="checkbox" value="1" id="abonoAutomaticoCheckAgregar">
                                                         <span class="slider green round"></span>
                                                     </label>
+                                                    <small class="help-block">Marcar si la transacción ya está pagada</small>
                                                 </header>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Campos de medio de pago y cuenta bancaria (solo visibles si abono automático está marcado) -->
+                                        <div id="camposAbonoAutomaticoAgregar" style="display: none;">
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label">Medio de pago <span style="color: red;">*</span></label>
+                                                <div class="col-sm-4">
+                                                    <select class="form-control  select2" name="forma" id="forma_pago_agregar" <?=$disabledPermiso;?>>
+                                                        <option value="">Seleccione una opción</option>
+                                                        <?php
+                                                        $mediosPago = MediosPago::obtenerMediosPago();
+                                                        foreach ($mediosPago as $codigo => $nombre) {
+                                                            echo '<option value="' . htmlspecialchars($codigo) . '" data-metodo="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                </div>
+                                                
+                                                <label class="col-sm-2 control-label">Cuenta Bancaria</label>
+                                                <div class="col-sm-4">
+                                                    <select class="form-control  select2" name="cuenta_bancaria_id" id="cuenta_bancaria_id_agregar" <?=$disabledPermiso;?>>
+                                                        <option value="">Seleccione una cuenta (opcional)</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -228,24 +250,28 @@ $codigoUnico=Utilidades::generateCode("FCN");
                                                                 </tr>
                                                             <?php }?>
                                                             <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL:</td>
-                                                                <td align="left" colspan="2"id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
-                                                                <td align="left" colspan="2"id="valorAdicional" data-valor-adicional="0">$0</td>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">SUBTOTAL GRABABLE:</td>
+                                                                <td align="left" colspan="2" id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">DESCUENTO:</td>
-                                                                <td align="left" colspan="2"id="valorDescuento" data-valor-descuento="0">$0</td>
+                                                                <td align="left" colspan="2" id="valorDescuento" data-valor-descuento="0">$0</td>
                                                             </tr>
                                                             <tr>
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">IMPUESTO:</td>
-                                                                <td align="left" colspan="2"id="valorImpuesto">$0</td>
+                                                                <td align="left" colspan="2" id="valorImpuesto">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">ANTICIPOS/CRÉDITOS:</td>
+                                                                <td align="left" colspan="2" id="valorCreditos" style="color: #ff5722;">$0</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td align="right" colspan="7" style="padding-right: 20px;">VLR. ADICIONAL:</td>
+                                                                <td align="left" colspan="2" id="valorAdicional" data-valor-adicional="0">$0</td>
                                                             </tr>
                                                             <tr style="font-size: 15px; font-weight:bold;">
                                                                 <td align="right" colspan="7" style="padding-right: 20px;">TOTAL NETO:</td>
-                                                                <td align="left" colspan="2"id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
+                                                                <td align="left" colspan="2" id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
@@ -318,6 +344,72 @@ $codigoUnico=Utilidades::generateCode("FCN");
         // Replace the <textarea id="editor1"> with a CKEditor 4
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );
+
+        $(document).ready(function() {
+            // Mostrar/ocultar campos de abono automático
+            $('#abonoAutomaticoCheckAgregar').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#camposAbonoAutomaticoAgregar').slideDown();
+                    $('#forma_pago_agregar').prop('required', true);
+                } else {
+                    $('#camposAbonoAutomaticoAgregar').slideUp();
+                    $('#forma_pago_agregar').prop('required', false);
+                    $('#forma_pago_agregar').val('');
+                    $('#cuenta_bancaria_id_agregar').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+                }
+            });
+            
+            // Validación de fecha en frontend
+            $('#fecha_documento').on('change', function() {
+                const fechaIngresada = new Date($(this).val());
+                const fechaActual = new Date();
+                const fechaLimite = new Date();
+                fechaLimite.setFullYear(fechaLimite.getFullYear() - 1);
+                
+                if (fechaIngresada > fechaActual) {
+                    alert('La fecha del documento no puede ser futura.');
+                    $(this).val('<?=date('Y-m-d');?>');
+                    return false;
+                }
+                
+                if (fechaIngresada < fechaLimite) {
+                    alert('La fecha del documento no puede ser mayor a un año en el pasado.');
+                    $(this).val('<?=date('Y-m-d');?>');
+                    return false;
+                }
+            });
+        });
+        
+        // Función para cargar todas las cuentas bancarias activas
+        // Una misma cuenta bancaria puede registrar ingresos o egresos de diferentes tipos de pago
+        function cargarCuentasBancariasAgregar() {
+            $('#cuenta_bancaria_id_agregar').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+            
+            $.ajax({
+                url: 'ajax-cargar-cuentas-bancarias.php',
+                type: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.cuentas) {
+                        $.each(response.cuentas, function(index, cuenta) {
+                            $('#cuenta_bancaria_id_agregar').append(
+                                $('<option></option>')
+                                    .attr('value', cuenta.id)
+                                    .text(cuenta.nombre)
+                            );
+                        });
+                    }
+                },
+                error: function() {
+                    console.log('Error al cargar cuentas bancarias');
+                }
+            });
+        }
+        
+        // Cargar cuentas bancarias al cargar la página
+        $(document).ready(function() {
+            cargarCuentasBancariasAgregar();
+        });
     </script>
 </body>
 

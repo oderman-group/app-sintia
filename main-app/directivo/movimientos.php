@@ -43,50 +43,16 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 				</div>
 
 				<?php
-				// Calcular KPIs usando los mismos métodos que la tabla (calcularTotalNeto y calcularTotalAbonado)
-				$kpis = array(
-					'totalVentas' => 0,
-					'totalCompras' => 0,
-					'totalPorCobrar' => 0,
-					'totalCobrado' => 0
-				);
-				
-				try {
-					// Obtener todas las facturas no anuladas (o según filtro)
-					$filtroAnuladas = '';
-					if (empty($_GET['mostrarAnuladas']) || $_GET['mostrarAnuladas'] != '1') {
-						$filtroAnuladas = " AND fcu_anulado=0";
-					}
-					
-					$consultaFacturas = mysqli_query($conexion, "SELECT fcu_id, fcu_tipo, fcu_valor, fcu_status 
-					FROM " . BD_FINANCIERA . ".finanzas_cuentas 
-					WHERE institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]} $filtroAnuladas");
-					
-					if ($consultaFacturas) {
-						while ($factura = mysqli_fetch_array($consultaFacturas, MYSQLI_BOTH)) {
-							$vlrAdicional = !empty($factura['fcu_valor']) ? $factura['fcu_valor'] : 0;
-							$totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $vlrAdicional);
-							$abonos = Movimientos::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
-							$porCobrar = $totalNeto - $abonos;
-							
-							if ($factura['fcu_tipo'] == 1) {
-								// Factura Venta
-								$kpis['totalVentas'] += $totalNeto;
-								// Sumar TODOS los abonos de facturas de venta (independientemente del estado)
-								$kpis['totalCobrado'] += $abonos;
-								// Sumar solo el por cobrar de facturas con estado POR_COBRAR
-								if ($factura['fcu_status'] == POR_COBRAR) {
-									$kpis['totalPorCobrar'] += $porCobrar;
-								}
-							} else if ($factura['fcu_tipo'] == 2) {
-								// Factura Compra
-								$kpis['totalCompras'] += $totalNeto;
-							}
-						}
-					}
-				} catch (Exception $e) {
-					include("../compartido/error-catch-to-report.php");
-				}
+				// Calcular KPIs usando el método centralizado para garantizar consistencia
+				$filtrosKPIs = [
+					'mostrarAnuladas' => (!empty($_GET['mostrarAnuladas']) && $_GET['mostrarAnuladas'] == '1'),
+					'excluirEnProceso' => true,
+					'tipo' => !empty($_GET['tipo']) ? intval(base64_decode($_GET['tipo'])) : null,
+					'usuario' => !empty($_GET['usuario']) ? base64_decode($_GET['usuario']) : null,
+					'desde' => !empty($_GET['desde']) ? $_GET['desde'] : null,
+					'hasta' => !empty($_GET['hasta']) ? $_GET['hasta'] : null
+				];
+				$kpis = Movimientos::calcularKPIsResumen($conexion, $config, $filtrosKPIs);
 				?>
 
 				<!-- KPIs Dashboard -->
@@ -178,20 +144,20 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 								<table class="display" style="width:100%;" id="tablaItems">
 									<thead>
 										<tr>
-											<th style="width: 30px;"></th>
-											<th style="width: 40px;"><input type="checkbox" id="selectAllFacturas" title="Seleccionar todas las facturas habilitadas"></th>
-											<th>#</th>
-											<th><?= $frases[49][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th>Fecha</th>
-											<th>Detalle</th>
-											<th><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th><?= $frases[417][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th><?= $frases[418][$datosUsuarioActual['uss_idioma']]; ?></th>
-											<th>Tipo</th>
-											<th>Usuario</th>
-											<th><?= $frases[246][$datosUsuarioActual['uss_idioma']]; ?></th>
+											<th style="width: 30px; color: white;"></th>
+											<th style="width: 40px; color: white;"><input type="checkbox" id="selectAllFacturas" title="Seleccionar todas las facturas habilitadas"></th>
+											<th style="color: white;">#</th>
+											<th style="color: white;">Consecutivo</th>
+											<th style="color: white;">Fecha</th>
+											<th style="color: white;">Detalle</th>
+											<th style="color: white;"><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
+											<th style="color: white;">Cobrado/Pagado</th>
+											<th style="color: white;">Por Cobrar/Por pagar</th>
+											<th style="color: white;">Tipo</th>
+											<th style="color: white;">Usuario</th>
+											<th style="color: white;"><?= $frases[246][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
-												<th><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
+												<th style="color: white;"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<?php } ?>
 										</tr>
 									</thead>
@@ -201,17 +167,18 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 
 										try {
 											// Aplicar filtro de anuladas si no se está mostrando (ya está en $filtro desde barra-superior)
-											$consulta = mysqli_query($conexion, "SELECT fc.*, uss.*, fc.id_nuevo AS id_nuevo_movimientos FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
+											// Las facturas EN_PROCESO sí se muestran pero no se incluyen en cálculos
+											// fcu_id es ahora el ID principal (AUTO_INCREMENT)
+											$consulta = mysqli_query($conexion, "SELECT fc.*, uss.*, fc.fcu_id AS id_nuevo_movimientos FROM " . BD_FINANCIERA . ".finanzas_cuentas fc
 														INNER JOIN " . BD_GENERAL . ".usuarios uss 
 															ON uss_id=fcu_usuario 
 															AND uss.institucion={$config['conf_id_institucion']} 
 															AND uss.year={$_SESSION["bd"]}
 														WHERE 
-															fcu_id=fcu_id 
-														AND fc.institucion={$config['conf_id_institucion']} 
+															fc.institucion={$config['conf_id_institucion']} 
 														AND fc.year={$_SESSION["bd"]} 
 														$filtro
-														ORDER BY fc.id_nuevo DESC
+														ORDER BY fc.fcu_id DESC
 														");
 										} catch (Exception $e) {
 											include("../compartido/error-catch-to-report.php");
@@ -222,6 +189,28 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 										
 										?>
 									</tbody>
+									<tfoot>
+										<tr style="background-color: #f0f9ff; font-weight: bold; border-top: 2px solid #dee2e6;">
+											<td colspan="6" style="text-align: right; padding: 10px;"><strong>Total Facturas Venta:</strong></td>
+											<td id="footerTotalVenta" style="text-align: right; padding: 10px; font-weight: bold;">$0</td>
+											<td id="footerCobradoVenta" style="text-align: right; padding: 10px; font-weight: bold; color: #00c292;">$0</td>
+											<td id="footerPorCobrarVenta" style="text-align: right; padding: 10px; font-weight: bold; color: #ffc107;">$0</td>
+											<td colspan="3" style="padding: 10px;"></td>
+											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
+												<td style="padding: 10px;"></td>
+											<?php } ?>
+										</tr>
+										<tr style="background-color: #fff7ed; font-weight: bold;">
+											<td colspan="6" style="text-align: right; padding: 10px;"><strong>Total Facturas Compra:</strong></td>
+											<td id="footerTotalCompra" style="text-align: right; padding: 10px; font-weight: bold;">$0</td>
+											<td id="footerCobradoCompra" style="text-align: right; padding: 10px; font-weight: bold; color: #00c292;">$0</td>
+											<td id="footerPorCobrarCompra" style="text-align: right; padding: 10px; font-weight: bold; color: #ffc107;">$0</td>
+											<td colspan="3" style="padding: 10px;"></td>
+											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
+												<td style="padding: 10px;"></td>
+											<?php } ?>
+										</tr>
+									</tfoot>
 									<script>
 										$(document).ready(totalizarMovimientos);
 										// Verificar si hay registros al cargar la página
@@ -321,8 +310,12 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 						</div>
 						<div class="col-md-6">
 							<div class="form-group">
-								<label>Fecha <span style="color: red;">*</span></label>
-								<input type="date" name="fecha" class="form-control" required value="<?=date('Y-m-d');?>">
+								<label>Fecha del documento <span style="color: red;">*</span></label>
+								<input type="date" name="fecha" class="form-control" required 
+									value="<?=date('Y-m-d');?>" 
+									max="<?=date('Y-m-d');?>" 
+									min="<?=date('Y-m-d', strtotime('-1 year'));?>"
+									id="fecha_documento_modal">
 							</div>
 						</div>
 					</div>
@@ -338,48 +331,17 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 								</select>
 							</div>
 						</div>
-						<div class="col-md-6">
-							<div class="form-group">
-								<label>Medio de pago <span style="color: red;">*</span></label>
-								<select class="form-control" name="forma" required>
-									<option value="">Seleccione una opción</option>
-									<option value="1">Efectivo</option>
-									<option value="2">Cheque</option>
-									<option value="3">T. Débito</option>
-									<option value="4">T. Crédito</option>
-									<option value="5">Transferencia</option>
-									<option value="6">No aplica</option>
-								</select>
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-md-8">
-							<div class="form-group">
-								<label>Descripción general <span style="color: red;">*</span></label>
-								<input type="text" name="detalle" class="form-control" required>
-							</div>
-						</div>
-						<div class="col-md-4">
-							<div class="form-group">
-								<label>Valor adicional</label>
-								<input type="number" min="0" name="valor" class="form-control" value="0" required>
-							</div>
-						</div>
 					</div>
 
 					<div class="row">
 						<div class="col-md-12">
 							<div class="form-group">
-								<label>
-									<input name="abonoAutomatico" type="checkbox" value="1">
-									Añadir Abono Automático
-								</label>
-								<small class="help-block">Marcar si la transacción ya está pagada</small>
+								<label>Descripción general <span style="color: red;">*</span></label>
+								<input type="text" name="detalle" class="form-control" required>
 							</div>
 						</div>
 					</div>
+
 
 					<div class="row">
 						<div class="col-md-12">
@@ -470,17 +432,30 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 						<label>Valor del abono</label>
 						<input type="number" min="0" step="1" class="form-control" id="abonoRapidoValor" name="valor" required>
 					</div>
-					<div class="form-group">
-						<label>Método de pago</label>
-						<select class="form-control" id="abonoRapidoMetodo" name="metodo" required>
-							<option value="">Seleccione...</option>
-							<option value="EFECTIVO">Efectivo</option>
-							<option value="CHEQUE">Cheque</option>
-							<option value="T_DEBITO">T. Débito</option>
-							<option value="T_CREDITO">T. Crédito</option>
-							<option value="TRANSFERENCIA">Transferencia</option>
-							<option value="OTROS">Otras formas</option>
-						</select>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Método de pago <span style="color: red;">*</span></label>
+								<select class="form-control" id="abonoRapidoMetodo" name="metodo" required>
+									<option value="">Seleccione una opción</option>
+									<?php
+									require_once(ROOT_PATH."/main-app/class/MediosPago.php");
+									$mediosPago = MediosPago::obtenerMediosPago();
+									foreach ($mediosPago as $codigo => $nombre) {
+										echo '<option value="' . htmlspecialchars($codigo) . '">' . htmlspecialchars($nombre) . '</option>' . "\n";
+									}
+									?>
+								</select>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="form-group">
+								<label>Cuenta Bancaria</label>
+								<select class="form-control" id="abonoRapidoCuentaBancaria" name="cuenta_bancaria_id">
+									<option value="">Seleccione una cuenta (opcional)</option>
+								</select>
+							</div>
+						</div>
 					</div>
 					<div class="form-group">
 						<label>Observaciones</label>
@@ -554,6 +529,33 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 			});
 		}, 300);
 	}
+
+	$(document).ready(function() {
+		// Validación de fecha en el modal
+		$('#fecha_documento_modal').on('change', function() {
+			const fechaIngresada = new Date($(this).val());
+			const fechaActual = new Date();
+			const fechaLimite = new Date();
+			fechaLimite.setFullYear(fechaLimite.getFullYear() - 1);
+			
+			if (fechaIngresada > fechaActual) {
+				alert('La fecha del documento no puede ser futura.');
+				$(this).val('<?=date('Y-m-d');?>');
+				return false;
+			}
+			
+			if (fechaIngresada < fechaLimite) {
+				alert('La fecha del documento no puede ser mayor a un año en el pasado.');
+				$(this).val('<?=date('Y-m-d');?>');
+				return false;
+			}
+		});
+		
+		// Limpiar campos cuando se cierra el modal
+		$('#modalAgregarMovimiento').on('hidden.bs.modal', function() {
+			$('#formAgregarMovimiento')[0].reset();
+		});
+	});
 
 	// Asegurar que el dropdown de acciones se posicione correctamente
 	$(document).ready(function() {
@@ -837,8 +839,46 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		$('#abonoRapidoSaldoPendiente').text('$' + saldoPendiente);
 		$('#abonoRapidoValor').val('');
 		$('#abonoRapidoMetodo').val('');
+		$('#abonoRapidoCuentaBancaria').val('');
 		$('#abonoRapidoObservaciones').val('');
+		$('#abonoRapidoComprobante').val('');
+		// Cargar cuentas bancarias
+		cargarCuentasBancariasAbonoRapido();
 		$('#modalAbonoRapido').modal('show');
+	}
+	
+	// Limpiar campos al cerrar el modal
+	$('#modalAbonoRapido').on('hidden.bs.modal', function() {
+		$('#abonoRapidoValor').val('');
+		$('#abonoRapidoMetodo').val('');
+		$('#abonoRapidoCuentaBancaria').val('');
+		$('#abonoRapidoObservaciones').val('');
+		$('#abonoRapidoComprobante').val('');
+	});
+	
+	// Función para cargar cuentas bancarias en el modal de abono rápido
+	function cargarCuentasBancariasAbonoRapido() {
+		$('#abonoRapidoCuentaBancaria').empty().append('<option value="">Seleccione una cuenta (opcional)</option>');
+		
+		$.ajax({
+			url: 'ajax-cargar-cuentas-bancarias.php',
+			type: 'POST',
+			dataType: 'json',
+			success: function(response) {
+				if (response.success && response.cuentas) {
+					$.each(response.cuentas, function(index, cuenta) {
+						$('#abonoRapidoCuentaBancaria').append(
+							$('<option></option>')
+								.attr('value', cuenta.id)
+								.text(cuenta.nombre)
+						);
+					});
+				}
+			},
+			error: function() {
+				console.log('Error al cargar cuentas bancarias');
+			}
+		});
 	}
 
 	$('#formAbonoRapido').on('submit', function(e){
@@ -866,6 +906,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		}
 
 		var formData = new FormData(this);
+		
 		$.ajax({
 			url: 'ajax-abono-rapido.php',
 			method: 'POST',
@@ -1068,13 +1109,20 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 			return;
 		}
 
-		$.post('ajax-bloquear-usuarios-pendientes.php')
+		$.ajax({
+			url: 'ajax-bloquear-usuarios-pendientes.php',
+			type: 'POST',
+			dataType: 'json'
+		})
 		.done(function(response){
 			if(response && response.success){
-				var bloqueados = response.usuariosBloqueados ? response.usuariosBloqueados.length : 0;
+				var cantidadBloqueados = 0;
+				if (response.usuariosBloqueados && Array.isArray(response.usuariosBloqueados)) {
+					cantidadBloqueados = response.usuariosBloqueados.length;
+				}
 				$.toast({
 					heading: 'Proceso completado',
-					text: 'Usuarios evaluados: '+ (response.totalEvaluados || 0) +'. Bloqueados: '+ bloqueados +'.',
+					text: 'Usuarios evaluados: '+ (response.totalEvaluados || 0) +'. Bloqueados: '+ cantidadBloqueados +'.',
 					position: 'bottom-right',
 					icon: 'success',
 					hideAfter: 5000
@@ -1100,6 +1148,7 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 		});
 	}
 </script>
+<?php include("../compartido/modal-centralizado.php"); ?>
 <!-- end js include path -->
 </body>
 

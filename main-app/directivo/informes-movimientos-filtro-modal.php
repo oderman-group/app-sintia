@@ -92,11 +92,47 @@ $usuariosIniciales = mysqli_query($conexion, $sqlUsuariosConFacturas);
 		</div>
 		
 		<div class="row">
+			<div class="col-md-6">
+				<div class="form-group">
+					<label for="filtro_metodo_pago">Método de Pago</label>
+					<select class="form-control select2" id="filtro_metodo_pago" name="metodo_pago" style="width: 100%;">
+						<option value="">Todos los métodos</option>
+						<option value="EFECTIVO">Efectivo</option>
+						<option value="CHEQUE">Cheque</option>
+						<option value="T_DEBITO">T. Débito</option>
+						<option value="T_CREDITO">T. Crédito</option>
+						<option value="TRANSFERENCIA">Transferencia</option>
+						<option value="OTROS">Otros</option>
+					</select>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="form-group">
+					<label for="filtro_cuenta_bancaria">Cuenta Bancaria</label>
+					<select class="form-control select2" id="filtro_cuenta_bancaria" name="cuenta_bancaria" style="width: 100%;">
+						<option value="">Todas las cuentas</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
 			<div class="col-md-12">
 				<div class="form-group">
 					<label>
 						<input type="checkbox" name="mostrarAnuladas" value="1">
 						Mostrar facturas anuladas
+					</label>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-md-12">
+				<div class="form-group">
+					<label>
+						<input type="checkbox" name="mostrarArqueo" value="1" id="mostrarArqueo">
+						Mostrar arqueo de caja agrupado por método de pago y cuenta bancaria
 					</label>
 				</div>
 			</div>
@@ -119,10 +155,42 @@ $usuariosIniciales = mysqli_query($conexion, $sqlUsuariosConFacturas);
 <script>
 $(document).ready(function() {
 	// Inicializar Select2
-	$('#filtro_tipo, #filtro_estado').select2({
+	$('#filtro_tipo, #filtro_estado, #filtro_metodo_pago').select2({
 		dropdownParent: $('#ModalCentralizado .modal-content'),
 		width: '100%',
 		minimumResultsForSearch: -1
+	});
+	
+	// Cargar cuentas bancarias cuando cambia el método de pago
+	$('#filtro_metodo_pago').on('change', function() {
+		const metodoPago = $(this).val();
+		$('#filtro_cuenta_bancaria').empty().append('<option value="">Todas las cuentas</option>');
+		
+		if (metodoPago) {
+			$.ajax({
+				url: 'ajax-cargar-cuentas-bancarias.php',
+				type: 'POST',
+				data: { metodo_pago: metodoPago },
+				dataType: 'json',
+				success: function(response) {
+					if (response.success && response.cuentas) {
+						$.each(response.cuentas, function(index, cuenta) {
+							$('#filtro_cuenta_bancaria').append(
+								$('<option></option>')
+									.attr('value', cuenta.id)
+									.text(cuenta.nombre)
+							);
+						});
+					}
+				}
+			});
+		}
+	});
+	
+	// Inicializar Select2 para cuenta bancaria
+	$('#filtro_cuenta_bancaria').select2({
+		dropdownParent: $('#ModalCentralizado .modal-content'),
+		width: '100%'
 	});
 	
 	// Inicializar Select2 para usuario con búsqueda AJAX

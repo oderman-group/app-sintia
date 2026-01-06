@@ -23,10 +23,16 @@ if($numItems>0){
         $arrayEnviar = array("tipo"=>1, "restar"=>$fila['subtotal'], "descripcionTipo"=>"Para ocultar fila del registro.");
         $arrayDatos = json_encode($arrayEnviar);
         $objetoEnviar = htmlentities($arrayDatos);
+        
+        // Determinar si es item tipo crédito (C) o débito (D)
+        $itemType = isset($fila['item_type']) ? $fila['item_type'] : 'D';
+        $isCredito = ($itemType == 'C');
+        $rowClass = $isCredito ? 'item-credito' : '';
+        $nombreItem = $isCredito ? $fila['name'] . ' (Crédito)' : $fila['name'];
 ?>
-<tr id="reg<?=$fila['idtx'];?>">
+<tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>">
     <td><?=$fila['idtx'];?></td>
-    <td><?=$fila['name'];?></td>
+    <td><?=$nombreItem;?></td>
     <td>
         <input type="number" min="0" id="precio<?=$fila['idtx'];?>" data-precio="<?=$fila['priceTransaction'];?>" data-precio-anterior="<?=$fila['priceTransaction'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['priceTransaction']?>">
     </td>
@@ -51,7 +57,7 @@ if($numItems>0){
         <textarea  id="descrip<?=$fila['idtx'];?>" cols="30" rows="1" onchange="guardarDescripcion('<?=$fila['idtx'];?>')"><?=$fila['description']?></textarea>
     </td>
     <td><input type="number" title="cantity" min="0" id="cantidadItems<?=$fila['idtx'];?>" data-cantidad="<?=$fila['cantity'];?>" name="cantidadItems" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['cantity'];?>" style="width: 50px;"></td>
-    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>">$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
+    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>" data-item-type="<?=$itemType;?>"><?=($isCredito ? '-' : '')?>$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
     <td>
         <a href="#" title="<?=$objetoEnviar;?>" id="<?=$fila['idtx'];?>" name="movimientos-items-eliminar.php?idR=<?=$fila['idtx'];?>" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" onClick="deseaEliminarNuevoItem(this)">X</a>
     </td>

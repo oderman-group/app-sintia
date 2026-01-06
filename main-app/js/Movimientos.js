@@ -37,6 +37,7 @@ function actualizarSubtotal(id) {
     var subtotalElement = document.getElementById('subtotalNuevo');
     var descuentoElement = document.getElementById('descuentoNuevo');
     var impuestoElement = document.getElementById('impuestoNuevo');
+    var rowElement = null; // Para obtener el tipo de item
     if(id !== 'idNuevo'){
         var idItem=id
         // Obtener los elementos
@@ -45,24 +46,51 @@ function actualizarSubtotal(id) {
         var subtotalElement = document.getElementById('subtotal'+id);
         var descuentoElement = document.getElementById('descuento'+id);
         var impuestoElement = document.getElementById('impuesto'+id);
+        // Obtener la fila para acceder al data-item-type
+        rowElement = document.getElementById('reg'+id);
     }
     
+    // Determinar si es crédito antes de validar
+    var itemType = rowElement ? (rowElement.getAttribute('data-item-type') || 'D') : (subtotalElement ? (subtotalElement.getAttribute('data-item-type') || 'D') : 'D');
+    var isCredito = (itemType === 'C');
+    
+    // Para items crédito, solo validar precio y cantidad (sin descuento)
     var regex = /^[0-9]+(\.[0-9]+)?$/;
+    var validacionOk = false;
+    
+    if (isCredito) {
+        // Items crédito: solo precio y cantidad, sin descuento ni impuesto
+        validacionOk = (precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && 
+                       regex.test(precioElement.value) && regex.test(cantidadElement.value));
+    } else {
+        // Items débito: precio, cantidad y descuento
+        validacionOk = (precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && 
+                       descuentoElement.value.trim() !== '' && 
+                       regex.test(precioElement.value) && regex.test(cantidadElement.value) && regex.test(descuentoElement.value));
+    }
 
-    if ((precioElement.value.trim() !== '' && cantidadElement.value.trim() !== '' && descuentoElement.value.trim() !== '' && regex.test(precioElement.value) && regex.test(cantidadElement.value) && regex.test(descuentoElement.value))) {
+    if (validacionOk) {
 
         // Obtener los valores
         var precio = parseFloat(precioElement.value);
         var cantidad = parseFloat(cantidadElement.value);
-        var porcentajeDescuento= parseFloat(descuentoElement.value);
-        var impuesto= parseFloat(impuestoElement.value);
+        var porcentajeDescuento = isCredito ? 0 : (parseFloat(descuentoElement.value) || 0);
+        var impuesto = isCredito ? 0 : (parseFloat(impuestoElement.value) || 0);
 
         // Calcular el subtotal
-        var vlrDescuento = precio * (porcentajeDescuento / 100);
-        var vlrDescuentoAnterior = vlrDescuento * cantidad;
-
-        var subtotal = (precio-vlrDescuento) * cantidad;
-        var subtotalFormat = "$"+numberFormat(subtotal, 0, ',', '.');
+        var subtotal = 0;
+        
+        if (isCredito) {
+            // Items crédito: cálculo directo sin descuentos ni impuestos
+            subtotal = precio * cantidad;
+        } else {
+            // Items débito: aplicar descuento
+            var vlrDescuento = precio * (porcentajeDescuento / 100);
+            subtotal = (precio - vlrDescuento) * cantidad;
+        }
+        
+        var signoNegativo = isCredito ? '-' : '';
+        var subtotalFormat = signoNegativo+"$"+numberFormat(subtotal, 0, ',', '.');
         
         fetch('../directivo/ajax-cambiar-subtotal.php?subtotal='+(subtotal)+'&cantidad='+(cantidad)+'&precio='+(precio)+'&idItem='+(idItem)+'&porcentajeDescuento='+(porcentajeDescuento)+'&impuesto='+(impuesto), {
             method: 'GET'
@@ -71,11 +99,19 @@ function actualizarSubtotal(id) {
         .then(data => {
             precioElement.dataset.precio = precio;
             cantidadElement.dataset.cantidad = cantidad;
-            descuentoElement.dataset.descuentoAnterior = porcentajeDescuento;
+            if (!isCredito && descuentoElement) {
+                descuentoElement.dataset.descuentoAnterior = porcentajeDescuento;
+            }
+            
+            // Recalcular el total después de actualizar el subtotal
+            totalizar();
 
             subtotalElement.innerHTML = '';
             subtotalElement.appendChild(document.createTextNode(subtotalFormat));
             subtotalElement.dataset.subtotalAnterior = subtotal;
+            if (itemType) {
+                subtotalElement.setAttribute('data-item-type', itemType);
+            }
 
             totalizar();
 
@@ -96,10 +132,13 @@ function actualizarSubtotal(id) {
         });
 
     } else {
-
+        var mensajeError = isCredito 
+            ? "Los campos de precio y cantidad no pueden ir vacío, o con letras"
+            : "Los campos de precio, descuento y cantidad no pueden ir vacío, o con letras";
+            
         Swal.fire({
             title: 'Campo Vacío',
-            text: "Los campos de precio, descuento y cantidad no pueden ir vacío, o con letras",
+            text: mensajeError,
             icon: 'warning',
             showCancelButton: false,
             confirmButtonText: 'Ok',
@@ -110,11 +149,13 @@ function actualizarSubtotal(id) {
         }).then((result) => {
             var precioAnterior = parseFloat(precioElement.getAttribute("data-precio"));
             var cantidadAnterior = parseFloat(cantidadElement.getAttribute("data-cantidad"));
-            var descuentoAnterior = parseFloat(descuentoElement.getAttribute("data-descuento-anterior"));
+            var descuentoAnterior = isCredito ? 0 : parseFloat(descuentoElement.getAttribute("data-descuento-anterior"));
             
             precioElement.value = precioAnterior;
             cantidadElement.value = cantidadAnterior;
-            descuentoElement.value = descuentoAnterior;
+            if (!isCredito && descuentoElement) {
+                descuentoElement.value = descuentoAnterior;
+            }
         })
 
     }
@@ -141,6 +182,9 @@ function traerItems(){
         $('#mostrarItems').empty().hide().html(data).show(1);
 
         totalizar();
+        
+        // Actualizar estado del botón de confirmar después de recargar items
+        actualizarEstadoBotonConfirmar();
 
         $.toast({
             heading: 'Acción realizada',
@@ -201,39 +245,142 @@ function guardarNuevoItem(selectElement) {
     fetch('../directivo/ajax-guardar-items.php?idTransaction=' + idTransaction + '&idItem=' + idItem + '&itemModificar=' + itemModificar + '&subtotal=' + subtotal + '&cantidad=' + cantidad + '&precio=' + precio + '&typeTransaction=' + typeTransaction, {
         method: 'GET'
     })
-    .then(response => response.json()) // Convertir la respuesta a objeto JSON
+    .then(response => {
+        // Verificar si la respuesta es JSON válida
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text || 'Error en la respuesta del servidor');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
+        // Verificar si hay error en la respuesta
+        if (data.error) {
+            throw new Error(data.message || 'Error desconocido');
+        }
+
         // Actualizar los elementos del DOM con los datos recibidos
         itemElement.innerHTML = '';
         itemElement.appendChild(document.createTextNode(data.idInsercion));
 
+        // Usar precio del servidor si está disponible, sino usar el del select
+        var precioFinal = data.precio || precio;
         precioElement.disabled = false;
-        precioElement.value = precio;
-        precioElement.dataset.precio = precio;
-        precioElement.dataset.precioAnterior = precio;
+        precioElement.value = precioFinal;
+        precioElement.dataset.precio = precioFinal;
+        precioElement.dataset.precioAnterior = precioFinal;
 
-        descripElement.disabled = false;
+        // Actualizar descripción si está disponible
+        if (data.descripcion) {
+            descripElement.disabled = false;
+            descripElement.value = data.descripcion;
+        } else {
+            descripElement.disabled = false;
+        }
+        
         cantidadElement.disabled = false;
 
-        subtotalElement.innerHTML = '';
-        subtotalElement.appendChild(document.createTextNode(subtotalFormat));
-        subtotalElement.dataset.subtotalAnterior = subtotal;
-
-        descuentoElement.disabled = false;
+        // Determinar si es crédito para mostrar signo negativo en el subtotal
+        var itemType = data.item_type || 'D';
+        var isCredito = (itemType === 'C');
+        var applicationTime = isCredito ? (data.application_time || 'ANTE_IMPUESTO') : null;
+        var signoNegativo = isCredito ? '-' : '';
+        var subtotalFormatFinal = signoNegativo + "$" + numberFormat(subtotal, 0, ',', '.');
         
-        impuestoElement.disabled = false;
+        subtotalElement.innerHTML = '';
+        subtotalElement.appendChild(document.createTextNode(subtotalFormatFinal));
+        subtotalElement.dataset.subtotalAnterior = subtotal;
+        subtotalElement.setAttribute('data-item-type', itemType);
 
-        if (data.creado == 0) {
+        // Para items crédito, deshabilitar campos de descuento e impuesto
+        if (isCredito) {
+            descuentoElement.disabled = true;
             descuentoElement.value = 0;
+            impuestoElement.disabled = true;
+            if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2-hidden-accessible')) {
+                $(impuestoElement).val(0).trigger('change');
+            } else {
+                impuestoElement.value = 0;
+            }
+        } else {
+            descuentoElement.disabled = false;
+            descuentoElement.value = 0;
+            impuestoElement.disabled = false;
+        }
 
-            impuestoElement.value = 0;
-            impuestoContainer.innerHTML = 'Ninguno - (0%)';
+        // Si es un item nuevo, establecer valores por defecto
+        if (data.creado == 1) {
+            // Para items crédito, no establecer impuesto (ya está deshabilitado)
+            if (!isCredito) {
+                // Establecer el impuesto del item si existe
+                if (data.tax && data.tax != '0') {
+                    impuestoElement.value = data.tax;
+                    // Actualizar el contenedor de Select2 usando jQuery
+                    if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                        $(impuestoElement).val(data.tax).trigger('change');
+                    } else {
+                        var taxOption = impuestoElement.querySelector('option[value="' + data.tax + '"]');
+                        if (taxOption && impuestoContainer) {
+                            impuestoContainer.innerHTML = taxOption.textContent;
+                        }
+                    }
+                } else {
+                    impuestoElement.value = 0;
+                    if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                        $(impuestoElement).val(0).trigger('change');
+                    } else if (impuestoContainer) {
+                        impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                    }
+                }
+            }
+            
+            // Si es un item nuevo, agregar la fila a la tabla inmediatamente
+            // Esto permite que totalizar() pueda calcular correctamente en tiempo real
+            var filaNueva = itemElement.closest('tr');
+            if (filaNueva) {
+                // Agregar atributo data-item-type a la fila para que totalizar() lo detecte
+                filaNueva.setAttribute('data-item-type', itemType);
+                // Agregar atributo data-application-time para items crédito
+                if (isCredito && applicationTime) {
+                    filaNueva.setAttribute('data-application-time', applicationTime);
+                } else {
+                    filaNueva.removeAttribute('data-application-time');
+                }
+                // Agregar clase si es crédito
+                if (isCredito) {
+                    filaNueva.classList.add('item-credito');
+                } else {
+                    filaNueva.classList.remove('item-credito');
+                }
+            }
+        } else {
+            // Si está modificando, mantener valores anteriores (pero si es crédito, ya están deshabilitados)
+            if (!isCredito) {
+                descuentoElement.value = 0;
+                impuestoElement.value = 0;
+                if (typeof $ !== 'undefined' && $(impuestoElement).hasClass('select2')) {
+                    $(impuestoElement).val(0).trigger('change');
+                } else if (impuestoContainer) {
+                    impuestoContainer.innerHTML = 'Ninguno - (0%)';
+                }
+            }
         }
 
         var html='<a href="#" title="Eliminar item nuevo" name="movimientos-items-eliminar.php?idR='+data.idInsercion+'" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" data-toggle="tooltip" onClick="deseaEliminarNuevoItem(this)" data-placement="right">X</a>';
         idEliminarNuevo.innerHTML = html;
 
-        totalizar();
+        // Recalcular subtotal con el impuesto si existe (solo para items débito)
+        if (!isCredito && data.tax && data.tax != '0' && data.creado == 1) {
+            actualizarSubtotal('idNuevo');
+        } else {
+            // Llamar a totalizar() para recalcular el total considerando el nuevo item
+            totalizar();
+        }
+
+        // Actualizar estado del botón de confirmar según cantidad de items y total neto
+        totalizar(); // Asegurar que los totales estén actualizados
+        actualizarEstadoBotonConfirmar();
 
         $.toast({
             heading: 'Acción realizada',
@@ -249,6 +396,16 @@ function guardarNuevoItem(selectElement) {
     .catch(error => {
         // Manejar errores
         console.error('Error:', error);
+        $.toast({
+            heading: 'Error',
+            text: 'Error al guardar el item: ' + error.message,
+            position: 'bottom-right',
+            showHideTransition: 'slide',
+            loaderBg: '#ff0039',
+            icon: 'error',
+            hideAfter: 8000,
+            stack: 6
+        });
     });
 }
 
@@ -381,6 +538,9 @@ function deseaEliminarNuevoItem(dato) {
                 }
 
                 totalizar();
+
+                // Actualizar estado del botón de confirmar según cantidad de items
+                actualizarEstadoBotonConfirmar();
 
                 $.toast({
                     heading: 'Acción realizada',
@@ -565,6 +725,16 @@ function tipoAbono(tipo){
 
 		document.getElementById("opt1").checked="";
 		document.getElementById("opt2").checked="checked";
+		
+		// Habilitar campos para que puedan ser llenados y enviados en el formulario
+		// Los campos solo se habilitarán completamente cuando se seleccione un concepto
+		// pero necesitamos asegurarnos de que puedan recibir valores
+		var precioElement = document.getElementById('precioNuevo');
+		var cantidadElement = document.getElementById('cantidadNuevo');
+		var descripElement = document.getElementById('descripNueva');
+		
+		// Los campos seguirán disabled hasta que se seleccione un concepto
+		// pero se habilitarán automáticamente cuando guardarNuevoConcepto() se ejecute
 	}
 }
 
@@ -969,110 +1139,164 @@ function actualizarKPIs() {
 
 /**
  * Calcula y muestra el total neto, total abonos y total por cobrar
- * basado en los valores de la tabla 'tablaItems'.
+ * usando el método centralizado para garantizar consistencia con el KPI
  */
 function totalizarMovimientos() {
-    // Obtener el elemento de la tabla por su ID
-    var tabla = document.getElementById('tablaItems');
+    // Obtener parámetros de filtro de la URL actual
+    var urlParams = new URLSearchParams(window.location.search);
+    var filtros = {
+        mostrarAnuladas: urlParams.get('mostrarAnuladas') === '1',
+        tipo: urlParams.get('tipo') || null,
+        usuario: urlParams.get('usuario') || null,
+        desde: urlParams.get('desde') || null,
+        hasta: urlParams.get('hasta') || null
+    };
 
-    // Inicializar variables para almacenar valores totales
-    var totalNetoVenta = 0;
-    var totalAbonosVenta = 0;
-    var totalPorCobrarVenta = 0;
-
-    var totalNetoCompra = 0;
-    var totalAbonosCompra = 0;
-    var totalPorCobrarCompra = 0;
-
-    // Iterar a través de las filas de la tabla, comenzando desde el índice 1
-    for (let i = 1; i < tabla.rows.length; i++) {
-        // Obtener la fila actual
-        var fila = tabla.rows[i];
-        if (fila.classList.contains('child')) {
-            continue;
-        }
-
-        var celdaTotal = fila.querySelector('td[data-total-neto]');
-        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
-
-        // Obtener el valor neto total del atributo de datos
-        var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
-        // Obtenga el valor total de abonos del atributo de datos
-        var celdaAbonos = fila.querySelector('td[data-abonos]');
-        var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
-        if (!celdaAbonos || !celdaPorCobrar) { continue; }
-        var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos'));
-        // Validar si abonos es un número válido, establecer en 0 si NaN
-        if (isNaN(abonos)) {
-            abonos = 0;
-        }
-        // Obtener el valor total por cobrar del atributo de datos
-        var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar'));
-
-        if (celdaTotal.getAttribute('data-tipo') == 1) {
-
-            // Acumular el valor neto total del atributo de datos
-            totalNetoVenta = totalNetoVenta + total;
-            // Acumule el valor total de abonos del atributo de datos
-            totalAbonosVenta = totalAbonosVenta + abonos;
-            // Acumular el valor total por cobrar del atributo de datos
-            totalPorCobrarVenta = totalPorCobrarVenta + porCobrar;
-
-        } else if (celdaTotal.getAttribute('data-tipo') == 2) {
-
-            // Acumular el valor neto total del atributo de datos
-            totalNetoCompra = totalNetoCompra + total;
-            // Acumule el valor total de abonos del atributo de datos
-            totalAbonosCompra = totalAbonosCompra + abonos;
-            // Acumular el valor total por cobrar del atributo de datos
-            totalPorCobrarCompra = totalPorCobrarCompra + porCobrar;
-
-        }
+    // Construir URL del endpoint con los filtros
+    var url = 'ajax-calcular-kpis-resumen.php?';
+    var params = [];
+    if (filtros.mostrarAnuladas) {
+        params.push('mostrarAnuladas=1');
     }
+    if (filtros.tipo) {
+        params.push('tipo=' + encodeURIComponent(filtros.tipo));
+    }
+    if (filtros.usuario) {
+        params.push('usuario=' + encodeURIComponent(filtros.usuario));
+    }
+    if (filtros.desde) {
+        params.push('desde=' + encodeURIComponent(filtros.desde));
+    }
+    if (filtros.hasta) {
+        params.push('hasta=' + encodeURIComponent(filtros.hasta));
+    }
+    url += params.join('&');
 
-    // Actualiza total neto ventas
-    var totalNetoVentaFinal = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
-    var elementTotalNetoVenta = document.getElementById('totalNetoVenta');
-    elementTotalNetoVenta.innerHTML = '';
-    elementTotalNetoVenta.appendChild(document.createTextNode(totalNetoVentaFinal));
-    // Actualiza total abonos ventas
-    var totalAbonosVentaFinal = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
-    var elementAbonosVenta = document.getElementById('abonosNetoVenta');
-    elementAbonosVenta.innerHTML = '';
-    elementAbonosVenta.appendChild(document.createTextNode(totalAbonosVentaFinal));
-    // Actualiza total por cobrar ventas
-    var porCobrarNetoVentaFinal = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
-    var elementPorCobrarNetoVenta = document.getElementById('porCobrarNetoVenta');
-    elementPorCobrarNetoVenta.innerHTML = '';
-    elementPorCobrarNetoVenta.appendChild(document.createTextNode(porCobrarNetoVentaFinal));
+    // Llamar al endpoint centralizado
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response && response.success && response.kpis) {
+                var kpis = response.kpis;
+                
+                // Actualizar totales de ventas
+                var totalNetoVenta = kpis.totalVentas || 0;
+                var totalAbonosVenta = kpis.totalCobrado || 0;
+                var totalPorCobrarVenta = kpis.totalPorCobrar || 0;
+                
+                // Actualizar totales de compras
+                var totalNetoCompra = kpis.totalCompras || 0;
+                // Para compras, por ahora solo tenemos el total neto (no hay separación de abonos/por pagar en el método centralizado)
+                // Mantener la lógica anterior para compras por ahora
+                var totalAbonosCompra = 0;
+                var totalPorCobrarCompra = 0;
 
-    // Actualiza total neto compras
-    var totalNetoCompraFinal = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
-    var elementTotalNetoCompra = document.getElementById('totalNetoCompra');
-    elementTotalNetoCompra.innerHTML = '';
-    elementTotalNetoCompra.appendChild(document.createTextNode(totalNetoCompraFinal));
-    // Actualiza total abonos compras
-    var totalAbonosCompraFinal = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
-    var elementAbonosCompra = document.getElementById('abonosNetoCompra');
-    elementAbonosCompra.innerHTML = '';
-    elementAbonosCompra.appendChild(document.createTextNode(totalAbonosCompraFinal));
-    // Actualiza total por cobrar compras
-    var porCobrarNetoCompraFinal = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
-    var elementPorCobrarNetoCompra = document.getElementById('porCobrarNetoCompra');
-    elementPorCobrarNetoCompra.innerHTML = '';
-    elementPorCobrarNetoCompra.appendChild(document.createTextNode(porCobrarNetoCompraFinal));
+                // Si la tabla existe, calcular totales de compras desde las filas (temporal hasta que se agregue al método centralizado)
+                var tabla = document.getElementById('tablaItems');
+                if (tabla) {
+                    for (let i = 1; i < tabla.rows.length; i++) {
+                        var fila = tabla.rows[i];
+                        if (fila.classList.contains('child')) {
+                            continue;
+                        }
+                        var celdaTotal = fila.querySelector('td[data-total-neto]');
+                        if (!celdaTotal || celdaTotal.getAttribute('data-anulado') == 1) { continue; }
+                        if (celdaTotal.getAttribute('data-tipo') == 2) {
+                            var total = parseFloat(celdaTotal.getAttribute('data-total-neto'));
+                            var celdaAbonos = fila.querySelector('td[data-abonos]');
+                            var celdaPorCobrar = fila.querySelector('td[data-por-cobrar]');
+                            if (celdaAbonos && celdaPorCobrar) {
+                                var abonos = parseFloat(celdaAbonos.getAttribute('data-abonos')) || 0;
+                                var porCobrar = parseFloat(celdaPorCobrar.getAttribute('data-por-cobrar')) || 0;
+                                totalAbonosCompra += abonos;
+                                totalPorCobrarCompra += porCobrar;
+                            }
+                        }
+                    }
+                }
+
+                // Actualizar resumen de ventas
+                var elementTotalNetoVenta = document.getElementById('totalNetoVenta');
+                if (elementTotalNetoVenta) {
+                    elementTotalNetoVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
+                }
+                var elementAbonosVenta = document.getElementById('abonosNetoVenta');
+                if (elementAbonosVenta) {
+                    elementAbonosVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
+                }
+                var elementPorCobrarNetoVenta = document.getElementById('porCobrarNetoVenta');
+                if (elementPorCobrarNetoVenta) {
+                    elementPorCobrarNetoVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
+                }
+
+                // Actualizar resumen de compras
+                var elementTotalNetoCompra = document.getElementById('totalNetoCompra');
+                if (elementTotalNetoCompra) {
+                    elementTotalNetoCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
+                }
+                var elementAbonosCompra = document.getElementById('abonosNetoCompra');
+                if (elementAbonosCompra) {
+                    elementAbonosCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
+                }
+                var elementPorCobrarNetoCompra = document.getElementById('porCobrarNetoCompra');
+                if (elementPorCobrarNetoCompra) {
+                    elementPorCobrarNetoCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
+                }
+
+                // Actualizar footer de la tabla
+                var footerTotalVenta = document.getElementById('footerTotalVenta');
+                if (footerTotalVenta) {
+                    footerTotalVenta.innerHTML = "$" + numberFormat(totalNetoVenta, 0, ',', '.');
+                }
+                var footerCobradoVenta = document.getElementById('footerCobradoVenta');
+                if (footerCobradoVenta) {
+                    footerCobradoVenta.innerHTML = "$" + numberFormat(totalAbonosVenta, 0, ',', '.');
+                }
+                var footerPorCobrarVenta = document.getElementById('footerPorCobrarVenta');
+                if (footerPorCobrarVenta) {
+                    footerPorCobrarVenta.innerHTML = "$" + numberFormat(totalPorCobrarVenta, 0, ',', '.');
+                }
+
+                var footerTotalCompra = document.getElementById('footerTotalCompra');
+                if (footerTotalCompra) {
+                    footerTotalCompra.innerHTML = "$" + numberFormat(totalNetoCompra, 0, ',', '.');
+                }
+                var footerCobradoCompra = document.getElementById('footerCobradoCompra');
+                if (footerCobradoCompra) {
+                    footerCobradoCompra.innerHTML = "$" + numberFormat(totalAbonosCompra, 0, ',', '.');
+                }
+                var footerPorCobrarCompra = document.getElementById('footerPorCobrarCompra');
+                if (footerPorCobrarCompra) {
+                    footerPorCobrarCompra.innerHTML = "$" + numberFormat(totalPorCobrarCompra, 0, ',', '.');
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al calcular KPIs:', error);
+            // En caso de error, mantener valores en 0
+        }
+    });
 }
 
 /**
  * Esta funcion me calcula los totales de una factura
+ * Considera items tipo crédito (C) que restan del total
  */
 function totalizar(){
     var tabla = document.getElementById('tablaItems');
+    if (!tabla) {
+        return; // Si no existe la tabla, salir
+    }
 
-    var totalPrecio = 0;
-    var totalDescuento = 0;
-    var totalImpuesto = 0;
-    var nuevostr  = "";
+    // Variables según la lógica correcta
+    var subtotalBruto = 0;  // 1. Suma de (precio × cantidad) de items débito ANTES de descuentos
+    var descuentosItems = 0;  // 2. Sumatoria de descuentos línea por línea en items débito
+    var descuentosComercialesGlobales = 0;  // 3. Suma de créditos ANTE_IMPUESTO
+    var impuestos = 0;  // 5. Suma de IVAs sobre base gravable de cada item débito
+    var anticiposSaldosFavor = 0;  // 7. Suma de créditos POST_IMPUESTO
+    
     for (let i = 1; i < tabla.rows.length; i++) {
         var fila = tabla.rows[i];
         if (fila.cells.length === 9) {
@@ -1080,58 +1304,247 @@ function totalizar(){
                 continue;
             }
 
-            var precio = parseFloat(fila.cells[2].querySelector('input').value);
-            var porcentajeDescuento = parseFloat(fila.cells[3].querySelector('input').value);
-            var cantidad = parseFloat(fila.cells[6].querySelector('input').value);
-            var selectImpuesto = fila.cells[4].querySelector('select');
-            var opcionSeleccionada = selectImpuesto.selectedOptions[0];
-            var impuestoValue = opcionSeleccionada.value;
-            var impuestoValor = parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto'));
-            var impuestoName = opcionSeleccionada.getAttribute('data-name-impuesto');
+            // Obtener el tipo de item (D= Débito, C= Crédito)
+            var itemType = fila.getAttribute('data-item-type');
+            if (!itemType && fila.cells[7]) {
+                itemType = fila.cells[7].getAttribute('data-item-type');
+            }
+            if (!itemType) {
+                itemType = 'D';
+            }
+            
+            var isCredito = (itemType === 'C');
+            var isDebito = !isCredito;
+            
+            // Para créditos, obtener application_time (por defecto ANTE_IMPUESTO)
+            var applicationTime = null;
+            if (isCredito) {
+                applicationTime = fila.getAttribute('data-application-time');
+                if (!applicationTime) {
+                    applicationTime = 'ANTE_IMPUESTO';
+                }
+            }
 
-            var precioNeto = (precio * cantidad);
-            var totalPrecio = totalPrecio + precioNeto;
+            // Obtener elementos de la fila
+            var precioInput = fila.cells[2] ? fila.cells[2].querySelector('input') : null;
+            var descuentoInput = fila.cells[3] ? fila.cells[3].querySelector('input') : null;
+            var cantidadInput = fila.cells[6] ? fila.cells[6].querySelector('input') : null;
+            var selectImpuesto = fila.cells[4] ? fila.cells[4].querySelector('select') : null;
+            var subtotalCell = fila.cells[7];
+            
+            if (!precioInput || !cantidadInput || !subtotalCell) {
+                continue;
+            }
 
-            var descuento = precioNeto * (porcentajeDescuento / 100)
-            var totalDescuento = totalDescuento + descuento;
-
-            if (impuestoValue > 0) {
-                var impuesto = (precioNeto - descuento) * (impuestoValor / 100);
-                var totalImpuesto = totalImpuesto + impuesto;
+            var precio = parseFloat(precioInput.value) || 0;
+            var cantidad = parseFloat(cantidadInput.value) || 0;
+            
+            if (isDebito) {
+                // 1. Subtotal Bruto: precio × cantidad (antes de descuentos)
+                var precioPorCantidad = precio * cantidad;
+                subtotalBruto += precioPorCantidad;
+                
+                // 2. Descuentos de Items: descuento línea por línea
+                if (descuentoInput) {
+                    var porcentajeDescuento = parseFloat(descuentoInput.value) || 0;
+                    var descuentoLinea = precioPorCantidad * (porcentajeDescuento / 100);
+                    descuentosItems += descuentoLinea;
+                    
+                    // 5. Impuestos: sobre base gravable del item (después de descuento)
+                    if (selectImpuesto) {
+                        var opcionSeleccionada = selectImpuesto.selectedOptions[0];
+                        var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
+                        var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
+                        
+                        if (impuestoValue > 0 && impuestoValor > 0) {
+                            var baseGravableItem = precioPorCantidad - descuentoLinea;
+                            var impuestoItem = baseGravableItem * (impuestoValor / 100);
+                            impuestos += impuestoItem;
+                        }
+                    }
+                }
+            } else if (isCredito) {
+                // Obtener el subtotal del crédito
+                var subtotalValue = 0;
+                if (subtotalCell.getAttribute('data-subtotal-anterior')) {
+                    subtotalValue = Math.abs(parseFloat(subtotalCell.getAttribute('data-subtotal-anterior')) || 0);
+                } else {
+                    var subtotalText = subtotalCell.textContent.trim();
+                    subtotalText = subtotalText.replace(/^\$?\s*-?/, '').replace(/\./g, '').replace(',', '.');
+                    subtotalValue = Math.abs(parseFloat(subtotalText) || 0);
+                }
+                
+                // 3. Descuentos Comerciales Globales (ANTE_IMPUESTO) o 7. Anticipos (POST_IMPUESTO)
+                if (applicationTime === 'ANTE_IMPUESTO') {
+                    descuentosComercialesGlobales += subtotalValue;
+                } else {
+                    anticiposSaldosFavor += subtotalValue;
+                }
             }
         }
     }
 
-    //SUBTOTAL NETO
-    var totalPrecioFinal = "$"+numberFormat(totalPrecio, 0, ',', '.');
-    var idSubtotal = document.getElementById('subtotal');
-    idSubtotal.innerHTML = '';
-    idSubtotal.appendChild(document.createTextNode(totalPrecioFinal));
+    // 4. Subtotal Gravable: Subtotal Bruto - Descuentos Items - Descuentos Comerciales Globales
+    var subtotalGrabable = subtotalBruto - descuentosItems - descuentosComercialesGlobales;
+    
+    // 6. Total Facturado: Subtotal Gravable + Impuestos
+    var totalFacturado = subtotalGrabable + impuestos;
+    
+    // VALOR ADICIONAL
+    var vlrAdicional = parseFloat(document.getElementById('vlrAdicional') ? document.getElementById('vlrAdicional').value : 0) || 0;
+    
+    // 8. Total Neto: Total Facturado - Anticipos + Valor Adicional
+    var totalNeto = totalFacturado - anticiposSaldosFavor + vlrAdicional;
 
-    //VALOR ADICIONAL
-    var vlrAdicional = parseFloat(document.getElementById('vlrAdicional').value);
+    // Actualizar elementos del DOM según el orden del plan
+    // 1. SUBTOTAL BRUTO
+    var subtotalBrutoFinal = "$"+numberFormat(subtotalBruto, 0, ',', '.');
+    var idSubtotalBruto = document.getElementById('subtotalBruto');
+    if (idSubtotalBruto) {
+        idSubtotalBruto.innerHTML = '';
+        idSubtotalBruto.appendChild(document.createTextNode(subtotalBrutoFinal));
+    }
+
+    // 2. DESCUENTOS DE ÍTEMS (solo de items débito)
+    var negativo = descuentosItems === 0 ? '' : '-';
+    var descuentoFinal = negativo+"$"+numberFormat(descuentosItems, 0, ',', '.');
+    var idDescuento = document.getElementById('valorDescuento');
+    if (idDescuento) {
+        idDescuento.innerHTML = '';
+        idDescuento.appendChild(document.createTextNode(descuentoFinal));
+    }
+
+    // 3. DESCUENTOS COMERCIALES GLOBALES (créditos ANTE_IMPUESTO)
+    var negativoComerciales = descuentosComercialesGlobales === 0 ? '' : '-';
+    var descuentosComercialesFinal = negativoComerciales+"$"+numberFormat(descuentosComercialesGlobales, 0, ',', '.');
+    var idDescuentosComerciales = document.getElementById('descuentosComerciales');
+    if (idDescuentosComerciales) {
+        idDescuentosComerciales.innerHTML = '';
+        idDescuentosComerciales.appendChild(document.createTextNode(descuentosComercialesFinal));
+    }
+
+    // 4. SUBTOTAL GRABABLE
+    var subtotalGrabableFinal = "$"+numberFormat(subtotalGrabable, 0, ',', '.');
+    var idSubtotal = document.getElementById('subtotal');
+    if (idSubtotal) {
+        idSubtotal.innerHTML = '';
+        idSubtotal.appendChild(document.createTextNode(subtotalGrabableFinal));
+    }
+
+    // 5. IMPUESTOS
+    var impuestoFinal = "$"+numberFormat(impuestos, 0, ',', '.');
+    var idImpuesto = document.getElementById('valorImpuesto');
+    if (idImpuesto) {
+        idImpuesto.innerHTML = '';
+        idImpuesto.appendChild(document.createTextNode(impuestoFinal));
+    }
+
+    // 6. TOTAL FACTURADO
+    var totalFacturadoFinal = "$"+numberFormat(totalFacturado, 0, ',', '.');
+    var idTotalFacturado = document.getElementById('totalFacturado');
+    if (idTotalFacturado) {
+        idTotalFacturado.innerHTML = '';
+        idTotalFacturado.appendChild(document.createTextNode(totalFacturadoFinal));
+    }
+
+    // 7. ANTICIPOS O SALDOS A FAVOR (solo POST_IMPUESTO)
+    var anticiposFinal = anticiposSaldosFavor > 0 ? "-$"+numberFormat(anticiposSaldosFavor, 0, ',', '.') : "$0";
+    var idCreditos = document.getElementById('valorCreditos');
+    if (idCreditos) {
+        idCreditos.innerHTML = '';
+        idCreditos.appendChild(document.createTextNode(anticiposFinal));
+        idCreditos.style.color = anticiposSaldosFavor > 0 ? '#ff5722' : '';
+    }
+
+    // VALOR ADICIONAL
     var vlrAdicionalFinal = "$"+numberFormat(vlrAdicional, 0, ',', '.');
     var idValorAdicional = document.getElementById('valorAdicional');
-    idValorAdicional.innerHTML = '';
-    idValorAdicional.appendChild(document.createTextNode(vlrAdicionalFinal));
-
-    //TOTAL DESCUENTO
-    var negativo = totalDescuento === 0 ? '' : '-';
-    var descuentoFinal = negativo+"$"+numberFormat(totalDescuento, 0, ',', '.');
-    var idDescuento = document.getElementById('valorDescuento');
-    idDescuento.innerHTML = '';
-    idDescuento.appendChild(document.createTextNode(descuentoFinal));
-
-    //IMPUESTOS
-    var impuestoFinal = "$"+numberFormat(totalImpuesto, 0, ',', '.');
-    var idImpuesto = document.getElementById('valorImpuesto');
-    idImpuesto.innerHTML = '';
-    idImpuesto.appendChild(document.createTextNode(impuestoFinal));
+    if (idValorAdicional) {
+        idValorAdicional.innerHTML = '';
+        idValorAdicional.appendChild(document.createTextNode(vlrAdicionalFinal));
+    }
     
-    //TOTAL NETO
-    var totalNeto = ((totalPrecio + vlrAdicional) - totalDescuento) + totalImpuesto;
+    // 8. TOTAL NETO A PAGAR
     var totalNetoFinal = "$"+numberFormat(totalNeto, 0, ',', '.');
     var idTotalNeto = document.getElementById('totalNeto');
-    idTotalNeto.innerHTML = '';
-    idTotalNeto.appendChild(document.createTextNode(totalNetoFinal));
+    if (idTotalNeto) {
+        idTotalNeto.innerHTML = '';
+        idTotalNeto.appendChild(document.createTextNode(totalNetoFinal));
+    }
+}
+
+/**
+ * Actualiza el estado del botón de confirmar factura según la cantidad de items.
+ * Habilita el botón si hay al menos un item, lo deshabilita si no hay items.
+ */
+function actualizarEstadoBotonConfirmar() {
+    // Buscar el botón de confirmar y el mensaje
+    var btnConfirmar = document.getElementById('btnConfirmarFactura');
+    var msgItemsRequeridos = document.getElementById('msgItemsRequeridos');
+    
+    // Si no existe el botón, salir (no estamos en la página de edición de movimientos)
+    if (!btnConfirmar) {
+        return;
+    }
+    
+    // Obtener la tabla de items
+    var tablaItems = document.getElementById('tablaItems');
+    if (!tablaItems) {
+        return;
+    }
+    
+    // Obtener todos los tbody de la tabla
+    var todosTbody = tablaItems.querySelectorAll('tbody');
+    var contadorItems = 0;
+    
+    // Iterar sobre todos los tbody
+    for (var t = 0; t < todosTbody.length; t++) {
+        var tbodyActual = todosTbody[t];
+        var filas = tbodyActual.querySelectorAll('tr');
+        
+        for (var i = 0; i < filas.length; i++) {
+            var fila = filas[i];
+            // Contar solo filas que estén visibles (no tienen style.display="none" ni clase fila-oculta)
+            var style = window.getComputedStyle(fila);
+            var display = style.display;
+            var tieneClaseOculta = fila.classList.contains('fila-oculta');
+            
+            if (display === 'none' || tieneClaseOculta) {
+                continue;
+            }
+            
+            // Verificar si es una fila de item guardado (con ID que comience con "reg")
+            var tieneIdReg = fila.id && fila.id.startsWith('reg');
+            if (tieneIdReg) {
+                contadorItems++;
+                continue;
+            }
+            
+            // Si no tiene ID "reg", puede ser la fila del item nuevo
+            // Verificar si el <td id="idItemNuevo"> tiene contenido (no está vacío)
+            var idItemNuevo = fila.querySelector('#idItemNuevo');
+            if (idItemNuevo) {
+                var textoIdItem = idItemNuevo.textContent.trim();
+                // Si tiene contenido, es un item guardado
+                if (textoIdItem !== '' && textoIdItem !== '0') {
+                    contadorItems++;
+                }
+            }
+        }
+    }
+    
+    // Habilitar o deshabilitar el botón según la cantidad de items
+    if (contadorItems > 0) {
+        btnConfirmar.disabled = false;
+        btnConfirmar.title = '';
+        if (msgItemsRequeridos) {
+            msgItemsRequeridos.style.display = 'none';
+        }
+    } else {
+        btnConfirmar.disabled = true;
+        btnConfirmar.title = 'No se puede confirmar la factura sin items asociados';
+        if (msgItemsRequeridos) {
+            msgItemsRequeridos.style.display = 'block';
+        }
+    }
 }

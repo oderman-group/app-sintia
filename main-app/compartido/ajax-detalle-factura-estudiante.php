@@ -1,6 +1,9 @@
 <?php
 session_start();
 include("../../config-general/config.php");
+if (!defined('FACTURA_VENTA')) {
+    require_once(ROOT_PATH."/config-general/constantes.php");
+}
 require_once("../class/Modulos.php");
 require_once("../class/Movimientos.php");
 require_once("../class/UsuariosPadre.php");
@@ -65,11 +68,44 @@ ob_start();
         <div style="flex: 1; min-width: 220px;">
             <h5 style="font-weight: 600; color: #667eea;">Información de la factura</h5>
             <ul style="list-style:none; padding:0; margin:0;">
-                <li><strong>Código:</strong> <?= htmlspecialchars($factura['id_nuevo'] ?? '') ?></li>
+                <li><strong>Código:</strong> <?= htmlspecialchars($factura['fcu_consecutivo'] ?? $factura['fcu_id'] ?? '') ?></li>
                 <li><strong>Fecha:</strong> <?= htmlspecialchars($factura['fcu_fecha'] ?? '') ?></li>
                 <li><strong>Detalle:</strong> <?= htmlspecialchars($factura['fcu_detalle'] ?? 'N/A') ?></li>
+                <li><strong>Tipo:</strong> <?= ((int)($factura['fcu_tipo'] ?? 1) == FACTURA_COMPRA) ? 'Compra' : 'Venta' ?></li>
+                <li><strong>Estado:</strong> 
+                    <?php 
+                    // Obtener el estado de la factura
+                    $estado = isset($factura['fcu_status']) ? trim($factura['fcu_status']) : null;
+                    $estadoTexto = 'No definido';
+                    $estadoColor = 'secondary';
+                    
+                    if (!empty($estado) && $estado !== '') {
+                        switch($estado) {
+                            case 'POR_COBRAR':
+                                $estadoTexto = 'Por Cobrar';
+                                $estadoColor = 'warning';
+                                break;
+                            case 'COBRADA':
+                                $estadoTexto = 'Cobrada';
+                                $estadoColor = 'success';
+                                break;
+                            case 'EN_PROCESO':
+                                $estadoTexto = 'En Proceso';
+                                $estadoColor = 'info';
+                                break;
+                            case 'ANULADA':
+                                $estadoTexto = 'Anulada';
+                                $estadoColor = 'danger';
+                                break;
+                            default:
+                                $estadoTexto = htmlspecialchars($estado);
+                                $estadoColor = 'secondary';
+                        }
+                    }
+                    ?>
+                    <span class="badge badge-<?= $estadoColor ?>"><?= htmlspecialchars($estadoTexto) ?></span>
+                </li>
                 <li><strong>Usuario:</strong> <?= $responsable ?: 'N/A' ?></li>
-                <li><strong>Estado:</strong> <?= htmlspecialchars($factura['fcu_status'] ?? '') ?></li>
             </ul>
         </div>
         <div style="flex: 1; min-width: 220px;">
@@ -83,17 +119,17 @@ ob_start();
     </div>
     <?php if (!empty($items)) { ?>
     <div style="margin-top: 20px;">
-        <h5 style="font-weight: 600; color: #667eea;">Items</h5>
+        <h5 style="font-weight: 600; color: #000000;">Items</h5>
         <div class="table-responsive">
             <table class="table table-sm table-bordered">
                 <thead style="background:#f8f9fa;">
                     <tr>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Precio unit.</th>
-                        <th>Descuento</th>
-                        <th>Impuesto</th>
-                        <th>Subtotal</th>
+                        <th style="color: #000000;">Descripción</th>
+                        <th style="color: #000000;">Cantidad</th>
+                        <th style="color: #000000;">Precio unit.</th>
+                        <th style="color: #000000;">Descuento</th>
+                        <th style="color: #000000;">Impuesto</th>
+                        <th style="color: #000000;">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,7 +147,7 @@ ob_start();
                         $totalItems += $subtotal;
                     ?>
                     <tr>
-                        <td><?= htmlspecialchars($item['description'] ?? $item['item_name'] ?? 'N/A') ?></td>
+                        <td><?= htmlspecialchars(strip_tags($item['description'] ?? $item['item_name'] ?? 'N/A')) ?></td>
                         <td><?= number_format($cantidad, 0, ",", ".") ?></td>
                         <td>$<?= number_format((float)$precio, 0, ",", ".") ?></td>
                         <td><?= number_format((float)$descuento, 0, ",", ".") ?>%</td>

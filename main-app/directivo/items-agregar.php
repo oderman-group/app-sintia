@@ -59,7 +59,7 @@ if(!Modulos::validarPermisoEdicion()){
                                 <div class="panel-body">
 									<form name="formularioGuardar" action="items-guardar.php" method="post" enctype="multipart/form-data">
 
-										<div class="form-group row">
+                                        <div class="form-group row">
                                             <label class="col-sm-1 control-label"><?=$frases[187][$datosUsuarioActual['uss_idioma']];?> <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" name="nombre" class="form-control" required <?=$disabledPermiso;?>>
@@ -71,12 +71,24 @@ if(!Modulos::validarPermisoEdicion()){
                                             <div class="col-sm-4">
                                                 <input type="number" min="0" value="0" name="precio" class="form-control" required <?=$disabledPermiso;?>>
                                             </div>
-
-                                            <label class="col-sm-1 control-label"><?=$frases[382][$datosUsuarioActual['uss_idioma']];?>:</label>
-                                            <div class="col-sm-4">
-                                                <input type="number" min="0" value="0" name="iva" class="form-control" <?=$disabledPermiso;?>>
-                                            </div>
 										</div>
+
+                                        <div class="form-group row">
+                                            <label class="col-sm-1 control-label">Tipo <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4">
+                                                <select name="item_type" id="item_type" class="form-control" required <?=$disabledPermiso;?> onchange="toggleApplicationTime()">
+                                                    <option value="D">Débito (Cargo)</option>
+                                                    <option value="C">Crédito (Descuento)</option>
+                                                </select>
+                                            </div>
+                                            <label class="col-sm-1 control-label" id="label_application_time" style="display: none;">Aplicación <span style="color: red;">(*)</span></label>
+                                            <div class="col-sm-4" id="div_application_time" style="display: none;">
+                                                <select name="application_time" id="application_time" class="form-control" <?=$disabledPermiso;?>>
+                                                    <option value="ANTE_IMPUESTO">Antes del Impuesto</option>
+                                                    <option value="POST_IMPUESTO">Después del Impuesto</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
                                         <div class="form-group row">
                                             <label class="col-sm-12 control-label"><?=$frases[50][$datosUsuarioActual['uss_idioma']];?></label>
@@ -131,6 +143,34 @@ if(!Modulos::validarPermisoEdicion()){
 
     <script>
         CKEDITOR.replace( 'editor1' );
+        
+        // Función para mostrar/ocultar campo de aplicación según el tipo de item
+        function toggleApplicationTime() {
+            var itemType = document.getElementById('item_type').value;
+            var labelApplicationTime = document.getElementById('label_application_time');
+            var divApplicationTime = document.getElementById('div_application_time');
+            var selectApplicationTime = document.getElementById('application_time');
+            
+            if (itemType === 'C') {
+                // Mostrar campo de aplicación si es Crédito
+                if (labelApplicationTime) labelApplicationTime.style.display = '';
+                if (divApplicationTime) divApplicationTime.style.display = '';
+                if (selectApplicationTime) selectApplicationTime.setAttribute('required', 'required');
+            } else {
+                // Ocultar campo de aplicación si es Débito
+                if (labelApplicationTime) labelApplicationTime.style.display = 'none';
+                if (divApplicationTime) divApplicationTime.style.display = 'none';
+                if (selectApplicationTime) {
+                    selectApplicationTime.removeAttribute('required');
+                    selectApplicationTime.value = 'ANTE_IMPUESTO'; // Resetear valor por defecto
+                }
+            }
+        }
+        
+        // Ejecutar al cargar la página para establecer el estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleApplicationTime();
+        });
     </script>
 </body>
 

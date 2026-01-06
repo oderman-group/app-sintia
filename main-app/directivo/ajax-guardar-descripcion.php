@@ -10,10 +10,10 @@ try {
     require_once(ROOT_PATH."/main-app/class/Conexion.php");
     $conexionPDO = Conexion::newConnection('PDO');
     $sql = "UPDATE ".BD_FINANCIERA.".transaction_items SET description=? 
-            WHERE id=? AND institucion=? AND year=?";
+            WHERE id_autoincremental=? AND institucion=? AND year=?";
     $stmt = $conexionPDO->prepare($sql);
     $stmt->bindParam(1, $_REQUEST['descripcion'], PDO::PARAM_STR);
-    $stmt->bindParam(2, $_REQUEST['idItem'], PDO::PARAM_STR);
+    $stmt->bindParam(2, $_REQUEST['idItem'], PDO::PARAM_INT);
     $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
     $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
     $stmt->execute();

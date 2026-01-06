@@ -1,4 +1,9 @@
-<?php require_once(ROOT_PATH."/main-app/class/Movimientos.php"); ?>
+<?php 
+require_once(ROOT_PATH."/main-app/class/Movimientos.php");
+if (!defined('FACTURA_VENTA')) {
+    require_once(ROOT_PATH."/config-general/constantes.php");
+}
+?>
 <style>
 /* Cards superiores */
 .estado-cuenta-cards {
@@ -152,7 +157,7 @@
             WHERE fcu_usuario='{$_SESSION["id"]}' AND fcu_anulado=0
             AND fc.institucion={$_SESSION['idInstitucion']} 
             AND fc.year='{$_SESSION["bd"]}' 
-            ORDER BY fc.id_nuevo DESC");
+            ORDER BY fc.fcu_id DESC");
         
         $totalFacturado = 0;
         $totalAbonado = 0;
@@ -162,13 +167,31 @@
             $vlrAdicional = !empty($factura['fcu_valor']) ? $factura['fcu_valor'] : 0;
             $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $factura['fcu_id'], $vlrAdicional);
             $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $factura['fcu_id']);
+            $tipoFactura = (int)($factura['fcu_tipo'] ?? 1);
+            
+            // Si es factura de compra (tipo 2), el valor se invierte (le deben al usuario)
+            // Para facturas de compra, el total neto debe ser negativo para indicar saldo a favor
+            if ($tipoFactura == FACTURA_COMPRA) {
+                $totalNeto = -abs($totalNeto); // Convertir a negativo (saldo a favor)
+            }
+            
             $porCobrar = $totalNeto - $abonos;
             
+            // Para el cálculo de totales:
+            // - Facturas de venta (tipo 1): se suman normalmente (si totalNeto es negativo por items crédito, también)
+            // - Facturas de compra (tipo 2): se restan (son negativas, representan saldo a favor)
             $totalFacturado += $totalNeto;
             $totalAbonado += $abonos;
-            $totalPorCobrar += max(0, $porCobrar);
+            
+            // Por cobrar: solo sumar valores positivos (lo que debe pagar), valores negativos son saldo a favor
+            if ($porCobrar > 0) {
+                $totalPorCobrar += $porCobrar;
+            }
         }
         
+        // Saldo final: total abonado - total facturado
+        // Si saldo es positivo = le deben al usuario (saldo a favor) - se muestra en verde
+        // Si saldo es negativo = el usuario debe (deuda) - se muestra en rojo
         $saldo = $totalAbonado - $totalFacturado;
         $colorSaldo = 'black';
         $mensajeSaldo = $frases[309][$datosUsuarioActual['uss_idioma']];
@@ -209,6 +232,13 @@
             </div>
         </div>
         
+        <!-- Botón para imprimir estado de cuenta -->
+        <div style="text-align: right; margin-bottom: 15px;">
+            <a href="estado-de-cuenta-imprimir.php" target="_blank" class="btn btn-primary">
+                <i class="fa fa-print"></i> Imprimir Estado de Cuenta
+            </a>
+        </div>
+        
         <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) {?>
             <div align="center" style="margin-bottom: 20px;">
                 <p><mark><?=$frases[316][$datosUsuarioActual['uss_idioma']];?>: <b><?php if(!empty($datosEstudianteActual['mat_codigo_tesoreria'])){ echo $datosEstudianteActual['mat_codigo_tesoreria'];}?></b>  (cuatro dígitos, sin el 0 a la izquierda).</mark></p>
@@ -239,6 +269,7 @@
                                     <th>#</th>
                                     <th><?=$frases[51][$datosUsuarioActual['uss_idioma']];?></th>
                                     <th><?=$frases[162][$datosUsuarioActual['uss_idioma']];?></th>
+                                    <th>Tipo</th>
                                     <th><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
                                     <th><?= $frases[413][$datosUsuarioActual['uss_idioma']]; ?></th>
                                     <th><?= $frases[418][$datosUsuarioActual['uss_idioma']]; ?></th>
@@ -252,19 +283,56 @@
                                     $vlrAdicional = !empty($resultado['fcu_valor']) ? $resultado['fcu_valor'] : 0;
                                     $totalNeto    = Movimientos::calcularTotalNeto($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
                                     $abonos       = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
-                                    $porCobrar    = $totalNeto - $abonos;
-                                    $colorValor = $porCobrar > 0 ? 'red' : 'black';
+                                    $tipoFactura = (int)($resultado['fcu_tipo'] ?? 1);
+                                    
+                                    // Si es factura de compra (tipo 2), el valor se invierte (le deben al usuario)
+                                    $totalNetoMostrar = $totalNeto;
+                                    if ($tipoFactura == FACTURA_COMPRA) {
+                                        $totalNetoMostrar = -abs($totalNeto); // Convertir a negativo para mostrar
+                                    }
+                                    
+                                    $porCobrar    = $totalNetoMostrar - $abonos;
+                                    
+                                    // Color y formato según el tipo:
+                                    // - Si porCobrar > 0: debe (rojo)
+                                    // - Si porCobrar < 0: le deben (verde/saldo a favor)
+                                    // - Si porCobrar = 0: saldado (negro)
+                                    $colorValor = 'black';
+                                    if ($porCobrar > 0) {
+                                        $colorValor = 'red';
+                                    } elseif ($porCobrar < 0) {
+                                        $colorValor = 'green';
+                                    }
                                 ?>
-                                <tr class="movimiento-row" data-factura-id="<?= $resultado['fcu_id']; ?>">
+                                <tr class="movimiento-row" data-factura-id="<?= $resultado['fcu_id']; ?>" data-tipo-factura="<?= $tipoFactura ?>">
                                     <td>
                                         <i class="fa fa-chevron-right detalle-movimiento-btn" data-id="<?= $resultado['fcu_id']; ?>"></i>
                                     </td>
                                     <td><?=$contReg;?></td>
                                     <td><?=$resultado['fcu_fecha'];?></td>
                                     <td><?=$resultado['fcu_detalle'];?></td>
-                                    <td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-total-neto="<?= $totalNeto ?>">$<?= !empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0 ?></td>
+                                    <td>
+                                        <?php if ($tipoFactura == FACTURA_COMPRA): ?>
+                                            <span class="badge badge-warning">Compra</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-info">Venta</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td id="totalNeto<?= $resultado['fcu_id']; ?>" data-tipo="<?= $tipoFactura ?>" data-total-neto="<?= $totalNetoMostrar ?>">
+                                        <?php if ($tipoFactura == FACTURA_COMPRA): ?>
+                                            -$<?= !empty($totalNeto) ? number_format($totalNeto, 0, ",", ".") : 0 ?>
+                                        <?php else: ?>
+                                            $<?= !empty($totalNetoMostrar) ? number_format($totalNetoMostrar, 0, ",", ".") : 0 ?>
+                                        <?php endif; ?>
+                                    </td>
                                     <td id="abonos<?= $resultado['fcu_id']; ?>" data-abonos="<?= $abonos ?>">$<?= !empty($abonos) ? number_format($abonos, 0, ",", ".") : 0 ?></td>
-                                    <td id="porCobrar<?= $resultado['fcu_id']; ?>" style="color:<?=$colorValor;?>;" data-por-cobrar="<?= $porCobrar ?>">$<?= !empty($porCobrar) ? number_format($porCobrar, 0, ",", ".") : 0 ?></td>
+                                    <td id="porCobrar<?= $resultado['fcu_id']; ?>" style="color:<?=$colorValor;?>;" data-por-cobrar="<?= $porCobrar ?>">
+                                        <?php if ($porCobrar < 0): ?>
+                                            -$<?= number_format(abs($porCobrar), 0, ",", ".") ?>
+                                        <?php else: ?>
+                                            $<?= number_format($porCobrar, 0, ",", ".") ?>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                                 <?php 
                                     $contReg++;
@@ -340,10 +408,11 @@ $(document).ready(function() {
             var $totalNeto = $row.find('td[data-total-neto]');
             var $abonos = $row.find('td[data-abonos]');
             var $porCobrar = $row.find('td[data-por-cobrar]');
+            var tipoFactura = parseInt($row.attr('data-tipo-factura')) || 1;
             
             if ($totalNeto.length) {
                 var total = parseFloat($totalNeto.attr('data-total-neto')) || 0;
-                totalFacturado += total;
+                totalFacturado += total; // Ya viene ajustado según el tipo (negativo si es compra)
             }
             
             if ($abonos.length) {
@@ -353,14 +422,20 @@ $(document).ready(function() {
             
             if ($porCobrar.length) {
                 var porCobrar = parseFloat($porCobrar.attr('data-por-cobrar')) || 0;
-                totalPorCobrar += Math.max(0, porCobrar);
+                // Solo sumar valores positivos (lo que debe), valores negativos son saldo a favor
+                if (porCobrar > 0) {
+                    totalPorCobrar += porCobrar;
+                }
             }
         });
         
+        // Saldo: lo abonado menos lo facturado
+        // Si saldo es positivo = le deben al usuario (saldo a favor)
+        // Si saldo es negativo = el usuario debe (deuda)
         var saldo = totalAbonado - totalFacturado;
         var colorSaldo = 'black';
-        if (saldo > 0) colorSaldo = 'green';
-        if (saldo < 0) colorSaldo = 'red';
+        if (saldo > 0) colorSaldo = 'green'; // Le deben (saldo a favor)
+        if (saldo < 0) colorSaldo = 'red'; // Debe (deuda)
         
         // Actualizar cards
         $('#cardTotalFacturado').text('$' + numberFormat(totalFacturado, 0, ',', '.'));

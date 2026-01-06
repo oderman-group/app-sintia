@@ -307,6 +307,23 @@ if (empty($catalogoGrados)) {
                                             <div id="alertaEnlace" class="collapse">
                                                 <div class="card-body">
                                                     <p class="mb-2">Para ir al formulario de inscripción <a href="<?=$urlInscripcion?>" target="_blank" class="btn btn-sm btn-primary"><i class="fa fa-external-link"></i> Abrir formulario</a></p>
+                                                    
+                                                    <!-- ID de Institución -->
+                                                    <div class="mb-3">
+                                                        <label class="mb-1"><strong><i class="fa fa-id-card"></i> ID de Institución:</strong></label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="idInstitucion" class="form-control" value="<?= htmlspecialchars($config['conf_id_institucion']); ?>" readonly style="font-weight: bold; font-size: 16px; text-align: center; background-color: #f8f9fa;">
+                                                            <div class="input-group-append">
+                                                                <button class="btn btn-outline-secondary" type="button" onclick="copiarIdInstitucion()" title="Copiar ID">
+                                                                    <i class="fa fa-copy"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <small class="form-text text-muted">
+                                                            <i class="fa fa-info-circle"></i> Comparta este ID con los interesados para que puedan acceder al formulario de inscripción.
+                                                        </small>
+                                                    </div>
+                                                    
                                                     <label class="mb-1"><strong>Copiar enlace para enviar:</strong></label>
                                                     <div class="input-group">
                                                         <input type="text" id="enlaceInscripcion" class="form-control" value="<?=$urlInscripcion?>" readonly>
@@ -763,6 +780,27 @@ if (empty($catalogoGrados)) {
 				$.toast({
 					heading: 'Copiado',
 					text: 'Enlace copiado al portapapeles',
+					position: 'top-right',
+					loaderBg: '#26c281',
+					icon: 'success',
+					hideAfter: 2000
+				});
+			} catch (err) {
+				alert('Error al copiar: ' + err);
+			}
+		}
+		
+		// Función para copiar el ID de institución
+		function copiarIdInstitucion() {
+			var idInput = document.getElementById('idInstitucion');
+			idInput.select();
+			idInput.setSelectionRange(0, 99999); // Para móviles
+			
+			try {
+				document.execCommand('copy');
+				$.toast({
+					heading: 'Copiado',
+					text: 'ID de institución copiado al portapapeles',
 					position: 'top-right',
 					loaderBg: '#26c281',
 					icon: 'success',

@@ -69,7 +69,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
   <table bgcolor="#FFFFFF" width="100%" cellspacing="5" cellpadding="5" rules="all" border="<?php echo $config[13] ?>" style="border:solid; border-color:<?= $Plataforma->colorUno; ?>;" align="center">
   <tr style="font-weight:bold; font-size:12px; height:30px; background:<?= $Plataforma->colorUno; ?>; color:#FFF;">
         <th>ID</th>
-        <th>Consecutivo</th>
         <th>Usuario</th>
         <th>Fecha</th>
         <th>Detalle</th>
@@ -78,7 +77,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
         <th>Por Cobrar</th>
         <th>Tipo</th>
         <th>Estado</th>
-        <th>Forma de pago</th>
         <th>Observaciones</th>
         <th>Cerrado</th>
   </tr>
@@ -126,11 +124,26 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
                       }
                   }
                   
+                  // Filtro de método de pago
+                  if (!empty($_GET['metodo_pago']) && trim($_GET['metodo_pago']) !== '') {
+                      $metodoPago = mysqli_real_escape_string($conexion, $_GET['metodo_pago']);
+                  // NOTA: El filtro de forma de pago ya no aplica a finanzas_cuentas.
+                  // El medio de pago ahora solo está en payments_invoiced (abonos).
+                  // Si se necesita filtrar por método de pago, debe hacerse a través de los abonos asociados.
+                  }
+                  
+                  // Filtro de cuenta bancaria
+                  if (!empty($_GET['cuenta_bancaria']) && trim($_GET['cuenta_bancaria']) !== '') {
+                      $cuentaBancaria = mysqli_real_escape_string($conexion, $_GET['cuenta_bancaria']);
+                      $filtro .= " AND fc.fcu_cuenta_bancaria_id = '{$cuentaBancaria}'";
+                  }
+                  
 									$consulta = mysqli_query($conexion, "SELECT fc.*, uss.* FROM ".BD_FINANCIERA.".finanzas_cuentas fc
 										LEFT JOIN ".BD_GENERAL.".usuarios uss ON uss.uss_id=fc.fcu_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
 										WHERE fc.institucion={$config['conf_id_institucion']} AND fc.year={$_SESSION["bd"]}
+										AND (fc.fcu_status IS NULL OR fc.fcu_status != '".EN_PROCESO."')
 										{$filtro}
-										ORDER BY fc.id_nuevo DESC");
+										ORDER BY fc.fcu_id DESC");
                   $cont=0;
                   $totalGeneralNeto = 0;
                   $totalGeneralAbonos = 0;
@@ -142,8 +155,10 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
                     
                     // Calcular total neto incluyendo items (igual que en movimientos-tbody.php)
                     $vlrAdicional = !empty($resultado['fcu_valor']) ? $resultado['fcu_valor'] : 0;
-                    $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $resultado['fcu_id'], $vlrAdicional);
-                    $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $resultado['fcu_id']);
+                    // Usar fcu_id como identificador
+                    $idParaCalculo = $resultado['fcu_id'];
+                    $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $idParaCalculo, $vlrAdicional);
+                    $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $idParaCalculo);
                     $porCobrar = $totalNeto - $abonos;
                     
                     // Determinar tipo de factura (igual que en movimientos-tbody.php)
@@ -179,7 +194,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
 									?>
   <tr style="font-size:13px;">
       <td><?=$resultado['fcu_id'];?></td>
-      <td><?=$resultado['id_nuevo'] ?? $resultado['fcu_id'];?></td>
       <td><?=$nombreCompleto;?></td>
       <td><?=$resultado['fcu_fecha'];?></td>
       <td><?=$resultado['fcu_detalle'];?></td>
@@ -188,7 +202,6 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
       <td><?=$prefijoPorCobrar.$porCobrarFormateado;?></td>
       <td><?=$tipoFacturaTexto;?></td>
       <td><?=$estado;?></td>
-      <td><?=$formasPagoFinanzas[$resultado['fcu_forma_pago']] ?? "N/A";?></td>
       <td><?=$resultado['fcu_observaciones'];?></td>
       <td><?=$resultado['fcu_cerrado'];?> <br> <?php if(isset($cerrado[4])) echo strtoupper($cerrado['uss_nombre']);?></td>
 </tr>
@@ -202,16 +215,101 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
   $totalGeneralPorCobrarFormateado = number_format($totalGeneralPorCobrar, 0, ",", ".");
   ?>
   <tr style="font-weight:bold; font-size:13px; background:#f0f0f0;">
-      <td colspan="5" align="right"><strong>TOTALES:</strong></td>
+      <td colspan="4" align="right"><strong>TOTALES:</strong></td>
       <td><strong>$<?=$totalGeneralNetoFormateado;?></strong></td>
       <td><strong>$<?=$totalGeneralAbonosFormateado;?></strong></td>
       <td><strong>$<?=$totalGeneralPorCobrarFormateado;?></strong></td>
-      <td colspan="5"></td>
+      <td colspan="4"></td>
   </tr>
   <?php
   ?>
   </table>
   </center>
+  
+  <?php
+  // Mostrar arqueo de caja si está solicitado
+  if (!empty($_GET['mostrarArqueo']) && $_GET['mostrarArqueo'] == '1' && !empty($_GET['desde']) && !empty($_GET['hasta'])) {
+      $tipoMovimiento = null;
+      if (!empty($_GET['tipo'])) {
+          $tipoFiltro = base64_decode($_GET['tipo']);
+          if ($tipoFiltro !== '') {
+              $tipoMovimiento = intval($tipoFiltro);
+          }
+      }
+      
+      $arqueo = Movimientos::obtenerArqueoCajaPorMetodo(
+          $conexion, 
+          $config, 
+          $_GET['desde'], 
+          $_GET['hasta'],
+          $tipoMovimiento
+      );
+      
+      if (!empty($arqueo['por_metodo'])) {
+  ?>
+  <br><br>
+  <table bgcolor="#FFFFFF" width="100%" cellspacing="5" cellpadding="5" rules="all" border="<?php echo $config[13] ?>" style="border:solid; border-color:<?= $Plataforma->colorUno; ?>;" align="center">
+  <tr style="font-weight:bold; font-size:14px; height:35px; background:<?= $Plataforma->colorUno; ?>; color:#FFF;">
+      <th colspan="6" style="text-align:center;">ARQUEO DE CAJA - AGRUPADO POR MÉTODO DE PAGO Y CUENTA BANCARIA</th>
+  </tr>
+  <tr style="font-weight:bold; font-size:12px; height:30px; background:#e0e0e0;">
+      <th>Método de Pago</th>
+      <th>Cuenta Bancaria</th>
+      <th>Ingresos</th>
+      <th>Egresos</th>
+      <th>Neto</th>
+      <th>Cantidad Mov.</th>
+  </tr>
+  <?php
+      $totalArqueoIngresos = 0;
+      $totalArqueoEgresos = 0;
+      $totalArqueoNeto = 0;
+      
+      foreach ($arqueo['por_metodo'] as $metodoPago => $datosMetodo) {
+          $filaMetodo = true;
+          foreach ($datosMetodo['cuentas'] as $cuenta) {
+              $totalArqueoIngresos += $cuenta['ingresos'];
+              $totalArqueoEgresos += $cuenta['egresos'];
+              $totalArqueoNeto += $cuenta['neto'];
+  ?>
+  <tr style="font-size:12px;">
+      <td><?= $filaMetodo ? $datosMetodo['nombre'] : ''; ?></td>
+      <td><?= htmlspecialchars($cuenta['cuenta_nombre']); ?></td>
+      <td align="right">$<?= number_format($cuenta['ingresos'], 0, ",", "."); ?></td>
+      <td align="right">$<?= number_format($cuenta['egresos'], 0, ",", "."); ?></td>
+      <td align="right">$<?= number_format($cuenta['neto'], 0, ",", "."); ?></td>
+      <td align="center"><?= $cuenta['cantidad']; ?></td>
+  </tr>
+  <?php
+              $filaMetodo = false;
+          }
+          
+          // Fila de subtotal por método
+          if (count($datosMetodo['cuentas']) > 1) {
+  ?>
+  <tr style="font-weight:bold; font-size:12px; background:#f5f5f5;">
+      <td colspan="2" align="right">Subtotal <?= $datosMetodo['nombre']; ?>:</td>
+      <td align="right">$<?= number_format($datosMetodo['total_ingresos'], 0, ",", "."); ?></td>
+      <td align="right">$<?= number_format($datosMetodo['total_egresos'], 0, ",", "."); ?></td>
+      <td align="right">$<?= number_format($datosMetodo['total_neto'], 0, ",", "."); ?></td>
+      <td></td>
+  </tr>
+  <?php
+          }
+      }
+  ?>
+  <tr style="font-weight:bold; font-size:13px; background:#d0d0d0;">
+      <td colspan="2" align="right"><strong>TOTAL GENERAL:</strong></td>
+      <td align="right"><strong>$<?= number_format($totalArqueoIngresos, 0, ",", "."); ?></strong></td>
+      <td align="right"><strong>$<?= number_format($totalArqueoEgresos, 0, ",", "."); ?></strong></td>
+      <td align="right"><strong>$<?= number_format($totalArqueoNeto, 0, ",", "."); ?></strong></td>
+      <td></td>
+  </tr>
+  </table>
+  <?php
+      }
+  }
+  ?>
     <?php include("../compartido/footer-informes.php"); ?>
 </body>
 </html>

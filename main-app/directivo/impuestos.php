@@ -86,6 +86,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             $arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
                                                             $arrayDatos = json_encode($arrayEnviar);
                                                             $objetoEnviar = htmlentities($arrayDatos);
+                                                            
+                                                            // Validar si el impuesto está en uso
+                                                            $impuestoEnUso = Movimientos::validarImpuestoEnUso($conexion, $config, $resultado['id']);
                                                     ?>
 													<tr id="reg<?=$resultado['id'];?>">
                                                         <td><?=$contReg;?></td>
@@ -104,7 +107,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     <ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0297'])){?>
                                                                             <li><a href="impuestos-editar.php?id=<?=base64_encode($resultado['id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
-                                                                        <?php } if(Modulos::validarSubRol(['DT0299'])){?>
+                                                                        <?php } if(Modulos::validarSubRol(['DT0299']) && !$impuestoEnUso){?>
                                                                             <li><a href="javascript:void(0);" title="<?=$objetoEnviar;?>" id="<?=$resultado['id'];?>" name="impuestos-eliminar.php?id=<?=base64_encode($resultado['id']);?>" onClick="deseaEliminar(this)"><?=$frases[174][$datosUsuarioActual['uss_idioma']];?></a></li>
 																		<?php }?>
                                                                     </ul>

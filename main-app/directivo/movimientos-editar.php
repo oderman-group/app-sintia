@@ -38,9 +38,11 @@ try{
         }
     }
     
+    // fcu_id es ahora el ID principal (AUTO_INCREMENT INT UNSIGNED)
     $sql = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_id=? AND institucion=? AND year=?";
     $stmt = $conexionPDO->prepare($sql);
-    $stmt->bindParam(1, $idMovimiento, PDO::PARAM_STR);
+    $idMovimientoInt = (int)$idMovimiento;
+    $stmt->bindParam(1, $idMovimientoInt, PDO::PARAM_INT);
     $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
     $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
     $stmt->execute();
@@ -48,19 +50,8 @@ try{
     
     // Validar que se encontró el registro
     if ($datosMovimiento === false || !is_array($datosMovimiento) || empty($datosMovimiento['fcu_id'])) {
-        // Intentar buscar por id_nuevo también (por si acaso)
-        $sql2 = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE id_nuevo=? AND institucion=? AND year=?";
-        $stmt2 = $conexionPDO->prepare($sql2);
-        $stmt2->bindParam(1, $idMovimiento, PDO::PARAM_STR);
-        $stmt2->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
-        $stmt2->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
-        $stmt2->execute();
-        $datosMovimiento = $stmt2->fetch(PDO::FETCH_ASSOC);
-        
-        if ($datosMovimiento === false || !is_array($datosMovimiento) || empty($datosMovimiento['fcu_id'])) {
-            echo '<script type="text/javascript">alert("No se encontró la transacción solicitada.\\n\\nID buscado: '.htmlspecialchars($idMovimiento).'\\n\\nPor favor verifica que la transacción existe en la base de datos."); window.location.href="movimientos.php";</script>';
-            exit();
-        }
+        echo '<script type="text/javascript">alert("No se encontró la transacción solicitada.\\n\\nID buscado: '.htmlspecialchars($idMovimiento).'\\n\\nPor favor verifica que la transacción existe en la base de datos."); window.location.href="movimientos.php";</script>';
+        exit();
     }
     
     // En este punto, $datosMovimiento debería ser válido (ya validado arriba)
@@ -81,6 +72,7 @@ if (!isset($datosMovimiento) || !is_array($datosMovimiento) || empty($datosMovim
     exit();
 }
 
+// Calcular abonos usando fcu_id (ahora es el ID principal)
 $abonos = Movimientos::calcularTotalAbonado($conexion, $config, $datosMovimiento['fcu_id']);
 
 // Asegurar que $abonos sea un número válido (manejar null, false, o valores no numéricos)
@@ -90,11 +82,37 @@ if ($abonos === null || $abonos === false || !is_numeric($abonos)) {
     $abonos = floatval($abonos);
 }
 
-// $abonos = number_format($abonos, 0, ",", ".");
+// Determinar qué campos están deshabilitados
+// Solo se puede editar si está en estado EN_PROCESO y no tiene abonos
+$estadoActual = $datosMovimiento['fcu_status'] ?? '';
+$puedeEditar = false;
 
-$disabledPermiso = "";
-if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==1) || (isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==COBRADA) || $abonos>0){
-	$disabledPermiso = "disabled";
+// Se puede editar solo si:
+// 1. Tiene permisos de edición
+// 2. No está anulada
+// 3. Está en estado EN_PROCESO
+// 4. No tiene abonos
+if(Modulos::validarPermisoEdicion() 
+    && (!isset($datosMovimiento['fcu_anulado']) || $datosMovimiento['fcu_anulado']==0) 
+    && $estadoActual == EN_PROCESO 
+    && $abonos == 0){
+    $puedeEditar = true;
+}
+
+// Establecer disabled según si puede editar
+$disabledPermiso = $puedeEditar ? "" : "disabled";
+
+// Contar items de la factura para validar antes de confirmar
+$numItems = 0;
+if ($puedeEditar) {
+    try {
+        $consultaItems = Movimientos::listarItemsTransaction($conexion, $config, (string)$datosMovimiento['fcu_id'], TIPO_FACTURA);
+        if ($consultaItems) {
+            $numItems = mysqli_num_rows($consultaItems);
+        }
+    } catch (Exception $e) {
+        $numItems = 0;
+    }
 }
 ?>
 
@@ -113,6 +131,24 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
     <!-- Movimientos Mejorado CSS -->
     <link href="../css/movimientos-mejorado.css" rel="stylesheet" type="text/css" />
     <style>
+    /* Fijar ancho de columna de impuesto */
+    #tablaItems th:nth-child(5),
+    #tablaItems td:nth-child(5) {
+        width: 150px !important;
+        max-width: 150px !important;
+        min-width: 150px !important;
+    }
+    
+    #tablaItems td:nth-child(5) .select2-container {
+        width: 100% !important;
+        max-width: 150px !important;
+    }
+    
+    #tablaItems td:nth-child(5) .select2-selection {
+        width: 100% !important;
+        max-width: 150px !important;
+    }
+    
     .invoice-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -231,12 +267,27 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                     $fcuValor = isset($datosMovimiento['fcu_valor']) ? $datosMovimiento['fcu_valor'] : 0;
                                     $totalNeto = Movimientos::calcularTotalNeto($conexion, $config, $fcuId, $fcuValor);
                                     
-                                    $estadoTexto = (!empty($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status'] == COBRADA) ? 'Cobrada' : 'Por Cobrar';
-                                    $estadoColor = (!empty($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status'] == COBRADA) ? '#00c292' : '#ffc107';
+                                    // Determinar texto y color del estado
+                                    $estadoFactura = $datosMovimiento['fcu_status'] ?? '';
+                                    if ($estadoFactura == COBRADA) {
+                                        $estadoTexto = 'Cobrada';
+                                        $estadoColor = '#00c292';
+                                    } elseif ($estadoFactura == EN_PROCESO) {
+                                        $estadoTexto = 'En Proceso';
+                                        $estadoColor = '#3498db';
+                                    } elseif ($estadoFactura == ANULADA) {
+                                        $estadoTexto = 'Anulada';
+                                        $estadoColor = '#e74c3c';
+                                    } else {
+                                        $estadoTexto = 'Por Cobrar';
+                                        $estadoColor = '#ffc107';
+                                    }
                                     $tipoTexto = (!empty($datosMovimiento['fcu_tipo']) && $datosMovimiento['fcu_tipo'] == 1) ? 'Fact. Venta' : 'Fact. Compra';
                                     
                                     // Pasar $datosMovimiento como $resultado al include para compatibilidad
                                     $resultado = $datosMovimiento;
+                                    // Asegurar que el estado esté disponible en $resultado para el include
+                                    $resultado['fcu_status'] = $datosMovimiento['fcu_status'] ?? '';
                                     include("includes/barra-superior-movimientos-financieros-editar.php");
                                 ?>
 								
@@ -248,7 +299,7 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 												<i class="fa fa-file-text-o"></i> <?=$frases[95][$datosUsuarioActual['uss_idioma']];?>
 											</h2>
 											<p style="margin: 10px 0 0 0; opacity: 0.9;">
-												# <?=$datosMovimiento['id_nuevo'] ?? '';?> | <?=$tipoTexto;?>
+												# <?=$datosMovimiento['fcu_id'] ?? '';?> | <?=$tipoTexto;?>
 											</p>
 										</div>
 										<div class="col-md-6 text-right">
@@ -295,6 +346,22 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 										</div>
 									</div>
 								</div>
+								
+								<?php if(!$puedeEditar): ?>
+								<div class="alert alert-warning" style="margin-top: 20px;">
+									<i class="fa fa-exclamation-triangle"></i> 
+									<strong>Información:</strong> 
+									<?php 
+									if($estadoActual != EN_PROCESO) {
+										echo "Esta factura ya está confirmada (Estado: ".$estadoActual."). No se permite editar ningún dato.";
+									} elseif($abonos > 0) {
+										echo "Esta factura tiene abonos asociados. No se permite editar ningún dato.";
+									} else {
+										echo "No tiene permisos para editar esta factura.";
+									}
+									?>
+								</div>
+								<?php endif; ?>
 
 								<!-- Formulario Principal -->
 								<div class="form-section">
@@ -310,7 +377,7 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Número de Factura</label>
-													<input type="text" name="idNuevo" class="form-control" value="<?=$datosMovimiento['id_nuevo'] ?? '';?>" disabled style="background: #f5f5f5;">
+													<input type="text" name="idNuevo" class="form-control" value="<?=$datosMovimiento['fcu_id'] ?? '';?>" disabled style="background: #f5f5f5;">
 												</div>
 											</div>
 											<div class="col-md-6">
@@ -336,8 +403,12 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 										<div class="row">
 											<div class="col-md-6">
 												<div class="form-group">
-													<label>Fecha <span style="color: red;">*</span></label>
-													<input type="date" name="fecha" class="form-control" required value="<?=$datosMovimiento['fcu_fecha'] ?? '';?>" <?=$disabledPermiso;?>>
+													<label>Fecha del documento <span style="color: red;">*</span></label>
+													<input type="date" name="fecha" class="form-control" required 
+														value="<?=$datosMovimiento['fcu_fecha'] ?? '';?>" 
+														max="<?=date('Y-m-d');?>" 
+														min="<?=date('Y-m-d', strtotime('-1 year'));?>"
+														<?=$disabledPermiso;?>>
 												</div>
 											</div>
 											<div class="col-md-6">
@@ -362,34 +433,30 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Valor adicional</label>
-													<input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" value="<?=$datosMovimiento['fcu_valor'] ?? 0;?>" required <?=$disabledPermiso;?> data-vlr-adicional-anterior="<?=$datosMovimiento['fcu_valor'] ?? 0;?>" onchange="totalizar(this)">
+													<input type="number" min="0" id="vlrAdicional" name="valor" class="form-control" value="0" required disabled data-vlr-adicional-anterior="0">
 												</div>
 											</div>
 										</div>
 
+										<!-- NOTA: Los campos de Medio de pago y Cuenta Bancaria fueron eliminados según el plan.
+										     El medio de pago solo se registra en el abono asociado, no en la factura. -->
+										
 										<div class="row">
-											<div class="col-md-6">
-												<div class="form-group">
-													<label>Medio de pago <span style="color: red;">*</span></label>
-													<select class="form-control select2" name="forma" required <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
-														<option value="1" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==1){ echo "selected";}?>>Efectivo</option>
-														<option value="2" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==2){ echo "selected";}?>>Cheque</option>
-														<option value="3" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==3){ echo "selected";}?>>T. Débito</option>
-														<option value="4" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==4){ echo "selected";}?>>T. Crédito</option>
-														<option value="5" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==5){ echo "selected";}?>>Transferencia</option>
-														<option value="6" <?php if(isset($datosMovimiento['fcu_forma_pago']) && $datosMovimiento['fcu_forma_pago']==6){ echo "selected";}?>>No aplica</option>
-													</select>
-												</div>
-											</div>
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Estado</label>
 													<select class="form-control select2" disabled>
 														<option value="">Seleccione una opción</option>
+														<option value="<?=EN_PROCESO?>" <?php if(isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==EN_PROCESO){ echo "selected";}?>>En Proceso</option>
 														<option value="<?=POR_COBRAR?>" <?php if(isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR){ echo "selected";}?>>Por Cobrar</option>
 														<option value="<?=COBRADA?>" <?php if(isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==COBRADA){ echo "selected";}?>>Cobrada</option>
+														<option value="<?=ANULADA?>" <?php if(isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==ANULADA){ echo "selected";}?>>Anulada</option>
 													</select>
+													<?php if(!empty($estadoFactura)): ?>
+													<p style="margin-top: 5px; color: <?=$estadoColor;?>; font-weight: 600;">
+														<i class="fa fa-info-circle"></i> Estado actual: <?=$estadoTexto;?>
+													</p>
+													<?php endif; ?>
 												</div>
 											</div>
 										</div>
@@ -398,21 +465,23 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Cerrado?</label>
-													<select class="form-control select2" name="cerrado" required <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
+													<select class="form-control select2" name="cerrado" disabled style="background-color: #e9ecef; cursor: not-allowed;">
 														<option value="0" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==0){ echo "selected";}?>>Abierto</option>
 														<option value="1" <?php if(isset($datosMovimiento['fcu_cerrado']) && $datosMovimiento['fcu_cerrado']==1){ echo "selected";}?>>Cerrado</option>
 													</select>
+													<input type="hidden" name="cerrado" value="<?=isset($datosMovimiento['fcu_cerrado']) ? $datosMovimiento['fcu_cerrado'] : '0';?>">
+													<small class="form-text text-muted" style="font-style: italic; color: #6c757d;">Este campo está reservado para otro proceso y no puede ser modificado.</small>
 												</div>
 											</div>
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Anulado</label>
-													<select class="form-control select2" name="anulado" required <?=$disabledPermiso;?>>
+													<select class="form-control select2" name="anulado" required disabled>
 														<option value="">Seleccione una opción</option>
 														<option value="0" <?php if(isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0){ echo "selected";}?>>No</option>
 														<option value="1" <?php if(isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==1){ echo "selected";}?>>Si</option>
 													</select>
+													<input type="hidden" name="anulado" value="<?=isset($datosMovimiento['fcu_anulado']) ? $datosMovimiento['fcu_anulado'] : 0;?>">
 												</div>
 											</div>
 										</div>
@@ -448,6 +517,26 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                         }
                                                     }
                                                 });
+                                                
+                                                // Validación de fecha en frontend
+                                                $('input[name="fecha"]').on('change', function() {
+                                                    const fechaIngresada = new Date($(this).val());
+                                                    const fechaActual = new Date();
+                                                    const fechaLimite = new Date();
+                                                    fechaLimite.setFullYear(fechaLimite.getFullYear() - 1);
+                                                    
+                                                    if (fechaIngresada > fechaActual) {
+                                                        alert('La fecha del documento no puede ser futura.');
+                                                        $(this).val('<?=!empty($datosMovimiento['fcu_fecha']) ? date('Y-m-d', strtotime($datosMovimiento['fcu_fecha'])) : '';?>');
+                                                        return false;
+                                                    }
+                                                    
+                                                    if (fechaIngresada < fechaLimite) {
+                                                        alert('La fecha del documento no puede ser mayor a un año en el pasado.');
+                                                        $(this).val('<?=!empty($datosMovimiento['fcu_fecha']) ? date('Y-m-d', strtotime($datosMovimiento['fcu_fecha'])) : '';?>');
+                                                        return false;
+                                                    }
+                                                });
                                             });
                                         </script>
 
@@ -457,7 +546,7 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                 <h4 style="margin: 0; color: #333; font-weight: 600;">
                                                     <i class="fa fa-list"></i> Items de la Factura
                                                 </h4>
-                                                <?php if(Modulos::validarPermisoEdicion() && isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0 && isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR && $abonos==0){?>
+                                                <?php if($puedeEditar){?>
                                                 <button type="button" class="btn btn-add-item" onclick="abrirModalCrearItem()">
                                                     <i class="fa fa-plus"></i> Crear Item Nuevo
                                                 </button>
@@ -473,7 +562,7 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                 <th style="color: white; border: none;">Item</th>
                                                                 <th style="color: white; border: none;">Precio</th>
                                                                 <th style="color: white; border: none;">Desc %</th>
-                                                                <th style="color: white; border: none;">Impuesto</th>
+                                                                <th style="color: white; border: none; width: 150px; max-width: 150px;">Impuesto</th>
                                                                 <th style="color: white; border: none;">Descripción</th>
                                                                 <th style="color: white; border: none;">Cant.</th>
                                                                 <th style="color: white; border: none;">Total</th>
@@ -494,19 +583,35 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                         $arrayEnviar = array("tipo"=>1, "restar"=>$fila['subtotal'], "descripcionTipo"=>"Para ocultar fila del registro.");
                                                                         $arrayDatos = json_encode($arrayEnviar);
                                                                         $objetoEnviar = htmlentities($arrayDatos);
+                                                                        
+                                                                        // Determinar si es item tipo crédito (C) o débito (D)
+                                                                        $itemType = isset($fila['item_type']) ? $fila['item_type'] : 'D';
+                                                                        $isCredito = ($itemType == 'C');
+                                                                        $rowClass = $isCredito ? 'item-credito' : '';
+                                                                        $signoSubtotal = $isCredito ? '-' : '';
+                                                                        // Obtener application_time para créditos (por defecto ANTE_IMPUESTO si no existe)
+                                                                        $applicationTime = ($isCredito && isset($fila['application_time'])) ? $fila['application_time'] : ($isCredito ? 'ANTE_IMPUESTO' : null);
+                                                                        
+                                                                        // Construir nombre del item con información de aplicación para créditos
+                                                                        if ($isCredito) {
+                                                                            $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+                                                                            $nombreItem = $fila['name'] . ' <small style="color: #666; font-size: 0.85em;">(Crédito - ' . $textoApplicationTime . ')</small>';
+                                                                        } else {
+                                                                            $nombreItem = $fila['name'];
+                                                                        }
                                                             ?>
-                                                                <tr id="reg<?=$fila['idtx'];?>">
+                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>"<?=$applicationTime ? ' data-application-time="'.$applicationTime.'"' : '';?>>
                                                                     <td><?=$fila['idtx'];?></td>
-                                                                    <td><?=$fila['name'];?></td>
+                                                                    <td><?=$nombreItem;?></td>
                                                                     <td>
                                                                         <input type="number" min="0" id="precio<?=$fila['idtx'];?>" data-precio="<?=$fila['priceTransaction'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['priceTransaction']?>" <?=$disabledPermiso;?>>
                                                                     </td>
                                                                     <td>
-                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$fila['discount']?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount']?>" <?=$disabledPermiso;?>>
+                                                                        <input type="text" id="descuento<?=$fila['idtx'];?>" data-descuento-anterior="<?=$fila['discount']?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['discount']?>" <?=$disabledPermiso;?><?=$isCredito ? ' disabled' : '';?>>
                                                                     </td>
-                                                                    <td>
+                                                                    <td style="width: 150px; max-width: 150px;">
                                                                         <div class="col-sm-12" style="padding: 0px;">
-                                                                            <select class="form-control  select2" id="impuesto<?=$fila['idtx'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" <?=$disabledPermiso;?>>
+                                                                            <select class="form-control select2" id="impuesto<?=$fila['idtx'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" style="width: 100%;" <?=$disabledPermiso;?><?=$isCredito ? ' disabled' : '';?>>
                                                                                 <option value="0" name="0">Ninguno - (0%)</option>
                                                                                 <?php
                                                                                     $consulta= Movimientos::listarImpuestos($conexion, $config);
@@ -524,9 +629,9 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                     <td>
                                                                         <input type="number" title="cantity" min="0" id="cantidadItems<?=$fila['idtx'];?>" data-cantidad="<?=$fila['cantity'];?>" onchange="actualizarSubtotal('<?=$fila['idtx'];?>')" value="<?=$fila['cantity'];?>" style="width: 50px;" <?=$disabledPermiso;?>>
                                                                     </td>
-                                                                    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>">$<?=number_format($fila['subtotal'] ?? 0, 0, ",", ".")?></td>
+                                                                    <td id="subtotal<?=$fila['idtx'];?>" data-subtotal-anterior="<?=$fila['subtotal'];?>" data-item-type="<?=$itemType;?>"><?=$signoSubtotal;?>$<?=number_format($fila['subtotal'] ?? 0, 0, ",", ".")?></td>
                                                                     <td>
-                                                                        <?php if(Modulos::validarPermisoEdicion() && isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0 && isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR && $abonos==0){?>
+                                                                        <?php if($puedeEditar){?>
                                                                             <a href="#" title="<?=$objetoEnviar;?>" id="<?=$fila['idtx'];?>" name="movimientos-items-eliminar.php?idR=<?=$fila['idtx'];?>" style="padding: 4px 4px; margin: 5px;" class="btn btn-sm" onClick="deseaEliminarNuevoItem(this)">X</a>
                                                                         <?php } ?>
                                                                     </td>
@@ -548,10 +653,10 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                                     $consulta= Movimientos::listarItems($conexion, $config);
                                                                                     while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                                                 ?>
-                                                                                <option value="<?=$datosConsulta['id']?>" name="<?=$datosConsulta['price']?>"><?=$datosConsulta['name']?> - $<?=number_format($datosConsulta['price'] ?? 0, 0, ",", ".")?></option>
+                                                                                <option value="<?=$datosConsulta['item_id']?>" name="<?=$datosConsulta['price']?>"><?=$datosConsulta['name']?> - $<?=number_format($datosConsulta['price'] ?? 0, 0, ",", ".")?></option>
                                                                                 <?php } ?>
                                                                             </select>
-                                                                            <?php if(Modulos::validarPermisoEdicion() && isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0 && isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR && $abonos==0){?>
+                                                                            <?php if($puedeEditar){?>
                                                                             <button type="button" class="btn btn-sm btn-success" onclick="abrirModalCrearItem()" title="Crear nuevo item" style="white-space: nowrap;">
                                                                                 <i class="fa fa-plus"></i>
                                                                             </button>
@@ -560,14 +665,14 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="number" min="0" id="precioNuevo" data-precio="0" onchange="actualizarSubtotal('idNuevo')" value="0" disabled>
+                                                                    <input type="number" min="0" id="precioNuevo" data-precio="0" onchange="actualizarSubtotal('idNuevo')" value="0" <?=$disabledPermiso;?>>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="text" id="descuentoNuevo" data-total-precio="0" data-precio-item-anterior="0" data-descuento-anterior="0" onchange="actualizarSubtotal('idNuevo')" value="0" disabled>
+                                                                    <input type="text" id="descuentoNuevo" data-total-precio="0" data-precio-item-anterior="0" data-descuento-anterior="0" onchange="actualizarSubtotal('idNuevo')" value="0" <?=$disabledPermiso;?>>
                                                                 </td>
                                                                 <td>
                                                                     <div class="col-sm-12" style="padding: 0px;">
-                                                                        <select class="form-control  select2" id="impuestoNuevo" onchange="actualizarSubtotal('idNuevo')" disabled>
+                                                                        <select class="form-control  select2" id="impuestoNuevo" onchange="actualizarSubtotal('idNuevo')" <?=$disabledPermiso;?>>
                                                                             <option value="0" name="0">Ninguno - (0%)</option>
                                                                             <?php
                                                                                 $consulta= Movimientos::listarImpuestos($conexion, $config);
@@ -579,15 +684,15 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    <textarea  id="descripNueva" cols="30" rows="1" onchange="guardarDescripcion('idNuevo')" disabled></textarea>
+                                                                    <textarea  id="descripNueva" cols="30" rows="1" onchange="guardarDescripcion('idNuevo')" <?=$disabledPermiso;?>></textarea>
                                                                 </td>
-                                                                <td><input type="number" min="0" id="cantidadItemNuevo" data-cantidad="1" onchange="actualizarSubtotal('idNuevo')" value="1" style="width: 50px;" disabled></td>
+                                                                <td><input type="number" min="0" id="cantidadItemNuevo" data-cantidad="1" onchange="actualizarSubtotal('idNuevo')" value="1" style="width: 50px;" <?=$disabledPermiso;?>></td>
                                                                 <td id="subtotalNuevo" data-subtotal-anterior="0">$0</td>
                                                                 <td id="eliminarNuevo"></td>
                                                             </tr>
                                                         </tbody>
                                                         <tfoot id="tfootTotalizar">
-                                                            <?php if(Modulos::validarPermisoEdicion() && isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0 && isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR && $abonos==0){?>
+                                                            <?php if($puedeEditar){?>
                                                                 <tr>
                                                                     <td colspan="9" style="padding: 15px;">
                                                                         <button type="button" title="Agregar nueva línea para item" class="btn btn-sm btn-primary" data-toggle="tooltip" onclick="nuevoItem()" data-placement="right">
@@ -607,23 +712,39 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                 <div class="col-md-6">
                                                     <div class="total-summary">
                                                         <div class="total-row">
-                                                            <span>SUBTOTAL:</span>
+                                                            <span>SUBTOTAL BRUTO:</span>
+                                                            <span id="subtotalBruto" data-subtotal-bruto="0">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) DESCUENTOS DE ÍTEMS:</span>
+                                                            <span id="valorDescuento" data-valor-descuento="0" style="color: #ff5722;">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) DESCUENTOS COMERCIALES GLOBALES:</span>
+                                                            <span id="descuentosComerciales" style="color: #ff5722;">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(=) SUBTOTAL GRABABLE:</span>
                                                             <span id="subtotal" data-subtotal="0" data-subtotal-anterior-sub="0">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(+) IMPUESTOS:</span>
+                                                            <span id="valorImpuesto">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(=) TOTAL FACTURADO:</span>
+                                                            <span id="totalFacturado">$0</span>
+                                                        </div>
+                                                        <div class="total-row">
+                                                            <span>(-) ANTICIPOS O SALDOS A FAVOR:</span>
+                                                            <span id="valorCreditos" style="color: #ff5722;">$0</span>
                                                         </div>
                                                         <div class="total-row">
                                                             <span>VALOR ADICIONAL:</span>
                                                             <span id="valorAdicional" data-valor-adicional="0">$0</span>
                                                         </div>
                                                         <div class="total-row">
-                                                            <span>DESCUENTO:</span>
-                                                            <span id="valorDescuento" data-valor-descuento="0" style="color: #ff5722;">$0</span>
-                                                        </div>
-                                                        <div class="total-row">
-                                                            <span>IMPUESTO:</span>
-                                                            <span id="valorImpuesto">$0</span>
-                                                        </div>
-                                                        <div class="total-row">
-                                                            <span>TOTAL NETO:</span>
+                                                            <span>(=) TOTAL NETO A PAGAR:</span>
                                                             <span id="totalNeto" data-total-neto="0" data-total-neto-anterior="0">$0</span>
                                                         </div>
                                                     </div>
@@ -632,7 +753,32 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                         </div>
                                         
                                         <script>
-                                            $(document).ready(totalizar);
+                                            $(document).ready(function() {
+                                                // Inicializar totalizar para calcular correctamente los items crédito/débito
+                                                totalizar();
+                                                
+                                                // Deshabilitar campos de descuento e impuesto para items crédito existentes
+                                                $('#tablaItems tbody tr[data-item-type="C"]').each(function() {
+                                                    var $fila = $(this);
+                                                    var idItem = $fila.attr('id').replace('reg', '');
+                                                    if (idItem) {
+                                                        $('#descuento' + idItem).prop('disabled', true);
+                                                        $('#impuesto' + idItem).prop('disabled', true);
+                                                    }
+                                                });
+                                                
+                                                // Inicializar Select2 para los campos de impuesto con ancho fijo
+                                                $('#tablaItems select.select2').each(function() {
+                                                    if (!$(this).hasClass('select2-hidden-accessible')) {
+                                                        $(this).select2({
+                                                            theme: 'bootstrap',
+                                                            width: '100%',
+                                                            dropdownAutoWidth: false,
+                                                            containerCssClass: 'select2-container-fixed-width'
+                                                        });
+                                                    }
+                                                });
+                                            });
                                         </script>
 
                                         <!-- Observaciones -->
@@ -641,15 +787,36 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                                 <i class="fa fa-comment"></i> Observaciones
                                             </div>
                                             <div class="form-group">
+                                                <!-- Observaciones: solo editables si NO hay abonos -->
                                                 <textarea cols="80" id="editor1" name="obs" class="form-control" rows="6" placeholder="Escribe observaciones adicionales..." style="resize: vertical;" <?=$disabledPermiso;?>><?=htmlspecialchars($datosMovimiento['fcu_observaciones'] ?? '');?></textarea>
                                             </div>
                                         </div>
 										
                                         <!-- Botones de Acción -->
                                         <div class="form-section" style="margin-top: 20px;">
-                                            <div class="text-left">                                            
-                                                <?php                                             
-                                				$botones = new botonesGuardar("movimientos.php",Modulos::validarPermisoEdicion() && isset($datosMovimiento['fcu_anulado']) && $datosMovimiento['fcu_anulado']==0 && isset($datosMovimiento['fcu_status']) && $datosMovimiento['fcu_status']==POR_COBRAR && $abonos==0,"Guardar cambios"); ?>
+                                            <div class="text-left" style="display: flex; gap: 10px;">
+                                                <?php if($puedeEditar): ?>
+                                                    <!-- Botón: Guardar cambios (mantiene EN_PROCESO) -->
+                                                    <button type="submit" name="accion" value="guardar" class="btn btn-primary" style="padding: 10px 20px;">
+                                                        <i class="fa fa-save"></i> Guardar cambios
+                                                    </button>
+                                                    
+                                                    <!-- Botón: Confirmar creación (cambia a POR_COBRAR) -->
+                                                    <button type="submit" name="accion" value="confirmar" id="btnConfirmarFactura" class="btn btn-success" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;" <?= ($numItems == 0) ? 'disabled title="No se puede confirmar la factura sin items asociados"' : ''; ?>>
+                                                        <i class="fa fa-check-circle"></i> Confirmar creación de factura
+                                                    </button>
+                                                    <small id="msgItemsRequeridos" class="text-danger" style="display: <?= ($numItems == 0) ? 'block' : 'none'; ?>; margin-top: 5px;">
+                                                        <i class="fa fa-exclamation-triangle"></i> Debe agregar al menos un item para confirmar la factura
+                                                    </small>
+                                                    
+                                                    <a href="movimientos.php" class="btn btn-default" style="padding: 10px 20px;">
+                                                        <i class="fa fa-times"></i> Cancelar
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="movimientos.php" class="btn btn-default" style="padding: 10px 20px;">
+                                                        <i class="fa fa-arrow-left"></i> Volver
+                                                    </a>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </form>
@@ -688,15 +855,17 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
                                 <input type="number" min="0" step="0.01" name="precio" class="form-control" required placeholder="0.00">
                             </div>
                             <div class="form-group">
-                                <label>Impuesto</label>
-                                <select class="form-control select2" name="iva">
-                                    <option value="0">Ninguno - (0%)</option>
-                                    <?php
-                                    $consulta= Movimientos::listarImpuestos($conexion, $config);
-                                    while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-                                    ?>
-                                    <option value="<?=$datosConsulta['id']?>"><?=$datosConsulta['type_tax']." - (".$datosConsulta['fee']."%)"?></option>
-                                    <?php } ?>
+                                <label>Tipo <span style="color: red;">*</span></label>
+                                <select class="form-control" name="item_type" id="item_type_modal" required onchange="toggleApplicationTimeModal()">
+                                    <option value="D">Débito (Cargo)</option>
+                                    <option value="C">Crédito (Descuento)</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="div_application_time_modal" style="display: none;">
+                                <label>Aplicación <span style="color: red;">*</span></label>
+                                <select class="form-control" name="application_time" id="application_time_modal">
+                                    <option value="ANTE_IMPUESTO">Antes del Impuesto</option>
+                                    <option value="POST_IMPUESTO">Después del Impuesto</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -754,13 +923,35 @@ if(!Modulos::validarPermisoEdicion() || (isset($datosMovimiento['fcu_anulado']) 
     <script src="../js/Movimientos.js"></script>
     
     <script>
+        // Actualizar estado del botón de confirmar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarEstadoBotonConfirmar();
+        });
+        
         // Replace the <textarea id="editor1"> with a CKEditor 4
         // instance, using default configuration.
         CKEDITOR.replace( 'editor1' );
         
         // Función para abrir modal de crear item
         function abrirModalCrearItem() {
+            // Resetear formulario y campos
+            $('#formCrearItem')[0].reset();
+            $('#item_type_modal').val('D');
+            $('#div_application_time_modal').hide();
             $('#modalCrearItem').modal('show');
+        }
+        
+        // Función para mostrar/ocultar campo de aplicación según el tipo de item
+        function toggleApplicationTimeModal() {
+            var itemType = $('#item_type_modal').val();
+            if (itemType === 'C') {
+                $('#div_application_time_modal').show();
+                $('#application_time_modal').prop('required', true);
+            } else {
+                $('#div_application_time_modal').hide();
+                $('#application_time_modal').prop('required', false);
+                $('#application_time_modal').val('ANTE_IMPUESTO');
+            }
         }
         
         // Manejar el envío del formulario de crear item

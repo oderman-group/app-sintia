@@ -516,7 +516,11 @@ if($config['conf_activar_encuesta']==1){
                     <?php include("../../config-general/mensajes-informativos.php"); ?>
                     
                     <?php
-                        $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $datosEstudianteActual['mat_grado'], $datosEstudianteActual['mat_grupo']);
+                        // Asegurar que mat_grado y mat_grupo sean strings válidos
+                        $idGrado = !empty($datosEstudianteActual['mat_grado']) ? (string)$datosEstudianteActual['mat_grado'] : '';
+                        $idGrupo = !empty($datosEstudianteActual['mat_grupo']) ? (string)$datosEstudianteActual['mat_grupo'] : '';
+                        
+                        $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $idGrado, $idGrupo);
                         $nCargas = mysqli_num_rows($cCargas);
                         $mensajeCargas = new Cargas;
                         $mensajeCargas->verificarNumCargas($nCargas, $datosUsuarioActual['uss_idioma']);

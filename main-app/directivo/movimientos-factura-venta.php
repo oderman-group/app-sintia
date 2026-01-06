@@ -18,15 +18,22 @@ if (!empty($_GET["id"])) {
 $configFinanzas=Movimientos::configuracionFinanzas($conexion, $config);
 
 try{
-    $consulta = mysqli_query($conexion, "SELECT fcu.*, uss.*, ciu.*, dep.*, fcu.id_nuevo AS id_nuevo_finanzas  FROM ".BD_FINANCIERA.".finanzas_cuentas fcu
+    $consulta = mysqli_query($conexion, "SELECT fcu.*, uss.*, ciu.*, dep.*, fcu.fcu_id AS id_nuevo_finanzas  FROM ".BD_FINANCIERA.".finanzas_cuentas fcu
     INNER JOIN ".BD_GENERAL.".usuarios uss ON uss_id=fcu_usuario AND uss.institucion={$config['conf_id_institucion']} AND uss.year={$_SESSION["bd"]}
     LEFT JOIN ".BD_ADMIN.".localidad_ciudades ciu ON ciu_id=uss_lugar_nacimiento
     LEFT JOIN ".BD_ADMIN.".localidad_departamentos dep ON dep_id=ciu_departamento
-    WHERE fcu_id='".$id."' AND fcu.institucion={$config['conf_id_institucion']} AND fcu.year={$_SESSION["bd"]}");
+    WHERE fcu.fcu_id='".mysqli_real_escape_string($conexion, $id)."' AND fcu.institucion={$config['conf_id_institucion']} AND fcu.year={$_SESSION["bd"]}");
 } catch (Exception $e) {
     include("../compartido/error-catch-to-report.php");
 }
 $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
+
+// Validar que la factura no esté en EN_PROCESO o ANULADA
+if (empty($resultado) || 
+    (isset($resultado['fcu_status']) && ($resultado['fcu_status'] == EN_PROCESO || $resultado['fcu_status'] == ANULADA))) {
+    echo '<script type="text/javascript">alert("No se puede imprimir esta factura. Solo se pueden imprimir facturas confirmadas (POR_COBRAR o COBRADA)."); window.location.href="movimientos.php";</script>';
+    exit();
+}
 
 $fecha        = explode ("-", $resultado['fcu_fecha']);
 $dia          = $fecha[2];  
@@ -129,23 +136,76 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                 </thead>
                 <tbody>
                     <?php
-                                                                
+                        // Usar el método centralizado para calcular todos los totales
+                        $valorAdicional = floatval($resultado['fcu_valor'] ?? 0);
+                        $totales = Movimientos::calcularTotalesFactura($conexion, $config, $id, $valorAdicional, TIPO_FACTURA);
+                        
+                        // Obtener items y separarlos por tipo
                         $itemsConsulta = Movimientos::listarItemsTransaction($conexion, $config, $id);
-
-                        $subtotal=0;
-                        $totalDescuento=0;
-                        $totalImpuesto=0;
+                        $itemsDebito = [];
+                        $itemsCredito = [];
                         $arrayImpuestos = [];
-                        $numItems=mysqli_num_rows($itemsConsulta);
-                        if($numItems>0){
+                        
+                        if($itemsConsulta && mysqli_num_rows($itemsConsulta) > 0){
                             while ($fila = mysqli_fetch_array($itemsConsulta, MYSQLI_BOTH)) {
-
-                                $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, $fila['tax']);
-
-                                $impuestoItem = $fila['tax'] != 0 ? $resultadoTax['type_tax']." (".$resultadoTax['fee']."%)" : "NINGUNO (0%)";
+                                $itemType = $fila['item_type'] ?? 'D';
+                                
+                                // Obtener datos de impuesto para items débito
+                                $resultadoTax = [];
+                                if ($itemType == 'D' && !empty($fila['tax']) && $fila['tax'] != 0) {
+                                    $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                                    
+                                    // Calcular impuesto para el array
+                                    $precio = floatval($fila['priceTransaction'] ?? 0);
+                                    $cantidad = floatval($fila['cantity'] ?? 0);
+                                    $descuento = floatval($fila['discount'] ?? 0);
+                                    $precioPorCantidad = $precio * $cantidad;
+                                    $descuentoLinea = $precioPorCantidad * ($descuento / 100);
+                                    $baseGravableItem = $precioPorCantidad - $descuentoLinea;
+                                    $tax = (!empty($resultadoTax) && !empty($resultadoTax['fee'])) ? $resultadoTax['fee'] : 0;
+                                    $impuesto = $baseGravableItem * ($tax / 100);
+                                    
+                                    if (!empty($fila['tax']) && $fila['tax'] > 0 && !empty($resultadoTax) && $impuesto > 0) {
+                                        // Agregar o actualizar en el array de impuestos
+                                        $existe = false;
+                                        foreach ($arrayImpuestos as &$imp) {
+                                            if ($imp['name'] == $resultadoTax['type_tax']) {
+                                                $imp['value'] += $impuesto;
+                                                $existe = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!$existe) {
+                                            $arrayImpuestos[] = [
+                                                "name" => $resultadoTax['type_tax'],
+                                                "fee" => $resultadoTax['fee'],
+                                                "value" => $impuesto
+                                            ];
+                                        }
+                                    }
+                                }
+                                
+                                if ($itemType == 'C') {
+                                    $itemsCredito[] = $fila;
+                                } else {
+                                    $itemsDebito[] = $fila;
+                                }
+                            }
+                        }
+                        
+                        // Mostrar items débito primero
+                        foreach ($itemsDebito as $fila) {
+                            $resultadoTax = [];
+                            if (!empty($fila['tax']) && $fila['tax'] != 0) {
+                                $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                            }
+                            
+                            $impuestoItem = (!empty($fila['tax']) && $fila['tax'] != 0 && !empty($resultadoTax)) 
+                                ? $resultadoTax['type_tax']." (".$resultadoTax['fee']."%)" 
+                                : "NINGUNO (0%)";
                     ?>
                         <tr>
-                            <td colspan="2"><?=$fila['name'];?><?php if ( !empty($fila['description']) ){ echo "(".$fila['description'].")"; } ?></td>
+                            <td colspan="2"><?=$fila['name'];?><?php if ( !empty($fila['description']) ){ echo " (".$fila['description'].")"; } ?></td>
                             <td style="text-align: right;">$<?=number_format($fila['priceTransaction'], 0, ",", ".")?></td>
                             <td style="text-align: center;"><?=$fila['discount']?>%</td>
                             <td style="text-align: right;"><?=$impuestoItem?></td>
@@ -153,29 +213,40 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                             <td style="text-align: right;">$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
                         </tr>
                     <?php 
-                            $subtotal += $fila['priceTransaction'] * $fila['cantity'];
-
-                            $descuento = ($fila['priceTransaction'] * ($fila['discount'] / 100));
-                            $totalDescuento += $descuento;
-
-                            $tax = !empty($resultadoTax['fee']) ? $resultadoTax['fee'] : 0;
-                            $impuesto = (($fila['priceTransaction'] * $fila['cantity']) - $descuento) * ($tax / 100);
-                            if ($fila['tax'] > 0) {
-                                $datosImpuestos = [
-                                    "name" =>$resultadoTax['type_tax'],
-                                    "fee" =>$resultadoTax['fee'],
-                                    "value" =>$impuesto
-                                ];
-                                $arrayImpuestos[] = $datosImpuestos;
-                            }
-                            $totalImpuesto += $impuesto;
-                            }
                         }
-                        if(empty($resultado['fcu_valor'])){ $resultado['fcu_valor']=0; }
-                        $total= (($subtotal + $resultado['fcu_valor']) - $totalDescuento) + $totalImpuesto ;
-                        $negativo = $totalDescuento > 0 ? "-" : "";
+                        
+                        // Mostrar items crédito después
+                        foreach ($itemsCredito as $fila) {
+                            $applicationTime = $fila['application_time'] ?? 'ANTE_IMPUESTO';
+                            $textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+                            $nombreItem = $fila['name'];
+                            if (!empty($fila['description'])) {
+                                $nombreItem .= " (".$fila['description'].")";
+                            }
+                            $nombreItem .= " - Crédito (".$textoApplicationTime.")";
+                    ?>
+                        <tr style="background-color: #e8f5e9;">
+                            <td colspan="2"><?=$nombreItem;?></td>
+                            <td style="text-align: right;">$<?=number_format($fila['priceTransaction'], 0, ",", ".")?></td>
+                            <td style="text-align: center;">N/A</td>
+                            <td style="text-align: right;">N/A</td>
+                            <td style="text-align: center;"><?=$fila['cantity'];?></td>
+                            <td style="text-align: right; color: #27ae60;">-$<?=number_format($fila['subtotal'], 0, ",", ".")?></td>
+                        </tr>
+                    <?php 
+                        }
+                        
+                        // Calcular número de filas en el resumen para el rowspan
+                        // Filas fijas: SUBTOTAL BRUTO, DESCUENTOS ÍTEMS, DESCUENTOS COMERCIALES, SUBTOTAL GRABABLE, TOTAL FACTURADO, TOTAL NETO = 6
                         $numImpuesto = count($arrayImpuestos);
-                        $colspan = 4 + $numImpuesto;
+                        $numFilasResumen = 6 + $numImpuesto; // 6 filas base + impuestos
+                        if ($totales['anticipos_saldos_favor'] > 0) {
+                            $numFilasResumen++; // ANTICIPOS
+                        }
+                        if ($valorAdicional > 0) {
+                            $numFilasResumen++; // VALOR ADICIONAL
+                        }
+                        $colspan = $numFilasResumen;
                     ?>
                 </tbody>
                 <tfoot>
@@ -194,30 +265,50 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                                 </tr>
                             </table>
                         </td>
-                        <td align="right" colspan="2" style="font-weight:bold;">SUBTOTAL:</td>
-                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($subtotal, 0, ",", ".");?></td>
+                        <td align="right" colspan="2" style="font-weight:bold;">SUBTOTAL BRUTO:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($totales['subtotal_bruto'], 0, ",", ".");?></td>
                     </tr>
                     <tr>
-                        <td align="right" colspan="2" style="font-weight:bold;">VLR. ADICIONAL:</td>
-                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($resultado['fcu_valor'], 0, ",", ".");?></td>
+                        <td align="right" colspan="2" style="font-weight:bold;">(-) DESCUENTOS DE ÍTEMS:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;">-<?="$".number_format($totales['descuentos_items'], 0, ",", ".");?></td>
                     </tr>
                     <tr>
-                        <td align="right" colspan="2" style="font-weight:bold;">DESCUENTO:</td>
-                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?=$negativo."$".number_format($totalDescuento, 0, ",", ".");?></td>
+                        <td align="right" colspan="2" style="font-weight:bold;">(-) DESCUENTOS COMERCIALES GLOBALES:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;">-<?="$".number_format($totales['descuentos_comerciales_globales'], 0, ",", ".");?></td>
+                    </tr>
+                    <tr>
+                        <td align="right" colspan="2" style="font-weight:bold;">(=) SUBTOTAL GRABABLE:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($totales['subtotal_gravable'], 0, ",", ".");?></td>
                     </tr>
                     <?php
                     foreach ($arrayImpuestos as $datosImpuestos) {
                     ?>
                         <tr>
-                            <td align="right" colspan="2" style="font-weight:bold;"><?=$datosImpuestos['name']." (".$datosImpuestos['fee']."%)";?></td>
+                            <td align="right" colspan="2" style="font-weight:bold;">(+) <?=$datosImpuestos['name']." (".$datosImpuestos['fee']."%)";?>:</td>
                             <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($datosImpuestos['value'], 0, ",", ".");?></td>
                         </tr>
                     <?php
                     }
                     ?>
+                    <tr>
+                        <td align="right" colspan="2" style="font-weight:bold;">(=) TOTAL FACTURADO:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($totales['total_facturado'], 0, ",", ".");?></td>
+                    </tr>
+                    <?php if ($totales['anticipos_saldos_favor'] > 0) { ?>
+                    <tr>
+                        <td align="right" colspan="2" style="font-weight:bold;">(-) ANTICIPOS O SALDOS A FAVOR:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;">-<?="$".number_format($totales['anticipos_saldos_favor'], 0, ",", ".");?></td>
+                    </tr>
+                    <?php } ?>
+                    <?php if ($valorAdicional > 0) { ?>
+                    <tr>
+                        <td align="right" colspan="2" style="font-weight:bold;">VALOR ADICIONAL:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-weight:bold;"><?="$".number_format($valorAdicional, 0, ",", ".");?></td>
+                    </tr>
+                    <?php } ?>
                     <tr style="font-weight:bold;">
-                        <td align="right" colspan="2">TOTAL NETO:</td>
-                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; "><?="$".number_format($total, 0, ",", ".");?></td>
+                        <td align="right" colspan="2">(=) TOTAL NETO A PAGAR:</td>
+                        <td align="right" style="background-color: #e3e3e3; border: 1px solid #000; font-size: 1.1em;"><?="$".number_format($totales['total_neto'], 0, ",", ".");?></td>
                     </tr>
                 </tfoot>
             </table>

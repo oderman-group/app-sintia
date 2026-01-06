@@ -70,15 +70,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <th>#</th>
 														<th><?=$frases[49][$datosUsuarioActual['uss_idioma']];?></th>
 														<th><?=$frases[187][$datosUsuarioActual['uss_idioma']];?></th>
+														<th>Tipo</th>
 														<th><?=$frases[381][$datosUsuarioActual['uss_idioma']];?></th>
-														<th><?=$frases[382][$datosUsuarioActual['uss_idioma']];?></th>
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0261','DT0263'])){?>
                                                             <th><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></th>
                                                         <?php }?>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-													<?php
+                                                    <?php
                                                         $consulta= Movimientos::listarItems($conexion, $config);
                                                         $contReg = 1;
                                                         while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
@@ -86,24 +86,37 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             if (!empty($resultado['price'])) {
                                                                 $price = $resultado['price'];
                                                             }
-                                                            
-                                                            $tax = 0;
-                                                            if (!empty($resultado['tax'])) {
-                                                                $tax = $resultado['tax'];
-                                                            }
 
-                                                            $existeTransaction = Movimientos::validarExistenciaItemsEnTransaction($conexion, $config, $resultado['id']);
+                                                            // Usar item_id en lugar de id (según el esquema de BD actualizado)
+                                                            $itemId = $resultado['item_id'] ?? $resultado['id'] ?? null;
+                                                            $existeTransaction = 0;
+                                                            if (!empty($itemId)) {
+                                                                $existeTransaction = Movimientos::validarExistenciaItemsEnTransaction($conexion, $config, (string)$itemId);
+                                                            }
 
                                                             $arrayEnviar = array("tipo"=>1, "descripcionTipo"=>"Para ocultar fila del registro.");
                                                             $arrayDatos = json_encode($arrayEnviar);
                                                             $objetoEnviar = htmlentities($arrayDatos);
                                                     ?>
-													<tr id="reg<?=$resultado['id'];?>">
+													<tr id="reg<?=$resultado['item_id'];?>">
                                                         <td><?=$contReg;?></td>
-														<td><?=$resultado['id'];?></td>
+														<td><?=$resultado['item_id'];?></td>
 														<td><?=$resultado['name'];?></td>
+														<td>
+															<?php 
+																$tipoItem = $resultado['item_type'] ?? 'D';
+																if ($tipoItem == 'C') {
+																	echo '<span class="label label-success">Crédito</span>';
+																	// Mostrar application_time para créditos
+																	$applicationTime = $resultado['application_time'] ?? 'ANTE_IMPUESTO';
+																	$textoApplicationTime = ($applicationTime == 'POST_IMPUESTO') ? 'Después del Impuesto' : 'Antes del Impuesto';
+																	echo '<br><small style="color: #666; font-size: 0.85em;">(' . $textoApplicationTime . ')</small>';
+																} else {
+																	echo '<span class="label label-info">Débito</span>';
+																}
+															?>
+														</td>
 														<td>$<?=number_format($price,0,",",".")?></td>
-														<td><?=$tax;?>%</td>
 														
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0261','DT0263'])){?>
                                                             <td>
@@ -114,9 +127,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     </button>
                                                                     <ul class="dropdown-menu" role="menu">
 																		<?php if(Modulos::validarSubRol(['DT0261'])){?>
-                                                                            <li><a href="items-editar.php?id=<?=base64_encode($resultado['id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                            <li><a href="items-editar.php?id=<?=base64_encode((string)$resultado['item_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
                                                                         <?php } if(Modulos::validarSubRol(['DT0263']) && $existeTransaction==0){?>
-                                                                            <li><a href="javascript:void(0);" title="<?=$objetoEnviar;?>" id="<?=$resultado['id'];?>" name="items-eliminar.php?id=<?=base64_encode($resultado['id']);?>" onClick="deseaEliminar(this)"><?=$frases[174][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                            <li><a href="javascript:void(0);" title="<?=$objetoEnviar;?>" id="<?=$resultado['item_id'];?>" name="items-eliminar.php?id=<?=base64_encode((string)$resultado['item_id']);?>" onClick="deseaEliminar(this)"><?=$frases[174][$datosUsuarioActual['uss_idioma']];?></a></li>
                                                                         <?php }?>
                                                                     </ul>
                                                                 </div>

@@ -116,6 +116,11 @@ if(isset($_GET['error']) || isset($_GET['success'])){
                 $mensaje = base64_decode($_GET['msj']);
             break;
 
+            case 'ER_DT_CREATE':
+                $tipo = 'danger';
+                $mensaje = !empty($_GET['msj']) ? urldecode($_GET['msj']) : 'Ocurrió un error al guardar el registro. Por favor, verifica los datos e intenta nuevamente.';
+            break;
+
             case 'ER_DT_8':
                 $tipo = 'danger';
                 $mensaje = 'El archivo enviado es invalido. Por favor vuelva a intentarlo.';
@@ -341,7 +346,7 @@ if(isset($_GET['error']) || isset($_GET['success'])){
 
             default:
                 $tipo = 'secondary';
-                $mensaje = 'Error desconocido: '.$_GET['error'];
+                $mensaje = 'Mensaje desconocido: '.(isset($_GET['success']) ? $_GET['success'] : 'N/A');
             break;
         }
     }
