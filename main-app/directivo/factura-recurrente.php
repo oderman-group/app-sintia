@@ -31,6 +31,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                             </div>
                         </div>
                     </div>
+					
+					<!-- Descripción de la página -->
+					<div class="row mb-3">
+						<div class="col-md-12">
+							<p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+								<i class="fa fa-info-circle text-info"></i> 
+								<?=__('financiero.factura_recurrente_descripcion');?>
+							</p>
+						</div>
+					</div>
 
                     <div class="row">
                         <div class="col-md-12">
