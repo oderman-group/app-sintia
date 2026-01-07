@@ -105,6 +105,30 @@
   "datatables.first": "First",
   "datatables.last": "Last",
   "datatables.next": "Next",
-  "datatables.previous": "Previous"
+  "datatables.previous": "Previous",
+  
+  "financiero.movimientos_titulo": "Financial Transactions",
+  "financiero.movimientos_descripcion": "Manage the institution's sales and purchase invoices. Create new invoices, check collection status, apply filters by type, user, date or status. You can also confirm pending invoices, cancel them or generate financial reports.",
+  
+  "financiero.factura_recurrente_titulo": "Recurring Invoices",
+  "financiero.factura_recurrente_descripcion": "Configure and manage invoices that are automatically generated periodically (monthly, bimonthly, quarterly, semiannually or annually). Perfect for tuition, pension, transportation or other recurring charges. You can activate/deactivate, edit and view generation history.",
+  
+  "financiero.abonos_titulo": "Payments",
+  "financiero.abonos_descripcion": "Record and view all payments made to invoices. Filter by invoice, student, payment method or date range. You can edit payments, generate cash receipts, attach payment vouchers and keep detailed accounts receivable control.",
+  
+  "financiero.items_titulo": "Items and Concepts",
+  "financiero.items_descripcion": "Manage the catalog of products and services billed at the institution (enrollment, tuition, uniforms, transportation, meals, etc.). Define prices, types (debit/credit), tax application and application timing. Items are used when creating invoices.",
+  
+  "financiero.impuestos_titulo": "Taxes",
+  "financiero.impuestos_descripcion": "Configure the different types of taxes applicable to invoices (VAT, sales tax, withholding tax, etc.). Define the percentage, tax type and description. Taxes can be associated with items to be automatically applied to invoices.",
+  
+  "financiero.cuentas_bancarias_titulo": "Bank Accounts",
+  "financiero.cuentas_bancarias_descripcion": "Manage the institution's bank accounts for payment recording. Configure name, account number, bank, account type and associate payment methods. Bank accounts are used when recording payments to track the payment method used.",
+  
+  "financiero.lotes_facturacion_titulo": "Batch Invoicing",
+  "financiero.lotes_facturacion_descripcion": "Create bulk invoices for multiple students automatically. Select items to invoice, filter by course/group, define additional value and generate multiple invoices in a single process. Ideal for monthly tuition billing or general charges.",
+  
+  "financiero.reportes_graficos_titulo": "Reports and Charts",
+  "financiero.reportes_graficos_descripcion": "View financial indicators and statistical charts of operations. Visualize income vs expenses, portfolio behavior, collection analysis, most invoiced items and other important KPIs. Apply filters by period for specific analysis."
 }
 

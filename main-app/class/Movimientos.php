@@ -1030,14 +1030,16 @@ class Movimientos {
                 cba.cba_numero_cuenta as cuenta_bancaria_numero, 
                 cba.cba_banco as cuenta_bancaria_banco, 
                 cba.cba_tipo as cuenta_bancaria_tipo,
-                uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, uss.uss_id, uss.uss_tipo,
+                uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2, uss.uss_id, uss.uss_tipo, uss.uss_firma,
                 pes.pes_nombre,
                 CONCAT_WS(' ', cli.uss_nombre, cli.uss_nombre2, cli.uss_apellido1, cli.uss_apellido2) AS cliente_nombre,
                 cli.uss_nombre AS cli_nombre, cli.uss_nombre2 AS cli_nombre2, cli.uss_apellido1 AS cli_apellido1, cli.uss_apellido2 AS cli_apellido2,
-                cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_documento AS cli_documento,
+                cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_telefono AS cli_telefono, cli.uss_documento AS cli_documento,
+                cli.uss_direccion AS cli_direccion, cli.uss_id AS cli_id,
                 cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil,
                 fc.fcu_id as numeroFactura,
                 fc.fcu_id as fcu_id_factura,
+                fc.fcu_valor as fcu_valor_factura,
                 SUM(pi_detalle.payment) AS valorAbono
             FROM ".BD_FINANCIERA.".payments_invoiced pi
             LEFT JOIN ".BD_GENERAL.".usuarios uss 

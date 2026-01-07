@@ -105,6 +105,30 @@
   "datatables.first": "Primero",
   "datatables.last": "Último",
   "datatables.next": "Siguiente",
-  "datatables.previous": "Anterior"
+  "datatables.previous": "Anterior",
+  
+  "financiero.movimientos_titulo": "Movimientos Financieros",
+  "financiero.movimientos_descripcion": "Gestiona las facturas de venta y compra de la institución. Crea nuevas facturas, consulta el estado de cobro, aplica filtros por tipo, usuario, fecha o estado. También puedes confirmar facturas en proceso, anularlas o generar reportes financieros.",
+  
+  "financiero.factura_recurrente_titulo": "Facturas Recurrentes",
+  "financiero.factura_recurrente_descripcion": "Configura y administra facturas que se generan automáticamente de forma periódica (mensual, bimestral, trimestral, semestral o anual). Perfectas para cobros de matrícula, pensión, transporte u otros conceptos recurrentes. Puedes activar/desactivar, editar y consultar el histórico de generación.",
+  
+  "financiero.abonos_titulo": "Abonos y Pagos",
+  "financiero.abonos_descripcion": "Registra y consulta todos los pagos o abonos realizados a las facturas. Filtra por factura, estudiante, método de pago o rango de fechas. Puedes editar abonos, generar recibos de caja, adjuntar comprobantes de pago y llevar un control detallado de la cartera.",
+  
+  "financiero.items_titulo": "Items y Conceptos",
+  "financiero.items_descripcion": "Administra el catálogo de productos y servicios que se facturan en la institución (matrícula, pensión, uniformes, transporte, alimentación, etc.). Define precios, tipos (débito/crédito), aplicación de impuestos y momento de aplicación. Los items se utilizan al crear facturas.",
+  
+  "financiero.impuestos_titulo": "Impuestos",
+  "financiero.impuestos_descripcion": "Configura los diferentes tipos de impuestos aplicables a las facturas (IVA, INC, ReteIVA, ReteFuente, etc.). Define el porcentaje, tipo de impuesto y descripción. Los impuestos se pueden asociar a los items para aplicarse automáticamente en las facturas.",
+  
+  "financiero.cuentas_bancarias_titulo": "Cuentas Bancarias",
+  "financiero.cuentas_bancarias_descripcion": "Gestiona las cuentas bancarias de la institución para el registro de pagos. Configura el nombre, número de cuenta, banco, tipo de cuenta y asocia métodos de pago. Las cuentas bancarias se utilizan al registrar abonos para llevar un control del medio de pago utilizado.",
+  
+  "financiero.lotes_facturacion_titulo": "Lotes de Facturación",
+  "financiero.lotes_facturacion_descripcion": "Crea facturas masivas para múltiples estudiantes de forma automática. Selecciona los items a facturar, filtra por curso/grupo, define valor adicional y genera múltiples facturas en un solo proceso. Ideal para facturación mensual de pensiones o cobros generales.",
+  
+  "financiero.reportes_graficos_titulo": "Reportes y Gráficos",
+  "financiero.reportes_graficos_descripcion": "Consulta indicadores financieros y gráficos estadísticos de las operaciones. Visualiza ingresos vs egresos, comportamiento de cartera, análisis de cobros, items más facturados y otros KPIs importantes. Aplica filtros por período para análisis específicos."
 }
 
