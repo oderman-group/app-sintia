@@ -32,29 +32,71 @@ if (!empty($resultado['registration_date'])) {
     }
 }
 
-$resultadoFactura = [];
-if (!empty($resultado['invoiced'])) {
-    $resultadoFactura = UsuariosPadre::sesionUsuario($resultado['invoiced']);
-}
-
-$nombreCliente = 'N/A';
-if (!empty($resultadoFactura)) {
-    $nombreCliente = UsuariosPadre::nombreCompletoDelUsuario($resultadoFactura);
-}
-
-$direccionCliente = $resultadoFactura['uss_direccion'] ?? 'N/A';
-$ciudadCliente    = $resultadoFactura['ciu_nombre'] ?? 'N/A';
-$celularCliente   = $resultadoFactura['uss_celular'] ?? '';
-$telefonoCliente  = $resultadoFactura['uss_telefono'] ?? '';
-$documentoCliente = $resultadoFactura['uss_documento'] ?? 'N/A';
-$contactoCliente  = trim($celularCliente . ((!empty($celularCliente) && !empty($telefonoCliente)) ? '-' : '') . $telefonoCliente);
+// Datos del cliente (ya vienen en $resultado con prefijo cli_)
+$nombreCliente    = trim(($resultado['cli_nombre'] ?? '') . ' ' . ($resultado['cli_nombre2'] ?? '') . ' ' . ($resultado['cli_apellido1'] ?? '') . ' ' . ($resultado['cli_apellido2'] ?? ''));
+$nombreCliente    = !empty($nombreCliente) ? $nombreCliente : 'N/A';
+$direccionCliente = $resultado['cli_direccion'] ?? 'N/A';
+$ciudadCliente    = 'N/A'; // El campo ciudad no existe en la tabla usuarios
+$celularCliente   = $resultado['cli_celular'] ?? '';
+$telefonoCliente  = $resultado['cli_telefono'] ?? '';
+$documentoCliente = $resultado['cli_documento'] ?? 'N/A';
+$contactoCliente  = trim($celularCliente . ((!empty($celularCliente) && !empty($telefonoCliente)) ? ' - ' : '') . $telefonoCliente);
 if ($contactoCliente === '') {
     $contactoCliente = 'N/A';
 }
 
+// Datos del abono
 $numeroFactura = $resultado['numeroFactura'] ?? 'N/A';
 $valorAbono    = (float)($resultado['valorAbono'] ?? 0);
-$observacion   = $resultado['observation'] ?? '';
+$observacion   = strip_tags($resultado['observation'] ?? ''); // Limpiar HTML
+
+// Datos de la cuenta bancaria
+$cuentaBancaria = 'N/A';
+if (!empty($resultado['cuenta_bancaria_nombre'])) {
+    $cuentaBancaria = $resultado['cuenta_bancaria_nombre'];
+    if (!empty($resultado['cuenta_bancaria_numero'])) {
+        $cuentaBancaria .= ' - ' . $resultado['cuenta_bancaria_numero'];
+    }
+}
+
+// Obtener el total de la factura usando el método correcto que calcula desde transaction_items
+$idFactura = $resultado['invoiced'] ?? '';
+$valorAdicionalFactura = (float)($resultado['fcu_valor_factura'] ?? 0);
+
+// Calcular el total correcto de la factura sumando los items
+$totalesFactura = Movimientos::calcularTotalesFactura($conexion, $config, $idFactura, $valorAdicionalFactura, TIPO_FACTURA);
+$totalFactura = $totalesFactura['total_neto'];
+
+// Calcular el total abonado y saldo restante
+$totalAbonado = 0;
+$historialAbonos = [];
+if (!empty($idFactura)) {
+    try {
+        $consultaAbonos = mysqli_query($conexion, "SELECT 
+            pi.id, 
+            pi.payment,
+            pi.fecha_registro,
+            pi.observation
+        FROM ".BD_FINANCIERA.".payments_invoiced pi
+        WHERE pi.invoiced = '".mysqli_real_escape_string($conexion, $idFactura)."'
+        AND pi.is_deleted = 0
+        AND pi.institucion = {$config['conf_id_institucion']} 
+        AND pi.year = {$_SESSION["bd"]}
+        ORDER BY pi.fecha_registro ASC
+        ");
+        
+        if ($consultaAbonos && mysqli_num_rows($consultaAbonos) > 0) {
+            while ($abono = mysqli_fetch_array($consultaAbonos, MYSQLI_ASSOC)) {
+                $totalAbonado += (float)($abono['payment'] ?? 0);
+                $historialAbonos[] = $abono;
+            }
+        }
+    } catch (Exception $e) {
+        // Silenciar errores
+    }
+}
+
+$saldoRestante = $totalFactura - $totalAbonado;
 
 $infoLogo      = $informacion_inst["info_logo"] ?? '';
 $infoNombre    = strtoupper((string)($informacion_inst["info_nombre"] ?? ''));
@@ -189,7 +231,7 @@ switch ($resultado['payment_method']) {
                     <td align="right" width="20%" class="borde_inferior_izquierdo" style="background-color: #a8a8a8; font-weight:bold;">CC/NIT</td>
                     <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($documentoCliente)?></td>
                     <td align="right" width="20%" style="background-color: #a8a8a8; font-weight:bold;">CUENTA</td>
-                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"></td>
+                    <td align="left" style="padding-left: 10px; border: 1px solid #a8a8a8;"><?=htmlspecialchars($cuentaBancaria)?></td>
                 </tr>
             </table>
             <table class="table_items" width="100%" style="font-size: 15px; height: 50%;">
@@ -201,7 +243,14 @@ switch ($resultado['payment_method']) {
                 </thead>
                 <tbody>
                     <tr>
-                        <td><div style="height: 200px;">Abono a la factura no. <?=htmlspecialchars($numeroFactura)?></div></td>
+                        <td>
+                            <div style="padding: 10px;">
+                                <strong>Abono a la factura no. <?=htmlspecialchars($numeroFactura)?></strong><br><br>
+                                <strong>Total factura:</strong> $<?=number_format($totalFactura, 0, ",", ".")?><br>
+                                <strong>Total abonado:</strong> $<?=number_format($totalAbonado, 0, ",", ".")?><br>
+                                <strong>Saldo restante:</strong> $<?=number_format($saldoRestante, 0, ",", ".")?>
+                            </div>
+                        </td>
                         <td align="right" style="vertical-align: top;">$<?=number_format($valorAbono, 0, ",", ".")?></td>
                     </tr>
                 </tbody>
@@ -231,7 +280,66 @@ switch ($resultado['payment_method']) {
                         </td>
                     </tr>
                 </tfoot>
-            </table>  
+            </table>
+            
+            <?php
+            // Configuración para mostrar histórico de abonos (puede cambiar a false para ocultar)
+            $mostrarHistorico = true;
+            
+            if ($mostrarHistorico && count($historialAbonos) > 0) {
+            ?>
+            <p>&nbsp;</p>
+            <h4 style="margin: 10px 0; text-align: center;">HISTÓRICO DE ABONOS</h4>
+            <table class="table_items" width="100%" style="font-size: 13px;">
+                <thead style="background-color: #a8a8a8; font-weight:bold;" align="center">
+                    <tr>
+                        <th width="10%">No.</th>
+                        <th width="20%">Fecha</th>
+                        <th width="40%">Observación</th>
+                        <th width="30%">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $numeroAbono = 1;
+                    foreach ($historialAbonos as $abono) { 
+                        $esAbonoActual = ($abono['id'] == $id);
+                        $estilo = $esAbonoActual ? 'background-color: #ffffcc; font-weight: bold;' : '';
+                        $fechaAbono = 'N/A';
+                        if (!empty($abono['fecha_registro'])) {
+                            try {
+                                $fechaBD = new DateTime($abono['fecha_registro']);
+                                $fechaAbono = $fechaBD->format('d/m/Y');
+                            } catch (Exception $e) {
+                                $fechaAbono = 'N/A';
+                            }
+                        }
+                        $observacionAbono = strip_tags($abono['observation'] ?? 'Sin observación');
+                    ?>
+                    <tr style="<?=$estilo?>">
+                        <td align="center"><?=$numeroAbono?><?=$esAbonoActual ? ' (Este)' : ''?></td>
+                        <td align="center"><?=htmlspecialchars($fechaAbono)?></td>
+                        <td align="left" style="padding-left: 5px;"><?=htmlspecialchars($observacionAbono)?></td>
+                        <td align="right" style="padding-right: 10px;">$<?=number_format((float)$abono['payment'], 0, ",", ".")?></td>
+                    </tr>
+                    <?php 
+                        $numeroAbono++;
+                    } 
+                    ?>
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #e3e3e3; font-weight: bold;">
+                        <td colspan="3" align="right" style="padding-right: 10px;">TOTAL ABONADO:</td>
+                        <td align="right" style="padding-right: 10px;">$<?=number_format($totalAbonado, 0, ",", ".")?></td>
+                    </tr>
+                    <tr style="background-color: #a8a8a8; font-weight: bold;">
+                        <td colspan="3" align="right" style="padding-right: 10px;">SALDO RESTANTE:</td>
+                        <td align="right" style="padding-right: 10px;">$<?=number_format($saldoRestante, 0, ",", ".")?></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <?php } ?>
+            
             <p>&nbsp;</p>
             <!--******FIRMAS******-->
             <table width="80%" cellspacing="0" cellpadding="0" rules="none" border="0" style="text-align:center; font-size:10px;">

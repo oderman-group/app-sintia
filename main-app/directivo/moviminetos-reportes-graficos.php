@@ -108,6 +108,16 @@ if ($consultaItemsMasVendidos && mysqli_num_rows($consultaItemsMasVendidos) > 0)
                         </div>
                     </div>
                 </div>
+				
+				<!-- Descripción de la página -->
+				<div class="row mb-3">
+					<div class="col-md-12">
+						<p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+							<i class="fa fa-info-circle text-info"></i> 
+							<?=__('financiero.reportes_graficos_descripcion');?>
+						</p>
+					</div>
+				</div>
 
     <div class="finance-summary-grid">
                     <div class="finance-summary-card">
