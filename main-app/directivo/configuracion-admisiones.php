@@ -203,10 +203,24 @@ if(!Modulos::validarPermisoEdicion()){
                                             </div>
                                         </div>
 
+                                        <!-- Separador visual para el último campo -->
+                                        <hr style="margin: 30px 0; border-top: 2px solid #ddd;">
+                                        
+                                        <p class="h3">Formulario completo de admisión</p>
+                                        <div class="alert alert-info" style="margin-bottom: 20px;">
+                                            <i class="fa fa-info-circle"></i> 
+                                            El siguiente campo se mostrará únicamente en el <strong>último paso del formulario completo de admisión</strong>, 
+                                            NO en el formulario inicial de inscripción.
+                                        </div>
+
                                         <div class="form-group row">
-											<label class="col-sm-2 control-label">Frase 2 al final del formulario <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Este frase la podrán leer los usuarios antes de enviar el formulario de inscripción. Escribe algo que les quieras informar o advertir."><i class="fa fa-info"></i></button></label>
+											<label class="col-sm-2 control-label">Frase 2 al final del formulario completo <button type="button" class="btn btn-sm" data-toggle="tooltip" data-placement="right" title="Esta frase aparecerá en el último paso del formulario completo de admisión (no en el formulario inicial). Los usuarios la podrán leer antes de enviar el formulario completo. Escribe algo que les quieras informar o advertir."><i class="fa fa-info"></i></button></label>
 											<div class="col-sm-10">
                                                 <textarea cols="80" id="editor4" name="fraseDos" rows="10" <?=$disabledPermiso;?>><?=$cfg['cfgi_frase_formulario_inscripcion_2'];?></textarea>
+                                                <small class="form-text text-muted" style="margin-top: 10px;">
+                                                    <i class="fa fa-arrow-right"></i> 
+                                                    Esta frase se mostrará en el <strong>paso final del formulario completo</strong> de admisión, después de que el usuario haya completado todos los datos personales y familiares.
+                                                </small>
 											</div>
 										</div>
 
