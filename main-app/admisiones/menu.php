@@ -155,6 +155,11 @@ $colorTexto       = !empty($config['cfgi_color_texto'])           ? $config['cfg
                 <i class="fas fa-search"></i>
                 <span>Consultar Estado</span>
             </a>
+
+            <a class="nav-link <?= (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'active' : ''; ?>" href="index.php">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Cambiar Institución</span>
+            </a>
         </div>
     </div>
     <?php
