@@ -3,6 +3,8 @@
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
 require_once(ROOT_PATH."/main-app/class/Movimientos.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
+require_once(ROOT_PATH."/main-app/class/Grupos.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
@@ -125,11 +127,43 @@ $itemsLote = json_decode($datosLote['lote_items'], true);
                                                     <h4>Criterios de Selección:</h4>
                                                     <?php if (!empty($criterios)) { ?>
                                                         <ul>
-                                                            <?php if (!empty($criterios['grados'])) { ?>
-                                                                <li><strong>Grados:</strong> <?=implode(', ', $criterios['grados']);?></li>
+                                                            <?php if (!empty($criterios['grados'])) { 
+                                                                // Convertir códigos de grados a nombres
+                                                                $nombresGrados = [];
+                                                                foreach ($criterios['grados'] as $idGrado) {
+                                                                    $resultadoGrado = Grados::obtenerDatosGrados($idGrado);
+                                                                    if ($resultadoGrado) {
+                                                                        $datosGrado = mysqli_fetch_array($resultadoGrado, MYSQLI_BOTH);
+                                                                        if (!empty($datosGrado['gra_nombre'])) {
+                                                                            $nombresGrados[] = $datosGrado['gra_nombre'];
+                                                                        } else {
+                                                                            $nombresGrados[] = $idGrado; // Fallback al código si no se encuentra
+                                                                        }
+                                                                    } else {
+                                                                        $nombresGrados[] = $idGrado; // Fallback al código si no se encuentra
+                                                                    }
+                                                                }
+                                                            ?>
+                                                                <li><strong>Grados:</strong> <?=implode(', ', $nombresGrados);?></li>
                                                             <?php } ?>
-                                                            <?php if (!empty($criterios['grupos'])) { ?>
-                                                                <li><strong>Grupos:</strong> <?=implode(', ', $criterios['grupos']);?></li>
+                                                            <?php if (!empty($criterios['grupos'])) { 
+                                                                // Convertir códigos de grupos a nombres
+                                                                $nombresGrupos = [];
+                                                                foreach ($criterios['grupos'] as $idGrupo) {
+                                                                    $resultadoGrupo = Grupos::obtenerDatosGrupos($idGrupo);
+                                                                    if ($resultadoGrupo) {
+                                                                        $datosGrupo = mysqli_fetch_array($resultadoGrupo, MYSQLI_BOTH);
+                                                                        if (!empty($datosGrupo['gru_nombre'])) {
+                                                                            $nombresGrupos[] = $datosGrupo['gru_nombre'];
+                                                                        } else {
+                                                                            $nombresGrupos[] = $idGrupo; // Fallback al código si no se encuentra
+                                                                        }
+                                                                    } else {
+                                                                        $nombresGrupos[] = $idGrupo; // Fallback al código si no se encuentra
+                                                                    }
+                                                                }
+                                                            ?>
+                                                                <li><strong>Grupos:</strong> <?=implode(', ', $nombresGrupos);?></li>
                                                             <?php } ?>
                                                             <?php if (!empty($criterios['estado'])) { ?>
                                                                 <li><strong>Estado:</strong> <?=$criterios['estado'] == 1 ? 'Activo' : 'Inactivo';?></li>
