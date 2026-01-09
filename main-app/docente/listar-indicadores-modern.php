@@ -159,11 +159,13 @@ if ($numIndicadores > 0) {
                                             </li>
                                         <?php } ?>
                                         
-                                        <li>
-                                            <a href="indicadores-estudiantes-inclusion.php?idIndicadorNuevo=<?php echo base64_encode($resultado['aipc_id_nuevo']); ?>&idIndicador=<?php echo base64_encode($resultado['ipc_id']); ?>">
-                                                <i class="fa fa-users"></i> E. Inclusión
-                                            </a>
-                                        </li>
+                                        <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INDICADORES_INCLUSION)) { ?>
+                                            <li>
+                                                <a href="indicadores-estudiantes-inclusion.php?idIndicadorNuevo=<?php echo base64_encode($resultado['aipc_id_nuevo']); ?>&idIndicador=<?php echo base64_encode($resultado['ipc_id']); ?>">
+                                                    <i class="fa fa-users"></i> E. Inclusión
+                                                </a>
+                                            </li>
+                                        <?php } ?>
                                     </ul>
                                 </div>
                             </td>
