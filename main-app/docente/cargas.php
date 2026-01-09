@@ -163,13 +163,8 @@ if (!empty($_SESSION["infoCargaActual"])) {
         display: flex;
         flex-direction: column;
         border: 2px solid transparent;
-        cursor: grab;
         position: relative;
         z-index: 1;
-    }
-
-    .carga-card-modern:active {
-        cursor: grabbing;
     }
 
     .carga-card-modern:hover {
@@ -210,6 +205,34 @@ if (!empty($_SESSION["infoCargaActual"])) {
         background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
     }
 
+    /* Cuando el header es un link */
+    .card-header-link {
+        text-decoration: none !important;
+        display: block;
+        cursor: pointer;
+    }
+
+    .card-header-link:hover,
+    .card-header-link:focus,
+    .card-header-link:active,
+    .card-header-link:visited {
+        color: white !important;
+        text-decoration: none !important;
+    }
+
+    /* Mantener el color blanco para todos los elementos dentro del header */
+    .card-header-link .materia-title,
+    .card-header-link .curso-info,
+    .card-header-link .curso-info span,
+    .card-header-link .curso-info i {
+        color: white !important;
+    }
+
+    .card-header-link:hover .materia-title {
+        color: var(--secondary-color) !important;
+        transform: translateX(5px);
+    }
+
     .materia-title {
         font-size: 18px;
         font-weight: 700;
@@ -221,17 +244,13 @@ if (!empty($_SESSION["infoCargaActual"])) {
         transition: var(--transition);
     }
 
-    .materia-title:hover {
-        color: var(--secondary-color);
-        transform: translateX(5px);
-    }
-
     .curso-info {
         font-size: 14px;
         opacity: 0.9;
         display: flex;
         align-items: center;
         gap: 8px;
+        color: white;
     }
 
     .card-body-modern {
@@ -699,35 +718,11 @@ if (!empty($_SESSION["infoCargaActual"])) {
         z-index: 100 !important;
     }
     
-    /* Asegurar que los sortable-items no tengan overflow */
-    .sortable-item {
-        overflow: visible !important;
-    }
-
-    /* Posición draggable indicator */
+    /* Posición indicator - Oculto */
     .position-indicator {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 32px;
-        height: 32px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 14px;
+        display: none;
     }
 
-    .elemento-draggable {
-        cursor: grab;
-    }
-
-    .elemento-draggable:active {
-        cursor: grabbing;
-        opacity: 0.7;
-    }
 </style>
 <!-- END HEAD -->
 <?php include("../compartido/body.php"); ?>
@@ -857,6 +852,17 @@ if (!empty($_SESSION["infoCargaActual"])) {
                     <?php } ?>
                 </div>
 
+                <!-- Descripción de la página -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <p class="text-muted" style="font-size: 14px; line-height: 1.6;">
+                            <i class="fa fa-info-circle text-info"></i> 
+                            Administra tus cargas académicas asignadas. Selecciona cualquier carga haciendo clic sobre ella para acceder a sus estudiantes, actividades y calificaciones. 
+                            Utiliza el buscador y filtros para encontrar rápidamente cargas específicas. También puedes generar planillas e informes desde las acciones rápidas.
+                        </p>
+                    </div>
+                </div>
+
                 <?php if ($nCargas > 0) { ?>
                 <!-- Buscador y Filtros -->
                 <div class="search-filter-container">
@@ -909,7 +915,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                 </div>
                 <?php } ?>
                 <!-- Contenedor de tarjetas -->
-                <div class="row" id="sortable-container">
+                <div class="row" id="cargas-container">
                     <?php 
                     $cargasCont = 1;
                     foreach ($listaCargas as $carga) {
@@ -956,24 +962,24 @@ if (!empty($_SESSION["infoCargaActual"])) {
 
                         $verMsj = false;
                     ?>
-                    <div class="col-lg-3 col-md-4 col-sm-6 col-12 sortable-item elemento-draggable mb-4"
-                        draggable="true" 
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-4"
                         id="carga-<?= $carga['car_id']; ?>"
                         data-materia="<?= strtolower($carga['mat_nombre']); ?>"
                         data-curso="<?= strtolower($carga['gra_nombre']); ?>"
                         data-grupo="<?= strtolower($carga['gru_nombre']); ?>"
                         data-director="<?= $esDirectorGrupo ? '1' : '0'; ?>"
-                        data-media-tecnica="<?= $esMediaTecnica ? '1' : '0'; ?>"
-                        data-posicion="<?= $carga['car_posicion_docente']; ?>">
+                        data-media-tecnica="<?= $esMediaTecnica ? '1' : '0'; ?>">
                         
                         <div class="carga-card-modern <?= $seleccionado ? 'selected' : ''; ?>">
-                            <!-- Header de la tarjeta -->
-                            <div class="card-header-modern">
+                            <!-- Header de la tarjeta - Completamente clickeable -->
+                            <a href="cargas-seleccionar.php?carga=<?= base64_encode($carga['car_id']); ?>&periodo=<?= base64_encode($carga['car_periodo']); ?>"
+                               class="card-header-modern card-header-link" 
+                               <?= $induccionEntrar; ?> 
+                               title="Click para entrar a esta carga académica">
                                 <div class="position-indicator"><?= $carga['car_posicion_docente']; ?></div>
-                                <a href="cargas-seleccionar.php?carga=<?= base64_encode($carga['car_id']); ?>&periodo=<?= base64_encode($carga['car_periodo']); ?>"
-                                   class="materia-title" <?= $induccionEntrar; ?> title="Click para entrar">
+                                <div class="materia-title">
                                     <i class="fa fa-book mr-2"></i><?= strtoupper($carga['mat_nombre']); ?>
-                                </a>
+                                </div>
                                 <div class="curso-info">
                                     <i class="fa fa-users"></i>
                                     <?= strtoupper($carga['gra_nombre'] . " " . $carga['gru_nombre']); ?>
@@ -981,7 +987,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
                                         <i class="fa fa-user-graduate"></i> <?= $cantidadEstudiantes; ?>
                                     </span>
                                 </div>
-                            </div>
+                            </a>
 
                             <!-- Body de la tarjeta -->
                             <div class="card-body-modern">
@@ -1246,7 +1252,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
     $(document).on('show.bs.dropdown', '.carga-card-modern .btn-group', function() {
         // Elevar z-index de la tarjeta padre cuando se abre el dropdown
         $(this).closest('.carga-card-modern').css('z-index', '100');
-        $(this).closest('.sortable-item').css('z-index', '100');
+        $(this).closest('.col-lg-3').css('z-index', '100');
         
         // Deshabilitar tooltips temporalmente cuando el dropdown está abierto
         $('[data-toggle="tooltip"]').tooltip('disable');
@@ -1256,7 +1262,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
         // Restaurar z-index cuando se cierra el dropdown
         setTimeout(() => {
             $(this).closest('.carga-card-modern').css('z-index', '');
-            $(this).closest('.sortable-item').css('z-index', '');
+            $(this).closest('.col-lg-3').css('z-index', '');
             
             // Rehabilitar tooltips después de cerrar el dropdown
             $('[data-toggle="tooltip"]').tooltip('enable');
@@ -1278,9 +1284,9 @@ if (!empty($_SESSION["infoCargaActual"])) {
     
     const searchInput = document.getElementById('searchInput');
     const filterChips = document.querySelectorAll('.filter-chip');
-    const sortableContainer = document.getElementById('sortable-container');
+    const cargasContainer = document.getElementById('cargas-container');
     const emptyState = document.getElementById('emptyState');
-    const allCards = document.querySelectorAll('.sortable-item');
+    const allCards = document.querySelectorAll('.col-lg-3');
     
     let currentFilter = 'all';
     let currentSearchTerm = '';
@@ -1325,10 +1331,10 @@ if (!empty($_SESSION["infoCargaActual"])) {
         if (emptyState) {
             if (visibleCount === 0) {
                 emptyState.classList.add('show');
-                sortableContainer.style.minHeight = '0';
+                cargasContainer.style.minHeight = '0';
             } else {
                 emptyState.classList.remove('show');
-                sortableContainer.style.minHeight = 'auto';
+                cargasContainer.style.minHeight = 'auto';
             }
         }
     }
@@ -1377,7 +1383,7 @@ if (!empty($_SESSION["infoCargaActual"])) {
         
         // Reorganizar en el DOM
         cardsArray.forEach(card => {
-            sortableContainer.appendChild(card);
+            cargasContainer.appendChild(card);
         });
         
         // Mostrar notificación
@@ -1391,95 +1397,6 @@ if (!empty($_SESSION["infoCargaActual"])) {
             stack: 6
         });
     }
-    
-    // ============================================
-    // FUNCIONALIDAD DRAG & DROP
-    // ============================================
-    
-    let draggedItem = null;
-    let fromIndex, toIndex;
-    let idCarga;
-    let target;
-    let docente = '<?= $_SESSION["id"]; ?>';
-    
-    if (sortableContainer) {
-        sortableContainer.addEventListener("dragstart", (e) => {
-            if (!e.target.classList.contains('sortable-item')) return;
-            
-            draggedItem = e.target;
-            fromIndex = Array.from(sortableContainer.children).indexOf(draggedItem);
-            idCarga = e.target.id.split('-')[1];
-            target = e.target;
-            
-            setTimeout(() => {
-                e.target.style.opacity = '0.5';
-            }, 0);
-        });
-        
-        sortableContainer.addEventListener("dragend", (e) => {
-            if (e.target.classList.contains('sortable-item')) {
-                e.target.style.opacity = '1';
-            }
-        });
-        
-        sortableContainer.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            const afterElement = getDragAfterElement(sortableContainer, e.clientY);
-            if (afterElement == null) {
-                sortableContainer.appendChild(draggedItem);
-            } else {
-                sortableContainer.insertBefore(draggedItem, afterElement);
-            }
-        });
-        
-        sortableContainer.addEventListener("drop", (e) => {
-            e.preventDefault();
-            toIndex = Array.from(sortableContainer.children).indexOf(draggedItem);
-            
-            if (fromIndex !== toIndex && toIndex > -1) {
-                const newPosition = toIndex + 1;
-                cambiarPosicion(idCarga, newPosition, docente);
-                
-                // Actualizar el indicador de posición
-                const positionIndicator = draggedItem.querySelector('.position-indicator');
-                if (positionIndicator) {
-                    positionIndicator.textContent = newPosition;
-                    draggedItem.setAttribute('data-posicion', newPosition);
-                }
-                
-                // Mostrar notificación
-                $.toast({
-                    heading: 'Posición actualizada',
-                    text: 'La posición de la carga se ha actualizado correctamente',
-                    position: 'top-right',
-                    loaderBg: '#41c1ba',
-                    icon: 'success',
-                    hideAfter: 3000,
-                    stack: 6
-                });
-            }
-        });
-    }
-    
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.sortable-item:not(.dragging)')];
-        
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-    
-    // Prevenir eventos por defecto
-    document.addEventListener("dragover", (e) => {
-        e.preventDefault();
-    });
     
     // ============================================
     // ANIMACIONES DE PROGRESO
@@ -1780,11 +1697,11 @@ if (!empty($_SESSION["infoCargaActual"])) {
     $(document).ready(function() {
         // Esperar un momento para que la página se cargue completamente
         setTimeout(function() {
-            const sortableContainer = document.getElementById('sortable-container');
+            const cargasContainer = document.getElementById('cargas-container');
             const searchFilterContainer = document.querySelector('.search-filter-container');
             
             // Si existe el contenedor de cargas o el buscador, hacer scroll hacia ahí
-            const targetElement = searchFilterContainer || sortableContainer;
+            const targetElement = searchFilterContainer || cargasContainer;
             
             if (targetElement) {
                 // Calcular posición considerando cualquier header fijo

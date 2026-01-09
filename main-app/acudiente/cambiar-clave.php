@@ -2,6 +2,7 @@
 <?php $idPaginaInterna = 'DT0031';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
+<?php require_once(ROOT_PATH."/main-app/class/App/Seguridad/Csrf.php");?>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">

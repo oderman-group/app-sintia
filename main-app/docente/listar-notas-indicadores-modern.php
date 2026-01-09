@@ -129,13 +129,18 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
                                 $colorNota = "#616161";
                             }
 
-                            $notasResultadoFinal = ($notasResultado !== null && $notasResultado !== "") ? $notasResultado : '-';
+                            // Aplicar formato de decimales según configuración de la institución
+                            $decimales = $config['conf_decimales_notas'] ?? 2;
+                            $notasResultadoFormateado = ($notasResultado !== null && $notasResultado !== "") ? number_format($notasResultado, $decimales, '.', '') : '';
+                            $valorPorcentualFormateado = ($valorPorcentual !== null && $valorPorcentual !== "") ? number_format($valorPorcentual, $decimales, '.', '') : '';
+                            
+                            $notasResultadoFinal = ($notasResultado !== null && $notasResultado !== "") ? $notasResultadoFormateado : '-';
                             $atributosA = '';
 
                             if ($config['conf_forma_mostrar_notas'] == CUALITATIVA && $notasResultado !== null && $notasResultado !== "") {
                                 $atributosA = 'tabindex="0" role="button" data-toggle="popover" data-trigger="hover" 
-                                               title="Nota Cuantitativa: '.$notasResultado.' ('.$valorPorcentual.'%)" 
-                                               data-content="<b>Nota Cuantitativa:</b><br>'.$notasResultado.'" 
+                                               title="Nota Cuantitativa: '.$notasResultadoFormateado.' ('.$valorPorcentualFormateado.'%)" 
+                                               data-content="<b>Nota Cuantitativa:</b><br>'.$notasResultadoFormateado.'" 
                                                data-html="true" data-placement="top"';
         
                                 $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notasResultado);
@@ -165,13 +170,17 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
                             $claseDefinitiva = 'nota-pendiente';
                         }
 
-                        $definitivaFinal = $definitiva ?: '-';
+                        // Aplicar formato de decimales a la definitiva
+                        $decimales = $config['conf_decimales_notas'] ?? 2;
+                        $definitivaFormateada = $definitiva ? number_format($definitiva, $decimales, '.', '') : '';
+                        
+                        $definitivaFinal = $definitiva ? $definitivaFormateada : '-';
                         $atributosA = '';
 
                         if ($config['conf_forma_mostrar_notas'] == CUALITATIVA) {
                             $atributosA = 'tabindex="0" role="button" data-toggle="popover" data-trigger="hover" 
-                                           title="Nota Cuantitativa: '.$definitiva.'" 
-                                           data-content="<b>Nota Cuantitativa:</b><br>'.$definitiva.'" 
+                                           title="Nota Cuantitativa: '.$definitivaFormateada.'" 
+                                           data-content="<b>Nota Cuantitativa:</b><br>'.$definitivaFormateada.'" 
                                            data-html="true" data-placement="top"';
 
                             $estiloNota = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $definitiva);

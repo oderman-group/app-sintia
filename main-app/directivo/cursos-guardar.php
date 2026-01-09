@@ -22,8 +22,13 @@ require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 		exit();
 	}
 
-	if(empty($_POST["valorM"])) {$_POST["valorM"] = '0';}
-	if(empty($_POST["valorP"])) {$_POST["valorP"] = '0';}
+	// Limpiar valores monetarios de caracteres no numéricos (como $, comas, espacios, etc.)
+	$_POST["valorM"] = preg_replace('/[^0-9.]/', '', $_POST["valorM"] ?? '');
+	$_POST["valorP"] = preg_replace('/[^0-9.]/', '', $_POST["valorP"] ?? '');
+	
+	// Convertir valores vacíos a 0
+	if(empty($_POST["valorM"]) || $_POST["valorM"] === '') {$_POST["valorM"] = '0';}
+	if(empty($_POST["valorP"]) || $_POST["valorP"] === '') {$_POST["valorP"] = '0';}
 	if(empty($_POST["graSiguiente"])) {$_POST["graSiguiente"] = 1;}
 	if(empty($_POST["tipoG"])){ $_POST["tipoG"]=GRADO_GRUPAL;}
 
