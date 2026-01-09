@@ -207,7 +207,7 @@ try {
             $documento = mysqli_real_escape_string($conexion, $documento);
             
             // Contraseña por defecto
-            $claveEncriptada = SHA1($clavePorDefectoUsuarios);
+            $claveEncriptada = $clavePorDefectoUsuarios;
             
             // Generar ID único para este usuario específico
             $idRegistro = Utilidades::getNextIdSequence($conexion, BD_GENERAL, 'usuarios').$fila;
