@@ -143,9 +143,13 @@ if(!empty($_GET["docente"])) {
 			text-align: center;
 		}
 		
+		.main-table tbody td.student-name {
+			text-align: left !important;
+		}
+		
 		.student-name {
-			text-align: left;
-			padding-left: 8px;
+			text-align: left !important;
+			padding-left: 10px;
 			font-weight: 500;
 			color: #2c3e50;
 		}
