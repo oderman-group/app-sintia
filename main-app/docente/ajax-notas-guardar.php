@@ -48,9 +48,21 @@ function notifica(){
 	});
 }
 setTimeout ("notifica()", 100);
+
+// Ocultar la notificación automáticamente después de 5 segundos
+setTimeout(function() {
+	const alertDiv = document.querySelector('.alert.alert-<?=$datosMensaje['estado']?>');
+	if (alertDiv) {
+		alertDiv.style.transition = 'opacity 0.3s ease-out';
+		alertDiv.style.opacity = '0';
+		setTimeout(function() {
+			alertDiv.style.display = 'none';
+		}, 300);
+	}
+}, 5000);
 </script>
 
-<div class="alert alert-<?=$datosMensaje['estado']?>">
+<div class="alert alert-<?=$datosMensaje['estado']?>" style="z-index: 999;">
 	<button type="button" class="close" data-dismiss="alert">&times;</button>
 	<i class="icon-exclamation-sign"></i><strong>INFORMACI&Oacute;N:</strong> <?=$datosMensaje['mensaje']?>
 </div>
