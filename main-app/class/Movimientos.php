@@ -596,11 +596,31 @@ class Movimientos {
     public static function listarAbonos (
         mysqli $conexion, 
         array $config,
-        bool $incluirAnulados = false
+        bool $incluirAnulados = false,
+        ?string $fechaDesde = null,
+        ?string $fechaHasta = null,
+        ?string $metodoPago = null
     )
     {
         try {
             $filtroAnulados = $incluirAnulados ? '' : 'AND pi.is_deleted = 0';
+            
+            // Filtros adicionales
+            $filtroFechas = '';
+            if (!empty($fechaDesde)) {
+                $fechaDesde = mysqli_real_escape_string($conexion, $fechaDesde);
+                $filtroFechas .= " AND DATE(pi.fecha_registro) >= '{$fechaDesde}'";
+            }
+            if (!empty($fechaHasta)) {
+                $fechaHasta = mysqli_real_escape_string($conexion, $fechaHasta);
+                $filtroFechas .= " AND DATE(pi.fecha_registro) <= '{$fechaHasta}'";
+            }
+            
+            $filtroMetodo = '';
+            if (!empty($metodoPago)) {
+                $metodoPago = mysqli_real_escape_string($conexion, $metodoPago);
+                $filtroMetodo = " AND pi.payment_method = '{$metodoPago}'";
+            }
             
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
@@ -640,7 +660,9 @@ class Movimientos {
                 pi.institucion = {$config['conf_id_institucion']} 
             AND pi.year = {$_SESSION["bd"]}
             {$filtroAnulados}
-            ORDER BY pi.id DESC
+            {$filtroFechas}
+            {$filtroMetodo}
+            ORDER BY pi.id ASC
             ");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
