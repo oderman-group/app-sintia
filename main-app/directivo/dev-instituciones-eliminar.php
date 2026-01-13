@@ -325,6 +325,11 @@ function eliminarDatosInstitucion($conexion, $config, $baseDatosServicios, $insI
         
         // ELIMINAR REGISTRO DE INSTITUCIÓN (si se seleccionó institución completa)
         if ($opciones['institucion_completa']) {
+            // Primero eliminar registros relacionados en instituciones_periodos
+            $stmt = $conexionPDO->prepare("DELETE FROM " . $baseDatosServicios . ".instituciones_periodos WHERE inspp_institucion = ?");
+            $stmt->execute([$insId]);
+            $datosEliminados['instituciones_periodos'] = $stmt->rowCount();
+            
             $stmt = $conexionPDO->prepare("DELETE FROM " . $baseDatosServicios . ".instituciones_modulos WHERE ipmod_institucion = ?");
             $stmt->execute([$insId]);
             $datosEliminados['instituciones_modulos'] = $stmt->rowCount();

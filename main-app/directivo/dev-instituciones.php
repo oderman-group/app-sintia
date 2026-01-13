@@ -185,12 +185,16 @@ $Plataforma = new Plataforma;
                                             <table class="table table-striped table-hover" style="width:100%;">
                                                 <thead>
                                                     <tr>
+                                                        <th style="width: 30px;">
+                                                            <i class="fa fa-plus-circle" title="Expandir/Contraer"></i>
+                                                        </th>
                                                         <th style="width: 40px;">
                                                             <input type="checkbox" id="selectAllInstituciones" title="Seleccionar todas">
                                                         </th>
                                                         <th>#</th>
                                                         <th>Bloq</th>
                                                         <th>Cod</th>
+                                                        <th>Año</th>
                                                         <th>Fecha Inicio</th>
                                                         <th>Nombre Institución</th>
                                                         <th>Contacto Principal</th>
@@ -332,7 +336,7 @@ function renderizarInstituciones(instituciones, paginacion) {
     let html = '';
     
     if (instituciones.length === 0) {
-        html = '<tr><td colspan="12" class="text-center py-5"><i class="fa fa-inbox fa-3x text-muted mb-3"></i><br><h5>No se encontraron instituciones</h5><p class="text-muted">Intenta ajustar los filtros de búsqueda</p></td></tr>';
+        html = '<tr><td colspan="14" class="text-center py-5"><i class="fa fa-inbox fa-3x text-muted mb-3"></i><br><h5>No se encontraron instituciones</h5><p class="text-muted">Intenta ajustar los filtros de búsqueda</p></td></tr>';
     } else {
         let inicio = (paginacion.paginaActual - 1) * paginacion.porPagina;
         
@@ -343,9 +347,16 @@ function renderizarInstituciones(instituciones, paginacion) {
             let bgColor = inst.ins_bloqueada == 1 ? '#ff572238' : 'transparent';
             let checked = inst.ins_bloqueada == 1 ? 'checked' : '';
             let planNombre = inst.plns_nombre || '<span class="text-muted">Sin plan</span>';
+            let yearDefault = inst.ins_year_default || '-';
             
+            // Fila principal
             html += `
                 <tr id="Reg${inst.ins_id}" style="background-color:${bgColor};">
+                    <td align="center">
+                        <button class="btn btn-sm btn-link text-secondary expand-inst-btn" data-id="${inst.ins_id}" title="Ver detalles">
+                            <i class="fa fa-chevron-right"></i>
+                        </button>
+                    </td>
                     <td align="center">
                         <input type="checkbox" class="institucion-checkbox" 
                             data-id="${inst.ins_id}" 
@@ -363,6 +374,7 @@ function renderizarInstituciones(instituciones, paginacion) {
                         </div>
                     </td>
                     <td>${inst.ins_id}</td>
+                    <td><strong>${yearDefault}</strong></td>
                     <td>${inst.ins_fecha_inicio || '-'}</td>
                     <td><strong>${inst.ins_nombre}</strong></td>
                     <td>${inst.ins_contacto_principal || '-'}</td>
@@ -384,6 +396,46 @@ function renderizarInstituciones(instituciones, paginacion) {
                                 <li class="divider"></li>
                                 <li><a href="javascript:void(0);" onclick="eliminarInstitucionIndividual('${inst.ins_id}', '${inst.ins_nombre.replace(/'/g, "\\'")}', '${inst.ins_bd || ''}', '${inst.ins_contacto_principal || ''}')" style="color: #ef4444;"><i class="fa fa-trash"></i> Eliminar</a></li>
                             </ul>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Fila expandible con más información
+            html += `
+                <tr id="expand-inst-${inst.ins_id}" class="expandable-inst-row" style="display: none;">
+                    <td colspan="14">
+                        <div class="p-4">
+                            <div class="row">
+                                <!-- Información General -->
+                                <div class="col-md-4">
+                                    <h6 class="text-primary mb-3"><i class="fa fa-info-circle"></i> Información General</h6>
+                                    <p class="mb-2"><strong>ID:</strong><br><span class="text-muted">${inst.ins_id}</span></p>
+                                    <p class="mb-2"><strong>Nombre:</strong><br><span class="text-muted">${inst.ins_nombre}</span></p>
+                                    <p class="mb-2"><strong>Siglas:</strong><br><span class="text-muted">${inst.ins_siglas || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>NIT:</strong><br><span class="text-muted">${inst.ins_nit || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Año por Defecto:</strong><br><span class="badge badge-info">${yearDefault}</span></p>
+                                    <p class="mb-2"><strong>Base de Datos:</strong><br><span class="text-muted">${inst.ins_bd || 'N/A'}</span></p>
+                                </div>
+                                
+                                <!-- Contacto -->
+                                <div class="col-md-4">
+                                    <h6 class="text-success mb-3"><i class="fa fa-user"></i> Contacto</h6>
+                                    <p class="mb-2"><strong>Contacto Principal:</strong><br><span class="text-muted">${inst.ins_contacto_principal || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Email de Contacto:</strong><br><span class="text-muted">${inst.ins_email_contacto || 'N/A'}</span></p>
+                                </div>
+                                
+                                <!-- Plan y Estado -->
+                                <div class="col-md-4">
+                                    <h6 class="text-warning mb-3"><i class="fa fa-certificate"></i> Plan y Estado</h6>
+                                    <p class="mb-2"><strong>Plan:</strong><br>${planNombre}</p>
+                                    <p class="mb-2"><strong>Espacio:</strong><br><span class="text-muted">${espacio || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Fecha Inicio:</strong><br><span class="text-muted">${inst.ins_fecha_inicio || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Fecha Renovación:</strong><br><span class="text-muted">${inst.ins_fecha_renovacion || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Estado:</strong><br><span class="badge badge-${inst.ins_estado == 1 ? 'success' : 'danger'}">${estado}</span></p>
+                                    <p class="mb-2"><strong>Bloqueada:</strong><br><span class="badge badge-${inst.ins_bloqueada == 1 ? 'danger' : 'success'}">${inst.ins_bloqueada == 1 ? 'Sí' : 'No'}</span></p>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -462,7 +514,7 @@ function irAPagina(pagina) {
 function mostrarError(mensaje) {
     $('#tabla_instituciones').html(`
         <tr>
-            <td colspan="12" class="text-center py-5">
+            <td colspan="14" class="text-center py-5">
                 <i class="fa fa-exclamation-triangle fa-3x text-danger mb-3"></i>
                 <br>
                 <h5>Error</h5>
@@ -672,7 +724,80 @@ $(document).on('change', '#eliminar_institucion_completa', function() {
             .prop('disabled', false);
     }
 });
+
+// ========================================
+// SISTEMA DE EXPANDIR/CONTRAER FILAS DE INSTITUCIONES
+// ========================================
+
+$(document).on('click', '.expand-inst-btn', function() {
+    var id = $(this).data('id');
+    var row = $('#expand-inst-' + id);
+    var icon = $(this).find('i');
+    var button = $(this);
+
+    if (row.is(':visible')) {
+        // Contraer con animación
+        row.slideUp(300, function() {
+            icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+            button.removeClass('text-primary').addClass('text-secondary');
+        });
+    } else {
+        // Expandir con animación
+        row.slideDown(300, function() {
+            icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+            button.removeClass('text-secondary').addClass('text-primary');
+        });
+    }
+});
+
 </script>
+
+<style>
+/* Estilos para filas expandibles de instituciones */
+.expandable-inst-row {
+    background-color: #f8f9fa !important;
+    border-left: 4px solid #667eea;
+}
+
+.expand-inst-btn {
+    transition: all 0.3s ease;
+    padding: 2px 8px;
+}
+
+.expand-inst-btn:hover {
+    transform: scale(1.2);
+    color: #667eea !important;
+}
+
+.expandable-inst-row h6 {
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.expandable-inst-row p {
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.expandable-inst-row strong {
+    color: #333;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.expandable-inst-row .text-muted {
+    color: #666 !important;
+    font-size: 0.95em;
+}
+
+.expandable-inst-row .badge {
+    font-size: 0.9em;
+    padding: 5px 10px;
+}
+</style>
 
 <!-- Modal Eliminar Instituciones -->
 <div class="modal fade" id="modalEliminarInstituciones" tabindex="-1" role="dialog">
