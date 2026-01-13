@@ -107,6 +107,30 @@ try {
         $datosActualizar[] = "ins_valor_deuda = $valor";
     }
     
+    // Campo is_internal_oderman con validación especial
+    if (isset($_POST['is_internal_oderman'])) {
+        $nuevoValor = (int)$_POST['is_internal_oderman'];
+        
+        // Verificar el valor actual en la base de datos
+        $consultaActual = mysqli_query($conexion, "SELECT is_internal_oderman FROM " . $baseDatosServicios . ".instituciones WHERE ins_id = '$ins_id' AND ins_enviroment = '" . ENVIROMENT . "'");
+        $datosActuales = mysqli_fetch_array($consultaActual, MYSQLI_BOTH);
+        $valorActual = (int)($datosActuales['is_internal_oderman'] ?? 0);
+        
+        error_log("is_internal_oderman - Valor actual: $valorActual, Nuevo valor: $nuevoValor");
+        
+        // VALIDACIÓN: No permitir cambiar de interna (1) a externa (0)
+        if ($valorActual == 1 && $nuevoValor == 0) {
+            throw new Exception('⚠️ OPERACIÓN NO PERMITIDA: Una cuenta interna de Oderman no puede convertirse en cuenta externa por seguridad. Este cambio es irreversible.');
+        }
+        
+        // Si pasa la validación, agregar el campo para actualizar
+        $datosActualizar[] = "is_internal_oderman = $nuevoValor";
+        
+        if ($valorActual == 0 && $nuevoValor == 1) {
+            error_log("⚠️ ADVERTENCIA: Institución $ins_id está siendo marcada como CUENTA INTERNA. Este cambio es irreversible.");
+        }
+    }
+    
     // Validar que hay datos para actualizar
     if (empty($datosActualizar)) {
         throw new Exception('No hay datos para actualizar');

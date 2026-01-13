@@ -20,6 +20,7 @@ $busqueda = isset($_POST['busqueda']) ? mysqli_real_escape_string($conexion, tri
 $plan = isset($_POST['plan']) ? mysqli_real_escape_string($conexion, $_POST['plan']) : '';
 $estado = isset($_POST['estado']) ? mysqli_real_escape_string($conexion, $_POST['estado']) : '';
 $bloqueado = isset($_POST['bloqueado']) ? mysqli_real_escape_string($conexion, $_POST['bloqueado']) : '';
+$tipoCuenta = isset($_POST['tipo_cuenta']) ? mysqli_real_escape_string($conexion, $_POST['tipo_cuenta']) : '';
 
 // Construir filtros
 $filtros = [];
@@ -41,6 +42,11 @@ if (isset($estado) && $estado !== '' && $estado !== 'todos') {
 // Usar isset en lugar de !empty para permitir el valor "0" (No bloqueado)
 if (isset($bloqueado) && $bloqueado !== '' && $bloqueado !== 'todos') {
     $filtros[] = "ins_bloqueada = '$bloqueado'";
+}
+
+// Filtro por tipo de cuenta (interna/externa)
+if (isset($tipoCuenta) && $tipoCuenta !== '' && $tipoCuenta !== 'todos') {
+    $filtros[] = "is_internal_oderman = '$tipoCuenta'";
 }
 
 $whereClause = count($filtros) > 0 ? "WHERE " . implode(" AND ", $filtros) : "";
@@ -80,6 +86,7 @@ try {
             'ins_year_default' => $resultado['ins_year_default'],
             'ins_fecha_renovacion' => $resultado['ins_fecha_renovacion'],
             'ins_nit' => $resultado['ins_nit'],
+            'is_internal_oderman' => $resultado['is_internal_oderman'],
             'plns_nombre' => $resultado['plns_nombre'],
             'plns_espacio_gb' => $resultado['plns_espacio_gb']
         ];
