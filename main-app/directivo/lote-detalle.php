@@ -190,7 +190,7 @@ $itemsLote = json_decode($datosLote['lote_items'], true);
                                                 <thead>
                                                     <tr>
                                                         <th>#</th>
-														<th>Código</th>
+														<th>Consecutivo</th>
 														<th>Fecha</th>
 														<th>Usuario</th>
 														<th>Valor Factura</th>
@@ -245,7 +245,7 @@ $itemsLote = json_decode($datosLote['lote_items'], true);
 													?>
 													<tr>
                                                         <td><?=$contReg;?></td>
-														<td><?=htmlspecialchars($factura['fcu_consecutivo'] ?? 'N/A');?></td>
+														<td><?=htmlspecialchars($factura['fcu_id'] ?? 'N/A');?></td>
 														<td><?=$fecha;?></td>
 														<td><?=htmlspecialchars($factura['usuario_nombre'] ?? 'N/A');?></td>
 														<td>$<?=number_format($valorFactura, 0, ',', '.');?></td>

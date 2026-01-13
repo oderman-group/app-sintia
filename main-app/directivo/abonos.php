@@ -394,6 +394,81 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Formulario de Filtros -->
+                                    <?php
+                                    $tieneFiltrosActivos = !empty($_GET['fecha_desde']) || !empty($_GET['fecha_hasta']) || !empty($_GET['metodo_pago']);
+                                    $borderColor = $tieneFiltrosActivos ? '#667eea' : '#dee2e6';
+                                    $bgColor = $tieneFiltrosActivos ? '#f0f4ff' : '#f8f9fa';
+                                    ?>
+                                    <div class="row mb-3" style="margin-bottom: 20px; background: <?=$bgColor?>; padding: 15px; border-radius: 8px; border: 2px solid <?=$borderColor?>;">
+                                        <div class="col-md-12">
+                                            <h6 style="margin-bottom: 15px; font-weight: 600; color: #495057;">
+                                                <i class="fa fa-filter"></i> Filtros de Búsqueda
+                                                <?php if ($tieneFiltrosActivos) { ?>
+                                                    <span class="badge badge-primary" style="margin-left: 10px; font-size: 11px;">Activo</span>
+                                                <?php } ?>
+                                            </h6>
+                                            <form method="GET" action="" id="formFiltros">
+                                                <input type="hidden" name="mostrar_anulados" value="<?= !empty($_GET['mostrar_anulados']) ? $_GET['mostrar_anulados'] : ''; ?>">
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="fecha_desde">Fecha Desde:</label>
+                                                            <input type="date" class="form-control" id="fecha_desde" name="fecha_desde" value="<?= !empty($_GET['fecha_desde']) ? $_GET['fecha_desde'] : ''; ?>">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="fecha_hasta">Fecha Hasta:</label>
+                                                            <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta" value="<?= !empty($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : ''; ?>">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label for="metodo_pago">Método de Pago:</label>
+                                                            <select class="form-control" id="metodo_pago" name="metodo_pago">
+                                                                <option value="">-- Todos --</option>
+                                                                <?php
+                                                                // Obtener métodos de pago únicos
+                                                                try {
+                                                                    $consultaMetodos = mysqli_query($conexion, "SELECT DISTINCT payment_method 
+                                                                        FROM ".BD_FINANCIERA.".payments_invoiced 
+                                                                        WHERE institucion = {$config['conf_id_institucion']} 
+                                                                        AND year = {$_SESSION["bd"]}
+                                                                        AND payment_method IS NOT NULL 
+                                                                        AND payment_method != ''
+                                                                        ORDER BY payment_method ASC");
+                                                                    if ($consultaMetodos) {
+                                                                        while ($metodo = mysqli_fetch_array($consultaMetodos, MYSQLI_BOTH)) {
+                                                                            $selected = (!empty($_GET['metodo_pago']) && $_GET['metodo_pago'] == $metodo['payment_method']) ? 'selected' : '';
+                                                                            echo '<option value="'.htmlspecialchars($metodo['payment_method']).'" '.$selected.'>'.htmlspecialchars($metodo['payment_method']).'</option>';
+                                                                        }
+                                                                    }
+                                                                } catch (Exception $e) {
+                                                                    // Silenciar error
+                                                                }
+                                                                ?>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>&nbsp;</label>
+                                                            <div>
+                                                                <button type="submit" class="btn btn-primary" style="margin-right: 5px;">
+                                                                    <i class="fa fa-search"></i> Filtrar
+                                                                </button>
+                                                                <a href="abonos.php" class="btn btn-secondary">
+                                                                    <i class="fa fa-eraser"></i> Limpiar
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
 									
                                         <div class="table-scrollable">
                                     		<table id="example1" class="display" style="width:100%;">
@@ -417,7 +492,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     <?php $detallesAbonos = []; ?>
 													<?php
                                                         $incluirAnulados = !empty($_GET['mostrar_anulados']) && $_GET['mostrar_anulados'] == '1';
-                                                        $consulta= Movimientos::listarAbonos($conexion, $config, $incluirAnulados);
+                                                        $fechaDesde = !empty($_GET['fecha_desde']) ? $_GET['fecha_desde'] : null;
+                                                        $fechaHasta = !empty($_GET['fecha_hasta']) ? $_GET['fecha_hasta'] : null;
+                                                        $metodoPago = !empty($_GET['metodo_pago']) ? $_GET['metodo_pago'] : null;
+                                                        $consulta= Movimientos::listarAbonos($conexion, $config, $incluirAnulados, $fechaDesde, $fechaHasta, $metodoPago);
                                                         $contReg = 1;
                                                         while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
 
@@ -563,10 +641,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <td>
                                                             <i class="fa fa-chevron-right expand-btn" id="expand<?=$resultado['id'];?>"></i>
                                                         </td>
-                                                        <td>
-                                                            <?=$contReg;?>
+                                                        <td data-order="<?=$resultado['id'];?>">
+                                                            <strong style="color: #667eea;">#<?=$resultado['id'];?></strong>
                                                             <?php if ($abonoAnulado) { ?>
-                                                                <span class="badge badge-warning" style="margin-left: 5px;" title="Abono anulado">ANULADO</span>
+                                                                <br><span class="badge badge-warning" style="margin-top: 5px;" title="Abono anulado">ANULADO</span>
                                                             <?php } ?>
                                                         </td>
 														<td><?=$resultado['registration_date'];?></td>
@@ -1007,7 +1085,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                     { "orderable": false, "searchable": false, "targets": -1 }
                     <?php }?>
                 ],
-                "order": [[1, 'desc']],
+                "order": [[1, 'asc']],
                 "drawCallback": function(settings) {
                     // Recalcular totales cada vez que se redibuja la tabla
                     totalizarAbonosFooter();
@@ -1125,19 +1203,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
         // Manejar el checkbox de mostrar abonos anulados
         $(document).ready(function() {
             $('#mostrarAnulados').on('change', function() {
-                var url = window.location.pathname;
-                var mostrarAnulados = $(this).is(':checked') ? '1' : '0';
-                
-                // Construir la URL con el parámetro
-                var params = new URLSearchParams(window.location.search);
-                if (mostrarAnulados == '1') {
-                    params.set('mostrar_anulados', '1');
-                } else {
-                    params.delete('mostrar_anulados');
-                }
-                
-                // Redirigir a la nueva URL
-                window.location.href = url + (params.toString() ? '?' + params.toString() : '');
+                // Actualizar el valor del campo oculto en el formulario y enviarlo
+                $('input[name="mostrar_anulados"]').val($(this).is(':checked') ? '1' : '');
+                $('#formFiltros').submit();
             });
         });
     </script>
