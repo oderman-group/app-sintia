@@ -1109,7 +1109,29 @@ input:checked + .toggle-slider:before {
                                                 <option value="1" <?= ($datosInstitucion['ins_bloqueada'] == 1) ? 'selected' : ''; ?>>Sí</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-8 mb-3">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label"><i class="fas fa-building"></i> Tipo de Cuenta</label>
+                                            <?php 
+                                            $esInterna = ($datosInstitucion['is_internal_oderman'] == 1 || $datosInstitucion['is_internal_oderman'] == '1');
+                                            if ($esInterna) { ?>
+                                                <select class="form-control" name="is_internal_oderman" id="is_internal_oderman" disabled style="background-color: #fff3cd; border-color: #ffc107;">
+                                                    <option value="1" selected>Cuenta Interna Oderman</option>
+                                                </select>
+                                                <input type="hidden" name="is_internal_oderman" value="1">
+                                                <small class="text-warning d-block mt-2">
+                                                    <i class="fas fa-lock"></i> Una vez marcada como cuenta interna, no puede cambiarse por seguridad.
+                                                </small>
+                                            <?php } else { ?>
+                                                <select class="form-control" name="is_internal_oderman" id="is_internal_oderman">
+                                                    <option value="0" <?= (!$esInterna) ? 'selected' : ''; ?>>Cliente Externo</option>
+                                                    <option value="1">Cuenta Interna Oderman</option>
+                                                </select>
+                                                <small class="text-muted d-block mt-2">
+                                                    <i class="fas fa-info-circle"></i> Las cuentas internas son para uso de Oderman y no pueden revertirse.
+                                                </small>
+                                            <?php } ?>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
                                             <label class="form-label"><i class="fas fa-calendar-plus"></i> Años Disponibles</label>
                                             <input type="text" class="form-control" name="ins_years" id="ins_years" value="<?= $datosInstitucion['ins_years']; ?>" placeholder="2023,2024,2025">
                                             <small class="text-muted">Separados por comas (ej: 2023,2024,2025)</small>

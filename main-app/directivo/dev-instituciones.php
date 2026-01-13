@@ -124,6 +124,16 @@ $Plataforma = new Plataforma;
                                                 </select>
                                             </div>
                                             
+                                            <!-- Filtro Tipo de Cuenta -->
+                                            <div class="col-md-2 mb-3">
+                                                <label><i class="fa fa-building"></i> Tipo</label>
+                                                <select id="filtro_tipo_cuenta" class="form-control">
+                                                    <option value="todos">Todos</option>
+                                                    <option value="1">Interna Oderman</option>
+                                                    <option value="0">Cliente Externo</option>
+                                                </select>
+                                            </div>
+                                            
                                             <!-- Registros por página -->
                                             <div class="col-md-2 mb-3">
                                                 <label><i class="fa fa-list"></i> Mostrar</label>
@@ -274,7 +284,7 @@ $(document).ready(function() {
     });
     
     // Cambio en filtros - recargar inmediatamente
-    $('#filtro_plan, #filtro_estado, #filtro_bloqueado').on('change', function() {
+    $('#filtro_plan, #filtro_estado, #filtro_bloqueado, #filtro_tipo_cuenta').on('change', function() {
         paginaActual = 1;
         cargarInstituciones();
     });
@@ -292,6 +302,7 @@ $(document).ready(function() {
         $('#filtro_plan').val('todos');
         $('#filtro_estado').val('todos');
         $('#filtro_bloqueado').val('todos');
+        $('#filtro_tipo_cuenta').val('todos');
         $('#registros_por_pagina').val('20');
         paginaActual = 1;
         registrosPorPagina = 20;
@@ -313,7 +324,8 @@ function cargarInstituciones() {
             busqueda: $('#filtro_busqueda').val(),
             plan: $('#filtro_plan').val(),
             estado: $('#filtro_estado').val(),
-            bloqueado: $('#filtro_bloqueado').val()
+            bloqueado: $('#filtro_bloqueado').val(),
+            tipo_cuenta: $('#filtro_tipo_cuenta').val()
         },
         success: function(response) {
             $('#loading_instituciones').hide();
@@ -349,6 +361,13 @@ function renderizarInstituciones(instituciones, paginacion) {
             let planNombre = inst.plns_nombre || '<span class="text-muted">Sin plan</span>';
             let yearDefault = inst.ins_year_default || '-';
             
+            // Indicador de cuenta interna
+            let badgeInterno = '';
+            let isInternal = inst.is_internal_oderman == 1 || inst.is_internal_oderman == '1';
+            if (isInternal) {
+                badgeInterno = '<span class="badge badge-warning ml-2" title="Cuenta interna de Oderman"><i class="fa fa-home"></i> INTERNA</span>';
+            }
+            
             // Fila principal
             html += `
                 <tr id="Reg${inst.ins_id}" style="background-color:${bgColor};">
@@ -376,7 +395,7 @@ function renderizarInstituciones(instituciones, paginacion) {
                     <td>${inst.ins_id}</td>
                     <td><strong>${yearDefault}</strong></td>
                     <td>${inst.ins_fecha_inicio || '-'}</td>
-                    <td><strong>${inst.ins_nombre}</strong></td>
+                    <td><strong>${inst.ins_nombre}</strong>${badgeInterno}</td>
                     <td>${inst.ins_contacto_principal || '-'}</td>
                     <td>${planNombre}</td>
                     <td>${espacio}</td>
@@ -414,6 +433,11 @@ function renderizarInstituciones(instituciones, paginacion) {
                                     <p class="mb-2"><strong>Nombre:</strong><br><span class="text-muted">${inst.ins_nombre}</span></p>
                                     <p class="mb-2"><strong>Siglas:</strong><br><span class="text-muted">${inst.ins_siglas || 'N/A'}</span></p>
                                     <p class="mb-2"><strong>NIT:</strong><br><span class="text-muted">${inst.ins_nit || 'N/A'}</span></p>
+                                    <p class="mb-2"><strong>Tipo de Cuenta:</strong><br>
+                                        ${isInternal ? 
+                                            '<span class="badge badge-warning"><i class="fa fa-home"></i> Cuenta Interna Oderman</span>' : 
+                                            '<span class="badge badge-info"><i class="fa fa-user"></i> Cliente Externo</span>'}
+                                    </p>
                                     <p class="mb-2"><strong>Año por Defecto:</strong><br><span class="badge badge-info">${yearDefault}</span></p>
                                     <p class="mb-2"><strong>Base de Datos:</strong><br><span class="text-muted">${inst.ins_bd || 'N/A'}</span></p>
                                 </div>
