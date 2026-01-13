@@ -88,7 +88,16 @@ foreach ($data["data"] as $resultado) {
 		<td><?= $marcaDG . "" . strtoupper($resultado['uss_nombre'] . " " . $resultado['uss_nombre2'] . " " . $resultado['uss_apellido1'] . " " . $resultado['uss_apellido2']); ?></td>
 		<td><?= $marcaMediaTecnica . strtoupper($resultado['gra_nombre'] . " " . $resultado['gru_nombre']); ?></td>
 		<td><?= strtoupper(empty($resultado['mat_nombre'])?'':$resultado['mat_nombre']) . " (" . $resultado['mat_valor'] . "%)"; ?></td>
-		<td><?= $resultado['car_ih']; ?></td>
+		<td>
+			<span class="carga-ih-display" 
+				  data-carga-id="<?= $resultado['car_id']; ?>"
+				  data-ih="<?= htmlspecialchars($resultado['car_ih'], ENT_QUOTES); ?>"
+				  style="cursor: pointer; border-bottom: 1px dotted #999; padding: 2px 6px; border-radius: 4px; display: inline-block; min-width: 30px; text-align: center;"
+				  title="Clic para editar la intensidad horaria">
+				<?= $resultado['car_ih']; ?>
+			</span>
+			<i class="fa fa-edit text-muted ml-1" style="font-size: 0.8em;"></i>
+		</td>
 		<td><?php 
 			$periodoGrado = !empty($resultado['gra_periodos']) ? $resultado['gra_periodos'] : 4;
 			$periodoActual = $resultado['car_periodo'];

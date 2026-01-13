@@ -75,6 +75,16 @@ if($config['conf_doble_buscador'] == 1) {
 			background-color: #bbdefb !important;
 		}
 		
+		/* Estilos para edición inline de I.H. */
+		.carga-ih-display {
+			transition: background-color 0.2s ease, box-shadow 0.2s ease;
+		}
+		
+		.carga-ih-display:hover {
+			background-color: #e3f2fd !important;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+		
 		/* Estilos mejorados para el modal de edición masiva */
 		#editarMasivoModal .form-group {
 			margin-bottom: 20px;
@@ -1071,11 +1081,139 @@ if($config['conf_doble_buscador'] == 1) {
 				'</td>' +
 			'</tr>';
 
-			return html;
-		}
+		return html;
+	}
 
-		// JavaScript for bulk move cargas
-		var selectedCargas = [];
+	// ========================================
+	// EDICIÓN INLINE DE INTENSIDAD HORARIA (I.H.)
+	// ========================================
+	
+	// Edición inline del campo I.H.
+	$(document).on('click', '.carga-ih-display', function() {
+		var span = $(this);
+		var cargaId = span.data('carga-id');
+		var ihActual = span.data('ih');
+		
+		// Crear input temporal para editar
+		var input = $('<input type="number" class="form-control form-control-sm" style="display:inline-block; width:80px;" min="1" max="100" step="1">');
+		input.val(ihActual);
+		
+		// Reemplazar span por input
+		span.replaceWith(input);
+		input.focus();
+		input.select();
+		
+		// Guardar al perder el foco o presionar Enter
+		input.on('blur keypress', function(e) {
+			if (e.type === 'blur' || e.which === 13) {
+				e.preventDefault();
+				var nuevoIH = input.val().trim();
+				
+				// Validar que sea un número válido
+				if (!nuevoIH || isNaN(nuevoIH) || nuevoIH < 1) {
+					$.toast({
+						heading: 'Error',
+						text: 'Debe ingresar un número válido mayor a 0',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 3000
+					});
+					input.replaceWith(span);
+					return;
+				}
+				
+				if (nuevoIH && nuevoIH !== ihActual.toString()) {
+					guardarCambioIH(cargaId, nuevoIH, input, span);
+				} else {
+					input.replaceWith(span);
+				}
+			}
+		});
+		
+		// Cancelar con ESC
+		input.on('keydown', function(e) {
+			if (e.which === 27) { // ESC
+				input.replaceWith(span);
+			}
+		});
+	});
+	
+	// Función para guardar cambios de I.H. vía AJAX
+	function guardarCambioIH(cargaId, nuevoIH, inputElement, spanElement) {
+		// Mostrar indicador de carga
+		inputElement.prop('disabled', true).css('opacity', '0.5');
+		
+		$.ajax({
+			url: 'ajax-actualizar-carga-ih.php',
+			method: 'POST',
+			data: {
+				carga_id: cargaId,
+				ih: nuevoIH
+			},
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					// Actualizar el span con el nuevo valor
+					spanElement.text(nuevoIH);
+					spanElement.data('ih', nuevoIH);
+					
+					// Reemplazar input por span actualizado
+					inputElement.replaceWith(spanElement);
+					
+					// Mostrar notificación de éxito
+					$.toast({
+						heading: 'Éxito',
+						text: response.message || 'Intensidad Horaria actualizada correctamente',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 3000
+					});
+					
+					// Actualizar también en la fila expandible si está visible
+					var expandBtn = $('button[data-id="' + cargaId + '"]');
+					if (expandBtn.length) {
+						expandBtn.data('ih', nuevoIH);
+						
+						// Si la fila está expandida, actualizar el valor allí también
+						var expandRow = expandBtn.closest('tr').next('tr.expandable-row');
+						if (expandRow.length && expandRow.is(':visible')) {
+							expandRow.find('.info-item:contains("I.H:") .text-dark').text(nuevoIH);
+						}
+					}
+				} else {
+					// Mostrar error y revertir
+					inputElement.replaceWith(spanElement);
+					
+					$.toast({
+						heading: 'Error',
+						text: response.message || 'No se pudo actualizar la Intensidad Horaria',
+						position: 'top-right',
+						loaderBg: '#bf441d',
+						icon: 'error',
+						hideAfter: 5000
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error al actualizar I.H.:', error);
+				inputElement.replaceWith(spanElement);
+				
+				$.toast({
+					heading: 'Error',
+					text: 'Error de conexión. Intente nuevamente.',
+					position: 'top-right',
+					loaderBg: '#bf441d',
+					icon: 'error',
+					hideAfter: 5000
+				});
+			}
+		});
+	}
+
+	// JavaScript for bulk move cargas
+	var selectedCargas = [];
 
 		$('#selectAllCargas').on('change', function() {
 			if (this.checked) {
