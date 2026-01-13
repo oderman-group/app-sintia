@@ -325,6 +325,10 @@ function eliminarDatosInstitucion($conexion, $config, $baseDatosServicios, $insI
             $stmt = $conexionPDO->prepare("DELETE FROM " . BD_ADMIN . ".reporte_errores WHERE rperr_institucion = ?");
             $stmt->execute([$insId]);
             $datosEliminados['reporte_errores'] = $stmt->rowCount();
+            
+            $stmt = $conexionPDO->prepare("DELETE FROM " . BD_ADMIN . ".comentarios WHERE adcom_institucion = ?");
+            $stmt->execute([$insId]);
+            $datosEliminados['comentarios'] = $stmt->rowCount();
         }
         
         // ELIMINAR REGISTRO DE INSTITUCIÓN (si se seleccionó institución completa)

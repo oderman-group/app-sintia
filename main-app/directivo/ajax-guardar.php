@@ -24,9 +24,15 @@ if($_POST["operacion"]==3){
 		$sql = "UPDATE ".$baseDatosServicios.".instituciones SET ins_bloqueada=? 
 		        WHERE ins_id=? AND ins_enviroment=?";
 		$stmt = $conexionPDO->prepare($sql);
-		$stmt->bindParam(1, $_POST["valor"], PDO::PARAM_STR);
-		$stmt->bindParam(2, $_POST["idR"], PDO::PARAM_STR);
-		$stmt->bindParam(3, ENVIROMENT, PDO::PARAM_STR);
+		
+		// Asignar valores a variables para bindParam
+		$valor = $_POST["valor"];
+		$idR = $_POST["idR"];
+		$enviroment = ENVIROMENT;
+		
+		$stmt->bindParam(1, $valor, PDO::PARAM_STR);
+		$stmt->bindParam(2, $idR, PDO::PARAM_STR);
+		$stmt->bindParam(3, $enviroment, PDO::PARAM_STR);
 		$stmt->execute();
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");
