@@ -1191,7 +1191,12 @@ if($config['conf_doble_buscador'] == 1) {
                                             </div>
                                         </div>
                                     </div>
-                      				<?php include("enlaces-paginacion.php");?>
+                      				<?php
+									// Paginación (server-side por defecto). Cuando haya filtrado AJAX, este contenedor se reemplaza con paginación AJAX.
+									echo '<div id="paginacion-estudiantes">';
+									include("enlaces-paginacion.php");
+									echo '</div>';
+									?>
                                 </div>
                             </div>
                         </div>
@@ -1838,7 +1843,7 @@ if($config['conf_doble_buscador'] == 1) {
 			}
 			
 			// Función para recargar la tabla de estudiantes sin recargar toda la página
-			function recargarTablaEstudiantes() {
+			function recargarTablaEstudiantes(page = 1) {
 				console.log('Recargando tabla de estudiantes...');
 				
 				// Mostrar loader
@@ -1849,6 +1854,11 @@ if($config['conf_doble_buscador'] == 1) {
 				var grupos = $('#filtro_grupos').val() || [];
 				var estados = $('#filtro_estados').val() || [];
 				var busqueda = $('#filtro_busqueda').val() || '';
+				var busquedaNormalizada = normalizarBusqueda(busqueda);
+				if (busquedaNormalizada !== busqueda) {
+					busqueda = busquedaNormalizada;
+					$('#filtro_busqueda').val(busquedaNormalizada);
+				}
 				var fechaDesde = $('#filtro_fecha_desde').val() || '';
 				var fechaHasta = $('#filtro_fecha_hasta').val() || '';
 				
@@ -1861,7 +1871,8 @@ if($config['conf_doble_buscador'] == 1) {
 						estados: estados,
 						busqueda: busqueda,
 						fechaDesde: fechaDesde,
-						fechaHasta: fechaHasta
+						fechaHasta: fechaHasta,
+						page: page
 					},
 					dataType: 'json',
 					success: function(response) {
@@ -1870,6 +1881,9 @@ if($config['conf_doble_buscador'] == 1) {
 						if (response.success) {
 							// Actualizar el contenido de la tabla
 							$('#matriculas_result').html(response.html);
+							if (response.paginationHtml !== undefined && $('#paginacion-estudiantes').length) {
+								$('#paginacion-estudiantes').html(response.paginationHtml);
+							}
 							
 							// Limpiar las selecciones
 							selectedEstudiantes = [];
@@ -1877,6 +1891,8 @@ if($config['conf_doble_buscador'] == 1) {
 							toggleActionButtons();
 							
 							console.log('Tabla de estudiantes recargada exitosamente');
+							// Reaplicar resaltado si hay búsqueda
+							aplicarResaltadoBusqueda(busqueda);
 						} else {
 							console.error('Error al recargar tabla:', response.error);
 							$.toast({
@@ -2041,14 +2057,77 @@ if($config['conf_doble_buscador'] == 1) {
 			}
 			
 			// Función para aplicar filtros
-			function aplicarFiltros() {
+			function normalizarBusqueda(valor) {
+				if (!valor) return '';
+				return valor.replace(/\s+/g, ' ').trim();
+			}
+
+			function escapeRegExp(string) {
+				return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			}
+
+			function aplicarResaltadoBusqueda(busqueda) {
+				const criterio = normalizarBusqueda(busqueda);
+
+				// Restaurar contenido original antes de re-resaltar
+				$('#matriculas_result .editable-name').each(function() {
+					const $el = $(this);
+					if ($el.data('origText') !== undefined) {
+						$el.text($el.data('origText'));
+					} else {
+						$el.data('origText', $el.text());
+					}
+				});
+				$('#matriculas_result td.cell-documento').each(function() {
+					const $el = $(this);
+					if ($el.data('origText') !== undefined) {
+						$el.text($el.data('origText'));
+					} else {
+						$el.data('origText', $el.text());
+					}
+				});
+
+				if (!criterio) return;
+
+				// Resaltar por tokens (mejor UX: "mejia martinez" resalta ambas partes)
+				const tokens = criterio.split(' ').filter(t => t.length > 0);
+				if (!tokens.length) return;
+
+				const wrapMatches = function($el) {
+					let html = $el.text();
+					tokens.forEach(tok => {
+						const re = new RegExp(escapeRegExp(tok), 'gi');
+						html = html.replace(re, function(m) { return '<span class="sintia-highlight-match">' + m + '</span>'; });
+					});
+					$el.html(html);
+				};
+
+				// Solo columnas visibles: documento + nombre
+				$('#matriculas_result td.cell-documento').each(function(){ wrapMatches($(this)); });
+				$('#matriculas_result .editable-name').each(function(){ wrapMatches($(this)); });
+			}
+
+			// Estilo de resaltado (solo una vez)
+			if (!document.getElementById('sintiaHighlightStyle')) {
+				const st = document.createElement('style');
+				st.id = 'sintiaHighlightStyle';
+				st.textContent = '.sintia-highlight-match{background:#fff3cd; padding:0 2px; border-radius:2px;}';
+				document.head.appendChild(st);
+			}
+
+			function aplicarFiltros(page = 1) {
 				// Deshabilitar controles al inicio
 				deshabilitarControlesFiltro();
 				
 				const cursos = $('#filtro_cursos').val() || [];
 				const grupos = $('#filtro_grupos').val() || [];
 				const estados = $('#filtro_estados').val() || [];
-				const busqueda = $('#filtro_busqueda').val() || '';
+				let busqueda = $('#filtro_busqueda').val() || '';
+				const busquedaNormalizada = normalizarBusqueda(busqueda);
+				if (busquedaNormalizada !== busqueda) {
+					busqueda = busquedaNormalizada;
+					$('#filtro_busqueda').val(busquedaNormalizada);
+				}
 				const fechaDesde = $('#filtro_fecha_desde').val() || '';
 				const fechaHasta = $('#filtro_fecha_hasta').val() || '';
 				
@@ -2068,7 +2147,8 @@ if($config['conf_doble_buscador'] == 1) {
 						estados: estados,
 						busqueda: busqueda,
 						fechaDesde: fechaDesde,
-						fechaHasta: fechaHasta
+						fechaHasta: fechaHasta,
+						page: page
 					},
 					dataType: 'json',
 					success: function(response) {
@@ -2082,6 +2162,32 @@ if($config['conf_doble_buscador'] == 1) {
 						if (response.success) {
 							// Insertar el HTML
 							$('#matriculas_result').html(response.html);
+
+							// Actualizar paginación (filtrada) si viene en la respuesta
+							if (response.paginationHtml !== undefined && $('#paginacion-estudiantes').length) {
+								$('#paginacion-estudiantes').html(response.paginationHtml);
+							}
+
+							// Persistir filtros en la URL (sin recargar) para mantener contexto
+							try {
+								const urlParams = new URLSearchParams(window.location.search);
+								// página
+								if (response.page) urlParams.set('nume', btoa(String(response.page))); else urlParams.delete('nume');
+
+								// limpiar y setear filtros (arrays)
+								urlParams.delete('filtro_cursos[]'); urlParams.delete('filtro_grupos[]'); urlParams.delete('filtro_estados[]');
+								urlParams.delete('filtro_cursos'); urlParams.delete('filtro_grupos'); urlParams.delete('filtro_estados');
+								cursos.forEach(v => urlParams.append('filtro_cursos[]', v));
+								grupos.forEach(v => urlParams.append('filtro_grupos[]', v));
+								estados.forEach(v => urlParams.append('filtro_estados[]', v));
+
+								if (busqueda.trim() !== '') urlParams.set('busqueda', busqueda.trim()); else urlParams.delete('busqueda');
+								if (fechaDesde) urlParams.set('fecha_desde', fechaDesde); else urlParams.delete('fecha_desde');
+								if (fechaHasta) urlParams.set('fecha_hasta', fechaHasta); else urlParams.delete('fecha_hasta');
+
+								const nuevaUrl = window.location.pathname + '?' + urlParams.toString();
+								window.history.replaceState({}, '', nuevaUrl);
+							} catch (e) {}
 							
 							// Forzar que TODAS las filas expandibles estén completamente ocultas
 							$('#matriculas_result tr.expandable-row').each(function() {
@@ -2093,6 +2199,9 @@ if($config['conf_doble_buscador'] == 1) {
 							// Resetear todos los botones al estado inicial
 							$('.expand-btn').removeClass('text-primary').addClass('text-secondary');
 							$('.expand-btn i').removeClass('fa-chevron-down').addClass('fa-chevron-right');
+
+							// Resaltar coincidencias del criterio buscado en columnas visibles
+							aplicarResaltadoBusqueda(busqueda);
 							
 							console.log('Filas expandibles después de filtrar:', $('#matriculas_result tr.expandable-row').length);
 							console.log('Filas visibles:', $('#matriculas_result tr.expandable-row:visible').length);
@@ -2146,10 +2255,19 @@ if($config['conf_doble_buscador'] == 1) {
 					}
 				});
 			}
+
+			// Click en paginación filtrada (AJAX)
+			$(document).on('click', '.js-estu-page', function(e) {
+				e.preventDefault();
+				const page = parseInt($(this).data('page'), 10);
+				if (!isNaN(page) && page > 0) {
+					aplicarFiltros(page);
+				}
+			});
 			
 			// Aplicar filtros al hacer clic en el botón
 			$('#btnAplicarFiltros').on('click', function() {
-				aplicarFiltros();
+				aplicarFiltros(1);
 			});
 			
 			// Limpiar filtros
@@ -2174,20 +2292,20 @@ if($config['conf_doble_buscador'] == 1) {
 				// Aplicar filtros después de un breve delay para evitar múltiples llamadas
 				clearTimeout(window.filtroTimeout);
 				window.filtroTimeout = setTimeout(function() {
-					aplicarFiltros();
+					aplicarFiltros(1);
 				}, 500);
 			});
 			
 			// Búsqueda al hacer clic en el botón
 			$('#btnBuscar').on('click', function() {
-				aplicarFiltros();
+				aplicarFiltros(1);
 			});
 			
 			// Búsqueda al presionar Enter
 			$('#filtro_busqueda').on('keypress', function(e) {
 				if (e.which === 13) { // Enter key
 					e.preventDefault();
-					aplicarFiltros();
+					aplicarFiltros(1);
 				}
 			});
 			
@@ -2196,7 +2314,7 @@ if($config['conf_doble_buscador'] == 1) {
 				validarFechas();
 				clearTimeout(window.filtroTimeout);
 				window.filtroTimeout = setTimeout(function() {
-					aplicarFiltros();
+					aplicarFiltros(1);
 				}, 500);
 			});
 			

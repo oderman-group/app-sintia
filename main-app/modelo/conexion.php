@@ -101,7 +101,8 @@ if (empty($_SESSION["inst"])) {
 
 	// Crear una instancia de PDO
     $conexionPDO = new PDO("mysql:host=".SERVIDOR_CONEXION.";dbname=".BD_ADMIN, USUARIO_CONEXION, CLAVE_CONEXION);
-	$conexionPDO->exec("SET NAMES 'utf8mb4'");
+	$conexionPDO->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+	$conexionPDO->exec("SET collation_connection = 'utf8mb4_unicode_ci'");
 
     // Establecer el modo de error PDO a excepciones
     $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -137,5 +138,9 @@ if (empty($_SESSION["inst"])) {
     	printf("Error cargando el conjunto de caracteres utf8mb4: %s\n", mysqli_error($link));
     	exit();
     }
+    
+    // Establecer collation utf8mb4_unicode_ci explícitamente para evitar conflictos
+    mysqli_query($conexion, "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    mysqli_query($conexion, "SET collation_connection = 'utf8mb4_unicode_ci'");
 
 }

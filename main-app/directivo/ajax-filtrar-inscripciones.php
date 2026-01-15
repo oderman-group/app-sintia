@@ -13,6 +13,74 @@ try {
     $anios = isset($_POST['anios']) ? $_POST['anios'] : [];
     $busqueda = isset($_POST['busqueda']) ? trim($_POST['busqueda']) : '';
     $tabActivo = isset($_POST['tab']) ? $_POST['tab'] : 'visibles';
+    $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+    if ($page < 1) { $page = 1; }
+
+    $registrosPorPagina = !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20;
+    if ($registrosPorPagina < 1) { $registrosPorPagina = 20; }
+
+    $buildPaginationHtml = function(int $paginaActual, int $totalRegistros, int $porPagina) {
+        if ($totalRegistros <= 0) {
+            return '';
+        }
+        $totalPaginas = (int)ceil($totalRegistros / $porPagina);
+        if ($totalPaginas < 1) { $totalPaginas = 1; }
+        if ($paginaActual > $totalPaginas) { $paginaActual = $totalPaginas; }
+
+        $inicio = (($paginaActual - 1) * $porPagina);
+        $fin = min($inicio + $porPagina, $totalRegistros);
+        $ant = $paginaActual - 1;
+        $sig = $paginaActual + 1;
+
+        ob_start();
+        ?>
+        <div style="text-align:center">
+            <ul class="pagination pg-dark justify-content-center pb-5 pt-5 mb-0" style="float: none; padding-bottom: 5px!important;">
+                <li class="page-item">
+                    <?php if ($paginaActual > 1) { ?>
+                        <a class="page-link js-insc-page" data-page="<?= (int)$ant; ?>" href="#">Previous</a>
+                    <?php } else { ?>
+                        <span class="page-link">Previous</span>
+                    <?php } ?>
+                </li>
+                <?php
+                for ($i = 1; $i <= $totalPaginas; $i++) {
+                    if ($i == 1 || $i == $totalPaginas || ($i >= $paginaActual - 2 && $i <= $paginaActual + 2)) {
+                        if ($i == $paginaActual) {
+                            ?>
+                            <li class="page-item active" style="padding-left: 5px!important;">
+                                <a class="page-link"><?= (int)$i; ?></a>
+                            </li>
+                            <?php
+                        } else {
+                            ?>
+                            <li class="page-item" style="padding-left: 5px!important;">
+                                <a class="page-link js-insc-page" data-page="<?= (int)$i; ?>" href="#"><?= (int)$i; ?></a>
+                            </li>
+                            <?php
+                        }
+                    } elseif (($i == 2 && $paginaActual > 3) || ($i == $totalPaginas - 1 && $paginaActual < $totalPaginas - 2)) {
+                        ?>
+                        <li class="page-item" style="padding-left: 5px!important;">
+                            <span class="page-link">...</span>
+                        </li>
+                        <?php
+                    }
+                }
+                ?>
+                <li class="page-item" style="padding-left: 5px!important;">
+                    <?php if ($paginaActual < $totalPaginas) { ?>
+                        <a class="page-link js-insc-page" data-page="<?= (int)$sig; ?>" href="#">Next</a>
+                    <?php } else { ?>
+                        <span class="page-link">Next</span>
+                    <?php } ?>
+                </li>
+            </ul>
+            <p>Mostrando <?= (int)($inicio + 1); ?> a <?= (int)$fin; ?> de <?= (int)$totalRegistros; ?> resultados totales</p>
+        </div>
+        <?php
+        return ob_get_clean();
+    };
     
     // Construir filtro SQL base según el tab activo
     if ($tabActivo === 'ocultos') {
@@ -83,7 +151,16 @@ try {
     
     // Preparar datos para el componente
     $data["data"] = $listaInscripciones;
-    $contReg = 1;
+    // Paginación (sobre la lista ya deduplicada)
+    $totalFiltrado = count($listaInscripciones);
+    $totalPaginas = $totalFiltrado > 0 ? (int)ceil($totalFiltrado / $registrosPorPagina) : 0;
+    if ($totalPaginas > 0 && $page > $totalPaginas) { $page = $totalPaginas; }
+    $inicio = ($page - 1) * $registrosPorPagina;
+    if ($inicio < 0) { $inicio = 0; }
+    $data["data"] = array_slice($listaInscripciones, $inicio, $registrosPorPagina);
+
+    // Para numeración si el componente lo respeta
+    $contReg = $inicio + 1;
     $mostrarOcultos = ($tabActivo === 'ocultos'); // Contexto según el tab activo
     
     $configAdmisiones = Inscripciones::configuracionAdmisiones($conexion, $baseDatosAdmisiones, $config['conf_id_institucion'], $_SESSION["bd"]);
@@ -115,7 +192,10 @@ try {
     echo json_encode([
         'success' => true,
         'html' => $html,
-        'total' => count($listaInscripciones),
+        'total' => $totalFiltrado,
+        'page' => $page,
+        'totalPages' => $totalPaginas,
+        'paginationHtml' => $buildPaginationHtml($page, $totalFiltrado, $registrosPorPagina),
         'filtros' => [
             'grados' => $grados,
             'estados' => $estados,

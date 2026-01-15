@@ -14,6 +14,74 @@ try {
     $busqueda = isset($_POST['busqueda']) ? trim($_POST['busqueda']) : '';
     $fechaDesde = isset($_POST['fechaDesde']) ? trim($_POST['fechaDesde']) : '';
     $fechaHasta = isset($_POST['fechaHasta']) ? trim($_POST['fechaHasta']) : '';
+    $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+    if ($page < 1) { $page = 1; }
+
+    $registrosPorPagina = !empty($config['conf_num_registros']) ? (int)$config['conf_num_registros'] : 20;
+    if ($registrosPorPagina < 1) { $registrosPorPagina = 20; }
+
+    $buildPaginationHtml = function(int $paginaActual, int $totalRegistros, int $porPagina) {
+        if ($totalRegistros <= 0) {
+            return '';
+        }
+        $totalPaginas = (int)ceil($totalRegistros / $porPagina);
+        if ($totalPaginas < 1) { $totalPaginas = 1; }
+        if ($paginaActual > $totalPaginas) { $paginaActual = $totalPaginas; }
+
+        $inicio = (($paginaActual - 1) * $porPagina);
+        $fin = min($inicio + $porPagina, $totalRegistros);
+        $ant = $paginaActual - 1;
+        $sig = $paginaActual + 1;
+
+        ob_start();
+        ?>
+        <div style="text-align:center">
+            <ul class="pagination pg-dark justify-content-center pb-5 pt-5 mb-0" style="float: none; padding-bottom: 5px!important;">
+                <li class="page-item">
+                    <?php if ($paginaActual > 1) { ?>
+                        <a class="page-link js-estu-page" data-page="<?= (int)$ant; ?>" href="#">Previous</a>
+                    <?php } else { ?>
+                        <span class="page-link">Previous</span>
+                    <?php } ?>
+                </li>
+                <?php
+                for ($i = 1; $i <= $totalPaginas; $i++) {
+                    if ($i == 1 || $i == $totalPaginas || ($i >= $paginaActual - 2 && $i <= $paginaActual + 2)) {
+                        if ($i == $paginaActual) {
+                            ?>
+                            <li class="page-item active" style="padding-left: 5px!important;">
+                                <a class="page-link"><?= (int)$i; ?></a>
+                            </li>
+                            <?php
+                        } else {
+                            ?>
+                            <li class="page-item" style="padding-left: 5px!important;">
+                                <a class="page-link js-estu-page" data-page="<?= (int)$i; ?>" href="#"><?= (int)$i; ?></a>
+                            </li>
+                            <?php
+                        }
+                    } elseif (($i == 2 && $paginaActual > 3) || ($i == $totalPaginas - 1 && $paginaActual < $totalPaginas - 2)) {
+                        ?>
+                        <li class="page-item" style="padding-left: 5px!important;">
+                            <span class="page-link">...</span>
+                        </li>
+                        <?php
+                    }
+                }
+                ?>
+                <li class="page-item" style="padding-left: 5px!important;">
+                    <?php if ($paginaActual < $totalPaginas) { ?>
+                        <a class="page-link js-estu-page" data-page="<?= (int)$sig; ?>" href="#">Next</a>
+                    <?php } else { ?>
+                        <span class="page-link">Next</span>
+                    <?php } ?>
+                </li>
+            </ul>
+            <p>Mostrando <?= (int)($inicio + 1); ?> a <?= (int)$fin; ?> de <?= (int)$totalRegistros; ?> resultados totales</p>
+        </div>
+        <?php
+        return ob_get_clean();
+    };
     
     // Log de filtros recibidos
     error_log("FILTRAR-ESTUDIANTES: Filtros recibidos:");
@@ -29,7 +97,17 @@ try {
     
     // Filtro de búsqueda general POTENTE
     if (!empty($busqueda)) {
-        $busquedaEscape = mysqli_real_escape_string($conexion, $busqueda);
+        // Normalizar espacios del término buscado (máximo 1 espacio)
+        $busquedaNorm = preg_replace('/\s+/u', ' ', $busqueda);
+        $busquedaNorm = trim($busquedaNorm);
+
+        $busquedaEscape = mysqli_real_escape_string($conexion, $busquedaNorm);
+        // Variante tolerante: convierte espacios en comodines para tolerar dobles espacios en BD (p.ej "mejia martinez" => "mejia%martinez")
+        $busquedaLike = mysqli_real_escape_string($conexion, str_replace(' ', '%', $busquedaNorm));
+
+        // Expresiones de nombre normalizadas (trim + concat_ws) para evitar dobles espacios entre campos vacíos
+        $nombreNormal_orden1 = "CONCAT_WS(' ', NULLIF(TRIM(mat_nombres),''), NULLIF(TRIM(mat_nombre2),''), NULLIF(TRIM(mat_primer_apellido),''), NULLIF(TRIM(mat_segundo_apellido),''))";
+        $nombreNormal_orden2 = "CONCAT_WS(' ', NULLIF(TRIM(mat_primer_apellido),''), NULLIF(TRIM(mat_segundo_apellido),''), NULLIF(TRIM(mat_nombres),''), NULLIF(TRIM(mat_nombre2),''))";
         
         // Búsqueda POTENTE y case-insensitive que busca en:
         // - 4 campos de nombres: mat_nombres, mat_nombre2, mat_primer_apellido, mat_segundo_apellido
@@ -72,7 +150,15 @@ try {
             mat_documento LIKE '%{$busquedaEscape}%' OR
             mat_email LIKE '%{$busquedaEscape}%' OR
             mat_codigo_tesoreria LIKE '%{$busquedaEscape}%' OR
-            uss.uss_usuario LIKE '%{$busquedaEscape}%'
+            uss.uss_usuario LIKE '%{$busquedaEscape}%' OR
+
+            -- Comparación por nombre completo normalizado (evita dobles espacios entre campos)
+            {$nombreNormal_orden1} LIKE '%{$busquedaEscape}%' OR
+            {$nombreNormal_orden2} LIKE '%{$busquedaEscape}%' OR
+
+            -- Variante tolerante a espacios extra en BD (espacios => %)
+            {$nombreNormal_orden1} LIKE '%{$busquedaLike}%' OR
+            {$nombreNormal_orden2} LIKE '%{$busquedaLike}%'
         )";
     }
     
@@ -140,8 +226,15 @@ try {
     }
     
     // Preparar datos para el componente (asegurando que todas las variables necesarias estén definidas)
-    $data["data"] = $estudiantes;
-    $data["dataTotal"] = count($estudiantes);
+    $totalFiltrado = count($estudiantes);
+    $totalPaginas = $totalFiltrado > 0 ? (int)ceil($totalFiltrado / $registrosPorPagina) : 0;
+    if ($totalPaginas > 0 && $page > $totalPaginas) { $page = $totalPaginas; }
+    $inicio = ($page - 1) * $registrosPorPagina;
+    if ($inicio < 0) { $inicio = 0; }
+
+    $data["data"] = array_slice($estudiantes, $inicio, $registrosPorPagina);
+    $data["dataTotal"] = $totalFiltrado;
+    $contReg = $inicio + 1;
     
     // Variables adicionales que el componente necesita
     require_once(ROOT_PATH."/main-app/class/Modulos.php");
@@ -177,7 +270,10 @@ try {
     echo json_encode([
         'success' => true,
         'html' => $html,
-        'total' => count($estudiantes),
+        'total' => $totalFiltrado,
+        'page' => $page,
+        'totalPages' => $totalPaginas,
+        'paginationHtml' => $buildPaginationHtml($page, $totalFiltrado, $registrosPorPagina),
         'filtros' => [
             'cursos' => $cursos,
             'grupos' => $grupos,

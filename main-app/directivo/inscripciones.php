@@ -606,7 +606,9 @@ if (empty($catalogoGrados)) {
                                             <!-- Paginación para visibles -->
                                             <?php 
                                             if (!empty($numRegistros) && $numRegistros > 0) {
+                                                echo '<div id="paginacion-visibles">';
                                                 include("enlaces-paginacion.php");
+                                                echo '</div>';
                                             }
                                             ?>
                                         </div>
@@ -712,7 +714,9 @@ if (empty($catalogoGrados)) {
                                             <!-- Paginación para ocultos -->
                                             <?php 
                                             if (!empty($numRegistros) && $numRegistros > 0) {
+                                                echo '<div id="paginacion-ocultos">';
                                                 include("enlaces-paginacion.php");
+                                                echo '</div>';
                                             }
                                             ?>
                                         </div>
@@ -926,7 +930,7 @@ if (empty($catalogoGrados)) {
 		}
 		
 		// Función para aplicar filtros de inscripciones
-		function aplicarFiltrosInscripciones() {
+		function aplicarFiltrosInscripciones(page = 1) {
 			// Deshabilitar controles al inicio
 			deshabilitarControlesFiltro();
 			
@@ -938,6 +942,7 @@ if (empty($catalogoGrados)) {
 			// Detectar qué tab está activo
 			const tabActivo = $('.tab-inscripcion.active').attr('id') === 'tab-ocultos' ? 'ocultos' : 'visibles';
 			const targetId = tabActivo === 'ocultos' ? '#inscripciones_ocultos_result' : '#inscripciones_result';
+			const paginacionTargetId = tabActivo === 'ocultos' ? '#paginacion-ocultos' : '#paginacion-visibles';
 			
 			console.log('Aplicando filtros inscripciones:', { grados, estados, anios, busqueda, tab: tabActivo });
 			
@@ -953,7 +958,8 @@ if (empty($catalogoGrados)) {
 					estados: estados,
 					anios: anios,
 					busqueda: busqueda,
-					tab: tabActivo
+					tab: tabActivo,
+					page: page
 				},
 				dataType: 'json',
 				success: function(response) {
@@ -965,6 +971,36 @@ if (empty($catalogoGrados)) {
 					if (response.success) {
 						// Insertar el HTML en el tab activo
 						$(targetId).html(response.html);
+
+						// Actualizar paginación del tab activo (si viene en la respuesta)
+						if (response.paginationHtml !== undefined && $(paginacionTargetId).length) {
+							$(paginacionTargetId).html(response.paginationHtml);
+						}
+
+						// Persistir filtros en la URL para que al navegar/recargar se mantengan
+						try {
+							const urlParams = new URLSearchParams(window.location.search);
+							urlParams.set('tab', tabActivo);
+							// Guardar página actual filtrada
+							if (response.page) {
+								urlParams.set('nume', btoa(String(response.page)));
+							} else {
+								urlParams.delete('nume');
+							}
+
+							// Limpiar y setear filtros (arrays)
+							urlParams.delete('filtro_grado[]'); urlParams.delete('filtro_estado[]'); urlParams.delete('filtro_anio[]');
+							urlParams.delete('filtro_grado'); urlParams.delete('filtro_estado'); urlParams.delete('filtro_anio');
+							grados.forEach(v => urlParams.append('filtro_grado[]', v));
+							estados.forEach(v => urlParams.append('filtro_estado[]', v));
+							anios.forEach(v => urlParams.append('filtro_anio[]', v));
+							if (busqueda.trim() !== '') urlParams.set('busqueda', busqueda.trim()); else urlParams.delete('busqueda');
+
+							const nuevaUrl = window.location.pathname + '?' + urlParams.toString();
+							window.history.replaceState({}, '', nuevaUrl);
+						} catch (e) {
+							// sin bloquear flujo
+						}
 						
 						// No necesitamos DataTables - la paginación se maneja del lado del servidor
 						
@@ -1018,17 +1054,26 @@ if (empty($catalogoGrados)) {
 				}
 			});
 		}
+
+		// Click en paginación filtrada (AJAX)
+		$(document).on('click', '.js-insc-page', function(e) {
+			e.preventDefault();
+			const page = parseInt($(this).data('page'), 10);
+			if (!isNaN(page) && page > 0) {
+				aplicarFiltrosInscripciones(page);
+			}
+		});
 		
 		// Botón de buscar
 		$('#btnBuscarInscripciones').on('click', function() {
-			aplicarFiltrosInscripciones();
+			aplicarFiltrosInscripciones(1);
 		});
 		
 		// Enter en el campo de búsqueda
 		$('#filtro_inscripciones_busqueda').on('keypress', function(e) {
 			if (e.which === 13) { // Enter key
 				e.preventDefault();
-				aplicarFiltrosInscripciones();
+				aplicarFiltrosInscripciones(1);
 			}
 		});
 		
@@ -1051,7 +1096,7 @@ if (empty($catalogoGrados)) {
 		$('.select2-multiple-inscripciones').on('change', function() {
 			clearTimeout(window.filtroInscripcionesTimeout);
 			window.filtroInscripcionesTimeout = setTimeout(function() {
-				aplicarFiltrosInscripciones();
+				aplicarFiltrosInscripciones(1);
 			}, 500);
 		});
 		
