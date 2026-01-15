@@ -7,6 +7,13 @@ require_once(ROOT_PATH."/main-app/class/Grupos.php");
 header('Content-Type: application/json');
 
 try {
+    // Paginación (mismo tamaño que usa cargas.php)
+    $limit = 200;
+    $page  = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+    if ($page < 1) { $page = 1; }
+    $offset = ($page - 1) * $limit;
+    $filtroLimite = "LIMIT {$offset}, {$limit}";
+
     // Recibir filtros
     $cursos = isset($_POST['cursos']) ? $_POST['cursos'] : [];
     $grupos = isset($_POST['grupos']) ? $_POST['grupos'] : [];
@@ -19,25 +26,30 @@ try {
     // Filtro de cursos (múltiple)
     if (!empty($cursos) && is_array($cursos)) {
         $cursosStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($cursos), $conexion), $cursos));
-        $filtro .= " AND car_curso IN ('{$cursosStr}')";
+        $filtro .= " AND car.car_curso IN ('{$cursosStr}')";
     }
     
     // Filtro de grupos (múltiple)
     if (!empty($grupos) && is_array($grupos)) {
         $gruposStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($grupos), $conexion), $grupos));
-        $filtro .= " AND car_grupo IN ('{$gruposStr}')";
+        $filtro .= " AND car.car_grupo IN ('{$gruposStr}')";
     }
     
     // Filtro de docentes (múltiple)
     if (!empty($docentes) && is_array($docentes)) {
         $docentesStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($docentes), $conexion), $docentes));
-        $filtro .= " AND car_docente IN ('{$docentesStr}')";
+        $filtro .= " AND car.car_docente IN ('{$docentesStr}')";
     }
     
     // Filtro de periodos (múltiple)
     if (!empty($periodos) && is_array($periodos)) {
-        $periodosStr = implode("','", array_map('mysqli_real_escape_string', array_fill(0, count($periodos), $conexion), $periodos));
-        $filtro .= " AND car_periodo IN ('{$periodosStr}')";
+        // periodos es numérico
+        $periodosNums = array_map('intval', $periodos);
+        $periodosNums = array_filter($periodosNums, function($p){ return $p > 0; });
+        if (!empty($periodosNums)) {
+            $periodosStr = implode(", ", $periodosNums);
+            $filtro .= " AND car.car_periodo IN ({$periodosStr})";
+        }
     }
     
     // Campos a seleccionar
@@ -51,8 +63,17 @@ try {
         "car.id_nuevo AS id_nuevo_carga"
     ];
     
-    // Consultar cargas con filtros (sin límite para mostrar todos los resultados filtrados)
-    $consulta = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", $filtro, "car.car_id", "", "", array(), $selectSql);
+    // Total filtrado para paginación
+    $totalCargas = CargaAcademicaOptimizada::contarTotalCargas($conexion, $config, $filtro);
+    $totalPaginas = ($totalCargas > 0) ? (int)ceil($totalCargas / $limit) : 1;
+    if ($page > $totalPaginas) {
+        $page = $totalPaginas;
+        $offset = ($page - 1) * $limit;
+        $filtroLimite = "LIMIT {$offset}, {$limit}";
+    }
+
+    // Consultar cargas con filtros (paginado)
+    $consulta = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", $filtro, "car.car_id", $filtroLimite, "", array(), $selectSql);
     
     $cargas = [];
     if (!empty($consulta)) {
@@ -105,10 +126,39 @@ try {
         $html = substr($html, 0, $matches[0][1] + strlen($matches[0][0]));
     }
     
+    // Construir HTML de paginación (similar al de cargas.php)
+    $paginationHtml = '';
+    if ($totalPaginas > 1) {
+        $paginationHtml .= '<nav aria-label="Paginación de cargas"><ul class="pagination justify-content-end">';
+        if ($page > 1) {
+            $paginationHtml .= '<li class="page-item"><a class="page-link cargas-page-link" href="#" data-page="1"><i class="fa fa-angle-double-left"></i> Primera</a></li>';
+            $paginationHtml .= '<li class="page-item"><a class="page-link cargas-page-link" href="#" data-page="'.($page-1).'"><i class="fa fa-angle-left"></i> Anterior</a></li>';
+        }
+
+        $rango = 2;
+        $inicio = max(1, $page - $rango);
+        $fin = min($totalPaginas, $page + $rango);
+        for ($i = $inicio; $i <= $fin; $i++) {
+            $active = ($i == $page) ? 'active' : '';
+            $paginationHtml .= '<li class="page-item '.$active.'"><a class="page-link cargas-page-link" href="#" data-page="'.$i.'">'.$i.'</a></li>';
+        }
+
+        if ($page < $totalPaginas) {
+            $paginationHtml .= '<li class="page-item"><a class="page-link cargas-page-link" href="#" data-page="'.($page+1).'">Siguiente <i class="fa fa-angle-right"></i></a></li>';
+            $paginationHtml .= '<li class="page-item"><a class="page-link cargas-page-link" href="#" data-page="'.$totalPaginas.'">Última <i class="fa fa-angle-double-right"></i></a></li>';
+        }
+        $paginationHtml .= '</ul></nav>';
+    }
+
     echo json_encode([
         'success' => true,
         'html' => $html,
-        'total' => count($cargas),
+        'total' => $totalCargas,
+        'page' => $page,
+        'limit' => $limit,
+        'totalPages' => $totalPaginas,
+        'countOnPage' => count($cargas),
+        'paginationHtml' => $paginationHtml,
         'filtros' => [
             'cursos' => $cursos,
             'grupos' => $grupos,

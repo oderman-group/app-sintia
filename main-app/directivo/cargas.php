@@ -695,24 +695,24 @@ if($config['conf_doble_buscador'] == 1) {
                           
                           <!-- Información de paginación y navegación -->
                           <div class="row mt-3">
-                              <div class="col-md-6">
+                              <div class="col-md-6" id="cargas_pagination_info">
                                   <div class="alert alert-info">
                                       <i class="fa fa-info-circle"></i> 
                                       Mostrando <strong><?= count($arraysDatos) ?></strong> de <strong><?= $totalCargas ?></strong> cargas totales
                                       (Página <?= $page ?> de <?= $totalPaginas ?>)
                                   </div>
                               </div>
-                              <div class="col-md-6 text-right">
+                              <div class="col-md-6 text-right" id="cargas_pagination">
                                   <nav aria-label="Paginación de cargas">
                                       <ul class="pagination justify-content-end">
                                           <?php if ($page > 1) { ?>
                                               <li class="page-item">
-                                                  <a class="page-link" href="?page=1<?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                  <a class="page-link cargas-page-link" href="?page=1<?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>" data-page="1">
                                                       <i class="fa fa-angle-double-left"></i> Primera
                                                   </a>
                                               </li>
                                               <li class="page-item">
-                                                  <a class="page-link" href="?page=<?= $page - 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                  <a class="page-link cargas-page-link" href="?page=<?= $page - 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>" data-page="<?= $page - 1 ?>">
                                                       <i class="fa fa-angle-left"></i> Anterior
                                                   </a>
                                               </li>
@@ -728,7 +728,7 @@ if($config['conf_doble_buscador'] == 1) {
                                               $active = ($i == $page) ? 'active' : '';
                                           ?>
                                               <li class="page-item <?= $active ?>">
-                                                  <a class="page-link" href="?page=<?= $i ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                  <a class="page-link cargas-page-link" href="?page=<?= $i ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>" data-page="<?= $i ?>">
                                                       <?= $i ?>
                                                   </a>
                                               </li>
@@ -736,12 +736,12 @@ if($config['conf_doble_buscador'] == 1) {
                                           
                                           <?php if ($page < $totalPaginas) { ?>
                                               <li class="page-item">
-                                                  <a class="page-link" href="?page=<?= $page + 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                  <a class="page-link cargas-page-link" href="?page=<?= $page + 1 ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>" data-page="<?= $page + 1 ?>">
                                                       Siguiente <i class="fa fa-angle-right"></i>
                                                   </a>
                                               </li>
                                               <li class="page-item">
-                                                  <a class="page-link" href="?page=<?= $totalPaginas ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>">
+                                                  <a class="page-link cargas-page-link" href="?page=<?= $totalPaginas ?><?= !empty($_GET['busqueda']) ? '&busqueda=' . $_GET['busqueda'] : '' ?><?= !empty($_GET['curso']) ? '&curso=' . $_GET['curso'] : '' ?>" data-page="<?= $totalPaginas ?>">
                                                       Última <i class="fa fa-angle-double-right"></i>
                                                   </a>
                                               </li>
@@ -1607,68 +1607,9 @@ if($config['conf_doble_buscador'] == 1) {
 		}
 		
 		// Función para recargar la tabla de cargas sin recargar toda la página
+		// (ahora reutiliza la carga paginada para conservar filtros/página)
 		function recargarTablaCargas() {
-			console.log('Recargando tabla de cargas...');
-			
-			// Mostrar loader
-			$('#gifCarga').show();
-			
-			// Obtener filtros actuales
-			var cursos = $('#filtro_cargas_cursos').val() || [];
-			var grupos = $('#filtro_cargas_grupos').val() || [];
-			var docentes = $('#filtro_cargas_docentes').val() || [];
-			var periodos = $('#filtro_cargas_periodos').val() || [];
-			
-			$.ajax({
-				url: 'ajax-filtrar-cargas.php',
-				type: 'POST',
-				data: {
-					cursos: cursos,
-					grupos: grupos,
-					docentes: docentes,
-					periodos: periodos
-				},
-				dataType: 'json',
-				success: function(response) {
-					$('#gifCarga').hide();
-					
-					if (response.success) {
-						// Destruir DataTable antes de reemplazar el contenido
-						if ($.fn.DataTable.isDataTable('#example1')) {
-							$('#example1').DataTable().destroy();
-						}
-						
-						// Actualizar el contenido de la tabla
-						$('#cargas_result').html(response.html);
-						
-						// Limpiar las selecciones
-						selectedCargas = [];
-						$('#selectAllCargas').prop('checked', false);
-						toggleActionButtons();
-						
-						// Reinicializar DataTable y tooltips
-						inicializarDataTableCargas();
-						$('[data-toggle="tooltip"]').tooltip();
-						
-						console.log('Tabla recargada exitosamente');
-					} else {
-						console.error('Error al recargar tabla:', response.error);
-						$.toast({
-							heading: 'Advertencia',
-							text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista.',
-							showHideTransition: 'slide',
-							icon: 'warning',
-							position: 'top-right',
-							hideAfter: 3000
-						});
-					}
-				},
-				error: function(xhr, status, error) {
-					$('#gifCarga').hide();
-					console.error('Error al recargar tabla:', error);
-					// No mostrar error ya que los cambios sí se aplicaron
-				}
-			});
+			cargarCargasPaginado(window._cargasCurrentPage || 1);
 		}
 		
 		
@@ -2293,6 +2234,20 @@ $(document).ready(function() {
 		});
 	});
 	
+	// Mantener foco/scroll al abrir/guardar en el modal de edición rápida
+	window._cargasScrollYBeforeModal = null;
+	window._cargasLastEditCargaId = null;
+	window._btnGuardarCargaHtml = $('#btnGuardarCarga').html();
+
+	function resetBotonGuardarCarga() {
+		var $btn = $('#btnGuardarCarga');
+		if (!$btn.length) return;
+		$btn.prop('disabled', false);
+		if (window._btnGuardarCargaHtml) {
+			$btn.html(window._btnGuardarCargaHtml);
+		}
+	}
+
 	// Manejar envío del formulario de edición
 	$('#formEditarCarga').on('submit', function(e) {
 		e.preventDefault();
@@ -2308,6 +2263,9 @@ $(document).ready(function() {
 			type: 'POST',
 			data: $(this).serialize(),
 			success: function(response) {
+				// Restaurar botón (si no, queda “Guardando...” para la próxima apertura del modal)
+				btnGuardar.html(textoOriginal).prop('disabled', false);
+
 				$.toast({
 					heading: 'Éxito',
 					text: 'Carga actualizada correctamente',
@@ -2317,11 +2275,20 @@ $(document).ready(function() {
 					hideAfter: 2000
 				});
 				
-				// Cerrar modal y recargar página
+				// Cerrar modal y recargar SOLO tabla (sin perder foco/scroll)
 				$('#modalEditarCarga').modal('hide');
 				setTimeout(function() {
-					location.reload();
-				}, 1000);
+					// Recargar tabla respetando filtros/página actual
+					cargarCargasPaginado(window._cargasCurrentPage || 1, function() {
+						if (typeof window._cargasScrollYBeforeModal === 'number') {
+							$(window).scrollTop(window._cargasScrollYBeforeModal);
+						}
+						if (window._cargasLastEditCargaId) {
+							var $btn = $('.btn-editar-carga-modal[data-carga-id="' + window._cargasLastEditCargaId + '"]').first();
+							if ($btn.length) $btn.focus();
+						}
+					});
+				}, 300);
 			},
 			error: function(xhr, status, error) {
 				btnGuardar.html(textoOriginal).prop('disabled', false);
@@ -2439,74 +2406,106 @@ $(document).ready(function() {
 		$('#btnLimpiarFiltrosCargas').prop('disabled', false).css('opacity', '1').css('cursor', 'pointer');
 	}
 	
-	// Función para aplicar filtros de cargas
-	function aplicarFiltrosCargas() {
+	// Utilidades: estado actual de filtros/página + persistencia en URL
+	window._cargasCurrentPage = 1;
+
+	function getFiltrosCargas() {
+		return {
+			cursos: $('#filtro_cargas_cursos').val() || [],
+			grupos: $('#filtro_cargas_grupos').val() || [],
+			docentes: $('#filtro_cargas_docentes').val() || [],
+			periodos: $('#filtro_cargas_periodos').val() || []
+		};
+	}
+
+	function updateUrlCargas(filtros, page) {
+		try {
+			var params = new URLSearchParams(window.location.search);
+			params.set('page', String(page || 1));
+			// Guardar filtros como CSV para fácil lectura
+			if (filtros.cursos && filtros.cursos.length) params.set('cursos', filtros.cursos.join(',')); else params.delete('cursos');
+			if (filtros.grupos && filtros.grupos.length) params.set('grupos', filtros.grupos.join(',')); else params.delete('grupos');
+			if (filtros.docentes && filtros.docentes.length) params.set('docentes', filtros.docentes.join(',')); else params.delete('docentes');
+			if (filtros.periodos && filtros.periodos.length) params.set('periodos', filtros.periodos.join(',')); else params.delete('periodos');
+
+			var newUrl = window.location.pathname + '?' + params.toString();
+			history.replaceState(null, '', newUrl);
+		} catch (e) {
+			// No bloquear si el navegador no soporta URLSearchParams
+		}
+	}
+
+	function renderInfoPaginacionCargas(response) {
+		if (!response) return;
+		var infoHtml = '<div class="alert alert-info">' +
+			'<i class="fa fa-info-circle"></i> ' +
+			'Mostrando <strong>' + (response.countOnPage || 0) + '</strong> de <strong>' + (response.total || 0) + '</strong> cargas totales ' +
+			'(Página ' + (response.page || 1) + ' de ' + (response.totalPages || 1) + ')' +
+			'</div>';
+		$('#cargas_pagination_info').html(infoHtml);
+		$('#cargas_pagination').html(response.paginationHtml || '');
+	}
+
+	function cargarCargasPaginado(page, afterUpdate) {
 		// Deshabilitar controles al inicio
 		deshabilitarControlesFiltroCargas();
-		
-		const cursos = $('#filtro_cargas_cursos').val() || [];
-		const grupos = $('#filtro_cargas_grupos').val() || [];
-		const docentes = $('#filtro_cargas_docentes').val() || [];
-		const periodos = $('#filtro_cargas_periodos').val() || [];
-		
-		console.log('Aplicando filtros cargas:', { cursos, grupos, docentes, periodos });
-		
+
+		var filtros = getFiltrosCargas();
+		window._cargasCurrentPage = page || 1;
+		updateUrlCargas(filtros, window._cargasCurrentPage);
+
 		// Mostrar loader
 		$('#gifCarga').show();
 		$('#cargas_result').html('<tr><td colspan="11" class="text-center"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Cargando...</td></tr>');
-		
-		// Enviar AJAX
+
 		$.ajax({
 			url: 'ajax-filtrar-cargas.php',
 			type: 'POST',
 			data: {
-				cursos: cursos,
-				grupos: grupos,
-				docentes: docentes,
-				periodos: periodos
+				cursos: filtros.cursos,
+				grupos: filtros.grupos,
+				docentes: filtros.docentes,
+				periodos: filtros.periodos,
+				page: window._cargasCurrentPage
 			},
 			dataType: 'json',
 			success: function(response) {
-				console.log('Respuesta del filtro cargas:', response);
-				
 				$('#gifCarga').hide();
-				
-				// Habilitar controles al finalizar
 				habilitarControlesFiltroCargas();
-				
+
 				if (response.success) {
-					// Insertar el HTML
-					$('#cargas_result').html(response.html);
-					
-					// Restaurar las selecciones previas y sombreado visual
-					if (selectedCargas.length > 0) {
-						$('.carga-checkbox').each(function() {
-							var cargaId = $(this).val();
-							if (selectedCargas.includes(cargaId)) {
-								$(this).prop('checked', true);
-								$(this).closest('tr').addClass('carga-row-selected');
-							}
-						});
+					// Destruir DataTable antes de reemplazar el contenido
+					if ($.fn.DataTable && $.fn.DataTable.isDataTable && $.fn.DataTable.isDataTable('#example1')) {
+						$('#example1').DataTable().destroy();
 					}
-					
-					// Reinicializar event listeners para los botones de expandir
-					// Esto es necesario porque el HTML se insertó dinámicamente
+
+					$('#cargas_result').html(response.html);
+					renderInfoPaginacionCargas(response);
+
+					// Limpiar checks seleccionados (evita inconsistencias al paginar)
+					selectedCargas = [];
+					$('#selectAllCargas').prop('checked', false);
+					toggleActionButtons();
+
+					// Reinicializar DataTable y tooltips
+					if (typeof inicializarDataTableCargas === 'function') {
+						inicializarDataTableCargas();
+					}
+					$('[data-toggle="tooltip"]').tooltip();
+
+					// Re-bind expand
 					$('.expand-btn').off('click').on('click', function() {
 						var button = $(this);
 						var cargaId = button.data('id');
 						var icon = button.find('i');
-						
-						// Verificar si la fila expandible ya existe
+
 						var expandRow = button.closest('tr').next('tr.expandable-row');
-						
 						if (expandRow.length && expandRow.is(':visible')) {
-							// Contraer
 							expandRow.slideUp(300, function() {
 								icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
 								button.removeClass('text-primary').addClass('text-secondary');
 							});
 						} else {
-							// Expandir - obtener datos de los atributos del botón
 							var codigo = button.data('codigo');
 							var docente = button.data('docente');
 							var curso = button.data('curso');
@@ -2522,58 +2521,31 @@ $(document).ready(function() {
 							var maxCalificaciones = button.data('max-calificaciones');
 							var cantidadEstudiantes = button.data('cantidad-estudiantes');
 							var activa = button.data('activa');
-							
-							// Crear el HTML de detalles y insertarlo
+
 							var detailsHtml = formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId);
 							$(detailsHtml).insertAfter(button.closest('tr')).slideDown(300);
-							
+
 							icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
 							button.removeClass('text-secondary').addClass('text-primary');
 						}
 					});
-					
-					// Mostrar mensaje de resultados
-					$.toast({
-						heading: 'Filtros Aplicados',
-						text: 'Se encontraron ' + response.total + ' carga(s)',
-						position: 'top-right',
-						loaderBg: '#26c281',
-						icon: 'success',
-						hideAfter: 3000
-					});
+
+					if (typeof afterUpdate === 'function') afterUpdate();
 				} else {
-					console.error('Error del servidor:', response.error);
-					if (response.trace) {
-						console.error('Trace:', response.trace);
-					}
-					if (response.file) {
-						console.error('File:', response.file, 'Line:', response.line);
-					}
-					
 					$.toast({
 						heading: 'Error',
-						text: response.error || 'Error al aplicar filtros',
+						text: response.error || 'Error al cargar datos',
 						position: 'top-right',
 						loaderBg: '#bf441d',
 						icon: 'error',
 						hideAfter: 5000
 					});
-					
-					$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error al cargar los datos. Ver consola para detalles.</td></tr>');
+					$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error al cargar los datos.</td></tr>');
 				}
-				
-				// Habilitar controles incluso si hay error
-				habilitarControlesFiltroCargas();
 			},
 			error: function(xhr, status, error) {
-				console.error('Error AJAX cargas:', status, error);
-				console.error('Response:', xhr.responseText);
-				
 				$('#gifCarga').hide();
-				
-				// Habilitar controles al finalizar (incluso con error)
 				habilitarControlesFiltroCargas();
-				
 				$.toast({
 					heading: 'Error de Conexión',
 					text: 'No se pudo conectar con el servidor',
@@ -2582,10 +2554,14 @@ $(document).ready(function() {
 					icon: 'error',
 					hideAfter: 5000
 				});
-				
 				$('#cargas_result').html('<tr><td colspan="11" class="text-center text-danger">Error de conexión</td></tr>');
 			}
 		});
+	}
+
+	// Función para aplicar filtros de cargas
+	function aplicarFiltrosCargas(page = 1) {
+		cargarCargasPaginado(page);
 	}
 	
 	// Limpiar filtros de cargas
@@ -2598,16 +2574,38 @@ $(document).ready(function() {
 		$('#filtro_cargas_docentes').val(null).trigger('change');
 		$('#filtro_cargas_periodos').val(null).trigger('change');
 		
-		// Recargar la página para mostrar todas las cargas
-		location.reload();
+		// Mostrar todas las cargas (sin recargar toda la página)
+		setTimeout(function(){
+			cargarCargasPaginado(1);
+		}, 50);
 	});
 	
 	// Aplicar filtros automáticamente al cambiar las opciones
 	$('.select2-multiple-cargas').on('change', function() {
 		clearTimeout(window.filtroCargasTimeout);
 		window.filtroCargasTimeout = setTimeout(function() {
-			aplicarFiltrosCargas();
+			aplicarFiltrosCargas(1);
 		}, 500);
+	});
+
+	// Guardar scroll/foco al abrir modal de edición rápida
+	$(document).on('click', '.btn-editar-carga-modal', function() {
+		window._cargasScrollYBeforeModal = $(window).scrollTop();
+		window._cargasLastEditCargaId = $(this).data('carga-id') || null;
+		resetBotonGuardarCarga();
+	});
+
+	// Asegurar que el botón siempre quede listo al cerrar el modal
+	$('#modalEditarCarga').on('hidden.bs.modal', function() {
+		resetBotonGuardarCarga();
+	});
+
+	// Paginación (delegación de eventos). Siempre paginar por AJAX para mantener filtros/página.
+	$(document).on('click', '.cargas-page-link', function(e) {
+		var page = $(this).data('page');
+		if (!page) return; // si no trae data-page, dejar comportamiento normal
+		e.preventDefault();
+		cargarCargasPaginado(parseInt(page, 10) || 1);
 	});
 	
 	// ========================================
