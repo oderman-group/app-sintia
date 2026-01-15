@@ -7,8 +7,24 @@ Modulos::validarAccesoDirectoPaginas();
 
 $idPaginaInterna = 'DV0073';
 
-$_SESSION['devAdmin']      = $_SESSION['id'];
-$_SESSION['admin']         = $_SESSION['id'];
+// Guardar contexto original para poder regresar correctamente al "DEV PANEL"
+// (No sobrescribir si ya existe: soporta autologin encadenado)
+if (!isset($_SESSION['devAdmin'])) {
+	$_SESSION['devAdmin'] = $_SESSION['id'];
+}
+if (!isset($_SESSION['admin'])) {
+	$_SESSION['admin'] = $_SESSION['id'];
+}
+if (!isset($_SESSION['devAdmin_idInstitucion'])) {
+	$_SESSION['devAdmin_idInstitucion'] = $_SESSION["idInstitucion"] ?? null;
+}
+if (!isset($_SESSION['devAdmin_inst'])) {
+	$_SESSION['devAdmin_inst'] = $_SESSION["inst"] ?? null;
+}
+if (!isset($_SESSION['devAdmin_bd'])) {
+	$_SESSION['devAdmin_bd'] = $_SESSION["bd"] ?? null;
+}
+
 $_SESSION['id']            = base64_decode($_GET['user']);
 $_SESSION["idInstitucion"] = base64_decode($_GET['idInstitucion']);
 $_SESSION["inst"]          = base64_decode($_GET['bd']);
