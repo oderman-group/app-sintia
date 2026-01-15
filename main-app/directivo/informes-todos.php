@@ -236,6 +236,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Listado general de estudiantes con información básica y académica</div>
                                                             </li>
                                                             <?php }
+                                                            if(Modulos::validarSubRol(['DT0133'])){
+                                                            ?>
+                                                            <li class="informe-item">
+                                                                <a href="constancia-estudio.php" class="informe-link">
+                                                                    <i class="fas fa-file-signature"></i> Constancia de estudio
+                                                                    <span class="badge badge-info">Nuevo</span>
+                                                                </a>
+                                                                <div class="informe-descripcion" style="font-style: italic; color: #555; font-size: 0.9em; margin-top: 4px; padding-left: 25px;">Documento que certifica que el estudiante está matriculado y cursando estudios en el año lectivo</div>
+                                                            </li>
+                                                            <?php }
                                                             if(Modulos::validarSubRol(['DT0221'])){
                                                             ?>
                                                             <li class="informe-item">
