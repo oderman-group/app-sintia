@@ -7,6 +7,7 @@ ob_start();
 include("session.php");
 require_once(ROOT_PATH . "/main-app/class/Estudiantes.php");
 require_once(ROOT_PATH . "/main-app/class/Inscripciones.php");
+include(ROOT_PATH . "/config-general/config-admisiones.php");
 
 function jsonResponse($data) {
     while (ob_get_level()) { ob_end_clean(); }
@@ -159,8 +160,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+
+        // Consultar estado final guardado (fuente de verdad) para que el frontend refleje exactamente lo persistido
+        $sqlVerificarFinal = "SELECT asp_estado_solicitud FROM " . BD_ADMISIONES . ".aspirantes WHERE asp_id = :asp_id";
+        $stmtFinal = $conexionPDO->prepare($sqlVerificarFinal);
+        $stmtFinal->bindParam(':asp_id', $aspId, PDO::PARAM_INT);
+        $stmtFinal->execute();
+        $estadoFinal = (int)($stmtFinal->fetchColumn() ?: 0);
+
+        $estadoLabel = null;
+        if (isset($estadosSolicitud) && is_array($estadosSolicitud)) {
+            $estadoLabel = $estadosSolicitud[$estadoFinal] ?? null;
+        }
         
-        jsonResponse(['success' => true, 'message' => 'Aspirante actualizado correctamente.']);
+        jsonResponse([
+            'success' => true,
+            'message' => 'Aspirante actualizado correctamente.',
+            'estado_solicitud' => $estadoFinal,
+            'estado_label' => $estadoLabel
+        ]);
         
     } catch (Exception $e) {
         error_log("Error al actualizar aspirante: " . $e->getMessage());
