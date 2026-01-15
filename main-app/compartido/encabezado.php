@@ -159,46 +159,49 @@ if ($mensajesNoLeidosConsulta) {
                     	<!--<li><a href="javascript:;" class="fullscreen-btn"><i class="fa fa-arrows-alt"></i></a></li>-->
 
                         <?php
-                            if (
-                                $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || 
-                                $datosUsuarioActual['uss_tipo'] == TIPO_DEV && 
-                                Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SEDES)
-                            ) {
-                                $sites    = Instituciones::getSites();
-                                $numSites = mysqli_num_rows($sites);
+                            // IMPORTANTE:
+                            // El selector de AÑO/PERIODO no debe depender del módulo de SEDES.
+                            // Solo el selector de SEDE depende de MODULO_SEDES.
+                            if ($datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO || $datosUsuarioActual['uss_tipo'] == TIPO_DEV) {
 
-                                if (
-                                    $numSites > 0 && 
-                                    Modulos::validarSubRol(['DT0339']) && 
-                                    !empty($datosUsuarioActual["uss_documento"])
-                                ) {
+                                // Selector de sedes (solo si el módulo está activo)
+                                if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_SEDES)) {
+                                    $sites    = Instituciones::getSites();
+                                    $numSites = mysqli_num_rows($sites);
+
+                                    if (
+                                        $numSites > 0 && 
+                                        Modulos::validarSubRol(['DT0339']) && 
+                                        !empty($datosUsuarioActual["uss_documento"])
+                                    ) {
                         ?>
-                                    <li class="dropdown dropdown-user">
-                                        <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                        <i class="fa fa-home" data-toggle="tooltip" data-placement="top" title="Cambia de sede para consultar su información."></i>
-                                        <span class="username username-hide-on-mobile"> SEDE ACTUAL: <b><?=$institucionNombre;?></b> </span>
-                                            <?php echo '<i class="fa fa-angle-down"></i>'; ?>
-                                        </a>
-                                        <ul class="dropdown-menu dropdown-menu-default">
-                                            <?php
-                                            require_once(ROOT_PATH."/main-app/class/Usuarios/Directivo.php");
+                                        <li class="dropdown dropdown-user">
+                                            <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
+                                            <i class="fa fa-home" data-toggle="tooltip" data-placement="top" title="Cambia de sede para consultar su información."></i>
+                                            <span class="username username-hide-on-mobile"> SEDE ACTUAL: <b><?=$institucionNombre;?></b> </span>
+                                                <?php echo '<i class="fa fa-angle-down"></i>'; ?>
+                                            </a>
+                                            <ul class="dropdown-menu dropdown-menu-default">
+                                                <?php
+                                                require_once(ROOT_PATH."/main-app/class/Usuarios/Directivo.php");
 
-                                            while ($site = mysqli_fetch_array($sites, MYSQLI_BOTH)) {
-                                                try {
-                                                    $mySelf = Directivo::getMyselfByDocument(
-                                                        $datosUsuarioActual["uss_documento"], 
-                                                        $datosUsuarioActual["uss_tipo"], 
-                                                        $site['ins_id']
-                                                    );
-                                                } catch (Exception $e) {
-                                                    continue;
-                                                }
-                                            ?>
-                                                <li><a href="cambiar-sede.php?idInstitucion=<?=base64_encode($site['ins_id']);?>"><?=$site['ins_siglas'];?></a></li>
-                                            <?php }?>
-                                        </ul>
-                                    </li>
-                        <?php 
+                                                while ($site = mysqli_fetch_array($sites, MYSQLI_BOTH)) {
+                                                    try {
+                                                        $mySelf = Directivo::getMyselfByDocument(
+                                                            $datosUsuarioActual["uss_documento"], 
+                                                            $datosUsuarioActual["uss_tipo"], 
+                                                            $site['ins_id']
+                                                        );
+                                                    } catch (Exception $e) {
+                                                        continue;
+                                                    }
+                                                ?>
+                                                    <li><a href="cambiar-sede.php?idInstitucion=<?=base64_encode($site['ins_id']);?>"><?=$site['ins_siglas'];?></a></li>
+                                                <?php }?>
+                                            </ul>
+                                        </li>
+                        <?php
+                                    }
                                 }
                         ?>
 
