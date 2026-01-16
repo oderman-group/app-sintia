@@ -76,6 +76,9 @@ foreach ($data["data"] as $resultado) {
 		<td>
 			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($usuario) ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($resultado['fcu_fecha']); ?>" style="text-decoration: underline;"><?= $resultado['fcu_fecha']; ?></a>
 		</td>
+		<td>
+			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($resultado['uss_id']); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: underline;"><?= $usuario; ?></a>
+		</td>
 		<td><?= $resultado['fcu_detalle']; ?></td>
 		<td id="totalNeto<?= $resultado['fcu_id']; ?>" class="<?= $claseTotal; ?>" data-tipo="<?= $resultado['fcu_tipo'] ?>" data-anulado="<?= $resultado['fcu_anulado'] ?>" data-total-neto="<?= (float)$totalNeto ?>"><?= $totalTexto ?></td>
 		<td id="abonos<?= $resultado['fcu_id']; ?>" data-abonos="<?= (float)$abonos ?>">$<?= !empty($abonos) ? number_format((float)$abonos, 0, ",", ".") : 0 ?></td>
@@ -84,9 +87,6 @@ foreach ($data["data"] as $resultado) {
 			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($usuario); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($resultado['fcu_tipo']); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: none;">
 				<span class="<?= $claseBadgeTipo; ?>"><?= $tipoFacturaTexto; ?></span>
 			</a>
-		</td>
-		<td>
-			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($resultado['uss_id']); ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($fecha); ?>" style="text-decoration: underline;"><?= $usuario; ?></a>
 		</td>
 		<td align="center" style="background-color:<?= $bgColorEstado; ?>; color: black;"><?= $estado ?></td>
 		<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>

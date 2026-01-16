@@ -126,7 +126,7 @@
 											}
 											if(Modulos::validarSubRol(["DT0275"])){ 
 										?>
-											<li <?php agregarClass(MENU,["DT0275", "DT0276", "DT0278"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_FACTURA_RECURRENTES, "factura-recurrente.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[415][$datosUsuarioActual['uss_idioma']];?></span></a></li>
+											<li <?php agregarClass(MENU,["DT0275", "DT0276"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_FACTURA_RECURRENTES, "factura-recurrente.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[415][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 										<?php 
 											}
 											if(Modulos::validarSubRol(["DT0264"])){ 

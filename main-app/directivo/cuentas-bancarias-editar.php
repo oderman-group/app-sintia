@@ -67,6 +67,9 @@ if (mysqli_num_rows($consultaPorId) > 0) {
         echo '<script type="text/javascript">alert("Error: No se pudo obtener el ID de la cuenta bancaria."); window.location.href="cuentas-bancarias.php";</script>';
         exit();
     }
+    
+    // Verificar si la cuenta tiene transacciones (abonos o transferencias)
+    $cuentaEnUso = Movimientos::validarCuentaBancariaEnUso($conexion, $config, $datosCuentaBancaria['cba_id']);
 } else {
     // No se encontró el registro
     echo '<script type="text/javascript">alert("No se encontró la cuenta bancaria con ID: '.htmlspecialchars($id).'"); window.location.href="cuentas-bancarias.php";</script>';
@@ -162,7 +165,16 @@ if (mysqli_num_rows($consultaPorId) > 0) {
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Saldo Inicial</label>
                                             <div class="col-sm-4">
-                                                <input type="number" name="cba_saldo_inicial" class="form-control" step="0.01" min="0" value="<?=htmlspecialchars($datosCuentaBancaria['cba_saldo_inicial'] ?? '0', ENT_QUOTES)?>" <?=$disabledPermiso;?> placeholder="0.00">
+                                                <?php 
+                                                $readonlySaldo = ($cuentaEnUso || $disabledPermiso) ? 'readonly' : '';
+                                                $disabledSaldo = ($cuentaEnUso || $disabledPermiso) ? 'disabled' : '';
+                                                ?>
+                                                <input type="number" name="cba_saldo_inicial" class="form-control" step="0.01" min="0" value="<?=htmlspecialchars($datosCuentaBancaria['cba_saldo_inicial'] ?? '0', ENT_QUOTES)?>" <?=$readonlySaldo?> <?=$disabledSaldo?> placeholder="0.00">
+                                                <?php if ($cuentaEnUso) { ?>
+                                                    <small class="form-text text-muted" style="color: #e74c3c;">
+                                                        <i class="fa fa-lock"></i> El saldo inicial no puede modificarse porque la cuenta tiene transacciones registradas (abonos o transferencias).
+                                                    </small>
+                                                <?php } ?>
                                             </div>
 
                                             <label class="col-sm-2 control-label">Estado</label>
