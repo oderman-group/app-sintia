@@ -60,13 +60,15 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </div>
                                         </div>
                                         <div class="card-body">
-											<div class="row" style="margin-bottom: 10px;">
+											<div class="row" style="margin-bottom: 20px;">
 												<div class="col-sm-12">
-													<div class="btn-group">
-                                                        <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0279'])) { ?>
-                                                            <a href="cuentas-bancarias-agregar.php" class="btn deepPink-bgcolor"> Agregar nueva <i class="fa fa-plus"></i></a>
-                                                        <?php } ?>
-													</div>
+                                                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0279'])) { ?>
+                                                        <a href="cuentas-bancarias-agregar.php" class="btn deepPink-bgcolor" style="margin-right: 10px;"> Agregar nueva <i class="fa fa-plus"></i></a>
+                                                    <?php } ?>
+                                                    <?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0278'])) { ?>
+                                                        <a href="cuentas-bancarias-transferir.php" class="btn btn-info" style="margin-right: 10px;"> Transferir entre cuentas <i class="fa fa-exchange"></i></a>
+                                                        <a href="transferencias-cuentas.php" class="btn btn-warning"> Historial de Transferencias <i class="fa fa-history"></i></a>
+                                                    <?php } ?>
 												</div>
 											</div>
 											
@@ -81,9 +83,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<th>Número de Cuenta</th>
 														<th>Tipo</th>
 														<th>Método de Pago</th>
-														<th>Saldo Inicial</th>
+                                                        <th>Saldo Inicial</th>
 														<th>Ingresos</th>
 														<th>Egresos</th>
+														<th>Transferencias</th>
 														<th>Saldo Actual</th>
 														<th>Estado</th>
                                                         <?php if(Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0280','DT0281'])){?>
@@ -114,7 +117,9 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             $saldoInicial = floatval($resultado['cba_saldo_inicial'] ?? 0);
                                                             $ingresos = floatval($saldoInfo['ingresos'] ?? 0);
                                                             $egresos = floatval($saldoInfo['egresos'] ?? 0);
-                                                            $saldoActual = ($saldoInicial + $ingresos) - $egresos;
+                                                            $transferenciasEnviadas = floatval($saldoInfo['transferencias_enviadas'] ?? 0);
+                                                            $transferenciasRecibidas = floatval($saldoInfo['transferencias_recibidas'] ?? 0);
+                                                            $saldoActual = ($saldoInicial + $ingresos) - $egresos - $transferenciasEnviadas + $transferenciasRecibidas;
                                                     ?>
 													<tr id="reg<?=$resultado['cba_id'];?>">
                                                         <td><?=$contReg;?></td>
@@ -127,6 +132,16 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 														<td>$<?=number_format($saldoInicial, 0, ",", ".");?></td>
 														<td style="color: #2ecc71; font-weight: 600;">$<?=number_format($ingresos, 0, ",", ".");?></td>
 														<td style="color: #e74c3c; font-weight: 600;">$<?=number_format($egresos, 0, ",", ".");?></td>
+														<td>
+															<div style="font-size: 12px;">
+																<div style="color: #e74c3c; font-weight: 600;">
+																	<i class="fa fa-arrow-up"></i> Salidas: $<?=number_format($transferenciasEnviadas, 0, ",", ".");?>
+																</div>
+																<div style="color: #2ecc71; font-weight: 600;">
+																	<i class="fa fa-arrow-down"></i> Entradas: $<?=number_format($transferenciasRecibidas, 0, ",", ".");?>
+																</div>
+															</div>
+														</td>
 														<td style="color: <?=$saldoActual >= 0 ? '#2ecc71' : '#e74c3c'?>; font-weight: 700; font-size: 14px;">$<?=number_format($saldoActual, 0, ",", ".");?></td>
 														<td>
 															<?php 

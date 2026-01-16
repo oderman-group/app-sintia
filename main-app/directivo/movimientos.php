@@ -159,12 +159,12 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 											<th style="color: white;">#</th>
 											<th style="color: white;">Consecutivo</th>
 											<th style="color: white;">Fecha</th>
+											<th style="color: white;">Usuario</th>
 											<th style="color: white;">Detalle</th>
 											<th style="color: white;"><?= $frases[107][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<th style="color: white;">Cobrado/Pagado</th>
 											<th style="color: white;">Por Cobrar/Por pagar</th>
 											<th style="color: white;">Tipo</th>
-											<th style="color: white;">Usuario</th>
 											<th style="color: white;"><?= $frases[246][$datosUsuarioActual['uss_idioma']]; ?></th>
 											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
 												<th style="color: white;"><?= $frases[54][$datosUsuarioActual['uss_idioma']]; ?></th>
@@ -201,21 +201,21 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 									</tbody>
 									<tfoot>
 										<tr style="background-color: #f0f9ff; font-weight: bold; border-top: 2px solid #dee2e6;">
-											<td colspan="6" style="text-align: right; padding: 10px;"><strong>Total Facturas Venta:</strong></td>
+											<td colspan="7" style="text-align: right; padding: 10px;"><strong>Total Facturas Venta:</strong></td>
 											<td id="footerTotalVenta" style="text-align: right; padding: 10px; font-weight: bold;">$0</td>
 											<td id="footerCobradoVenta" style="text-align: right; padding: 10px; font-weight: bold; color: #00c292;">$0</td>
 											<td id="footerPorCobrarVenta" style="text-align: right; padding: 10px; font-weight: bold; color: #ffc107;">$0</td>
-											<td colspan="3" style="padding: 10px;"></td>
+											<td colspan="2" style="padding: 10px;"></td>
 											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
 												<td style="padding: 10px;"></td>
 											<?php } ?>
 										</tr>
 										<tr style="background-color: #fff7ed; font-weight: bold;">
-											<td colspan="6" style="text-align: right; padding: 10px;"><strong>Total Facturas Compra:</strong></td>
+											<td colspan="7" style="text-align: right; padding: 10px;"><strong>Total Facturas Compra:</strong></td>
 											<td id="footerTotalCompra" style="text-align: right; padding: 10px; font-weight: bold;">$0</td>
 											<td id="footerCobradoCompra" style="text-align: right; padding: 10px; font-weight: bold; color: #00c292;">$0</td>
 											<td id="footerPorCobrarCompra" style="text-align: right; padding: 10px; font-weight: bold; color: #ffc107;">$0</td>
-											<td colspan="3" style="padding: 10px;"></td>
+											<td colspan="2" style="padding: 10px;"></td>
 											<?php if (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0128', 'DT0089'])) { ?>
 												<td style="padding: 10px;"></td>
 											<?php } ?>
