@@ -41,6 +41,11 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                     $tieneCategorias = true;
                                     $mensajeCategorias = "";
                                     $totalCategorias = 0;
+                                    $totalFaltas = 0;
+                                    $tieneFaltas = true;
+                                    $mensajeFaltas = "";
+                                    $yearsConDatos = [];
+                                    $puedeImportar = (Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0071']) && Modulos::validarSubRol(['DT0068']));
                                     try{
                                         $consultaCategorias = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM ".BD_DISCIPLINA.".disciplina_categorias
                                         WHERE dcat_institucion={$config['conf_id_institucion']} AND dcat_year={$_SESSION["bd"]}");
@@ -60,6 +65,58 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         $mensajeCategorias = "Error al consultar las categorías. Intenta nuevamente.";
                                         include("../compartido/error-catch-to-report.php");
                                     }
+
+                                    // Contar faltas del año actual
+                                    try{
+                                        $consultaFaltas = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM ".BD_DISCIPLINA.".disciplina_faltas
+                                        WHERE dfal_institucion={$config['conf_id_institucion']} AND dfal_year={$_SESSION["bd"]}");
+                                        if($consultaFaltas){
+                                            $datosFaltas = mysqli_fetch_array($consultaFaltas, MYSQLI_BOTH);
+                                            $totalFaltas = (int)($datosFaltas['total'] ?? 0);
+                                            if($totalFaltas <= 0){
+                                                $tieneFaltas = false;
+                                                $mensajeFaltas = "No hay faltas registradas para el año actual.";
+                                            }
+                                        }else{
+                                            $tieneFaltas = false;
+                                            $mensajeFaltas = "No fue posible verificar las faltas. Intenta nuevamente.";
+                                        }
+                                    } catch (Exception $e) {
+                                        $tieneFaltas = false;
+                                        $mensajeFaltas = "Error al consultar las faltas. Intenta nuevamente.";
+                                        include("../compartido/error-catch-to-report.php");
+                                    }
+
+                                    // Años disponibles con datos (categorías + faltas) para importar
+                                    try {
+                                        if (!empty($_SESSION["datosUnicosInstitucion"]["ins_years"])) {
+                                            $yearArrayTmp = explode(",", $_SESSION["datosUnicosInstitucion"]["ins_years"]);
+                                            $yearStartTmp = (int)trim($yearArrayTmp[0] ?? '0');
+                                            $yearEndTmp   = (int)trim($yearArrayTmp[1] ?? '0');
+                                            if ($yearStartTmp > 0 && $yearEndTmp > 0 && $yearEndTmp >= $yearStartTmp) {
+                                                for ($y = $yearStartTmp; $y <= $yearEndTmp; $y++) {
+                                                    if ($y == (int)$_SESSION["bd"]) continue;
+                                                    $cCats = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM ".BD_DISCIPLINA.".disciplina_categorias
+                                                        WHERE dcat_institucion={$config['conf_id_institucion']} AND dcat_year={$y}");
+                                                    $cFals = mysqli_query($conexion, "SELECT COUNT(*) AS total FROM ".BD_DISCIPLINA.".disciplina_faltas
+                                                        WHERE dfal_institucion={$config['conf_id_institucion']} AND dfal_year={$y}");
+                                                    if ($cCats && $cFals) {
+                                                        $nCats = (int)(mysqli_fetch_array($cCats, MYSQLI_BOTH)['total'] ?? 0);
+                                                        $nFals = (int)(mysqli_fetch_array($cFals, MYSQLI_BOTH)['total'] ?? 0);
+                                                        if ($nCats > 0 && $nFals > 0) {
+                                                            $yearsConDatos[] = [
+                                                                'year' => $y,
+                                                                'categorias' => $nCats,
+                                                                'faltas' => $nFals
+                                                            ];
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception $e) {
+                                        // Si falla, simplemente no mostramos opciones de importación
+                                    }
                                 ?>
                                 <?php if(!$tieneCategorias){ ?>
                                     <div class="alert alert-warning">
@@ -69,7 +126,26 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <a href="disciplina-categorias.php" class="btn btn-sm btn-primary">
                                                 <i class="fa fa-plus"></i> Crear categorías
                                             </a>
+                                            <?php if($puedeImportar && !empty($yearsConDatos)){ ?>
+                                                <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalImportarFaltasYear" style="margin-left:6px;">
+                                                    <i class="fa fa-download"></i> Importar desde otro año
+                                                </button>
+                                            <?php } ?>
                                         </span>
+                                    </div>
+                                <?php } ?>
+
+                                <?php if($tieneCategorias && !$tieneFaltas){ ?>
+                                    <div class="alert alert-info">
+                                        <i class="fa fa-info-circle"></i>
+                                        <strong>Sin faltas:</strong> <?=$mensajeFaltas?>
+                                        <?php if($puedeImportar && !empty($yearsConDatos)){ ?>
+                                            <div style="margin-top:8px;">
+                                                <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalImportarFaltasYear">
+                                                    <i class="fa fa-download"></i> Importar desde otro año
+                                                </button>
+                                            </div>
+                                        <?php } ?>
                                     </div>
                                 <?php } ?>
                                     <div class="card card-topline-purple">
@@ -97,6 +173,12 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 </button>
                                                             <?php } ?>
                                                         <?php }?>
+
+                                                        <?php if($puedeImportar && !empty($yearsConDatos) && (!$tieneCategorias || !$tieneFaltas)){ ?>
+                                                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalImportarFaltasYear" style="margin-left:6px;">
+                                                                <i class="fa fa-download"></i> Importar de otro año
+                                                            </button>
+                                                        <?php } ?>
 													</div>
 												</div>
 											</div>
@@ -181,6 +263,56 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>
     </div>
+
+    <!-- Modal Importar categorías/faltas desde otro año -->
+    <div class="modal fade" id="modalImportarFaltasYear" tabindex="-1" role="dialog" aria-labelledby="modalImportarFaltasYearLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalImportarFaltasYearLabel">
+                        <i class="fa fa-download"></i> Importar categorías y faltas
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        Esta acción copiará <strong>categorías y faltas</strong> desde un año anterior al año actual <strong>(<?=$_SESSION["bd"];?>)</strong>.
+                        Solo se permite si el año actual está vacío para evitar duplicados.
+                    </div>
+
+                    <?php if(empty($yearsConDatos)){ ?>
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            No se encontraron años con categorías y faltas disponibles para importar.
+                        </div>
+                    <?php } else { ?>
+                        <div class="form-group">
+                            <label>Selecciona el año origen</label>
+                            <select class="form-control" id="importar_year_origen">
+                                <option value="">Seleccione...</option>
+                                <?php foreach($yearsConDatos as $yd){ ?>
+                                    <option value="<?=$yd['year'];?>">
+                                        <?=$yd['year'];?> (<?=$yd['categorias'];?> categorías, <?=$yd['faltas'];?> faltas)
+                                    </option>
+                                <?php } ?>
+                            </select>
+                        </div>
+                        <div id="importar_faltas_msg" class="alert alert-danger" style="display:none;"></div>
+                    <?php } ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnImportarFaltasYear" <?= empty($yearsConDatos) ? 'disabled' : '' ?>>
+                        <i class="fa fa-download"></i> Importar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
     <script src="../../config-general/assets/plugins/popper/popper.js" ></script>
@@ -203,6 +335,72 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
     <!-- end js include path -->
+
+    <script>
+        $(document).ready(function(){
+            $('#btnImportarFaltasYear').on('click', function(){
+                $('#importar_faltas_msg').hide().text('');
+                var yearOrigen = $('#importar_year_origen').val();
+                if(!yearOrigen){
+                    $('#importar_faltas_msg').show().text('Debes seleccionar un año origen.');
+                    return;
+                }
+
+                var btn = $(this);
+                var htmlOriginal = btn.html();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '¿Importar categorías y faltas?',
+                        html: 'Se copiarán categorías y faltas del año <b>' + yearOrigen + '</b> al año actual <b><?=$_SESSION["bd"];?></b>.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, importar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (!result.isConfirmed) return;
+                        ejecutarImportacion(yearOrigen, btn, htmlOriginal);
+                    });
+                } else {
+                    if (confirm('¿Deseas importar categorías y faltas del año ' + yearOrigen + ' al año actual <?=$_SESSION["bd"];?>?')) {
+                        ejecutarImportacion(yearOrigen, btn, htmlOriginal);
+                    }
+                }
+            });
+
+            function ejecutarImportacion(yearOrigen, btn, htmlOriginal){
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Importando...');
+                $.ajax({
+                    url: 'ajax-importar-disciplina-faltas-year.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { year_origen: yearOrigen },
+                    success: function(resp){
+                        btn.prop('disabled', false).html(htmlOriginal);
+                        if(resp && resp.success){
+                            $('#modalImportarFaltasYear').modal('hide');
+                            $.toast({
+                                heading: 'Éxito',
+                                text: resp.message || 'Importación completada.',
+                                position: 'top-right',
+                                loaderBg: '#26c281',
+                                icon: 'success',
+                                hideAfter: 3500
+                            });
+                            setTimeout(function(){ window.location.reload(); }, 800);
+                        } else {
+                            var msg = (resp && resp.message) ? resp.message : 'No fue posible importar.';
+                            $('#importar_faltas_msg').show().text(msg);
+                        }
+                    },
+                    error: function(xhr){
+                        btn.prop('disabled', false).html(htmlOriginal);
+                        $('#importar_faltas_msg').show().text('Error de conexión al servidor.');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
