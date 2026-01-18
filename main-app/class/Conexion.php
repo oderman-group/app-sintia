@@ -33,6 +33,10 @@ class Conexion extends Conexion_Factory{
 
                 // Establecer el modo de error PDO a excepciones
                 $this->conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                
+                // Establecer collation utf8mb4_unicode_ci explícitamente para evitar conflictos
+                $this->conexionPDO->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
+                $this->conexionPDO->exec("SET collation_connection = 'utf8mb4_unicode_ci'");
 
                 // Validar el conjunto de caracteres
                 $charset = $this->conexionPDO->query("SELECT @@character_set_connection AS charset")->fetch(PDO::FETCH_ASSOC);
@@ -65,6 +69,10 @@ class Conexion extends Conexion_Factory{
                 printf("Error cargando el conjunto de caracteres utf8mb4: %s\n", mysqli_error($this->conexionMysql));
                 exit();
             }
+            
+            // Establecer collation utf8mb4_unicode_ci explícitamente para evitar conflictos
+            mysqli_query($this->conexionMysql, "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            mysqli_query($this->conexionMysql, "SET collation_connection = 'utf8mb4_unicode_ci'");
         //}
 
         return $this->conexionMysql;

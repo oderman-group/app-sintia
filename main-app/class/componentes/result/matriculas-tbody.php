@@ -221,7 +221,7 @@ foreach ($data["data"] as $resultado) {
 			</span>
 			<?php } ?>
 		</td>
-		<td><?= $resultado['mat_documento']; ?></td>
+		<td class="cell-documento"><?= $resultado['mat_documento']; ?></td>
 		<?php $nombre = Estudiantes::NombreCompletoDelEstudiante($resultado); ?>
 
 		<td <?= $color; ?>>

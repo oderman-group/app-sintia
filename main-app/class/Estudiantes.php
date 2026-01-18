@@ -444,7 +444,13 @@ class Estudiantes {
                 break;
         }
 
-        return !empty($nombre) ? strtoupper($nombre) : 'SIN NOMBRE';
+        if (!empty($nombre)) {
+            // Normalizar: máximo 1 espacio entre partes (evita dobles espacios por datos con espacios extras)
+            $nombre = preg_replace('/\s+/u', ' ', trim($nombre));
+            return strtoupper($nombre);
+        }
+
+        return 'SIN NOMBRE';
     }
 
     /**

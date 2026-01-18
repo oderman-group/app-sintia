@@ -2980,7 +2980,29 @@ class Movimientos {
         $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $activa = !empty($POST["cba_activa"]) ? 1 : 0;
-        $saldoInicial = !empty($POST["cba_saldo_inicial"]) ? (float)$POST["cba_saldo_inicial"] : 0.00;
+        
+        // Validar si la cuenta tiene transacciones antes de permitir modificar el saldo inicial
+        $cuentaEnUso = self::validarCuentaBancariaEnUso($conexion, $config, $POST["cba_id"]);
+        
+        // Si la cuenta tiene transacciones, mantener el saldo inicial original
+        if ($cuentaEnUso) {
+            // Obtener el saldo inicial actual de la base de datos
+            $consultaSaldo = mysqli_query($conexion, "SELECT cba_saldo_inicial FROM ".BD_FINANCIERA.".finanzas_cuentas_bancarias 
+                WHERE cba_id='".mysqli_real_escape_string($conexion, $POST["cba_id"])."' 
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]} 
+                LIMIT 1");
+            
+            if ($consultaSaldo && mysqli_num_rows($consultaSaldo) > 0) {
+                $row = mysqli_fetch_array($consultaSaldo, MYSQLI_BOTH);
+                $saldoInicial = floatval($row['cba_saldo_inicial'] ?? 0);
+            } else {
+                $saldoInicial = 0.00;
+            }
+        } else {
+            // Si no tiene transacciones, permitir modificar el saldo inicial
+            $saldoInicial = !empty($POST["cba_saldo_inicial"]) ? (float)$POST["cba_saldo_inicial"] : 0.00;
+        }
 
         try {
             $sql = "UPDATE ".BD_FINANCIERA.".finanzas_cuentas_bancarias SET 
@@ -3051,17 +3073,21 @@ class Movimientos {
         $resultado = [
             'ingresos' => 0,
             'egresos' => 0,
+            'transferencias_enviadas' => 0,
+            'transferencias_recibidas' => 0,
             'saldo_actual' => 0
         ];
         
         try {
+            $idCuentaEscapado = mysqli_real_escape_string($conexion, $idCuenta);
+            
             // Calcular ingresos (abonos a facturas de venta - fcu_tipo = 1)
             $sqlIngresos = "SELECT COALESCE(SUM(CAST(pi.payment AS DECIMAL(12, 2))), 0) AS total_ingresos
                 FROM ".BD_FINANCIERA.".payments_invoiced pi
                 INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id = pi.invoiced
                     AND fc.institucion = pi.institucion 
                     AND fc.year = pi.year
-                WHERE pi.payment_cuenta_bancaria_id = '".mysqli_real_escape_string($conexion, $idCuenta)."'
+                WHERE pi.payment_cuenta_bancaria_id = '{$idCuentaEscapado}'
                     AND pi.is_deleted = 0
                     AND pi.type_payments = '".INVOICE."'
                     AND fc.fcu_tipo = '1'
@@ -3081,7 +3107,7 @@ class Movimientos {
                 INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id = pi.invoiced
                     AND fc.institucion = pi.institucion 
                     AND fc.year = pi.year
-                WHERE pi.payment_cuenta_bancaria_id = '".mysqli_real_escape_string($conexion, $idCuenta)."'
+                WHERE pi.payment_cuenta_bancaria_id = '{$idCuentaEscapado}'
                     AND pi.is_deleted = 0
                     AND pi.type_payments = '".INVOICE."'
                     AND fc.fcu_tipo = '2'
@@ -3093,6 +3119,34 @@ class Movimientos {
             if ($consultaEgresos && mysqli_num_rows($consultaEgresos) > 0) {
                 $row = mysqli_fetch_array($consultaEgresos, MYSQLI_BOTH);
                 $resultado['egresos'] = floatval($row['total_egresos'] ?? 0);
+            }
+            
+            // Calcular transferencias enviadas (egresos)
+            // Convertir ID a INT para comparación correcta
+            $idCuentaInt = intval($idCuenta);
+            $sqlTransferenciasEnviadas = "SELECT COALESCE(SUM(CAST(tcb_monto AS DECIMAL(12, 2))), 0) AS total_transferencias_enviadas
+                FROM ".BD_FINANCIERA.".transferencias_cuentas_bancarias
+                WHERE tcb_cuenta_origen_id = {$idCuentaInt}
+                    AND institucion = {$config['conf_id_institucion']}
+                    AND year = {$_SESSION["bd"]}";
+            
+            $consultaTransferenciasEnviadas = mysqli_query($conexion, $sqlTransferenciasEnviadas);
+            if ($consultaTransferenciasEnviadas && mysqli_num_rows($consultaTransferenciasEnviadas) > 0) {
+                $row = mysqli_fetch_array($consultaTransferenciasEnviadas, MYSQLI_BOTH);
+                $resultado['transferencias_enviadas'] = floatval($row['total_transferencias_enviadas'] ?? 0);
+            }
+            
+            // Calcular transferencias recibidas (ingresos)
+            $sqlTransferenciasRecibidas = "SELECT COALESCE(SUM(CAST(tcb_monto AS DECIMAL(12, 2))), 0) AS total_transferencias_recibidas
+                FROM ".BD_FINANCIERA.".transferencias_cuentas_bancarias
+                WHERE tcb_cuenta_destino_id = {$idCuentaInt}
+                    AND institucion = {$config['conf_id_institucion']}
+                    AND year = {$_SESSION["bd"]}";
+            
+            $consultaTransferenciasRecibidas = mysqli_query($conexion, $sqlTransferenciasRecibidas);
+            if ($consultaTransferenciasRecibidas && mysqli_num_rows($consultaTransferenciasRecibidas) > 0) {
+                $row = mysqli_fetch_array($consultaTransferenciasRecibidas, MYSQLI_BOTH);
+                $resultado['transferencias_recibidas'] = floatval($row['total_transferencias_recibidas'] ?? 0);
             }
             
         } catch (Exception $e) {
@@ -3116,17 +3170,35 @@ class Movimientos {
     ): bool {
         try {
             $idCuentaEscapado = mysqli_real_escape_string($conexion, $idCuenta);
-            $consulta = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_FINANCIERA.".payments_invoiced 
+            
+            // Verificar si tiene abonos
+            $consultaAbonos = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_FINANCIERA.".payments_invoiced 
                 WHERE payment_cuenta_bancaria_id='{$idCuentaEscapado}' 
                 AND institucion={$config['conf_id_institucion']} 
                 AND year={$_SESSION["bd"]}
                 AND is_deleted=0");
             
-            if ($consulta && mysqli_num_rows($consulta) > 0) {
-                $resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH);
-                return ((int)$resultado['total']) > 0;
+            $tieneAbonos = false;
+            if ($consultaAbonos && mysqli_num_rows($consultaAbonos) > 0) {
+                $resultado = mysqli_fetch_array($consultaAbonos, MYSQLI_BOTH);
+                $tieneAbonos = ((int)$resultado['total']) > 0;
             }
-            return false;
+            
+            // Verificar si tiene transferencias (como origen o destino)
+            // Convertir ID a INT para comparación correcta
+            $idCuentaInt = intval($idCuenta);
+            $consultaTransferencias = mysqli_query($conexion, "SELECT COUNT(*) as total FROM ".BD_FINANCIERA.".transferencias_cuentas_bancarias 
+                WHERE (tcb_cuenta_origen_id={$idCuentaInt} OR tcb_cuenta_destino_id={$idCuentaInt})
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]}");
+            
+            $tieneTransferencias = false;
+            if ($consultaTransferencias && mysqli_num_rows($consultaTransferencias) > 0) {
+                $resultado = mysqli_fetch_array($consultaTransferencias, MYSQLI_BOTH);
+                $tieneTransferencias = ((int)$resultado['total']) > 0;
+            }
+            
+            return $tieneAbonos || $tieneTransferencias;
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
             return false;
@@ -3423,5 +3495,237 @@ class Movimientos {
                 ORDER BY fc.fcu_fecha DESC, fc.fcu_consecutivo DESC";
         
         return mysqli_query($conexion, $sql);
+    }
+
+    /**
+     * Obtiene el saldo disponible de una cuenta bancaria
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $idCuenta
+     * @return float Saldo disponible
+     */
+    public static function obtenerSaldoDisponibleCuenta(
+        mysqli $conexion,
+        array $config,
+        string $idCuenta
+    ): float {
+        try {
+            // Obtener saldo inicial
+            $consultaCuenta = mysqli_query($conexion, "SELECT cba_saldo_inicial FROM ".BD_FINANCIERA.".finanzas_cuentas_bancarias 
+                WHERE cba_id='".mysqli_real_escape_string($conexion, $idCuenta)."' 
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]} 
+                LIMIT 1");
+            
+            $saldoInicial = 0;
+            if ($consultaCuenta && mysqli_num_rows($consultaCuenta) > 0) {
+                $row = mysqli_fetch_array($consultaCuenta, MYSQLI_BOTH);
+                $saldoInicial = floatval($row['cba_saldo_inicial'] ?? 0);
+            }
+            
+            // Calcular saldo con transferencias incluidas
+            $saldoInfo = self::calcularSaldoCuentaBancaria($conexion, $config, $idCuenta);
+            $ingresos = floatval($saldoInfo['ingresos'] ?? 0);
+            $egresos = floatval($saldoInfo['egresos'] ?? 0);
+            $transferenciasEnviadas = floatval($saldoInfo['transferencias_enviadas'] ?? 0);
+            $transferenciasRecibidas = floatval($saldoInfo['transferencias_recibidas'] ?? 0);
+            
+            return ($saldoInicial + $ingresos) - $egresos - $transferenciasEnviadas + $transferenciasRecibidas;
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            return 0;
+        }
+    }
+
+    /**
+     * Registra una transferencia entre cuentas bancarias
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string $cuentaOrigenId
+     * @param string $cuentaDestinoId
+     * @param float $monto
+     * @param string $fecha
+     * @param string $observaciones
+     * @return array Resultado con 'success' y 'message'
+     */
+    public static function registrarTransferenciaEntreCuentas(
+        mysqli $conexion,
+        array $config,
+        string $cuentaOrigenId,
+        string $cuentaDestinoId,
+        float $monto,
+        string $fecha,
+        string $observaciones = ''
+    ): array {
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        
+        $conexionPDO = Conexion::newConnection('PDO');
+        $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        try {
+            // Validaciones
+            if ($cuentaOrigenId === $cuentaDestinoId) {
+                return ['success' => false, 'message' => 'La cuenta origen y destino no pueden ser la misma.'];
+            }
+            
+            if ($monto <= 0) {
+                return ['success' => false, 'message' => 'El monto debe ser mayor a cero.'];
+            }
+            
+            // Validar que las cuentas existan y estén activas
+            // Convertir IDs a INT para comparación correcta
+            $cuentaOrigenIdInt = intval($cuentaOrigenId);
+            $cuentaDestinoIdInt = intval($cuentaDestinoId);
+            
+            $consultaOrigen = mysqli_query($conexion, "SELECT cba_id, cba_activa FROM ".BD_FINANCIERA.".finanzas_cuentas_bancarias 
+                WHERE cba_id={$cuentaOrigenIdInt} 
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]} 
+                LIMIT 1");
+            
+            if (!$consultaOrigen || mysqli_num_rows($consultaOrigen) == 0) {
+                return ['success' => false, 'message' => 'La cuenta origen no existe.'];
+            }
+            
+            $cuentaOrigen = mysqli_fetch_array($consultaOrigen, MYSQLI_BOTH);
+            if ($cuentaOrigen['cba_activa'] != 1) {
+                return ['success' => false, 'message' => 'La cuenta origen no está activa.'];
+            }
+            
+            $consultaDestino = mysqli_query($conexion, "SELECT cba_id, cba_activa FROM ".BD_FINANCIERA.".finanzas_cuentas_bancarias 
+                WHERE cba_id={$cuentaDestinoIdInt} 
+                AND institucion={$config['conf_id_institucion']} 
+                AND year={$_SESSION["bd"]} 
+                LIMIT 1");
+            
+            if (!$consultaDestino || mysqli_num_rows($consultaDestino) == 0) {
+                return ['success' => false, 'message' => 'La cuenta destino no existe.'];
+            }
+            
+            $cuentaDestino = mysqli_fetch_array($consultaDestino, MYSQLI_BOTH);
+            if ($cuentaDestino['cba_activa'] != 1) {
+                return ['success' => false, 'message' => 'La cuenta destino no está activa.'];
+            }
+            
+            // Validar saldo disponible
+            $saldoDisponible = self::obtenerSaldoDisponibleCuenta($conexion, $config, $cuentaOrigenId);
+            if ($monto > $saldoDisponible) {
+                return ['success' => false, 'message' => 'El monto excede el saldo disponible de la cuenta origen. Saldo disponible: $'.number_format($saldoDisponible, 2, ',', '.').'.'];
+            }
+            
+            // Iniciar transacción
+            $conexionPDO->beginTransaction();
+            
+            // Insertar registro de transferencia
+            $sql = "INSERT INTO ".BD_FINANCIERA.".transferencias_cuentas_bancarias (
+                tcb_cuenta_origen_id, tcb_cuenta_destino_id, tcb_monto, tcb_fecha, 
+                tcb_observaciones, tcb_responsible_user, institucion, year
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $conexionPDO->prepare($sql);
+            $responsibleUser = $_SESSION["id"] ?? '';
+            // Convertir IDs a INT para el binding correcto
+            $cuentaOrigenIdInt = intval($cuentaOrigenId);
+            $cuentaDestinoIdInt = intval($cuentaDestinoId);
+            $stmt->bindParam(1, $cuentaOrigenIdInt, PDO::PARAM_INT);
+            $stmt->bindParam(2, $cuentaDestinoIdInt, PDO::PARAM_INT);
+            $stmt->bindParam(3, $monto, PDO::PARAM_STR);
+            $stmt->bindParam(4, $fecha, PDO::PARAM_STR);
+            $stmt->bindParam(5, $observaciones, PDO::PARAM_STR);
+            $stmt->bindParam(6, $responsibleUser, PDO::PARAM_STR);
+            $stmt->bindParam(7, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(8, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->execute();
+            
+            // Confirmar transacción
+            $conexionPDO->commit();
+            
+            return ['success' => true, 'message' => 'Transferencia registrada exitosamente.'];
+        } catch (Exception $e) {
+            if ($conexionPDO->inTransaction()) {
+                $conexionPDO->rollBack();
+            }
+            include("../compartido/error-catch-to-report.php");
+            return ['success' => false, 'message' => 'Error al registrar la transferencia: '.$e->getMessage()];
+        }
+    }
+
+    /**
+     * Lista las transferencias entre cuentas bancarias con filtros opcionales
+     * @param mysqli $conexion
+     * @param array $config
+     * @param string|null $cuentaOrigenId
+     * @param string|null $cuentaDestinoId
+     * @param string|null $fechaDesde
+     * @param string|null $fechaHasta
+     * @return mysqli_result
+     */
+    public static function listarTransferenciasCuentas(
+        mysqli $conexion,
+        array $config,
+        ?string $cuentaOrigenId = null,
+        ?string $cuentaDestinoId = null,
+        ?string $fechaDesde = null,
+        ?string $fechaHasta = null
+    ) {
+        try {
+            $sql = "SELECT 
+                tcb.tcb_id,
+                tcb.tcb_cuenta_origen_id,
+                tcb.tcb_cuenta_destino_id,
+                tcb.tcb_monto,
+                tcb.tcb_fecha,
+                tcb.tcb_observaciones,
+                tcb.tcb_responsible_user,
+                tcb.tcb_fecha_registro,
+                cba_origen.cba_nombre AS cuenta_origen_nombre,
+                cba_destino.cba_nombre AS cuenta_destino_nombre,
+                CONCAT_WS(' ', u.uss_nombre, u.uss_nombre2, u.uss_apellido1, u.uss_apellido2) AS usuario_nombre
+            FROM ".BD_FINANCIERA.".transferencias_cuentas_bancarias tcb
+            LEFT JOIN ".BD_FINANCIERA.".finanzas_cuentas_bancarias cba_origen 
+                ON cba_origen.cba_id = tcb.tcb_cuenta_origen_id 
+                AND cba_origen.institucion = tcb.institucion 
+                AND cba_origen.year = tcb.year
+            LEFT JOIN ".BD_FINANCIERA.".finanzas_cuentas_bancarias cba_destino 
+                ON cba_destino.cba_id = tcb.tcb_cuenta_destino_id 
+                AND cba_destino.institucion = tcb.institucion 
+                AND cba_destino.year = tcb.year
+            LEFT JOIN ".BD_GENERAL.".usuarios u 
+                ON u.uss_id = tcb.tcb_responsible_user 
+                AND u.institucion = tcb.institucion 
+                AND u.year = tcb.year
+            WHERE tcb.institucion = {$config['conf_id_institucion']} 
+            AND tcb.year = {$_SESSION["bd"]}";
+            
+            // Aplicar filtros
+            if (!empty($cuentaOrigenId)) {
+                // Convertir a INT para comparación correcta
+                $cuentaOrigenIdInt = intval($cuentaOrigenId);
+                $sql .= " AND tcb.tcb_cuenta_origen_id = {$cuentaOrigenIdInt}";
+            }
+            
+            if (!empty($cuentaDestinoId)) {
+                // Convertir a INT para comparación correcta
+                $cuentaDestinoIdInt = intval($cuentaDestinoId);
+                $sql .= " AND tcb.tcb_cuenta_destino_id = {$cuentaDestinoIdInt}";
+            }
+            
+            if (!empty($fechaDesde)) {
+                $fechaDesdeEscapado = mysqli_real_escape_string($conexion, $fechaDesde);
+                $sql .= " AND tcb.tcb_fecha >= '{$fechaDesdeEscapado}'";
+            }
+            
+            if (!empty($fechaHasta)) {
+                $fechaHastaEscapado = mysqli_real_escape_string($conexion, $fechaHasta);
+                $sql .= " AND tcb.tcb_fecha <= '{$fechaHastaEscapado}'";
+            }
+            
+            $sql .= " ORDER BY tcb.tcb_fecha DESC, tcb.tcb_fecha_registro DESC";
+            
+            return mysqli_query($conexion, $sql);
+        } catch (Exception $e) {
+            include("../compartido/error-catch-to-report.php");
+            return mysqli_query($conexion, "SELECT NULL WHERE 1=0");
+        }
     }
 }

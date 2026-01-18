@@ -3,7 +3,9 @@ if (!empty($data["dataTotal"])) {
 	include(ROOT_PATH . "/config-general/config-admisiones.php");
 	require_once("../Estudiantes.php");
 }
-$contReg = 1;
+if (!isset($contReg) || !is_numeric($contReg) || $contReg < 1) {
+	$contReg = 1;
+}
 foreach ($data["data"] as $resultado) {
 	$observacion = !empty($resultado['asp_observacion']) ? strip_tags($resultado['asp_observacion']) : "";
 	$infoTooltipEstudiante = "<b>Nombre acudiente:</b><br>
@@ -341,6 +343,9 @@ function stripHtmlTags(html) {
 
 // Función para abrir modal de edición de aspirante
 function abrirModalEdicionAspirante(aspId, matId) {
+	// Guardar foco actual para restaurarlo al cerrar
+	try { window.__insc_last_focus = document.activeElement; } catch(e) {}
+
 	// Limpiar formulario
 	$('#formEdicionAspirante')[0].reset();
 	$('#asp_id_modal').val(aspId);
@@ -443,13 +448,76 @@ function guardarCambiosAspirante() {
 				// Cerrar modal
 				$('#modalEdicionAspirante').modal('hide');
 				
-				// Mostrar mensaje de éxito
-				alert('✅ ' + (response.message || 'Aspirante actualizado correctamente'));
-				
-				// Recargar la página para ver los cambios
+				// Actualizar UI sin recargar: estado + resaltar fila
+				try {
+					const aspId = formData.asp_id;
+					// Usar el estado realmente guardado (backend) para evitar desajustes
+					const estado = parseInt((response.estado_solicitud ?? formData.estado_solicitud), 10);
+
+					const estadosSolicitud = {
+						1: 'Pendiente',
+						2: 'En proceso',
+						3: 'En revisión',
+						4: 'Rechazada',
+						5: 'Cancelada',
+						6: 'Aprobada',
+						7: 'Otro'
+					};
+					const badgeClasses = {
+						1: 'badge badge-warning',
+						2: 'badge badge-info',
+						3: 'badge badge-primary',
+						4: 'badge badge-danger',
+						5: 'badge badge-secondary',
+						6: 'badge badge-success',
+						7: 'badge badge-dark'
+					};
+
+					const $row = $('#registro_' + aspId);
+					if ($row.length) {
+						const $estadoCell = $row.find('td').eq(8); // 0-based: col 9 "Estado"
+						const badgeClass = badgeClasses[estado] || 'badge badge-secondary';
+						const label = (response.estado_label || estadosSolicitud[estado]) || 'Sin estado';
+						$estadoCell.html('<span class=\"' + badgeClass + '\">' + label + '</span>');
+
+						// Resaltar fila un momento
+						$row.addClass('table-success');
+						setTimeout(function(){ $row.removeClass('table-success'); }, 1200);
+					}
+
+					// Actualizar badge en fila expandible (si existe)
+					const $expand = $('#expand-' + aspId);
+					if ($expand.length) {
+						const $badge = $expand.find('span.badge').first();
+						if ($badge.length) {
+							const label2 = (response.estado_label || estadosSolicitud[estado]) || 'Sin estado';
+							$badge.attr('class', (badgeClasses[estado] || 'badge badge-secondary')).text(label2);
+						}
+					}
+				} catch(e) {}
+
+				// Toast de éxito
+				if (typeof $.toast === 'function') {
+					$.toast({
+						heading: 'Guardado',
+						text: response.message || 'Aspirante actualizado correctamente.',
+						position: 'top-right',
+						loaderBg: '#26c281',
+						icon: 'success',
+						hideAfter: 2500
+					});
+				} else {
+					alert('✅ ' + (response.message || 'Aspirante actualizado correctamente'));
+				}
+
+				// Restaurar foco
 				setTimeout(function() {
-					location.reload();
-				}, 1000);
+					try {
+						if (window.__insc_last_focus && typeof window.__insc_last_focus.focus === 'function') {
+							window.__insc_last_focus.focus();
+						}
+					} catch(e) {}
+				}, 200);
 			} else {
 				// Mostrar mensaje de error
 				alert('❌ Error: ' + (response.message || 'Error desconocido'));
