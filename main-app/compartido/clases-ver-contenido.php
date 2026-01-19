@@ -94,11 +94,11 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 							
 							if (!empty($idsUsuarios)) {
 								$idsUsuariosEsc = array_map(function($id) use ($conexion) {
-									return "'" . mysqli_real_escape_string($conexion, $id) . "'";
+									return "'" . mysqli_real_escape_string($conexion, $id ?? '') . "'";
 								}, $idsUsuarios);
 								$inUsuarios = implode(',', $idsUsuariosEsc);
-								$urlClaseEsc = mysqli_real_escape_string($conexion, $urlClase);
-								$yearEsc = mysqli_real_escape_string($conexion, $_SESSION["bd"]);
+								$urlClaseEsc = mysqli_real_escape_string($conexion, $urlClase ?? '');
+								$yearEsc = mysqli_real_escape_string($conexion, $_SESSION["bd"] ?? '');
 								$institucion = (int)$config['conf_id_institucion'];
 								
 								$sqlIngresos = "SELECT hil_id, hil_usuario, hil_url, hil_titulo, hil_fecha
@@ -278,8 +278,8 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 					FROM ".BD_ACADEMICA.".clases_feedback f
 					INNER JOIN ".BD_GENERAL.".usuarios u ON f.fcls_usuario = u.uss_id 
 						AND u.institucion = ".intval($config['conf_id_institucion'])."
-						AND u.year = '".mysqli_real_escape_string($conexion, $_SESSION["bd"])."'
-					WHERE f.fcls_id_clase = '".mysqli_real_escape_string($conexion, $idR)."'
+						AND u.year = '".mysqli_real_escape_string($conexion, $_SESSION["bd"] ?? '')."'
+					WHERE f.fcls_id_clase = '".mysqli_real_escape_string($conexion, $idR ?? '')."'
 					AND f.fcls_id_institucion = ".intval($config['conf_id_institucion'])."
 					ORDER BY f.fcls_fecha DESC"
 				);
@@ -319,9 +319,9 @@ $datosConsultaBD = Clases::traerDatosClases($conexion, $config, $idR);
 								$feedbackExistente = mysqli_query($conexion, 
 									"SELECT fcls_comentario, fcls_star, fcls_fecha 
 									FROM ".BD_ACADEMICA.".clases_feedback 
-									WHERE fcls_id_clase = '".mysqli_real_escape_string($conexion, $idR)."'
+									WHERE fcls_id_clase = '".mysqli_real_escape_string($conexion, $idR ?? '')."'
 									AND fcls_id_institucion = ".intval($config['conf_id_institucion'])."
-									AND fcls_usuario = '".mysqli_real_escape_string($conexion, $datosUsuarioActual['uss_id'])."'
+									AND fcls_usuario = '".mysqli_real_escape_string($conexion, $datosUsuarioActual['uss_id'] ?? '')."'
 									LIMIT 1"
 								);
 								$yaTieneFeedback = mysqli_num_rows($feedbackExistente) > 0;
