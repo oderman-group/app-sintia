@@ -204,9 +204,18 @@
                             <tbody>
                                 <?php
                                 require_once(ROOT_PATH . "/main-app/class/Instituciones.php");
-                                foreach ($listaUsuarios as $user) { 
-                                    $institucion = Instituciones::getDataInstitution($user["institucion"]);
-                                    $institucion = mysqli_fetch_array($institucion, MYSQLI_BOTH);
+                                
+                                // Validar que $listaUsuarios sea un array antes de iterar
+                                if (!is_array($listaUsuarios) || empty($listaUsuarios)) {
+                                    echo '<tr><td colspan="3" class="text-center text-danger">No se pudieron cargar los usuarios. Por favor, intenta nuevamente.</td></tr>';
+                                } else {
+                                    foreach ($listaUsuarios as $user) {
+                                        if (!is_array($user)) {
+                                            continue; // Saltar si el elemento no es un array válido
+                                        }
+                                        
+                                        $institucion = Instituciones::getDataInstitution($user["institucion"]);
+                                        $institucion = mysqli_fetch_array($institucion, MYSQLI_BOTH);
                                 ?>
                                     <tr onclick="document.getElementById('usuario_<?php echo $user['id_nuevo']; ?>').checked = true;">
                                         <td>
@@ -222,22 +231,25 @@
                                         </td>
                                         <td>
                                             <span class="badge-institucion">
-                                                <?php echo htmlspecialchars($institucion["ins_siglas"]); ?>
+                                                <?php echo htmlspecialchars($institucion["ins_siglas"] ?? ''); ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <strong><?php echo htmlspecialchars($user["uss_documento"]); ?></strong>
+                                            <strong><?php echo htmlspecialchars($user["uss_documento"] ?? ''); ?></strong>
                                         </td>
                                         <td>
                                             <i class="bi bi-person me-1"></i>
-                                            <?php echo htmlspecialchars($user["uss_usuario"]); ?>
+                                            <?php echo htmlspecialchars($user["uss_usuario"] ?? ''); ?>
                                         </td>
                                         <td>
                                             <i class="bi bi-envelope me-1"></i>
-                                            <?php echo htmlspecialchars($user["uss_email"]); ?>
+                                            <?php echo htmlspecialchars($user["uss_email"] ?? ''); ?>
                                         </td>
                                     </tr>
-                                <?php } ?>
+                                <?php 
+                                    } // Cierre del foreach
+                                } // Cierre del else (validación de array)
+                                ?>
                             </tbody>
                         </table>
                     </div>

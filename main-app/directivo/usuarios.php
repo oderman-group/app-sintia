@@ -712,6 +712,12 @@ if ($resultGeneros) {
 																		<li><a href="../compartido/informe-historial-ingreso.php?id=<?= base64_encode($usuario['uss_id']); ?>" target="_blank">Historial de Ingreso</a></li>
 																	<?php } ?>
 
+																	<?php if ($datosUsuarioActual['uss_tipo'] == TIPO_DEV && !empty($usuario['uss_id'])) { ?>
+																		<li class="divider"></li>
+																		<li><a href="javascript:void(0);" onclick="abrirModalClonarUsuario('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars(UsuariosPadre::nombreCompletoDelUsuario($usuario), ENT_QUOTES, 'UTF-8'); ?>')"><i class="fa fa-copy"></i> Clonar</a></li>
+																		<li><a href="javascript:void(0);" onclick="abrirModalTransferirUsuario('<?= htmlspecialchars($usuario['uss_id'], ENT_QUOTES, 'UTF-8'); ?>', '<?= htmlspecialchars(UsuariosPadre::nombreCompletoDelUsuario($usuario), ENT_QUOTES, 'UTF-8'); ?>')"><i class="fa fa-exchange"></i> Transferir</a></li>
+																	<?php } ?>
+
 																</ul>
 																</div>
 															</td>
@@ -1439,6 +1445,118 @@ if ($resultGeneros) {
 					</button>
 					<button type="submit" class="btn btn-primary" id="btnEnviarComunicado">
 						<i class="fa fa-paper-plane"></i> Enviar Comunicado
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal para Clonar Usuario -->
+<div class="modal fade" id="modalClonarUsuario" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-info">
+				<h4 class="modal-title text-white"><i class="fa fa-copy"></i> Clonar Usuario</h4>
+				<button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formClonarUsuario">
+				<div class="modal-body">
+					<input type="hidden" id="clonar_usuario_id" name="usuario_id">
+					<?php echo Csrf::campoHTML(); ?>
+					
+					<!-- Información del Usuario a Clonar -->
+					<div class="alert alert-info">
+						<h5><i class="fa fa-user"></i> <span id="clonar_nombre_usuario"></span></h5>
+						<p class="mb-0"><strong>ID Usuario:</strong> <span id="clonar_id_usuario"></span></p>
+					</div>
+					
+					<!-- Institución Destino -->
+					<div class="form-group">
+						<label>Institución Destino <span class="text-danger">*</span></label>
+						<select class="form-control" id="clonar_institucion" name="institucion" required>
+							<option value="">Cargando instituciones...</option>
+						</select>
+						<small class="form-text text-muted">Seleccione la institución hacia donde desea clonar el usuario</small>
+					</div>
+					
+					<!-- Año Destino -->
+					<div class="form-group">
+						<label>Año Destino <span class="text-danger">*</span></label>
+						<select class="form-control" id="clonar_year" name="year" required disabled>
+							<option value="">Primero seleccione una institución</option>
+						</select>
+						<small class="form-text text-muted">Seleccione el año hacia donde desea clonar el usuario</small>
+					</div>
+					
+					<!-- Información adicional -->
+					<div class="alert alert-warning">
+						<i class="fa fa-exclamation-triangle"></i> 
+						<strong>Nota:</strong> Se copiarán todos los datos del usuario (información personal, credenciales, etc.) a la institución y año seleccionados.
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-info" id="btnClonarUsuario">
+						<i class="fa fa-copy"></i> Clonar Usuario
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal para Transferir Usuario -->
+<div class="modal fade" id="modalTransferirUsuario" tabindex="-1" role="dialog">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-warning">
+				<h4 class="modal-title text-white"><i class="fa fa-exchange"></i> Transferir Usuario</h4>
+				<button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+			</div>
+			<form id="formTransferirUsuario">
+				<div class="modal-body">
+					<input type="hidden" id="transferir_usuario_id" name="usuario_id">
+					<?php echo Csrf::campoHTML(); ?>
+					
+					<!-- Información del Usuario a Transferir -->
+					<div class="alert alert-warning">
+						<h5><i class="fa fa-user"></i> <span id="transferir_nombre_usuario"></span></h5>
+						<p class="mb-0"><strong>ID Usuario:</strong> <span id="transferir_id_usuario"></span></p>
+					</div>
+					
+					<!-- Institución Destino -->
+					<div class="form-group">
+						<label>Institución Destino <span class="text-danger">*</span></label>
+						<select class="form-control" id="transferir_institucion" name="institucion" required>
+							<option value="">Cargando instituciones...</option>
+						</select>
+						<small class="form-text text-muted">Seleccione la institución hacia donde desea transferir el usuario</small>
+					</div>
+					
+					<!-- Año Destino -->
+					<div class="form-group">
+						<label>Año Destino <span class="text-danger">*</span></label>
+						<select class="form-control" id="transferir_year" name="year" required disabled>
+							<option value="">Primero seleccione una institución</option>
+						</select>
+						<small class="form-text text-muted">Seleccione el año hacia donde desea transferir el usuario</small>
+					</div>
+					
+					<!-- Información adicional -->
+					<div class="alert alert-danger">
+						<i class="fa fa-exclamation-triangle"></i> 
+						<strong>Advertencia:</strong> Esta acción moverá el usuario de su institución y año actuales a la institución y año seleccionados. El usuario ya no estará disponible en su ubicación original.
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">
+						<i class="fa fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-warning" id="btnTransferirUsuario">
+						<i class="fa fa-exchange"></i> Transferir Usuario
 					</button>
 				</div>
 			</form>
@@ -2542,6 +2660,456 @@ $(document).ready(function() {
 			}
 		});
 	};
+	
+	// ========================================
+	// === FUNCIONES PARA CLONAR USUARIO ===
+	// ========================================
+	
+	// Función para abrir modal de clonar usuario
+	window.abrirModalClonarUsuario = function(usuarioId, nombreUsuario) {
+		// Los IDs son alfanuméricos, no numéricos
+		// Convertir a string y validar que no esté vacío
+		let idUsuario = String(usuarioId || '').trim();
+		
+		// Si es null, undefined, o vacío, mostrar error
+		if (!idUsuario || idUsuario === '' || idUsuario === 'null' || idUsuario === 'undefined') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario no proporcionado. Por favor, recarga la página e intenta nuevamente.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Llenar datos del usuario - guardar como string alfanumérico
+		$('#clonar_usuario_id').val(idUsuario);
+		$('#clonar_id_usuario').text(idUsuario);
+		$('#clonar_nombre_usuario').text(nombreUsuario || 'Usuario sin nombre');
+		
+		// Limpiar selects
+		$('#clonar_institucion').html('<option value="">Cargando instituciones...</option>');
+		$('#clonar_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+		
+		// Cargar instituciones
+		cargarInstitucionesParaClonar();
+		
+		// Mostrar modal
+		$('#modalClonarUsuario').modal('show');
+	};
+	
+	// Función para cargar instituciones
+	function cargarInstitucionesParaClonar() {
+		$.ajax({
+			url: 'ajax-instituciones-clonar.php',
+			type: 'GET',
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					let html = '<option value="">Seleccione una institución...</option>';
+					response.instituciones.forEach(function(inst) {
+						html += '<option value="' + inst.ins_id + '" data-years="' + inst.ins_years + '">' + 
+							inst.ins_nombre + ' (' + inst.ins_siglas + ')' + 
+							'</option>';
+					});
+					$('#clonar_institucion').html(html);
+				} else {
+					$('#clonar_institucion').html('<option value="">Error al cargar instituciones</option>');
+					Swal.fire({
+						title: 'Error',
+						text: response.message || 'Error al cargar instituciones',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				$('#clonar_institucion').html('<option value="">Error de conexión</option>');
+				Swal.fire({
+					title: 'Error',
+					text: 'Error de conexión al cargar instituciones',
+					icon: 'error',
+					confirmButtonColor: '#dc3545'
+				});
+			}
+		});
+	}
+	
+	// Manejar cambio de institución
+	$('#clonar_institucion').on('change', function() {
+		const selectedOption = $(this).find('option:selected');
+		const yearsRange = selectedOption.data('years');
+		
+		if (!yearsRange || $(this).val() === '') {
+			$('#clonar_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+			return;
+		}
+		
+		// Parsear rango de años
+		const years = yearsRange.split(',');
+		const yearStart = parseInt(years[0]);
+		const yearEnd = parseInt(years[1]);
+		
+		// Generar opciones de años
+		let html = '<option value="">Seleccione un año...</option>';
+		for (let year = yearEnd; year >= yearStart; year--) {
+			html += '<option value="' + year + '">' + year + '</option>';
+		}
+		
+		$('#clonar_year').html(html).prop('disabled', false);
+	});
+	
+	// Manejar envío del formulario de clonación
+	$('#formClonarUsuario').on('submit', function(e) {
+		e.preventDefault();
+		
+		// Obtener valores - usuarioId es alfanumérico, institución y año son numéricos
+		const usuarioId = String($('#clonar_usuario_id').val() || '').trim();
+		const institucion = parseInt($('#clonar_institucion').val(), 10);
+		const year = parseInt($('#clonar_year').val(), 10);
+		
+		// Validaciones
+		if (!usuarioId || usuarioId === '' || usuarioId === 'null' || usuarioId === 'undefined') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario inválido',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		if (!institucion || institucion <= 0 || isNaN(institucion)) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debe seleccionar una institución destino',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		if (!year || year <= 0 || isNaN(year)) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debe seleccionar un año destino',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Confirmar acción
+		Swal.fire({
+			title: '¿Clonar Usuario?',
+			html: '¿Está seguro de clonar este usuario a la institución y año seleccionados?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-copy"></i> Sí, Clonar',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#17a2b8',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				// Obtener valores nuevamente dentro de preConfirm para asegurar que son correctos
+				const usuarioIdVal = String($('#clonar_usuario_id').val() || '').trim();
+				const institucionVal = parseInt($('#clonar_institucion').val(), 10);
+				const yearVal = parseInt($('#clonar_year').val(), 10);
+				const csrfToken = $('input[name="csrf_token"]').val();
+				
+				// Validar nuevamente
+				if (!usuarioIdVal || usuarioIdVal === '' || usuarioIdVal === 'null' || usuarioIdVal === 'undefined') {
+					Swal.showValidationMessage('ID de usuario inválido');
+					return false;
+				}
+				
+				if (!institucionVal || institucionVal <= 0 || isNaN(institucionVal)) {
+					Swal.showValidationMessage('Debe seleccionar una institución destino');
+					return false;
+				}
+				
+				if (!yearVal || yearVal <= 0 || isNaN(yearVal)) {
+					Swal.showValidationMessage('Debe seleccionar un año destino');
+					return false;
+				}
+				
+				return $.ajax({
+					url: 'ajax-clonar-usuario.php',
+					type: 'POST',
+					data: {
+						usuario_id: usuarioIdVal,
+						institucion: institucionVal,
+						year: yearVal,
+						csrf_token: csrfToken
+					},
+					dataType: 'json'
+				}).then(function(response) {
+					return response;
+				}).catch(function(error) {
+					Swal.showValidationMessage('Error de conexión: ' + error.statusText);
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Usuario Clonado!',
+						html: result.value.message + '<br><br>' +
+							'<strong>Institución:</strong> ' + result.value.institucion_destino + '<br>' +
+							'<strong>Año:</strong> ' + result.value.year_destino,
+						icon: 'success',
+						confirmButtonColor: '#17a2b8'
+					}).then(() => {
+						$('#modalClonarUsuario').modal('hide');
+						// Opcional: recargar la página para ver los cambios
+						// location.reload();
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudo clonar el usuario',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	});
+	
+	// Limpiar formulario al cerrar modal
+	$('#modalClonarUsuario').on('hidden.bs.modal', function() {
+		$('#formClonarUsuario')[0].reset();
+		$('#clonar_institucion').html('<option value="">Cargando instituciones...</option>');
+		$('#clonar_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+	});
+	
+	// ========================================
+	// === FUNCIONES PARA TRANSFERIR USUARIO ===
+	// ========================================
+	
+	// Función para abrir modal de transferir usuario
+	window.abrirModalTransferirUsuario = function(usuarioId, nombreUsuario) {
+		// Los IDs son alfanuméricos, no numéricos
+		// Convertir a string y validar que no esté vacío
+		let idUsuario = String(usuarioId || '').trim();
+		
+		// Si es null, undefined, o vacío, mostrar error
+		if (!idUsuario || idUsuario === '' || idUsuario === 'null' || idUsuario === 'undefined') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario no proporcionado. Por favor, recarga la página e intenta nuevamente.',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Llenar datos del usuario - guardar como string alfanumérico
+		$('#transferir_usuario_id').val(idUsuario);
+		$('#transferir_id_usuario').text(idUsuario);
+		$('#transferir_nombre_usuario').text(nombreUsuario || 'Usuario sin nombre');
+		
+		// Limpiar selects
+		$('#transferir_institucion').html('<option value="">Cargando instituciones...</option>');
+		$('#transferir_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+		
+		// Cargar instituciones
+		cargarInstitucionesParaTransferir();
+		
+		// Mostrar modal
+		$('#modalTransferirUsuario').modal('show');
+	};
+	
+	// Función para cargar instituciones para transferir
+	function cargarInstitucionesParaTransferir() {
+		$.ajax({
+			url: 'ajax-instituciones-clonar.php',
+			type: 'GET',
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					let html = '<option value="">Seleccione una institución...</option>';
+					response.instituciones.forEach(function(inst) {
+						html += '<option value="' + inst.ins_id + '" data-years="' + inst.ins_years + '">' + 
+							inst.ins_nombre + ' (' + inst.ins_siglas + ')' + 
+							'</option>';
+					});
+					$('#transferir_institucion').html(html);
+				} else {
+					$('#transferir_institucion').html('<option value="">Error al cargar instituciones</option>');
+					Swal.fire({
+						title: 'Error',
+						text: response.message || 'Error al cargar instituciones',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			},
+			error: function(xhr, status, error) {
+				$('#transferir_institucion').html('<option value="">Error de conexión</option>');
+				Swal.fire({
+					title: 'Error',
+					text: 'Error de conexión al cargar instituciones',
+					icon: 'error',
+					confirmButtonColor: '#dc3545'
+				});
+			}
+		});
+	}
+	
+	// Manejar cambio de institución para transferir
+	$('#transferir_institucion').on('change', function() {
+		const selectedOption = $(this).find('option:selected');
+		const yearsRange = selectedOption.data('years');
+		
+		if (!yearsRange || $(this).val() === '') {
+			$('#transferir_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+			return;
+		}
+		
+		// Parsear rango de años
+		const years = yearsRange.split(',');
+		const yearStart = parseInt(years[0]);
+		const yearEnd = parseInt(years[1]);
+		
+		// Generar opciones de años
+		let html = '<option value="">Seleccione un año...</option>';
+		for (let year = yearEnd; year >= yearStart; year--) {
+			html += '<option value="' + year + '">' + year + '</option>';
+		}
+		
+		$('#transferir_year').html(html).prop('disabled', false);
+	});
+	
+	// Manejar envío del formulario de transferencia
+	$('#formTransferirUsuario').on('submit', function(e) {
+		e.preventDefault();
+		
+		// Obtener valores - usuarioId es alfanumérico, institución y año son numéricos
+		const usuarioId = String($('#transferir_usuario_id').val() || '').trim();
+		const institucion = parseInt($('#transferir_institucion').val(), 10);
+		const year = parseInt($('#transferir_year').val(), 10);
+		
+		// Validaciones
+		if (!usuarioId || usuarioId === '' || usuarioId === 'null' || usuarioId === 'undefined') {
+			Swal.fire({
+				title: 'Error',
+				text: 'ID de usuario inválido',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		if (!institucion || institucion <= 0 || isNaN(institucion)) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debe seleccionar una institución destino',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		if (!year || year <= 0 || isNaN(year)) {
+			Swal.fire({
+				title: 'Error',
+				text: 'Debe seleccionar un año destino',
+				icon: 'error',
+				confirmButtonColor: '#dc3545'
+			});
+			return;
+		}
+		
+		// Confirmar acción con advertencia más fuerte
+		Swal.fire({
+			title: '¿Transferir Usuario?',
+			html: '<div class="text-left">' +
+				'<p><strong>Esta acción moverá el usuario a otra institución/año.</strong></p>' +
+				'<p>El usuario ya no estará disponible en su ubicación actual.</p>' +
+				'<p class="text-danger"><i class="fa fa-exclamation-triangle"></i> Esta acción no se puede deshacer fácilmente.</p>' +
+				'</div>',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: '<i class="fa fa-exchange"></i> Sí, Transferir',
+			cancelButtonText: '<i class="fa fa-times"></i> Cancelar',
+			confirmButtonColor: '#ffc107',
+			cancelButtonColor: '#6c757d',
+			showLoaderOnConfirm: true,
+			preConfirm: () => {
+				// Obtener valores nuevamente dentro de preConfirm para asegurar que son correctos
+				const usuarioIdVal = String($('#transferir_usuario_id').val() || '').trim();
+				const institucionVal = parseInt($('#transferir_institucion').val(), 10);
+				const yearVal = parseInt($('#transferir_year').val(), 10);
+				const csrfToken = $('input[name="csrf_token"]').val();
+				
+				// Validar nuevamente
+				if (!usuarioIdVal || usuarioIdVal === '' || usuarioIdVal === 'null' || usuarioIdVal === 'undefined') {
+					Swal.showValidationMessage('ID de usuario inválido');
+					return false;
+				}
+				
+				if (!institucionVal || institucionVal <= 0 || isNaN(institucionVal)) {
+					Swal.showValidationMessage('Debe seleccionar una institución destino');
+					return false;
+				}
+				
+				if (!yearVal || yearVal <= 0 || isNaN(yearVal)) {
+					Swal.showValidationMessage('Debe seleccionar un año destino');
+					return false;
+				}
+				
+				return $.ajax({
+					url: 'ajax-transferir-usuario.php',
+					type: 'POST',
+					data: {
+						usuario_id: usuarioIdVal,
+						institucion: institucionVal,
+						year: yearVal,
+						csrf_token: csrfToken
+					},
+					dataType: 'json'
+				}).then(function(response) {
+					return response;
+				}).catch(function(error) {
+					Swal.showValidationMessage('Error de conexión: ' + error.statusText);
+				});
+			},
+			allowOutsideClick: () => !Swal.isLoading()
+		}).then((result) => {
+			if (result.isConfirmed && result.value) {
+				if (result.value.success) {
+					Swal.fire({
+						title: '¡Usuario Transferido!',
+						html: result.value.message + '<br><br>' +
+							'<strong>Institución Destino:</strong> ' + result.value.institucion_destino + '<br>' +
+							'<strong>Año Destino:</strong> ' + result.value.year_destino,
+						icon: 'success',
+						confirmButtonColor: '#ffc107'
+					}).then(() => {
+						$('#modalTransferirUsuario').modal('hide');
+						// Recargar la página para ver los cambios
+						location.reload();
+					});
+				} else {
+					Swal.fire({
+						title: 'Error',
+						html: result.value.message || 'No se pudo transferir el usuario',
+						icon: 'error',
+						confirmButtonColor: '#dc3545'
+					});
+				}
+			}
+		});
+	});
+	
+	// Limpiar formulario al cerrar modal de transferir
+	$('#modalTransferirUsuario').on('hidden.bs.modal', function() {
+		$('#formTransferirUsuario')[0].reset();
+		$('#transferir_institucion').html('<option value="">Cargando instituciones...</option>');
+		$('#transferir_year').html('<option value="">Primero seleccione una institución</option>').prop('disabled', true);
+	});
 });
 </script>
 

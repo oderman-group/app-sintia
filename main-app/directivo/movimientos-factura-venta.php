@@ -151,9 +151,20 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                                 $itemType = $fila['item_type'] ?? 'D';
                                 
                                 // Obtener datos de impuesto para items débito
-                                $resultadoTax = [];
+                                // Usar snapshot (tax_name, tax_fee) con fallback a traerDatosImpuestos()
                                 if ($itemType == 'D' && !empty($fila['tax']) && $fila['tax'] != 0) {
-                                    $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                                    // Usar snapshot si está disponible, sino hacer fallback
+                                    $taxName = !empty($fila['tax_name']) ? $fila['tax_name'] : null;
+                                    $taxFee = !empty($fila['tax_fee']) ? floatval($fila['tax_fee']) : null;
+                                    
+                                    // Si no hay snapshot, obtener desde la tabla taxes (fallback)
+                                    if ($taxName === null || $taxFee === null) {
+                                        $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                                        if (!empty($resultadoTax)) {
+                                            $taxName = $resultadoTax['type_tax'] ?? null;
+                                            $taxFee = !empty($resultadoTax['fee']) ? floatval($resultadoTax['fee']) : null;
+                                        }
+                                    }
                                     
                                     // Calcular impuesto para el array
                                     $precio = floatval($fila['priceTransaction'] ?? 0);
@@ -162,14 +173,14 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                                     $precioPorCantidad = $precio * $cantidad;
                                     $descuentoLinea = $precioPorCantidad * ($descuento / 100);
                                     $baseGravableItem = $precioPorCantidad - $descuentoLinea;
-                                    $tax = (!empty($resultadoTax) && !empty($resultadoTax['fee'])) ? $resultadoTax['fee'] : 0;
+                                    $tax = $taxFee ?? 0;
                                     $impuesto = $baseGravableItem * ($tax / 100);
                                     
-                                    if (!empty($fila['tax']) && $fila['tax'] > 0 && !empty($resultadoTax) && $impuesto > 0) {
+                                    if (!empty($fila['tax']) && $fila['tax'] > 0 && $taxName !== null && $taxFee !== null && $impuesto > 0) {
                                         // Agregar o actualizar en el array de impuestos
                                         $existe = false;
                                         foreach ($arrayImpuestos as &$imp) {
-                                            if ($imp['name'] == $resultadoTax['type_tax']) {
+                                            if ($imp['name'] == $taxName) {
                                                 $imp['value'] += $impuesto;
                                                 $existe = true;
                                                 break;
@@ -177,8 +188,8 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                                         }
                                         if (!$existe) {
                                             $arrayImpuestos[] = [
-                                                "name" => $resultadoTax['type_tax'],
-                                                "fee" => $resultadoTax['fee'],
+                                                "name" => $taxName,
+                                                "fee" => $taxFee,
                                                 "value" => $impuesto
                                             ];
                                         }
@@ -195,13 +206,21 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                         
                         // Mostrar items débito primero
                         foreach ($itemsDebito as $fila) {
-                            $resultadoTax = [];
-                            if (!empty($fila['tax']) && $fila['tax'] != 0) {
+                            // Usar snapshot (tax_name, tax_fee) con fallback a traerDatosImpuestos()
+                            $taxName = !empty($fila['tax_name']) ? $fila['tax_name'] : null;
+                            $taxFee = !empty($fila['tax_fee']) ? floatval($fila['tax_fee']) : null;
+                            
+                            // Si no hay snapshot, obtener desde la tabla taxes (fallback)
+                            if (($taxName === null || $taxFee === null) && !empty($fila['tax']) && $fila['tax'] != 0) {
                                 $resultadoTax = Movimientos::traerDatosImpuestos($conexion, $config, (string)$fila['tax']);
+                                if (!empty($resultadoTax)) {
+                                    $taxName = $resultadoTax['type_tax'] ?? null;
+                                    $taxFee = !empty($resultadoTax['fee']) ? floatval($resultadoTax['fee']) : null;
+                                }
                             }
                             
-                            $impuestoItem = (!empty($fila['tax']) && $fila['tax'] != 0 && !empty($resultadoTax)) 
-                                ? $resultadoTax['type_tax']." (".$resultadoTax['fee']."%)" 
+                            $impuestoItem = (!empty($fila['tax']) && $fila['tax'] != 0 && $taxName !== null && $taxFee !== null) 
+                                ? $taxName." (".number_format($taxFee, 0, ",", ".")."%)" 
                                 : "NINGUNO (0%)";
                     ?>
                         <tr>

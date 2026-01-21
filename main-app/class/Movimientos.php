@@ -152,6 +152,7 @@ class Movimientos {
             
             // Obtener todos los items con sus detalles
             // Usar item_type y application_time de transaction_items (copia histórica)
+            // Usar tax_fee del snapshot, con fallback a JOIN con taxes para compatibilidad
             $consulta = mysqli_query($conexion, "SELECT 
                 ti.price,
                 ti.cantity,
@@ -160,7 +161,7 @@ class Movimientos {
                 ti.tax,
                 ti.item_type,
                 COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time,
-                tax.fee AS tax_fee
+                COALESCE(ti.tax_fee, tax.fee) AS tax_fee
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id = ti.tax AND tax.institucion = {$config['conf_id_institucion']} AND tax.year = {$_SESSION["bd"]}
                 WHERE {$sqlWhere}
@@ -179,6 +180,7 @@ class Movimientos {
                     $cantidad = floatval($item['cantity'] ?? 0);
                     $porcentajeDescuento = floatval($item['discount'] ?? 0);
                     $subtotal = floatval($item['subtotal'] ?? 0);
+                    // Usar tax_fee del snapshot (preferencia) o del JOIN (fallback para registros antiguos)
                     $taxFee = floatval($item['tax_fee'] ?? 0);
                     
                     if ($isDebito) {
@@ -290,7 +292,8 @@ class Movimientos {
                     // Buscar items por factura_recurrente_id
                     // Orden: primero débitos (D), luego créditos (C)
                     // Usar item_name, item_type y application_time de transaction_items (copia histórica)
-                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
+                    // Incluir tax, tax_name y tax_fee del snapshot
+                    $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.tax_name, ti.tax_fee, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                     FROM ".BD_FINANCIERA.".transaction_items ti
                     LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                     WHERE ti.factura_recurrente_id = {$facturaRecurrenteId}
@@ -309,7 +312,8 @@ class Movimientos {
                 // id_transaction es fcu_id (INT UNSIGNED)
                 // Orden: primero débitos (D), luego créditos (C)
                 // Usar item_name, item_type y application_time de transaction_items (copia histórica)
-                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
+                // Incluir tax, tax_name y tax_fee del snapshot
+                $consulta = mysqli_query($conexion, "SELECT ti.id_autoincremental AS idtx, ti.id_item AS idit, ti.item_name AS name, i.price AS priceItem, ti.price AS priceTransaction, ti.cantity, ti.subtotal, ti.description, ti.discount, ti.tax, ti.tax_name, ti.tax_fee, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".items i ON i.item_id = ti.id_item AND i.institucion = {$config['conf_id_institucion']} AND i.year = {$_SESSION["bd"]}
                 WHERE ti.id_transaction = {$idTransactionNum}
@@ -1663,15 +1667,32 @@ class Movimientos {
         if ($numDatos > 0) {
             while ($fila = mysqli_fetch_array($itemsConsulta, MYSQLI_BOTH)) {
                 // Validar que el tax existe en la tabla taxes antes de usarlo
+                // Copiar también tax_name y tax_fee del snapshot
                 $taxValue = null;
+                $taxName = null;
+                $taxFee = null;
                 if (!empty($fila['tax']) && $fila['tax'] != '0' && $fila['tax'] != '' && $fila['tax'] !== null) {
-                    // Verificar que el tax existe en la tabla taxes
-                    $taxId = (int)$fila['tax'];
-                    $consultaTax = mysqli_query($conexion, "SELECT id FROM ".BD_FINANCIERA.".taxes WHERE id={$taxId} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
-                    if ($consultaTax && mysqli_num_rows($consultaTax) > 0) {
-                        $taxValue = $taxId;
+                    // Usar snapshot si está disponible
+                    if (!empty($fila['tax_name']) && !empty($fila['tax_fee'])) {
+                        $taxId = (int)$fila['tax'];
+                        $consultaTax = mysqli_query($conexion, "SELECT id FROM ".BD_FINANCIERA.".taxes WHERE id={$taxId} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
+                        if ($consultaTax && mysqli_num_rows($consultaTax) > 0) {
+                            $taxValue = $taxId;
+                            $taxName = mysqli_real_escape_string($conexion, $fila['tax_name']);
+                            $taxFee = floatval($fila['tax_fee']);
+                        }
+                    } else {
+                        // Fallback: obtener desde la tabla taxes si no hay snapshot
+                        $taxId = (int)$fila['tax'];
+                        $consultaTax = mysqli_query($conexion, "SELECT id, type_tax, fee FROM ".BD_FINANCIERA.".taxes WHERE id={$taxId} AND institucion={$datosRecurrente['institucion']} AND year='{$datosRecurrente['year']}' LIMIT 1");
+                        if ($consultaTax && mysqli_num_rows($consultaTax) > 0) {
+                            $taxData = mysqli_fetch_array($consultaTax, MYSQLI_BOTH);
+                            $taxValue = $taxId;
+                            $taxName = mysqli_real_escape_string($conexion, $taxData['type_tax']);
+                            $taxFee = floatval($taxData['fee']);
+                        }
                     }
-                    // Si no existe, $taxValue queda como NULL
+                    // Si no existe, $taxValue, $taxName y $taxFee quedan como NULL
                 }
                 
                 // Obtener item_type, application_time y name del item desde la tabla items
@@ -1689,12 +1710,14 @@ class Movimientos {
                     $itemName = !empty($itemInfo['name']) ? mysqli_real_escape_string($conexion, $itemInfo['name']) : '';
                 }
                 
-                // Construir el INSERT con o sin tax según corresponda, incluyendo item_type, application_time y item_name
+                // Construir el INSERT con o sin tax según corresponda, incluyendo item_type, application_time, item_name, tax_name y tax_fee
                 $itemNameEscapado = $itemName ? "'{$itemName}'" : "''";
+                $taxNameEscapado = $taxName ? "'{$taxName}'" : "NULL";
+                $taxFeeEscapado = $taxFee !== null ? $taxFee : "NULL";
                 if ($taxValue === null) {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, tax_name, tax_fee, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', NULL, NULL, NULL, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
                 } else {
-                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue}, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
+                    $sqlItems = "INSERT INTO ".BD_FINANCIERA.".transaction_items(id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, description, price, tax, tax_name, tax_fee, item_type, application_time, item_name)VALUES({$idFactura}, 'INVOICE', '".$fila['discount']."', '".$fila['cantity']."', '".$fila['subtotal']."', '".$fila['id_item']."', {$fila['institucion']}, '{$fila['year']}', '".mysqli_real_escape_string($conexion, $fila['description'])."', '".$fila['price']."', {$taxValue}, {$taxNameEscapado}, {$taxFeeEscapado}, '{$itemType}', {$applicationTime}, {$itemNameEscapado})";
                 }
                 
                 $resultadoItems = mysqli_query($conexion, $sqlItems);
@@ -1915,7 +1938,8 @@ class Movimientos {
 
         try {
             // Usar item_name, item_type y application_time de transaction_items (copia histórica)
-            $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, ti.item_name, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
+            // Usar tax_name y tax_fee del snapshot (preferencia) con fallback a JOIN con taxes para compatibilidad
+            $consultaItems = mysqli_query($conexion, "SELECT ti.*, COALESCE(ti.tax_name, tax.type_tax) as tax_name, COALESCE(ti.tax_fee, tax.fee) as tax_fee, ti.item_name, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                 FROM ".BD_FINANCIERA.".transaction_items ti
                 LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION['bd']}
                 WHERE ti.id_transaction='{$idFactura}'
@@ -3726,6 +3750,213 @@ class Movimientos {
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
             return mysqli_query($conexion, "SELECT NULL WHERE 1=0");
+        }
+    }
+
+    /**
+     * Duplica una factura existente con todos sus items, creando una nueva factura en estado EN_PROCESO
+     * @param mysqli $conexion
+     * @param array $config
+     * @param int $idFacturaOriginal - ID de la factura a duplicar
+     * @param string|null $nuevoUsuario - ID del nuevo usuario (opcional, si es null se mantiene el original)
+     * @param float|null $nuevoValor - Nuevo valor adicional (opcional, si es null se mantiene el original)
+     * 
+     * @return array ['success' => bool, 'id' => int|null, 'message' => string]
+     */
+    public static function duplicarFactura(
+        mysqli $conexion,
+        array $config,
+        int $idFacturaOriginal,
+        ?string $nuevoUsuario = null,
+        ?float $nuevoValor = null
+    ): array {
+        require_once(ROOT_PATH."/main-app/class/Conexion.php");
+        $conexionPDO = Conexion::newConnection('PDO');
+        $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        try {
+            // Iniciar transacción
+            $conexionPDO->beginTransaction();
+
+            // 1. Obtener datos de la factura original
+            $sqlFactura = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas 
+                          WHERE fcu_id=? AND institucion=? AND year=? 
+                          AND fcu_anulado=0
+                          LIMIT 1";
+            $stmtFactura = $conexionPDO->prepare($sqlFactura);
+            $stmtFactura->bindParam(1, $idFacturaOriginal, PDO::PARAM_INT);
+            $stmtFactura->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtFactura->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtFactura->execute();
+            $facturaOriginal = $stmtFactura->fetch(PDO::FETCH_ASSOC);
+
+            if (!$facturaOriginal) {
+                throw new Exception("No se encontró la factura original o está anulada.");
+            }
+
+            // 2. Obtener items de la factura original
+            $sqlItems = "SELECT * FROM ".BD_FINANCIERA.".transaction_items 
+                        WHERE id_transaction=? AND institucion=? AND year=?
+                        ORDER BY id_autoincremental";
+            $stmtItems = $conexionPDO->prepare($sqlItems);
+            $stmtItems->bindParam(1, $idFacturaOriginal, PDO::PARAM_INT);
+            $stmtItems->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtItems->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtItems->execute();
+            $itemsOriginales = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+
+            // 3. Generar nuevo consecutivo según el tipo
+            $tipoFactura = (int)$facturaOriginal['fcu_tipo'];
+            $consecutivo = 0;
+
+            if ($tipoFactura == 1) {
+                // Factura de venta
+                $sqlConsecutivo = "SELECT fcu_consecutivo FROM ".BD_FINANCIERA.".finanzas_cuentas 
+                                  WHERE fcu_tipo=1 AND institucion=? AND year=? 
+                                  ORDER BY fcu_id DESC LIMIT 1";
+                $stmtConsecutivo = $conexionPDO->prepare($sqlConsecutivo);
+                $stmtConsecutivo->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
+                $stmtConsecutivo->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
+                $stmtConsecutivo->execute();
+                $ultimoConsecutivo = $stmtConsecutivo->fetch(PDO::FETCH_ASSOC);
+
+                if (empty($ultimoConsecutivo['fcu_consecutivo'])) {
+                    $consecutivo = $config['conf_inicio_recibos_ingreso'] ?? 1;
+                } else {
+                    $consecutivo = (int)$ultimoConsecutivo['fcu_consecutivo'] + 1;
+                }
+            } else {
+                // Factura de compra
+                $sqlConsecutivo = "SELECT fcu_consecutivo FROM ".BD_FINANCIERA.".finanzas_cuentas 
+                                  WHERE fcu_tipo=2 AND institucion=? AND year=? 
+                                  ORDER BY fcu_id DESC LIMIT 1";
+                $stmtConsecutivo = $conexionPDO->prepare($sqlConsecutivo);
+                $stmtConsecutivo->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
+                $stmtConsecutivo->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
+                $stmtConsecutivo->execute();
+                $ultimoConsecutivo = $stmtConsecutivo->fetch(PDO::FETCH_ASSOC);
+
+                if (empty($ultimoConsecutivo['fcu_consecutivo'])) {
+                    $consecutivo = $config['conf_inicio_recibos_egreso'] ?? 1;
+                } else {
+                    $consecutivo = (int)$ultimoConsecutivo['fcu_consecutivo'] + 1;
+                }
+            }
+
+            // 4. Preparar datos para la nueva factura
+            $nuevoUsuarioId = $nuevoUsuario ?? $facturaOriginal['fcu_usuario'];
+            $nuevoValorAdicional = ($nuevoValor !== null) ? $nuevoValor : (float)$facturaOriginal['fcu_valor'];
+            $detalleNuevo = $facturaOriginal['fcu_detalle'];
+            if ($nuevoUsuarioId != $facturaOriginal['fcu_usuario']) {
+                // Opcional: agregar nota en el detalle si cambió el usuario
+                // $detalleNuevo .= " (Duplicada - Cliente modificado)";
+            }
+            
+            // 5. Crear nueva factura con estado EN_PROCESO
+            $sqlInsertFactura = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(
+                fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, 
+                fcu_usuario, fcu_anulado, fcu_cerrado, fcu_consecutivo, fcu_status, 
+                fcu_created_by, fcu_origen, institucion, year
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmtInsertFactura = $conexionPDO->prepare($sqlInsertFactura);
+            $fcuAnulado = 0;
+            $fcuCerrado = 0;
+            $fcuStatus = EN_PROCESO;
+            $fcuCreatedBy = $_SESSION["id"] ?? '';
+            $fcuOrigen = 'DUPLICADA'; // Indicar que es una factura duplicada
+            
+            $fechaFactura = $facturaOriginal['fcu_fecha'];
+            $detalleFactura = $detalleNuevo;
+            $tipoFactura = (int)$facturaOriginal['fcu_tipo'];
+            $observacionesFactura = $facturaOriginal['fcu_observaciones'] ?? '';
+            
+            $stmtInsertFactura->bindParam(1, $fechaFactura, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(2, $detalleFactura, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(3, $nuevoValorAdicional, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(4, $tipoFactura, PDO::PARAM_INT);
+            $stmtInsertFactura->bindParam(5, $observacionesFactura, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(6, $nuevoUsuarioId, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(7, $fcuAnulado, PDO::PARAM_INT);
+            $stmtInsertFactura->bindParam(8, $fcuCerrado, PDO::PARAM_INT);
+            $stmtInsertFactura->bindParam(9, $consecutivo, PDO::PARAM_INT);
+            $stmtInsertFactura->bindParam(10, $fcuStatus, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(11, $fcuCreatedBy, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(12, $fcuOrigen, PDO::PARAM_STR);
+            $stmtInsertFactura->bindParam(13, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmtInsertFactura->bindParam(14, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmtInsertFactura->execute();
+
+            // Obtener ID de la nueva factura
+            $idFacturaNueva = (int)$conexionPDO->lastInsertId();
+
+            if ($idFacturaNueva <= 0) {
+                throw new Exception("No se pudo obtener el ID de la factura duplicada.");
+            }
+
+            // 6. Copiar todos los items con sus snapshots
+            foreach ($itemsOriginales as $item) {
+                $sqlInsertItem = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
+                    id_transaction, type_transaction, id_item, item_name, item_type,
+                    price, cantity, discount, subtotal, tax, tax_name, tax_fee,
+                    description, application_time, institucion, year
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                $stmtInsertItem = $conexionPDO->prepare($sqlInsertItem);
+                
+                $typeTransaction = $item['type_transaction'] ?? 'INVOICE';
+                $idItem = $item['id_item'] ?? null;
+                $itemName = $item['item_name'] ?? null;
+                $itemType = $item['item_type'] ?? 'D';
+                $price = $item['price'] ?? 0;
+                $cantity = $item['cantity'] ?? 1;
+                $discount = $item['discount'] ?? 0;
+                $subtotal = $item['subtotal'] ?? 0;
+                $tax = $item['tax'] ?? null;
+                $taxName = $item['tax_name'] ?? null;
+                $taxFee = $item['tax_fee'] ?? null;
+                $description = $item['description'] ?? null;
+                $applicationTime = $item['application_time'] ?? 'ANTE_IMPUESTO';
+
+                $stmtInsertItem->bindParam(1, $idFacturaNueva, PDO::PARAM_INT);
+                $stmtInsertItem->bindParam(2, $typeTransaction, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(3, $idItem, PDO::PARAM_INT);
+                $stmtInsertItem->bindParam(4, $itemName, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(5, $itemType, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(6, $price, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(7, $cantity, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(8, $discount, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(9, $subtotal, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(10, $tax, PDO::PARAM_INT);
+                $stmtInsertItem->bindParam(11, $taxName, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(12, $taxFee, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(13, $description, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(14, $applicationTime, PDO::PARAM_STR);
+                $stmtInsertItem->bindParam(15, $config['conf_id_institucion'], PDO::PARAM_INT);
+                $stmtInsertItem->bindParam(16, $_SESSION["bd"], PDO::PARAM_INT);
+                $stmtInsertItem->execute();
+            }
+
+            // Confirmar transacción
+            $conexionPDO->commit();
+
+            return [
+                'success' => true,
+                'id' => $idFacturaNueva,
+                'message' => 'Factura duplicada exitosamente.'
+            ];
+
+        } catch (Exception $e) {
+            // Revertir transacción en caso de error
+            if ($conexionPDO->inTransaction()) {
+                $conexionPDO->rollBack();
+            }
+            include("../compartido/error-catch-to-report.php");
+            return [
+                'success' => false,
+                'id' => null,
+                'message' => 'Error al duplicar la factura: ' . $e->getMessage()
+            ];
         }
     }
 }

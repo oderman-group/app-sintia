@@ -194,61 +194,68 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                             <?php if (!empty($resumenMetodos)) { ?>
                             <div class="row" style="margin-bottom: 20px;">
                                 <div class="col-sm-12">
-                                    <h5 style="margin-bottom: 15px; font-weight: 600; color: #2c3e50;">
-                                        <i class="fa fa-bar-chart"></i> Resumen por Método de Pago
-                                    </h5>
-                            <div class="row">
-                                        <?php 
-                                        $coloresBorder = ['#3498db', '#f39c12', '#9b59b6', '#e67e22', '#1abc9c'];
-                                        $i = 0;
-                                        foreach ($resumenMetodos as $metodo => $datos) { 
-                                            $colorBorder = $coloresBorder[$i % count($coloresBorder)];
-                                            $totalMetodo = ($datos['total_ventas'] ?? 0) + ($datos['total_compras'] ?? 0);
-                                            $cantidadMetodo = ($datos['cantidad_ventas'] ?? 0) + ($datos['cantidad_compras'] ?? 0);
-                                            $porcentaje = $totalGeneral > 0 ? round(($totalMetodo / $totalGeneral) * 100, 1) : 0;
-                                            
-                                            // Calcular diferencia (ingresos - egresos)
-                                            $diferenciaMetodo = ($datos['total_ventas'] ?? 0) - ($datos['total_compras'] ?? 0);
-                                            
-                                            // Determinar tipo: Ingresos, Egresos o Mixto
-                                            $tieneVentas = ($datos['total_ventas'] ?? 0) > 0;
-                                            $tieneCompras = ($datos['total_compras'] ?? 0) > 0;
-                                            $tipoCard = '';
-                                            $colorTipo = '';
-                                            if ($tieneVentas && $tieneCompras) {
-                                                $tipoCard = 'Mixto (Ingresos + Egresos)';
-                                                $colorTipo = '#9b59b6';
-                                            } elseif ($tieneVentas) {
-                                                $tipoCard = 'Ingresos';
-                                                $colorTipo = '#2ecc71';
-                                            } elseif ($tieneCompras) {
-                                                $tipoCard = 'Egresos';
-                                                $colorTipo = '#e74c3c';
-                                            }
-                                            $i++;
-                                        ?>
-                                        <div class="col-md-3" style="margin-bottom: 15px;">
-                                            <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid <?=$colorBorder?>; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                                <div style="color: <?=$colorBorder?>; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
-                                                    <?=$metodo?>
+                                    <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleResumenMetodos()">
+                                            <h5 style="margin: 0; font-weight: 600; color: #2c3e50;">
+                                                <i class="fa fa-bar-chart"></i> Resumen por Método de Pago
+                                            </h5>
+                                            <i class="fa fa-chevron-down" id="iconResumenMetodos" style="color: #667eea; font-size: 18px; transition: transform 0.3s ease;"></i>
+                                        </div>
+                                        <div id="contenidoResumenMetodos" style="display: none; margin-top: 20px;">
+                                            <div class="row">
+                                                <?php 
+                                                $coloresBorder = ['#3498db', '#f39c12', '#9b59b6', '#e67e22', '#1abc9c'];
+                                                $i = 0;
+                                                foreach ($resumenMetodos as $metodo => $datos) { 
+                                                    $colorBorder = $coloresBorder[$i % count($coloresBorder)];
+                                                    $totalMetodo = ($datos['total_ventas'] ?? 0) + ($datos['total_compras'] ?? 0);
+                                                    $cantidadMetodo = ($datos['cantidad_ventas'] ?? 0) + ($datos['cantidad_compras'] ?? 0);
+                                                    $porcentaje = $totalGeneral > 0 ? round(($totalMetodo / $totalGeneral) * 100, 1) : 0;
+                                                    
+                                                    // Calcular diferencia (ingresos - egresos)
+                                                    $diferenciaMetodo = ($datos['total_ventas'] ?? 0) - ($datos['total_compras'] ?? 0);
+                                                    
+                                                    // Determinar tipo: Ingresos, Egresos o Mixto
+                                                    $tieneVentas = ($datos['total_ventas'] ?? 0) > 0;
+                                                    $tieneCompras = ($datos['total_compras'] ?? 0) > 0;
+                                                    $tipoCard = '';
+                                                    $colorTipo = '';
+                                                    if ($tieneVentas && $tieneCompras) {
+                                                        $tipoCard = 'Mixto (Ingresos + Egresos)';
+                                                        $colorTipo = '#9b59b6';
+                                                    } elseif ($tieneVentas) {
+                                                        $tipoCard = 'Ingresos';
+                                                        $colorTipo = '#2ecc71';
+                                                    } elseif ($tieneCompras) {
+                                                        $tipoCard = 'Egresos';
+                                                        $colorTipo = '#e74c3c';
+                                                    }
+                                                    $i++;
+                                                ?>
+                                                <div class="col-md-3" style="margin-bottom: 15px;">
+                                                    <div style="background: #ffffff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid <?=$colorBorder?>; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                                        <div style="color: <?=$colorBorder?>; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 5px;">
+                                                            <?=$metodo?>
+                                                        </div>
+                                                        <div style="color: <?=$colorTipo?>; font-size: 10px; font-weight: 600; margin-bottom: 10px;">
+                                                            <i class="fa fa-info-circle"></i> <?=$tipoCard?>
+                                                        </div>
+                                                        <div style="color: #2c3e50; font-size: 24px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalMetodo), 0, ",", ".")?></div>
+                                                        <div style="color: #95a5a6; font-size: 11px; margin-top: 8px;">
+                                                            <?=$cantidadMetodo?> abonos (<?=$porcentaje?>%)<br>
+                                                            <small style="font-size: 10px; display: block; margin-top: 5px;">
+                                                                <span style="color: #2ecc71;">Ingresos: $<?=number_format(floatval($datos['total_ventas'] ?? 0), 0, ",", ".")?></span><br>
+                                                                <span style="color: #e74c3c;">Egresos: $<?=number_format(floatval($datos['total_compras'] ?? 0), 0, ",", ".")?></span><br>
+                                                                <span style="color: <?=$diferenciaMetodo >= 0 ? '#2ecc71' : '#e74c3c'?>; font-weight: 600; margin-top: 3px; display: inline-block;">
+                                                                    <i class="fa fa-balance-scale"></i> Diferencia: $<?=number_format(floatval($diferenciaMetodo), 0, ",", ".")?>
+                                                                </span>
+                                                            </small>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div style="color: <?=$colorTipo?>; font-size: 10px; font-weight: 600; margin-bottom: 10px;">
-                                                    <i class="fa fa-info-circle"></i> <?=$tipoCard?>
-                                                </div>
-                                                <div style="color: #2c3e50; font-size: 24px; font-weight: 700; margin-top: 5px;">$<?=number_format(floatval($totalMetodo), 0, ",", ".")?></div>
-                                                <div style="color: #95a5a6; font-size: 11px; margin-top: 8px;">
-                                                    <?=$cantidadMetodo?> abonos (<?=$porcentaje?>%)<br>
-                                                    <small style="font-size: 10px; display: block; margin-top: 5px;">
-                                                        <span style="color: #2ecc71;">Ingresos: $<?=number_format(floatval($datos['total_ventas'] ?? 0), 0, ",", ".")?></span><br>
-                                                        <span style="color: #e74c3c;">Egresos: $<?=number_format(floatval($datos['total_compras'] ?? 0), 0, ",", ".")?></span><br>
-                                                        <span style="color: <?=$diferenciaMetodo >= 0 ? '#2ecc71' : '#e74c3c'?>; font-weight: 600; margin-top: 3px; display: inline-block;">
-                                                            <i class="fa fa-balance-scale"></i> Diferencia: $<?=number_format(floatval($diferenciaMetodo), 0, ",", ".")?>
-                                                        </span>
-                                                    </small>
-                                                </div>
+                                                <?php } ?>
                                             </div>
                                         </div>
-                                        <?php } ?>
                                     </div>
                                 </div>
                             </div>
@@ -569,7 +576,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                        try {
                                                                            // Obtener items ordenados (débitos primero, créditos después) e incluir application_time
                                                                            // Usar item_name, item_type y application_time de transaction_items (copia histórica)
-                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, tax.fee as tax_fee, tax.name as tax_name, ti.item_type, ti.item_name, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
+                                                                           // Usar tax_name y tax_fee del snapshot (preferencia) con fallback a JOIN con taxes para compatibilidad
+                                                                           $consultaItems = mysqli_query($conexion, "SELECT ti.*, COALESCE(ti.tax_name, tax.type_tax) as tax_name, COALESCE(ti.tax_fee, tax.fee) as tax_fee, ti.item_type, ti.item_name, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time
                                                                                FROM ".BD_FINANCIERA.".transaction_items ti
                                                                                LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
                                                                                WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}
@@ -1198,6 +1206,20 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
         function generarArqueoCaja() {
             $('#formArqueoCaja').submit();
             $('#modalArqueoCaja').modal('hide');
+        }
+        
+        // Función para expandir/contraer el resumen por métodos de pago
+        function toggleResumenMetodos() {
+            var contenido = document.getElementById('contenidoResumenMetodos');
+            var icono = document.getElementById('iconResumenMetodos');
+            
+            if (contenido.style.display === 'none') {
+                contenido.style.display = 'block';
+                icono.style.transform = 'rotate(180deg)';
+            } else {
+                contenido.style.display = 'none';
+                icono.style.transform = 'rotate(0deg)';
+            }
         }
         
         // Manejar el checkbox de mostrar abonos anulados
