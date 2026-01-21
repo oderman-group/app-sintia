@@ -675,7 +675,7 @@ if($config['conf_doble_buscador'] == 1) {
 																	"car.car_maximas_calificaciones","car.car_director_grupo","uss.uss_nombre",
 																	"uss.uss_id","uss.uss_nombre2","uss.uss_apellido1","uss.uss_apellido2","gra.gra_id","gra.gra_nombre","gra.gra_periodos",
 																	"gru.gru_nombre","am.mat_nombre","am.mat_valor","car.car_grupo","car.car_director_grupo", "car.car_activa",
-																	"car.id_nuevo AS id_nuevo_carga"];
+																	"car.id_nuevo AS id_nuevo_carga", "car.car_tematica", "car.car_observaciones_boletin"];
 													
 													// Usar método optimizado sin subqueries pesadas
 													$busqueda = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", $filtro, "car.car_id", $filtroLimite,"",array(),$selectSql);
@@ -903,6 +903,8 @@ if($config['conf_doble_buscador'] == 1) {
 				var maxCalificaciones = button.data('max-calificaciones');
 				var cantidadEstudiantes = button.data('cantidad-estudiantes');
 				var activa = button.data('activa');
+				var tematica = button.data('tematica');
+				var observacionesBoletin = button.data('observaciones-boletin');
 
 				var tr = $(this).closest('tr');
 				var row = table.row(tr);
@@ -925,16 +927,16 @@ if($config['conf_doble_buscador'] == 1) {
 				} else {
 					try {
 						if (row && row.child && typeof row.child === 'function') {
-							row.child(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).show();
+							row.child(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId, tematica, observacionesBoletin)).show();
 						} else {
-							$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
+							$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId, tematica, observacionesBoletin)).insertAfter(tr);
 						}
 						expandedRows[cargaId] = true;
 						icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
 						button.removeClass('text-secondary').addClass('text-primary');
 					} catch (error) {
 						console.error('Error showing child row:', error);
-						$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId)).insertAfter(tr);
+						$(formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId, tematica, observacionesBoletin)).insertAfter(tr);
 						expandedRows[cargaId] = true;
 						icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
 						button.removeClass('text-secondary').addClass('text-primary');
@@ -988,9 +990,13 @@ if($config['conf_doble_buscador'] == 1) {
 			inicializarDataTableCargas();
 		});
 
-		function formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId) {
+		function formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId, tematica, observacionesBoletin) {
 			var activaBadgeClass = activa == 1 ? 'success' : 'warning';
 			var activaText = activa == 1 ? 'Activa' : 'Inactiva';
+			
+			// Normalizar valores de tematica y observacionesBoletin
+			tematica = tematica || 'NO';
+			observacionesBoletin = observacionesBoletin || 'NO';
 
 			var html = '<tr class="expandable-row">' +
 				'<td colspan="11" class="expandable-content bg-light border">' +
@@ -1064,6 +1070,10 @@ if($config['conf_doble_buscador'] == 1) {
 										'<strong class="text-muted">Indicadores automáticos:</strong>' +
 										'<span class="badge badge-' + (indicadorAutomatico === 'Si' ? 'success' : 'secondary') + '">' + indicadorAutomatico + '</span>' +
 									'</div>' +
+									'<div class="info-item mb-2">' +
+										'<strong class="text-muted">Temática del periodo:</strong>' +
+										'<span class="badge badge-' + (tematica === 'SI' ? 'success' : 'secondary') + '">' + tematica + '</span>' +
+									'</div>' +
 								'</div>' +
 								'<div class="col-md-6">' +
 									'<div class="info-item mb-2">' +
@@ -1073,6 +1083,10 @@ if($config['conf_doble_buscador'] == 1) {
 									'<div class="info-item mb-2">' +
 										'<strong class="text-muted">Máx. Calificaciones:</strong>' +
 										'<span class="text-dark">' + maxCalificaciones + '</span>' +
+									'</div>' +
+									'<div class="info-item mb-2">' +
+										'<strong class="text-muted">Observaciones en boletín:</strong>' +
+										'<span class="badge badge-' + (observacionesBoletin === 'SI' ? 'success' : 'secondary') + '">' + observacionesBoletin + '</span>' +
 									'</div>' +
 								'</div>' +
 							'</div>' +
@@ -1873,6 +1887,32 @@ if($config['conf_doble_buscador'] == 1) {
 							</div>
 						</div>
 					</div>
+					
+					<div class="row">
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Temática del Periodo</label>
+								<select class="form-control" id="masivo_tematica" name="tematica">
+									<option value="">No modificar</option>
+									<option value="1">SI</option>
+									<option value="0">NO</option>
+								</select>
+								<small class="text-muted">Habilita la sección de temática del periodo para el docente</small>
+							</div>
+						</div>
+						
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Observaciones en Boletín</label>
+								<select class="form-control" id="masivo_observacionesBoletin" name="observacionesBoletin">
+									<option value="">No modificar</option>
+									<option value="1">SI</option>
+									<option value="0">NO</option>
+								</select>
+								<small class="text-muted">Permite al docente agregar observaciones en el boletín</small>
+							</div>
+						</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -2045,6 +2085,31 @@ if($config['conf_doble_buscador'] == 1) {
 								</div>
 							</div>
 						</div>
+						
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Temática del Periodo</label>
+									<select class="form-control" id="edit_tematica" name="tematica">
+										<option value="">Seleccione...</option>
+										<option value="1">SI</option>
+										<option value="0">NO</option>
+									</select>
+									<small class="text-muted">Habilita la sección de temática del periodo para el docente</small>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Observaciones en Boletín</label>
+									<select class="form-control" id="edit_observacionesBoletin" name="observacionesBoletin">
+										<option value="">Seleccione...</option>
+										<option value="1">SI</option>
+										<option value="0">NO</option>
+									</select>
+									<small class="text-muted">Permite al docente agregar observaciones en el boletín</small>
+								</div>
+							</div>
+						</div>
 					</div>
 					
 					<div id="cargaError" class="alert alert-danger" style="display:none;">
@@ -2177,6 +2242,8 @@ $(document).ready(function() {
 					$('#edit_valorActividades').val(carga.car_configuracion || '');
 					$('#edit_valorIndicadores').val(carga.car_valor_indicador || '');
 					$('#edit_indicadorAutomatico').val(carga.car_indicador_automatico || '');
+					$('#edit_tematica').val(carga.car_tematica || '');
+					$('#edit_observacionesBoletin').val(carga.car_observaciones_boletin || '');
 					
 					// Llenar select de periodos
 					$('#edit_periodo').empty().append('<option value="">Seleccione...</option>');
@@ -2487,48 +2554,14 @@ $(document).ready(function() {
 					$('#selectAllCargas').prop('checked', false);
 					toggleActionButtons();
 
+					// Eliminar filas expandidas existentes antes de reinicializar
+					$('#example1 tbody tr.expandable-row').remove();
+					
 					// Reinicializar DataTable y tooltips
 					if (typeof inicializarDataTableCargas === 'function') {
 						inicializarDataTableCargas();
 					}
 					$('[data-toggle="tooltip"]').tooltip();
-
-					// Re-bind expand
-					$('.expand-btn').off('click').on('click', function() {
-						var button = $(this);
-						var cargaId = button.data('id');
-						var icon = button.find('i');
-
-						var expandRow = button.closest('tr').next('tr.expandable-row');
-						if (expandRow.length && expandRow.is(':visible')) {
-							expandRow.slideUp(300, function() {
-								icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
-								button.removeClass('text-primary').addClass('text-secondary');
-							});
-						} else {
-							var codigo = button.data('codigo');
-							var docente = button.data('docente');
-							var curso = button.data('curso');
-							var asignatura = button.data('asignatura');
-							var ih = button.data('ih');
-							var periodo = button.data('periodo');
-							var actividades = button.data('actividades');
-							var actividadesRegistradas = button.data('actividades-registradas');
-							var directorGrupo = button.data('director-grupo');
-							var permiso2 = button.data('permiso2');
-							var indicadorAutomatico = button.data('indicador-automatico');
-							var maxIndicadores = button.data('max-indicadores');
-							var maxCalificaciones = button.data('max-calificaciones');
-							var cantidadEstudiantes = button.data('cantidad-estudiantes');
-							var activa = button.data('activa');
-
-							var detailsHtml = formatDetailsCargas(codigo, docente, curso, asignatura, ih, periodo, actividades, actividadesRegistradas, directorGrupo, permiso2, indicadorAutomatico, maxIndicadores, maxCalificaciones, cantidadEstudiantes, activa, cargaId);
-							$(detailsHtml).insertAfter(button.closest('tr')).slideDown(300);
-
-							icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
-							button.removeClass('text-secondary').addClass('text-primary');
-						}
-					});
 
 					if (typeof afterUpdate === 'function') afterUpdate();
 				} else {

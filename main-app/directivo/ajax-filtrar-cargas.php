@@ -60,7 +60,7 @@ try {
         "car.car_maximas_calificaciones", "car.car_director_grupo", "uss.uss_nombre",
         "uss.uss_id", "uss.uss_nombre2", "uss.uss_apellido1", "uss.uss_apellido2", "gra.gra_id", "gra.gra_nombre",
         "gru.gru_nombre", "am.mat_nombre", "am.mat_valor", "car.car_grupo", "car.car_director_grupo", "car.car_activa",
-        "car.id_nuevo AS id_nuevo_carga"
+        "car.id_nuevo AS id_nuevo_carga", "car.car_tematica", "car.car_observaciones_boletin"
     ];
     
     // Total filtrado para paginación
@@ -96,7 +96,7 @@ try {
     require_once(ROOT_PATH."/main-app/class/Boletin.php");
     
     // Definir todas las variables que el componente necesita
-    $opcionSINO = array("" => "NO", "1" => "SI");
+    $opcionSINO = [0 => 'NO', 1 => 'SI'];
     $permisoReportesNotas = Modulos::validarSubRol(['DT0238']);
     $permisoedicion       = Modulos::validarSubRol(['DT0049', 'DT0148', 'DT0129']);
     $permisoEditar        = Modulos::validarSubRol(['DT0049']);

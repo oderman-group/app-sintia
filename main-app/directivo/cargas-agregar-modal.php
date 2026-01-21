@@ -218,6 +218,36 @@ if (!Modulos::validarPermisoEdicion()) {
 
                 </div>
 
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">Temática del periodo </label>
+                    <div class="col-sm-4">
+                        <select class="form-control  select2" name="tematica" <?= $disabledPermiso; ?>>
+                            <option value="">Seleccione una opción</option>
+                            <option value="1">SI</option>
+                            <option value="0" selected>NO</option>
+                        </select>
+
+                        <span class="text-info">Si selecciona SI, el docente podrá agregar la temática del periodo en la sección de clases.</span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">Observaciones en boletín </label>
+                    <div class="col-sm-4">
+                        <select class="form-control  select2" name="observacionesBoletin" <?= $disabledPermiso; ?>>
+                            <option value="">Seleccione una opción</option>
+                            <option value="1">SI</option>
+                            <option value="0" selected>NO</option>
+                        </select>
+
+                        <span class="text-info">Si selecciona SI, el docente podrá colocar observaciones que aparecerán en el boletín de los estudiantes.</span>
+
+                    </div>
+
+                </div>
+
             </div>
 
 
