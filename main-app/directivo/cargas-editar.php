@@ -129,7 +129,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Docente <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="docente" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<?php foreach($docentesCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
@@ -146,7 +146,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Curso <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="curso" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<?php foreach($gradosCatalogo as $opcionesDatos){
 														$select = '';
 														$disabled = '';
@@ -163,7 +163,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Grupo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="grupo" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<?php foreach($gruposCatalogo as $opcionesDatos){
 														$select = '';
 														if($opcionesDatos['gru_id']==$datosEditar['car_grupo']) $select = 'selected';
@@ -175,10 +175,10 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                         </div>
 										
 										<div class="form-group row">
-                                            <label class="col-sm-2 control-label">Asignatura (Área) <span style="color: red;">(*)</span></label>
+                                            <label class="col-sm-2 control-label">Asignatura (ร�rea) <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-8">
                                                 <select class="form-control  select2" name="asignatura" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<?php
 													$opcionesConsulta = Asignaturas::consultarTodasAsignaturas($conexion, $config);
 													while($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)){
@@ -195,7 +195,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Periodo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="periodo" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<?php
 													$p = 1;
 													$peridoLimite = $datosEditar['gra_permiso_adelantar_periodo'] ? $config[19] : $datosEditar['car_periodo'];
@@ -216,7 +216,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Director de grupo <span style="color: red;">(*)</span></label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="dg" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_director_grupo"]==1){echo 'selected';} ?>>SI</option>
 													<option value="0" <?php if($datosEditar["car_director_grupo"]=='0'){echo 'selected';} ?>>NO</option>
                                                 </select>
@@ -249,7 +249,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Estado</label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="estado" required <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_activa"]==1){echo 'selected';} ?>>Activa</option>
 													<option value="0" <?php if($datosEditar["car_activa"]=='0'){echo 'selected';} ?>>Inactiva</option>
                                                 </select>
@@ -260,9 +260,9 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">% Actividades</label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="valorActividades" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_configuracion"]==1){echo 'selected';} ?>>Manual</option>
-													<option value="0" <?php if($datosEditar["car_configuracion"]=='0'){echo 'selected';} ?>>Automático</option>
+													<option value="0" <?php if($datosEditar["car_configuracion"]=='0'){echo 'selected';} ?>>Automรกtico</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -271,21 +271,21 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">% Indicadores</label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="valorIndicadores" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_valor_indicador"]==1){echo 'selected';} ?>>Manual</option>
-													<option value="0" <?php if($datosEditar["car_valor_indicador"]=='0'){echo 'selected';} ?>>Automático</option>
+													<option value="0" <?php if($datosEditar["car_valor_indicador"]=='0'){echo 'selected';} ?>>Automรกtico</option>
                                                 </select>
                                             </div>
                                         </div>
 
 										<hr>
-										<h3>Configuración y permisos adicionales</h3>
+										<h3>Configuraciรณn y permisos adicionales</h3>
 										
 										<div class="form-group row">
                                             <label class="col-sm-2 control-label">Permiso para generar informe</label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="permiso1" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_permiso1"]==1){echo 'selected';} ?>>SI</option>
 													<option value="0" <?php if($datosEditar["car_permiso1"]=='0' or $datosEditar["car_permiso1"]==''){echo 'selected';} ?>>NO</option>
                                                 </select>
@@ -296,25 +296,25 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Permiso para editar en periodos anteriores</label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="permiso2" disabled>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_permiso2"]==1){echo 'selected';} ?>>SI</option>
 													<option value="0" <?php if($datosEditar["car_permiso2"]!=1){echo 'selected';} ?>>NO</option>
                                                 </select>
 
-												<span class="text-danger">Esta opción ha sido temporalmente deshabilitada.</span>
+												<span class="text-danger">Esta opciรณn ha sido temporalmente deshabilitada.</span>
                                             </div>
 										</div>
 										
 										<div class="form-group row">
-                                            <label class="col-sm-2 control-label">Indicador automático </label>
+                                            <label class="col-sm-2 control-label">Indicador automรกtico </label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="indicadorAutomatico" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_indicador_automatico"]==1){echo 'selected';} ?>>SI</option>
 													<option value="0" <?php if($datosEditar["car_indicador_automatico"]==0){echo 'selected';} ?>>NO</option>
                                                 </select>
 
-                                                <span class="text-info">Si selecciona SI, el docente no llenará indicadores; solo las calificaciones. Habrá un solo indicador definitivo con el 100%.</span>
+                                                <span class="text-info">Si selecciona SI, el docente no llenarรก indicadores; solo las calificaciones. Habrรก un solo indicador definitivo con el 100%.</span>
 
                                             </div>
                                             
@@ -324,12 +324,27 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             <label class="col-sm-2 control-label">Observaciones en el boletin de los estudiantes ? </label>
                                             <div class="col-sm-4">
                                                 <select class="form-control  select2" name="observacionesBoletin" <?=$disabledPermiso;?>>
-                                                    <option value="">Seleccione una opción</option>
+                                                    <option value="">Seleccione una opciรณn</option>
 													<option value="1" <?php if($datosEditar["car_observaciones_boletin"]==1){echo 'selected';} ?>>SI</option>
 													<option value="0" <?php if($datosEditar["car_observaciones_boletin"]==0){echo 'selected';} ?>>NO</option>
                                                 </select>
 
-                                                <span class="text-info">Si selecciona SI, el docente podrá colocar observaciones que aparecerán en el boletín de los estudiantes.</span>
+                                                <span class="text-info">Si selecciona SI, el docente podrรก colocar observaciones que aparecerรกn en el boletรญn de los estudiantes.</span>
+
+                                            </div>
+                                            
+                                        </div>
+
+										<div class="form-group row">
+                                            <label class="col-sm-2 control-label">Temática del periodo </label>
+                                            <div class="col-sm-4">
+                                                <select class="form-control  select2" name="tematica" <?=$disabledPermiso;?>>
+                                                    <option value="">Seleccione una opción</option>
+													<option value="1" <?php if($datosEditar["car_tematica"]==1){echo 'selected';} ?>>SI</option>
+													<option value="0" <?php if($datosEditar["car_tematica"]==0 || $datosEditar["car_tematica"]==''){echo 'selected';} ?>>NO</option>
+                                                </select>
+
+                                                <span class="text-info">Si selecciona SI, el docente podrá agregar la temática del periodo en la sección de clases.</span>
 
                                             </div>
                                             
@@ -359,7 +374,7 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
 										</div>
 										
 										<div class="form-group row">
-											<label class="col-sm-2 control-label">Último acceso docente</label>
+											<label class="col-sm-2 control-label">ร�ltimo acceso docente</label>
 											<div class="col-sm-4">
 												<input type="text" name="ultimoAcceso" class="form-control" value="<?=$datosEditar['car_ultimo_acceso_docente'];?>" readonly>
 											</div>
