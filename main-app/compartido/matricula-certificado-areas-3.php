@@ -39,6 +39,41 @@ if(isset($_REQUEST["sin_encabezado"])){
     }
 }
 
+// Detectar si el formulario de configuración fue enviado
+$formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
+
+// Configuraciones de personalización (valores por defecto)
+$tipoLetra = $formularioEnviado && isset($_GET['tipo_letra']) ? $_GET['tipo_letra'] : 'Arial';
+$tamanoLetra = $formularioEnviado && isset($_GET['tamano_letra']) ? (int)$_GET['tamano_letra'] : 11;
+$mostrarMaterias = $formularioEnviado 
+    ? (isset($_GET['mostrar_materias']) ? (int)$_GET['mostrar_materias'] : 0)
+    : 1; // Por defecto mostrar materias
+$incluirLogo = $formularioEnviado 
+    ? (isset($_GET['incluir_logo']) ? (int)$_GET['incluir_logo'] : 0)
+    : 0; // Por defecto no incluir logo
+$logoAncho = $formularioEnviado && isset($_GET['logo_ancho']) ? (int)$_GET['logo_ancho'] : 150;
+$logoAlto = $formularioEnviado && isset($_GET['logo_alto']) ? (int)$_GET['logo_alto'] : 100;
+$logoAlineacion = $formularioEnviado && isset($_GET['logo_alineacion']) ? $_GET['logo_alineacion'] : 'centro';
+// Cargar automáticamente rector y secretario si están configurados
+$firmaRector = $formularioEnviado 
+    ? (isset($_GET['firma_rector']) ? (int)$_GET['firma_rector'] : 0)
+    : (!empty($informacion_inst["info_rector"]) ? 1 : 0); // Por defecto mostrar si existe rector configurado
+
+$firmaSecretario = $formularioEnviado 
+    ? (isset($_GET['firma_secretario']) ? (int)$_GET['firma_secretario'] : 0)
+    : (!empty($informacion_inst["info_secretaria_academica"]) ? 1 : 0); // Por defecto mostrar si existe secretario configurado
+
+// Configuración de marca de agua (logo de la institución)
+$mostrarMarcaAgua = $formularioEnviado 
+    ? (isset($_GET['mostrar_marca_agua']) ? (int)$_GET['mostrar_marca_agua'] : 0)
+    : 0; // Por defecto no mostrar marca de agua
+$marcaAguaOpacidad = $formularioEnviado && isset($_GET['marca_agua_opacidad']) 
+    ? (float)$_GET['marca_agua_opacidad'] 
+    : 0.1; // Por defecto opacidad 0.1 (10%)
+$marcaAguaTamanio = $formularioEnviado && isset($_GET['marca_agua_tamanio']) 
+    ? (int)$_GET['marca_agua_tamanio'] 
+    : 300; // Por defecto tamaño 300px
+
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
 $notasCualitativasCache = [];
 
@@ -78,19 +113,118 @@ $tiposNotas = [];
 		}
 
 		body {
-			font-family: 'Arial', 'Times New Roman', serif;
-			font-size: 11pt;
+			font-family: <?= htmlspecialchars($tipoLetra) ?>, 'Arial', 'Times New Roman', serif;
+			font-size: <?= $tamanoLetra ?>pt;
 			line-height: 1.6;
 			color: #000;
 			background-color: #fff;
 			padding: 20px;
+			position: relative;
 		}
 
 		.container-certificado {
 			max-width: 850px;
 			margin: 0 auto;
-			background: white;
+			background: transparent;
 			padding: 30px;
+			position: relative;
+		}
+
+		/* ============================
+		   VENTANA DE CONFIGURACIÓN
+		   ============================ */
+		.config-certificado-form {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			background: #ffffff;
+			border: 2px solid #2c3e50;
+			border-radius: 8px;
+			padding: 20px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+			z-index: 1000;
+			font-size: 12px;
+			min-width: 300px;
+			max-width: 400px;
+			max-height: 90vh;
+			overflow-y: auto;
+		}
+
+		.config-certificado-form h4 {
+			margin: 0 0 15px 0;
+			color: #2c3e50;
+			font-size: 16px;
+			font-weight: 600;
+			border-bottom: 2px solid #2c3e50;
+			padding-bottom: 10px;
+		}
+
+		.config-certificado-form .form-group {
+			margin-bottom: 15px;
+		}
+
+		.config-certificado-form label {
+			display: block;
+			margin-bottom: 5px;
+			font-weight: 600;
+			color: #2c3e50;
+			font-size: 12px;
+		}
+
+		.config-certificado-form input[type="text"],
+		.config-certificado-form input[type="number"],
+		.config-certificado-form select {
+			width: 100%;
+			padding: 6px 10px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 12px;
+		}
+
+		.config-certificado-form input[type="checkbox"] {
+			margin-right: 8px;
+			cursor: pointer;
+		}
+
+		.config-certificado-form .checkbox-label {
+			display: flex;
+			align-items: center;
+			margin-bottom: 8px;
+			cursor: pointer;
+			font-weight: normal;
+		}
+
+		.config-certificado-form .btn-aplicar {
+			margin-top: 15px;
+			padding: 10px 20px;
+			background: #2c3e50;
+			color: #ffffff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 13px;
+			width: 100%;
+			font-weight: 600;
+		}
+
+		.config-certificado-form .btn-aplicar:hover {
+			background: #34495e;
+		}
+
+		.config-certificado-form .logo-dimensions {
+			display: flex;
+			gap: 10px;
+		}
+
+		.config-certificado-form .logo-dimensions input {
+			flex: 1;
+		}
+
+		/* Ocultar formulario de configuración en impresión */
+		@media print {
+			.config-certificado-form {
+				display: none !important;
+			}
 		}
 
 		/* ============================
@@ -100,7 +234,7 @@ $tiposNotas = [];
 			position: fixed;
 			bottom: 30px;
 			right: 30px;
-			z-index: 1000;
+			z-index: 999;
 			display: flex;
 			flex-direction: column;
 			gap: 10px;
@@ -146,28 +280,86 @@ $tiposNotas = [];
 		}
 
 		/* ============================
+		   LOGO
+		   ============================ */
+		.logo-container {
+			margin: 20px 0;
+			text-align: <?= $logoAlineacion == 'izquierda' ? 'left' : ($logoAlineacion == 'derecha' ? 'right' : 'center') ?>;
+		}
+
+		.logo-container img {
+			width: <?= $logoAncho ?>px;
+			height: <?= $logoAlto ?>px;
+			object-fit: contain;
+		}
+
+		/* ============================
+		   MARCA DE AGUA
+		   ============================ */
+		.marca-agua {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 1;
+			pointer-events: none;
+			opacity: <?= $marcaAguaOpacidad ?>;
+		}
+
+		.marca-agua img {
+			width: <?= $marcaAguaTamanio ?>px;
+			height: auto;
+			object-fit: contain;
+		}
+
+		.container-certificado > * {
+			position: relative;
+			z-index: 10;
+		}
+		
+		.container-certificado .header-institucional,
+		.container-certificado .titulo-certificado,
+		.container-certificado .texto-estudiante,
+		.container-certificado .tabla-calificaciones {
+			background: transparent;
+		}
+		
+		.container-certificado .firmas-container {
+			background: white;
+		}
+
+		/* ============================
 		   ENCABEZADO
 		   ============================ */
 		.header-institucional {
 			text-align: justify;
 			margin: 40px 0 30px 0;
 			line-height: 1.8;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
+			background: white;
+			position: relative;
+			z-index: 10;
 		}
 
 		.texto-centrado {
 			text-align: center;
 			font-weight: bold;
-			font-size: 14pt;
+			font-size: <?= $tamanoLetra + 3 ?>pt;
 			margin: 25px 0;
 			letter-spacing: 2px;
+			background: white;
+			position: relative;
+			z-index: 10;
 		}
 
 		.texto-estudiante {
 			text-align: justify;
 			margin: 20px 0;
 			line-height: 1.8;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
+			background: white;
+			position: relative;
+			z-index: 10;
 		}
 
 		/* ============================
@@ -176,7 +368,7 @@ $tiposNotas = [];
 		.titulo-grado {
 			text-align: left;
 			font-weight: bold;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
 			margin: 20px 0 10px 0;
 		}
 
@@ -184,7 +376,10 @@ $tiposNotas = [];
 			width: 100%;
 			border-collapse: collapse;
 			margin-bottom: 20px;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
+			position: relative;
+			z-index: 10;
+			background: transparent;
 		}
 
 		.tabla-calificaciones th,
@@ -194,34 +389,35 @@ $tiposNotas = [];
 		}
 
 		.tabla-calificaciones th {
-			background-color: #e9ecef;
+			background-color: rgba(233, 236, 239, 0.85);
 			font-weight: bold;
 			text-align: center;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
 		}
 
 		.tabla-calificaciones td {
 			vertical-align: middle;
+			background-color: rgba(255, 255, 255, 0.85);
 		}
 
 		.tabla-calificaciones tr.fila-area {
-			background-color: #EAEAEA;
+			background-color: rgba(234, 234, 234, 0.85);
 			font-weight: normal;
 		}
 
 		.tabla-calificaciones tr.fila-materia {
-			background-color: white;
+			background-color: rgba(255, 255, 255, 0.85);
 		}
 
 		.tabla-calificaciones tfoot td {
-			background-color: #f8f9fa;
+			background-color: rgba(248, 249, 250, 0.85);
 			padding: 15px;
-			font-size: 10pt;
+			font-size: <?= $tamanoLetra - 1 ?>pt;
 			line-height: 1.8;
 		}
 
 		.tabla-calificaciones tfoot mark {
-			background-color: #fff3cd;
+			background-color: rgba(255, 243, 205, 0.9);
 			padding: 2px 5px;
 			border-radius: 3px;
 		}
@@ -233,7 +429,7 @@ $tiposNotas = [];
 			text-align: center;
 			font-weight: bold;
 			font-style: italic;
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
 			margin: 20px 0;
 			padding: 15px;
 			border: 1px solid #dee2e6;
@@ -275,7 +471,7 @@ $tiposNotas = [];
 		   PIE DEL CERTIFICADO
 		   ============================ */
 		.pie-certificado {
-			font-size: 11pt;
+			font-size: <?= $tamanoLetra ?>pt;
 			text-align: justify;
 			line-height: 1.8;
 			margin: 25px 0;
@@ -304,12 +500,12 @@ $tiposNotas = [];
 
 		.firma-nombre {
 			font-weight: bold;
-			font-size: 10pt;
+			font-size: <?= $tamanoLetra - 1 ?>pt;
 			margin-top: 5px;
 		}
 
 		.firma-cargo {
-			font-size: 9pt;
+			font-size: <?= $tamanoLetra - 2 ?>pt;
 			color: #555;
 		}
 
@@ -325,6 +521,8 @@ $tiposNotas = [];
 			body {
 				background-color: white;
 				padding: 0;
+				font-family: <?= htmlspecialchars($tipoLetra) ?>, 'Arial', 'Times New Roman', serif;
+				font-size: <?= $tamanoLetra ?>pt;
 			}
 
 			.container-certificado {
@@ -335,26 +533,50 @@ $tiposNotas = [];
 				display: none !important;
 			}
 
+			.marca-agua {
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				z-index: 1;
+				pointer-events: none;
+				opacity: <?= $marcaAguaOpacidad ?>;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			.marca-agua img {
+				width: <?= $marcaAguaTamanio ?>px;
+				height: auto;
+				object-fit: contain;
+			}
+
 			.tabla-calificaciones th {
-				background-color: #e9ecef !important;
+				background-color: rgba(233, 236, 239, 0.85) !important;
 				-webkit-print-color-adjust: exact;
 				print-color-adjust: exact;
 			}
 
 			.tabla-calificaciones tr.fila-area {
-				background-color: #EAEAEA !important;
+				background-color: rgba(234, 234, 234, 0.85) !important;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
+			.tabla-calificaciones tr.fila-materia {
+				background-color: rgba(255, 255, 255, 0.85) !important;
 				-webkit-print-color-adjust: exact;
 				print-color-adjust: exact;
 			}
 
 			.tabla-calificaciones tfoot td {
-				background-color: #f8f9fa !important;
+				background-color: rgba(248, 249, 250, 0.85) !important;
 				-webkit-print-color-adjust: exact;
 				print-color-adjust: exact;
 			}
 
 			.tabla-calificaciones tfoot mark {
-				background-color: #fff3cd !important;
+				background-color: rgba(255, 243, 205, 0.9) !important;
 				-webkit-print-color-adjust: exact;
 				print-color-adjust: exact;
 			}
@@ -414,6 +636,98 @@ $tiposNotas = [];
 </head>
 
 <body>
+	<!-- Ventana de Configuración -->
+	<div class="config-certificado-form">
+		<h4>⚙️ Configuración del Certificado</h4>
+		<form method="GET" id="configCertificadoForm">
+			<?php
+			// Mantener todos los parámetros GET existentes
+			if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
+			if(!empty($_GET["desde"])) echo '<input type="hidden" name="desde" value="'.htmlspecialchars($_GET["desde"]).'">';
+			if(!empty($_GET["hasta"])) echo '<input type="hidden" name="hasta" value="'.htmlspecialchars($_GET["hasta"]).'">';
+			if(!empty($_GET["estampilla"])) echo '<input type="hidden" name="estampilla" value="'.htmlspecialchars($_GET["estampilla"]).'">';
+			if(!empty($_GET["sin_encabezado"])) echo '<input type="hidden" name="sin_encabezado" value="'.htmlspecialchars($_GET["sin_encabezado"]).'">';
+			// Campo hidden para detectar que el formulario fue enviado
+			echo '<input type="hidden" name="config_aplicada" value="1">';
+			?>
+			
+			<div class="form-group">
+				<label>Tipo de Letra:</label>
+				<select name="tipo_letra">
+					<option value="Arial" <?= $tipoLetra == 'Arial' ? 'selected' : '' ?>>Arial</option>
+					<option value="Times New Roman" <?= $tipoLetra == 'Times New Roman' ? 'selected' : '' ?>>Times New Roman</option>
+					<option value="Courier New" <?= $tipoLetra == 'Courier New' ? 'selected' : '' ?>>Courier New</option>
+					<option value="Georgia" <?= $tipoLetra == 'Georgia' ? 'selected' : '' ?>>Georgia</option>
+					<option value="Verdana" <?= $tipoLetra == 'Verdana' ? 'selected' : '' ?>>Verdana</option>
+					<option value="Helvetica" <?= $tipoLetra == 'Helvetica' ? 'selected' : '' ?>>Helvetica</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label>Tamaño de Letra (pt):</label>
+				<input type="number" name="tamano_letra" value="<?= $tamanoLetra ?>" min="8" max="18" step="0.5">
+			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?>>
+					Incluir materias (si no, solo áreas)
+				</label>
+			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="incluir_logo" value="1" <?= $incluirLogo ? 'checked' : '' ?> id="incluir_logo_check">
+					Incluir logo de la institución
+				</label>
+			</div>
+
+			<div class="form-group" id="logo_config" style="display: <?= $incluirLogo ? 'block' : 'none' ?>;">
+				<label>Alineación del Logo:</label>
+				<select name="logo_alineacion">
+					<option value="izquierda" <?= $logoAlineacion == 'izquierda' ? 'selected' : '' ?>>Izquierda</option>
+					<option value="centro" <?= $logoAlineacion == 'centro' ? 'selected' : '' ?>>Centro</option>
+					<option value="derecha" <?= $logoAlineacion == 'derecha' ? 'selected' : '' ?>>Derecha</option>
+				</select>
+				
+				<label style="margin-top: 10px;">Dimensiones del Logo (px):</label>
+				<div class="logo-dimensions">
+					<input type="number" name="logo_ancho" value="<?= $logoAncho ?>" min="50" max="500" placeholder="Ancho">
+					<input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="50" max="500" placeholder="Alto">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>Firmas al pie de página:</label>
+				<label class="checkbox-label">
+					<input type="checkbox" name="firma_rector" value="1" <?= $firmaRector ? 'checked' : '' ?>>
+					Rector(a)
+				</label>
+				<label class="checkbox-label">
+					<input type="checkbox" name="firma_secretario" value="1" <?= $firmaSecretario ? 'checked' : '' ?>>
+					Secretario(a)
+				</label>
+			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_marca_agua" value="1" <?= $mostrarMarcaAgua ? 'checked' : '' ?> id="mostrar_marca_agua_check">
+					Mostrar marca de agua (logo de la institución)
+				</label>
+			</div>
+
+			<div class="form-group" id="marca_agua_config" style="display: <?= $mostrarMarcaAgua ? 'block' : 'none' ?>;">
+				<label>Opacidad de la marca de agua (0.0 - 1.0):</label>
+				<input type="number" name="marca_agua_opacidad" value="<?= $marcaAguaOpacidad ?>" min="0" max="1" step="0.05" placeholder="0.1">
+				
+				<label style="margin-top: 10px;">Tamaño de la marca de agua (px):</label>
+				<input type="number" name="marca_agua_tamanio" value="<?= $marcaAguaTamanio ?>" min="100" max="800" placeholder="300">
+			</div>
+
+			<button type="submit" class="btn-aplicar">Aplicar Configuración</button>
+		</form>
+	</div>
+
 	<!-- Botones de acción -->
 	<div class="botones-accion">
 		<button class="btn-flotante btn-print" onclick="window.print()">
@@ -426,7 +740,39 @@ $tiposNotas = [];
 		</button>
 	</div>
 
+	<?php if($mostrarMarcaAgua && !empty($informacion_inst["info_logo"])) { 
+		$logoPathMarcaAgua = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
+		$logoPathFullMarcaAgua = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+		
+		// Verificar si el logo existe
+		if(file_exists($logoPathFullMarcaAgua)) {
+	?>
+		<div class="marca-agua">
+			<img src="<?= $logoPathMarcaAgua ?>" alt="Marca de agua" onerror="this.style.display='none'">
+		</div>
+	<?php 
+		}
+	} 
+	?>
+
 	<div class="container-certificado">
+		<?php 
+		// Mostrar logo si está configurado y existe el archivo
+		if($incluirLogo && !empty($informacion_inst["info_logo"])) {
+			$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
+			$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+			
+			// Verificar si el logo existe
+			if(file_exists($logoPathFull)) {
+		?>
+			<div class="logo-container">
+				<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
+			</div>
+		<?php 
+			}
+		} 
+		?>
+
 		<?php if($mostrarEncabezado) { ?>
 			<!-- Encabezado institucional -->
 			<div class="header-institucional">
@@ -440,7 +786,6 @@ $tiposNotas = [];
 
 		<?php
 		$meses = array(" ", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
-		$horas = array('CERO', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE', 'DIEZ');
 		
 		// Obtener datos del estudiante del año actual (donde sabemos que existe) para información general
 		$estudianteActual = Estudiantes::obtenerDatosEstudiante($id, $config['conf_agno']);
@@ -541,90 +886,95 @@ $tiposNotas = [];
 						$notaAreaAcumulada = $promedioAreaCompleto['acumulado'];
 						
 						$notaArea = 0;
-						$notaAreasPeriodos = 0;
+						$ih = "";
 
-						while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
-							// Director de grupo
-							if($datosMaterias["car_director_grupo"]==1){
-								$idDirector=$datosMaterias["car_docente"];
-							}
-
-							$background = '';
-							$ih = $datosMaterias["car_ih"];
-							
-							// Si hay múltiples materias en el área, mostrarlas
-							if($datosAreas['numMaterias'] > 1){
-								$notaMateriasPeriodosTotal = 0;
-								$ultimoPeriodo = $config["conf_periodos_maximos"];
-								
-								// Calcular promedio de la materia por periodos
-								for($p = 1; $p <= $config["conf_periodos_maximos"]; $p++){
-									$datosPeriodos = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $matricula['mat_id'], $datosMaterias["car_id"], $inicio);
-									$notaMateriasPeriodos = !empty($datosPeriodos['bol_nota']) ? round($datosPeriodos['bol_nota'], 1) : 0;
-									$notaMateriasPeriodosTotal += $notaMateriasPeriodos;
-
-									if (empty($datosPeriodos['bol_periodo'])){
-										$ultimoPeriodo -= 1;
-									}
+						// Mostrar materias solo si está configurado
+						if($mostrarMaterias) {
+							while($datosMaterias = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH)){
+								// Director de grupo
+								if($datosMaterias["car_director_grupo"]==1){
+									$idDirector=$datosMaterias["car_docente"];
 								}
 
-								// Promedio acumulado de la materia
-								$notaAcomuladoMateria = 0;
-								if ($ultimoPeriodo > 0) {
-									$notaAcomuladoMateria = $notaMateriasPeriodosTotal / $ultimoPeriodo;
-								}
+								$ih = $datosMaterias["car_ih"];
 								
-								// Obtener desempeño correcto usando obtenerDatosTipoDeNotas (usar valor numérico)
-								$notaAcomuladoMateriaNum = (float)$notaAcomuladoMateria;
-								$notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateriaNum);
-								$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoMateriaNum . '_' . $inicio;
-								if (!isset($notasCualitativasCache[$cacheKey])) {
-									$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateriaNum, $inicio);
-								}
-								$estiloNotaAcomuladoMaterias = $notasCualitativasCache[$cacheKey];
-								
-								// Validar que no sea null y tenga el campo notip_nombre
-								if(empty($estiloNotaAcomuladoMaterias) || !is_array($estiloNotaAcomuladoMaterias)){
-									$estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
-								}
-								if(empty($estiloNotaAcomuladoMaterias['notip_nombre'])){
-									// Si no hay desempeño, usar determinarRango como fallback
-									if(!empty($tiposNotas)){
-										$estiloNotaAcomuladoMaterias = Boletin::determinarRango($notaAcomuladoMateriaNum, $tiposNotas);
-									} else {
-										$estiloNotaAcomuladoMaterias = ['notip_nombre' => 'N/A'];
-									}
-								}
-								
-							?>
-								<tr class="fila-materia">
-									<td style="padding-left: 25px;">
-										<?=$datosMaterias['mat_nombre']?>
-										<?php 
-										// Mostrar porcentaje solo si el usuario es DEVELOPER
-										if($datosUsuarioActual['uss_tipo'] == TIPO_DEV && !empty($datosMaterias['mat_valor'])){
-											echo ' (' . $datosMaterias['mat_valor'] . '%)';
+								// Si hay múltiples materias en el área, mostrarlas
+								if($datosAreas['numMaterias'] > 1){
+									$notaMateriasPeriodosTotal = 0;
+									$ultimoPeriodo = $config["conf_periodos_maximos"];
+									
+									// Calcular promedio de la materia por periodos
+									for($p = 1; $p <= $config["conf_periodos_maximos"]; $p++){
+										$datosPeriodos = Boletin::traerNotaBoletinCargaPeriodo($config, $p, $matricula['mat_id'], $datosMaterias["car_id"], $inicio);
+										$notaMateriasPeriodos = !empty($datosPeriodos['bol_nota']) ? round($datosPeriodos['bol_nota'], 1) : 0;
+										$notaMateriasPeriodosTotal += $notaMateriasPeriodos;
+
+										if (empty($datosPeriodos['bol_periodo'])){
+											$ultimoPeriodo -= 1;
 										}
-										?>
-									</td>
-									<td style="text-align: center;"><?=$datosMaterias['car_ih']?></td>
-									<td style="text-align: center;"><?=$notaAcomuladoMateriaFormateada?></td>
-									<td style="text-align: center;"><?=!empty($estiloNotaAcomuladoMaterias['notip_nombre']) ? strtoupper($estiloNotaAcomuladoMaterias['notip_nombre']) : 'N/A'?></td>
-								</tr>
-							<?php
-								$ih = "";
-								$ausencia = "";
-								$background = 'class="fila-area"';
-							}
+									}
 
-							// Nota para las áreas
-							if(!empty($datosMaterias['notaArea'])) {
-								$notaArea += round($datosMaterias['notaArea'], 1);
+									// Promedio acumulado de la materia
+									$notaAcomuladoMateria = 0;
+									if ($ultimoPeriodo > 0) {
+										$notaAcomuladoMateria = $notaMateriasPeriodosTotal / $ultimoPeriodo;
+									}
+									
+									// Obtener desempeño correcto usando obtenerDatosTipoDeNotas (usar valor numérico)
+									$notaAcomuladoMateriaNum = (float)$notaAcomuladoMateria;
+									$notaAcomuladoMateriaFormateada = Boletin::notaDecimales($notaAcomuladoMateriaNum);
+									$cacheKey = $config['conf_notas_categoria'] . '_' . $notaAcomuladoMateriaNum . '_' . $inicio;
+									if (!isset($notasCualitativasCache[$cacheKey])) {
+										$notasCualitativasCache[$cacheKey] = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaAcomuladoMateriaNum, $inicio);
+									}
+									$estiloNotaAcomuladoMaterias = $notasCualitativasCache[$cacheKey];
+									
+									// Validar que no sea null y tenga el campo notip_nombre
+									if(empty($estiloNotaAcomuladoMaterias) || !is_array($estiloNotaAcomuladoMaterias)){
+										$estiloNotaAcomuladoMaterias = ['notip_nombre' => ''];
+									}
+									if(empty($estiloNotaAcomuladoMaterias['notip_nombre'])){
+										// Si no hay desempeño, usar determinarRango como fallback
+										if(!empty($tiposNotas)){
+											$estiloNotaAcomuladoMaterias = Boletin::determinarRango($notaAcomuladoMateriaNum, $tiposNotas);
+										} else {
+											$estiloNotaAcomuladoMaterias = ['notip_nombre' => 'N/A'];
+										}
+									}
+									
+								?>
+									<tr class="fila-materia">
+										<td style="padding-left: 25px;">
+											<?=$datosMaterias['mat_nombre']?>
+											<?php 
+											// Mostrar porcentaje solo si el usuario es DEVELOPER
+											if($datosUsuarioActual['uss_tipo'] == TIPO_DEV && !empty($datosMaterias['mat_valor'])){
+												echo ' (' . $datosMaterias['mat_valor'] . '%)';
+											}
+											?>
+										</td>
+										<td style="text-align: center;"><?=$datosMaterias['car_ih']?></td>
+										<td style="text-align: center;"><?=$notaAcomuladoMateriaFormateada?></td>
+										<td style="text-align: center;"><?=!empty($estiloNotaAcomuladoMaterias['notip_nombre']) ? strtoupper($estiloNotaAcomuladoMaterias['notip_nombre']) : 'N/A'?></td>
+									</tr>
+								<?php
+								}
+
+								// Nota para las áreas
+								if(!empty($datosMaterias['notaArea'])) {
+									$notaArea += round($datosMaterias['notaArea'], 1);
+								}
+							}
+						} else {
+							// Si no se muestran materias, obtener solo el IH del área
+							$datosMateriasPrimera = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH);
+							if($datosMateriasPrimera) {
+								$ih = $datosMateriasPrimera["car_ih"];
 							}
 						}
 					?>
 						<!-- Fila del área -->
-						<tr <?=$background?>>
+						<tr class="fila-area">
 							<td><?=$datosAreas['ar_nombre']?></td>
 							<td style="text-align: center;"><?=$ih?></td>
 							<?php
@@ -757,7 +1107,7 @@ $tiposNotas = [];
 				}
 			}
 
-			// Verificar si hay notas en el último periodo configurado
+			// Verificar si hay notas en el último period configurado
 			$tieneNotasUltimoPeriodo = false;
 			$ultimoPeriodo = $config["conf_periodos_maximos"];
 			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
@@ -806,10 +1156,11 @@ $tiposNotas = [];
 			interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark style='background: #fff3cd; padding: 2px 5px;'>".$estampilla."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
 		</div>
 
-		<!-- FIRMA -->
+		<!-- FIRMAS -->
 		<table class="tabla-firmas">
 			<tr>
-				<td style="width: 100%;">
+				<?php if($firmaRector) { ?>
+				<td style="width: <?= $firmaSecretario ? '50%' : '100%' ?>;">
 					<?php
 					$nombreRector = 'RECTOR(A)';
 					if (!empty($informacion_inst["info_rector"])) {
@@ -826,6 +1177,27 @@ $tiposNotas = [];
 					<div class="firma-nombre"><?= strtoupper($nombreRector) ?></div>
 					<div class="firma-cargo">Rector(a)</div>
 				</td>
+				<?php } ?>
+				
+				<?php if($firmaSecretario) { ?>
+				<td style="width: <?= $firmaRector ? '50%' : '100%' ?>;">
+					<?php
+					$nombreSecretario = 'SECRETARIO(A)';
+					if (!empty($informacion_inst["info_secretaria_academica"])) {
+						$secretario = Usuarios::obtenerDatosUsuario($informacion_inst["info_secretaria_academica"]);
+						if (!empty($secretario)) {
+							$nombreSecretario = UsuariosPadre::nombreCompletoDelUsuario($secretario);
+							if(!empty($secretario["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $secretario['uss_firma'])){
+								echo '<img class="firma-imagen" src="../files/fotos/'.$secretario["uss_firma"].'" alt="Firma Secretario" style="max-width: 100px; height: auto; margin-bottom: 10px;">';
+							}
+						}
+					}
+					?>
+					<div class="firma-linea"></div>
+					<div class="firma-nombre"><?= strtoupper($nombreSecretario) ?></div>
+					<div class="firma-cargo">Secretario(a)</div>
+				</td>
+				<?php } ?>
 			</tr>
 		</table>
 	</div>
@@ -836,6 +1208,26 @@ $tiposNotas = [];
 
 	<script>
 		document.addEventListener('DOMContentLoaded', function() {
+			// Mostrar/ocultar configuración de logo
+			var incluirLogoCheck = document.getElementById('incluir_logo_check');
+			var logoConfig = document.getElementById('logo_config');
+			
+			if(incluirLogoCheck) {
+				incluirLogoCheck.addEventListener('change', function() {
+					logoConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar configuración de marca de agua
+			var mostrarMarcaAguaCheck = document.getElementById('mostrar_marca_agua_check');
+			var marcaAguaConfig = document.getElementById('marca_agua_config');
+			
+			if(mostrarMarcaAguaCheck) {
+				mostrarMarcaAguaCheck.addEventListener('change', function() {
+					marcaAguaConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
 			// Atajo de teclado para imprimir
 			document.addEventListener('keydown', function(e) {
 				if ((e.ctrlKey || e.metaKey) && e.key === 'p') {

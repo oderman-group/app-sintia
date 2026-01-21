@@ -74,11 +74,13 @@ foreach ($data["data"] as $resultado) {
 		   data-director-grupo="<?=htmlspecialchars($normalizarSiNo($resultado['car_director_grupo'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
 		   data-permiso2="<?=htmlspecialchars($normalizarSiNo($resultado['car_permiso2'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
 		   data-indicador-automatico="<?=htmlspecialchars($normalizarSiNo($resultado['car_indicador_automatico'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
-		   data-max-indicadores="<?=htmlspecialchars($resultado['car_maximos_indicadores'], ENT_QUOTES, 'UTF-8');?>"
-		   data-max-calificaciones="<?=htmlspecialchars($resultado['car_maximas_calificaciones'], ENT_QUOTES, 'UTF-8');?>"
-		   data-cantidad-estudiantes="<?=htmlspecialchars($cantidadEstudiantes, ENT_QUOTES, 'UTF-8');?>"
-		   data-activa="<?=htmlspecialchars(isset($resultado['car_activa']) ? $resultado['car_activa'] : 1, ENT_QUOTES, 'UTF-8');?>"
-		   title="Ver detalles">
+	   data-max-indicadores="<?=htmlspecialchars($resultado['car_maximos_indicadores'], ENT_QUOTES, 'UTF-8');?>"
+	   data-max-calificaciones="<?=htmlspecialchars($resultado['car_maximas_calificaciones'], ENT_QUOTES, 'UTF-8');?>"
+	   data-cantidad-estudiantes="<?=htmlspecialchars($cantidadEstudiantes, ENT_QUOTES, 'UTF-8');?>"
+	   data-activa="<?=htmlspecialchars(isset($resultado['car_activa']) ? $resultado['car_activa'] : 1, ENT_QUOTES, 'UTF-8');?>"
+	   data-tematica="<?=htmlspecialchars($normalizarSiNo($resultado['car_tematica'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
+	   data-observaciones-boletin="<?=htmlspecialchars($normalizarSiNo($resultado['car_observaciones_boletin'] ?? 0), ENT_QUOTES, 'UTF-8');?>"
+	   title="Ver detalles">
 		   <i class="fa fa-chevron-right"></i>
 	   </button>
 	   </td>
