@@ -23,21 +23,36 @@ class UsuariosPadre {
             return '--';
         }
 
-        $nombre = !empty($usuario['uss_nombre']) ? $usuario['uss_nombre'] : 'N/A';
-
-        if (!empty($usuario['uss_nombre2'])) {
-            $nombre .= " " . $usuario['uss_nombre2'];
+        $partesNombre = [];
+        
+        // Agregar primer nombre si existe y no está vacío
+        if (isset($usuario['uss_nombre']) && trim($usuario['uss_nombre']) !== '') {
+            $partesNombre[] = trim($usuario['uss_nombre']);
         }
-
-        if (!empty($usuario['uss_apellido1'])) {
-            $nombre .= " " . $usuario['uss_apellido1'];
+        
+        // Agregar segundo nombre si existe y no está vacío
+        if (isset($usuario['uss_nombre2']) && trim($usuario['uss_nombre2']) !== '') {
+            $partesNombre[] = trim($usuario['uss_nombre2']);
         }
-
-        if (!empty($usuario['uss_apellido2'])) {
-            $nombre .= " " . $usuario['uss_apellido2'];
+        
+        // Agregar primer apellido si existe y no está vacío
+        if (isset($usuario['uss_apellido1']) && trim($usuario['uss_apellido1']) !== '') {
+            $partesNombre[] = trim($usuario['uss_apellido1']);
         }
-
-        return strtoupper($nombre);
+        
+        // Agregar segundo apellido si existe y no está vacío
+        if (isset($usuario['uss_apellido2']) && trim($usuario['uss_apellido2']) !== '') {
+            $partesNombre[] = trim($usuario['uss_apellido2']);
+        }
+        
+        // Si no hay ninguna parte del nombre, retornar 'N/A'
+        if (empty($partesNombre)) {
+            return 'N/A';
+        }
+        
+        // Unir todas las partes con espacios y convertir a mayúsculas
+        $nombreCompleto = implode(' ', $partesNombre);
+        return strtoupper($nombreCompleto);
     }
 
     /**

@@ -384,14 +384,27 @@ if ($puedeEditar) {
 												<div class="form-group">
 													<label>Usuario <span style="color: red;">*</span></label>
 													<select class="form-control select2" id="select_usuario" name="usuario" required <?=$disabledPermiso;?>>
-														<option value="">Seleccione una opción</option>
 														<?php
+														// Precargar el usuario actual como opción inicial
 														if (!empty($datosMovimiento['fcu_usuario'])) {
 															$datosConsulta = UsuariosPadre::obtenerTodosLosDatosDeUsuarios("AND uss_id='".$datosMovimiento['fcu_usuario']."'");
-															while($datosMovimientosDatos = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH)){
+															$usuarioActual = null;
+															if ($datosConsulta) {
+																$usuarioActual = mysqli_fetch_array($datosConsulta, MYSQLI_BOTH);
+																if ($usuarioActual) {
+																	// Asegurar que todos los campos estén presentes y limpios
+																	$usuarioLimpio = [
+																		'uss_id' => $usuarioActual['uss_id'] ?? '',
+																		'uss_nombre' => isset($usuarioActual['uss_nombre']) ? trim($usuarioActual['uss_nombre']) : '',
+																		'uss_nombre2' => isset($usuarioActual['uss_nombre2']) ? trim($usuarioActual['uss_nombre2']) : '',
+																		'uss_apellido1' => isset($usuarioActual['uss_apellido1']) ? trim($usuarioActual['uss_apellido1']) : '',
+																		'uss_apellido2' => isset($usuarioActual['uss_apellido2']) ? trim($usuarioActual['uss_apellido2']) : '',
+																	];
+																	$nombreUsuario = UsuariosPadre::nombreCompletoDelUsuario($usuarioLimpio)." - ".(isset($usuarioActual['pes_nombre']) ? trim($usuarioActual['pes_nombre']) : 'N/A');
 														?>
-															<option value="<?=$datosMovimientosDatos['uss_id'];?>" <?php if(isset($datosMovimiento['fcu_usuario']) && $datosMovimiento['fcu_usuario']==$datosMovimientosDatos['uss_id']){ echo "selected";}?>><?=UsuariosPadre::nombreCompletoDelUsuario($datosMovimientosDatos)." (".$datosMovimientosDatos['pes_nombre'].")";?></option>
-														<?php 
+															<option value="<?=$usuarioActual['uss_id'];?>" selected><?=$nombreUsuario;?></option>
+														<?php
+																}
 															}
 														}
 														?>
@@ -498,23 +511,39 @@ if ($puedeEditar) {
                                         <script>
                                             $(document).ready(function() {
                                                 $('#select_usuario').select2({
-                                                placeholder: 'Seleccione el usuario...',
-                                                theme: "bootstrap",
-                                                multiple: false,
+                                                    placeholder: 'Seleccione el usuario...',
+                                                    theme: "bootstrap",
+                                                    multiple: false,
+                                                    allowClear: true,
+                                                    minimumInputLength: 0,
                                                     ajax: {
                                                         type: 'GET',
                                                         url: '../compartido/ajax-listar-usuarios.php',
-                                                        processResults: function(data) {
-                                                            data = JSON.parse(data);
+                                                        dataType: 'text', // Forzar texto para evitar parse automático
+                                                        data: function (params) {
                                                             return {
-                                                                results: $.map(data, function(item) {
-                                                                    return {
-                                                                        id: item.value,
-                                                                        text: item.label
-                                                                    }
-                                                                })
+                                                                term: params.term || '',
+                                                                todos: '1' // Cargar todos los usuarios, no solo los que tienen facturas
                                                             };
-                                                        }
+                                                        },
+                                                        processResults: function(data) {
+                                                            try {
+                                                                // Parsear manualmente el JSON
+                                                                var datos = JSON.parse(data);
+                                                                return {
+                                                                    results: $.map(datos || [], function(item) {
+                                                                        return {
+                                                                            id: item.value,
+                                                                            text: item.label
+                                                                        }
+                                                                    })
+                                                                };
+                                                            } catch (e) {
+                                                                console.error('Error parsing JSON:', e, data);
+                                                                return { results: [] };
+                                                            }
+                                                        },
+                                                        cache: true
                                                     }
                                                 });
                                                 
@@ -600,7 +629,12 @@ if ($puedeEditar) {
                                                                             $nombreItem = $fila['name'];
                                                                         }
                                                             ?>
-                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>"<?=$applicationTime ? ' data-application-time="'.$applicationTime.'"' : '';?>>
+                                                                <?php
+                                                                    // Obtener snapshot del impuesto (tax_name, tax_fee) con fallback
+                                                                    $taxNameSnapshot = !empty($fila['tax_name']) ? $fila['tax_name'] : '';
+                                                                    $taxFeeSnapshot = !empty($fila['tax_fee']) ? floatval($fila['tax_fee']) : 0;
+                                                                ?>
+                                                                <tr id="reg<?=$fila['idtx'];?>" class="<?=$rowClass;?>" data-item-type="<?=$itemType;?>"<?=$applicationTime ? ' data-application-time="'.$applicationTime.'"' : '';?> data-tax-name="<?=htmlspecialchars($taxNameSnapshot, ENT_QUOTES, 'UTF-8')?>" data-tax-fee="<?=$taxFeeSnapshot?>">
                                                                     <td><?=$fila['idtx'];?></td>
                                                                     <td><?=$nombreItem;?></td>
                                                                     <td>
@@ -615,10 +649,31 @@ if ($puedeEditar) {
                                                                                 <option value="0" name="0">Ninguno - (0%)</option>
                                                                                 <?php
                                                                                     $consulta= Movimientos::listarImpuestos($conexion, $config);
+                                                                                    $impuestoEncontrado = false;
                                                                                     while($datosConsulta = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                                                         $selected = $fila['tax'] == $datosConsulta['id'] ? "selected" : "";
+                                                                                        if ($selected) {
+                                                                                            $impuestoEncontrado = true;
+                                                                                        }
+                                                                                        
+                                                                                        // Si es el impuesto seleccionado y hay snapshot, usar el snapshot para mostrar
+                                                                                        if ($selected && !empty($taxNameSnapshot) && $taxFeeSnapshot > 0) {
+                                                                                            // Usar snapshot para el texto y data-valor-impuesto (formato consistente con el resto del código)
+                                                                                            $textoImpuesto = $taxNameSnapshot." - (".$taxFeeSnapshot."%)";
+                                                                                            $valorImpuesto = $taxFeeSnapshot;
+                                                                                        } else {
+                                                                                            // Usar valor actual del impuesto
+                                                                                            $textoImpuesto = $datosConsulta['type_tax']." - (".$datosConsulta['fee']."%)";
+                                                                                            $valorImpuesto = $datosConsulta['fee'];
+                                                                                        }
                                                                                 ?>
-                                                                                <option value="<?=$datosConsulta['id']?>" data-name-impuesto="<?=$datosConsulta['type_tax']?>" data-valor-impuesto="<?=$datosConsulta['fee']?>" <?=$selected?>><?=$datosConsulta['type_tax']." - (".$datosConsulta['fee']."%)"?></option>
+                                                                                <option value="<?=$datosConsulta['id']?>" data-name-impuesto="<?=$datosConsulta['type_tax']?>" data-valor-impuesto="<?=$valorImpuesto?>" <?=$selected?>><?=$textoImpuesto?></option>
+                                                                                <?php } ?>
+                                                                                <?php
+                                                                                    // Si hay snapshot pero el impuesto no está en la lista actual, agregar opción especial
+                                                                                    if (!empty($taxNameSnapshot) && $taxFeeSnapshot > 0 && !empty($fila['tax']) && $fila['tax'] != 0 && !$impuestoEncontrado) {
+                                                                                ?>
+                                                                                <option value="<?=$fila['tax']?>" data-name-impuesto="<?=htmlspecialchars($taxNameSnapshot, ENT_QUOTES, 'UTF-8')?>" data-valor-impuesto="<?=$taxFeeSnapshot?>" selected><?=$taxNameSnapshot." - (".$taxFeeSnapshot."%)"?> [Histórico]</option>
                                                                                 <?php } ?>
                                                                             </select>
                                                                         </div>
