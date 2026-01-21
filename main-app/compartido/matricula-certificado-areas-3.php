@@ -15,7 +15,11 @@ require_once(ROOT_PATH . "/main-app/class/UsuariosPadre.php");
 require_once(ROOT_PATH."/main-app/class/Asignaturas.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+require_once(ROOT_PATH."/main-app/class/RedisInstance.php");
 $Plataforma = new Plataforma;
+
+// Clave para almacenar preferencias del certificado
+define('CERTIFICADO_PREFS_KEY', 'certificado_preferencias_usuario_');
 
 // Configuraciones para manejo de archivos grandes
 set_time_limit(300);
@@ -42,37 +46,135 @@ if(isset($_REQUEST["sin_encabezado"])){
 // Detectar si el formulario de configuración fue enviado
 $formularioEnviado = isset($_GET['config_aplicada']) && $_GET['config_aplicada'] == '1';
 
-// Configuraciones de personalización (valores por defecto)
-$tipoLetra = $formularioEnviado && isset($_GET['tipo_letra']) ? $_GET['tipo_letra'] : 'Arial';
-$tamanoLetra = $formularioEnviado && isset($_GET['tamano_letra']) ? (int)$_GET['tamano_letra'] : 11;
-$mostrarMaterias = $formularioEnviado 
-    ? (isset($_GET['mostrar_materias']) ? (int)$_GET['mostrar_materias'] : 0)
-    : 1; // Por defecto mostrar materias
-$incluirLogo = $formularioEnviado 
-    ? (isset($_GET['incluir_logo']) ? (int)$_GET['incluir_logo'] : 0)
-    : 0; // Por defecto no incluir logo
-$logoAncho = $formularioEnviado && isset($_GET['logo_ancho']) ? (int)$_GET['logo_ancho'] : 150;
-$logoAlto = $formularioEnviado && isset($_GET['logo_alto']) ? (int)$_GET['logo_alto'] : 100;
-$logoAlineacion = $formularioEnviado && isset($_GET['logo_alineacion']) ? $_GET['logo_alineacion'] : 'centro';
-// Cargar automáticamente rector y secretario si están configurados
-$firmaRector = $formularioEnviado 
-    ? (isset($_GET['firma_rector']) ? (int)$_GET['firma_rector'] : 0)
-    : (!empty($informacion_inst["info_rector"]) ? 1 : 0); // Por defecto mostrar si existe rector configurado
+/**
+ * Cargar preferencias del certificado desde Redis o sesión
+ * @return array Array con las preferencias guardadas
+ */
+function cargarPreferenciasCertificado() {
+	$preferencias = [];
+	$usuarioId = isset($GLOBALS['datosUsuarioActual']['uss_id']) ? $GLOBALS['datosUsuarioActual']['uss_id'] : 0;
+	
+	if ($usuarioId > 0) {
+		// Intentar cargar desde Redis
+		try {
+			$redis = RedisInstance::getRedisInstance();
+			$redisKey = CERTIFICADO_PREFS_KEY . $usuarioId;
+			
+			if ($redis->exists($redisKey)) {
+				$prefsRedis = json_decode($redis->get($redisKey), true);
+				if (is_array($prefsRedis)) {
+					$preferencias = $prefsRedis;
+				}
+			}
+		} catch (Exception $e) {
+			// Si Redis falla, continuar con sesión
+		}
+	}
+	
+	// Si no hay en Redis, intentar desde sesión
+	if (empty($preferencias) && isset($_SESSION['certificado_preferencias'])) {
+		$preferencias = $_SESSION['certificado_preferencias'];
+	}
+	
+	return $preferencias;
+}
 
-$firmaSecretario = $formularioEnviado 
-    ? (isset($_GET['firma_secretario']) ? (int)$_GET['firma_secretario'] : 0)
-    : (!empty($informacion_inst["info_secretaria_academica"]) ? 1 : 0); // Por defecto mostrar si existe secretario configurado
+/**
+ * Guardar preferencias del certificado en Redis y sesión
+ * @param array $preferencias Array con las preferencias a guardar
+ */
+function guardarPreferenciasCertificado($preferencias) {
+	$usuarioId = isset($GLOBALS['datosUsuarioActual']['uss_id']) ? $GLOBALS['datosUsuarioActual']['uss_id'] : 0;
+	
+	// Guardar en sesión (siempre disponible)
+	$_SESSION['certificado_preferencias'] = $preferencias;
+	
+	// Guardar en Redis (persistencia entre sesiones)
+	if ($usuarioId > 0) {
+		try {
+			$redis = RedisInstance::getRedisInstance();
+			$redisKey = CERTIFICADO_PREFS_KEY . $usuarioId;
+			
+			// Guardar en Redis con expiración de 90 días
+			$redis->setex($redisKey, 90 * 24 * 60 * 60, json_encode($preferencias));
+		} catch (Exception $e) {
+			// Si Redis falla, al menos tenemos la sesión
+		}
+	}
+}
 
-// Configuración de marca de agua (logo de la institución)
-$mostrarMarcaAgua = $formularioEnviado 
-    ? (isset($_GET['mostrar_marca_agua']) ? (int)$_GET['mostrar_marca_agua'] : 0)
-    : 0; // Por defecto no mostrar marca de agua
-$marcaAguaOpacidad = $formularioEnviado && isset($_GET['marca_agua_opacidad']) 
-    ? (float)$_GET['marca_agua_opacidad'] 
-    : 0.1; // Por defecto opacidad 0.1 (10%)
-$marcaAguaTamanio = $formularioEnviado && isset($_GET['marca_agua_tamanio']) 
-    ? (int)$_GET['marca_agua_tamanio'] 
-    : 300; // Por defecto tamaño 300px
+// Cargar preferencias guardadas (Redis o sesión)
+$preferenciasGuardadas = cargarPreferenciasCertificado();
+
+// Configuraciones de personalización
+// Si el formulario fue enviado, usar valores del formulario y guardarlos
+// Si no, intentar cargar desde preferencias guardadas, sino usar valores por defecto
+if ($formularioEnviado) {
+	// Valores del formulario
+	// Para checkboxes: si no están presentes en GET, significa que están desmarcados (0)
+	$tipoLetra = isset($_GET['tipo_letra']) ? $_GET['tipo_letra'] : ($preferenciasGuardadas['tipo_letra'] ?? 'Arial');
+	$tamanoLetra = isset($_GET['tamano_letra']) ? (int)$_GET['tamano_letra'] : ($preferenciasGuardadas['tamano_letra'] ?? 11);
+	$mostrarMaterias = isset($_GET['mostrar_materias']) ? (int)$_GET['mostrar_materias'] : 0;
+	$incluirLogo = isset($_GET['incluir_logo']) ? (int)$_GET['incluir_logo'] : 0;
+	$logoAncho = isset($_GET['logo_ancho']) ? (int)$_GET['logo_ancho'] : ($preferenciasGuardadas['logo_ancho'] ?? 150);
+	$logoAlto = isset($_GET['logo_alto']) ? (int)$_GET['logo_alto'] : ($preferenciasGuardadas['logo_alto'] ?? 100);
+	$logoAlineacion = isset($_GET['logo_alineacion']) ? $_GET['logo_alineacion'] : ($preferenciasGuardadas['logo_alineacion'] ?? 'centro');
+	$firmaRector = isset($_GET['firma_rector']) ? (int)$_GET['firma_rector'] : 0;
+	$firmaSecretario = isset($_GET['firma_secretario']) ? (int)$_GET['firma_secretario'] : 0;
+	// Para checkboxes: si no están presentes en GET, significa que están desmarcados (0)
+	$mostrarFirmaDigitalRector = isset($_GET['mostrar_firma_digital_rector']) ? (int)$_GET['mostrar_firma_digital_rector'] : 0;
+	$mostrarFirmaDigitalSecretario = isset($_GET['mostrar_firma_digital_secretario']) ? (int)$_GET['mostrar_firma_digital_secretario'] : 0;
+	$posicionFirmaRector = isset($_GET['posicion_firma_rector']) ? (int)$_GET['posicion_firma_rector'] : ($preferenciasGuardadas['posicion_firma_rector'] ?? 10);
+	$posicionFirmaSecretario = isset($_GET['posicion_firma_secretario']) ? (int)$_GET['posicion_firma_secretario'] : ($preferenciasGuardadas['posicion_firma_secretario'] ?? 10);
+	$mostrarMarcaAgua = isset($_GET['mostrar_marca_agua']) ? (int)$_GET['mostrar_marca_agua'] : 0;
+	$marcaAguaOpacidad = isset($_GET['marca_agua_opacidad']) ? (float)$_GET['marca_agua_opacidad'] : ($preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1);
+	$marcaAguaTamanio = isset($_GET['marca_agua_tamanio']) ? (int)$_GET['marca_agua_tamanio'] : ($preferenciasGuardadas['marca_agua_tamanio'] ?? 300);
+	$espacioCertificado = isset($_GET['espacio_certificado']) ? (int)$_GET['espacio_certificado'] : ($preferenciasGuardadas['espacio_certificado'] ?? 30);
+	$interlineado = isset($_GET['interlineado']) ? (float)$_GET['interlineado'] : ($preferenciasGuardadas['interlineado'] ?? 1.6);
+	
+	// Guardar preferencias
+	$preferenciasParaGuardar = [
+		'tipo_letra' => $tipoLetra,
+		'tamano_letra' => $tamanoLetra,
+		'mostrar_materias' => $mostrarMaterias,
+		'incluir_logo' => $incluirLogo,
+		'logo_ancho' => $logoAncho,
+		'logo_alto' => $logoAlto,
+		'logo_alineacion' => $logoAlineacion,
+		'firma_rector' => $firmaRector,
+		'firma_secretario' => $firmaSecretario,
+		'mostrar_firma_digital_rector' => $mostrarFirmaDigitalRector,
+		'mostrar_firma_digital_secretario' => $mostrarFirmaDigitalSecretario,
+		'posicion_firma_rector' => $posicionFirmaRector,
+		'posicion_firma_secretario' => $posicionFirmaSecretario,
+		'mostrar_marca_agua' => $mostrarMarcaAgua,
+		'marca_agua_opacidad' => $marcaAguaOpacidad,
+		'marca_agua_tamanio' => $marcaAguaTamanio,
+		'espacio_certificado' => $espacioCertificado,
+		'interlineado' => $interlineado,
+	];
+	guardarPreferenciasCertificado($preferenciasParaGuardar);
+} else {
+	// Cargar desde preferencias guardadas o usar valores por defecto
+	$tipoLetra = $preferenciasGuardadas['tipo_letra'] ?? 'Arial';
+	$tamanoLetra = $preferenciasGuardadas['tamano_letra'] ?? 11;
+	$mostrarMaterias = $preferenciasGuardadas['mostrar_materias'] ?? 1;
+	$incluirLogo = $preferenciasGuardadas['incluir_logo'] ?? 0;
+	$logoAncho = $preferenciasGuardadas['logo_ancho'] ?? 150;
+	$logoAlto = $preferenciasGuardadas['logo_alto'] ?? 100;
+	$logoAlineacion = $preferenciasGuardadas['logo_alineacion'] ?? 'centro';
+	$firmaRector = $preferenciasGuardadas['firma_rector'] ?? (!empty($informacion_inst["info_rector"]) ? 1 : 0);
+	$firmaSecretario = $preferenciasGuardadas['firma_secretario'] ?? (!empty($informacion_inst["info_secretaria_academica"]) ? 1 : 0);
+	$mostrarFirmaDigitalRector = $preferenciasGuardadas['mostrar_firma_digital_rector'] ?? 0;
+	$mostrarFirmaDigitalSecretario = $preferenciasGuardadas['mostrar_firma_digital_secretario'] ?? 0;
+	$posicionFirmaRector = $preferenciasGuardadas['posicion_firma_rector'] ?? 10;
+	$posicionFirmaSecretario = $preferenciasGuardadas['posicion_firma_secretario'] ?? 10;
+	$mostrarMarcaAgua = $preferenciasGuardadas['mostrar_marca_agua'] ?? 0;
+	$marcaAguaOpacidad = $preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1;
+	$marcaAguaTamanio = $preferenciasGuardadas['marca_agua_tamanio'] ?? 300;
+	$espacioCertificado = $preferenciasGuardadas['espacio_certificado'] ?? 30;
+	$interlineado = $preferenciasGuardadas['interlineado'] ?? 1.6;
+}
 
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
 $notasCualitativasCache = [];
@@ -115,7 +217,7 @@ $tiposNotas = [];
 		body {
 			font-family: <?= htmlspecialchars($tipoLetra) ?>, 'Arial', 'Times New Roman', serif;
 			font-size: <?= $tamanoLetra ?>pt;
-			line-height: 1.6;
+			line-height: <?= $interlineado ?>;
 			color: #000;
 			background-color: #fff;
 			padding: 20px;
@@ -126,7 +228,7 @@ $tiposNotas = [];
 			max-width: 850px;
 			margin: 0 auto;
 			background: transparent;
-			padding: 30px;
+			padding: <?= $espacioCertificado ?>px;
 			position: relative;
 		}
 
@@ -334,7 +436,7 @@ $tiposNotas = [];
 		.header-institucional {
 			text-align: justify;
 			margin: 40px 0 30px 0;
-			line-height: 1.8;
+			line-height: <?= $interlineado ?>;
 			font-size: <?= $tamanoLetra ?>pt;
 			background: white;
 			position: relative;
@@ -355,7 +457,7 @@ $tiposNotas = [];
 		.texto-estudiante {
 			text-align: justify;
 			margin: 20px 0;
-			line-height: 1.8;
+			line-height: <?= $interlineado ?>;
 			font-size: <?= $tamanoLetra ?>pt;
 			background: white;
 			position: relative;
@@ -413,7 +515,7 @@ $tiposNotas = [];
 			background-color: rgba(248, 249, 250, 0.85);
 			padding: 15px;
 			font-size: <?= $tamanoLetra - 1 ?>pt;
-			line-height: 1.8;
+			line-height: <?= $interlineado ?>;
 		}
 
 		.tabla-calificaciones tfoot mark {
@@ -498,6 +600,14 @@ $tiposNotas = [];
 			margin: 50px auto 5px auto;
 		}
 
+		.firma-imagen {
+			max-width: 100px;
+			height: auto;
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
 		.firma-nombre {
 			font-weight: bold;
 			font-size: <?= $tamanoLetra - 1 ?>pt;
@@ -523,10 +633,11 @@ $tiposNotas = [];
 				padding: 0;
 				font-family: <?= htmlspecialchars($tipoLetra) ?>, 'Arial', 'Times New Roman', serif;
 				font-size: <?= $tamanoLetra ?>pt;
+				line-height: <?= $interlineado ?>;
 			}
 
 			.container-certificado {
-				padding: 0;
+				padding: <?= $espacioCertificado ?>px;
 			}
 
 			.botones-accion {
@@ -669,6 +780,18 @@ $tiposNotas = [];
 			</div>
 
 			<div class="form-group">
+				<label>Interlineado (1.0 - 2.5):</label>
+				<input type="number" name="interlineado" value="<?= $interlineado ?>" min="1.0" max="2.5" step="0.1" placeholder="1.6">
+				<small style="display: block; color: #666; margin-top: 5px;">Valores menores reducen el espacio entre líneas</small>
+			</div>
+
+			<div class="form-group">
+				<label>Espacio del certificado (px):</label>
+				<input type="number" name="espacio_certificado" value="<?= $espacioCertificado ?>" min="10" max="60" step="5" placeholder="30">
+				<small style="display: block; color: #666; margin-top: 5px;">Reduce para que quepa en una hoja</small>
+			</div>
+
+			<div class="form-group">
 				<label class="checkbox-label">
 					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?>>
 					Incluir materias (si no, solo áreas)
@@ -700,13 +823,37 @@ $tiposNotas = [];
 			<div class="form-group">
 				<label>Firmas al pie de página:</label>
 				<label class="checkbox-label">
-					<input type="checkbox" name="firma_rector" value="1" <?= $firmaRector ? 'checked' : '' ?>>
+					<input type="checkbox" name="firma_rector" value="1" <?= $firmaRector ? 'checked' : '' ?> id="firma_rector_check">
 					Rector(a)
 				</label>
 				<label class="checkbox-label">
-					<input type="checkbox" name="firma_secretario" value="1" <?= $firmaSecretario ? 'checked' : '' ?>>
+					<input type="checkbox" name="firma_secretario" value="1" <?= $firmaSecretario ? 'checked' : '' ?> id="firma_secretario_check">
 					Secretario(a)
 				</label>
+			</div>
+
+			<div class="form-group" id="config_firma_rector" style="display: <?= $firmaRector ? 'block' : 'none' ?>;">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_firma_digital_rector" value="1" <?= $mostrarFirmaDigitalRector ? 'checked' : '' ?> id="mostrar_firma_digital_rector_check">
+					Mostrar firma digital del Rector(a) (si existe)
+				</label>
+				<div id="posicion_firma_rector_config" style="display: <?= $mostrarFirmaDigitalRector ? 'block' : 'none' ?>; margin-top: 10px;">
+					<label>Posición de la firma digital (px desde la línea):</label>
+					<input type="number" name="posicion_firma_rector" value="<?= $posicionFirmaRector ?>" min="-30" max="30" step="5" placeholder="10">
+					<small style="display: block; color: #666; margin-top: 5px;">Valores negativos la acercan a la línea, positivos la alejan</small>
+				</div>
+			</div>
+
+			<div class="form-group" id="config_firma_secretario" style="display: <?= $firmaSecretario ? 'block' : 'none' ?>;">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_firma_digital_secretario" value="1" <?= $mostrarFirmaDigitalSecretario ? 'checked' : '' ?> id="mostrar_firma_digital_secretario_check">
+					Mostrar firma digital del Secretario(a) (si existe)
+				</label>
+				<div id="posicion_firma_secretario_config" style="display: <?= $mostrarFirmaDigitalSecretario ? 'block' : 'none' ?>; margin-top: 10px;">
+					<label>Posición de la firma digital (px desde la línea):</label>
+					<input type="number" name="posicion_firma_secretario" value="<?= $posicionFirmaSecretario ?>" min="-30" max="30" step="5" placeholder="10">
+					<small style="display: block; color: #666; margin-top: 5px;">Valores negativos la acercan a la línea, positivos la alejan</small>
+				</div>
 			</div>
 
 			<div class="form-group">
@@ -1163,12 +1310,25 @@ $tiposNotas = [];
 				<td style="width: <?= $firmaSecretario ? '50%' : '100%' ?>;">
 					<?php
 					$nombreRector = 'RECTOR(A)';
+					$mostrarFirmaDigitalRectorActual = false;
+					
 					if (!empty($informacion_inst["info_rector"])) {
 						$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
 						if (!empty($rector)) {
 							$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
-							if(!empty($rector["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $rector['uss_firma'])){
-								echo '<img class="firma-imagen" src="../files/fotos/'.$rector["uss_firma"].'" alt="Firma Rector" style="max-width: 100px; height: auto; margin-bottom: 10px;">';
+							$tieneFirmaDigital = !empty($rector["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $rector['uss_firma']);
+							
+							if($tieneFirmaDigital && $mostrarFirmaDigitalRector){
+								$mostrarFirmaDigitalRectorActual = true;
+								// El margin-bottom controla directamente el espacio entre la imagen y la línea
+								// Valor base de 10px, más el valor de posición (puede ser negativo o positivo)
+								$espacioFinal = 10 + $posicionFirmaRector;
+								// Asegurar que nunca sea menor a 0
+								if($espacioFinal < 0) {
+									$espacioFinal = 0;
+								}
+								$estiloFirmaRector = 'margin-bottom: ' . $espacioFinal . 'px !important;';
+								echo '<img class="firma-imagen" src="../files/fotos/'.$rector["uss_firma"].'" alt="Firma Rector" style="max-width: 100px; height: auto; margin-left: auto; margin-right: auto; ' . $estiloFirmaRector . '">';
 							}
 						}
 					}
@@ -1183,12 +1343,25 @@ $tiposNotas = [];
 				<td style="width: <?= $firmaRector ? '50%' : '100%' ?>;">
 					<?php
 					$nombreSecretario = 'SECRETARIO(A)';
+					$mostrarFirmaDigitalSecretarioActual = false;
+					
 					if (!empty($informacion_inst["info_secretaria_academica"])) {
 						$secretario = Usuarios::obtenerDatosUsuario($informacion_inst["info_secretaria_academica"]);
 						if (!empty($secretario)) {
 							$nombreSecretario = UsuariosPadre::nombreCompletoDelUsuario($secretario);
-							if(!empty($secretario["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $secretario['uss_firma'])){
-								echo '<img class="firma-imagen" src="../files/fotos/'.$secretario["uss_firma"].'" alt="Firma Secretario" style="max-width: 100px; height: auto; margin-bottom: 10px;">';
+							$tieneFirmaDigital = !empty($secretario["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $secretario['uss_firma']);
+							
+							if($tieneFirmaDigital && $mostrarFirmaDigitalSecretario){
+								$mostrarFirmaDigitalSecretarioActual = true;
+								// El margin-bottom controla directamente el espacio entre la imagen y la línea
+								// Valor base de 10px, más el valor de posición (puede ser negativo o positivo)
+								$espacioFinal = 10 + $posicionFirmaSecretario;
+								// Asegurar que nunca sea menor a 0
+								if($espacioFinal < 0) {
+									$espacioFinal = 0;
+								}
+								$estiloFirmaSecretario = 'margin-bottom: ' . $espacioFinal . 'px !important;';
+								echo '<img class="firma-imagen" src="../files/fotos/'.$secretario["uss_firma"].'" alt="Firma Secretario" style="max-width: 100px; height: auto; margin-left: auto; margin-right: auto; ' . $estiloFirmaSecretario . '">';
 							}
 						}
 					}
@@ -1225,6 +1398,46 @@ $tiposNotas = [];
 			if(mostrarMarcaAguaCheck) {
 				mostrarMarcaAguaCheck.addEventListener('change', function() {
 					marcaAguaConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar configuración de firma del rector
+			var firmaRectorCheck = document.getElementById('firma_rector_check');
+			var configFirmaRector = document.getElementById('config_firma_rector');
+			
+			if(firmaRectorCheck) {
+				firmaRectorCheck.addEventListener('change', function() {
+					configFirmaRector.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar configuración de firma del secretario
+			var firmaSecretarioCheck = document.getElementById('firma_secretario_check');
+			var configFirmaSecretario = document.getElementById('config_firma_secretario');
+			
+			if(firmaSecretarioCheck) {
+				firmaSecretarioCheck.addEventListener('change', function() {
+					configFirmaSecretario.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar posición de firma digital del rector
+			var mostrarFirmaDigitalRectorCheck = document.getElementById('mostrar_firma_digital_rector_check');
+			var posicionFirmaRectorConfig = document.getElementById('posicion_firma_rector_config');
+			
+			if(mostrarFirmaDigitalRectorCheck) {
+				mostrarFirmaDigitalRectorCheck.addEventListener('change', function() {
+					posicionFirmaRectorConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar posición de firma digital del secretario
+			var mostrarFirmaDigitalSecretarioCheck = document.getElementById('mostrar_firma_digital_secretario_check');
+			var posicionFirmaSecretarioConfig = document.getElementById('posicion_firma_secretario_config');
+			
+			if(mostrarFirmaDigitalSecretarioCheck) {
+				mostrarFirmaDigitalSecretarioCheck.addEventListener('change', function() {
+					posicionFirmaSecretarioConfig.style.display = this.checked ? 'block' : 'none';
 				});
 			}
 
