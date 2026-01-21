@@ -3,15 +3,35 @@
 require_once("index-logica.php");
 
 if (isset($_POST['usuariosEncontrados'])) {
-    $usuario = base64_decode($_GET['valor']);
-    $listaUsuarios = unserialize($_POST['usuariosEncontrados']);
-    echo '<script type="text/javascript">
-    window.onload = function() {
-        $("#miModalUsuarios").modal("show");
+    $usuario = !empty($_GET['valor']) ? base64_decode($_GET['valor']) : '';
+    
+    // Los datos pueden venir en base64 (nuevo método) o serializados directamente (método antiguo)
+    $datosUsuarios = $_POST['usuariosEncontrados'];
+    
+    // Intentar decodificar de base64 primero (método nuevo)
+    $datosDecodificados = @base64_decode($datosUsuarios, true);
+    if ($datosDecodificados !== false) {
+        $listaUsuarios = @unserialize($datosDecodificados);
+    } else {
+        $listaUsuarios = @unserialize($datosUsuarios);
     }
-    </script>';
+    
+    // Validar que sea un array válido
+    if (!is_array($listaUsuarios) || empty($listaUsuarios)) {
+        $listaUsuarios = [];
+        echo '<div class="alert alert-danger" role="alert">';
+        echo 'Error al procesar los usuarios encontrados. Por favor, intenta nuevamente.';
+        echo '</div>';
+    } else {
+        echo '<script type="text/javascript">
+        window.onload = function() {
+            $("#miModalUsuarios").modal("show");
+        }
+        </script>';
+    }
 } else {
     $usuario = '';
+    $listaUsuarios = [];
 }
 ?>
 
@@ -47,12 +67,10 @@ if (isset($_POST['usuariosEncontrados'])) {
             --sintia-warning: #f59e0b;
         }
         
-        /* Aplicar fuente Satoshi globalmente */
         body, html, * {
             font-family: var(--sintia-font-family) !important;
         }
         
-        /* Fondo blanco limpio */
         .login-container {
             background: var(--sintia-primary-bg);
             height: 100vh;
@@ -71,7 +89,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             padding-top: 3rem;
         }
         
-        /* Card de recuperación */
         .recovery-card {
             background: var(--sintia-primary-bg);
             border-radius: 20px;
@@ -83,7 +100,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             margin: 2rem auto;
         }
         
-        /* Header */
         .recovery-header {
             text-align: center;
             margin-bottom: 2rem;
@@ -122,7 +138,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             line-height: 1.6;
         }
         
-        /* Campos de entrada mejorados */
         .input-group-text {
             background-color: rgba(65, 196, 196, 0.1);
             border-color: rgba(65, 196, 196, 0.2);
@@ -156,7 +171,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             background-image: none;
         }
         
-        /* Validación en tiempo real */
         .validation-feedback {
             display: none;
             font-size: 0.875rem;
@@ -193,7 +207,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             }
         }
         
-        /* Botón principal mejorado */
         .btn-recovery {
             background: linear-gradient(135deg, var(--sintia-secondary) 0%, var(--sintia-accent) 100%);
             border: none;
@@ -233,7 +246,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             background: linear-gradient(135deg, var(--sintia-error) 0%, #dc2626 100%);
         }
         
-        /* Mensajes dinámicos */
         .alert-dynamic {
             border-radius: 12px;
             border: none;
@@ -260,7 +272,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             border-left: 4px solid var(--sintia-secondary);
         }
         
-        /* Mensajes estáticos (no dinámicos) - NO usan position fixed */
         .alert-static-info {
             background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
             color: #1e40af;
@@ -290,7 +301,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             }
         }
         
-        /* Animación de shake para errores */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -301,7 +311,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             animation: shake 0.5s ease-in-out;
         }
         
-        /* Enlaces */
         .recovery-link {
             color: var(--sintia-secondary);
             text-decoration: none;
@@ -323,14 +332,12 @@ if (isset($_POST['usuariosEncontrados'])) {
             font-size: 1.1rem;
         }
         
-        /* Footer */
         .recovery-footer {
             border-top: 1px solid rgba(0,0,0,0.1);
             padding-top: 1.5rem;
             margin-top: 2rem;
         }
         
-        /* Galería de fotos en el lado derecho */
         .photo-gallery {
             position: relative;
             width: 100%;
@@ -365,7 +372,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             background: linear-gradient(45deg, rgba(65, 196, 196, 0.1), rgba(96, 23, 220, 0.1));
         }
         
-        /* Progress indicator */
         .progress-steps {
             display: flex;
             justify-content: space-between;
@@ -431,7 +437,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             font-weight: 600;
         }
         
-        /* Loading spinner personalizado */
         .spinner-custom {
             width: 20px;
             height: 20px;
@@ -445,14 +450,11 @@ if (isset($_POST['usuariosEncontrados'])) {
             to { transform: rotate(360deg); }
         }
         
-        /* Responsive para tablets y móviles */
         @media (max-width: 1024px) {
-            /* Ocultar galería de fotos en tablets y móviles */
             .photo-gallery {
                 display: none !important;
             }
             
-            /* Centrar el formulario */
             .login-container {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             }
@@ -471,7 +473,7 @@ if (isset($_POST['usuariosEncontrados'])) {
         @media (max-width: 768px) {
             .recovery-card {
                 margin: 1rem;
-                margin-top: 80px; /* Espacio extra para mensajes */
+                margin-top: 80px;
                 padding: 2rem;
             }
             
@@ -492,13 +494,11 @@ if (isset($_POST['usuariosEncontrados'])) {
                 font-size: 0.65rem;
             }
             
-            /* Contenedor con espacio superior */
             .vertical-center {
                 padding-top: 80px;
                 padding-bottom: 40px;
             }
             
-            /* Mensajes dinámicos fijos en la parte superior */
             .alert-dynamic {
                 position: fixed !important;
                 top: 20px;
@@ -507,7 +507,7 @@ if (isset($_POST['usuariosEncontrados'])) {
                 z-index: 9999;
                 margin: 0;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                animation: fadeIn 0.3s ease-out !important; /* Cambiar animación */
+                animation: fadeIn 0.3s ease-out !important;
             }
             
             @keyframes fadeIn {
@@ -515,7 +515,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                 to { opacity: 1; }
             }
             
-            /* Mensajes estáticos se posicionan DEBAJO del contenido */
             .alert-static-info {
                 position: relative !important;
                 margin-top: 1rem;
@@ -527,7 +526,7 @@ if (isset($_POST['usuariosEncontrados'])) {
         @media (max-width: 480px) {
             .recovery-card {
                 margin: 0.5rem;
-                margin-top: 70px; /* Espacio extra para mensajes */
+                margin-top: 70px;
                 padding: 1.5rem;
                 border-radius: 12px;
             }
@@ -558,7 +557,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                 font-size: 0.6rem;
             }
             
-            /* Mensajes dinámicos más compactos */
             .alert-dynamic {
                 top: 15px;
                 left: 8px;
@@ -567,7 +565,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                 padding: 0.75rem 1rem;
             }
             
-            /* Mensajes estáticos aún más compactos */
             .alert-static-info {
                 font-size: 0.8125rem;
                 padding: 0.75rem 0.875rem;
@@ -718,9 +715,12 @@ if (isset($_POST['usuariosEncontrados'])) {
     
     <!-- Script de recuperación de contraseña -->
     <script>
+        // Función para codificar UTF-8 a Base64 correctamente
+        function utf8ToBase64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+        
         $(document).ready(function() {
-            console.log('Sistema de recuperación de contraseña iniciado');
-            
             // Galería de fotos rotando
             let currentSlide = 0;
             const slides = $('.photo-slide');
@@ -732,7 +732,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                 slides.eq(currentSlide).addClass('active');
             }
             
-            // Cambiar imagen cada 5 segundos
             if (totalSlides > 0) {
                 setInterval(showNextSlide, 5000);
             }
@@ -744,10 +743,8 @@ if (isset($_POST['usuariosEncontrados'])) {
                 const input = $(this);
                 const feedback = $('#usuarioValidation');
                 
-                // Limpiar timeout anterior
                 clearTimeout(validationTimeout);
                 
-                // Esperar 500ms después de que el usuario deje de escribir
                 validationTimeout = setTimeout(function() {
                     if (value.length === 0) {
                         input.removeClass('is-valid is-invalid');
@@ -755,7 +752,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                         return;
                     }
                     
-                    // Validación básica
                     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
                     const isUsername = value.length >= 3;
                     
@@ -774,9 +770,7 @@ if (isset($_POST['usuariosEncontrados'])) {
             // Sistema de envío asíncrono del formulario
             $('#recoveryForm').on('submit', function(e) {
                 e.preventDefault();
-                console.log('Formulario de recuperación enviado');
                 
-                // Validar formulario
                 const usuarioValue = $('#usuarioInput').val().trim();
                 
                 if (usuarioValue.length === 0) {
@@ -785,23 +779,17 @@ if (isset($_POST['usuariosEncontrados'])) {
                     $('#usuarioValidation').html('<i class="bi bi-exclamation-circle me-1"></i> Este campo es requerido');
                     showMessage('Por favor ingresa tu usuario o correo electrónico.', 'error');
                     
-                    // Shake animation
                     $('#recoveryForm').addClass('shake');
                     setTimeout(() => $('#recoveryForm').removeClass('shake'), 500);
                     return false;
                 }
                 
-                // Obtener datos del formulario
                 const formData = new FormData(this);
-                formData.append('async', '1'); // Indicar que es una petición asíncrona
+                formData.append('async', '1');
                 
-                // Cambiar estado del botón
                 setButtonState('loading', 'Enviando solicitud...');
-                
-                // Limpiar mensajes anteriores
                 clearMessages();
                 
-                // Realizar petición AJAX
                 $.ajax({
                     url: 'recuperar-clave-enviar-codigo.php',
                     type: 'POST',
@@ -812,92 +800,71 @@ if (isset($_POST['usuariosEncontrados'])) {
                     timeout: 30000,
                     
                     beforeSend: function() {
-                        console.log('Enviando petición de recuperación...');
                         setButtonState('loading', 'Verificando usuario...');
                     },
                     
                     success: function(response) {
-                        console.log('Respuesta recibida:', response);
-                        
                         if (response.success) {
-                            // Verificar si hay múltiples usuarios
                             if (response.multipleUsers && response.usuarios) {
-                                // Mostrar modal de selección de usuarios
                                 setButtonState('success', 'Usuarios encontrados');
                                 showMessage('Se encontraron múltiples usuarios. Por favor selecciona uno.', 'info');
-                                
-                                // Crear y mostrar modal dinámicamente
                                 createMultipleUsersModal(response.usuarios);
-                                
-                                // Restaurar botón
                                 setTimeout(() => resetButton(), 2000);
                             } else {
-                                // Código enviado exitosamente
                                 setButtonState('success', '¡Código enviado!');
                                 
-                                // Mostrar mensaje con email
                                 const emailMasked = response.usuarioEmail ? maskEmail(response.usuarioEmail) : 'tu correo';
                                 showMessage(
                                     `Código de verificación enviado a ${emailMasked}. Revisa tu bandeja de entrada.`, 
                                     'success'
                                 );
                                 
-                                // Redirigir después de un breve delay
                                 setTimeout(() => {
-                                    // DEBUG: Mostrar qué datos se enviarán
-                                    console.log('=== DATOS QUE SE ENVIARÁN ===');
-                                    console.log('Response completo:', response);
-                                    console.log('datosCodigo:', response.datosCodigo);
-                                    console.log('idRegistro:', response.datosCodigo ? response.datosCodigo.idRegistro : 'NO ENCONTRADO');
-                                    
-                                    // Verificar que los datos críticos existan
-                                    if (!response.datosCodigo || !response.datosCodigo.idRegistro) {
-                                        console.error('❌ ERROR: No se recibió idRegistro del servidor');
-                                        console.error('Estructura recibida:', response);
-                                        showMessage('Error: No se pudo obtener el código de registro. Intenta nuevamente.', 'error');
+                                    try {
+                                        const jsonData = JSON.stringify(response);
+                                        const base64Data = utf8ToBase64(jsonData);
+                                        
+                                        const redirectForm = $('<form>', {
+                                            method: 'POST',
+                                            action: 'recuperar-clave-validar-codigo.php'
+                                        }).append(
+                                            $('<input>', {
+                                                type: 'hidden',
+                                                name: 'datosUsuario',
+                                                value: base64Data
+                                            })
+                                        );
+                                        
+                                        $('body').append(redirectForm);
+                                        redirectForm.submit();
+                                    } catch (error) {
+                                        showMessage('Error al redirigir: ' + error.message, 'error');
                                         resetButton();
-                                        return;
                                     }
-                                    
-                                    const jsonData = JSON.stringify(response);
-                                    const base64Data = btoa(jsonData);
-                                    
-                                    console.log('JSON a enviar:', jsonData);
-                                    console.log('Base64:', base64Data.substring(0, 50) + '...');
-                                    
-                                    // Crear formulario para enviar datos del código
-                                    const redirectForm = $('<form>', {
-                                        method: 'POST',
-                                        action: 'recuperar-clave-validar-codigo.php'
-                                    }).append(
-                                        $('<input>', {
-                                            type: 'hidden',
-                                            name: 'datosUsuario',
-                                            value: base64Data
-                                        })
-                                    );
-                                    
-                                    $('body').append(redirectForm);
-                                    redirectForm.submit();
                                 }, 2000);
                             }
                         } else {
-                            // Error en el envío
-                            setButtonState('error', 'Error al enviar');
-                            showMessage(response.message || 'No se pudo enviar el código. Verifica tus datos.', 'error');
-                            
-                            // Shake animation
-                            $('#recoveryForm').addClass('shake');
-                            setTimeout(() => $('#recoveryForm').removeClass('shake'), 500);
-                            
-                            // Restaurar botón después de 3 segundos
-                            setTimeout(() => resetButton(), 3000);
+                            if (response.multipleUsersEmail) {
+                                setButtonState('error', 'Múltiples usuarios encontrados');
+                                showMessage(response.message || 'Se encontraron múltiples usuarios con este correo. Por favor, utiliza tu nombre de usuario.', 'error');
+                                
+                                setTimeout(() => {
+                                    $('#usuarioInput').val('').focus();
+                                    resetButton();
+                                }, 3000);
+                            } else {
+                                setButtonState('error', 'Error al enviar');
+                                showMessage(response.message || 'No se pudo enviar el código. Verifica tus datos.', 'error');
+                                
+                                $('#recoveryForm').addClass('shake');
+                                setTimeout(() => $('#recoveryForm').removeClass('shake'), 500);
+                                
+                                setTimeout(() => resetButton(), 3000);
+                            }
                         }
                     },
                     
                     error: function(xhr, status, error) {
-                        console.error('Error AJAX:', status, error);
-                        
                         let errorMessage = 'Error de conexión. Verifica tu internet.';
                         
                         if (status === 'timeout') {
@@ -911,11 +878,9 @@ if (isset($_POST['usuariosEncontrados'])) {
                         setButtonState('error', 'Error de conexión');
                         showMessage(errorMessage, 'error');
                         
-                        // Shake animation
                         $('#recoveryForm').addClass('shake');
                         setTimeout(() => $('#recoveryForm').removeClass('shake'), 500);
                         
-                        // Restaurar botón después de 3 segundos
                         setTimeout(() => resetButton(), 3000);
                     }
                 });
@@ -973,7 +938,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                 
                 $('#dynamicMessages').html(messageHtml);
                 
-                // Auto-ocultar después de 8 segundos
                 setTimeout(() => {
                     $('#dynamicMessages').fadeOut();
                 }, 8000);
@@ -992,7 +956,6 @@ if (isset($_POST['usuariosEncontrados'])) {
             }
             
             function createMultipleUsersModal(usuarios) {
-                // Crear modal dinámicamente
                 const modalHtml = `
                     <div class="modal fade modal-usuarios-moderno" id="modalUsuariosMultiples" tabindex="-1" role="dialog">
                         <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
@@ -1042,13 +1005,9 @@ if (isset($_POST['usuariosEncontrados'])) {
                     </div>
                 `;
                 
-                // Eliminar modal previo si existe
                 $('#modalUsuariosMultiples').remove();
-                
-                // Agregar modal al body
                 $('body').append(modalHtml);
                 
-                // Agregar filas de usuarios
                 const tbody = $('#tbodyUsuarios');
                 usuarios.forEach((usuario, index) => {
                     const row = `
@@ -1072,7 +1031,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                     tbody.append(row);
                 });
                 
-                // Evento click en filas
                 $('.usuario-row').on('click', function() {
                     const radio = $(this).find('input[type="radio"]');
                     radio.prop('checked', true);
@@ -1080,7 +1038,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                     $(this).css('background-color', 'rgba(65, 196, 196, 0.1)');
                 });
                 
-                // Evento botón continuar
                 $('#btnContinuarUsuario').on('click', function() {
                     const usuarioSeleccionado = $('input[name="usuarioSeleccionado"]:checked').val();
                     
@@ -1089,13 +1046,9 @@ if (isset($_POST['usuariosEncontrados'])) {
                         return;
                     }
                     
-                    // Cerrar modal
                     $('#modalUsuariosMultiples').modal('hide');
-                    
-                    // Mostrar loading
                     setButtonState('loading', 'Enviando código...');
                     
-                    // Enviar petición para el usuario seleccionado
                     $.ajax({
                         url: 'recuperar-clave-enviar-codigo.php',
                         type: 'POST',
@@ -1114,7 +1067,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                                     'success'
                                 );
                                 
-                                // Redirigir
                                 setTimeout(() => {
                                     const redirectForm = $('<form>', {
                                         method: 'POST',
@@ -1123,7 +1075,7 @@ if (isset($_POST['usuariosEncontrados'])) {
                                         $('<input>', {
                                             type: 'hidden',
                                             name: 'datosUsuario',
-                                            value: btoa(JSON.stringify(response))
+                                            value: utf8ToBase64(JSON.stringify(response))
                                         })
                                     );
                                     
@@ -1144,7 +1096,6 @@ if (isset($_POST['usuariosEncontrados'])) {
                     });
                 });
                 
-                // Mostrar modal
                 const modal = new bootstrap.Modal(document.getElementById('modalUsuariosMultiples'));
                 modal.show();
             }
