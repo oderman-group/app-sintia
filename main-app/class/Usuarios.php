@@ -79,10 +79,33 @@ class Usuarios {
         global $conexion;
         $resultado = [];
 
-        $sql = "SELECT id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, uss_celular, institucion, year FROM " . BD_GENERAL . ".usuarios WHERE (uss_email=? || uss_usuario=? || uss_documento=?) AND year=?";
-        $parametros = [$valor, $valor, $valor,$year];
-        $consulta = BindSQL::prepararSQL($sql, $parametros);
-        $resultado = $consulta->fetch_all(MYSQLI_ASSOC);
+        try {
+            $sql = "SELECT id_nuevo, uss_id, uss_nombre, uss_apellido1, uss_email, uss_usuario, uss_documento, uss_celular, institucion, year FROM " . BD_GENERAL . ".usuarios WHERE (uss_email=? || uss_usuario=? || uss_documento=?) AND year=?";
+            $parametros = [$valor, $valor, $valor,$year];
+            $consulta = BindSQL::prepararSQL($sql, $parametros);
+            
+            // Verificar que la consulta se ejecutó correctamente
+            if ($consulta === false) {
+                error_log("Error: BindSQL::prepararSQL devolvió false para buscarUsuariosRecuperarClave");
+                return [];
+            }
+            
+            // Verificar que es un objeto mysqli_result válido
+            if ($consulta instanceof mysqli_result) {
+                $resultado = $consulta->fetch_all(MYSQLI_ASSOC);
+            } else {
+                error_log("Error: El resultado de la consulta no es un mysqli_result válido. Tipo: " . gettype($consulta));
+                return [];
+            }
+        } catch (Exception $e) {
+            error_log("Excepción en buscarUsuariosRecuperarClave: " . $e->getMessage());
+            error_log("Trace: " . $e->getTraceAsString());
+            return [];
+        } catch (Throwable $t) {
+            error_log("Error fatal en buscarUsuariosRecuperarClave: " . $t->getMessage());
+            error_log("Trace: " . $t->getTraceAsString());
+            return [];
+        }
 
         return $resultado;
     }
