@@ -427,7 +427,8 @@ if (empty($datosAbono['cod_payment'])) {
                                                                                 $itemsFactura = [];
                                                                                 try {
                                                                                     // Usar item_name, item_type y application_time de transaction_items (copia histórica)
-                                                                                    $consultaItems = mysqli_query($conexion, "SELECT ti.*, ti.item_name, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time, tax.fee as tax_fee, tax.name as tax_name 
+                                                                                    // Usar tax_name y tax_fee del snapshot (preferencia) con fallback a JOIN con taxes para compatibilidad
+                                                                                    $consultaItems = mysqli_query($conexion, "SELECT ti.*, ti.item_name, ti.item_type, COALESCE(ti.application_time, 'ANTE_IMPUESTO') AS application_time, COALESCE(ti.tax_name, tax.type_tax) as tax_name, COALESCE(ti.tax_fee, tax.fee) as tax_fee 
                                                                                         FROM ".BD_FINANCIERA.".transaction_items ti
                                                                                         LEFT JOIN ".BD_FINANCIERA.".taxes tax ON tax.id=ti.tax AND tax.institucion={$config['conf_id_institucion']} AND tax.year={$_SESSION["bd"]}
                                                                                         WHERE ti.id_transaction='{$facturaAbono['fcu_id']}' AND ti.institucion={$config['conf_id_institucion']} AND ti.year={$_SESSION["bd"]}

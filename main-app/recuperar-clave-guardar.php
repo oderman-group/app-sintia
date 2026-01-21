@@ -33,7 +33,8 @@ if (!empty($datosUsuario)) {
 	$asunto = 'Tus credenciales han llegado';
 	$bodyTemplateRoute = ROOT_PATH . '/config-general/template-email-recuperar-clave.php';
 
-	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null);
+	// Enviar inmediatamente (true) para que el usuario reciba la confirmación al instante
+	EnviarEmail::enviar($data, $asunto, $bodyTemplateRoute, null, null, true);
 	Usuarios::guardarRegistroRestauracion($data);
 
 	// Registrar auditoría de recuperación de contraseña

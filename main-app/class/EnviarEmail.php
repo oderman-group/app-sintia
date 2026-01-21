@@ -234,6 +234,59 @@ class EnviarEmail {
     }
 
     /**
+     * Sanitiza y valida el contenido UTF-8 antes de insertarlo en la base de datos
+     * 
+     * @param string $content Contenido a sanitizar
+     * @return string Contenido sanitizado y válido en UTF-8
+     */
+    private static function sanitizarContenidoUTF8($content) {
+        if (empty($content)) {
+            return '';
+        }
+        
+        // Convertir a string si no lo es
+        if (!is_string($content)) {
+            $content = (string) $content;
+        }
+        
+        // Detectar y convertir la codificación a UTF-8 si es necesario
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-1', 'Windows-1252', 'ASCII'], true);
+        if ($encoding !== 'UTF-8' && $encoding !== false) {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        }
+        
+        // Guardar contenido original antes de intentar limpiar con iconv
+        $contentOriginal = $content;
+        
+        // Limpiar caracteres inválidos de UTF-8 usando iconv
+        $content = @iconv('UTF-8', 'UTF-8//IGNORE', $content);
+        if ($content === false) {
+            // Si iconv falla, restaurar contenido original y usar mb_convert_encoding como alternativa
+            $content = $contentOriginal;
+            $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+        }
+        
+        // Remover caracteres de control excepto saltos de línea (\x0A) y tabulaciones (\x09)
+        $content = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $content);
+        
+        // Validar que el contenido sea UTF-8 válido
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            // Si aún no es válido, usar una limpieza más agresiva
+            // Remover cualquier byte que no sea UTF-8 válido
+            $content = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/u', '', $content);
+            // Intentar convertir nuevamente
+            $contentOriginal = $content;
+            $content = @iconv('UTF-8', 'UTF-8//IGNORE', $content);
+            if ($content === false) {
+                $content = $contentOriginal;
+                $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+            }
+        }
+        
+        return $content;
+    }
+
+    /**
      * Este función envia el mensaje a la tabla de historial de correos enviados 
      * 
      * @param string|null $institucion
@@ -256,7 +309,13 @@ class EnviarEmail {
             $conexionPDO = Conexion::newConnection('PDO');
             $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             // Asegurar charset UTF-8 para soporte de emojis
-            $conexionPDO->exec("SET NAMES utf8mb4");
+            $conexionPDO->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            $conexionPDO->exec("SET CHARACTER SET utf8mb4");
+            
+            // Sanitizar contenido antes de insertar
+            $bodySanitizado = self::sanitizarContenidoUTF8($body);
+            $asuntoSanitizado = self::sanitizarContenidoUTF8($asunto);
+            $descripcionSanitizada = self::sanitizarContenidoUTF8($descripcion);
             
             $adjunto = ($mail !== null && method_exists($mail, 'attachmentExists')) ? $mail->attachmentExists() : 'NO';
             $referencia = (php_sapi_name() !== 'cli' && isset($_SERVER["HTTP_REFERER"])) ? $_SERVER["HTTP_REFERER"] : '';
@@ -277,16 +336,21 @@ class EnviarEmail {
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $remitente, PDO::PARAM_STR);
             $stmt->bindParam(2, $destinatario, PDO::PARAM_STR);
-            $stmt->bindParam(3, $asunto, PDO::PARAM_STR);
-            $stmt->bindParam(4, $body, PDO::PARAM_STR);
+            $stmt->bindParam(3, $asuntoSanitizado, PDO::PARAM_STR);
+            $stmt->bindParam(4, $bodySanitizado, PDO::PARAM_STR);
             $stmt->bindParam(5, $adjunto, PDO::PARAM_STR);
             $stmt->bindParam(6, $referencia, PDO::PARAM_STR);
             $stmt->bindParam(7, $estado, PDO::PARAM_STR);
-            $stmt->bindParam(8, $descripcion, PDO::PARAM_STR);
+            $stmt->bindParam(8, $descripcionSanitizada, PDO::PARAM_STR);
             $stmt->bindParam(9, $institucion, PDO::PARAM_STR);
             $stmt->execute();
         } catch (Exception $e) {
             error_log("Error en enviarReporte: " . $e->getMessage());
+            error_log("Detalles del error: " . print_r([
+                'asunto' => substr($asunto ?? '', 0, 100),
+                'body_length' => strlen($body ?? ''),
+                'encoding' => mb_detect_encoding($body ?? '', ['UTF-8', 'ISO-8859-1'], true)
+            ], true));
             if (php_sapi_name() !== 'cli') {
                 include("../compartido/error-catch-to-report.php");
             }
@@ -314,7 +378,13 @@ class EnviarEmail {
             require_once(ROOT_PATH."/main-app/class/Conexion.php");
             $conexionPDO = Conexion::newConnection('PDO');
             $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $conexionPDO->exec("SET NAMES utf8mb4");
+            $conexionPDO->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            $conexionPDO->exec("SET CHARACTER SET utf8mb4");
+            
+            // Sanitizar contenido antes de insertar
+            $bodySanitizado = self::sanitizarContenidoUTF8($body);
+            $asuntoSanitizado = self::sanitizarContenidoUTF8($asunto);
+            $descripcionSanitizada = self::sanitizarContenidoUTF8($descripcion);
             
             $adjunto = (is_array($archivos) && !empty($archivos)) ? 'SI' : 'NO';
             $referencia = $_SERVER["HTTP_REFERER"] ?? '';
@@ -335,12 +405,12 @@ class EnviarEmail {
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $remitente, PDO::PARAM_STR);
             $stmt->bindParam(2, $destinatario, PDO::PARAM_STR);
-            $stmt->bindParam(3, $asunto, PDO::PARAM_STR);
-            $stmt->bindParam(4, $body, PDO::PARAM_STR);
+            $stmt->bindParam(3, $asuntoSanitizado, PDO::PARAM_STR);
+            $stmt->bindParam(4, $bodySanitizado, PDO::PARAM_STR);
             $stmt->bindParam(5, $adjunto, PDO::PARAM_STR);
             $stmt->bindParam(6, $referencia, PDO::PARAM_STR);
             $stmt->bindParam(7, $estado, PDO::PARAM_STR);
-            $stmt->bindParam(8, $descripcion, PDO::PARAM_STR);
+            $stmt->bindParam(8, $descripcionSanitizada, PDO::PARAM_STR);
             $stmt->bindParam(9, $institucion, PDO::PARAM_STR);
             $stmt->execute();
         } catch (Exception $e) {

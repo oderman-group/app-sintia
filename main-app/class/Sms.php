@@ -1,15 +1,45 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT'] . "/app-sintia/config-general/constantes.php");
 
-require_once ROOT_PATH . "/vendor/twilio/sdk/src/Twilio/autoload.php";
-
-use Twilio\Rest\Client;
-use Twilio\Exceptions\RestException;
+// Twilio SDK se carga solo cuando se necesita (lazy loading)
+// para evitar errores si no está instalado y solo se usa email
 
 class Sms {
 
-    private const TWILIO_ACCOUNT_SID = TWILIO_ACCOUNT_SID;
-    private const TWILIO_AUTH_TOKEN  = TWILIO_AUTH_TOKEN;
+    private static bool $twilioLoaded = false;
+    
+    /**
+     * Carga el SDK de Twilio solo cuando se necesita
+     * @throws Exception Si el SDK de Twilio no está instalado
+     */
+    private static function loadTwilio(): void {
+        if (self::$twilioLoaded) {
+            return;
+        }
+        
+        $twilioAutoloadPath = ROOT_PATH . "/vendor/twilio/sdk/src/Twilio/autoload.php";
+        
+        if (!file_exists($twilioAutoloadPath)) {
+            throw new Exception(
+                "El SDK de Twilio no está instalado. " .
+                "Para usar SMS o WhatsApp, ejecuta: composer require twilio/sdk"
+            );
+        }
+        
+        require_once $twilioAutoloadPath;
+        self::$twilioLoaded = true;
+    }
+    
+    /**
+     * Obtiene las credenciales de Twilio de forma segura
+     */
+    private static function getAccountSid(): string {
+        return defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '';
+    }
+    
+    private static function getAuthToken(): string {
+        return defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '';
+    }
 
     public const PREFIX_COL = "+57";
     
@@ -61,8 +91,14 @@ class Sms {
      */
     public function enviarWhatsApp(array $data) {
         try {
+            // Cargar Twilio SDK solo cuando se necesita
+            self::loadTwilio();
+            
             // Validar que las credenciales estén definidas
-            if (empty(self::TWILIO_ACCOUNT_SID) || empty(self::TWILIO_AUTH_TOKEN)) {
+            $accountSid = self::getAccountSid();
+            $authToken = self::getAuthToken();
+            
+            if (empty($accountSid) || empty($authToken)) {
                 throw new Exception("Las credenciales de Twilio no están configuradas correctamente.");
             }
 
@@ -73,7 +109,7 @@ class Sms {
                 throw new Exception("El número de WhatsApp de Twilio no está configurado. Verifica TWILIO_WHATSAPP_FROM_NUMBER en sensitive.php");
             }
 
-            $twilio = new Client(self::TWILIO_ACCOUNT_SID, self::TWILIO_AUTH_TOKEN);
+            $twilio = new \Twilio\Rest\Client($accountSid, $authToken);
 
             // Formatear el número de destino: agregar prefijo whatsapp: y código de país
             $numeroDestino = 'whatsapp:' . self::PREFIX_COL . $data['telefono'];
@@ -103,7 +139,7 @@ class Sms {
             );
 
             return $message;
-        } catch (RestException $e) {
+        } catch (\Twilio\Exceptions\RestException $e) {
             // Error específico de Twilio API
             $mensajeError = "Error de Twilio API (WhatsApp): " . $e->getMessage();
             
@@ -147,12 +183,18 @@ class Sms {
      */
     public function enviarSms(array $data) {
         try {
+            // Cargar Twilio SDK solo cuando se necesita
+            self::loadTwilio();
+            
             // Validar que las credenciales estén definidas
-            if (empty(self::TWILIO_ACCOUNT_SID) || empty(self::TWILIO_AUTH_TOKEN)) {
+            $accountSid = self::getAccountSid();
+            $authToken = self::getAuthToken();
+            
+            if (empty($accountSid) || empty($authToken)) {
                 throw new Exception("Las credenciales de Twilio no están configuradas correctamente.");
             }
 
-            $twilio = new Client(self::TWILIO_ACCOUNT_SID, self::TWILIO_AUTH_TOKEN);
+            $twilio = new \Twilio\Rest\Client($accountSid, $authToken);
             
             // Obtener el número de teléfono según el environment
             $smsFromNumber = self::getTwilioFromNumber();
@@ -181,7 +223,7 @@ class Sms {
 
             // Retornar el objeto message para obtener el SID
             return $message;
-        } catch (RestException $e) {
+        } catch (\Twilio\Exceptions\RestException $e) {
             // Error específico de Twilio API
             $mensajeError = "Error de Twilio API: " . $e->getMessage();
             
@@ -199,8 +241,10 @@ class Sms {
 
     // TODO: Implementar métodos para listar todos los mensajes enviados
     public function listarMensajes() {
-
-        $twilio = new Client(self::TWILIO_ACCOUNT_SID, self::TWILIO_AUTH_TOKEN);
+        // Cargar Twilio SDK
+        self::loadTwilio();
+        
+        $twilio = new \Twilio\Rest\Client(self::getAccountSid(), self::getAuthToken());
 
         $messages = $twilio->messages->read(
             [

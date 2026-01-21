@@ -104,10 +104,13 @@ if(!empty($_REQUEST['itemModificar'])){
     $idItemModificar = (int)$_REQUEST['itemModificar']; // Es el id_autoincremental
     try {
         // Validar que el tax del item existe en la tabla taxes antes de usarlo
+        // Obtener también type_tax y fee para el snapshot
         $taxToUse = null;
+        $taxName = null;
+        $taxFee = null;
         if (!empty($datosItem['tax']) && $datosItem['tax'] != '0' && $datosItem['tax'] != '') {
             try {
-                $sqlVerificarTax = "SELECT id FROM ".BD_FINANCIERA.".taxes 
+                $sqlVerificarTax = "SELECT id, type_tax, fee FROM ".BD_FINANCIERA.".taxes 
                                    WHERE id=? AND institucion=? AND year=? LIMIT 1";
                 $stmtVerificar = $conexionPDO->prepare($sqlVerificarTax);
                 $taxIdParaVerificar = (int)$datosItem['tax'];
@@ -119,10 +122,14 @@ if(!empty($_REQUEST['itemModificar'])){
                 
                 if ($taxExiste && !empty($taxExiste['id'])) {
                     $taxToUse = (int)$taxExiste['id']; // Convertir a int porque el campo es UNSIGNED INT
+                    $taxName = $taxExiste['type_tax']; // Snapshot del nombre del impuesto
+                    $taxFee = floatval($taxExiste['fee']); // Snapshot del fee del impuesto
                 }
             } catch(Exception $e) {
                 // Si hay error al verificar, usar NULL por defecto
                 $taxToUse = null;
+                $taxName = null;
+                $taxFee = null;
             }
         }
         
@@ -138,11 +145,11 @@ if(!empty($_REQUEST['itemModificar'])){
         
         if ($taxToUse === null) {
             $sql = "UPDATE ".BD_FINANCIERA.".transaction_items 
-                    SET id_item=?, cantity=?, subtotal=?, price=?, discount=0, tax=NULL, item_type=?, application_time=?, item_name=? 
+                    SET id_item=?, cantity=?, subtotal=?, price=?, discount=0, tax=NULL, tax_name=NULL, tax_fee=NULL, item_type=?, application_time=?, item_name=? 
                     WHERE id_autoincremental=? AND institucion=? AND year=?";
         } else {
             $sql = "UPDATE ".BD_FINANCIERA.".transaction_items 
-                    SET id_item=?, cantity=?, subtotal=?, price=?, discount=0, tax=?, item_type=?, application_time=?, item_name=? 
+                    SET id_item=?, cantity=?, subtotal=?, price=?, discount=0, tax=?, tax_name=?, tax_fee=?, item_type=?, application_time=?, item_name=? 
                     WHERE id_autoincremental=? AND institucion=? AND year=?";
         }
         
@@ -154,12 +161,14 @@ if(!empty($_REQUEST['itemModificar'])){
         $stmt->bindParam(4, $_REQUEST['precio'], PDO::PARAM_STR);
         if ($taxToUse !== null) {
             $stmt->bindParam(5, $taxToUse, PDO::PARAM_INT);
-            $stmt->bindParam(6, $itemType, PDO::PARAM_STR);
-            $stmt->bindValue(7, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindParam(8, $nombreItem, PDO::PARAM_STR);
-            $stmt->bindParam(9, $idItemModificar, PDO::PARAM_INT);
-            $stmt->bindParam(10, $config['conf_id_institucion'], PDO::PARAM_INT);
-            $stmt->bindParam(11, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(6, $taxName, PDO::PARAM_STR);
+            $stmt->bindParam(7, $taxFee, PDO::PARAM_STR);
+            $stmt->bindParam(8, $itemType, PDO::PARAM_STR);
+            $stmt->bindValue(9, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+            $stmt->bindParam(10, $nombreItem, PDO::PARAM_STR);
+            $stmt->bindParam(11, $idItemModificar, PDO::PARAM_INT);
+            $stmt->bindParam(12, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(13, $_SESSION["bd"], PDO::PARAM_INT);
         } else {
             $stmt->bindParam(5, $itemType, PDO::PARAM_STR);
             $stmt->bindValue(6, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
@@ -181,12 +190,15 @@ if(!empty($_REQUEST['itemModificar'])){
     try {
         // Validar que el tax del item existe en la tabla taxes
         // El campo tax en transaction_items debe referenciar taxes.id o ser NULL
+        // Obtener también type_tax y fee para el snapshot
         // Por defecto NULL (sin impuesto) para evitar violaciones de FK
         $taxDefault = null;
+        $taxName = null;
+        $taxFee = null;
         if (!empty($datosItem['tax']) && $datosItem['tax'] != '0' && $datosItem['tax'] != '') {
-            // Verificar que el tax existe en la tabla taxes
+            // Verificar que el tax existe en la tabla taxes y obtener snapshot
             try {
-                $sqlVerificarTax = "SELECT id FROM ".BD_FINANCIERA.".taxes 
+                $sqlVerificarTax = "SELECT id, type_tax, fee FROM ".BD_FINANCIERA.".taxes 
                                    WHERE id=? AND institucion=? AND year=? LIMIT 1";
                 $stmtVerificar = $conexionPDO->prepare($sqlVerificarTax);
                 $taxIdParaVerificar = (int)$datosItem['tax'];
@@ -198,10 +210,14 @@ if(!empty($_REQUEST['itemModificar'])){
                 
                 if ($taxExiste && !empty($taxExiste['id'])) {
                     $taxDefault = (int)$taxExiste['id']; // Convertir a int porque el campo es UNSIGNED INT
+                    $taxName = $taxExiste['type_tax']; // Snapshot del nombre del impuesto
+                    $taxFee = floatval($taxExiste['fee']); // Snapshot del fee del impuesto
                 }
             } catch(Exception $e) {
                 // Si hay error al verificar, usar NULL por defecto
                 $taxDefault = null;
+                $taxName = null;
+                $taxFee = null;
             }
         }
         
@@ -222,23 +238,23 @@ if(!empty($_REQUEST['itemModificar'])){
             // Para facturas recurrentes, usar factura_recurrente_id y dejar id_transaction como NULL
             if ($taxDefault === null) {
                 $sql = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
-                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, description, factura_recurrente_id, item_type, application_time, item_name
-                ) VALUES (NULL, ?, 0, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)";
+                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, tax_name, tax_fee, description, factura_recurrente_id, item_type, application_time, item_name
+                ) VALUES (NULL, ?, 0, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?)";
             } else {
                 $sql = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
-                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, description, factura_recurrente_id, item_type, application_time, item_name
-                ) VALUES (NULL, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, tax_name, tax_fee, description, factura_recurrente_id, item_type, application_time, item_name
+                ) VALUES (NULL, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             }
         } else {
             // Para facturas normales, usar id_transaction
             if ($taxDefault === null) {
                 $sql = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
-                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, description, item_type, application_time, item_name
-                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)";
+                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, tax_name, tax_fee, description, item_type, application_time, item_name
+                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?)";
             } else {
                 $sql = "INSERT INTO ".BD_FINANCIERA.".transaction_items(
-                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, description, item_type, application_time, item_name
-                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    id_transaction, type_transaction, discount, cantity, subtotal, id_item, institucion, year, price, tax, tax_name, tax_fee, description, item_type, application_time, item_name
+                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             }
         }
         
@@ -263,11 +279,13 @@ if(!empty($_REQUEST['itemModificar'])){
                 $stmt->bindParam(12, $nombreItem, PDO::PARAM_STR);
             } else {
                 $stmt->bindParam(8, $taxDefault, PDO::PARAM_INT);
-                $stmt->bindParam(9, $descripcionItem, PDO::PARAM_STR);
-                $stmt->bindParam(10, $facturaRecurrenteId, PDO::PARAM_INT);
-                $stmt->bindParam(11, $itemType, PDO::PARAM_STR);
-                $stmt->bindValue(12, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                $stmt->bindParam(13, $nombreItem, PDO::PARAM_STR);
+                $stmt->bindParam(9, $taxName, PDO::PARAM_STR);
+                $stmt->bindParam(10, $taxFee, PDO::PARAM_STR);
+                $stmt->bindParam(11, $descripcionItem, PDO::PARAM_STR);
+                $stmt->bindParam(12, $facturaRecurrenteId, PDO::PARAM_INT);
+                $stmt->bindParam(13, $itemType, PDO::PARAM_STR);
+                $stmt->bindValue(14, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                $stmt->bindParam(15, $nombreItem, PDO::PARAM_STR);
             }
         } else {
             // Para facturas normales, bindear id_transaction
@@ -288,12 +306,14 @@ if(!empty($_REQUEST['itemModificar'])){
                 $stmt->bindValue(11, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
                 $stmt->bindParam(12, $nombreItem, PDO::PARAM_STR);
             } else {
-                // Bindear tax y descripción
+                // Bindear tax, tax_name, tax_fee y descripción
                 $stmt->bindParam(9, $taxDefault, PDO::PARAM_INT);
-                $stmt->bindParam(10, $descripcionItem, PDO::PARAM_STR);
-                $stmt->bindParam(11, $itemType, PDO::PARAM_STR);
-                $stmt->bindValue(12, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
-                $stmt->bindParam(13, $nombreItem, PDO::PARAM_STR);
+                $stmt->bindParam(10, $taxName, PDO::PARAM_STR);
+                $stmt->bindParam(11, $taxFee, PDO::PARAM_STR);
+                $stmt->bindParam(12, $descripcionItem, PDO::PARAM_STR);
+                $stmt->bindParam(13, $itemType, PDO::PARAM_STR);
+                $stmt->bindValue(14, $applicationTime, $applicationTime !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+                $stmt->bindParam(15, $nombreItem, PDO::PARAM_STR);
             }
         }
         $stmt->execute();

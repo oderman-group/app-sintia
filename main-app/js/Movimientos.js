@@ -1351,10 +1351,21 @@ function totalizar(){
                     descuentosItems += descuentoLinea;
                     
                     // 5. Impuestos: sobre base gravable del item (después de descuento)
+                    // Usar snapshot (data-tax-fee) con fallback al dropdown para compatibilidad
                     if (selectImpuesto) {
                         var opcionSeleccionada = selectImpuesto.selectedOptions[0];
                         var impuestoValue = opcionSeleccionada ? opcionSeleccionada.value : 0;
-                        var impuestoValor = opcionSeleccionada ? (parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0) : 0;
+                        
+                        // Priorizar snapshot del impuesto (data-tax-fee) sobre el dropdown
+                        var impuestoValor = 0;
+                        var taxFeeSnapshot = fila.getAttribute('data-tax-fee');
+                        if (taxFeeSnapshot && taxFeeSnapshot !== '' && taxFeeSnapshot !== '0') {
+                            // Usar snapshot del impuesto guardado
+                            impuestoValor = parseFloat(taxFeeSnapshot) || 0;
+                        } else if (opcionSeleccionada) {
+                            // Fallback: usar valor del dropdown si no hay snapshot
+                            impuestoValor = parseFloat(opcionSeleccionada.getAttribute('data-valor-impuesto')) || 0;
+                        }
                         
                         if (impuestoValue > 0 && impuestoValor > 0) {
                             var baseGravableItem = precioPorCantidad - descuentoLinea;

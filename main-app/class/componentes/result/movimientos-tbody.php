@@ -102,6 +102,9 @@ foreach ($data["data"] as $resultado) {
 							<?php if (Modulos::validarSubRol(['DT0128'])) { ?>
 								<li><a href="movimientos-editar.php?id=<?= base64_encode($resultado['fcu_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?></a></li>
 							<?php } ?>
+							<?php if ($resultado['fcu_anulado'] != 1 && Modulos::validarSubRol(['DT0094'])) { ?>
+								<li><a href="movimientos-duplicar.php?id=<?= base64_encode($resultado['fcu_id']); ?>">Duplicar</a></li>
+							<?php } ?>
 							<?php if ($resultado['fcu_anulado'] != 1 && Modulos::validarSubRol(['DT0089'])) { ?>
 								<li id="anulado<?= $resultado['fcu_id']; ?>"><a href="javascript:void(0);" onClick="anularMovimiento(this)" data-id-registro="<?= $resultado['fcu_id']; ?>" data-id-usuario="<?= $resultado['uss_id']; ?>">Anular</a></li>
 							<?php } ?>
@@ -117,6 +120,9 @@ foreach ($data["data"] as $resultado) {
 						<ul class="dropdown-menu" role="menu" style="z-index: 999999 !important;">
 							<?php if (Modulos::validarSubRol(['DT0128'])) { ?>
 								<li><a href="movimientos-editar.php?id=<?= base64_encode($resultado['fcu_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?></a></li>
+							<?php } ?>
+							<?php if ($resultado['fcu_anulado'] != 1 && Modulos::validarSubRol(['DT0094'])) { ?>
+								<li><a href="movimientos-duplicar.php?id=<?= base64_encode($resultado['fcu_id']); ?>">Duplicar</a></li>
 							<?php } ?>
 							<li><a href="javascript:void(0);" onClick="verAbonosFactura('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>')">Ver abonos</a></li>
 							<?php if ($resultado['fcu_anulado'] != 1 && $abonos <= 0 && $resultado['fcu_status'] == POR_COBRAR && Modulos::validarSubRol(['DT0089'])) { ?>
