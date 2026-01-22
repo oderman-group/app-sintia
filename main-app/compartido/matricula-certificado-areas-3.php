@@ -126,6 +126,10 @@ if ($formularioEnviado) {
 	$mostrarFirmaDigitalSecretario = isset($_GET['mostrar_firma_digital_secretario']) ? (int)$_GET['mostrar_firma_digital_secretario'] : 0;
 	$posicionFirmaRector = isset($_GET['posicion_firma_rector']) ? (int)$_GET['posicion_firma_rector'] : ($preferenciasGuardadas['posicion_firma_rector'] ?? 10);
 	$posicionFirmaSecretario = isset($_GET['posicion_firma_secretario']) ? (int)$_GET['posicion_firma_secretario'] : ($preferenciasGuardadas['posicion_firma_secretario'] ?? 10);
+	// Para checkboxes: si no están presentes en GET, significa que están desmarcados (0)
+	$espaciadoTabla = isset($_GET['espaciado_tabla']) ? (int)$_GET['espaciado_tabla'] : ($preferenciasGuardadas['espaciado_tabla'] ?? 8);
+	$mostrarMensajePromocion = isset($_GET['mostrar_mensaje_promocion']) ? (int)$_GET['mostrar_mensaje_promocion'] : 0;
+	$consolidarTextoAnios = isset($_GET['consolidar_texto_anios']) ? (int)$_GET['consolidar_texto_anios'] : 0;
 	$mostrarMarcaAgua = isset($_GET['mostrar_marca_agua']) ? (int)$_GET['mostrar_marca_agua'] : 0;
 	$marcaAguaOpacidad = isset($_GET['marca_agua_opacidad']) ? (float)$_GET['marca_agua_opacidad'] : ($preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1);
 	$marcaAguaTamanio = isset($_GET['marca_agua_tamanio']) ? (int)$_GET['marca_agua_tamanio'] : ($preferenciasGuardadas['marca_agua_tamanio'] ?? 300);
@@ -147,6 +151,9 @@ if ($formularioEnviado) {
 		'mostrar_firma_digital_secretario' => $mostrarFirmaDigitalSecretario,
 		'posicion_firma_rector' => $posicionFirmaRector,
 		'posicion_firma_secretario' => $posicionFirmaSecretario,
+		'espaciado_tabla' => $espaciadoTabla,
+		'mostrar_mensaje_promocion' => $mostrarMensajePromocion,
+		'consolidar_texto_anios' => $consolidarTextoAnios,
 		'mostrar_marca_agua' => $mostrarMarcaAgua,
 		'marca_agua_opacidad' => $marcaAguaOpacidad,
 		'marca_agua_tamanio' => $marcaAguaTamanio,
@@ -169,6 +176,9 @@ if ($formularioEnviado) {
 	$mostrarFirmaDigitalSecretario = $preferenciasGuardadas['mostrar_firma_digital_secretario'] ?? 0;
 	$posicionFirmaRector = $preferenciasGuardadas['posicion_firma_rector'] ?? 10;
 	$posicionFirmaSecretario = $preferenciasGuardadas['posicion_firma_secretario'] ?? 10;
+	$espaciadoTabla = $preferenciasGuardadas['espaciado_tabla'] ?? 8;
+	$mostrarMensajePromocion = $preferenciasGuardadas['mostrar_mensaje_promocion'] ?? 1;
+	$consolidarTextoAnios = $preferenciasGuardadas['consolidar_texto_anios'] ?? 0;
 	$mostrarMarcaAgua = $preferenciasGuardadas['mostrar_marca_agua'] ?? 0;
 	$marcaAguaOpacidad = $preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1;
 	$marcaAguaTamanio = $preferenciasGuardadas['marca_agua_tamanio'] ?? 300;
@@ -487,7 +497,7 @@ $tiposNotas = [];
 		.tabla-calificaciones th,
 		.tabla-calificaciones td {
 			border: 1px solid #000;
-			padding: 8px 12px;
+			padding: <?= $espaciadoTabla ?>px <?= $espaciadoTabla + 4 ?>px;
 		}
 
 		.tabla-calificaciones th {
@@ -792,11 +802,38 @@ $tiposNotas = [];
 			</div>
 
 			<div class="form-group">
+				<label>Espaciado de la tabla (px):</label>
+				<input type="number" name="espaciado_tabla" value="<?= $espaciadoTabla ?>" min="3" max="15" step="1" placeholder="8">
+				<small style="display: block; color: #666; margin-top: 5px;">Reduce el padding de las celdas para ahorrar espacio</small>
+			</div>
+
+			<div class="form-group">
 				<label class="checkbox-label">
 					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?>>
 					Incluir materias (si no, solo áreas)
 				</label>
 			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_mensaje_promocion" value="1" <?= $mostrarMensajePromocion ? 'checked' : '' ?>>
+					Mostrar mensaje de promoción
+				</label>
+			</div>
+
+			<?php 
+			// Solo mostrar opción de consolidar si hay múltiples años
+			$hayMultiplesAnios = !empty($desde) && !empty($hasta) && ($hasta - $desde) > 0;
+			if ($hayMultiplesAnios) { 
+			?>
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="consolidar_texto_anios" value="1" <?= $consolidarTextoAnios ? 'checked' : '' ?>>
+					Consolidar texto de años (mostrar todos los años en un solo texto)
+				</label>
+				<small style="display: block; color: #666; margin-top: 5px;">Si está desmarcado, se mostrará el texto por cada año</small>
+			</div>
+			<?php } ?>
 
 			<div class="form-group">
 				<label class="checkbox-label">
@@ -948,6 +985,67 @@ $tiposNotas = [];
 		}
 		
 		$restaAgnos = ($hasta - $desde) + 1;
+		$hayMultiplesAnios = $restaAgnos > 1;
+		
+		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años
+		$gradosAnios = [];
+		$aniosLectivos = [];
+		$educacionConsolidada = '';
+		$documentoEstudiante = '';
+		
+		if ($hayMultiplesAnios && $consolidarTextoAnios) {
+			$tempInicio = $desde;
+			$tempI = 1;
+			while ($tempI <= $restaAgnos) {
+				$matriculaTemp = Estudiantes::obtenerDatosEstudiante($id, $tempInicio);
+				if (!empty($matriculaTemp) && is_array($matriculaTemp)) {
+					$gradosAnios[] = strtoupper($matriculaTemp["gra_nombre"]);
+					$aniosLectivos[] = $tempInicio;
+					if (empty($documentoEstudiante)) {
+						$documentoEstudiante = $matriculaTemp["mat_documento"] ?? 'N/A';
+					}
+					if (empty($educacionConsolidada)) {
+						switch ($matriculaTemp["gra_nivel"]) {
+							case PREESCOLAR: 
+								$educacionConsolidada = "preescolar"; 
+							break;
+							case BASICA_PRIMARIA: 
+								$educacionConsolidada = "básica primaria"; 
+							break;
+							case BASICA_SECUNDARIA: 
+								$educacionConsolidada = "básica secundaria"; 
+							break;
+							case MEDIA: 
+								$educacionConsolidada = "media"; 
+							break;
+							default: 
+								$educacionConsolidada = "básica"; 
+							break;
+						}
+					}
+				}
+				$tempInicio++;
+				$tempI++;
+			}
+		}
+		
+		// Mostrar texto consolidado si hay múltiples años y está configurado
+		if ($hayMultiplesAnios && $consolidarTextoAnios && !empty($gradosAnios)) {
+			$gradosTexto = implode(' y ', array_unique($gradosAnios));
+			$aniosTexto = '';
+			if (count($aniosLectivos) == 2) {
+				$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
+			} else {
+				$aniosTexto = implode(', ', array_slice($aniosLectivos, 0, -1)) . ' y ' . end($aniosLectivos) . ' respectivamente';
+			}
+		?>
+			<div class="texto-estudiante">
+				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($documentoEstudiante); ?>, cursó y aprobó, en esta
+				Institución Educativa, el grado <b><?= $gradosTexto ?></b> en año lectivo <?= $aniosTexto ?> de Educación <?= $educacionConsolidada ?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
+			</div>
+		<?php
+		}
+		
 		$i = 1;
 		$inicio = $desde;
 
@@ -992,17 +1090,23 @@ $tiposNotas = [];
 					$educacion = "básica"; 
 				break;
 			}
+			
+			// Mostrar texto por año solo si NO está configurado para consolidar
+			if (!$consolidarTextoAnios) {
 		?>
 			<div class="texto-estudiante">
 				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($matricula["mat_documento"] ?? 'N/A'); ?>, cursó y aprobó, en esta
 				Institución Educativa, el grado <b><?= strtoupper($matricula["gra_nombre"]); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
 			</div>
+		<?php
+			}
+		?>
+		
+		<div class="titulo-grado">
+			<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
+		</div>
 
-			<div class="titulo-grado">
-				<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
-			</div>
-
-			<table class="tabla-calificaciones">
+		<table class="tabla-calificaciones">
 				<thead>
 					<tr>
 						<th style="width: 55%; text-align: left;">ASIGNATURAS</th>
@@ -1266,8 +1370,8 @@ $tiposNotas = [];
 				}
 			}
 
-			// Mensaje de promoción (solo si hay notas en el último periodo)
-			if ($tieneNotasUltimoPeriodo) {
+			// Mensaje de promoción (solo si hay notas en el último periodo y está configurado para mostrarlo)
+			if ($tieneNotasUltimoPeriodo && $mostrarMensajePromocion) {
 				$claseMensaje = 'mensaje-promocion';
 				if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
 					$msj = "EL (LA) ESTUDIANTE " . $nombre . " FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
