@@ -1417,7 +1417,13 @@ $tiposNotas = [];
 			}
 
 			// Mensaje de promoción (solo si hay notas en el último periodo y está configurado para mostrarlo)
-			if ($tieneNotasUltimoPeriodo && $mostrarMensajePromocion) {
+			// Si está consolidado, solo mostrar el mensaje en el último año
+			$mostrarMensajePromocionAnio = $mostrarMensajePromocion;
+			if ($consolidarTextoAnios && $i < $restaAgnos) {
+				$mostrarMensajePromocionAnio = false; // No mostrar en años intermedios cuando está consolidado
+			}
+			
+			if ($tieneNotasUltimoPeriodo && $mostrarMensajePromocionAnio) {
 				$claseMensaje = 'mensaje-promocion';
 				if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
 					$msj = "EL (LA) ESTUDIANTE " . $nombre . " FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
