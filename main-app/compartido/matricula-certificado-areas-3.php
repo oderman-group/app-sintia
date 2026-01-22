@@ -126,6 +126,10 @@ if ($formularioEnviado) {
 	$mostrarFirmaDigitalSecretario = isset($_GET['mostrar_firma_digital_secretario']) ? (int)$_GET['mostrar_firma_digital_secretario'] : 0;
 	$posicionFirmaRector = isset($_GET['posicion_firma_rector']) ? (int)$_GET['posicion_firma_rector'] : ($preferenciasGuardadas['posicion_firma_rector'] ?? 10);
 	$posicionFirmaSecretario = isset($_GET['posicion_firma_secretario']) ? (int)$_GET['posicion_firma_secretario'] : ($preferenciasGuardadas['posicion_firma_secretario'] ?? 10);
+	// Para checkboxes: si no están presentes en GET, significa que están desmarcados (0)
+	$espaciadoTabla = isset($_GET['espaciado_tabla']) ? (int)$_GET['espaciado_tabla'] : ($preferenciasGuardadas['espaciado_tabla'] ?? 8);
+	$mostrarMensajePromocion = isset($_GET['mostrar_mensaje_promocion']) ? (int)$_GET['mostrar_mensaje_promocion'] : 0;
+	$consolidarTextoAnios = isset($_GET['consolidar_texto_anios']) ? (int)$_GET['consolidar_texto_anios'] : 0;
 	$mostrarMarcaAgua = isset($_GET['mostrar_marca_agua']) ? (int)$_GET['mostrar_marca_agua'] : 0;
 	$marcaAguaOpacidad = isset($_GET['marca_agua_opacidad']) ? (float)$_GET['marca_agua_opacidad'] : ($preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1);
 	$marcaAguaTamanio = isset($_GET['marca_agua_tamanio']) ? (int)$_GET['marca_agua_tamanio'] : ($preferenciasGuardadas['marca_agua_tamanio'] ?? 300);
@@ -147,6 +151,9 @@ if ($formularioEnviado) {
 		'mostrar_firma_digital_secretario' => $mostrarFirmaDigitalSecretario,
 		'posicion_firma_rector' => $posicionFirmaRector,
 		'posicion_firma_secretario' => $posicionFirmaSecretario,
+		'espaciado_tabla' => $espaciadoTabla,
+		'mostrar_mensaje_promocion' => $mostrarMensajePromocion,
+		'consolidar_texto_anios' => $consolidarTextoAnios,
 		'mostrar_marca_agua' => $mostrarMarcaAgua,
 		'marca_agua_opacidad' => $marcaAguaOpacidad,
 		'marca_agua_tamanio' => $marcaAguaTamanio,
@@ -169,6 +176,9 @@ if ($formularioEnviado) {
 	$mostrarFirmaDigitalSecretario = $preferenciasGuardadas['mostrar_firma_digital_secretario'] ?? 0;
 	$posicionFirmaRector = $preferenciasGuardadas['posicion_firma_rector'] ?? 10;
 	$posicionFirmaSecretario = $preferenciasGuardadas['posicion_firma_secretario'] ?? 10;
+	$espaciadoTabla = $preferenciasGuardadas['espaciado_tabla'] ?? 8;
+	$mostrarMensajePromocion = $preferenciasGuardadas['mostrar_mensaje_promocion'] ?? 1;
+	$consolidarTextoAnios = $preferenciasGuardadas['consolidar_texto_anios'] ?? 0;
 	$mostrarMarcaAgua = $preferenciasGuardadas['mostrar_marca_agua'] ?? 0;
 	$marcaAguaOpacidad = $preferenciasGuardadas['marca_agua_opacidad'] ?? 0.1;
 	$marcaAguaTamanio = $preferenciasGuardadas['marca_agua_tamanio'] ?? 300;
@@ -487,7 +497,7 @@ $tiposNotas = [];
 		.tabla-calificaciones th,
 		.tabla-calificaciones td {
 			border: 1px solid #000;
-			padding: 8px 12px;
+			padding: <?= $espaciadoTabla ?>px <?= $espaciadoTabla + 4 ?>px;
 		}
 
 		.tabla-calificaciones th {
@@ -731,6 +741,16 @@ $tiposNotas = [];
 				page-break-inside: avoid;
 			}
 
+			/* Forzar salto de página para cada año cuando no está consolidado */
+			.pagina-certificado-anio {
+				page-break-after: always;
+				page-break-inside: avoid;
+			}
+
+			.pagina-certificado-anio:last-child {
+				page-break-after: auto;
+			}
+
 			.tabla-calificaciones {
 				page-break-inside: auto;
 			}
@@ -792,11 +812,38 @@ $tiposNotas = [];
 			</div>
 
 			<div class="form-group">
+				<label>Espaciado de la tabla (px):</label>
+				<input type="number" name="espaciado_tabla" value="<?= $espaciadoTabla ?>" min="3" max="15" step="1" placeholder="8">
+				<small style="display: block; color: #666; margin-top: 5px;">Reduce el padding de las celdas para ahorrar espacio</small>
+			</div>
+
+			<div class="form-group">
 				<label class="checkbox-label">
 					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?>>
 					Incluir materias (si no, solo áreas)
 				</label>
 			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_mensaje_promocion" value="1" <?= $mostrarMensajePromocion ? 'checked' : '' ?>>
+					Mostrar mensaje de promoción
+				</label>
+			</div>
+
+			<?php 
+			// Solo mostrar opción de consolidar si hay múltiples años
+			$hayMultiplesAnios = !empty($desde) && !empty($hasta) && ($hasta - $desde) > 0;
+			if ($hayMultiplesAnios) { 
+			?>
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="consolidar_texto_anios" value="1" <?= $consolidarTextoAnios ? 'checked' : '' ?>>
+					Consolidar texto de años (mostrar todos los años en un solo texto)
+				</label>
+				<small style="display: block; color: #666; margin-top: 5px;">Si está desmarcado, se mostrará el texto por cada año</small>
+			</div>
+			<?php } ?>
 
 			<div class="form-group">
 				<label class="checkbox-label">
@@ -904,32 +951,36 @@ $tiposNotas = [];
 
 	<div class="container-certificado">
 		<?php 
-		// Mostrar logo si está configurado y existe el archivo
-		if($incluirLogo && !empty($informacion_inst["info_logo"])) {
-			$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
-			$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+		// Calcular número de años antes de usarlo
+		$restaAgnos = ($hasta - $desde) + 1;
+		
+		// Si está consolidado, mostrar encabezado, logo y título una sola vez antes del loop
+		if ($consolidarTextoAnios || $restaAgnos == 1) {
+			if($incluirLogo && !empty($informacion_inst["info_logo"])) {
+				$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
+				$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+				
+				// Verificar si el logo existe
+				if(file_exists($logoPathFull)) {
+			?>
+				<div class="logo-container">
+					<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
+				</div>
+			<?php 
+				}
+			} 
 			
-			// Verificar si el logo existe
-			if(file_exists($logoPathFull)) {
-		?>
-			<div class="logo-container">
-				<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
-			</div>
-		<?php 
-			}
-		} 
-		?>
+			if($mostrarEncabezado) { ?>
+				<!-- Encabezado institucional -->
+				<div class="header-institucional">
+					EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
+					RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
+					DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
+				</div>
+			<?php } ?>
 
-		<?php if($mostrarEncabezado) { ?>
-			<!-- Encabezado institucional -->
-			<div class="header-institucional">
-				EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
-				RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
-				DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
-			</div>
+			<p class="texto-centrado" <?= !$mostrarEncabezado ? 'style="margin-top: 40px;"' : ''; ?>><b>C E R T I F I C A</b></p>
 		<?php } ?>
-
-		<p class="texto-centrado" <?= !$mostrarEncabezado ? 'style="margin-top: 40px;"' : ''; ?>><b>C E R T I F I C A</b></p>
 
 		<?php
 		$meses = array(" ", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
@@ -947,7 +998,68 @@ $tiposNotas = [];
 			$nombre = Estudiantes::NombreCompletoDelEstudiante($estudianteActual);
 		}
 		
-		$restaAgnos = ($hasta - $desde) + 1;
+		// $restaAgnos ya se calculó antes
+		$hayMultiplesAnios = $restaAgnos > 1;
+		
+		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años
+		$gradosAnios = [];
+		$aniosLectivos = [];
+		$educacionConsolidada = '';
+		$documentoEstudiante = '';
+		
+		if ($hayMultiplesAnios && $consolidarTextoAnios) {
+			$tempInicio = $desde;
+			$tempI = 1;
+			while ($tempI <= $restaAgnos) {
+				$matriculaTemp = Estudiantes::obtenerDatosEstudiante($id, $tempInicio);
+				if (!empty($matriculaTemp) && is_array($matriculaTemp)) {
+					$gradosAnios[] = strtoupper($matriculaTemp["gra_nombre"]);
+					$aniosLectivos[] = $tempInicio;
+					if (empty($documentoEstudiante)) {
+						$documentoEstudiante = $matriculaTemp["mat_documento"] ?? 'N/A';
+					}
+					if (empty($educacionConsolidada)) {
+						switch ($matriculaTemp["gra_nivel"]) {
+							case PREESCOLAR: 
+								$educacionConsolidada = "preescolar"; 
+							break;
+							case BASICA_PRIMARIA: 
+								$educacionConsolidada = "básica primaria"; 
+							break;
+							case BASICA_SECUNDARIA: 
+								$educacionConsolidada = "básica secundaria"; 
+							break;
+							case MEDIA: 
+								$educacionConsolidada = "media"; 
+							break;
+							default: 
+								$educacionConsolidada = "básica"; 
+							break;
+						}
+					}
+				}
+				$tempInicio++;
+				$tempI++;
+			}
+		}
+		
+		// Mostrar texto consolidado si hay múltiples años y está configurado
+		if ($hayMultiplesAnios && $consolidarTextoAnios && !empty($gradosAnios)) {
+			$gradosTexto = implode(' y ', array_unique($gradosAnios));
+			$aniosTexto = '';
+			if (count($aniosLectivos) == 2) {
+				$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
+			} else {
+				$aniosTexto = implode(', ', array_slice($aniosLectivos, 0, -1)) . ' y ' . end($aniosLectivos) . ' respectivamente';
+			}
+		?>
+			<div class="texto-estudiante">
+				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($documentoEstudiante); ?>, cursó y aprobó, en esta
+				Institución Educativa, el grado <b><?= $gradosTexto ?></b> en año lectivo <?= $aniosTexto ?> de Educación <?= $educacionConsolidada ?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
+			</div>
+		<?php
+		}
+		
 		$i = 1;
 		$inicio = $desde;
 
@@ -992,17 +1104,55 @@ $tiposNotas = [];
 					$educacion = "básica"; 
 				break;
 			}
+			
+			// Si NO está consolidado, cada año va en una página separada
+			if (!$consolidarTextoAnios) {
 		?>
-			<div class="texto-estudiante">
-				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($matricula["mat_documento"] ?? 'N/A'); ?>, cursó y aprobó, en esta
-				Institución Educativa, el grado <b><?= strtoupper($matricula["gra_nombre"]); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
-			</div>
+			<div class="pagina-certificado-anio">
+				<?php if($mostrarEncabezado) { ?>
+					<!-- Encabezado institucional -->
+					<div class="header-institucional">
+						EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
+						RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
+						DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
+					</div>
+				<?php } ?>
 
-			<div class="titulo-grado">
-				<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
-			</div>
+				<p class="texto-centrado" <?= !$mostrarEncabezado ? 'style="margin-top: 40px;"' : ''; ?>><b>C E R T I F I C A</b></p>
 
-			<table class="tabla-calificaciones">
+				<?php if($incluirLogo && !empty($informacion_inst["info_logo"])) {
+					$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
+					$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+					if(file_exists($logoPathFull)) {
+				?>
+					<div class="logo-container">
+						<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
+					</div>
+				<?php 
+					}
+				} 
+				?>
+
+				<div class="texto-estudiante">
+					Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($matricula["mat_documento"] ?? 'N/A'); ?>, cursó y aprobó, en esta
+					Institución Educativa, el grado <b><?= strtoupper($matricula["gra_nombre"]); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
+				</div>
+
+				<div class="titulo-grado">
+					<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
+				</div>
+		<?php
+			} else {
+				// Si está consolidado, solo mostrar título del grado
+		?>
+				<div class="titulo-grado">
+					<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
+				</div>
+		<?php
+			}
+		?>
+
+		<table class="tabla-calificaciones">
 				<thead>
 					<tr>
 						<th style="width: 55%; text-align: left;">ASIGNATURAS</th>
@@ -1266,8 +1416,26 @@ $tiposNotas = [];
 				}
 			}
 
-			// Mensaje de promoción (solo si hay notas en el último periodo)
-			if ($tieneNotasUltimoPeriodo) {
+			// Mensaje de promoción (solo si hay notas en el último periodo y está configurado para mostrarlo)
+			// Lógica:
+			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" NO está activa:
+			//   → Mostrar mensaje en cada año (cada hoja separada)
+			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" está activa:
+			//   → Mostrar mensaje solo en el último año
+			$mostrarMensajePromocionAnio = false;
+			if ($mostrarMensajePromocion) {
+				if ($consolidarTextoAnios) {
+					// Consolidado: solo mostrar en el último año
+					if ($i == $restaAgnos) {
+						$mostrarMensajePromocionAnio = true;
+					}
+				} else {
+					// No consolidado: mostrar en cada año (cada hoja)
+					$mostrarMensajePromocionAnio = true;
+				}
+			}
+			
+			if ($tieneNotasUltimoPeriodo && $mostrarMensajePromocionAnio) {
 				$claseMensaje = 'mensaje-promocion';
 				if($materiasPerdidas == 0 || $niveladas >= $materiasPerdidas){
 					$msj = "EL (LA) ESTUDIANTE " . $nombre . " FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
@@ -1285,26 +1453,117 @@ $tiposNotas = [];
 				<div class="<?= $claseMensaje; ?>"><?= $msj; ?></div>
 			<?php } ?>
 
+			<?php 
+			// Si NO está consolidado, mostrar pie y firmas dentro de cada página
+			if (!$consolidarTextoAnios) {
+				if (date('m') < 10) {
+					$mes = substr(date('m'), 1);
+				} else {
+					$mes = date('m');
+				}
+			?>
+				<!-- PIE DEL CERTIFICADO -->
+				<div class="pie-certificado">
+					Se expide en <?= !empty($informacion_inst["ciu_nombre"]) ? ucwords(strtolower($informacion_inst["ciu_nombre"])) : 'la ciudad'; ?> el <?= date("d"); ?> de <?= $meses[$mes]; ?> de <?= date("Y"); ?>, con destino al
+					interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark style='background: #fff3cd; padding: 2px 5px;'>".$estampilla."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
+				</div>
+
+				<!-- FIRMAS -->
+				<table class="tabla-firmas">
+					<tr>
+						<?php if($firmaRector) { ?>
+						<td style="width: <?= $firmaSecretario ? '50%' : '100%' ?>;">
+							<?php
+							$nombreRector = 'RECTOR(A)';
+							$mostrarFirmaDigitalRectorActual = false;
+							
+							if (!empty($informacion_inst["info_rector"])) {
+								$rector = Usuarios::obtenerDatosUsuario($informacion_inst["info_rector"]);
+								if (!empty($rector)) {
+									$nombreRector = UsuariosPadre::nombreCompletoDelUsuario($rector);
+									$tieneFirmaDigital = !empty($rector["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $rector['uss_firma']);
+									
+									if($tieneFirmaDigital && $mostrarFirmaDigitalRector){
+										$mostrarFirmaDigitalRectorActual = true;
+										// El margin-bottom controla directamente el espacio entre la imagen y la línea
+										// Valor base de 10px, más el valor de posición (puede ser negativo o positivo)
+										$espacioFinal = 10 + $posicionFirmaRector;
+										// Asegurar que nunca sea menor a 0
+										if($espacioFinal < 0) {
+											$espacioFinal = 0;
+										}
+										$estiloFirmaRector = 'margin-bottom: ' . $espacioFinal . 'px !important;';
+										echo '<img class="firma-imagen" src="../files/fotos/'.$rector["uss_firma"].'" alt="Firma Rector" style="max-width: 100px; height: auto; margin-left: auto; margin-right: auto; ' . $estiloFirmaRector . '">';
+									}
+								}
+							}
+							?>
+							<div class="firma-linea"></div>
+							<div class="firma-nombre"><?= strtoupper($nombreRector) ?></div>
+							<div class="firma-cargo">Rector(a)</div>
+						</td>
+						<?php } ?>
+						
+						<?php if($firmaSecretario) { ?>
+						<td style="width: <?= $firmaRector ? '50%' : '100%' ?>;">
+							<?php
+							$nombreSecretario = 'SECRETARIO(A)';
+							$mostrarFirmaDigitalSecretarioActual = false;
+							
+							if (!empty($informacion_inst["info_secretaria_academica"])) {
+								$secretario = Usuarios::obtenerDatosUsuario($informacion_inst["info_secretaria_academica"]);
+								if (!empty($secretario)) {
+									$nombreSecretario = UsuariosPadre::nombreCompletoDelUsuario($secretario);
+									$tieneFirmaDigital = !empty($secretario["uss_firma"]) && file_exists(ROOT_PATH.'/main-app/files/fotos/' . $secretario['uss_firma']);
+									
+									if($tieneFirmaDigital && $mostrarFirmaDigitalSecretario){
+										$mostrarFirmaDigitalSecretarioActual = true;
+										// El margin-bottom controla directamente el espacio entre la imagen y la línea
+										// Valor base de 10px, más el valor de posición (puede ser negativo o positivo)
+										$espacioFinal = 10 + $posicionFirmaSecretario;
+										// Asegurar que nunca sea menor a 0
+										if($espacioFinal < 0) {
+											$espacioFinal = 0;
+										}
+										$estiloFirmaSecretario = 'margin-bottom: ' . $espacioFinal . 'px !important;';
+										echo '<img class="firma-imagen" src="../files/fotos/'.$secretario["uss_firma"].'" alt="Firma Secretario" style="max-width: 100px; height: auto; margin-left: auto; margin-right: auto; ' . $estiloFirmaSecretario . '">';
+									}
+								}
+							}
+							?>
+							<div class="firma-linea"></div>
+							<div class="firma-nombre"><?= strtoupper($nombreSecretario) ?></div>
+							<div class="firma-cargo">Secretario(a)</div>
+						</td>
+						<?php } ?>
+					</tr>
+				</table>
+			</div> <!-- Cierre de pagina-certificado-anio -->
+			<?php } ?>
+
 		<?php
 			$inicio++;
 			$i++;
 		}
 		?>
 
-		<!-- PIE DEL CERTIFICADO -->
-		<?php if (date('m') < 10) {
-			$mes = substr(date('m'), 1);
-		} else {
-			$mes = date('m');
-		} ?>
-		
-		<div class="pie-certificado">
-			Se expide en <?= !empty($informacion_inst["ciu_nombre"]) ? ucwords(strtolower($informacion_inst["ciu_nombre"])) : 'la ciudad'; ?> el <?= date("d"); ?> de <?= $meses[$mes]; ?> de <?= date("Y"); ?>, con destino al
-			interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark style='background: #fff3cd; padding: 2px 5px;'>".$estampilla."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
-		</div>
+		<?php 
+		// Si está consolidado, mostrar pie y firmas una sola vez después del loop
+		if ($consolidarTextoAnios || $restaAgnos == 1) {
+			if (date('m') < 10) {
+				$mes = substr(date('m'), 1);
+			} else {
+				$mes = date('m');
+			}
+		?>
+			<!-- PIE DEL CERTIFICADO -->
+			<div class="pie-certificado">
+				Se expide en <?= !empty($informacion_inst["ciu_nombre"]) ? ucwords(strtolower($informacion_inst["ciu_nombre"])) : 'la ciudad'; ?> el <?= date("d"); ?> de <?= $meses[$mes]; ?> de <?= date("Y"); ?>, con destino al
+				interesado. <?php if ($config['conf_estampilla_certificados'] == SI) { echo "Se anula estampilla número <mark style='background: #fff3cd; padding: 2px 5px;'>".$estampilla."</mark>, según ordenanza 012/05 y decreto 005/06."; } ?>
+			</div>
 
-		<!-- FIRMAS -->
-		<table class="tabla-firmas">
+			<!-- FIRMAS -->
+			<table class="tabla-firmas">
 			<tr>
 				<?php if($firmaRector) { ?>
 				<td style="width: <?= $firmaSecretario ? '50%' : '100%' ?>;">
@@ -1373,7 +1632,7 @@ $tiposNotas = [];
 				<?php } ?>
 			</tr>
 		</table>
-	</div>
+		<?php } ?>
 
 	<?php 
 	include(ROOT_PATH . "/main-app/compartido/guardar-historial-acciones.php");
