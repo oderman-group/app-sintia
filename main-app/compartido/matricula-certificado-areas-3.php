@@ -1417,10 +1417,22 @@ $tiposNotas = [];
 			}
 
 			// Mensaje de promoción (solo si hay notas en el último periodo y está configurado para mostrarlo)
-			// Si está consolidado, solo mostrar el mensaje en el último año
-			$mostrarMensajePromocionAnio = $mostrarMensajePromocion;
-			if ($consolidarTextoAnios && $i < $restaAgnos) {
-				$mostrarMensajePromocionAnio = false; // No mostrar en años intermedios cuando está consolidado
+			// Lógica:
+			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" NO está activa:
+			//   → Mostrar mensaje en cada año (cada hoja separada)
+			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" está activa:
+			//   → Mostrar mensaje solo en el último año
+			$mostrarMensajePromocionAnio = false;
+			if ($mostrarMensajePromocion) {
+				if ($consolidarTextoAnios) {
+					// Consolidado: solo mostrar en el último año
+					if ($i == $restaAgnos) {
+						$mostrarMensajePromocionAnio = true;
+					}
+				} else {
+					// No consolidado: mostrar en cada año (cada hoja)
+					$mostrarMensajePromocionAnio = true;
+				}
 			}
 			
 			if ($tieneNotasUltimoPeriodo && $mostrarMensajePromocionAnio) {
