@@ -293,17 +293,35 @@
                                 <select class="form-control" name="estiloNotas" required style="max-width: 300px;">
                                     <option value="">Seleccione una opción</option>
                                     <?php
-                                    if(isset($config) && function_exists('categoriasNota::traerCategoriasNotasInstitucion')){
-                                        $opcionesGeneralesConsulta = categoriasNota::traerCategoriasNotasInstitucion($config);
-                                        while($opcionesGeneralesDatos = mysqli_fetch_array($opcionesGeneralesConsulta, MYSQLI_BOTH)){
-                                            if(($datosConfiguracion['conf_notas_categoria'] ?? '')==$opcionesGeneralesDatos['catn_id'])
-                                                echo '<option value="'.$opcionesGeneralesDatos['catn_id'].'" selected>'.$opcionesGeneralesDatos['catn_nombre'].'</option>';
-                                            else
-                                                echo '<option value="'.$opcionesGeneralesDatos['catn_id'].'">'.$opcionesGeneralesDatos['catn_nombre'].'</option>';	
+                                    // Asegurar que tenemos el ID de institución para la consulta
+                                    $idInstitucionParaConsulta = $id ?? ($config['conf_id_institucion'] ?? '');
+                                    
+                                    if(!empty($idInstitucionParaConsulta) && class_exists('categoriasNota')){
+                                        try {
+                                            // Crear config temporal si no existe
+                                            $configTemp = $config ?? [];
+                                            if(!isset($configTemp['conf_id_institucion'])) {
+                                                $configTemp['conf_id_institucion'] = $idInstitucionParaConsulta;
+                                            }
+                                            
+                                            $opcionesGeneralesConsulta = categoriasNota::traerCategoriasNotasInstitucion($configTemp, $year);
+                                            if($opcionesGeneralesConsulta && mysqli_num_rows($opcionesGeneralesConsulta) > 0){
+                                                while($opcionesGeneralesDatos = mysqli_fetch_array($opcionesGeneralesConsulta, MYSQLI_BOTH)){
+                                                    $selected = (($datosConfiguracion['conf_notas_categoria'] ?? '') == $opcionesGeneralesDatos['catn_id']) ? 'selected' : '';
+                                                    echo '<option value="'.$opcionesGeneralesDatos['catn_id'].'" '.$selected.'>'.$opcionesGeneralesDatos['catn_nombre'].'</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="">No hay categorías disponibles para este año</option>';
+                                            }
+                                        } catch (Exception $e) {
+                                            echo '<option value="">Error al cargar categorías: '.htmlspecialchars($e->getMessage()).'</option>';
                                         }
+                                    } else {
+                                        echo '<option value="">No se pudo cargar las categorías (ID institución no disponible)</option>';
                                     }
                                     ?>
                                 </select>
+                                <small class="form-text text-muted">Si no aparecen opciones, verifica que existan categorías de notas configuradas para esta institución y año.</small>
                             </div>
                         </div>
                     </div>

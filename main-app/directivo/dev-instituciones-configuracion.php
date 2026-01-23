@@ -83,6 +83,13 @@ $disabledPermiso = "";
 if (!Modulos::validarPermisoEdicion() && $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
 	$disabledPermiso = "readonly";
 }
+
+// Asegurar que $config tenga conf_id_institucion para las consultas
+if (isset($config) && !isset($config['conf_id_institucion'])) {
+	$config['conf_id_institucion'] = $id;
+} elseif (!isset($config)) {
+	$config = ['conf_id_institucion' => $id];
+}
 ?>
 
 <!--bootstrap -->
