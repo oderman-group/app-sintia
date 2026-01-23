@@ -359,22 +359,36 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($datosUsr);
 					if($resTemp){
 						$datosBoletin = mysqli_fetch_array($resTemp, MYSQLI_BOTH);
 					} else {
-						$datosBoletin = ['bol_nota' => 0, 'notip_nombre' => ''];
+						$datosBoletin = ['bol_nota' => 0];
 					}
 				}
 		
 				// OPTIMIZACIÓN: Obtener ausencias del mapa pre-cargado
 				$datosAusencias = [0 => ($ausenciasMapa[$datosCargas['car_id']][$j] ?? 0)];
 				
-				$promedioMateria += !empty($datosBoletin['bol_nota']) ? (float)$datosBoletin['bol_nota'] : 0;
+				$notaPeriodo = !empty($datosBoletin['bol_nota']) ? (float)$datosBoletin['bol_nota'] : 0;
+				$promedioMateria += $notaPeriodo;
+				
+				// OPTIMIZACIÓN: Calcular desempeño usando cache de notas cualitativas
+				$desempenoNotaPeriodo = '';
+				if($notaPeriodo > 0){
+					$notaRedondeada = number_format($notaPeriodo, $config['conf_decimales_notas'], '.', '');
+					$desempenoNotaPeriodo = isset($notasCualitativasCache[$notaRedondeada]) 
+						? $notasCualitativasCache[$notaRedondeada] 
+						: '';
+					if(empty($desempenoNotaPeriodo)){
+						$estiloNotaPeriodo = Boletin::obtenerDatosTipoDeNotas($config['conf_notas_categoria'], $notaPeriodo, $year);
+						$desempenoNotaPeriodo = !empty($estiloNotaPeriodo['notip_nombre']) ? $estiloNotaPeriodo['notip_nombre'] : '';
+					}
+				}
             ?>
                 <td align="center"><?php 
                 if (!empty($datosAusencias[0]) && $datosAusencias[0]>0) {
                     echo round($datosAusencias[0],0);
                 } 
                 ?></td>
-                <td align="center"><?=!empty($datosBoletin['bol_nota']) ? Boletin::notaDecimales((float)$datosBoletin['bol_nota']) : '';?></td>
-                <td align="center"><?=!empty($datosBoletin['notip_nombre']) ? $datosBoletin['notip_nombre'] : '';?></td>
+                <td align="center"><?=$notaPeriodo > 0 ? Boletin::notaDecimales($notaPeriodo) : '';?></td>
+                <td align="center"><?=$desempenoNotaPeriodo;?></td>
             <?php 
 			}
 			$promedioMateria = ($j-1) > 0 ? ($promedioMateria/($j-1)) : 0;
