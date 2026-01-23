@@ -7,6 +7,51 @@ Modulos::verificarPermisoDev();
 
 include("../compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
+
+// Incluir clases necesarias
+require_once(ROOT_PATH."/main-app/class/Tables/BDT_configuracion.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
+
+// Obtener ID de institución y año
+$id = !empty($_GET['id']) ? base64_decode($_GET['id']) : $_SESSION["idInstitucion"];
+$year = $_SESSION["bd"];
+if (!empty($_GET['year'])) {
+    $year = base64_decode($_GET['year']);
+}
+
+// Cargar datos de configuración
+try {
+	$sqlConfig = "SELECT configuracion.*, ins_siglas, ins_years 
+		FROM {$baseDatosServicios}.configuracion 
+		INNER JOIN {$baseDatosServicios}.instituciones ON ins_id = conf_id_institucion
+		WHERE conf_id_institucion = ? AND conf_agno = ?";
+
+	$consultaConfiguracion = BindSQL::prepararSQL($sqlConfig, [$id, $year]);
+	$datosConfiguracion = $consultaConfiguracion ? mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH) : [];
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
+	$datosConfiguracion = [];
+}
+
+// Si no hay datos de configuración, inicializar array vacío para evitar errores
+if (empty($datosConfiguracion)) {
+	$datosConfiguracion = [
+		'conf_id' => '',
+		'conf_periodo' => '',
+		'conf_periodos_maximos' => 4,
+		'conf_max_peso_archivos' => 10,
+		'ins_siglas' => ''
+	];
+}
+
+// Variables para el formulario
+$configDEV = 1; // Siempre es 1 para páginas de dev
+$disabledPermiso = "";
+
+if (!Modulos::validarPermisoEdicion() && $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+	$disabledPermiso = "readonly";
+}
 ?>
 
 <!--bootstrap -->
