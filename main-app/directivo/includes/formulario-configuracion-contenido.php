@@ -17,9 +17,66 @@
                 </span>
             </header>
             <div class="panel-body">
+                <!-- Selector de Año -->
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #667eea;">
+                    <div class="form-group row" style="margin-bottom: 0;">
+                        <label class="col-sm-3 control-label" style="font-weight: 600; color: #1e40af; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa fa-calendar-check-o"></i>
+                            Seleccionar Año
+                        </label>
+                        <div class="col-sm-9">
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <select 
+                                    id="selectorAno" 
+                                    class="form-control" 
+                                    style="max-width: 200px; font-weight: 600;"
+                                    onchange="cambiarAno(this.value)"
+                                >
+                                    <?php
+                                    if (isset($yearsDisponibles) && !empty($yearsDisponibles)) {
+                                        foreach ($yearsDisponibles as $anoDisponible) {
+                                            $selected = ($anoDisponible == $year) ? 'selected' : '';
+                                            echo '<option value="' . $anoDisponible . '" ' . $selected . '>' . $anoDisponible . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="' . $year . '" selected>' . $year . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                                <span style="color: #64748b; font-size: 14px;">
+                                    <i class="fa fa-info-circle"></i>
+                                    Selecciona el año para ver/editar su configuración
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                function cambiarAno(anoSeleccionado) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const idInstitucion = urlParams.get('id') || '';
+                    // Codificar el año en base64 para mantener consistencia con el sistema
+                    const yearEncoded = btoa(anoSeleccionado.toString());
+                    const nuevaUrl = '<?= $_SERVER['PHP_SELF']; ?>?id=' + idInstitucion + '&year=' + yearEncoded;
+                    window.location.href = nuevaUrl;
+                }
+                </script>
+
+                <?php if (empty($datosConfiguracion['conf_id'])) { ?>
+                <div class="alert-modern alert-info" style="margin-bottom: 30px;">
+                    <i class="fa fa-info-circle"></i>
+                    <div>
+                        <strong>Información:</strong> No existe configuración para el año <strong><?= $year; ?></strong>. 
+                        Puedes crear una nueva configuración completando el formulario y guardando los datos.
+                    </div>
+                </div>
+                <?php } ?>
+
                 <form name="formularioGuardar" action="configuracion-sistema-guardar.php" method="post" id="formConfiguracionCompleta">
                     <input type="hidden" name="configDEV" value="<?= $configDEV ?? 1; ?>">
                     <input type="hidden" name="id" value="<?= $datosConfiguracion['conf_id'] ?? ''; ?>">
+                    <input type="hidden" name="idInstitucion" value="<?= $id ?? ''; ?>">
                     <input type="hidden" name="agno" value="<?= $year; ?>">
                     <input type="hidden" name="configTab" value="<?=BDT_Configuracion::CONFIG_SISTEMA_GENERAL;?>">
                     

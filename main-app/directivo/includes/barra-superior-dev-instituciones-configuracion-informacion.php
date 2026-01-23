@@ -1,7 +1,20 @@
 <?php
+    // Obtener ID de institución
     $id="";
     if(!empty($_GET["id"])){
         $id=base64_decode($_GET["id"]);
+    } elseif (isset($id) && !empty($id)) {
+        // Si ya está definido en el contexto, usarlo
+        $id = $id;
+    } else {
+        // Fallback a SESSION
+        $id = $_SESSION["idInstitucion"] ?? '';
+    }
+    
+    // Obtener año actual
+    $year = $_SESSION["bd"] ?? date("Y");
+    if (!empty($_GET['year'])) {
+        $year = base64_decode($_GET['year']);
     }
 ?>
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #ffffff;">
@@ -19,19 +32,34 @@
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <?php
-                        $years = explode(",", $_SESSION["datosUnicosInstitucion"]['ins_years']);
-                        $start = $years[0];
-                        $end = $years[1];
-                        while($start <= $end){
-                            $estiloResaltado = '';
-                            if ($start == $year){ 
-                                $estiloResaltado = 'style="color: ' . $Plataforma->colorUno . ';"';
-                            }
+                        // Intentar obtener años desde datosConfiguracion primero, luego desde SESSION
+                        $insYears = '';
+                        if (isset($datosConfiguracion['ins_years']) && !empty($datosConfiguracion['ins_years'])) {
+                            $insYears = $datosConfiguracion['ins_years'];
+                        } elseif (isset($_SESSION["datosUnicosInstitucion"]['ins_years']) && !empty($_SESSION["datosUnicosInstitucion"]['ins_years'])) {
+                            $insYears = $_SESSION["datosUnicosInstitucion"]['ins_years'];
+                        }
+                        
+                        if (!empty($insYears)) {
+                            $years = explode(",", $insYears);
+                            $start = intval($years[0]);
+                            $end = intval($years[1] ?? $years[0]);
+                            while($start <= $end){
+                                $estiloResaltado = '';
+                                if ($start == $year){ 
+                                    $estiloResaltado = 'style="color: ' . (isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea') . '; font-weight: 600;"';
+                                }
                     ?>
                         <a class="dropdown-item" href="<?= $_SERVER['PHP_SELF']; ?>?id=<?=base64_encode($id);?>&year=<?=base64_encode($start);?>" <?= $estiloResaltado; ?>><?= $start; ?></a>
                     <?php 
                             $start++;
-                        } 
+                            } 
+                        } else {
+                            // Si no hay años, mostrar solo el año actual
+                    ?>
+                        <a class="dropdown-item" href="<?= $_SERVER['PHP_SELF']; ?>?id=<?=base64_encode($id);?>&year=<?=base64_encode($year);?>" style="color: <?= isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea'; ?>; font-weight: 600;"><?= $year; ?></a>
+                    <?php
+                        }
                     ?>
                 </div>
             </li>

@@ -20,6 +20,32 @@ if (!empty($_GET['year'])) {
     $year = base64_decode($_GET['year']);
 }
 
+// Obtener años disponibles de la institución
+$yearsDisponibles = [];
+try {
+	$sqlInstitucion = "SELECT ins_years FROM {$baseDatosServicios}.instituciones WHERE ins_id = ?";
+	$consultaInstitucion = BindSQL::prepararSQL($sqlInstitucion, [$id]);
+	if ($consultaInstitucion) {
+		$datosInstitucion = mysqli_fetch_array($consultaInstitucion, MYSQLI_BOTH);
+		if (!empty($datosInstitucion['ins_years'])) {
+			$yearsArray = explode(",", $datosInstitucion['ins_years']);
+			$yearStart = intval($yearsArray[0]);
+			$yearEnd = intval($yearsArray[1] ?? $yearsArray[0]);
+			while($yearStart <= $yearEnd) {
+				$yearsDisponibles[] = $yearStart;
+				$yearStart++;
+			}
+		}
+	}
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
+}
+
+// Si no hay años disponibles, usar el año actual
+if (empty($yearsDisponibles)) {
+	$yearsDisponibles = [$year];
+}
+
 // Cargar datos de configuración
 try {
 	$sqlConfig = "SELECT configuracion.*, ins_siglas, ins_years 
@@ -43,6 +69,11 @@ if (empty($datosConfiguracion)) {
 		'conf_max_peso_archivos' => 10,
 		'ins_siglas' => ''
 	];
+}
+
+// Obtener ins_years para la barra superior si no está en datosConfiguracion
+if (empty($datosConfiguracion['ins_years']) && !empty($yearsDisponibles)) {
+	$datosConfiguracion['ins_years'] = min($yearsDisponibles) . ',' . max($yearsDisponibles);
 }
 
 // Variables para el formulario

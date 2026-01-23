@@ -181,14 +181,58 @@ if ($_POST["configDEV"] == 1) {
         $datos["conf_color_ganada"] = $_POST["ganada"];
     }
     
-    // Si hay datos, actualizar y redirigir
+    // Si hay datos, actualizar o crear y redirigir
     if (!empty($datos)) {
-        $predicado = [
-            "conf_id" => $_POST['id']
-        ];
-        BDT_Configuracion::update($datos, $predicado, BD_ADMIN);
+        $confId = $_POST['id'] ?? ''; // Este es conf_id del formulario
+        $agno = $_POST['agno'] ?? date('Y');
+        
+        // Obtener ID de institución desde POST (preferido) o GET
+        $idInstitucion = '';
+        if (!empty($_POST['idInstitucion'])) {
+            $idInstitucion = $_POST['idInstitucion'];
+        } elseif (!empty($_GET['id'])) {
+            $idInstitucion = base64_decode($_GET['id']);
+        } else {
+            // Intentar obtener desde la configuración existente
+            if (!empty($confId)) {
+                try {
+                    $consultaConf = mysqli_query($conexion, "SELECT conf_id_institucion FROM " . BD_ADMIN . ".configuracion WHERE conf_id = '{$confId}'");
+                    if ($consultaConf && mysqli_num_rows($consultaConf) > 0) {
+                        $datosConf = mysqli_fetch_array($consultaConf, MYSQLI_BOTH);
+                        $idInstitucion = $datosConf['conf_id_institucion'];
+                    }
+                } catch (Exception $e) {
+                    include("../compartido/error-catch-to-report.php");
+                }
+            }
+        }
+        
+        // Si no hay conf_id o no existe el registro, crear uno nuevo
+        if (empty($confId) || empty($idInstitucion)) {
+            // Necesitamos obtener el ID de institución desde la URL
+            if (empty($idInstitucion) && !empty($_GET['id'])) {
+                $idInstitucion = base64_decode($_GET['id']);
+            }
+            
+            if (!empty($idInstitucion)) {
+                // Agregar campos requeridos para crear nuevo registro
+                $datos["conf_id_institucion"] = $idInstitucion;
+                $datos["conf_agno"] = $agno;
+                
+                // Usar Insert en lugar de update
+                BDT_Configuracion::Insert($datos, BD_ADMIN);
+            }
+        } else {
+            // Si existe conf_id, actualizar
+            $predicado = [
+                "conf_id" => $confId
+            ];
+            BDT_Configuracion::update($datos, $predicado, BD_ADMIN);
+        }
+        
         include("../compartido/guardar-historial-acciones.php");
-        echo '<script type="text/javascript">window.location.href="dev-instituciones-configuracion.php?id='.base64_encode($_POST['id'] ?? '').'&year='.base64_encode($_POST['agno'] ?? '').'";</script>';
+        $idEncoded = !empty($idInstitucion) ? base64_encode($idInstitucion) : '';
+        echo '<script type="text/javascript">window.location.href="dev-instituciones-configuracion.php?id='.$idEncoded.'&year='.base64_encode($agno).'";</script>';
         exit();
     }
 }
