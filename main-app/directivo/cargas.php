@@ -675,7 +675,7 @@ if($config['conf_doble_buscador'] == 1) {
 																	"car.car_maximas_calificaciones","car.car_director_grupo","uss.uss_nombre",
 																	"uss.uss_id","uss.uss_nombre2","uss.uss_apellido1","uss.uss_apellido2","gra.gra_id","gra.gra_nombre","gra.gra_periodos",
 																	"gru.gru_nombre","am.mat_nombre","am.mat_valor","car.car_grupo","car.car_director_grupo", "car.car_activa",
-																	"car.id_nuevo AS id_nuevo_carga", "car.car_tematica", "car.car_observaciones_boletin"];
+																	"car.id_nuevo AS id_nuevo_carga", "car.car_tematica", "car.car_observaciones_boletin", "car.car_indicadores_directivo"];
 													
 													// Usar método optimizado sin subqueries pesadas
 													$busqueda = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", $filtro, "car.car_id", $filtroLimite,"",array(),$selectSql);
@@ -1913,6 +1913,20 @@ if($config['conf_doble_buscador'] == 1) {
 							</div>
 						</div>
 					</div>
+					
+					<div class="row">
+						<div class="col-md-4">
+							<div class="form-group">
+								<label>Indicadores definidos por directivo</label>
+								<select class="form-control" id="masivo_indicadoresDirectivo" name="indicadoresDirectivo">
+									<option value="">No modificar</option>
+									<option value="1">SI</option>
+									<option value="0">NO</option>
+								</select>
+								<small class="text-muted">Si selecciona SI, solo el directivo podrá crear y gestionar los indicadores</small>
+							</div>
+						</div>
+					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -2110,6 +2124,20 @@ if($config['conf_doble_buscador'] == 1) {
 								</div>
 							</div>
 						</div>
+						
+						<div class="row">
+							<div class="col-md-12">
+								<div class="form-group">
+									<label>Indicadores definidos por directivo</label>
+									<select class="form-control" id="edit_indicadoresDirectivo" name="indicadoresDirectivo">
+										<option value="">Seleccione...</option>
+										<option value="1">SI</option>
+										<option value="0">NO</option>
+									</select>
+									<small class="text-muted">Si selecciona SI, solo el directivo podrá crear y gestionar los indicadores. El docente no podrá crear, editar o eliminar indicadores en esta carga.</small>
+								</div>
+							</div>
+						</div>
 					</div>
 					
 					<div id="cargaError" class="alert alert-danger" style="display:none;">
@@ -2244,6 +2272,7 @@ $(document).ready(function() {
 					$('#edit_indicadorAutomatico').val(carga.car_indicador_automatico || '');
 					$('#edit_tematica').val(carga.car_tematica || '');
 					$('#edit_observacionesBoletin').val(carga.car_observaciones_boletin || '');
+					$('#edit_indicadoresDirectivo').val(carga.car_indicadores_directivo || '0');
 					
 					// Llenar select de periodos
 					$('#edit_periodo').empty().append('<option value="">Seleccione...</option>');

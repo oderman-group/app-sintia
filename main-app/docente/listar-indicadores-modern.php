@@ -11,6 +11,10 @@ $porcentajeRestante = ($porcentajePermitido - ($sumaIndicadores[1] ?? 0));
 $porcentajeActual = $sumaIndicadores[1] ?? 0;
 $totalIndicadores = $totalIndicadores ?? 0;
 
+// Validar permisos para crear/editar/eliminar indicadores
+$validacionPermiso = Indicadores::validarPermisoEditarIndicador($conexion, $config, $cargaConsultaActual);
+$puedeGestionarIndicadores = $validacionPermiso['permiso'];
+
 $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)");
 ?>
 
@@ -19,16 +23,19 @@ $saberes = array("", "Saber saber (55%)", "Saber hacer (35%)", "Saber ser (10%)"
     <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
         <?php
         if (
-            (
-                ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
-                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+            $puedeGestionarIndicadores
+            && (
+                (
+                    ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
+                        && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+                    )
+                    ||
+                    ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
+                        && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+                        && $porcentajeRestante > 0)
                 )
-                ||
-                ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
-                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
-                    && $porcentajeRestante > 0)
+                && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
             )
-            && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
         ) {
         ?>
             <button onclick="abrirModalAgregar()" class="btn-primary-modern">
@@ -133,12 +140,24 @@ if ($numIndicadores > 0) {
                                 <?php echo number_format($resultado['ipc_valor'], 2); ?>%
                             </td>
                             <td style="text-align: center;">
+                                <?php 
+                                // Validar permisos para este indicador específico
+                                $validacionIndicador = Indicadores::validarPermisoEditarIndicador($conexion, $config, $cargaConsultaActual, $resultado['ipc_id']);
+                                
+                                // Verificar qué opciones están disponibles
+                                $tieneEditarEliminar = $validacionIndicador['permiso'] && $resultado['ipc_creado'] == 1 and ($periodoConsultaActual == $datosCargaActual['car_periodo'] or $datosCargaActual['car_permiso2'] == 1);
+                                $tieneRecuperar = $periodoConsultaActual < $datosCargaActual['car_periodo'];
+                                $tieneInclusion = Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INDICADORES_INCLUSION);
+                                
+                                // Solo mostrar el botón si hay al menos una opción disponible
+                                if ($tieneEditarEliminar || $tieneRecuperar || $tieneInclusion) {
+                                ?>
                                 <div class="btn-group">
                                     <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
                                         Acciones <i class="fa fa-angle-down"></i>
                                     </button>
                                     <ul class="dropdown-menu" role="menu">
-                                        <?php if ($resultado['ipc_creado'] == 1 and ($periodoConsultaActual == $datosCargaActual['car_periodo'] or $datosCargaActual['car_permiso2'] == 1)) { ?>
+                                        <?php if ($tieneEditarEliminar) { ?>
                                             <li>
                                                 <a href="javascript:void(0);" onclick="abrirModalEditar('<?php echo $resultado['ipc_id']; ?>')">
                                                     <i class="fa fa-edit"></i> Editar
@@ -151,7 +170,7 @@ if ($numIndicadores > 0) {
                                             </li>
                                         <?php } ?>
                                         
-                                        <?php if ($periodoConsultaActual < $datosCargaActual['car_periodo']) { ?>
+                                        <?php if ($tieneRecuperar) { ?>
                                             <li>
                                                 <a href="indicadores-recuperar.php?idR=<?php echo base64_encode($resultado['ipc_indicador']); ?>">
                                                     <i class="fa fa-redo"></i> Recuperar
@@ -159,7 +178,7 @@ if ($numIndicadores > 0) {
                                             </li>
                                         <?php } ?>
                                         
-                                        <?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_INDICADORES_INCLUSION)) { ?>
+                                        <?php if ($tieneInclusion) { ?>
                                             <li>
                                                 <a href="indicadores-estudiantes-inclusion.php?idIndicadorNuevo=<?php echo base64_encode($resultado['aipc_id_nuevo']); ?>&idIndicador=<?php echo base64_encode($resultado['ipc_id']); ?>">
                                                     <i class="fa fa-users"></i> E. Inclusión
@@ -168,6 +187,9 @@ if ($numIndicadores > 0) {
                                         <?php } ?>
                                     </ul>
                                 </div>
+                                <?php } else { ?>
+                                    <span style="color: #95a5a6; font-size: 12px;">-</span>
+                                <?php } ?>
                             </td>
                         </tr>
                     <?php
@@ -220,16 +242,19 @@ if ($numIndicadores > 0) {
         <p>Comienza agregando tu primer indicador para esta carga académica.</p>
         <?php
         if (
-            (
-                ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
-                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+            $puedeGestionarIndicadores
+            && (
+                (
+                    ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_AUTOMATICO_INDICADOR
+                        && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+                    )
+                    ||
+                    ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
+                        && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
+                        && $porcentajeRestante > 0)
                 )
-                ||
-                ($datosCargaActual['car_valor_indicador'] == Indicadores::CONFIG_MANUAL_INDICADOR
-                    && $totalIndicadores < $datosCargaActual['car_maximos_indicadores']
-                    && $porcentajeRestante > 0)
+                && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
             )
-            && CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual)
         ) {
         ?>
             <button onclick="abrirModalAgregar()" class="btn-primary-modern">
