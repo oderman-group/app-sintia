@@ -2,11 +2,34 @@
 <?php $idPaginaInterna = 'DT0038';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademicaOptimizada.php");
+require_once(ROOT_PATH."/main-app/class/Grados.php");
 
 if(!Modulos::validarSubRol([$idPaginaInterna])){
 	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
-}?>
+}
+
+// Obtener solo las cargas activas que tienen car_indicadores_directivo=1
+$selectSql = [
+    "car.car_id",
+    "car.car_periodo",
+    "car.car_indicadores_directivo",
+    "gra.gra_nombre",
+    "gru.gru_nombre",
+    "am.mat_nombre",
+    "CONCAT_WS(' ', uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2) as docente_nombre"
+];
+
+$cargasConsulta = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", "AND car.car_activa=1 AND car.car_indicadores_directivo=1", "gra.gra_nombre, gru.gru_nombre, am.mat_nombre", "", "", array(), $selectSql);
+$cargasLista = [];
+while ($carga = mysqli_fetch_array($cargasConsulta, MYSQLI_BOTH)) {
+    $cargasLista[] = $carga;
+}
+
+// Obtener períodos máximos
+$periodosMaximos = $config['conf_periodos_maximos'] ?? 4;
+?>
 
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
@@ -20,6 +43,120 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
     <!--select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+    /* Estilos mejorados para radio buttons y checkboxes */
+    .form-group .radio,
+    .form-group .checkbox {
+        margin-bottom: 12px;
+        padding: 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    
+    .form-group .radio:hover,
+    .form-group .checkbox:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .radio input[type="radio"],
+    .checkbox input[type="checkbox"] {
+        width: 20px !important;
+        height: 20px !important;
+        margin: 0 10px 0 0 !important;
+        cursor: pointer !important;
+        position: relative;
+        opacity: 1 !important;
+        -webkit-appearance: checkbox !important;
+        -moz-appearance: checkbox !important;
+        appearance: checkbox !important;
+        border: 2px solid #667eea !important;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+    
+    .radio input[type="radio"] {
+        -webkit-appearance: radio !important;
+        -moz-appearance: radio !important;
+        appearance: radio !important;
+        border-radius: 50% !important;
+        border: 2px solid #667eea !important;
+    }
+    
+    .radio label,
+    .checkbox label {
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        margin-bottom: 0 !important;
+        font-weight: normal;
+        padding: 0 !important;
+        user-select: none;
+    }
+    
+    .radio label:hover,
+    .checkbox label:hover {
+        color: #667eea;
+    }
+    
+    /* Estados checked - muy visibles */
+    input[type="radio"]:checked {
+        background-color: #667eea !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    input[type="checkbox"]:checked {
+        background-color: #667eea !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+    }
+    
+    /* Marca de verificación para checkboxes */
+    input[type="checkbox"]:checked::after {
+        content: '✓' !important;
+        display: block !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        line-height: 1;
+    }
+    
+    /* Punto central para radio buttons */
+    input[type="radio"]:checked::after {
+        content: '' !important;
+        display: block !important;
+        width: 8px !important;
+        height: 8px !important;
+        background: white !important;
+        border-radius: 50% !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    /* Contenedor de cargas y períodos */
+    #cargasEspecificasContainer {
+        margin-top: 15px;
+    }
+    
+    #cargasEspecificasContainer .checkbox label,
+    .form-group .checkbox label {
+        padding-left: 0 !important;
+    }
+    
+    /* Mejorar visibilidad del contenedor */
+    #cargasEspecificasContainer > div {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+    </style>
 </head>
 <!-- END HEAD -->
 <?php include("../compartido/body.php");?>
@@ -71,6 +208,80 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             <span style="color:#F06; font-size:11px;">Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.</span>
                                         </div>	
 
+                                        <hr>
+                                        <h4>Asignación a Cargas Académicas</h4>
+                                        
+                                        <div class="form-group row">
+                                            <label class="col-sm-2 control-label">Asignar a</label>
+                                            <div class="col-sm-10">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input type="radio" name="asignacionTipo" value="todas" checked onclick="toggleCargasEspecificas()">
+                                                        Todas las cargas académicas disponibles
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label>
+                                                        <input type="radio" name="asignacionTipo" value="especificas" onclick="toggleCargasEspecificas()">
+                                                        Cargas académicas específicas
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row" id="cargasEspecificasContainer" style="display:none;">
+                                            <label class="col-sm-2 control-label">Seleccionar Cargas</label>
+                                            <div class="col-sm-10">
+                                                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                                                    <?php if (count($cargasLista) > 0): ?>
+                                                        <?php foreach ($cargasLista as $carga): ?>
+                                                            <div class="checkbox">
+                                                                <label>
+                                                                    <input type="checkbox" name="cargas[]" value="<?=$carga['car_id'];?>">
+                                                                    <?=$carga['gra_nombre'];?> - <?=$carga['gru_nombre'];?> - <?=$carga['mat_nombre'];?> (<?=$carga['docente_nombre'];?>)
+                                                                </label>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <p class="text-muted">No hay cargas académicas disponibles.</p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <label class="col-sm-2 control-label">Períodos</label>
+                                            <div class="col-sm-10">
+                                                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                                                    <?php for ($p = 1; $p <= $periodosMaximos; $p++): ?>
+                                                        <div class="checkbox">
+                                                            <label>
+                                                                <input type="checkbox" name="periodos[]" value="<?=$p;?>" checked>
+                                                                Período <?=$p;?>
+                                                            </label>
+                                                        </div>
+                                                    <?php endfor; ?>
+                                                </div>
+                                                <small class="text-muted">Seleccione los períodos en los que se aplicará este indicador.</small>
+                                            </div>
+                                        </div>
+
+                                        <script>
+                                        function toggleCargasEspecificas() {
+                                            var tipo = document.querySelector('input[name="asignacionTipo"]:checked').value;
+                                            var container = document.getElementById('cargasEspecificasContainer');
+                                            if (tipo === 'especificas') {
+                                                container.style.display = 'block';
+                                            } else {
+                                                container.style.display = 'none';
+                                                // Desmarcar todos los checkboxes de cargas
+                                                var checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                                                checkboxes.forEach(function(cb) {
+                                                    cb.checked = false;
+                                                });
+                                            }
+                                        }
+                                        </script>
 
 										
                                     <?php $botones = new botonesGuardar("cargas-indicadores-obligatorios.php",true); ?>

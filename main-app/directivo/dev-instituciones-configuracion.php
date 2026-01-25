@@ -7,6 +7,89 @@ Modulos::verificarPermisoDev();
 
 include("../compartido/historial-acciones-guardar.php");
 include("../compartido/head.php");
+
+// Incluir clases necesarias
+require_once(ROOT_PATH."/main-app/class/Tables/BDT_configuracion.php");
+require_once(ROOT_PATH."/main-app/class/BindSQL.php");
+require_once(ROOT_PATH."/main-app/class/categoriasNotas.php");
+
+// Obtener ID de institución y año
+$id = !empty($_GET['id']) ? base64_decode($_GET['id']) : $_SESSION["idInstitucion"];
+$year = $_SESSION["bd"];
+if (!empty($_GET['year'])) {
+    $year = base64_decode($_GET['year']);
+}
+
+// Obtener años disponibles de la institución
+$yearsDisponibles = [];
+try {
+	$sqlInstitucion = "SELECT ins_years FROM {$baseDatosServicios}.instituciones WHERE ins_id = ?";
+	$consultaInstitucion = BindSQL::prepararSQL($sqlInstitucion, [$id]);
+	if ($consultaInstitucion) {
+		$datosInstitucion = mysqli_fetch_array($consultaInstitucion, MYSQLI_BOTH);
+		if (!empty($datosInstitucion['ins_years'])) {
+			$yearsArray = explode(",", $datosInstitucion['ins_years']);
+			$yearStart = intval($yearsArray[0]);
+			$yearEnd = intval($yearsArray[1] ?? $yearsArray[0]);
+			while($yearStart <= $yearEnd) {
+				$yearsDisponibles[] = $yearStart;
+				$yearStart++;
+			}
+		}
+	}
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
+}
+
+// Si no hay años disponibles, usar el año actual
+if (empty($yearsDisponibles)) {
+	$yearsDisponibles = [$year];
+}
+
+// Cargar datos de configuración
+try {
+	$sqlConfig = "SELECT configuracion.*, ins_siglas, ins_years 
+		FROM {$baseDatosServicios}.configuracion 
+		INNER JOIN {$baseDatosServicios}.instituciones ON ins_id = conf_id_institucion
+		WHERE conf_id_institucion = ? AND conf_agno = ?";
+
+	$consultaConfiguracion = BindSQL::prepararSQL($sqlConfig, [$id, $year]);
+	$datosConfiguracion = $consultaConfiguracion ? mysqli_fetch_array($consultaConfiguracion, MYSQLI_BOTH) : [];
+} catch (Exception $e) {
+    include("../compartido/error-catch-to-report.php");
+	$datosConfiguracion = [];
+}
+
+// Si no hay datos de configuración, inicializar array vacío para evitar errores
+if (empty($datosConfiguracion)) {
+	$datosConfiguracion = [
+		'conf_id' => '',
+		'conf_periodo' => '',
+		'conf_periodos_maximos' => 4,
+		'conf_max_peso_archivos' => 10,
+		'ins_siglas' => ''
+	];
+}
+
+// Obtener ins_years para la barra superior si no está en datosConfiguracion
+if (empty($datosConfiguracion['ins_years']) && !empty($yearsDisponibles)) {
+	$datosConfiguracion['ins_years'] = min($yearsDisponibles) . ',' . max($yearsDisponibles);
+}
+
+// Variables para el formulario
+$configDEV = 1; // Siempre es 1 para páginas de dev
+$disabledPermiso = "";
+
+if (!Modulos::validarPermisoEdicion() && $datosUsuarioActual['uss_tipo'] == TIPO_DIRECTIVO) {
+	$disabledPermiso = "readonly";
+}
+
+// Asegurar que $config tenga conf_id_institucion para las consultas
+if (isset($config) && !isset($config['conf_id_institucion'])) {
+	$config['conf_id_institucion'] = $id;
+} elseif (!isset($config)) {
+	$config = ['conf_id_institucion' => $id];
+}
 ?>
 
 <!--bootstrap -->

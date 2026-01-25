@@ -349,6 +349,21 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
                                             </div>
                                             
                                         </div>
+
+										<div class="form-group row">
+                                            <label class="col-sm-2 control-label">Indicadores definidos por directivo </label>
+                                            <div class="col-sm-4">
+                                                <select class="form-control  select2" name="indicadoresDirectivo" <?=$disabledPermiso;?>>
+                                                    <option value="">Seleccione una opción</option>
+													<option value="1" <?php if(!empty($datosEditar["car_indicadores_directivo"]) && $datosEditar["car_indicadores_directivo"]==1){echo 'selected';} ?>>SI</option>
+													<option value="0" <?php if(empty($datosEditar["car_indicadores_directivo"]) || $datosEditar["car_indicadores_directivo"]==0){echo 'selected';} ?>>NO</option>
+                                                </select>
+
+                                                <span class="text-info">Si selecciona SI, solo el directivo podrá crear y gestionar los indicadores. El docente no podrá crear, editar o eliminar indicadores en esta carga.</span>
+
+                                            </div>
+                                            
+                                        </div>
 										
 										
 										<hr>
@@ -384,6 +399,19 @@ $asignaturasCatalogo = $cacheCatalogos[$asignaturasKey];
 											<label class="col-sm-2 control-label">Estado actual</label>
 											<div class="col-sm-4">
 												<input type="text" name="estadoActual" class="form-control" value="<?=$datosEditar['car_estado'];?>" readonly>
+											</div>
+										</div>
+
+										<hr>
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Indicadores Obligatorios</label>
+											<div class="col-sm-10">
+												<a href="cargas-aplicar-indicadores.php?carga=<?=base64_encode($datosEditar['car_id']);?>" class="btn btn-info">
+													<i class="fa fa-list-check"></i> Aplicar Indicadores Obligatorios
+												</a>
+												<small class="text-muted" style="display: block; margin-top: 5px;">
+													Permite aplicar indicadores obligatorios previamente creados a esta carga académica.
+												</small>
 											</div>
 										</div>
 

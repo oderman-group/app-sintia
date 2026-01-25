@@ -1649,7 +1649,11 @@ if (!Modulos::validarPermisoEdicion()) {
 							}
 							
 							// Promedio basado en primera DEF (total periodos)
-							$defPorEstudiante = round($defPorEstudiante / $numCargasPorCurso, 2);
+							if ($numCargasPorCurso > 0) {
+								$defPorEstudiante = round($defPorEstudiante / $numCargasPorCurso, 2);
+							} else {
+								$defPorEstudiante = 0;
+							}
 							$color = '#718096';
 							if ($defPorEstudiante < $config[5] and $defPorEstudiante != "") {
 								$color = $config[6];

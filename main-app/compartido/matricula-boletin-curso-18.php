@@ -146,6 +146,12 @@ $mostrarEncabezado = $formularioEnviado
 $mostrarFirmas = $formularioEnviado 
     ? (isset($_GET['mostrar_firmas']) ? (int)$_GET['mostrar_firmas'] : 0)
     : 1; // Por defecto visible
+$mostrarLogoFooter = $formularioEnviado 
+    ? (isset($_GET['mostrar_logo_footer']) ? (int)$_GET['mostrar_logo_footer'] : 0)
+    : 1; // Por defecto visible
+$mostrarLeyendaFooter = $formularioEnviado 
+    ? (isset($_GET['mostrar_leyenda_footer']) ? (int)$_GET['mostrar_leyenda_footer'] : 0)
+    : 1; // Por defecto visible
 $mostrarIndicadores = $formularioEnviado 
     ? (isset($_GET['mostrar_indicadores']) ? (int)$_GET['mostrar_indicadores'] : 0)
     : 1; // Por defecto visible
@@ -171,6 +177,14 @@ $mostrarIndicadores = $formularioEnviado
         <label style="display: block; margin-bottom: 10px;">
             <input type="checkbox" name="mostrar_firmas" value="1" <?= $mostrarFirmas ? 'checked' : '' ?>>
             Mostrar firmas del pie de página
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_logo_footer" value="1" <?= $mostrarLogoFooter ? 'checked' : '' ?>>
+            Mostrar logo del pie de página
+        </label>
+        <label style="display: block; margin-bottom: 10px;">
+            <input type="checkbox" name="mostrar_leyenda_footer" value="1" <?= $mostrarLeyendaFooter ? 'checked' : '' ?>>
+            Mostrar leyenda del pie de página
         </label>
         <label style="display: block; margin-bottom: 10px;">
             <input type="checkbox" name="mostrar_indicadores" value="1" <?= $mostrarIndicadores ? 'checked' : '' ?>>
@@ -407,7 +421,10 @@ $mostrarIndicadores = $formularioEnviado
         </table>
         <?php endif; ?>
         <?php 
-        if($mostrarFirmas || $mostrarIndicadores) {
+        if($mostrarLogoFooter || $mostrarLeyendaFooter || $mostrarIndicadores) {
+            // Definir variables para controlar la visualización del logo y leyenda en el footer
+            $mostrarLogoEnFooter = $mostrarLogoFooter;
+            $mostrarLeyendaEnFooter = $mostrarLeyendaFooter;
             include("../compartido/footer-informes.php");
         }
         ?>

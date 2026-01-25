@@ -11,6 +11,15 @@ include("verificar-periodos-diferentes.php");
 require_once(ROOT_PATH."/main-app/class/Utilidades.php");
 require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
+
+// Validar permisos para crear indicadores
+$validacionPermiso = Indicadores::validarPermisoEditarIndicador($conexion, $config, $cargaConsultaActual);
+if (!$validacionPermiso['permiso']) {
+	include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+	echo '<script type="text/javascript">alert("' . addslashes($validacionPermiso['mensaje']) . '"); window.location.href="indicadores.php";</script>';
+	exit();
+}
+
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);
