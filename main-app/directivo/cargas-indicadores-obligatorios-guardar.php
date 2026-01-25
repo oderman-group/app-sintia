@@ -64,12 +64,15 @@ require_once(ROOT_PATH."/main-app/class/Indicadores.php");
 	if ($resultadoAsignacion['duplicadas'] > 0) {
 		$mensaje .= ($mensaje ? " " : "") . "Se omitieron {$resultadoAsignacion['duplicadas']} asignación(es) duplicada(s).";
 	}
+	if (isset($resultadoAsignacion['omitidas']) && $resultadoAsignacion['omitidas'] > 0) {
+		$mensaje .= ($mensaje ? " " : "") . "Se omitieron {$resultadoAsignacion['omitidas']} asignación(es) porque el docente ya tiene indicadores creados en ese período.";
+	}
 	if (!empty($resultadoAsignacion['errores'])) {
 		$mensaje .= ($mensaje ? " " : "") . "Errores: " . implode(", ", $resultadoAsignacion['errores']);
 	}
 	
-	// Si no hubo asignaciones ni duplicadas ni errores, puede ser que no haya cargas disponibles
-	if ($resultadoAsignacion['asignadas'] == 0 && $resultadoAsignacion['duplicadas'] == 0 && empty($resultadoAsignacion['errores'])) {
+	// Si no hubo asignaciones ni duplicadas ni omitidas ni errores, puede ser que no haya cargas disponibles
+	if ($resultadoAsignacion['asignadas'] == 0 && $resultadoAsignacion['duplicadas'] == 0 && (empty($resultadoAsignacion['omitidas']) || $resultadoAsignacion['omitidas'] == 0) && empty($resultadoAsignacion['errores'])) {
 		$mensaje = "Indicador creado, pero no se pudieron asignar cargas. Verifique que existan cargas académicas con la configuración 'Indicadores definidos por directivo' activada.";
 	}
 

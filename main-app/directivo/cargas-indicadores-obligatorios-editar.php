@@ -181,15 +181,20 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                     $enUso = $verificacionUso['enUso'];
                                     $disabledEdicion = $enUso ? 'readonly' : '';
                                     
-                                    // Obtener cargas y períodos asignados
-                                    $sqlAsignaciones = "SELECT DISTINCT ipc_carga, ipc_periodo, 
-                                                       CONCAT_WS(' - ', gra.gra_nombre, gru.gru_nombre, am.mat_nombre) as carga_nombre
+                                    // Obtener cargas y períodos asignados con información de uso
+                                    $sqlAsignaciones = "SELECT DISTINCT aic.ipc_carga, aic.ipc_periodo, 
+                                                       CONCAT_WS(' - ', gra.gra_nombre, gru.gru_nombre, am.mat_nombre) as carga_nombre,
+                                                       COUNT(DISTINCT aa.act_id) as total_actividades,
+                                                       COUNT(DISTINCT aac.cal_id) as total_calificaciones
                                                        FROM ".BD_ACADEMICA.".academico_indicadores_carga aic
                                                        INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car.car_id=aic.ipc_carga AND car.institucion=aic.institucion AND car.year=aic.year
                                                        INNER JOIN ".BD_ACADEMICA.".academico_grados gra ON gra.gra_id=car.car_curso AND gra.institucion=car.institucion AND gra.year=car.year
                                                        INNER JOIN ".BD_ACADEMICA.".academico_grupos gru ON gru.gru_id=car.car_grupo AND gru.institucion=car.institucion AND gru.year=car.year
                                                        INNER JOIN ".BD_ACADEMICA.".academico_materias am ON am.mat_id=car.car_materia AND am.institucion=car.institucion AND am.year=car.year
+                                                       LEFT JOIN ".BD_ACADEMICA.".academico_actividades aa ON aa.act_id_tipo=aic.ipc_indicador AND aa.act_id_carga=aic.ipc_carga AND aa.act_periodo=aic.ipc_periodo AND aa.act_estado=1 AND aa.institucion=aic.institucion AND aa.year=aic.year
+                                                       LEFT JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad=aa.act_id AND aac.institucion=aa.institucion AND aac.year=aa.year
                                                        WHERE aic.ipc_indicador=? AND aic.ipc_creado=0 AND aic.institucion=? AND aic.year=?
+                                                       GROUP BY aic.ipc_carga, aic.ipc_periodo
                                                        ORDER BY aic.ipc_carga, aic.ipc_periodo";
                                     $parametrosAsignaciones = [$idIndicador, $config['conf_id_institucion'], $_SESSION["bd"]];
                                     $consultaAsignaciones = BindSQL::prepararSQL($sqlAsignaciones, $parametrosAsignaciones);
@@ -250,22 +255,61 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Cargas y Períodos Asignados</label>
                                             <div class="col-sm-10">
-                                                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+                                                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
                                                     <?php 
                                                     $hayAsignaciones = false;
+                                                    $totalAsignaciones = 0;
+                                                    $totalEnUso = 0;
+                                                    mysqli_data_seek($consultaAsignaciones, 0);
                                                     while($asignacion = mysqli_fetch_array($consultaAsignaciones, MYSQLI_BOTH)): 
                                                         $hayAsignaciones = true;
+                                                        $totalAsignaciones++;
+                                                        $totalActividades = !empty($asignacion['total_actividades']) ? (int)$asignacion['total_actividades'] : 0;
+                                                        $totalCalificaciones = !empty($asignacion['total_calificaciones']) ? (int)$asignacion['total_calificaciones'] : 0;
+                                                        $estaEnUso = $totalActividades > 0 || $totalCalificaciones > 0;
+                                                        if ($estaEnUso) {
+                                                            $totalEnUso++;
+                                                        }
                                                     ?>
-                                                        <div class="alert alert-info" style="padding: 8px; margin-bottom: 5px;">
-                                                            <i class="fa fa-check-circle"></i> 
-                                                            <strong><?=$asignacion['carga_nombre'];?></strong> - Período <?=$asignacion['ipc_periodo'];?>
+                                                        <div class="alert <?=$estaEnUso ? 'alert-warning' : 'alert-info';?>" style="padding: 10px; margin-bottom: 8px;">
+                                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                                <div>
+                                                                    <i class="fa <?=$estaEnUso ? 'fa-exclamation-triangle' : 'fa-check-circle';?>"></i> 
+                                                                    <strong><?=$asignacion['carga_nombre'];?></strong> - Período <?=$asignacion['ipc_periodo'];?>
+                                                                    <?php if ($estaEnUso): ?>
+                                                                        <span class="label label-danger" style="margin-left: 10px;">EN USO</span>
+                                                                    <?php else: ?>
+                                                                        <span class="label label-success" style="margin-left: 10px;">Disponible</span>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </div>
+                                                            <?php if ($estaEnUso): ?>
+                                                                <div style="margin-top: 5px; font-size: 12px; color: #856404;">
+                                                                    <?php if ($totalActividades > 0): ?>
+                                                                        <i class="fa fa-tasks"></i> <?=$totalActividades;?> actividad(es) registrada(s)
+                                                                    <?php endif; ?>
+                                                                    <?php if ($totalCalificaciones > 0): ?>
+                                                                        <?php if ($totalActividades > 0): ?> | <?php endif; ?>
+                                                                        <i class="fa fa-file-text"></i> <?=$totalCalificaciones;?> calificación(es) asociada(s)
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endif; ?>
                                                         </div>
                                                     <?php endwhile; ?>
                                                     <?php if (!$hayAsignaciones): ?>
                                                         <p class="text-muted">Este indicador no está asignado a ninguna carga académica.</p>
+                                                    <?php else: ?>
+                                                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                                                            <strong>Resumen:</strong>
+                                                            <ul style="margin-bottom: 0;">
+                                                                <li>Total de asignaciones: <strong><?=$totalAsignaciones;?></strong></li>
+                                                                <li>Asignaciones en uso: <strong style="color: #856404;"><?=$totalEnUso;?></strong></li>
+                                                                <li>Asignaciones disponibles: <strong style="color: #155724;"><?=$totalAsignaciones - $totalEnUso;?></strong></li>
+                                                            </ul>
+                                                        </div>
                                                     <?php endif; ?>
                                                 </div>
-                                                <small class="text-muted">Estas son las cargas y períodos donde este indicador está actualmente asignado.</small>
+                                                <small class="text-muted">Estas son las cargas y períodos donde este indicador está actualmente asignado. Las marcadas como "EN USO" tienen actividades o calificaciones relacionadas.</small>
                                             </div>
                                         </div>
 

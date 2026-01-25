@@ -35,6 +35,7 @@ if (empty($_POST["periodos"]) || !is_array($_POST["periodos"])) {
 $idCarga = $_POST["carga"];
 $totalAsignadas = 0;
 $totalDuplicadas = 0;
+$totalOmitidas = 0;
 $errores = [];
 
 // Aplicar cada indicador seleccionado
@@ -59,6 +60,9 @@ foreach ($_POST["indicadores"] as $idIndicador) {
 
 	$totalAsignadas += $resultadoAsignacion['asignadas'];
 	$totalDuplicadas += $resultadoAsignacion['duplicadas'];
+	if (isset($resultadoAsignacion['omitidas'])) {
+		$totalOmitidas += $resultadoAsignacion['omitidas'];
+	}
 	
 	if (!empty($resultadoAsignacion['errores'])) {
 		$errores = array_merge($errores, $resultadoAsignacion['errores']);
@@ -72,6 +76,9 @@ if ($totalAsignadas > 0) {
 }
 if ($totalDuplicadas > 0) {
 	$mensaje .= ($mensaje ? " " : "") . "Se omitieron {$totalDuplicadas} asignación(es) duplicada(s).";
+}
+if ($totalOmitidas > 0) {
+	$mensaje .= ($mensaje ? " " : "") . "Se omitieron {$totalOmitidas} asignación(es) porque el docente ya tiene indicadores creados en ese período.";
 }
 if (!empty($errores)) {
 	$mensaje .= ($mensaje ? " " : "") . "Errores: " . implode(", ", array_slice($errores, 0, 3));

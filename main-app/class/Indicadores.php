@@ -1030,6 +1030,34 @@ class Indicadores {
     }
 
     /**
+     * Verifica si el docente ya tiene indicadores creados en una carga y período específicos
+     * @param array     $config
+     * @param string    $idCarga
+     * @param int       $periodo
+     * @param string    $yearBd
+     * 
+     * @return bool
+    **/
+    public static function verificarIndicadoresDocenteCargaPeriodo (
+        array   $config,
+        string  $idCarga,
+        int     $periodo,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_indicadores_carga 
+                WHERE ipc_carga=? AND ipc_periodo=? AND ipc_creado=1 AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return !empty($datos['total']) && (int)$datos['total'] > 0;
+    }
+
+    /**
      * Asigna un indicador a múltiples cargas y períodos
      * @param mysqli    $conexion
      * @param PDO       $conexionPDO
@@ -1081,12 +1109,21 @@ class Indicadores {
             return ['asignadas' => 0, 'duplicadas' => 0, 'errores' => $errores];
         }
 
+        $omitidas = 0; // Contador de asignaciones omitidas por tener indicadores del docente
+
         // Asignar a cada combinación de carga y período
         foreach ($cargas as $idCarga) {
             foreach ($periodos as $periodo) {
-                // Verificar si ya existe
+                // Verificar si ya existe este indicador específico
                 if (Indicadores::verificarIndicadorCargaPeriodo($config, $idIndicador, $idCarga, (int)$periodo, $year)) {
                     $duplicadas++;
+                    continue;
+                }
+
+                // Validar si el docente ya tiene indicadores creados en este período
+                // Si ya tiene indicadores del docente, omitir la asignación del indicador obligatorio
+                if (Indicadores::verificarIndicadoresDocenteCargaPeriodo($config, $idCarga, (int)$periodo, $year)) {
+                    $omitidas++;
                     continue;
                 }
 
@@ -1103,6 +1140,7 @@ class Indicadores {
         return [
             'asignadas' => $asignadas,
             'duplicadas' => $duplicadas,
+            'omitidas' => $omitidas,
             'errores' => $errores
         ];
     }
