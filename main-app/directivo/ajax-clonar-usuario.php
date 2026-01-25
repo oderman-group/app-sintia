@@ -194,6 +194,9 @@ try {
         } elseif ($campo == 'uss_intentos_fallidos') {
             $campos[] = $campo;
             $valores[] = 0; // Número sin comillas
+        } elseif ($campo == 'uss_bloqueado') {
+            $campos[] = $campo;
+            $valores[] = 0; // Siempre establecer en 0 para usuarios nuevos
         } else {
             $campos[] = $campo;
             

@@ -67,7 +67,9 @@ if (mysqli_num_rows($consultaExisteUsuario) == 0) {
 			uss_documento, 
 			uss_tema_sidebar,
 			uss_tema_header,
-			uss_tema_logo, institucion, year
+			uss_tema_logo, 
+			uss_bloqueado, 
+			institucion, year
 			)VALUES('" . $idEstudianteU . "', 
 			'" .	$_POST["usuario1"] . "',
 			SHA1('" . $_POST["identificacion"] . "'),
@@ -90,7 +92,9 @@ if (mysqli_num_rows($consultaExisteUsuario) == 0) {
 			'" . $_POST["identificacion"] . "',
 			'white-sidebar-color',
 			'header-white',
-			'logo-white', {$_POST["institucion"]}, {$_POST["year"]}
+			'logo-white', 
+			0, 
+			{$_POST["institucion"]}, {$_POST["year"]}
 			)");
 	} catch (Exception $e) {
 		include("../compartido/error-catch-to-report.php");

@@ -521,7 +521,17 @@ class UsuariosPadre {
     }
 
     /**
-     * Este metodo me actualiza la informacion de un usuario
+     * Este metodo me guarda un nuevo usuario en la base de datos
+     * 
+     * IMPORTANTE: El campo 'uss_bloqueado' debe estar incluido en el parámetro $insert
+     * y establecido en 0 en el array $parametros para evitar problemas en consultas
+     * que filtran por este campo. Si no se incluye, el valor será NULL y causará
+     * problemas en filtros como: WHERE uss_bloqueado='0'
+     * 
+     * @param PDO $conexionPDO Conexión PDO a la base de datos
+     * @param string $insert Lista de campos separados por comas (debe incluir 'uss_bloqueado')
+     * @param array $parametros Array de valores en el mismo orden que los campos (uss_bloqueado debe ser 0)
+     * @return string ID del usuario creado
     **/
     public static function guardarUsuario (
         PDO     $conexionPDO,
