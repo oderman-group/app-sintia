@@ -85,7 +85,8 @@ try {
         'maxActividades' => 'car_maximas_calificaciones',
         'indicadorAutomatico' => 'car_indicador_automatico',
         'tematica' => 'car_tematica',
-        'observacionesBoletin' => 'car_observaciones_boletin'
+        'observacionesBoletin' => 'car_observaciones_boletin',
+        'indicadoresDirectivo' => 'car_indicadores_directivo'
     ];
 
     // Preparar array de actualización con nombres de columnas correctos
@@ -127,7 +128,7 @@ try {
                 error_log("Campo docente sanitizado: '$valorSanitizado'");
             }
             // Campos booleanos (0 o 1)
-            elseif (in_array($nombreCampo, ['dg', 'estado', 'indicadorAutomatico', 'tematica', 'observacionesBoletin'])) {
+            elseif (in_array($nombreCampo, ['dg', 'estado', 'indicadorAutomatico', 'tematica', 'observacionesBoletin', 'indicadoresDirectivo'])) {
                 $valorSanitizado = intval($valor);
                 // Asegurar que sea solo 0 o 1
                 $valorSanitizado = ($valorSanitizado === 1) ? 1 : 0;

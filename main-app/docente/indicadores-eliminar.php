@@ -16,6 +16,14 @@ if (!empty($_GET['idR'])) {
     $idR = base64_decode($_GET['idR']);
 }
 
+// Validar permisos para eliminar indicadores
+$validacionPermiso = Indicadores::validarPermisoEditarIndicador($conexion, $config, $cargaConsultaActual, $idR);
+if (!$validacionPermiso['permiso']) {
+	include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+	echo '<script type="text/javascript">alert("' . addslashes($validacionPermiso['mensaje']) . '"); window.location.href="indicadores.php";</script>';
+	exit();
+}
+
 $actividadesRelacionadasConsulta = Actividades::traerActividadesCargaIndicador($config, base64_decode($_GET["idIndicador"]), $cargaConsultaActual, $periodoConsultaActual);
 
 while($actividadesRelacionadasDatos = mysqli_fetch_array($actividadesRelacionadasConsulta, MYSQLI_BOTH)){

@@ -76,7 +76,8 @@ include("../compartido/historial-acciones-guardar.php");
 			'car_permiso1'               => $_POST["permiso1"],
 			'car_indicador_automatico'   => $_POST["indicadorAutomatico"],
 			'car_observaciones_boletin'  => $_POST["observacionesBoletin"],
-			'car_tematica'               => $_POST["tematica"], 
+			'car_tematica'               => $_POST["tematica"],
+			'car_indicadores_directivo'  => !empty($_POST["indicadoresDirectivo"]) ? $_POST["indicadoresDirectivo"] : 0,
 		];
 
 		$predicado = [

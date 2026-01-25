@@ -10,6 +10,14 @@ require_once(ROOT_PATH."/main-app/class/Calificaciones.php");
 include("verificar-carga.php");
 include("verificar-periodos-diferentes.php");
 
+// Validar permisos para editar indicadores
+$validacionPermiso = Indicadores::validarPermisoEditarIndicador($conexion, $config, $cargaConsultaActual, $_POST["idR"]);
+if (!$validacionPermiso['permiso']) {
+	include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+	echo '<script type="text/javascript">alert("' . addslashes($validacionPermiso['mensaje']) . '"); window.location.href="indicadores.php";</script>';
+	exit();
+}
+
 $sumaIndicadores = Indicadores::consultarSumaIndicadores($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
 $porcentajePermitido = 100 - $sumaIndicadores[0];
 $porcentajeRestante = ($porcentajePermitido - $sumaIndicadores[1]);

@@ -11,7 +11,17 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 }
 include("../compartido/historial-acciones-guardar.php");
 
-Indicadores::eliminarIndicadores(base64_decode($_GET["idN"]));
+$idIndicador = base64_decode($_GET["idN"]);
+
+// Verificar si el indicador está en uso antes de permitir eliminación
+$verificacionUso = Indicadores::verificarIndicadorEnUso($config, $idIndicador);
+if ($verificacionUso['enUso']) {
+	include("../compartido/guardar-historial-acciones.php");
+	echo '<script type="text/javascript">alert("' . addslashes($verificacionUso['mensaje']) . '"); window.location.href="cargas-indicadores-obligatorios.php";</script>';
+	exit();
+}
+
+Indicadores::eliminarIndicadores($idIndicador);
 
 include("../compartido/guardar-historial-acciones.php");
 

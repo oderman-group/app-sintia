@@ -260,6 +260,41 @@ $tiposNotas = [];
 			max-width: 400px;
 			max-height: 90vh;
 			overflow-y: auto;
+			display: none; /* Oculto por defecto */
+		}
+		
+		.config-certificado-form.visible {
+			display: block; /* Visible cuando tiene la clase visible */
+		}
+		
+		/* Botón de configuración */
+		.btn-config-certificado {
+			position: fixed;
+			top: 10px;
+			right: 10px;
+			background: #2c3e50;
+			color: #ffffff;
+			border: none;
+			border-radius: 8px;
+			padding: 12px 20px;
+			font-size: 14px;
+			font-weight: 600;
+			cursor: pointer;
+			z-index: 1001;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+		
+		.btn-config-certificado:hover {
+			background: #34495e;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+		}
+		
+		.btn-config-certificado i {
+			font-size: 16px;
 		}
 
 		.config-certificado-form h4 {
@@ -332,9 +367,10 @@ $tiposNotas = [];
 			flex: 1;
 		}
 
-		/* Ocultar formulario de configuración en impresión */
+		/* Ocultar formulario de configuración y botón en impresión */
 		@media print {
-			.config-certificado-form {
+			.config-certificado-form,
+			.btn-config-certificado {
 				display: none !important;
 			}
 		}
@@ -767,10 +803,16 @@ $tiposNotas = [];
 </head>
 
 <body>
+	<!-- Botón de Configuración -->
+	<button class="btn-config-certificado" id="btnConfigCertificado" onclick="toggleConfigCertificado()">
+		<i class="fas fa-cog"></i>
+		<span>Configuración</span>
+	</button>
+	
 	<!-- Ventana de Configuración -->
-	<div class="config-certificado-form">
+	<div class="config-certificado-form" id="configCertificadoForm">
 		<h4>⚙️ Configuración del Certificado</h4>
-		<form method="GET" id="configCertificadoForm">
+		<form method="GET" id="formConfigCertificado">
 			<?php
 			// Mantener todos los parámetros GET existentes
 			if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
@@ -954,8 +996,11 @@ $tiposNotas = [];
 		// Calcular número de años antes de usarlo
 		$restaAgnos = ($hasta - $desde) + 1;
 		
-		// Si está consolidado, mostrar encabezado, logo y título una sola vez antes del loop
-		if ($consolidarTextoAnios || $restaAgnos == 1) {
+		// Detectar si es un solo año (desde == hasta)
+		$esUnSoloAnio = ($desde == $hasta);
+		
+		// Si está consolidado o es un solo año, mostrar encabezado, logo y título una sola vez antes del loop
+		if ($consolidarTextoAnios || $restaAgnos == 1 || $esUnSoloAnio) {
 			if($incluirLogo && !empty($informacion_inst["info_logo"])) {
 				$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
 				$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
@@ -1044,13 +1089,41 @@ $tiposNotas = [];
 		}
 		
 		// Mostrar texto consolidado si hay múltiples años y está configurado
-		if ($hayMultiplesAnios && $consolidarTextoAnios && !empty($gradosAnios)) {
-			$gradosTexto = implode(' y ', array_unique($gradosAnios));
-			$aniosTexto = '';
-			if (count($aniosLectivos) == 2) {
-				$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
+		// O si es un solo año, mostrar el texto antes del loop
+		if (($hayMultiplesAnios && $consolidarTextoAnios && !empty($gradosAnios)) || ($esUnSoloAnio && !$consolidarTextoAnios)) {
+			if ($esUnSoloAnio && !$consolidarTextoAnios) {
+				// Para un solo año, obtener datos del estudiante
+				$matriculaUnAnio = Estudiantes::obtenerDatosEstudiante($id, $desde);
+				if (!empty($matriculaUnAnio) && is_array($matriculaUnAnio)) {
+					$documentoEstudiante = $matriculaUnAnio["mat_documento"] ?? 'N/A';
+					$gradosTexto = strtoupper($matriculaUnAnio["gra_nombre"]);
+					$aniosTexto = $desde;
+					switch ($matriculaUnAnio["gra_nivel"]) {
+						case PREESCOLAR: 
+							$educacionConsolidada = "preescolar"; 
+						break;
+						case BASICA_PRIMARIA: 
+							$educacionConsolidada = "básica primaria"; 
+						break;
+						case BASICA_SECUNDARIA: 
+							$educacionConsolidada = "básica secundaria"; 
+						break;
+						case MEDIA: 
+							$educacionConsolidada = "media"; 
+						break;
+						default: 
+							$educacionConsolidada = "básica"; 
+						break;
+					}
+				}
 			} else {
-				$aniosTexto = implode(', ', array_slice($aniosLectivos, 0, -1)) . ' y ' . end($aniosLectivos) . ' respectivamente';
+				$gradosTexto = implode(' y ', array_unique($gradosAnios));
+				$aniosTexto = '';
+				if (count($aniosLectivos) == 2) {
+					$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
+				} else {
+					$aniosTexto = implode(', ', array_slice($aniosLectivos, 0, -1)) . ' y ' . end($aniosLectivos) . ' respectivamente';
+				}
 			}
 		?>
 			<div class="texto-estudiante">
@@ -1105,8 +1178,9 @@ $tiposNotas = [];
 				break;
 			}
 			
-			// Si NO está consolidado, cada año va en una página separada
-			if (!$consolidarTextoAnios) {
+			// Si NO está consolidado Y NO es un solo año, cada año va en una página separada
+			// Si es un solo año, no repetir encabezado ni CERTIFICA (ya se mostraron antes del loop)
+			if (!$consolidarTextoAnios && !$esUnSoloAnio) {
 		?>
 			<div class="pagina-certificado-anio">
 				<?php if($mostrarEncabezado) { ?>
@@ -1133,10 +1207,15 @@ $tiposNotas = [];
 				} 
 				?>
 
+				<?php 
+				// Solo mostrar texto del estudiante si NO es un solo año (ya se mostró antes del loop)
+				if (!$esUnSoloAnio) {
+				?>
 				<div class="texto-estudiante">
 					Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($matricula["mat_documento"] ?? 'N/A'); ?>, cursó y aprobó, en esta
 					Institución Educativa, el grado <b><?= strtoupper($matricula["gra_nombre"]); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
 				</div>
+				<?php } ?>
 
 				<div class="titulo-grado">
 					<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
@@ -1418,12 +1497,13 @@ $tiposNotas = [];
 
 			// Mensaje de promoción (solo si hay notas en el último periodo y está configurado para mostrarlo)
 			// Lógica:
+			// - Si es un solo año (desde == hasta): NO mostrar dentro del loop, se mostrará después de todas las tablas
 			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" NO está activa:
 			//   → Mostrar mensaje en cada año (cada hoja separada)
 			// - Si "Mostrar mensaje de promoción" está activa Y "Consolidar texto de años" está activa:
 			//   → Mostrar mensaje solo en el último año
 			$mostrarMensajePromocionAnio = false;
-			if ($mostrarMensajePromocion) {
+			if ($mostrarMensajePromocion && !$esUnSoloAnio) {
 				if ($consolidarTextoAnios) {
 					// Consolidado: solo mostrar en el último año
 					if ($i == $restaAgnos) {
@@ -1454,8 +1534,9 @@ $tiposNotas = [];
 			<?php } ?>
 
 			<?php 
-			// Si NO está consolidado, mostrar pie y firmas dentro de cada página
-			if (!$consolidarTextoAnios) {
+			// Si NO está consolidado Y NO es un solo año, mostrar pie y firmas dentro de cada página
+			// Si es un solo año, no repetir pie ni firmas aquí (se mostrarán al final)
+			if (!$consolidarTextoAnios && !$esUnSoloAnio) {
 				if (date('m') < 10) {
 					$mes = substr(date('m'), 1);
 				} else {
@@ -1548,8 +1629,76 @@ $tiposNotas = [];
 		?>
 
 		<?php 
-		// Si está consolidado, mostrar pie y firmas una sola vez después del loop
-		if ($consolidarTextoAnios || $restaAgnos == 1) {
+		// Si es un solo año y está activa la opción de mostrar mensaje de promoción, mostrarlo después de todas las tablas
+		if ($esUnSoloAnio && $mostrarMensajePromocion) {
+			// Obtener datos del estudiante para el mensaje de promoción
+			$matriculaPromocion = Estudiantes::obtenerDatosEstudiante($id, $desde);
+			if (!empty($matriculaPromocion) && is_array($matriculaPromocion)) {
+				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $desde);
+				$materiasPerdidasPromocion = 0;
+				$vectorMPPromocion = array();
+				$periodoFinalPromocion = $config['conf_periodos_maximos'];
+				
+				while ($cargasCPromocion = mysqli_fetch_array($cargasAcademicasPromocion, MYSQLI_BOTH)) {
+					$boletinCPromocion = Boletin::traerDefinitivaBoletinCarga($config, $cargasCPromocion["car_id"], $id, $desde);
+					$notaCPromocion = !empty($boletinCPromocion['promedio']) ? round($boletinCPromocion['promedio'], 1) : 0;
+					
+					if ($notaCPromocion < $config[5]) {
+						$vectorMPPromocion[$materiasPerdidasPromocion] = $cargasCPromocion["car_id"];
+						$materiasPerdidasPromocion++;
+					}
+
+					if ($boletinCPromocion['periodo'] < $config['conf_periodos_maximos']){
+						$periodoFinalPromocion = $boletinCPromocion['periodo'];
+					}
+				}
+
+				// Verificar nivelaciones
+				$niveladasPromocion = 0;
+				if ($materiasPerdidasPromocion > 0) {
+					for ($m = 0; $m < $materiasPerdidasPromocion; $m++) {
+						$nMPPromocion = Calificaciones::validarMateriaNivelada($conexion, $config, $id, $vectorMPPromocion[$m], $desde);
+						if (mysqli_num_rows($nMPPromocion) > 0) {
+							$niveladasPromocion++;
+						}
+					}
+				}
+
+				// Verificar si hay notas en el último periodo configurado
+				$tieneNotasUltimoPeriodoPromocion = false;
+				$ultimoPeriodoPromocion = $config["conf_periodos_maximos"];
+				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $desde);
+				while ($cargaVerificarPromocion = mysqli_fetch_array($cargasParaVerificarPromocion, MYSQLI_BOTH)) {
+					$notaUltimoPeriodoPromocion = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodoPromocion, $id, $cargaVerificarPromocion["car_id"], $desde);
+					if (!empty($notaUltimoPeriodoPromocion['bol_nota'])) {
+						$tieneNotasUltimoPeriodoPromocion = true;
+						break;
+					}
+				}
+				
+				if ($tieneNotasUltimoPeriodoPromocion) {
+					$claseMensajePromocion = 'mensaje-promocion';
+					if($materiasPerdidasPromocion == 0 || $niveladasPromocion >= $materiasPerdidasPromocion){
+						$msjPromocion = "EL (LA) ESTUDIANTE " . $nombre . " FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensajePromocion .= ' mensaje-promovido';
+					} else {
+						$msjPromocion = "EL (LA) ESTUDIANTE " . $nombre . " NO FUE PROMOVIDO(A) AL GRADO SIGUIENTE";
+						$claseMensajePromocion .= ' mensaje-no-promovido';
+					}
+
+					if ($periodoFinalPromocion < $config["conf_periodos_maximos"] && $matriculaPromocion["mat_estado_matricula"] == CANCELADO) {
+						$msjPromocion = "EL(LA) ESTUDIANTE " . $nombre . " FUE RETIRADO SIN FINALIZAR AÑO LECTIVO";
+						$claseMensajePromocion = 'mensaje-promocion mensaje-retirado';
+					}
+					?>
+					<div class="<?= $claseMensajePromocion; ?>"><?= $msjPromocion; ?></div>
+				<?php 
+				}
+			}
+		}
+		
+		// Si está consolidado, es un solo año, o solo hay un año, mostrar pie y firmas una sola vez después del loop
+		if ($consolidarTextoAnios || $restaAgnos == 1 || $esUnSoloAnio) {
 			if (date('m') < 10) {
 				$mes = substr(date('m'), 1);
 			} else {
@@ -1639,6 +1788,20 @@ $tiposNotas = [];
 	?>
 
 	<script>
+		// Función para mostrar/ocultar el formulario de configuración
+		function toggleConfigCertificado() {
+			var form = document.getElementById('configCertificadoForm');
+			var btn = document.getElementById('btnConfigCertificado');
+			
+			if (form.classList.contains('visible')) {
+				form.classList.remove('visible');
+				btn.innerHTML = '<i class="fas fa-cog"></i><span>Configuración</span>';
+			} else {
+				form.classList.add('visible');
+				btn.innerHTML = '<i class="fas fa-times"></i><span>Cerrar</span>';
+			}
+		}
+		
 		document.addEventListener('DOMContentLoaded', function() {
 			// Mostrar/ocultar configuración de logo
 			var incluirLogoCheck = document.getElementById('incluir_logo_check');
