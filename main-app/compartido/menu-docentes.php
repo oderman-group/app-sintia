@@ -28,7 +28,7 @@
 								Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACADEMICO)
 							) {
 								$arrayItemsAcademico = [
-									"DC0034","DC0080", "DC0035", "DC0011", "DC0079", "DC0039", "DC0022", "DC0043", "DC0046", "DC0012", "DC0037", "DC0018", "DC0015", "DC0021", "DC0020", "DC0007", "DC0029", "DC0025", "DC0070", "DC0072", "DC0071", "DC0019", "DC0028", "DC0077"
+									"DC0034","DC0080", "DC0035", "DC0011", "DC0079", "DC0039", "DC0022", "DC0043", "DC0046", "DC0037", "DC0018", "DC0021", "DC0020", "DC0007", "DC0029", "DC0025", "DC0070", "DC0072", "DC0071", "DC0019", "DC0028", "DC0077"
 								]
 							?>
 							<li <?php agregarClass(MENU_PADRE, $arrayItemsAcademico) ?>>
@@ -52,10 +52,6 @@
 
 									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CLASES)){ ?>
 										<li <?php agregarClass(MENU,["DC0046", "DC0025", "DC0070", "DC0072", "DC0071"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_CLASES, "clases.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[7][$datosUsuarioActual['uss_idioma']];?></span></a></li>
-									<?php }?>
-
-									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)){ ?>
-										<li <?php agregarClass(MENU,["DC0012", "DC0015"]) ?>><a <?php validarModuloMenu(Modulos::MODULO_CRONOGRAMA, "cronograma-calendario.php", MENU) ?> class="nav-link "> <span class="title"><?=$frases[111][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 									
 									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_IMPORTAR_INFORMACION_ACADEMICA)){ ?>
@@ -114,6 +110,30 @@
 										<span class="title">Aspectos</span> 
 									</a>
 								</li>
+							<?php }?>
+
+							<?php
+							// Verificar si el docente tiene al menos una carga académica para mostrar "Mi cronograma"
+							$mostrarCronograma = false;
+							if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)){
+								require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+								global $conexion;
+								$cCargasCronograma = CargaAcademica::traerCargasDocentes($config, $_SESSION["id"]);
+								if(mysqli_num_rows($cCargasCronograma) > 0){
+									$mostrarCronograma = true;
+								}
+							}
+							?>
+							
+							<?php if($mostrarCronograma){?>
+							<li <?php agregarClass(MENU,["DC0015"]) ?>>
+								<a <?php validarModuloMenu(Modulos::MODULO_CRONOGRAMA, "cronograma-calendario.php", MENU) ?> class="nav-link nav-toggle">
+									<div class="menu-icon icon-academic">
+										<i class="fa fa-calendar-alt"></i>
+									</div>
+									<span class="title">Mi cronograma</span>
+								</a>
+							</li>
 							<?php }?>
 
 							<?php if(
