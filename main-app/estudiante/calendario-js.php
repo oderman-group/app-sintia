@@ -1,20 +1,6 @@
 <?php
-require_once(ROOT_PATH."/main-app/class/Cronograma.php");
-$consulta = Cronograma::traerDatosCronograma($conexion, $config, $cargaConsultaActual, $periodoConsultaActual);
-$contReg=1; 
-$eventos ="";
-while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
-	$resultado["mes"]--;
-	$eventos .= '
-		{
-			title: "'.$resultado["cro_tema"].'",
-			start: new Date('.$resultado["agno"].', '.$resultado["mes"].', '.$resultado["dia"].', 6, 0),
-			backgroundColor: "'.$resultado["cro_color"].'",
-			url: "cronograma-detalles.php?idR='.base64_encode($resultado["cro_id"]).'&usrEstud='.$_GET["usrEstud"].'&carga='.base64_encode($cargaConsultaActual).'&periodo='.base64_encode($periodoConsultaActual).'"
-		},
-	'; 
-}
-$eventos = substr($eventos,0,-1);
+// Incluir el archivo que obtiene todas las actividades del estudiante
+include("calendario-actividades-todas.php");
 ?>
 
 <script type="application/javascript">

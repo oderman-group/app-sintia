@@ -89,7 +89,7 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
 										<div class="form-group row">
 													<label class="col-sm-2 control-label">Color</label>
 													<div class="col-sm-4">
-														<input type="color" name="colorFondo" class="form-control" autocomplete="off" value="<?=$datosConsultaBD['cro_color'];?>">
+														<input type="color" name="colorFondo" class="form-control" autocomplete="off" value="#3498db">
 													</div>
 											</div>
 
