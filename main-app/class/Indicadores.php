@@ -956,7 +956,7 @@ class Indicadores {
         $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
         require_once(ROOT_PATH."/main-app/class/Actividades.php");
 
-        // Construir la consulta según los parámetros
+        // Verificar actividades registradas (act_registrada=1)
         $sql = "SELECT COUNT(*) as total, 
                        GROUP_CONCAT(DISTINCT CONCAT('Carga: ', act_id_carga, ', Período: ', act_periodo) SEPARATOR '; ') as cargas_periodos
                 FROM ".BD_ACADEMICA.".academico_actividades 
@@ -980,14 +980,77 @@ class Indicadores {
         $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
         $total = !empty($datos['total']) ? (int)$datos['total'] : 0;
-        $enUso = $total > 0;
+        
+        // También verificar si hay actividades no registradas pero existentes
+        $sqlTodas = "SELECT COUNT(*) as total_todas 
+                     FROM ".BD_ACADEMICA.".academico_actividades 
+                     WHERE act_id_tipo=? AND act_estado=1 AND institucion=? AND year=?";
+        $parametrosTodas = [$idIndicador, $config['conf_id_institucion'], $year];
+        
+        if (!empty($idCarga)) {
+            $sqlTodas .= " AND act_id_carga=?";
+            $parametrosTodas[] = $idCarga;
+        }
+        
+        if (!empty($periodo)) {
+            $sqlTodas .= " AND act_periodo=?";
+            $parametrosTodas[] = $periodo;
+        }
+        
+        $resultadoTodas = BindSQL::prepararSQL($sqlTodas, $parametrosTodas);
+        $datosTodas = mysqli_fetch_array($resultadoTodas, MYSQLI_BOTH);
+        $totalTodas = !empty($datosTodas['total_todas']) ? (int)$datosTodas['total_todas'] : 0;
+        
+        // Verificar calificaciones asociadas
+        $sqlCalificaciones = "SELECT COUNT(DISTINCT aac.cal_id) as total_calificaciones 
+                              FROM ".BD_ACADEMICA.".academico_actividades aa
+                              INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad = aa.act_id AND aac.institucion = aa.institucion AND aac.year = aa.year
+                              WHERE aa.act_id_tipo=? AND aa.act_estado=1 AND aa.institucion=? AND aa.year=?";
+        $parametrosCalificaciones = [$idIndicador, $config['conf_id_institucion'], $year];
+        
+        if (!empty($idCarga)) {
+            $sqlCalificaciones .= " AND aa.act_id_carga=?";
+            $parametrosCalificaciones[] = $idCarga;
+        }
+        
+        if (!empty($periodo)) {
+            $sqlCalificaciones .= " AND aa.act_periodo=?";
+            $parametrosCalificaciones[] = $periodo;
+        }
+        
+        $resultadoCalificaciones = BindSQL::prepararSQL($sqlCalificaciones, $parametrosCalificaciones);
+        $datosCalificaciones = mysqli_fetch_array($resultadoCalificaciones, MYSQLI_BOTH);
+        $totalCalificaciones = !empty($datosCalificaciones['total_calificaciones']) ? (int)$datosCalificaciones['total_calificaciones'] : 0;
+        
+        // El indicador está en uso si tiene actividades o calificaciones
+        $enUso = $total > 0 || $totalTodas > 0 || $totalCalificaciones > 0;
 
         $mensaje = '';
         if ($enUso) {
             if (!empty($idCarga) && !empty($periodo)) {
-                $mensaje = "Este indicador está en uso en esta carga y período. Tiene {$total} actividad(es) registrada(s) y no puede ser modificado o eliminado.";
+                $mensaje = "Este indicador está en uso en esta carga y período. ";
+                if ($total > 0) {
+                    $mensaje .= "Tiene {$total} actividad(es) registrada(s). ";
+                }
+                if ($totalTodas > $total) {
+                    $mensaje .= "Tiene " . ($totalTodas - $total) . " actividad(es) adicional(es). ";
+                }
+                if ($totalCalificaciones > 0) {
+                    $mensaje .= "Tiene {$totalCalificaciones} calificación(es) asociada(s). ";
+                }
+                $mensaje .= "No puede ser modificado o eliminado.";
             } else {
-                $mensaje = "Este indicador está en uso. Tiene {$total} actividad(es) registrada(s) en: " . ($datos['cargas_periodos'] ?? 'varias cargas') . ". No puede ser modificado o eliminado.";
+                $mensaje = "Este indicador está en uso. ";
+                if ($total > 0) {
+                    $mensaje .= "Tiene {$total} actividad(es) registrada(s) en: " . ($datos['cargas_periodos'] ?? 'varias cargas') . ". ";
+                }
+                if ($totalTodas > $total) {
+                    $mensaje .= "Tiene " . ($totalTodas - $total) . " actividad(es) adicional(es). ";
+                }
+                if ($totalCalificaciones > 0) {
+                    $mensaje .= "Tiene {$totalCalificaciones} calificación(es) asociada(s). ";
+                }
+                $mensaje .= "No puede ser modificado o eliminado.";
             }
         }
 
@@ -995,6 +1058,8 @@ class Indicadores {
             'enUso' => $enUso,
             'mensaje' => $mensaje,
             'totalActividades' => $total,
+            'totalActividadesTodas' => $totalTodas,
+            'totalCalificaciones' => $totalCalificaciones,
             'cargasPeriodos' => !empty($datos['cargas_periodos']) ? $datos['cargas_periodos'] : ''
         ];
     }

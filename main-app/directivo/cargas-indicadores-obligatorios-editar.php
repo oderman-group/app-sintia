@@ -229,25 +229,42 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                    
 									<form name="formularioGuardar" action="cargas-indicadores-obligatorios-actualizar.php" method="post" enctype="multipart/form-data">
                                         <input type="hidden" value="<?=$idIndicador?>" name="idI">
+                                        <?php if($enUso): ?>
+                                        <!-- Campos hidden con valores originales cuando está en uso -->
+                                        <input type="hidden" name="nombre" value="<?=htmlspecialchars($rCargas['ind_nombre']);?>">
+                                        <input type="hidden" name="valor" value="<?=htmlspecialchars($rCargas['ind_valor']);?>">
+                                        <?php endif; ?>
 										
                                         <?php if($enUso): ?>
                                         <div class="alert alert-warning">
-                                            <strong>Advertencia:</strong> Este indicador está en uso y no puede ser modificado. <?=$verificacionUso['mensaje'];?>
+                                            <strong>Advertencia:</strong> Este indicador está en uso en al menos una de las cargas asignadas. El nombre y el valor no pueden ser modificados. Solo se pueden asignar nuevas cargas. <?=$verificacionUso['mensaje'];?>
                                         </div>
                                         <?php endif; ?>
 										
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Nombre</label>
                                             <div class="col-sm-10">
-                                                <input type="text" name="nombre" class="form-control" value="<?=$rCargas['ind_nombre'];?>" <?=$disabledEdicion;?>>
+                                                <?php if($enUso): ?>
+                                                    <input type="text" id="campoNombre" class="form-control" value="<?=htmlspecialchars($rCargas['ind_nombre']);?>" readonly disabled style="background-color: #f5f5f5; cursor: not-allowed;">
+                                                    <small class="text-muted"><i class="fa fa-info-circle"></i> No se puede modificar porque el indicador está en uso.</small>
+                                                <?php else: ?>
+                                                    <input type="text" id="campoNombre" name="nombre" class="form-control" value="<?=htmlspecialchars($rCargas['ind_nombre']);?>">
+                                                <?php endif; ?>
                                             </div>
                                         </div>	
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Valor</label>
                                             <div class="col-sm-2">
-                                                <input type="text" name="valor" class="form-control" value="<?=$rCargas['ind_valor'];?>" <?=$disabledEdicion;?>>
+                                                <?php if($enUso): ?>
+                                                    <input type="text" id="campoValor" class="form-control" value="<?=htmlspecialchars($rCargas['ind_valor']);?>" readonly disabled style="background-color: #f5f5f5; cursor: not-allowed;">
+                                                    <small class="text-muted"><i class="fa fa-info-circle"></i> No se puede modificar porque el indicador está en uso.</small>
+                                                <?php else: ?>
+                                                    <input type="text" id="campoValor" name="valor" class="form-control" value="<?=htmlspecialchars($rCargas['ind_valor']);?>">
+                                                <?php endif; ?>
                                             </div>
-                                            <span style="color:#F06; font-size:11px;">Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.</span>
+                                            <div class="col-sm-8">
+                                                <span style="color:#F06; font-size:11px;">Estos valores m&aacute;s la suma de los indicadores que crear&aacute; el docente debe ser igual a 100.</span>
+                                            </div>
                                         </div>	
 
                                         <hr>
@@ -313,9 +330,13 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                             </div>
                                         </div>
 
-                                        <?php if (!$enUso): ?>
                                         <hr>
                                         <h4>Asignar a Nuevas Cargas</h4>
+                                        <?php if($enUso): ?>
+                                        <div class="alert alert-info">
+                                            <i class="fa fa-info-circle"></i> Puede asignar este indicador a nuevas cargas aunque esté en uso.
+                                        </div>
+                                        <?php endif; ?>
                                         
                                         <div class="form-group row">
                                             <label class="col-sm-2 control-label">Asignar a</label>
@@ -390,15 +411,40 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                 });
                                             }
                                         }
-                                        </script>
+                                        
+                                        // Validación antes de enviar el formulario (solo si está en uso)
+                                        <?php if($enUso): ?>
+                                        var indicadorEnUso = true;
+                                        var nombreOriginal = '<?=addslashes($rCargas['ind_nombre']);?>';
+                                        var valorOriginal = '<?=addslashes($rCargas['ind_valor']);?>';
+                                        
+                                        document.querySelector('form[name="formularioGuardar"]').addEventListener('submit', function(e) {
+                                            // Verificar que los valores hidden sean los originales (protección adicional)
+                                            var nombreHidden = document.querySelector('input[name="nombre"][type="hidden"]');
+                                            var valorHidden = document.querySelector('input[name="valor"][type="hidden"]');
+                                            
+                                            if (nombreHidden && nombreHidden.value.trim() !== nombreOriginal) {
+                                                e.preventDefault();
+                                                alert('Este indicador está en uso y no se pueden modificar el nombre ni el valor. Solo se pueden asignar nuevas cargas.');
+                                                nombreHidden.value = nombreOriginal;
+                                                return false;
+                                            }
+                                            
+                                            if (valorHidden && Math.abs(parseFloat(valorHidden.value) - parseFloat(valorOriginal)) > 0.0001) {
+                                                e.preventDefault();
+                                                alert('Este indicador está en uso y no se pueden modificar el nombre ni el valor. Solo se pueden asignar nuevas cargas.');
+                                                valorHidden.value = valorOriginal;
+                                                return false;
+                                            }
+                                        });
                                         <?php endif; ?>
+                                        </script>
 
 										
                                     <?php 
-                                    if($enUso) {
-                                        echo '<div class="alert alert-danger">No se puede editar este indicador porque está en uso.</div>';
-                                    }
-                                    $botones = new botonesGuardar("cargas-indicadores-obligatorios.php",!$enUso); 
+                                    // El botón siempre debe estar habilitado para permitir asignar nuevas cargas
+                                    // incluso cuando el indicador está en uso
+                                    $botones = new botonesGuardar("cargas-indicadores-obligatorios.php", true); 
                                     ?>
                                     </form>
                                 </div>
