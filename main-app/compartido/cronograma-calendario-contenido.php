@@ -16,6 +16,62 @@
                             </ol>
                         </div>
                     </div>
+                    <?php 
+                    // Inicializar variables si no están definidas
+                    if(!isset($totalActividades)) $totalActividades = 0;
+                    if(!isset($totalPendientes)) $totalPendientes = 0;
+                    if(!isset($totalHoy)) $totalHoy = 0;
+                    ?>
+                    <?php if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){?>
+                    <!-- Tarjetas de resumen de actividades -->
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col-md-4">
+                            <div class="card-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                <div class="card-body" style="padding: 20px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <h3 style="margin: 0; font-size: 32px; font-weight: 700;"><?= $totalActividades; ?></h3>
+                                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Total de Actividades</p>
+                                        </div>
+                                        <div style="font-size: 48px; opacity: 0.3;">
+                                            <i class="fa fa-calendar-check"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+                                <div class="card-body" style="padding: 20px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <h3 style="margin: 0; font-size: 32px; font-weight: 700;"><?= $totalPendientes; ?></h3>
+                                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Actividades Pendientes</p>
+                                        </div>
+                                        <div style="font-size: 48px; opacity: 0.3;">
+                                            <i class="fa fa-clock"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
+                                <div class="card-body" style="padding: 20px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <h3 style="margin: 0; font-size: 32px; font-weight: 700;"><?= $totalHoy; ?></h3>
+                                            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Actividades de Hoy</p>
+                                        </div>
+                                        <div style="font-size: 48px; opacity: 0.3;">
+                                            <i class="fa fa-calendar-day"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php }?>
                     <div class="row">
                     	<div class="col-md-12">
 							<?php if($datosUsuarioActual['uss_tipo']==TIPO_ESTUDIANTE){?>
