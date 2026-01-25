@@ -168,7 +168,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                 </button>
                                                                 <ul class="dropdown-menu" role="menu">
                                                                     <?php if($tieneEditar){?>
-                                                                    <li><a href="cargas-indicadores-obligatorios-editar.php?id=<?=base64_encode($resultado['ind_id']);?>" <?php if($enUso) echo 'onclick="alert(\'Este indicador está en uso y no puede ser editado.\'); return false;"'; ?>><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
+                                                                    <li><a href="cargas-indicadores-obligatorios-editar.php?id=<?=base64_encode($resultado['ind_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
                                                                     <?php } if($tieneEliminar){?>
                                                                     <li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','cargas-indicadores-obligatorios-eliminar.php?idN=<?=base64_encode($resultado['ind_id']);?>')">Eliminar</a></li>	
                                                                     <?php }?>

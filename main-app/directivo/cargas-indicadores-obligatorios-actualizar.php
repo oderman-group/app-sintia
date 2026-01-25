@@ -68,12 +68,15 @@ if (!empty($_POST["periodos"]) && is_array($_POST["periodos"]) && count($_POST["
 	if ($resultadoAsignacion['duplicadas'] > 0) {
 		$mensajeAsignacion .= ($mensajeAsignacion ? " " : "") . "Se omitieron {$resultadoAsignacion['duplicadas']} asignación(es) duplicada(s).";
 	}
+	if (isset($resultadoAsignacion['omitidas']) && $resultadoAsignacion['omitidas'] > 0) {
+		$mensajeAsignacion .= ($mensajeAsignacion ? " " : "") . "Se omitieron {$resultadoAsignacion['omitidas']} asignación(es) porque el docente ya tiene indicadores creados en ese período.";
+	}
 	if (!empty($resultadoAsignacion['errores'])) {
 		$mensajeAsignacion .= ($mensajeAsignacion ? " " : "") . "Errores: " . implode(", ", $resultadoAsignacion['errores']);
 	}
 	
-	// Si no hubo asignaciones ni duplicadas ni errores, puede ser que no haya cargas disponibles
-	if ($resultadoAsignacion['asignadas'] == 0 && $resultadoAsignacion['duplicadas'] == 0 && empty($resultadoAsignacion['errores'])) {
+	// Si no hubo asignaciones ni duplicadas ni omitidas ni errores, puede ser que no haya cargas disponibles
+	if ($resultadoAsignacion['asignadas'] == 0 && $resultadoAsignacion['duplicadas'] == 0 && (empty($resultadoAsignacion['omitidas']) || $resultadoAsignacion['omitidas'] == 0) && empty($resultadoAsignacion['errores'])) {
 		$mensajeAsignacion = "No se pudieron asignar cargas. Verifique que existan cargas académicas con la configuración 'Indicadores definidos por directivo' activada.";
 	}
 }
