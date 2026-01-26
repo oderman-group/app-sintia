@@ -1,28 +1,32 @@
 <?php include("session.php");?>
-<?php $idPaginaInterna = 'DC0013';?>
+<?php $idPaginaInterna = 'DT0035';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
-<?php include("verificar-carga.php");?>
-<?php include("verificar-periodos-diferentes.php");?>
-<?php include("../compartido/head.php");?>
-<?php
-if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $periodoConsultaActual) )
-{
+<?php include("../compartido/head.php");
+require_once(ROOT_PATH."/main-app/class/Indicadores.php");
+require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
-	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=212";</script>';
+Utilidades::validarParametros($_GET,["carga"]);
+
+if(!Modulos::validarSubRol([$idPaginaInterna])){
+	echo '<script type="text/javascript">window.location.href="page-info.php?idmsg=301";</script>';
 	exit();
 }
-?>
 
+$idCarga = base64_decode($_GET["carga"]);
+$datosCarga = CargaAcademica::traerCargaMateriaPorID($config, $idCarga);
+
+// Obtener todos los indicadores obligatorios disponibles
+$consultaIndicadores = Indicadores::consultarIndicadoresObligatorios();
+
+// Obtener períodos máximos del grado
+$periodosMaximos = $config['conf_periodos_maximos'] ?? 4;
+?>
 	<!--bootstrap -->
     <link href="../../config-general/assets/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
     <link href="../../config-general/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.css" rel="stylesheet" media="screen">
 	<!-- Theme Styles -->
     <link href="../../config-general/assets/css/pages/formlayout.css" rel="stylesheet" type="text/css" />
-	<!-- dropzone -->
-    <link href="../../config-general/assets/plugins/dropzone/dropzone.css" rel="stylesheet" media="screen">
-    <!--tagsinput-->
-    <link href="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.css" rel="stylesheet">
-    <!--select2-->
+	<!-- select2-->
     <link href="../../config-general/assets/plugins/select2/css/select2.css" rel="stylesheet" type="text/css" />
     <link href="../../config-general/assets/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
 </head>
@@ -41,61 +45,78 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
                     <div class="page-bar">
                         <div class="page-title-breadcrumb">
                             <div class=" pull-left">
-                                <div class="page-title"><?=$frases[56][$datosUsuarioActual['uss_idioma']];?> <?=$frases[111][$datosUsuarioActual['uss_idioma']];?></div>
+                                <div class="page-title">Aplicar Indicadores Obligatorios</div>
 								<?php include("../compartido/texto-manual-ayuda.php");?>
                             </div>
 							<ol class="breadcrumb page-breadcrumb pull-right">
-                                <li><a class="parent-item" href="#" name="cronograma-calendario.php" onClick="deseaRegresar(this)"><?=$frases[111][$datosUsuarioActual['uss_idioma']];?></a>&nbsp;<i class="fa fa-angle-right"></i></li>
-                                <li class="active"><?=$frases[56][$datosUsuarioActual['uss_idioma']];?> <?=$frases[111][$datosUsuarioActual['uss_idioma']];?></li>
+                                <li><a class="parent-item" href="javascript:void(0);" name="cargas.php" onClick="deseaRegresar(this)">Cargas</a>&nbsp;<i class="fa fa-angle-right"></i></li>
+                                <li class="active">Aplicar Indicadores</li>
                             </ol>
                         </div>
                     </div>
-                    <?php include("includes/barra-superior-informacion-actual.php"); ?>
                     <div class="row">
 						
-						
-                        <div class="col-sm-9">
-
-
-								<div class="panel">
-									<header class="panel-heading panel-heading-purple"><?=$frases[119][$datosUsuarioActual['uss_idioma']];?> </header>
-                                	<div class="panel-body">
-
+                        <div class="col-sm-12">
+							<div class="panel">
+								<header class="panel-heading panel-heading-purple">Aplicar Indicadores Obligatorios a Carga Académica</header>
+                                <div class="panel-body">
+                                    <div class="alert alert-info">
+                                        <strong>Información:</strong> Seleccione los indicadores obligatorios que desea aplicar a esta carga académica. 
+                                        El sistema validará automáticamente si ya existen para evitar duplicados.
+                                    </div>
                                    
-									<form name="formularioGuardar" action="cronograma-guardar.php?carga=<?=base64_encode($cargaConsultaActual);?>&periodo=<?=base64_encode($periodoConsultaActual);?>" method="post">
-
-
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Descripción</label>
-												<div class="col-sm-10">
-													<input type="text" name="contenido" class="form-control" autocomplete="off" required>
-												</div>
-											</div>
-											
-											<div class="form-group row">
-												<label class="col-sm-2 control-label">Recursos</label>
-												<div class="col-sm-10">
-													<input type="text" name="recursos" class="form-control" autocomplete="off">
-												</div>
-											</div>
-											
-											<div class="form-group row">
-													<label class="col-sm-2 control-label">Fecha</label>
-													<div class="col-sm-4">
-														<input type="date" name="fecha" class="form-control" autocomplete="off" value="<?=date("Y-m-d");?>" required>
-													</div>
-											</div>
+									<form name="formularioGuardar" action="cargas-aplicar-indicadores-guardar.php" method="post" enctype="multipart/form-data">
+										<input type="hidden" name="carga" value="<?=$idCarga;?>">
 										
 										<div class="form-group row">
-													<label class="col-sm-2 control-label">Color</label>
-													<div class="col-sm-4">
-														<input type="color" name="colorFondo" class="form-control" autocomplete="off" value="#3498db">
-													</div>
+											<label class="col-sm-2 control-label">Carga Académica</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" value="<?=$datosCarga['gra_nombre'];?> - <?=$datosCarga['gru_nombre'];?> - <?=$datosCarga['mat_nombre'];?>" readonly>
 											</div>
+										</div>
 
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Indicadores Disponibles</label>
+											<div class="col-sm-10">
+												<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+													<?php 
+													$hayIndicadores = false;
+													while($indicador = mysqli_fetch_array($consultaIndicadores, MYSQLI_BOTH)): 
+														$hayIndicadores = true;
+													?>
+														<div class="checkbox">
+															<label>
+																<input type="checkbox" name="indicadores[]" value="<?=$indicador['ind_id'];?>">
+																<strong><?=$indicador['ind_nombre'];?></strong> - Valor: <?=$indicador['ind_valor'];?>%
+															</label>
+														</div>
+													<?php endwhile; ?>
+													<?php if (!$hayIndicadores): ?>
+														<p class="text-muted">No hay indicadores obligatorios disponibles.</p>
+													<?php endif; ?>
+												</div>
+												<small class="text-muted">Seleccione los indicadores que desea aplicar a esta carga.</small>
+											</div>
+										</div>
 
-                                            <?php 
-                            				$botones = new botonesGuardar("cronograma-calendario.php",Modulos::validarPermisoEdicion()); ?> 
+										<div class="form-group row">
+											<label class="col-sm-2 control-label">Períodos</label>
+											<div class="col-sm-10">
+												<div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+													<?php for ($p = 1; $p <= $periodosMaximos; $p++): ?>
+														<div class="checkbox">
+															<label>
+																<input type="checkbox" name="periodos[]" value="<?=$p;?>" checked>
+																Período <?=$p;?>
+															</label>
+														</div>
+													<?php endfor; ?>
+												</div>
+												<small class="text-muted">Seleccione los períodos en los que se aplicarán los indicadores seleccionados.</small>
+											</div>
+										</div>
+										
+                                    <?php $botones = new botonesGuardar("cargas-editar.php?idR=".base64_encode($idCarga),true); ?>
                                     </form>
                                 </div>
                             </div>
@@ -132,16 +153,9 @@ if( !CargaAcademica::validarPermisoPeriodosDiferentes($datosCargaActual, $period
 	<script src="../../config-general/assets/plugins/jquery-toast/dist/toast.js" ></script>	
 	<!-- Material -->
 	<script src="../../config-general/assets/plugins/material/material.min.js"></script>
-	<!-- dropzone -->
-    <script src="../../config-general/assets/plugins/dropzone/dropzone.js" ></script>
-    <!--tags input-->
-    <script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input.js" ></script>
-    <script src="../../config-general/assets/plugins/jquery-tags-input/jquery-tags-input-init.js" ></script>
-    <!--select2-->
+	<!--select2-->
     <script src="../../config-general/assets/plugins/select2/js/select2.js" ></script>
     <script src="../../config-general/assets/js/pages/select2/select2-init.js" ></script>
     <!-- end js include path -->
 </body>
-
-<!-- Mirrored from radixtouch.in/templates/admin/smart/source/light/advance_form.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 18 May 2018 17:32:54 GMT -->
 </html>

@@ -157,11 +157,16 @@ $porcentajeRestante = 100 - $valores[0];
                 <?php
                     foreach ($actividadesCarga as $rA) {
                         $descripcionLimpia = htmlspecialchars($rA['act_descripcion'], ENT_QUOTES, 'UTF-8');
+                        // Formatear fecha de la actividad
+                        $fechaActividad = '';
+                        if (!empty($rA['act_fecha'])) {
+                            $fechaActividad = date('d/m/Y', strtotime($rA['act_fecha']));
+                        }
                         echo '<th class="columna-actividad-header">
                             <a href="calificaciones-editar.php?idR=' . base64_encode($rA['act_id']) . '" 
                                title="' . $descripcionLimpia . ' - Valor: ' . $rA['act_valor'] . '%" 
                                class="actividad-link">
-                                <span class="actividad-id">' . $rA['act_id'] . '</span>
+                                <span class="actividad-id">' . htmlspecialchars($fechaActividad, ENT_QUOTES, 'UTF-8') . '</span>
                                 <span class="actividad-descripcion">' . $descripcionLimpia . '</span>
                                 <span class="actividad-porcentaje">(' . $rA['act_valor'] . '%)</span>
                             </a>

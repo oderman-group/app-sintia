@@ -73,6 +73,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <th>C&oacute;digo</th>
                                                         <th>Nombre</th>
                                                         <th>Valor</th>
+														<th>Cargas Asignadas</th>
+														<th>Estado</th>
 														<th>Acciones</th>
                                                     </tr>
                                                 </thead>
@@ -83,31 +85,97 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                     $sumaP = 0;
 													while($resultado = mysqli_fetch_array($consulta, MYSQLI_BOTH)){
                                                         $sumaP = $sumaP + $resultado['ind_valor'];
+														
+														// Verificar si el indicador está en uso (actividades registradas)
+														$verificacionUso = Indicadores::verificarIndicadorEnUso($config, $resultado['ind_id']);
+														
+														// Verificar también si hay actividades relacionadas (aunque no estén registradas)
+														// o si hay calificaciones asociadas a actividades de este indicador
+														$sqlActividades = "SELECT COUNT(*) as total_actividades 
+																		 FROM ".BD_ACADEMICA.".academico_actividades 
+																		 WHERE act_id_tipo=? AND act_estado=1 AND institucion=? AND year=?";
+														$parametrosActividades = [$resultado['ind_id'], $config['conf_id_institucion'], $_SESSION["bd"]];
+														$resultadoActividades = BindSQL::prepararSQL($sqlActividades, $parametrosActividades);
+														$datosActividades = mysqli_fetch_array($resultadoActividades, MYSQLI_BOTH);
+														$totalActividades = !empty($datosActividades['total_actividades']) ? (int)$datosActividades['total_actividades'] : 0;
+														
+														// Verificar si hay calificaciones asociadas a actividades de este indicador
+														$sqlCalificaciones = "SELECT COUNT(DISTINCT aac.cal_id) as total_calificaciones 
+																			  FROM ".BD_ACADEMICA.".academico_actividades aa
+																			  INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad = aa.act_id AND aac.institucion = aa.institucion AND aac.year = aa.year
+																			  WHERE aa.act_id_tipo=? AND aa.act_estado=1 AND aa.institucion=? AND aa.year=?";
+														$parametrosCalificaciones = [$resultado['ind_id'], $config['conf_id_institucion'], $_SESSION["bd"]];
+														$resultadoCalificaciones = BindSQL::prepararSQL($sqlCalificaciones, $parametrosCalificaciones);
+														$datosCalificaciones = mysqli_fetch_array($resultadoCalificaciones, MYSQLI_BOTH);
+														$totalCalificaciones = !empty($datosCalificaciones['total_calificaciones']) ? (int)$datosCalificaciones['total_calificaciones'] : 0;
+														
+														// El indicador está en uso si tiene actividades o calificaciones
+														$enUso = $verificacionUso['enUso'] || $totalActividades > 0 || $totalCalificaciones > 0;
+														
+														$estadoTexto = $enUso ? '<span class="label label-danger">En Uso</span>' : '<span class="label label-success">Disponible</span>';
+														$mensajeUso = '';
+														if ($enUso) {
+															$mensajeUso = 'Este indicador está en uso. ';
+															if ($verificacionUso['totalActividades'] > 0) {
+																$mensajeUso .= 'Tiene ' . $verificacionUso['totalActividades'] . ' actividad(es) registrada(s). ';
+															}
+															if ($totalActividades > $verificacionUso['totalActividades']) {
+																$mensajeUso .= 'Tiene ' . ($totalActividades - $verificacionUso['totalActividades']) . ' actividad(es) adicional(es). ';
+															}
+															if ($totalCalificaciones > 0) {
+																$mensajeUso .= 'Tiene ' . $totalCalificaciones . ' calificación(es) asociada(s). ';
+															}
+															$mensajeUso .= 'No puede ser eliminado.';
+														}
+														$estadoTooltip = $enUso ? 'title="' . htmlspecialchars($mensajeUso) . '"' : '';
+														
+														// Contar cargas asignadas (distintas cargas, no importa el período)
+														$sqlCargas = "SELECT COUNT(DISTINCT ipc_carga) as total_cargas, COUNT(*) as total_relaciones 
+																	 FROM ".BD_ACADEMICA.".academico_indicadores_carga 
+																	 WHERE ipc_indicador=? AND ipc_creado=0 AND institucion=? AND year=?";
+														$parametrosCargas = [$resultado['ind_id'], $config['conf_id_institucion'], $_SESSION["bd"]];
+														$resultadoCargas = BindSQL::prepararSQL($sqlCargas, $parametrosCargas);
+														$datosCargas = mysqli_fetch_array($resultadoCargas, MYSQLI_BOTH);
+														$totalCargasAsignadas = !empty($datosCargas['total_cargas']) ? (int)$datosCargas['total_cargas'] : 0;
+														$totalRelaciones = !empty($datosCargas['total_relaciones']) ? (int)$datosCargas['total_relaciones'] : 0;
 													?>
 													<tr>
                                                         <td><?=$contReg;?></td>
                                                         <td><?=$resultado['ind_id'];?></td>
                                                         <td><?=$resultado['ind_nombre'];?></td>
-                                                        <td><?=$resultado['ind_valor'];?></td>														
+                                                        <td><?=$resultado['ind_valor'];?></td>
 														<td>
-                                                            <?php if(Modulos::validarSubRol(['DT0037','DT0157','DT0036'])){?>
+															<?php if($totalCargasAsignadas > 0): ?>
+																<span class="badge badge-info" title="Asignado a <?=$totalCargasAsignadas;?> carga(s) académica(s) en <?=$totalRelaciones;?> relación(es) carga/período"><?=$totalCargasAsignadas;?> carga(s)</span>
+															<?php else: ?>
+																<span class="text-muted">Sin asignar</span>
+															<?php endif; ?>
+														</td>
+														<td <?=$estadoTooltip;?>><?=$estadoTexto;?></td>
+														<td>
+                                                            <?php 
+                                                            // Verificar si hay opciones disponibles para mostrar
+                                                            $tieneEditar = Modulos::validarSubRol(['DT0037']);
+                                                            $tieneEliminar = Modulos::validarSubRol(['DT0157']) && !$enUso; // Solo mostrar eliminar si NO está en uso
+                                                            
+                                                            // Solo mostrar el botón si hay al menos una opción disponible
+                                                            if ($tieneEditar || $tieneEliminar) {
+                                                            ?>
 															<div class="btn-group">
                                                                 <button type="button" class="btn btn-primary"><?=$frases[54][$datosUsuarioActual['uss_idioma']];?></button>
                                                                 <button type="button" class="btn btn-primary dropdown-toggle m-r-20" data-toggle="dropdown">
                                                                     <i class="fa fa-angle-down"></i>
                                                                 </button>
                                                                 <ul class="dropdown-menu" role="menu">
-                                                                    <?php if(Modulos::validarSubRol(['DT0037'])){?>
+                                                                    <?php if($tieneEditar){?>
                                                                     <li><a href="cargas-indicadores-obligatorios-editar.php?id=<?=base64_encode($resultado['ind_id']);?>"><?=$frases[165][$datosUsuarioActual['uss_idioma']];?></a></li>
-                                                                    <li>
-                                                                    <?php } if(Modulos::validarSubRol(['DT0157'])){?>
-                                                                    <a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','cargas-indicadores-obligatorios-eliminar.php?idN=<?=base64_encode($resultado['ind_id']);?>')">Eliminar</a>    
-                                                                    </li>	
-                                                                    <?php } if(Modulos::validarSubRol(['DT0036'])){?>
-                                                                    <li><a href="cargas-indicadores-obligatorios-ver.php?ind=<?=base64_encode($resultado['ind_id']);?>&indNombre=<?=base64_encode($resultado['ind_nombre']);?>" title="Grados por asignaturas">Grados por asignaturas</a></li>
+                                                                    <?php } if($tieneEliminar){?>
+                                                                    <li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Deseas eliminar este registro?','question','cargas-indicadores-obligatorios-eliminar.php?idN=<?=base64_encode($resultado['ind_id']);?>')">Eliminar</a></li>	
                                                                     <?php }?>
                                                                 </ul>
                                                             </div>
+                                                            <?php } else { ?>
+                                                                <span class="text-muted">-</span>
                                                             <?php }?>
 														</td>
                                                     </tr>

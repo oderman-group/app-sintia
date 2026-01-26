@@ -36,9 +36,28 @@ if (!$validacion['valido']) {
 }
 
 // Si la validación es exitosa, proceder con la actualización
+// Detectar cambio de estado de no matriculado (4) a matriculado (1)
+// o si mat_fecha está vacío/inválido y el estado es matriculado
+$actualizarFechaMatricula = false;
+if ($estadoActual === Estudiantes::ESTADO_NO_MATRICULADO && $estadoNuevo === Estudiantes::ESTADO_MATRICULADO) {
+    $actualizarFechaMatricula = true;
+} elseif ($estadoNuevo === Estudiantes::ESTADO_MATRICULADO) {
+    // Si el estado nuevo es matriculado y la fecha está vacía o es inválida, actualizarla
+    $fechaMatriculaActual = $datosEstudiante['mat_fecha'] ?? '';
+    if (empty($fechaMatriculaActual) || $fechaMatriculaActual === '0000-00-00' || $fechaMatriculaActual === '0000-00-00 00:00:00') {
+        $actualizarFechaMatricula = true;
+    }
+}
+
 $update = [
     'mat_estado_matricula' => $estadoNuevo
 ];
+
+// Si se debe actualizar la fecha de matrícula, agregarla al update
+if ($actualizarFechaMatricula) {
+    $update['mat_fecha'] = date('Y-m-d H:i:s');
+}
+
 Estudiantes::actualizarMatriculasPorId($config, $_POST["idEstudiante"], $update);
 ?>  
 <div class="alert alert-success">

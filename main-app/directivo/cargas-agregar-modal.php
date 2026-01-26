@@ -20,8 +20,8 @@ if (!Modulos::validarPermisoEdicion()) {
 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
     <form name="formularioGuardar" id="formAgregarCarga" action="cargas-guardar.php" method="post">
 
-        <!-- Sección: Información Básica -->
-        <h5 class="mb-3"><i class="fa fa-info-circle"></i> Información Básica</h5>
+        <!-- Secciรณn: Informaciรณn Bรกsica -->
+        <h5 class="mb-3"><i class="fa fa-info-circle"></i> Informaciรณn Bรกsica</h5>
         
         <div class="row">
             <div class="col-md-12">
@@ -50,7 +50,7 @@ if (!Modulos::validarPermisoEdicion()) {
                 <div class="form-group">
                     <label>Curso(s) <span class="text-danger">*</span></label>
                     <select id="multiple1" class="form-control select2-modal" name="curso[]" required multiple <?= $disabledPermiso; ?>>
-                        <option value="">Seleccione uno o más cursos</option>
+                        <option value="">Seleccione uno o mรกs cursos</option>
                         <?php
                         $opcionesConsulta = Grados::traerGradosInstitucion($config);
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
@@ -67,7 +67,7 @@ if (!Modulos::validarPermisoEdicion()) {
                 <div class="form-group">
                     <label>Grupo(s) <span class="text-danger">*</span></label>
                     <select id="multiple" class="form-control select2-modal" name="grupo[]" required multiple <?= $disabledPermiso; ?>>
-                        <option value="">Seleccione uno o más grupos</option>
+                        <option value="">Seleccione uno o mรกs grupos</option>
                         <?php
                         $opcionesConsulta = Grupos::listarGrupos();
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
@@ -82,9 +82,9 @@ if (!Modulos::validarPermisoEdicion()) {
         <div class="row">
             <div class="col-md-12">
                 <div class="form-group">
-                    <label>Asignatura(s) (Área) <span class="text-danger">*</span></label>
+                    <label>Asignatura(s) (ร�rea) <span class="text-danger">*</span></label>
                     <select class="form-control select2-modal" name="asignatura[]" required multiple <?= $disabledPermiso; ?>>
-                        <option value="">Seleccione una o más asignaturas</option>
+                        <option value="">Seleccione una o mรกs asignaturas</option>
                         <?php
                         $opcionesConsulta = Asignaturas::consultarTodasAsignaturas($conexion, $config);
                         while ($opcionesDatos = mysqli_fetch_array($opcionesConsulta, MYSQLI_BOTH)) {
@@ -152,7 +152,7 @@ if (!Modulos::validarPermisoEdicion()) {
                     <label class="col-sm-2 control-label">Estado</label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="estado" required <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1" selected>Activa</option>
                             <option value="0">Inactiva</option>
                         </select>
@@ -163,9 +163,9 @@ if (!Modulos::validarPermisoEdicion()) {
                     <label class="col-sm-2 control-label">% Actividades</label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="valorActividades" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">Manual</option>
-                            <option value="0" selected>Automático</option>
+                            <option value="0" selected>Automรกtico</option>
                         </select>
                     </div>
                 </div>
@@ -174,9 +174,9 @@ if (!Modulos::validarPermisoEdicion()) {
                     <label class="col-sm-2 control-label">% Indicadores</label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="valorIndicadores" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">Manual</option>
-                            <option value="0" selected>Automático</option>
+                            <option value="0" selected>Automรกtico</option>
                         </select>
                     </div>
                 </div>
@@ -185,7 +185,7 @@ if (!Modulos::validarPermisoEdicion()) {
                     <label class="col-sm-2 control-label">Permiso para generar informe</label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="permiso1" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1" selected>SI</option>
                             <option value="0">NO</option>
                         </select>
@@ -196,7 +196,7 @@ if (!Modulos::validarPermisoEdicion()) {
                     <label class="col-sm-2 control-label">Permiso para editar en periodos anteriores</label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="permiso2" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">SI</option>
                             <option value="0" selected>NO</option>
                         </select>
@@ -204,45 +204,60 @@ if (!Modulos::validarPermisoEdicion()) {
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Indicador automático </label>
+                    <label class="col-sm-2 control-label">Indicador automรกtico </label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="indicadorAutomatico" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">SI</option>
                             <option value="0" selected>NO</option>
                         </select>
 
-                        <span class="text-info">Si selecciona SI, el docente no llenará indicadores; solo las calificaciones. Habrá un solo indicador definitivo con el 100%.</span>
+                        <span class="text-info">Si selecciona SI, el docente no llenarรก indicadores; solo las calificaciones. Habrรก un solo indicador definitivo con el 100%.</span>
 
                     </div>
 
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Temática del periodo </label>
+                    <label class="col-sm-2 control-label">Temรกtica del periodo </label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="tematica" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">SI</option>
                             <option value="0" selected>NO</option>
                         </select>
 
-                        <span class="text-info">Si selecciona SI, el docente podrá agregar la temática del periodo en la sección de clases.</span>
+                        <span class="text-info">Si selecciona SI, el docente podrรก agregar la temรกtica del periodo en la secciรณn de clases.</span>
 
                     </div>
 
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-2 control-label">Observaciones en boletín </label>
+                    <label class="col-sm-2 control-label">Observaciones en boletรญn </label>
                     <div class="col-sm-4">
                         <select class="form-control  select2" name="observacionesBoletin" <?= $disabledPermiso; ?>>
-                            <option value="">Seleccione una opción</option>
+                            <option value="">Seleccione una opciรณn</option>
                             <option value="1">SI</option>
                             <option value="0" selected>NO</option>
                         </select>
 
-                        <span class="text-info">Si selecciona SI, el docente podrá colocar observaciones que aparecerán en el boletín de los estudiantes.</span>
+                        <span class="text-info">Si selecciona SI, el docente podrรก colocar observaciones que aparecerรกn en el boletรญn de los estudiantes.</span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">Indicadores definidos por directivo </label>
+                    <div class="col-sm-4">
+                        <select class="form-control  select2" name="indicadoresDirectivo" <?= $disabledPermiso; ?>>
+                            <option value="">Seleccione una opciรณn</option>
+                            <option value="1">SI</option>
+                            <option value="0" selected>NO</option>
+                        </select>
+
+                        <span class="text-info">Si selecciona SI, solo el directivo podrรก crear y gestionar los indicadores. El docente no podrรก crear, editar o eliminar indicadores en esta carga.</span>
 
                     </div>
 
@@ -269,7 +284,7 @@ $(document).ready(function() {
     $('#nuevaCargModal').on('shown.bs.modal', function () {
         $('.select2-modal').select2({
             dropdownParent: $('#nuevaCargModal'),
-            placeholder: "Seleccione una opción",
+            placeholder: "Seleccione una opciรณn",
             allowClear: true,
             language: {
                 noResults: function() {

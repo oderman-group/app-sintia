@@ -42,12 +42,15 @@ class Indicadores {
     /**
      * Este metodo guarda la relación de un indicador con su carga
      * @param mysqli    $conexion
+     * @param PDO       $conexionPDO
      * @param array     $config
      * @param string    $idcarga
      * @param string    $idIndicador
      * @param int       $periodo
      * @param array     $POST
      * @param array     $indicadorCopiado
+     * @param float     $creado
+     * @param string    $valor
     **/
     public static function guardarIndicadorCarga (
         mysqli  $conexion, 
@@ -62,6 +65,9 @@ class Indicadores {
         string  $valor = ""
     )
     {
+        // Asegurar que ipc_creado tenga un valor válido (0 o 1, no NULL)
+        $creado = ($creado === null || $creado === '') ? 0 : (int)$creado;
+        
         $codigo             = Utilidades::getNextIdSequence($conexionPDO, BD_ACADEMICA, 'academico_indicadores_carga');
         $copiado            = NULL;
         $evaluacion         = NULL;
@@ -70,6 +76,9 @@ class Indicadores {
         if($POST != NULL){
             $evaluacion     = !empty($POST["saberes"]) ? $POST["saberes"] : NULL;
             $valorIndicador = !empty($valor) ? $valor : (!empty($POST["valor"]) ? $POST["valor"] : NULL);
+        } else {
+            // Si no hay POST, usar el valor pasado como parámetro
+            $valorIndicador = !empty($valor) ? $valor : NULL;
         }
         
         if($indicadorCopiado != NULL){
@@ -78,11 +87,32 @@ class Indicadores {
             $valorIndicador     = !empty($indicadorCopiado['ipc_valor']) ? $indicadorCopiado['ipc_valor'] : NULL;
         }
 
-        $sql = "INSERT INTO ".BD_ACADEMICA.".academico_indicadores_carga(ipc_id, ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion, institucion, year) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        $parametros = [$codigo, $idcarga, $idIndicador, $valorIndicador, $periodo, $creado, $copiado, $evaluacion, $config['conf_id_institucion'], $_SESSION["bd"]];
-        
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        // Usar PDO directamente en lugar de BindSQL
+        try {
+            $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            $sql = "INSERT INTO ".BD_ACADEMICA.".academico_indicadores_carga(ipc_id, ipc_carga, ipc_indicador, ipc_valor, ipc_periodo, ipc_creado, ipc_copiado, ipc_evaluacion, institucion, year) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $conexionPDO->prepare($sql);
+            
+            // Bind de parámetros con tipos correctos
+            $stmt->bindParam(1, $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(2, $idcarga, PDO::PARAM_STR);
+            $stmt->bindParam(3, $idIndicador, PDO::PARAM_STR);
+            $stmt->bindValue(4, $valorIndicador, is_null($valorIndicador) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindParam(5, $periodo, PDO::PARAM_INT);
+            $stmt->bindParam(6, $creado, PDO::PARAM_INT);
+            $stmt->bindValue(7, $copiado, is_null($copiado) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(8, $evaluacion, is_null($evaluacion) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindParam(9, $config['conf_id_institucion'], PDO::PARAM_INT);
+            $stmt->bindParam(10, $_SESSION["bd"], PDO::PARAM_INT);
+            
+            $stmt->execute();
+        } catch (PDOException $e) {
+            Utilidades::writeLog('LOG desde el método guardarIndicadorCarga: '.$e->getMessage());
+            include(ROOT_PATH . "/main-app/compartido/error-catch-to-report.php");
+            throw $e;
+        }
     }
 
     /**
@@ -843,6 +873,341 @@ class Indicadores {
         $parametros = array_merge($updateValues, [$idIndicador, $config['conf_id_institucion'], $year]);
 
         $resultado = BindSQL::prepararSQL($sql, $parametros);
+    }
+
+    /**
+     * Valida si el docente tiene permiso para crear/editar/eliminar indicadores en una carga
+     * @param mysqli    $conexion
+     * @param array     $config
+     * @param string    $idCarga
+     * @param string    $idIndicador (opcional, para validar si es indicador del directivo)
+     * 
+     * @return array    ['permiso' => bool, 'mensaje' => string]
+    **/
+    public static function validarPermisoEditarIndicador (
+        mysqli  $conexion, 
+        array   $config, 
+        string  $idCarga,
+        string  $idIndicador = ""
+    )
+    {
+        // Consultar datos de la carga
+        $sql = "SELECT car_indicadores_directivo FROM ".BD_ACADEMICA.".academico_cargas WHERE car_id=? AND institucion=? AND year=?";
+        $parametros = [$idCarga, $config['conf_id_institucion'], $_SESSION["bd"]];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datosCarga = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        // Si la carga no existe
+        if (empty($datosCarga)) {
+            return [
+                'permiso' => false,
+                'mensaje' => 'La carga académica no existe.'
+            ];
+        }
+
+        // Si car_indicadores_directivo = 1, el docente NO puede crear/editar/eliminar indicadores
+        if (!empty($datosCarga['car_indicadores_directivo']) && $datosCarga['car_indicadores_directivo'] == 1) {
+            // Si se está intentando editar/eliminar un indicador específico, verificar si es del directivo
+            if (!empty($idIndicador)) {
+                $sqlIndicador = "SELECT ipc_creado FROM ".BD_ACADEMICA.".academico_indicadores_carga WHERE ipc_id=? AND ipc_carga=? AND institucion=? AND year=?";
+                $parametrosIndicador = [$idIndicador, $idCarga, $config['conf_id_institucion'], $_SESSION["bd"]];
+                $resultadoIndicador = BindSQL::prepararSQL($sqlIndicador, $parametrosIndicador);
+                $datosIndicador = mysqli_fetch_array($resultadoIndicador, MYSQLI_BOTH);
+
+                // Si el indicador fue creado por el directivo (ipc_creado=0), el docente no puede editarlo
+                if (!empty($datosIndicador) && $datosIndicador['ipc_creado'] == 0) {
+                    return [
+                        'permiso' => false,
+                        'mensaje' => 'No tiene permiso para modificar este indicador. Solo el directivo puede gestionar los indicadores en esta carga.'
+                    ];
+                }
+            } else {
+                // Si está intentando crear un nuevo indicador
+                return [
+                    'permiso' => false,
+                    'mensaje' => 'No tiene permiso para crear indicadores en esta carga. Solo el directivo puede definir los indicadores.'
+                ];
+            }
+        }
+
+        return [
+            'permiso' => true,
+            'mensaje' => ''
+        ];
+    }
+
+    /**
+     * Verifica si un indicador está en uso (tiene actividades registradas)
+     * @param array     $config
+     * @param string    $idIndicador - ID del indicador en academico_indicadores
+     * @param string    $idCarga (opcional) - Si se especifica, verifica solo en esa carga
+     * @param int       $periodo (opcional) - Si se especifica, verifica solo en ese período
+     * 
+     * @return array    ['enUso' => bool, 'mensaje' => string, 'cargas' => array]
+    **/
+    public static function verificarIndicadorEnUso (
+        array   $config,
+        string  $idIndicador,
+        string  $idCarga = null,
+        int     $periodo = null,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        require_once(ROOT_PATH."/main-app/class/Actividades.php");
+
+        // Verificar actividades registradas (act_registrada=1)
+        $sql = "SELECT COUNT(*) as total, 
+                       GROUP_CONCAT(DISTINCT CONCAT('Carga: ', act_id_carga, ', Período: ', act_periodo) SEPARATOR '; ') as cargas_periodos
+                FROM ".BD_ACADEMICA.".academico_actividades 
+                WHERE act_id_tipo=? AND act_estado=1 AND act_registrada=1 AND institucion=? AND year=?";
+
+        $parametros = [$idIndicador, $config['conf_id_institucion'], $year];
+
+        // Si se especifica carga, agregar filtro
+        if (!empty($idCarga)) {
+            $sql .= " AND act_id_carga=?";
+            $parametros[] = $idCarga;
+        }
+
+        // Si se especifica período, agregar filtro
+        if (!empty($periodo)) {
+            $sql .= " AND act_periodo=?";
+            $parametros[] = $periodo;
+        }
+
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        $total = !empty($datos['total']) ? (int)$datos['total'] : 0;
+        
+        // También verificar si hay actividades no registradas pero existentes
+        $sqlTodas = "SELECT COUNT(*) as total_todas 
+                     FROM ".BD_ACADEMICA.".academico_actividades 
+                     WHERE act_id_tipo=? AND act_estado=1 AND institucion=? AND year=?";
+        $parametrosTodas = [$idIndicador, $config['conf_id_institucion'], $year];
+        
+        if (!empty($idCarga)) {
+            $sqlTodas .= " AND act_id_carga=?";
+            $parametrosTodas[] = $idCarga;
+        }
+        
+        if (!empty($periodo)) {
+            $sqlTodas .= " AND act_periodo=?";
+            $parametrosTodas[] = $periodo;
+        }
+        
+        $resultadoTodas = BindSQL::prepararSQL($sqlTodas, $parametrosTodas);
+        $datosTodas = mysqli_fetch_array($resultadoTodas, MYSQLI_BOTH);
+        $totalTodas = !empty($datosTodas['total_todas']) ? (int)$datosTodas['total_todas'] : 0;
+        
+        // Verificar calificaciones asociadas
+        $sqlCalificaciones = "SELECT COUNT(DISTINCT aac.cal_id) as total_calificaciones 
+                              FROM ".BD_ACADEMICA.".academico_actividades aa
+                              INNER JOIN ".BD_ACADEMICA.".academico_calificaciones aac ON aac.cal_id_actividad = aa.act_id AND aac.institucion = aa.institucion AND aac.year = aa.year
+                              WHERE aa.act_id_tipo=? AND aa.act_estado=1 AND aa.institucion=? AND aa.year=?";
+        $parametrosCalificaciones = [$idIndicador, $config['conf_id_institucion'], $year];
+        
+        if (!empty($idCarga)) {
+            $sqlCalificaciones .= " AND aa.act_id_carga=?";
+            $parametrosCalificaciones[] = $idCarga;
+        }
+        
+        if (!empty($periodo)) {
+            $sqlCalificaciones .= " AND aa.act_periodo=?";
+            $parametrosCalificaciones[] = $periodo;
+        }
+        
+        $resultadoCalificaciones = BindSQL::prepararSQL($sqlCalificaciones, $parametrosCalificaciones);
+        $datosCalificaciones = mysqli_fetch_array($resultadoCalificaciones, MYSQLI_BOTH);
+        $totalCalificaciones = !empty($datosCalificaciones['total_calificaciones']) ? (int)$datosCalificaciones['total_calificaciones'] : 0;
+        
+        // El indicador está en uso si tiene actividades o calificaciones
+        $enUso = $total > 0 || $totalTodas > 0 || $totalCalificaciones > 0;
+
+        $mensaje = '';
+        if ($enUso) {
+            if (!empty($idCarga) && !empty($periodo)) {
+                $mensaje = "Este indicador está en uso en esta carga y período. ";
+                if ($total > 0) {
+                    $mensaje .= "Tiene {$total} actividad(es) registrada(s). ";
+                }
+                if ($totalTodas > $total) {
+                    $mensaje .= "Tiene " . ($totalTodas - $total) . " actividad(es) adicional(es). ";
+                }
+                if ($totalCalificaciones > 0) {
+                    $mensaje .= "Tiene {$totalCalificaciones} calificación(es) asociada(s). ";
+                }
+                $mensaje .= "No puede ser modificado o eliminado.";
+            } else {
+                $mensaje = "Este indicador está en uso. ";
+                if ($total > 0) {
+                    $mensaje .= "Tiene {$total} actividad(es) registrada(s) en: " . ($datos['cargas_periodos'] ?? 'varias cargas') . ". ";
+                }
+                if ($totalTodas > $total) {
+                    $mensaje .= "Tiene " . ($totalTodas - $total) . " actividad(es) adicional(es). ";
+                }
+                if ($totalCalificaciones > 0) {
+                    $mensaje .= "Tiene {$totalCalificaciones} calificación(es) asociada(s). ";
+                }
+                $mensaje .= "No puede ser modificado o eliminado.";
+            }
+        }
+
+        return [
+            'enUso' => $enUso,
+            'mensaje' => $mensaje,
+            'totalActividades' => $total,
+            'totalActividadesTodas' => $totalTodas,
+            'totalCalificaciones' => $totalCalificaciones,
+            'cargasPeriodos' => !empty($datos['cargas_periodos']) ? $datos['cargas_periodos'] : ''
+        ];
+    }
+
+    /**
+     * Verifica si ya existe un indicador asignado a una carga y período específicos
+     * @param array     $config
+     * @param string    $idIndicador
+     * @param string    $idCarga
+     * @param int       $periodo
+     * @param string    $yearBd
+     * 
+     * @return bool
+    **/
+    public static function verificarIndicadorCargaPeriodo (
+        array   $config,
+        string  $idIndicador,
+        string  $idCarga,
+        int     $periodo,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_indicadores_carga 
+                WHERE ipc_indicador=? AND ipc_carga=? AND ipc_periodo=? AND institucion=? AND year=?";
+
+        $parametros = [$idIndicador, $idCarga, $periodo, $config['conf_id_institucion'], $year];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return !empty($datos['total']) && (int)$datos['total'] > 0;
+    }
+
+    /**
+     * Verifica si el docente ya tiene indicadores creados en una carga y período específicos
+     * @param array     $config
+     * @param string    $idCarga
+     * @param int       $periodo
+     * @param string    $yearBd
+     * 
+     * @return bool
+    **/
+    public static function verificarIndicadoresDocenteCargaPeriodo (
+        array   $config,
+        string  $idCarga,
+        int     $periodo,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+
+        $sql = "SELECT COUNT(*) as total FROM ".BD_ACADEMICA.".academico_indicadores_carga 
+                WHERE ipc_carga=? AND ipc_periodo=? AND ipc_creado=1 AND institucion=? AND year=?";
+
+        $parametros = [$idCarga, $periodo, $config['conf_id_institucion'], $year];
+        $resultado = BindSQL::prepararSQL($sql, $parametros);
+        $datos = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+        return !empty($datos['total']) && (int)$datos['total'] > 0;
+    }
+
+    /**
+     * Asigna un indicador a múltiples cargas y períodos
+     * @param mysqli    $conexion
+     * @param PDO       $conexionPDO
+     * @param array     $config
+     * @param string    $idIndicador
+     * @param array     $cargas - Array de IDs de cargas (vacío = todas las cargas activas)
+     * @param array     $periodos - Array de números de períodos
+     * @param float     $valor - Valor del indicador
+     * @param string    $yearBd
+     * 
+     * @return array    ['asignadas' => int, 'duplicadas' => int, 'errores' => array]
+    **/
+    public static function asignarIndicadorACargas (
+        mysqli  $conexion,
+        PDO     $conexionPDO,
+        array   $config,
+        string  $idIndicador,
+        array   $cargas,
+        array   $periodos,
+        float   $valor,
+        string  $yearBd = ""
+    )
+    {
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        require_once(ROOT_PATH."/main-app/class/CargaAcademicaOptimizada.php");
+
+        $asignadas = 0;
+        $duplicadas = 0;
+        $errores = [];
+
+        // Si no se especificaron cargas, obtener todas las cargas activas que tienen car_indicadores_directivo=1
+        if (empty($cargas)) {
+            $selectSql = ["car.car_id"];
+            $cargasConsulta = CargaAcademicaOptimizada::listarCargasOptimizado($conexion, $config, "", "AND car.car_activa=1 AND car.car_indicadores_directivo=1", "car.car_id", "", "", array(), $selectSql);
+            $cargas = [];
+            while ($carga = mysqli_fetch_array($cargasConsulta, MYSQLI_BOTH)) {
+                $cargas[] = $carga['car_id'];
+            }
+        }
+
+        // Validar que haya cargas y períodos
+        if (empty($cargas)) {
+            $errores[] = "No hay cargas académicas disponibles para asignar el indicador.";
+            return ['asignadas' => 0, 'duplicadas' => 0, 'errores' => $errores];
+        }
+
+        if (empty($periodos)) {
+            $errores[] = "Debe seleccionar al menos un período.";
+            return ['asignadas' => 0, 'duplicadas' => 0, 'errores' => $errores];
+        }
+
+        $omitidas = 0; // Contador de asignaciones omitidas por tener indicadores del docente
+
+        // Asignar a cada combinación de carga y período
+        foreach ($cargas as $idCarga) {
+            foreach ($periodos as $periodo) {
+                // Verificar si ya existe este indicador específico
+                if (Indicadores::verificarIndicadorCargaPeriodo($config, $idIndicador, $idCarga, (int)$periodo, $year)) {
+                    $duplicadas++;
+                    continue;
+                }
+
+                // Validar si el docente ya tiene indicadores creados en este período
+                // Si ya tiene indicadores del docente, omitir la asignación del indicador obligatorio
+                if (Indicadores::verificarIndicadoresDocenteCargaPeriodo($config, $idCarga, (int)$periodo, $year)) {
+                    $omitidas++;
+                    continue;
+                }
+
+                // Crear la relación
+                try {
+                    Indicadores::guardarIndicadorCarga($conexion, $conexionPDO, $config, $idCarga, $idIndicador, (int)$periodo, NULL, NULL, 0, $valor);
+                    $asignadas++;
+                } catch (Exception $e) {
+                    $errores[] = "Error al asignar indicador a carga {$idCarga}, período {$periodo}: " . $e->getMessage();
+                }
+            }
+        }
+
+        return [
+            'asignadas' => $asignadas,
+            'duplicadas' => $duplicadas,
+            'omitidas' => $omitidas,
+            'errores' => $errores
+        ];
     }
 
 }

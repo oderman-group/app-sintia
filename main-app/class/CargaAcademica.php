@@ -1610,8 +1610,8 @@ class CargaAcademica {
 
         $sql = "SELECT
         (SELECT count(car_id) FROM ".BD_ACADEMICA.".academico_cargas WHERE car_docente=? AND car_periodo=? AND institucion=? AND year=?),
-        (SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=aa.act_id_carga AND car_periodo=? AND car_docente=? AND car.institucion=? AND car.year=? WHERE aa.act_estado=1 AND aa.act_periodo=? AND aa.institucion=? AND aa.year=?),
-        (SELECT sum(act_valor) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car_id=aa.act_id_carga AND car_periodo=? AND car_docente=? AND car.institucion=? AND car.year=? WHERE aa.act_estado=1 AND aa.act_periodo=? AND aa.act_registrada=1 AND aa.institucion=? AND aa.year=?)";
+        (SELECT COALESCE(sum(aa.act_valor), 0) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car.car_id=aa.act_id_carga WHERE car.car_periodo=? AND car.car_docente=? AND car.institucion=? AND car.year=? AND aa.act_estado=1 AND aa.act_periodo=? AND aa.institucion=? AND aa.year=?),
+        (SELECT COALESCE(sum(aa.act_valor), 0) FROM ".BD_ACADEMICA.".academico_actividades aa INNER JOIN ".BD_ACADEMICA.".academico_cargas car ON car.car_id=aa.act_id_carga WHERE car.car_periodo=? AND car.car_docente=? AND car.institucion=? AND car.year=? AND aa.act_estado=1 AND aa.act_periodo=? AND aa.act_registrada=1 AND aa.institucion=? AND aa.year=?)";
 
         $parametros = [$idDocente, $config['conf_periodo'], $config['conf_id_institucion'], $year, $config['conf_periodo'], $idDocente, $config['conf_id_institucion'], $year, $config['conf_periodo'], $config['conf_id_institucion'], $year, $config['conf_periodo'], $idDocente, $config['conf_id_institucion'], $year, $config['conf_periodo'], $config['conf_id_institucion'], $year];
 
