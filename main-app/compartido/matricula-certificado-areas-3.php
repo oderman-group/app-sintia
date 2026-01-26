@@ -460,7 +460,7 @@ $tiposNotas = [];
 		}
 		
 		.header-con-logo .logo-container.logo-izquierda {
-			order: 1;
+			order: 0;
 		}
 		
 		.header-con-logo .logo-container.logo-derecha {
@@ -479,6 +479,7 @@ $tiposNotas = [];
 			hyphens: auto;
 			-webkit-hyphens: auto;
 			-moz-hyphens: auto;
+			order: 1;
 		}
 		
 		.header-con-logo .logo-container img {
