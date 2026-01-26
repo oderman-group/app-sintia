@@ -118,7 +118,8 @@ if ($formularioEnviado) {
 	$incluirLogo = isset($_GET['incluir_logo']) ? (int)$_GET['incluir_logo'] : 0;
 	$logoAncho = isset($_GET['logo_ancho']) ? (int)$_GET['logo_ancho'] : ($preferenciasGuardadas['logo_ancho'] ?? 150);
 	$logoAlto = isset($_GET['logo_alto']) ? (int)$_GET['logo_alto'] : ($preferenciasGuardadas['logo_alto'] ?? 100);
-	$logoAlineacion = isset($_GET['logo_alineacion']) ? $_GET['logo_alineacion'] : ($preferenciasGuardadas['logo_alineacion'] ?? 'centro');
+	$logoPosicion = isset($_GET['logo_posicion']) ? $_GET['logo_posicion'] : ($preferenciasGuardadas['logo_posicion'] ?? 'arriba');
+	$espacioFirmas = isset($_GET['espacio_firmas']) ? (int)$_GET['espacio_firmas'] : ($preferenciasGuardadas['espacio_firmas'] ?? 40);
 	$firmaRector = isset($_GET['firma_rector']) ? (int)$_GET['firma_rector'] : 0;
 	$firmaSecretario = isset($_GET['firma_secretario']) ? (int)$_GET['firma_secretario'] : 0;
 	// Para checkboxes: si no están presentes en GET, significa que están desmarcados (0)
@@ -144,7 +145,8 @@ if ($formularioEnviado) {
 		'incluir_logo' => $incluirLogo,
 		'logo_ancho' => $logoAncho,
 		'logo_alto' => $logoAlto,
-		'logo_alineacion' => $logoAlineacion,
+		'logo_posicion' => $logoPosicion,
+		'espacio_firmas' => $espacioFirmas,
 		'firma_rector' => $firmaRector,
 		'firma_secretario' => $firmaSecretario,
 		'mostrar_firma_digital_rector' => $mostrarFirmaDigitalRector,
@@ -169,7 +171,8 @@ if ($formularioEnviado) {
 	$incluirLogo = $preferenciasGuardadas['incluir_logo'] ?? 0;
 	$logoAncho = $preferenciasGuardadas['logo_ancho'] ?? 150;
 	$logoAlto = $preferenciasGuardadas['logo_alto'] ?? 100;
-	$logoAlineacion = $preferenciasGuardadas['logo_alineacion'] ?? 'centro';
+	$logoPosicion = $preferenciasGuardadas['logo_posicion'] ?? 'arriba';
+	$espacioFirmas = $preferenciasGuardadas['espacio_firmas'] ?? 40;
 	$firmaRector = $preferenciasGuardadas['firma_rector'] ?? (!empty($informacion_inst["info_rector"]) ? 1 : 0);
 	$firmaSecretario = $preferenciasGuardadas['firma_secretario'] ?? (!empty($informacion_inst["info_secretaria_academica"]) ? 1 : 0);
 	$mostrarFirmaDigitalRector = $preferenciasGuardadas['mostrar_firma_digital_rector'] ?? 0;
@@ -432,13 +435,55 @@ $tiposNotas = [];
 		   ============================ */
 		.logo-container {
 			margin: 20px 0;
-			text-align: <?= $logoAlineacion == 'izquierda' ? 'left' : ($logoAlineacion == 'derecha' ? 'right' : 'center') ?>;
+			text-align: center;
 		}
 
 		.logo-container img {
 			width: <?= $logoAncho ?>px;
 			height: <?= $logoAlto ?>px;
 			object-fit: contain;
+		}
+		
+		/* Logo al lado del encabezado */
+		.header-con-logo {
+			display: flex;
+			align-items: flex-start;
+			gap: 15px;
+			margin: 40px 0 30px 0;
+			width: 100%;
+		}
+		
+		.header-con-logo .logo-container {
+			margin: 0;
+			flex-shrink: 0;
+			max-width: <?= min($logoAncho + 20, 200) ?>px; /* Limita el ancho máximo del logo */
+		}
+		
+		.header-con-logo .logo-container.logo-izquierda {
+			order: 1;
+		}
+		
+		.header-con-logo .logo-container.logo-derecha {
+			order: 2;
+		}
+		
+		.header-con-logo .header-institucional {
+			flex: 1;
+			margin: 0;
+			min-width: 0; /* Permite que el texto se ajuste */
+			font-size: <?= max($tamanoLetra - 1.5, 8.5) ?>pt; /* Reduce el tamaño de fuente para que quepa */
+			line-height: <?= max($interlineado - 0.15, 1.25) ?>; /* Reduce el interlineado */
+			text-align: justify;
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+			hyphens: auto;
+			-webkit-hyphens: auto;
+			-moz-hyphens: auto;
+		}
+		
+		.header-con-logo .logo-container img {
+			max-width: 100%;
+			height: auto;
 		}
 
 		/* ============================
@@ -631,7 +676,7 @@ $tiposNotas = [];
 		.tabla-firmas {
 			width: 100%;
 			border-collapse: collapse;
-			margin-top: 40px;
+			margin-top: <?= $espacioFirmas ?>px;
 		}
 
 		.tabla-firmas td {
@@ -895,11 +940,11 @@ $tiposNotas = [];
 			</div>
 
 			<div class="form-group" id="logo_config" style="display: <?= $incluirLogo ? 'block' : 'none' ?>;">
-				<label>Alineación del Logo:</label>
-				<select name="logo_alineacion">
-					<option value="izquierda" <?= $logoAlineacion == 'izquierda' ? 'selected' : '' ?>>Izquierda</option>
-					<option value="centro" <?= $logoAlineacion == 'centro' ? 'selected' : '' ?>>Centro</option>
-					<option value="derecha" <?= $logoAlineacion == 'derecha' ? 'selected' : '' ?>>Derecha</option>
+				<label>Posición del Logo:</label>
+				<select name="logo_posicion">
+					<option value="arriba" <?= $logoPosicion == 'arriba' ? 'selected' : '' ?>>Arriba del encabezado</option>
+					<option value="izquierda" <?= $logoPosicion == 'izquierda' ? 'selected' : '' ?>>Al lado izquierdo del encabezado</option>
+					<option value="derecha" <?= $logoPosicion == 'derecha' ? 'selected' : '' ?>>Al lado derecho del encabezado</option>
 				</select>
 				
 				<label style="margin-top: 10px;">Dimensiones del Logo (px):</label>
@@ -907,6 +952,12 @@ $tiposNotas = [];
 					<input type="number" name="logo_ancho" value="<?= $logoAncho ?>" min="50" max="500" placeholder="Ancho">
 					<input type="number" name="logo_alto" value="<?= $logoAlto ?>" min="50" max="500" placeholder="Alto">
 				</div>
+			</div>
+
+			<div class="form-group">
+				<label>Espacio antes de las firmas (px):</label>
+				<input type="number" name="espacio_firmas" value="<?= $espacioFirmas ?>" min="0" max="200" step="5" placeholder="40">
+				<small style="display: block; color: #666; margin-top: 5px;">Espacio entre el último párrafo y las firmas</small>
 			</div>
 
 			<div class="form-group">
@@ -1001,21 +1052,49 @@ $tiposNotas = [];
 		
 		// Si está consolidado o es un solo año, mostrar encabezado, logo y título una sola vez antes del loop
 		if ($consolidarTextoAnios || $restaAgnos == 1 || $esUnSoloAnio) {
+			// Preparar logo si está habilitado
+			$logoPath = "";
+			$logoPathFull = "";
+			$logoExiste = false;
 			if($incluirLogo && !empty($informacion_inst["info_logo"])) {
 				$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
 				$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
-				
-				// Verificar si el logo existe
-				if(file_exists($logoPathFull)) {
+				$logoExiste = file_exists($logoPathFull);
+			}
+			
+			// Si el logo va arriba del encabezado
+			if($logoExiste && $logoPosicion == 'arriba') {
 			?>
 				<div class="logo-container">
 					<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
 				</div>
 			<?php 
-				}
-			} 
+			}
 			
-			if($mostrarEncabezado) { ?>
+			// Si hay encabezado y logo al lado, usar contenedor flex
+			if($mostrarEncabezado && $logoExiste && ($logoPosicion == 'izquierda' || $logoPosicion == 'derecha')) {
+			?>
+				<div class="header-con-logo">
+					<?php if($logoPosicion == 'izquierda') { ?>
+					<div class="logo-container logo-izquierda">
+						<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
+					</div>
+					<?php } ?>
+					<div class="header-institucional">
+						EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
+						RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
+						DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
+					</div>
+					<?php if($logoPosicion == 'derecha') { ?>
+					<div class="logo-container logo-derecha">
+						<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
+					</div>
+					<?php } ?>
+				</div>
+			<?php 
+			} else if($mostrarEncabezado) {
+				// Solo encabezado sin logo al lado
+			?>
 				<!-- Encabezado institucional -->
 				<div class="header-institucional">
 					EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
@@ -1183,7 +1262,50 @@ $tiposNotas = [];
 			if (!$consolidarTextoAnios && !$esUnSoloAnio) {
 		?>
 			<div class="pagina-certificado-anio">
-				<?php if($mostrarEncabezado) { ?>
+				<?php 
+				// Preparar logo si está habilitado
+				$logoPathLoop = "";
+				$logoPathFullLoop = "";
+				$logoExisteLoop = false;
+				if($incluirLogo && !empty($informacion_inst["info_logo"])) {
+					$logoPathLoop = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
+					$logoPathFullLoop = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
+					$logoExisteLoop = file_exists($logoPathFullLoop);
+				}
+				
+				// Si el logo va arriba del encabezado
+				if($logoExisteLoop && $logoPosicion == 'arriba') {
+				?>
+					<div class="logo-container">
+						<img src="<?= $logoPathLoop ?>" alt="Logo Institución" onerror="this.style.display='none'">
+					</div>
+				<?php 
+				}
+				
+				// Si hay encabezado y logo al lado, usar contenedor flex
+				if($mostrarEncabezado && $logoExisteLoop && ($logoPosicion == 'izquierda' || $logoPosicion == 'derecha')) {
+				?>
+					<div class="header-con-logo">
+						<?php if($logoPosicion == 'izquierda') { ?>
+						<div class="logo-container logo-izquierda">
+							<img src="<?= $logoPathLoop ?>" alt="Logo Institución" onerror="this.style.display='none'">
+						</div>
+						<?php } ?>
+						<div class="header-institucional">
+							EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
+							RECONOCIMIENTO OFICIAL SEGÚN RESOLUCIÓN <?= strtoupper($informacion_inst["info_resolucion"] ?? 'N/A') ?>, EMANADA DE LA SECRETARÍA
+							DE EDUCACIÓN DEPARTAMENTAL DE <?= strtoupper($informacion_inst["dep_nombre"] ?? 'N/A') ?>, CON DANE <?= $informacion_inst["info_dane"] ?? 'N/A' ?> Y NIT <?= $informacion_inst["info_nit"] ?? 'N/A' ?>, CELULAR <?= $informacion_inst["info_telefono"] ?? 'N/A' ?>.
+						</div>
+						<?php if($logoPosicion == 'derecha') { ?>
+						<div class="logo-container logo-derecha">
+							<img src="<?= $logoPathLoop ?>" alt="Logo Institución" onerror="this.style.display='none'">
+						</div>
+						<?php } ?>
+					</div>
+				<?php 
+				} else if($mostrarEncabezado) {
+					// Solo encabezado sin logo al lado
+				?>
 					<!-- Encabezado institucional -->
 					<div class="header-institucional">
 						EL SUSCRITO RECTOR DE <b><?= strtoupper($informacion_inst["info_nombre"] ?? 'LA INSTITUCIÓN') ?></b> DEL MUNICIPIO DE <?= !empty($informacion_inst["ciu_nombre"]) ? strtoupper($informacion_inst["ciu_nombre"]) : 'N/A' ?>, CON
@@ -1193,19 +1315,6 @@ $tiposNotas = [];
 				<?php } ?>
 
 				<p class="texto-centrado" <?= !$mostrarEncabezado ? 'style="margin-top: 40px;"' : ''; ?>><b>C E R T I F I C A</b></p>
-
-				<?php if($incluirLogo && !empty($informacion_inst["info_logo"])) {
-					$logoPath = "../files/images/logo/" . htmlspecialchars($informacion_inst["info_logo"]);
-					$logoPathFull = ROOT_PATH . "/main-app/files/images/logo/" . $informacion_inst["info_logo"];
-					if(file_exists($logoPathFull)) {
-				?>
-					<div class="logo-container">
-						<img src="<?= $logoPath ?>" alt="Logo Institución" onerror="this.style.display='none'">
-					</div>
-				<?php 
-					}
-				} 
-				?>
 
 				<?php 
 				// Solo mostrar texto del estudiante si NO es un solo año (ya se mostró antes del loop)
