@@ -41,6 +41,7 @@ if(!empty($_REQUEST["anios"])){
 if(empty($arrayAnios) && $desde !== '' && $desde !== false && $hasta !== '' && $hasta !== false){
 	$arrayAnios = range((int)$desde, (int)$hasta);
 }
+sort($arrayAnios); // Años siempre en orden ascendente para que los grados aparezcan ordenados (ej. cuarto, sexto, séptimo)
 $estampilla="";
 if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 
@@ -1137,9 +1138,10 @@ $tiposNotas = [];
 		// $restaAgnos ya se calculó antes
 		$hayMultiplesAnios = $restaAgnos > 1;
 		
-		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años
+		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años (orden = año ascendente)
 		$gradosAnios = [];
 		$aniosLectivos = [];
+		$nivelesEducacion = []; // Tipos de educación únicos por nivel (preescolar, básica primaria, bachillerato, media)
 		$educacionConsolidada = '';
 		$documentoEstudiante = '';
 		
@@ -1152,26 +1154,28 @@ $tiposNotas = [];
 					if (empty($documentoEstudiante)) {
 						$documentoEstudiante = $matriculaTemp["mat_documento"] ?? 'N/A';
 					}
-					if (empty($educacionConsolidada)) {
-						switch ($matriculaTemp["gra_nivel"]) {
-							case PREESCOLAR: 
-								$educacionConsolidada = "preescolar"; 
-							break;
-							case BASICA_PRIMARIA: 
-								$educacionConsolidada = "básica primaria"; 
-							break;
-							case BASICA_SECUNDARIA: 
-								$educacionConsolidada = "básica secundaria"; 
-							break;
-							case MEDIA: 
-								$educacionConsolidada = "media"; 
-							break;
-							default: 
-								$educacionConsolidada = "básica"; 
-							break;
-						}
+					$nivelStr = '';
+					switch ($matriculaTemp["gra_nivel"]) {
+						case PREESCOLAR: $nivelStr = "preescolar"; break;
+						case BASICA_PRIMARIA: $nivelStr = "básica primaria"; break;
+						case BASICA_SECUNDARIA: $nivelStr = "bachillerato"; break;
+						case MEDIA: $nivelStr = "media"; break;
+						default: $nivelStr = "básica"; break;
+					}
+					if ($nivelStr !== '' && !in_array($nivelStr, $nivelesEducacion, true)) {
+						$nivelesEducacion[] = $nivelStr;
 					}
 				}
+			}
+			// Orden fijo: preescolar, básica primaria, bachillerato, media
+			$ordenNiveles = ['preescolar' => 1, 'básica primaria' => 2, 'bachillerato' => 3, 'media' => 4, 'básica' => 0];
+			usort($nivelesEducacion, function ($a, $b) use ($ordenNiveles) {
+				return ($ordenNiveles[$a] ?? 5) <=> ($ordenNiveles[$b] ?? 5);
+			});
+			if (!empty($nivelesEducacion)) {
+				$educacionConsolidada = count($nivelesEducacion) === 1
+					? $nivelesEducacion[0]
+					: implode(', ', array_slice($nivelesEducacion, 0, -1)) . ' y ' . end($nivelesEducacion);
 			}
 		}
 		
@@ -1205,7 +1209,10 @@ $tiposNotas = [];
 					}
 				}
 			} else {
-				$gradosTexto = implode(' y ', array_unique($gradosAnios));
+				// Grados en orden de años (ya viene ordenado): "CUARTO, SEXTO, SEPTIMO, OCTAVO y DECIMO"
+				$gradosTexto = count($gradosAnios) === 1
+					? $gradosAnios[0]
+					: implode(', ', array_slice($gradosAnios, 0, -1)) . ' y ' . end($gradosAnios);
 				$aniosTexto = '';
 				if (count($aniosLectivos) == 2) {
 					$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
