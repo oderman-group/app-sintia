@@ -31,4 +31,11 @@ $auth = Autenticate::getInstance();
 $auth->limpiarCookiesDocentes();
 $auth->limpiarCookiesEstudiantes();
 
-header("Location:../directivo/usuarios.php?tipo=".$_GET['tipo']);
+$tipo = isset($_GET['tipo']) ? base64_decode($_GET['tipo']) : '';
+// Si el autologin fue a un estudiante, volver a estudiantes.php; si no, a usuarios.php
+if ($tipo == TIPO_ESTUDIANTE) {
+    header('Location: ../directivo/estudiantes.php');
+} else {
+    header('Location: ../directivo/usuarios.php?tipo=' . ($_GET['tipo'] ?? ''));
+}
+exit();
