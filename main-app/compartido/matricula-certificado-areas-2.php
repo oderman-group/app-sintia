@@ -1123,12 +1123,6 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				</td>
 			</tr>
 		</table>
-
-		<!-- Footer SINTIA -->
-		<div class="footer-sintia">
-			<img src="<?=$Plataforma->logo?>" alt="SINTIA">
-			<div>SINTIA - SISTEMA INTEGRAL DE GESTIÓN INSTITUCIONAL - <?=date("l, d-M-Y");?></div>
-		</div>
 	</div>
 
 	<?php 
