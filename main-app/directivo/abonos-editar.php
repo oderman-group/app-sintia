@@ -148,8 +148,8 @@ if (empty($datosAbono['cod_payment'])) {
 									<header class="panel-heading panel-heading-purple invoice-header-section">
 										<h4 style="margin: 0; color: white;">
 											<i class="fa fa-edit"></i> <?=$frases[165][$datosUsuarioActual['uss_idioma']];?> <?=$frases[413][$datosUsuarioActual['uss_idioma']];?>
-											<?php if (!empty($datosAbono['cod_payment'])) { ?>
-											<span class="info-badge badge-success">Código: <?=htmlspecialchars($datosAbono['cod_payment'])?></span>
+											<?php if (!empty($datosAbono['cod_payment']) || isset($datosAbono['pi_consecutivo'])) { ?>
+											<span class="info-badge badge-success">Código: <?=(isset($datosAbono['pi_consecutivo']) && $datosAbono['pi_consecutivo'] !== '' && $datosAbono['pi_consecutivo'] !== null) ? (int)$datosAbono['pi_consecutivo'] : htmlspecialchars($datosAbono['cod_payment'] ?? '');?></span>
 											<?php } ?>
 										</h4>
 									</header>
@@ -393,7 +393,7 @@ if (empty($datosAbono['cod_payment'])) {
                                                                         // Buscar por id del registro O por payments (si hay múltiples facturas)
                                                                         $whereClause = "pi.id='".mysqli_real_escape_string($conexion, $id)."'";
                                                                         
-                                                                        $sqlFacturas = "SELECT pi.*, fc.fcu_id, fc.fcu_fecha, fc.fcu_detalle, fc.fcu_observaciones, fc.fcu_status, fc.fcu_valor
+                                                                        $sqlFacturas = "SELECT pi.*, fc.fcu_id, fc.fcu_consecutivo, fc.fcu_fecha, fc.fcu_detalle, fc.fcu_observaciones, fc.fcu_status, fc.fcu_valor
                                                                         FROM ".BD_FINANCIERA.".payments_invoiced pi
                                                                         INNER JOIN ".BD_FINANCIERA.".finanzas_cuentas fc ON fc.fcu_id=pi.invoiced
                                                                         WHERE ({$whereClause})
@@ -451,7 +451,7 @@ if (empty($datosAbono['cod_payment'])) {
                                                                         <i class="fa fa-chevron-right expand-btn" onclick="toggleFacturaDetails('<?=$facturaAbono['fcu_id'];?>')" id="expand<?=$facturaAbono['fcu_id'];?>"></i>
                                                                     </td>
                                                                     <td title="<?=$detalleFactura;?>">
-                                                                        <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=$facturaAbono['fcu_id'] ?? '';?></span>
+                                                                        <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=(isset($facturaAbono['fcu_consecutivo']) && $facturaAbono['fcu_consecutivo'] !== '' && $facturaAbono['fcu_consecutivo'] !== null) ? (int)$facturaAbono['fcu_consecutivo'] : ($facturaAbono['fcu_id'] ?? '');?></span>
                                                                     </td>
                                                                     <td><?=$facturaAbono['fcu_fecha'] ?? '';?></td>
                                                                     <td id="totalNeto<?=$facturaAbono['fcu_id'];?>" data-total-neto="<?=$totalNeto?>">$<?=number_format($totalNeto, 0, ",", ".")?></td>

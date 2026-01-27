@@ -59,7 +59,8 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta name="description" content="Plataforma Educativa SINTIA | Para Colegios y Universidades" />
         <meta name="author" content="ODERMAN" />
-        <title><?=$tipoFactura;?> No. <?=$resultado["id_nuevo_finanzas"];?> Para <?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?> del <?=$fechaReplace;?>  </title>
+        <?php $numeroFacturaPdf = (isset($resultado['fcu_consecutivo']) && $resultado['fcu_consecutivo'] !== '' && $resultado['fcu_consecutivo'] !== null) ? (int)$resultado['fcu_consecutivo'] : ($resultado['id_nuevo_finanzas'] ?? ''); ?>
+        <title><?=$tipoFactura;?> No. <?=$numeroFacturaPdf;?> Para <?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?> del <?=$fechaReplace;?>  </title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -110,7 +111,7 @@ if ($resultado["fcu_tipo"] == FACTURA_COMPRA) {
                     </td>
                     <td align="right" width="45%" style="vertical-align: top;">
                         <h1 style="margin: 0px; font-size: 50px;"><?=$tituloGeneral;?></h1>
-                        <h3 style="margin: 0px; font-size: 13px;"><b>Número: <?=$resultado["id_nuevo_finanzas"];?></b></h3>
+                        <h3 style="margin: 0px; font-size: 13px;"><b>Número: <?=$numeroFacturaPdf;?></b></h3>
                         <h3 style="margin: 0px; font-size: 13px;">No responsable de IVA</h3>
                         <h3 style="margin: 0px; font-size: 13px;"><?=$tipoFactura;?></h3>
                     </td>

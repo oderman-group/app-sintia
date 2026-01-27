@@ -118,7 +118,7 @@ $nombre = Estudiantes::NombreCompletoDelEstudiante($e);
 													?>		
 															<!-- BEGIN PRODUCT INFO -->
 															<tr>
-															<td><?=$resultado['fcu_id'];?></td>
+															<td><?= (isset($resultado['fcu_consecutivo']) && $resultado['fcu_consecutivo'] !== '' && $resultado['fcu_consecutivo'] !== null) ? (int)$resultado['fcu_consecutivo'] : $resultado['fcu_id']; ?></td>
 															<td><?=$resultado['fcu_fecha'];?></td>
 															<td><?=$resultado['fcu_detalle'];?></td>
 															<td><?php if(!empty($resultado['fcu_valor'])) echo "$".number_format($resultado['fcu_valor'],2,".",",");?></td>

@@ -2,6 +2,10 @@
 <?php include("verificar-usuario.php");?>
 <?php $idPaginaInterna = 'ES0003';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
+<?php 
+// Incluir el archivo que calcula las estadísticas antes de mostrar el contenido
+include("calendario-actividades-todas.php");
+?>
 <?php include("../compartido/head.php");?>
 	<!-- full calendar -->
     <link href="../../config-general/assets/plugins/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />

@@ -629,6 +629,7 @@ class Movimientos {
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
                 pi.id as cod_payment,
+                pi.pi_consecutivo,
                 pi.payment,
                 pi.fecha_registro as registration_date, 
                 pi.responsible_user, 
@@ -643,7 +644,7 @@ class Movimientos {
                 pi.observation,
                 pi.note,
                 cba.cba_nombre as cuenta_bancaria_nombre,
-                fc.fcu_id as numeroFactura,
+                COALESCE(NULLIF(TRIM(CAST(fc.fcu_consecutivo AS CHAR)), ''), fc.fcu_id) as numeroFactura,
                 fc.fcu_id as fcu_id_factura,
                 fc.fcu_consecutivo,
                 uss.uss_nombre, uss.uss_nombre2, uss.uss_apellido1, uss.uss_apellido2
@@ -700,6 +701,32 @@ class Movimientos {
         }
 
         return $consulta;
+    }
+
+    /**
+     * Obtiene el siguiente consecutivo de abono por institución y año (multitenant).
+     * Debe invocarse dentro de la misma transacción que el INSERT.
+     * @param PDO|mysqli $connection Conexión PDO o mysqli
+     * @param array $config
+     * @return int
+     */
+    public static function siguienteConsecutivoAbono($connection, array $config): int
+    {
+        $inst = (int)$config['conf_id_institucion'];
+        $year = $_SESSION['bd'] ?? date('Y');
+        if ($connection instanceof \PDO) {
+            $sql = "SELECT COALESCE(MAX(pi_consecutivo), 0) AS m FROM ".BD_FINANCIERA.".payments_invoiced WHERE institucion=? AND year=?";
+            $stmt = $connection->prepare($sql);
+            $stmt->execute([$inst, $year]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $max = $row ? (int)$row['m'] : 0;
+        } else {
+            $yearEsc = mysqli_real_escape_string($connection, $year);
+            $q = mysqli_query($connection, "SELECT COALESCE(MAX(pi_consecutivo), 0) AS m FROM ".BD_FINANCIERA.".payments_invoiced WHERE institucion={$inst} AND year='{$yearEsc}'");
+            $row = $q && mysqli_num_rows($q) > 0 ? mysqli_fetch_assoc($q) : null;
+            $max = $row ? (int)$row['m'] : 0;
+        }
+        return $max + 1;
     }
 
     /**
@@ -905,11 +932,12 @@ class Movimientos {
                 $sqlInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
                     responsible_user, payment_user, type_payments, payment_tipo, payment_method, 
                     payment_cuenta_bancaria_id, invoiced, payment, observation, attachment, note,
-                    fecha_registro, fecha_documento, institucion, year
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    fecha_registro, fecha_documento, institucion, year, pi_consecutivo
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmtInvoiced = $conexionPDO->prepare($sqlInvoiced);
                 
                 foreach ($abonosAFacturas as $abono) {
+                    $consecutivo = self::siguienteConsecutivoAbono($conexionPDO, $config);
                     $stmtInvoiced->bindValue(1, $_SESSION["id"], PDO::PARAM_STR);
                     $stmtInvoiced->bindValue(2, $paymentUser, $paymentUser ? PDO::PARAM_STR : PDO::PARAM_NULL);
                     $stmtInvoiced->bindValue(3, $tipoTransaccion, PDO::PARAM_STR);
@@ -925,6 +953,7 @@ class Movimientos {
                     $stmtInvoiced->bindValue(13, $fechaDocumento, $fechaDocumento ? PDO::PARAM_STR : PDO::PARAM_NULL);
                     $stmtInvoiced->bindValue(14, $config['conf_id_institucion'], PDO::PARAM_INT);
                     $stmtInvoiced->bindValue(15, $_SESSION["bd"], PDO::PARAM_INT);
+                    $stmtInvoiced->bindValue(16, $consecutivo, PDO::PARAM_INT);
                     $stmtInvoiced->execute();
                 }
             }
@@ -937,12 +966,13 @@ class Movimientos {
                     $sqlConcepto = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
                         responsible_user, payment_user, type_payments, payment_tipo, payment_method,
                         payment_cuenta_bancaria_id, invoiced, payment, cantity, subtotal, description,
-                        observation, attachment, note, fecha_registro, fecha_documento, institucion, year
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        observation, attachment, note, fecha_registro, fecha_documento, institucion, year, pi_consecutivo
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmtConcepto = $conexionPDO->prepare($sqlConcepto);
                     
                     foreach ($conceptos as $concepto) {
                         if (!empty($concepto['concepto']) && floatval($concepto['precio']) > 0) {
+                            $consecutivo = self::siguienteConsecutivoAbono($conexionPDO, $config);
                             // Para abonos independientes (ACCOUNT), invoiced debe ser NULL
                             $invoicedValue = null;
                             
@@ -970,6 +1000,7 @@ class Movimientos {
                             $stmtConcepto->bindValue(16, $fechaDocumento, $fechaDocumento ? PDO::PARAM_STR : PDO::PARAM_NULL);
                             $stmtConcepto->bindValue(17, $config['conf_id_institucion'], PDO::PARAM_INT);
                             $stmtConcepto->bindValue(18, $_SESSION["bd"], PDO::PARAM_INT);
+                            $stmtConcepto->bindValue(19, $consecutivo, PDO::PARAM_INT);
                             $stmtConcepto->execute();
                         }
                     }
@@ -978,11 +1009,12 @@ class Movimientos {
             
             // Si no hay abonos ni conceptos, crear un registro base (pago esporádico sin factura ni concepto)
             if (empty($abonosAFacturas) && empty($POST["conceptos_contables_json"])) {
+                $consecutivo = self::siguienteConsecutivoAbono($conexionPDO, $config);
                 $sqlBase = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
                     responsible_user, payment_user, type_payments, payment_tipo, payment_method,
                     payment_cuenta_bancaria_id, invoiced, observation, attachment, note,
-                    fecha_registro, fecha_documento, institucion, year
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    fecha_registro, fecha_documento, institucion, year, pi_consecutivo
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmtBase = $conexionPDO->prepare($sqlBase);
                 $stmtBase->bindValue(1, $_SESSION["id"], PDO::PARAM_STR);
                 $stmtBase->bindValue(2, $paymentUser, $paymentUser ? PDO::PARAM_STR : PDO::PARAM_NULL);
@@ -998,6 +1030,7 @@ class Movimientos {
                 $stmtBase->bindValue(12, $fechaDocumento, $fechaDocumento ? PDO::PARAM_STR : PDO::PARAM_NULL);
                 $stmtBase->bindValue(13, $config['conf_id_institucion'], PDO::PARAM_INT);
                 $stmtBase->bindValue(14, $_SESSION["bd"], PDO::PARAM_INT);
+                $stmtBase->bindValue(15, $consecutivo, PDO::PARAM_INT);
                 $stmtBase->execute();
             }
             
@@ -1038,6 +1071,8 @@ class Movimientos {
             // Consulta mejorada para traer todos los datos del abono desde payments_invoiced consolidado
             $consulta = mysqli_query($conexion, "SELECT 
                 pi.id, 
+                pi.id as cod_payment,
+                pi.pi_consecutivo,
                 pi.fecha_registro as registration_date, 
                 pi.fecha_documento,
                 pi.responsible_user, 
@@ -1063,7 +1098,7 @@ class Movimientos {
                 cli.uss_email AS cli_email, cli.uss_celular AS cli_celular, cli.uss_telefono AS cli_telefono, cli.uss_documento AS cli_documento,
                 cli.uss_direccion AS cli_direccion, cli.uss_id AS cli_id,
                 cli.uss_tipo AS cli_tipo, pes_cli.pes_nombre AS cli_perfil,
-                fc.fcu_id as numeroFactura,
+                COALESCE(NULLIF(TRIM(CAST(fc.fcu_consecutivo AS CHAR)), ''), fc.fcu_id) as numeroFactura,
                 fc.fcu_id as fcu_id_factura,
                 fc.fcu_valor as fcu_valor_factura,
                 SUM(pi_detalle.payment) AS valorAbono
@@ -1634,14 +1669,43 @@ class Movimientos {
         $conexionPDO = Conexion::newConnection('PDO');
         $conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+        $inst = (int)$datosRecurrente['institucion'];
+        $year = mysqli_real_escape_string($conexion, $datosRecurrente['year']);
+        $tipo = (int)$datosRecurrente['invoice_type'];
+
+        // Obtener conf_inicio_recibos por institución y año (para CLI/job no hay $config de sesión)
+        $inicioIngreso = 1;
+        $inicioEgreso = 1;
+        $confQuery = mysqli_query($conexion, "SELECT conf_inicio_recibos_ingreso, conf_inicio_recibos_egreso FROM ".BD_ADMIN.".configuracion WHERE conf_id_institucion={$inst} AND (conf_base_datos='{$year}' OR conf_agno='{$year}') LIMIT 1");
+        if ($confQuery && mysqli_num_rows($confQuery) > 0) {
+            $confRow = mysqli_fetch_assoc($confQuery);
+            if (isset($confRow['conf_inicio_recibos_ingreso']) && $confRow['conf_inicio_recibos_ingreso'] !== '' && $confRow['conf_inicio_recibos_ingreso'] !== null) {
+                $inicioIngreso = (int)$confRow['conf_inicio_recibos_ingreso'];
+            }
+            if (isset($confRow['conf_inicio_recibos_egreso']) && $confRow['conf_inicio_recibos_egreso'] !== '' && $confRow['conf_inicio_recibos_egreso'] !== null) {
+                $inicioEgreso = (int)$confRow['conf_inicio_recibos_egreso'];
+            }
+        }
+
+        // Calcular siguiente consecutivo por tipo (misma lógica que movimientos-guardar)
+        $consecutivo = 0;
+        $sqlConsecutivo = "SELECT fcu_consecutivo FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_tipo={$tipo} AND institucion={$inst} AND year='{$year}' ORDER BY fcu_consecutivo DESC LIMIT 1";
+        $resConsec = mysqli_query($conexion, $sqlConsecutivo);
+        $ultimo = $resConsec && mysqli_num_rows($resConsec) > 0 ? mysqli_fetch_assoc($resConsec) : null;
+        if (!$ultimo || $ultimo['fcu_consecutivo'] === '' || $ultimo['fcu_consecutivo'] === null) {
+            $consecutivo = ($tipo == 1) ? $inicioIngreso : $inicioEgreso;
+        } else {
+            $consecutivo = (int)$ultimo['fcu_consecutivo'] + 1;
+        }
+
         // Insertar factura generada desde recurrente
         // fcu_id es AUTO_INCREMENT, NO se incluye en el INSERT
         // fcu_created_by: responsable_user de la factura recurrente o $_SESSION["id"] si está disponible
         $createdBy = !empty($datosRecurrente["responsible_user"]) ? mysqli_real_escape_string($conexion, $datosRecurrente["responsible_user"]) : (!empty($_SESSION["id"]) ? mysqli_real_escape_string($conexion, $_SESSION["id"]) : 'SYSTEM');
         $origen = 'RECURRENTE';
-        
-        // INSERT sin fcu_id (se genera automáticamente)
-        $resultadoInsert = mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_cerrado, fcu_status, fcu_created_by, fcu_origen, institucion, year)VALUES(now(),'" . mysqli_real_escape_string($conexion, $datosRecurrente["detail"]) . "','" . $datosRecurrente["additional_value"] . "','" . $datosRecurrente["invoice_type"] . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["observation"]) . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["user"]) . "',0,0,'".POR_COBRAR."','" . $createdBy . "','" . $origen . "', {$datosRecurrente['institucion']}, '{$datosRecurrente["year"]}')");
+
+        // INSERT con fcu_consecutivo (multitenant: consecutivo por institución+año+tipo)
+        $resultadoInsert = mysqli_query($conexion, "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_cerrado, fcu_consecutivo, fcu_status, fcu_created_by, fcu_origen, institucion, year)VALUES(now(),'" . mysqli_real_escape_string($conexion, $datosRecurrente["detail"]) . "','" . $datosRecurrente["additional_value"] . "','" . $datosRecurrente["invoice_type"] . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["observation"]) . "','" . mysqli_real_escape_string($conexion, $datosRecurrente["user"]) . "',0,0,".(int)$consecutivo.",'".POR_COBRAR."','" . $createdBy . "','" . $origen . "', {$datosRecurrente['institucion']}, '{$datosRecurrente["year"]}')");
         
         if (!$resultadoInsert) {
             throw new Exception("Error al insertar factura: " . mysqli_error($conexion));
@@ -2656,7 +2720,7 @@ class Movimientos {
             // Obtener consecutivo inicial
             $sqlConsecutivo = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas 
                 WHERE fcu_tipo=1 AND institucion=? AND year=? 
-                ORDER BY fcu_id DESC LIMIT 1";
+                ORDER BY fcu_consecutivo DESC LIMIT 1";
             $stmtConsecutivo = $conexionPDO->prepare($sqlConsecutivo);
             $stmtConsecutivo->bindValue(1, $config['conf_id_institucion'], PDO::PARAM_INT);
             $stmtConsecutivo->bindValue(2, $_SESSION["bd"], PDO::PARAM_INT);
@@ -2664,7 +2728,7 @@ class Movimientos {
             $consecutivoActual = $stmtConsecutivo->fetch(PDO::FETCH_ASSOC);
             
             $consecutivo = empty($consecutivoActual['fcu_consecutivo']) 
-                ? $config['conf_inicio_recibos_ingreso'] 
+                ? ($config['conf_inicio_recibos_ingreso'] ?? 1) 
                 : intval($consecutivoActual['fcu_consecutivo']) + 1;
             
             foreach ($usuarios as $usuario) {
@@ -3813,7 +3877,7 @@ class Movimientos {
                 // Factura de venta
                 $sqlConsecutivo = "SELECT fcu_consecutivo FROM ".BD_FINANCIERA.".finanzas_cuentas 
                                   WHERE fcu_tipo=1 AND institucion=? AND year=? 
-                                  ORDER BY fcu_id DESC LIMIT 1";
+                                  ORDER BY fcu_consecutivo DESC LIMIT 1";
                 $stmtConsecutivo = $conexionPDO->prepare($sqlConsecutivo);
                 $stmtConsecutivo->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
                 $stmtConsecutivo->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
@@ -3829,7 +3893,7 @@ class Movimientos {
                 // Factura de compra
                 $sqlConsecutivo = "SELECT fcu_consecutivo FROM ".BD_FINANCIERA.".finanzas_cuentas 
                                   WHERE fcu_tipo=2 AND institucion=? AND year=? 
-                                  ORDER BY fcu_id DESC LIMIT 1";
+                                  ORDER BY fcu_consecutivo DESC LIMIT 1";
                 $stmtConsecutivo = $conexionPDO->prepare($sqlConsecutivo);
                 $stmtConsecutivo->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
                 $stmtConsecutivo->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);

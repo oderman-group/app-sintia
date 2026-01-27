@@ -120,36 +120,7 @@ if ($accion == 'confirmar') {
 
 $fecha = $fechaDocumento;
 
-if ($_POST["tipo"] == 1) {
-    try{
-        $consultaConsecutivoActual=mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_tipo=1 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-        ORDER BY fcu_id DESC");
-    } catch (Exception $e) {
-        include("../compartido/error-catch-to-report.php");
-    }
-
-    $consecutivoActual = mysqli_fetch_array($consultaConsecutivoActual, MYSQLI_BOTH);
-    if ($consecutivoActual['fcu_consecutivo'] == "") {
-        $consecutivo = $config['conf_inicio_recibos_ingreso'];
-    } else {
-        $consecutivo = $consecutivoActual['fcu_consecutivo'] + 1;
-    }
-}
-
-if ($_POST["tipo"] == 2) {
-    try{
-        $consultaConsecutivoActual=mysqli_query($conexion, "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_tipo=2 AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}
-        ORDER BY fcu_id DESC");
-    } catch (Exception $e) {
-        include("../compartido/error-catch-to-report.php");
-    }
-    $consecutivoActual = mysqli_fetch_array($consultaConsecutivoActual, MYSQLI_BOTH);
-    if ($consecutivoActual['fcu_consecutivo'] == "") {
-        $consecutivo = $config['conf_inicio_recibos_egreso'];
-    } else {
-        $consecutivo = $consecutivoActual['fcu_consecutivo'] + 1;
-    }
-}
+// fcu_consecutivo no se modifica al actualizar: se asigna solo al crear la factura.
 
 // Solo se ejecuta si está en EN_PROCESO y NO tiene abonos (ya se manejó arriba)
 try{
@@ -168,7 +139,7 @@ try{
     $usuarioEscapado = mysqli_real_escape_string($conexion, (string)($_POST["usuario"] ?? ''));
     $anuladoEscapado = mysqli_real_escape_string($conexion, (string)($_POST["anulado"] ?? '0'));
     // El campo cerrado no se modifica desde esta página, está reservado para otro proceso
-    $consecutivoEscapado = mysqli_real_escape_string($conexion, (string)($consecutivo ?? ''));
+    // fcu_consecutivo no se actualiza: se asigna solo al crear
     $estadoEscapado = mysqli_real_escape_string($conexion, (string)($nuevoEstado ?? ''));
     $idUEscapado = mysqli_real_escape_string($conexion, (string)($_POST['idU'] ?? ''));
     
@@ -182,7 +153,6 @@ try{
     fcu_observaciones='{$obsEscapada}',
     fcu_usuario='{$usuarioEscapado}',
     fcu_anulado='{$anuladoEscapado}',
-    fcu_consecutivo='{$consecutivoEscapado}',
     fcu_status='{$estadoEscapado}'
     WHERE fcu_id='{$idUEscapado}' AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
     
@@ -195,7 +165,7 @@ try{
             'fcu_observaciones' => $obsEscapada,
             'fcu_usuario' => $usuarioEscapado,
             'fcu_anulado' => $anuladoEscapado,
-            'fcu_consecutivo' => $consecutivoEscapado,
+            'fcu_consecutivo' => $datosAnteriores['fcu_consecutivo'] ?? null,
             'fcu_status' => $estadoEscapado,
             'fcu_cerrado' => $datosAnteriores['fcu_cerrado'] ?? 0,
             'fcu_fecha_cerrado' => $datosAnteriores['fcu_fecha_cerrado'] ?? null,

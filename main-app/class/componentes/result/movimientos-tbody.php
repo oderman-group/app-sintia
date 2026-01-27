@@ -52,6 +52,8 @@ foreach ($data["data"] as $resultado) {
 	$saldoPendienteFormateado = number_format($saldoPendiente, 0, ",", ".");
 	$tipoFacturaTexto = $estadosCuentas[$resultado['fcu_tipo']] ?? 'N/D';
 	$claseBadgeTipo = ($resultado['fcu_tipo'] == 1) ? 'badge badge-tipo-venta' : 'badge badge-tipo-compra';
+	$displayConsecutivo = (isset($resultado['fcu_consecutivo']) && $resultado['fcu_consecutivo'] !== '' && $resultado['fcu_consecutivo'] !== null)
+		? (int)$resultado['fcu_consecutivo'] : ($resultado['id_nuevo_movimientos'] ?? '');
 	// Las facturas EN_PROCESO no pueden tener abonos ni recordatorios
 	$esEnProceso = ($resultado['fcu_status'] == EN_PROCESO);
 	$puedeAgregarAbono = ($resultado['fcu_anulado'] != 1 && $saldoPendiente > 0 && !$esEnProceso);
@@ -65,14 +67,14 @@ foreach ($data["data"] as $resultado) {
 			<input type="checkbox"
 				class="factura-checkbox"
 				data-factura="<?= $resultado['fcu_id']; ?>"
-				data-consecutivo="<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>"
+				data-consecutivo="<?= htmlspecialchars((string)$displayConsecutivo, ENT_QUOTES); ?>"
 				data-usuario="<?= htmlspecialchars($usuario, ENT_QUOTES); ?>"
 				data-email="<?= htmlspecialchars($correoUsuario, ENT_QUOTES); ?>"
 				data-saldo="<?= $saldoPendiente; ?>"
 				<?= $puedeSeleccionar ? '' : 'disabled'; ?>>
 		</td>
 		<td><?= $contReg; ?></td>
-		<td><?= $resultado['id_nuevo_movimientos']; ?></td>
+		<td><?= $displayConsecutivo; ?></td>
 		<td>
 			<a href="<?= $_SERVER['PHP_SELF']; ?>?estadoFil=<?= base64_encode($estadoFil); ?>&usuario=<?= base64_encode($usuario) ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&desde=<?= $desde; ?>&hasta=<?= $hasta; ?>&tipo=<?= base64_encode($tipo); ?>&fecha=<?= base64_encode($resultado['fcu_fecha']); ?>" style="text-decoration: underline;"><?= $resultado['fcu_fecha']; ?></a>
 		</td>
@@ -124,19 +126,19 @@ foreach ($data["data"] as $resultado) {
 							<?php if ($resultado['fcu_anulado'] != 1 && Modulos::validarSubRol(['DT0094'])) { ?>
 								<li><a href="movimientos-duplicar.php?id=<?= base64_encode($resultado['fcu_id']); ?>">Duplicar</a></li>
 							<?php } ?>
-							<li><a href="javascript:void(0);" onClick="verAbonosFactura('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>')">Ver abonos</a></li>
+							<li><a href="javascript:void(0);" onClick="verAbonosFactura('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars((string)$displayConsecutivo, ENT_QUOTES); ?>')">Ver abonos</a></li>
 							<?php if ($resultado['fcu_anulado'] != 1 && $abonos <= 0 && $resultado['fcu_status'] == POR_COBRAR && Modulos::validarSubRol(['DT0089'])) { ?>
 								<li id="anulado<?= $resultado['fcu_id']; ?>"><a href="javascript:void(0);" onClick="anularMovimiento(this)" data-id-registro="<?= $resultado['fcu_id']; ?>" data-id-usuario="<?= $resultado['uss_id']; ?>">Anular</a></li>
 							<?php } ?>
-							<li><a href="javascript:void(0);" onClick="sincronizarAbonos('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>')">Sync abonos</a></li>
+							<li><a href="javascript:void(0);" onClick="sincronizarAbonos('<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars((string)$displayConsecutivo, ENT_QUOTES); ?>')">Sync abonos</a></li>
 							<?php if ($puedeAgregarAbono) { ?>
-								<li><a href="javascript:void(0);" onClick="abrirModalAbonoRapido('<?= $resultado['fcu_id']; ?>', '<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>', '<?= $saldoPendienteFormateado; ?>')">Agregar abono</a></li>
+								<li><a href="javascript:void(0);" onClick="abrirModalAbonoRapido('<?= $resultado['fcu_id']; ?>', '<?= htmlspecialchars((string)$displayConsecutivo, ENT_QUOTES); ?>', '<?= $saldoPendienteFormateado; ?>')">Agregar abono</a></li>
 							<?php } ?>
 							<?php if ($puedeRecordar) { ?>
 								<li><a href="javascript:void(0);" onClick="enviarRecordatorioFactura('<?= $resultado['fcu_id']; ?>')">Enviar recordatorio</a></li>
 							<?php } ?>
 							<?php if ($resultado['fcu_tipo'] == 1 && $resultado['fcu_anulado'] != 1 && $saldoPendiente > 0) { ?>
-								<li><a href="javascript:void(0);" onClick="bloquearUsuarioFactura('<?= $resultado['uss_id']; ?>','<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars($resultado['id_nuevo_movimientos'], ENT_QUOTES); ?>','<?= $saldoPendienteFormateado; ?>')">Bloquear usuario</a></li>
+								<li><a href="javascript:void(0);" onClick="bloquearUsuarioFactura('<?= $resultado['uss_id']; ?>','<?= $resultado['fcu_id']; ?>','<?= htmlspecialchars((string)$displayConsecutivo, ENT_QUOTES); ?>','<?= $saldoPendienteFormateado; ?>')">Bloquear usuario</a></li>
 							<?php } ?>
 							<?php if (Modulos::validarSubRol(['DT0255'])) { ?>
 								<li><a href="movimientos-factura-venta.php?id=<?= base64_encode($resultado['fcu_id']); ?>" target="_blank"><?= $frases[57][$datosUsuarioActual['uss_idioma']]; ?></a></li>

@@ -283,6 +283,8 @@ if ($puedeEditar) {
                                         $estadoColor = '#ffc107';
                                     }
                                     $tipoTexto = (!empty($datosMovimiento['fcu_tipo']) && $datosMovimiento['fcu_tipo'] == 1) ? 'Fact. Venta' : 'Fact. Compra';
+                                    $displayConsecutivoFactura = (isset($datosMovimiento['fcu_consecutivo']) && $datosMovimiento['fcu_consecutivo'] !== '' && $datosMovimiento['fcu_consecutivo'] !== null)
+                                        ? (int)$datosMovimiento['fcu_consecutivo'] : ($datosMovimiento['fcu_id'] ?? '');
                                     
                                     // Pasar $datosMovimiento como $resultado al include para compatibilidad
                                     $resultado = $datosMovimiento;
@@ -299,7 +301,7 @@ if ($puedeEditar) {
 												<i class="fa fa-file-text-o"></i> <?=$frases[95][$datosUsuarioActual['uss_idioma']];?>
 											</h2>
 											<p style="margin: 10px 0 0 0; opacity: 0.9;">
-												# <?=$datosMovimiento['fcu_id'] ?? '';?> | <?=$tipoTexto;?>
+												# <?= $displayConsecutivoFactura; ?> | <?=$tipoTexto;?>
 											</p>
 										</div>
 										<div class="col-md-6 text-right">
@@ -377,7 +379,7 @@ if ($puedeEditar) {
 											<div class="col-md-6">
 												<div class="form-group">
 													<label>Número de Factura</label>
-													<input type="text" name="idNuevo" class="form-control" value="<?=$datosMovimiento['fcu_id'] ?? '';?>" disabled style="background: #f5f5f5;">
+													<input type="text" name="idNuevo" class="form-control" value="<?= $displayConsecutivoFactura; ?>" disabled style="background: #f5f5f5;">
 												</div>
 											</div>
 											<div class="col-md-6">

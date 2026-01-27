@@ -1,12 +1,13 @@
 <?php
 /**
- * Este archivo obtiene todas las actividades del estudiante para el calendario
+ * Este archivo obtiene todas las actividades del docente para el calendario
  * Incluye: cronogramas, tareas, exámenes, clases y actividades calificables
+ * de todas las cargas del docente
  */
 
 // Evitar ejecución duplicada
-if(!isset($calendarioActividadesCalculado)){
-    $calendarioActividadesCalculado = true;
+if(!isset($calendarioActividadesDocenteCalculado)){
+    $calendarioActividadesDocenteCalculado = true;
     
     require_once(ROOT_PATH."/main-app/class/Cronograma.php");
     require_once(ROOT_PATH."/main-app/class/Actividades.php");
@@ -14,20 +15,14 @@ if(!isset($calendarioActividadesCalculado)){
     require_once(ROOT_PATH."/main-app/class/Clases.php");
     require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
 
-    // Determinar el usrEstud para las URLs
-    $usrEstudParam = !empty($_GET["usrEstud"]) ? $_GET["usrEstud"] : base64_encode($datosEstudianteActual['mat_id_usuario']);
-
     // Verificar si hay un filtro de carga seleccionado
     $cargaFiltro = '';
     if(!empty($_GET['filtro_carga'])){
         $cargaFiltro = base64_decode($_GET['filtro_carga']);
     }
 
-    // Obtener todas las cargas del estudiante
-    $idGrado = !empty($datosEstudianteActual['mat_grado']) ? (string)$datosEstudianteActual['mat_grado'] : '';
-    $idGrupo = !empty($datosEstudianteActual['mat_grupo']) ? (string)$datosEstudianteActual['mat_grupo'] : '';
-
-    $cCargas = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $idGrado, $idGrupo);
+    // Obtener todas las cargas del docente
+    $cCargas = CargaAcademica::traerCargasDocentes($config, $_SESSION["id"]);
 
     $eventos = "";
     $contReg = 1;
@@ -42,14 +37,8 @@ if(!isset($calendarioActividadesCalculado)){
     // Array para almacenar todas las cargas válidas
     $cargasValidas = [];
 
-    // Primero, obtener todas las cargas válidas del estudiante
+    // Primero, obtener todas las cargas válidas del docente
     while($cargaTemp = mysqli_fetch_array($cCargas, MYSQLI_BOTH)){
-        // Verificar si el estudiante está matriculado en cursos de extensión o complementarios
-        if($cargaTemp['car_curso_extension']==1){
-            $cursoExt = CargaAcademica::validarCursosComplementario($conexion, $config, $datosEstudianteActual['mat_id'], $cargaTemp['car_id']);
-            if($cursoExt==0){continue;}
-        }
-        
         // Si hay un filtro de carga, solo incluir la carga seleccionada
         if(!empty($cargaFiltro) && $cargaTemp['car_id'] != $cargaFiltro){
             continue;
@@ -63,6 +52,9 @@ if(!isset($calendarioActividadesCalculado)){
         $idCarga = $carga['car_id'];
         $periodo = $carga['car_periodo'];
         $materiaNombre = $carga['mat_nombre'];
+        $gradoNombre = $carga['gra_nombre'];
+        $grupoNombre = $carga['gru_nombre'];
+        $materiaCompleta = $materiaNombre . ' - ' . $gradoNombre . ' ' . $grupoNombre;
         
         // 1. CRONOGRAMAS
         $consultaCronograma = Cronograma::traerDatosCronograma($conexion, $config, $idCarga, $periodo);
@@ -81,12 +73,12 @@ if(!isset($calendarioActividadesCalculado)){
             
             $eventos .= '
             {
-                title: "'.addslashes($resultado["cro_tema"]).' - '.addslashes($materiaNombre).'",
+                title: "'.addslashes($resultado["cro_tema"]).' - '.addslashes($materiaCompleta).'",
                 start: new Date('.$resultado["agno"].', '.$resultado["mes"].', '.$resultado["dia"].', 6, 0),
                 backgroundColor: "'.$resultado["cro_color"].'",
                 borderColor: "'.$resultado["cro_color"].'",
                 textColor: "#ffffff",
-                url: "cronograma-detalles.php?idR='.base64_encode($resultado["cro_id"]).'&usrEstud='.$usrEstudParam.'&carga='.base64_encode($idCarga).'&periodo='.base64_encode($periodo).'",
+                url: "cronograma-editar.php?idR='.base64_encode($resultado["cro_id"]).'&carga='.base64_encode($idCarga).'&periodo='.base64_encode($periodo).'",
                 tipo: "cronograma"
             },
             ';
@@ -109,12 +101,12 @@ if(!isset($calendarioActividadesCalculado)){
                 
                 $eventos .= '
                 {
-                    title: "'.addslashes($tarea['tar_titulo']).' - '.addslashes($materiaNombre).'",
+                    title: "'.addslashes($tarea['tar_titulo']).' - '.addslashes($materiaCompleta).'",
                     start: new Date('.$fechaEntrega->format('Y').', '.($fechaEntrega->format('m')-1).', '.$fechaEntrega->format('d').', 23, 59),
                     backgroundColor: "#3498db",
                     borderColor: "#2980b9",
                     textColor: "#ffffff",
-                    url: "actividades-ver.php?idR='.base64_encode($tarea['tar_id']).'&usrEstud='.$usrEstudParam.'",
+                    url: "actividades-entregas.php?idR='.base64_encode($tarea['tar_id']).'",
                     tipo: "tarea"
                 },
                 ';
@@ -139,12 +131,12 @@ if(!isset($calendarioActividadesCalculado)){
                 
                 $eventos .= '
                 {
-                    title: "'.addslashes($evaluacion['eva_nombre']).' - '.addslashes($materiaNombre).'",
+                    title: "'.addslashes($evaluacion['eva_nombre']).' - '.addslashes($materiaCompleta).'",
                     start: new Date('.$fechaHasta->format('Y').', '.($fechaHasta->format('m')-1).', '.$fechaHasta->format('d').', '.$fechaHasta->format('H').', '.$fechaHasta->format('i').'),
                     backgroundColor: "#e74c3c",
                     borderColor: "#c0392b",
                     textColor: "#ffffff",
-                    url: "evaluaciones-ver.php?idR='.base64_encode($evaluacion['eva_id']).'&usrEstud='.$usrEstudParam.'",
+                    url: "evaluaciones-editar.php?idR='.base64_encode($evaluacion['eva_id']).'",
                     tipo: "examen"
                 },
                 ';
@@ -168,12 +160,12 @@ if(!isset($calendarioActividadesCalculado)){
                 
                 $eventos .= '
                 {
-                    title: "'.addslashes($clase['cls_tema']).' - '.addslashes($materiaNombre).'",
+                    title: "'.addslashes($clase['cls_tema']).' - '.addslashes($materiaCompleta).'",
                     start: new Date('.$fechaClase->format('Y').', '.($fechaClase->format('m')-1).', '.$fechaClase->format('d').', 8, 0),
                     backgroundColor: "#27ae60",
                     borderColor: "#229954",
                     textColor: "#ffffff",
-                    url: "clases-ver.php?idR='.base64_encode($clase['cls_id']).'&usrEstud='.$usrEstudParam.'",
+                    url: "clases-ver.php?idR='.base64_encode($clase['cls_id']).'&carga='.base64_encode($idCarga).'&periodo='.base64_encode($periodo).'",
                     tipo: "clase"
                 },
                 ';
@@ -204,12 +196,12 @@ if(!isset($calendarioActividadesCalculado)){
                 }
                 $eventos .= '
                 {
-                    title: "'.addslashes($nombreActividad).' - '.addslashes($materiaNombre).'",
+                    title: "'.addslashes($nombreActividad).' - '.addslashes($materiaCompleta).'",
                     start: new Date('.$fechaActividad->format('Y').', '.($fechaActividad->format('m')-1).', '.$fechaActividad->format('d').', 10, 0),
                     backgroundColor: "#9b59b6",
                     borderColor: "#8e44ad",
                     textColor: "#ffffff",
-                    url: "calificaciones.php?carga='.base64_encode($idCarga).'&periodo='.base64_encode($periodo).'&usrEstud='.$usrEstudParam.'",
+                    url: "calificaciones.php?carga='.base64_encode($idCarga).'&periodo='.base64_encode($periodo).'",
                     tipo: "actividad_calificable"
                 },
                 ';
