@@ -646,6 +646,34 @@ class Utilidades {
     }
 
     /**
+     * Normaliza una fecha de entrada a Y-m-d para MySQL.
+     * Acepta formatos habituales (Y-m-d, d-m-Y, d/m/Y, etc.).
+     * Útil para filtrar fechas antes de insertar/actualizar en BD y evitar "Incorrect date value".
+     *
+     * @param string|mixed $valor Fecha en cualquier formato común (ej. '30-06-2018', '2018-06-30')
+     * @return string|null|false Y-m-d si válida, null si vacía, false si no parseable
+     */
+    public static function normalizarFechaParaBD($valor) {
+        $v = is_string($valor) ? trim($valor) : '';
+        if ($v === '') {
+            return null;
+        }
+        $formatos = ['Y-m-d', 'd-m-Y', 'd/m/Y', 'm-d-Y', 'd.m.Y', 'Y/m/d'];
+        foreach ($formatos as $fmt) {
+            $d = DateTime::createFromFormat($fmt, $v);
+            if ($d) {
+                return $d->format('Y-m-d');
+            }
+        }
+        $ts = strtotime($v);
+        if ($ts !== false) {
+            $d = new DateTime('@' . $ts);
+            return $d->format('Y-m-d');
+        }
+        return false;
+    }
+
+    /**
      * Sanitiza un array asociativo (ej: $_POST)
      * - Aplica sanitización de texto a todos los valores tipo string
      *
