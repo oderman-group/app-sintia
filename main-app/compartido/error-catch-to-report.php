@@ -38,8 +38,8 @@ if(ENVIROMENT === 'PROD') {
 	$data = [
 		'usuario_email'    => 'info@oderman-group.com',
 		'usuario_nombre'   => 'Jhon Oderman',
-		'usuario2_email'   => 'enuar2110@gmail.com',
-		'usuario2_nombre'  => 'Enuar Lara',
+		'usuario2_email'   => 'rguerramartinez1989@gmail.com',
+		'usuario2_nombre'  => 'Rafael Guerra',
 		'institucion_id'   => $config['conf_id_institucion'],
 		'institucion_agno' => $_SESSION["bd"],
 		'usuario_id'       => $_SESSION["id"],
