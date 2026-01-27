@@ -31,6 +31,16 @@ $desde="";
 if(isset($_REQUEST["desde"])){$desde=base64_decode($_REQUEST["desde"]);}
 $hasta="";
 if(isset($_REQUEST["hasta"])){$hasta=base64_decode($_REQUEST["hasta"]);}
+$arrayAnios = [];
+if(!empty($_REQUEST["anios"])){
+	$aniosDec = base64_decode($_REQUEST["anios"]);
+	if($aniosDec !== false && $aniosDec !== ''){
+		$arrayAnios = array_map('intval', array_filter(array_map('trim', explode(',', $aniosDec))));
+	}
+}
+if(empty($arrayAnios) && $desde !== '' && $desde !== false && $hasta !== '' && $hasta !== false){
+	$arrayAnios = range((int)$desde, (int)$hasta);
+}
 $estampilla="";
 if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 
@@ -921,8 +931,8 @@ $tiposNotas = [];
 
 			<?php 
 			// Solo mostrar opción de consolidar si hay múltiples años
-			$hayMultiplesAnios = !empty($desde) && !empty($hasta) && ($hasta - $desde) > 0;
-			if ($hayMultiplesAnios) { 
+			$hayMultiplesAniosConfig = count($arrayAnios) > 1;
+			if ($hayMultiplesAniosConfig) { 
 			?>
 			<div class="form-group">
 				<label class="checkbox-label">
@@ -1045,11 +1055,11 @@ $tiposNotas = [];
 
 	<div class="container-certificado">
 		<?php 
-		// Calcular número de años antes de usarlo
-		$restaAgnos = ($hasta - $desde) + 1;
+		// Calcular número de años (lista explícita o rango desde-hasta)
+		$restaAgnos = count($arrayAnios);
 		
-		// Detectar si es un solo año (desde == hasta)
-		$esUnSoloAnio = ($desde == $hasta);
+		// Detectar si es un solo año
+		$esUnSoloAnio = ($restaAgnos == 1);
 		
 		// Si está consolidado o es un solo año, mostrar encabezado, logo y título una sola vez antes del loop
 		if ($consolidarTextoAnios || $restaAgnos == 1 || $esUnSoloAnio) {
@@ -1133,9 +1143,7 @@ $tiposNotas = [];
 		$documentoEstudiante = '';
 		
 		if ($hayMultiplesAnios && $consolidarTextoAnios) {
-			$tempInicio = $desde;
-			$tempI = 1;
-			while ($tempI <= $restaAgnos) {
+			foreach ($arrayAnios as $tempInicio) {
 				$matriculaTemp = Estudiantes::obtenerDatosEstudiante($id, $tempInicio);
 				if (!empty($matriculaTemp) && is_array($matriculaTemp)) {
 					$gradosAnios[] = strtoupper($matriculaTemp["gra_nombre"]);
@@ -1163,8 +1171,6 @@ $tiposNotas = [];
 						}
 					}
 				}
-				$tempInicio++;
-				$tempI++;
 			}
 		}
 		
@@ -1172,12 +1178,13 @@ $tiposNotas = [];
 		// O si es un solo año, mostrar el texto antes del loop
 		if (($hayMultiplesAnios && $consolidarTextoAnios && !empty($gradosAnios)) || ($esUnSoloAnio && !$consolidarTextoAnios)) {
 			if ($esUnSoloAnio && !$consolidarTextoAnios) {
+				$unicoAnio = $arrayAnios[0];
 				// Para un solo año, obtener datos del estudiante
-				$matriculaUnAnio = Estudiantes::obtenerDatosEstudiante($id, $desde);
+				$matriculaUnAnio = Estudiantes::obtenerDatosEstudiante($id, $unicoAnio);
 				if (!empty($matriculaUnAnio) && is_array($matriculaUnAnio)) {
 					$documentoEstudiante = $matriculaUnAnio["mat_documento"] ?? 'N/A';
 					$gradosTexto = strtoupper($matriculaUnAnio["gra_nombre"]);
-					$aniosTexto = $desde;
+					$aniosTexto = $unicoAnio;
 					switch ($matriculaUnAnio["gra_nivel"]) {
 						case PREESCOLAR: 
 							$educacionConsolidada = "preescolar"; 
@@ -1213,17 +1220,13 @@ $tiposNotas = [];
 		<?php
 		}
 		
-		$i = 1;
-		$inicio = $desde;
-
-		while ($i <= $restaAgnos) {
+		foreach ($arrayAnios as $idx => $inicio) {
+			$i = $idx + 1;
 			// Optimización: Obtener datos del estudiante
 			$matricula = Estudiantes::obtenerDatosEstudiante($id, $inicio);
 			
 			// Validar que el estudiante exista
 			if (empty($matricula) || !is_array($matricula)) {
-				$i++;
-				$inicio++;
 				continue;
 			}
 			
@@ -1733,24 +1736,23 @@ $tiposNotas = [];
 			<?php } ?>
 
 		<?php
-			$inicio++;
-			$i++;
 		}
 		?>
 
 		<?php 
 		// Si es un solo año y está activa la opción de mostrar mensaje de promoción, mostrarlo después de todas las tablas
 		if ($esUnSoloAnio && $mostrarMensajePromocion) {
+			$anioPromocion = $arrayAnios[0];
 			// Obtener datos del estudiante para el mensaje de promoción
-			$matriculaPromocion = Estudiantes::obtenerDatosEstudiante($id, $desde);
+			$matriculaPromocion = Estudiantes::obtenerDatosEstudiante($id, $anioPromocion);
 			if (!empty($matriculaPromocion) && is_array($matriculaPromocion)) {
-				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $desde);
+				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
 				$materiasPerdidasPromocion = 0;
 				$vectorMPPromocion = array();
 				$periodoFinalPromocion = $config['conf_periodos_maximos'];
 				
 				while ($cargasCPromocion = mysqli_fetch_array($cargasAcademicasPromocion, MYSQLI_BOTH)) {
-					$boletinCPromocion = Boletin::traerDefinitivaBoletinCarga($config, $cargasCPromocion["car_id"], $id, $desde);
+					$boletinCPromocion = Boletin::traerDefinitivaBoletinCarga($config, $cargasCPromocion["car_id"], $id, $anioPromocion);
 					$notaCPromocion = !empty($boletinCPromocion['promedio']) ? round($boletinCPromocion['promedio'], 1) : 0;
 					
 					if ($notaCPromocion < $config[5]) {
@@ -1767,7 +1769,7 @@ $tiposNotas = [];
 				$niveladasPromocion = 0;
 				if ($materiasPerdidasPromocion > 0) {
 					for ($m = 0; $m < $materiasPerdidasPromocion; $m++) {
-						$nMPPromocion = Calificaciones::validarMateriaNivelada($conexion, $config, $id, $vectorMPPromocion[$m], $desde);
+						$nMPPromocion = Calificaciones::validarMateriaNivelada($conexion, $config, $id, $vectorMPPromocion[$m], $anioPromocion);
 						if (mysqli_num_rows($nMPPromocion) > 0) {
 							$niveladasPromocion++;
 						}
@@ -1777,9 +1779,9 @@ $tiposNotas = [];
 				// Verificar si hay notas en el último periodo configurado
 				$tieneNotasUltimoPeriodoPromocion = false;
 				$ultimoPeriodoPromocion = $config["conf_periodos_maximos"];
-				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $desde);
+				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
 				while ($cargaVerificarPromocion = mysqli_fetch_array($cargasParaVerificarPromocion, MYSQLI_BOTH)) {
-					$notaUltimoPeriodoPromocion = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodoPromocion, $id, $cargaVerificarPromocion["car_id"], $desde);
+					$notaUltimoPeriodoPromocion = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodoPromocion, $id, $cargaVerificarPromocion["car_id"], $anioPromocion);
 					if (!empty($notaUltimoPeriodoPromocion['bol_nota'])) {
 						$tieneNotasUltimoPeriodoPromocion = true;
 						break;

@@ -1428,9 +1428,10 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 			// Verificar si es el modal de certificados por el contenido
 			var tieneFormCertificado = $('#formCertificado').length > 0;
 			if (tieneFormCertificado) {
-				// Inicializar Select2 en los campos del formulario
 				setTimeout(function() {
-					$('#desdeAnio, #hastaAnio, #selectEstudiante, #tipoCertificado').each(function() {
+					// Los selects Desde/Hasta son nativos (sin Select2) para que siempre se vea el valor elegido
+					// Resto de selects del formulario
+					$('#selectEstudiante, #tipoCertificado, #formCertificado select[name="sin_encabezado"]').each(function() {
 						var $select = $(this);
 						if (!$select.data('select2')) {
 							$select.select2({
@@ -1441,7 +1442,6 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 						}
 					});
 					
-					// Inicializar funciones del modal
 					if (typeof window.inicializarModalCertificados === 'function') {
 						window.inicializarModalCertificados();
 					}
