@@ -1239,8 +1239,8 @@ $tiposNotas = [];
 					}
 				}
 			}
-			$gradoActual = $matricula['mat_grado'];
-			$grupoActual = $matricula['mat_grupo'];
+			$gradoActual = (string)($matricula['mat_grado'] ?? '');
+			$grupoActual = (string)($matricula['mat_grupo'] ?? '');
 
 			// Determinar tipo de educación
 			switch ($matricula["gra_nivel"]) {
