@@ -1775,45 +1775,39 @@ if($config['conf_doble_buscador'] == 1) {
 						campos: camposAActualizar
 					},
 					dataType: 'json',
+					timeout: 60000,
 					success: function(response) {
 						console.log('Respuesta del servidor:', response);
 						
 						$('#btnConfirmarEdicionMasivaEstudiantes').html(btnOriginal).prop('disabled', false);
-						
-						// Cerrar el toast de procesamiento
+						// Solo quitar el toast "Procesando..."; no tocar el de éxito que se mostrará después
 						$('.jq-toast-wrap').remove();
 						
-					if (response.success) {
-						// Cerrar modal
-						$('#editarMasivoEstudiantesModal').modal('hide');
-						
-						// Construir mensaje de éxito
-						var mensaje = response.message || 'Operación completada exitosamente.';
-						
-						// Agregar detalles adicionales si están disponibles
-						if (response.usuarios_generados > 0) {
-							mensaje += ' Se generaron ' + response.usuarios_generados + ' usuarios.';
-						}
-						
-						// Mostrar mensaje de éxito
-						$.toast({
-							heading: '¡Éxito!',
-							text: mensaje,
-							showHideTransition: 'slide',
-							icon: 'success',
-							position: 'top-right',
-							hideAfter: 6000
-						});
-						
-						// Recargar solo la tabla de estudiantes sin recargar toda la página
-						setTimeout(function() {
-							recargarTablaEstudiantes();
-						}, 500);
-						
-					} else {
+						if (response && response.success) {
+							$('#editarMasivoEstudiantesModal').modal('hide');
+							
+							var mensaje = response.message || 'Operación completada exitosamente.';
+							if (response.usuarios_generados > 0) {
+								mensaje += ' Se generaron ' + response.usuarios_generados + ' usuarios.';
+							}
+							
+							$.toast({
+								heading: '¡Éxito!',
+								text: mensaje,
+								showHideTransition: 'slide',
+								icon: 'success',
+								position: 'top-right',
+								hideAfter: 8000
+							});
+							
+							// Dar tiempo al usuario de leer el toast; luego recargar la página para ver los cambios
+							setTimeout(function() {
+								location.reload();
+							}, 8500);
+						} else {
 							$.toast({
 								heading: 'Error',
-								text: response.message || 'No se pudo actualizar ningún estudiante.',
+								text: (response && response.message) || 'No se pudo actualizar ningún estudiante.',
 								showHideTransition: 'slide',
 								icon: 'error',
 								position: 'top-right',
@@ -1822,22 +1816,28 @@ if($config['conf_doble_buscador'] == 1) {
 						}
 					},
 					error: function(xhr, status, error) {
-						console.error('Error AJAX:', error);
+						console.error('Error AJAX:', status, error);
 						console.error('Response:', xhr.responseText);
 						
 						$('#btnConfirmarEdicionMasivaEstudiantes').html(btnOriginal).prop('disabled', false);
-						
-						// Cerrar el toast de procesamiento
 						$('.jq-toast-wrap').remove();
 						
+						var msg = 'Error de conexión al servidor.';
+						if (status === 'timeout') {
+							msg = 'La operación tardó demasiado. Comprueba que los cambios se aplicaron y recarga la página si es necesario.';
+						}
 						$.toast({
 							heading: 'Error',
-							text: 'Error de conexión al servidor.',
+							text: msg,
 							showHideTransition: 'slide',
 							icon: 'error',
 							position: 'top-right',
 							hideAfter: 5000
 						});
+					},
+					complete: function() {
+						$('#btnConfirmarEdicionMasivaEstudiantes').html(btnOriginal).prop('disabled', false);
+						// No eliminar toasts aquí: en éxito ya mostramos el toast y no debe borrarse
 					}
 				});
 			}
@@ -1854,7 +1854,7 @@ if($config['conf_doble_buscador'] == 1) {
 				var grupos = $('#filtro_grupos').val() || [];
 				var estados = $('#filtro_estados').val() || [];
 				var busqueda = $('#filtro_busqueda').val() || '';
-				var busquedaNormalizada = normalizarBusqueda(busqueda);
+				var busquedaNormalizada = typeof normalizarBusqueda === 'function' ? normalizarBusqueda(busqueda) : busqueda;
 				if (busquedaNormalizada !== busqueda) {
 					busqueda = busquedaNormalizada;
 					$('#filtro_busqueda').val(busquedaNormalizada);
@@ -1875,40 +1875,66 @@ if($config['conf_doble_buscador'] == 1) {
 						page: page
 					},
 					dataType: 'json',
+					timeout: 30000,
 					success: function(response) {
-						$('#gifCarga').hide();
-						
-						if (response.success) {
-							// Actualizar el contenido de la tabla
-							$('#matriculas_result').html(response.html);
-							if (response.paginationHtml !== undefined && $('#paginacion-estudiantes').length) {
-								$('#paginacion-estudiantes').html(response.paginationHtml);
+						try {
+							if (response && response.success) {
+								// Actualizar el contenido de la tabla
+								$('#matriculas_result').html(response.html || '');
+								if (response.paginationHtml !== undefined && $('#paginacion-estudiantes').length) {
+									$('#paginacion-estudiantes').html(response.paginationHtml);
+								}
+								
+								// Limpiar las selecciones
+								selectedEstudiantes = [];
+								$('#selectAllEstudiantes').prop('checked', false);
+								toggleActionButtons();
+								
+								console.log('Tabla de estudiantes recargada exitosamente');
+								if (typeof aplicarResaltadoBusqueda === 'function') {
+									aplicarResaltadoBusqueda(busqueda);
+								}
+							} else {
+								console.error('Error al recargar tabla:', response && response.error);
+								$.toast({
+									heading: 'Advertencia',
+									text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista. Recarga la página si es necesario.',
+									showHideTransition: 'slide',
+									icon: 'warning',
+									position: 'top-right',
+									hideAfter: 4000
+								});
 							}
-							
-							// Limpiar las selecciones
-							selectedEstudiantes = [];
-							$('#selectAllEstudiantes').prop('checked', false);
-							toggleActionButtons();
-							
-							console.log('Tabla de estudiantes recargada exitosamente');
-							// Reaplicar resaltado si hay búsqueda
-							aplicarResaltadoBusqueda(busqueda);
-						} else {
-							console.error('Error al recargar tabla:', response.error);
+						} catch (e) {
+							console.error('Excepción al procesar recarga de tabla:', e);
 							$.toast({
 								heading: 'Advertencia',
-								text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista.',
+								text: 'Los cambios se aplicaron pero hubo un problema al actualizar la vista. Recarga la página para ver los datos.',
 								showHideTransition: 'slide',
 								icon: 'warning',
 								position: 'top-right',
-								hideAfter: 3000
+								hideAfter: 4000
 							});
 						}
 					},
 					error: function(xhr, status, error) {
+						console.error('Error al recargar tabla:', status, error);
+						if (status !== 'abort') {
+							$.toast({
+								heading: 'Aviso',
+								text: 'Los cambios se guardaron correctamente. Si la tabla no se actualizó, recarga la página (F5).',
+								showHideTransition: 'slide',
+								icon: 'info',
+								position: 'top-right',
+								hideAfter: 5000
+							});
+						}
+					},
+					complete: function() {
 						$('#gifCarga').hide();
-						console.error('Error al recargar tabla:', error);
-						// No mostrar error ya que los cambios sí se aplicaron
+						if (typeof habilitarControlesFiltro === 'function') {
+							habilitarControlesFiltro();
+						}
 					}
 				});
 			}

@@ -25,6 +25,16 @@ $desde="";
 if(isset($_REQUEST["desde"])){$desde=base64_decode($_REQUEST["desde"]);}
 $hasta="";
 if(isset($_REQUEST["hasta"])){$hasta=base64_decode($_REQUEST["hasta"]);}
+$arrayAnios = [];
+if(!empty($_REQUEST["anios"])){
+	$aniosDec = base64_decode($_REQUEST["anios"]);
+	if($aniosDec !== false && $aniosDec !== ''){
+		$arrayAnios = array_map('intval', array_filter(array_map('trim', explode(',', $aniosDec))));
+	}
+}
+if(empty($arrayAnios) && $desde !== '' && $desde !== false && $hasta !== '' && $hasta !== false){
+	$arrayAnios = range((int)$desde, (int)$hasta);
+}
 $estampilla="";
 if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 
@@ -471,10 +481,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 		
 		// Obtener grados de todos los años donde el estudiante existe
 		$grados = "";
-		$restaAgnos = ($hasta - $desde) + 1;
-		$i = 1;
-		$inicio = $desde;
-		while ($i <= $restaAgnos) {
+		foreach ($arrayAnios as $inicio) {
 			$estudiante = Estudiantes::obtenerDatosEstudiante($id, $inicio);
 			
 			// Solo agregar grados si el estudiante existe en ese año
@@ -484,9 +491,6 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				}
 				$grados .= !empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : '';
 			}
-
-			$inicio++;
-			$i++;
 		}
 		?>
 
@@ -495,19 +499,15 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 		</p>
 
 		<?php
-		$restaAgnos = ($hasta - $desde) + 1;
-		$i = 1;
-		$inicio = $desde;
 		$horasT = 0;
 
-		while ($i <= $restaAgnos) {
+		foreach ($arrayAnios as $idx => $inicio) {
+			$i = $idx + 1;
 			// Obtener datos del estudiante para este año
 			$matricula = Estudiantes::obtenerDatosEstudiante($id, $inicio);
 			
 			// Validar que el estudiante exista en este año
 			if (empty($matricula) || !is_array($matricula)) {
-				$inicio++;
-				$i++;
 				continue;
 			}
 			
@@ -1009,8 +1009,6 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 			<?php } ?>
 
 		<?php
-			$inicio++;
-			$i++;
 		}
 		?>
 

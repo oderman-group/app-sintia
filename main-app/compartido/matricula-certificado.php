@@ -279,11 +279,15 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
         exit();
     }
 
-    $restaAgnos = ($_POST["hasta"] - $_POST["desde"]) + 1;
-
-    $i = 1;
-
-    $inicio = $_POST["desde"];
+    $arrayAnios = [];
+    if (!empty($_POST["anios"])) {
+        $parts = array_filter(array_map('trim', explode(',', $_POST["anios"])));
+        $arrayAnios = array_map('intval', $parts);
+    }
+    if (empty($arrayAnios)) {
+        $arrayAnios = range((int)$_POST["desde"], (int)$_POST["hasta"]);
+    }
+    $restaAgnos = count($arrayAnios);
 
     $grados = "";
 
@@ -319,29 +323,24 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 		}
 	}
 
-    while ($i <= $restaAgnos) {
-	$estudiante = Estudiantes::obtenerDatosEstudiante($_POST["id"],$inicio);
+    foreach ($arrayAnios as $idx => $inicio) {
+	$estudiante = Estudiantes::obtenerDatosEstudiante($_POST["id"], $inicio);
 	
 	// Validar que el estudiante exista en este año
 	if (empty($estudiante) || !is_array($estudiante)) {
-		$inicio++;
-		$i++;
 		continue;
 	}
 
+	$i = $idx + 1;
 	// El tipo de educación ya se obtuvo del año actual, no es necesario recalcularlo
 
-        if ($i < $restaAgnos)
+        if ($idx + 1 < $restaAgnos)
 
             $grados .= strtoupper(!empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : 'Grado '.$i) . ", ";
 
         else
 
             $grados .= strtoupper(!empty($estudiante["gra_nombre"]) ? $estudiante["gra_nombre"] : 'Grado '.$i);
-
-        $inicio++;
-
-        $i++;
     }
 
     ?>
@@ -354,19 +353,12 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 
     <?php
 
-    $restaAgnos = ($_POST["hasta"] - $_POST["desde"]) + 1;
-
-    $i = 1;
-
-    $inicio = $_POST["desde"];
-
-    while ($i <= $restaAgnos) {
-	$matricula = Estudiantes::obtenerDatosEstudiante($_POST["id"],$inicio);
+    foreach ($arrayAnios as $idx => $inicio) {
+	$i = $idx + 1;
+	$matricula = Estudiantes::obtenerDatosEstudiante($_POST["id"], $inicio);
 	
 	// Validar que el estudiante exista en este año
 	if (empty($matricula) || !is_array($matricula)) {
-		$inicio++;
-		$i++;
 		continue;
 	}
 
@@ -793,10 +785,6 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 
 
     <?php
-
-        $inicio++;
-
-        $i++;
     }
 
     ?>

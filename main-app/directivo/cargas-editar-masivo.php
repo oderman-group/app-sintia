@@ -92,8 +92,9 @@ try {
     // Preparar array de actualización con nombres de columnas correctos
     $datosActualizar = [];
     foreach ($campos as $nombreCampo => $valor) {
-        // Validar que el valor no esté vacío
-        if (empty($valor) && $valor !== '0' && $valor !== 0) {
+        // Validar que el valor no esté vacío (excepto '0' o 0)
+        $valorTrim = is_string($valor) ? trim($valor) : (string) $valor;
+        if ($valorTrim === '' && $valor !== '0' && $valor !== 0) {
             error_log("Campo '$nombreCampo' está vacío, se omite");
             continue;
         }
@@ -106,12 +107,20 @@ try {
             // Sanitizar el valor según el tipo de campo
             $valorSanitizado = null;
             
-            // Campos numéricos
-            if (in_array($nombreCampo, ['periodo', 'curso', 'grupo', 'asignatura', 'ih', 'maxIndicadores', 'maxActividades'])) {
+            // Curso y grupo: pueden ser numéricos (gra_id, gru_id) o alfanuméricos; siempre como string
+            if (in_array($nombreCampo, ['curso', 'grupo'])) {
+                $valorSanitizado = mysqli_real_escape_string($conexion, $valorTrim);
+                if ($valorSanitizado === '') {
+                    error_log("Campo '$nombreCampo' vacío después de trim, se omite");
+                    continue;
+                }
+                error_log("Campo curso/grupo '$nombreCampo' sanitizado: '$valorSanitizado'");
+            }
+            // Campos numéricos puros
+            elseif (in_array($nombreCampo, ['periodo', 'asignatura', 'ih', 'maxIndicadores', 'maxActividades'])) {
                 $valorSanitizado = intval($valor);
                 error_log("Campo numérico '$nombreCampo' sanitizado: $valorSanitizado");
                 
-                // Validar que sea un número válido (mayor a 0 excepto para algunos campos)
                 if ($valorSanitizado <= 0 && !in_array($nombreCampo, ['maxIndicadores', 'maxActividades'])) {
                     error_log("ERROR: Campo '$nombreCampo' tiene valor inválido: $valorSanitizado");
                     continue;
@@ -119,11 +128,10 @@ try {
             }
             // Campos de texto (docente es un ID que puede ser alfanumérico o numérico)
             elseif ($nombreCampo === 'docente') {
-                // El docente puede ser texto o número, mantenerlo como string
-                $valorSanitizado = trim($valor);
-                // Si es numérico, convertir a string sin escapar con comillas
-                if (is_numeric($valorSanitizado)) {
-                    $valorSanitizado = strval($valorSanitizado);
+                $valorSanitizado = mysqli_real_escape_string($conexion, $valorTrim);
+                if ($valorSanitizado === '') {
+                    error_log("Campo docente vacío, se omite");
+                    continue;
                 }
                 error_log("Campo docente sanitizado: '$valorSanitizado'");
             }

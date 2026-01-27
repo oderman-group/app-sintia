@@ -14,6 +14,8 @@
     if(isset($_POST["desde"])){$desde=base64_encode($_POST["desde"]);}
     $hasta="";
     if(isset($_POST["hasta"])){$hasta=base64_encode($_POST["hasta"]);}
+    $anios="";
+    if(!empty($_POST["anios"])){$anios=base64_encode($_POST["anios"]);}
     $estampilla="";
     if(isset($_POST["estampilla"])){$estampilla=base64_encode($_POST["estampilla"]);}
     $sin_encabezado="";
@@ -45,6 +47,9 @@
     $ruta="informes-todos.php?error=ER_DT_9";
     if($ext != 1298){
         $ruta="../compartido/matricula-certificado-areas".$ext.".php?id=".$id."&desde=".$desde."&hasta=".$hasta."&estampilla=".$estampilla;
+        if(!empty($anios)){
+            $ruta .= "&anios=".$anios;
+        }
         if(!empty($sin_encabezado)){
             $ruta .= "&sin_encabezado=".$sin_encabezado;
         }
