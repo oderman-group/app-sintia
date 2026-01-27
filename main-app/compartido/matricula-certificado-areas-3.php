@@ -147,6 +147,9 @@ if ($formularioEnviado) {
 	$marcaAguaTamanio = isset($_GET['marca_agua_tamanio']) ? (int)$_GET['marca_agua_tamanio'] : ($preferenciasGuardadas['marca_agua_tamanio'] ?? 300);
 	$espacioCertificado = isset($_GET['espacio_certificado']) ? (int)$_GET['espacio_certificado'] : ($preferenciasGuardadas['espacio_certificado'] ?? 30);
 	$interlineado = isset($_GET['interlineado']) ? (float)$_GET['interlineado'] : ($preferenciasGuardadas['interlineado'] ?? 1.6);
+	$incluirEncabezadoEstiloAreas = isset($_GET['incluir_encabezado_estilo_areas']) ? (int)$_GET['incluir_encabezado_estilo_areas'] : 0;
+	$espacioEncabezadoEstiloAreas = isset($_GET['espacio_encabezado_estilo_areas']) ? max(5, min(80, (int)$_GET['espacio_encabezado_estilo_areas'])) : max(5, min(80, (int)($preferenciasGuardadas['espacio_encabezado_estilo_areas'] ?? 10)));
+	$mostrarTextoEncabezado = isset($_GET['mostrar_texto_encabezado']) ? 1 : 0;
 	
 	// Guardar preferencias
 	$preferenciasParaGuardar = [
@@ -172,8 +175,12 @@ if ($formularioEnviado) {
 		'marca_agua_tamanio' => $marcaAguaTamanio,
 		'espacio_certificado' => $espacioCertificado,
 		'interlineado' => $interlineado,
+		'incluir_encabezado_estilo_areas' => $incluirEncabezadoEstiloAreas,
+		'espacio_encabezado_estilo_areas' => $espacioEncabezadoEstiloAreas,
+		'mostrar_texto_encabezado' => $mostrarTextoEncabezado,
 	];
 	guardarPreferenciasCertificado($preferenciasParaGuardar);
+	$mostrarEncabezado = (bool)$mostrarTextoEncabezado;
 } else {
 	// Cargar desde preferencias guardadas o usar valores por defecto
 	$tipoLetra = $preferenciasGuardadas['tipo_letra'] ?? 'Arial';
@@ -198,6 +205,10 @@ if ($formularioEnviado) {
 	$marcaAguaTamanio = $preferenciasGuardadas['marca_agua_tamanio'] ?? 300;
 	$espacioCertificado = $preferenciasGuardadas['espacio_certificado'] ?? 30;
 	$interlineado = $preferenciasGuardadas['interlineado'] ?? 1.6;
+	$incluirEncabezadoEstiloAreas = $preferenciasGuardadas['incluir_encabezado_estilo_areas'] ?? 0;
+	$espacioEncabezadoEstiloAreas = max(5, min(80, (int)($preferenciasGuardadas['espacio_encabezado_estilo_areas'] ?? 10)));
+	$mostrarTextoEncabezado = isset($preferenciasGuardadas['mostrar_texto_encabezado']) ? (int)$preferenciasGuardadas['mostrar_texto_encabezado'] : ($mostrarEncabezado ? 1 : 0);
+	$mostrarEncabezado = (bool)$mostrarTextoEncabezado;
 }
 
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
@@ -534,6 +545,45 @@ $tiposNotas = [];
 		}
 
 		/* ============================
+		   ENCABEZADO ESTILO ÁREAS (logo + datos + título)
+		   ============================ */
+		.encabezado-estilo-areas {
+			display: flex;
+			align-items: flex-start;
+			gap: <?= max(5, min(80, (int)($espacioEncabezadoEstiloAreas ?? 10))) ?>px;
+			margin-bottom: 25px;
+			padding-bottom: 15px;
+			border-bottom: 1px solid #e0e0e0;
+			position: relative;
+			z-index: 10;
+			background: white;
+		}
+		.encabezado-estilo-areas-logo {
+			flex: 0 0 auto;
+		}
+		.encabezado-estilo-areas-logo img {
+			width: 200px;
+			height: 200px;
+			object-fit: contain;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+		}
+		.encabezado-estilo-areas-datos {
+			flex: 1 1 auto;
+			font-size: 11pt;
+			line-height: 1.5;
+			color: #000;
+		}
+		.encabezado-estilo-areas-datos .nombre-inst { font-weight: bold; }
+		.encabezado-estilo-areas-titulo {
+			flex: 0 0 auto;
+			text-align: right;
+			font-weight: bold;
+			font-size: 14pt;
+			line-height: 1.4;
+		}
+
+		/* ============================
 		   ENCABEZADO
 		   ============================ */
 		.header-institucional {
@@ -743,6 +793,12 @@ $tiposNotas = [];
 				padding: <?= $espacioCertificado ?>px;
 			}
 
+			.encabezado-estilo-areas {
+				break-inside: avoid;
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
+
 			.botones-accion {
 				display: none !important;
 			}
@@ -947,6 +1003,28 @@ $tiposNotas = [];
 
 			<div class="form-group">
 				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_texto_encabezado" value="1" <?= $mostrarTextoEncabezado ? 'checked' : '' ?>>
+					Mostrar texto de encabezado (EL SUSCRITO RECTOR DE...)
+				</label>
+				<small style="display: block; color: #666; margin-top: 5px;">Desmarcar para papel membrete o si no desea ese párrafo. Evita volver a la ventana de filtros.</small>
+			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
+					<input type="checkbox" name="incluir_encabezado_estilo_areas" value="1" <?= $incluirEncabezadoEstiloAreas ? 'checked' : '' ?> id="incluir_encabezado_estilo_areas_check">
+					Incluir encabezado institucional (logo + datos + título del certificado)
+				</label>
+				<small style="display: block; color: #666; margin-top: 5px;">Bloque superior con logo, NIT, dirección, teléfono y "CERTIFICADO DE ESTUDIOS". No sustituye las demás opciones.</small>
+			</div>
+
+			<div class="form-group" id="espacio_encabezado_estilo_areas_config" style="display: <?= $incluirEncabezadoEstiloAreas ? 'block' : 'none' ?>;">
+				<label>Espacio entre logo y texto del encabezado (px):</label>
+				<input type="number" name="espacio_encabezado_estilo_areas" value="<?= (int)$espacioEncabezadoEstiloAreas ?>" min="5" max="80" step="1" placeholder="10">
+				<small style="display: block; color: #666; margin-top: 5px;">Solo aplica al encabezado institucional (logo + datos + título). Valores menores acercan el texto al logo.</small>
+			</div>
+
+			<div class="form-group">
+				<label class="checkbox-label">
 					<input type="checkbox" name="incluir_logo" value="1" <?= $incluirLogo ? 'checked' : '' ?> id="incluir_logo_check">
 					Incluir logo de la institución
 				</label>
@@ -1057,6 +1135,33 @@ $tiposNotas = [];
 
 	<div class="container-certificado">
 		<?php 
+		// Encabezado superior estilo áreas (logo + datos institución + título certificado), opción adicional
+		if (!empty($incluirEncabezadoEstiloAreas)) {
+			$logoEncabezadoAreas = !empty($informacion_inst["info_logo"]) ? $informacion_inst["info_logo"] : '';
+			$logoPathEncabezadoAreas = $logoEncabezadoAreas ? "../files/images/logo/" . htmlspecialchars($logoEncabezadoAreas) : '';
+			$logoPathFullEncabezadoAreas = $logoEncabezadoAreas ? (ROOT_PATH . "/main-app/files/images/logo/" . $logoEncabezadoAreas) : '';
+			$colorTituloCert = isset($Plataforma->colorUno) ? $Plataforma->colorUno : '#667eea';
+		?>
+		<div class="encabezado-estilo-areas">
+			<div class="encabezado-estilo-areas-logo">
+				<?php if ($logoPathEncabezadoAreas && file_exists($logoPathFullEncabezadoAreas)) { ?>
+				<img src="<?= $logoPathEncabezadoAreas ?>" alt="Logo institución" onerror="this.style.display='none'">
+				<?php } else { ?>
+				<div style="width:200px;height:200px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;display:flex;align-items:center;justify-content:center;font-size:10pt;color:#999;">Logo</div>
+				<?php } ?>
+			</div>
+			<div class="encabezado-estilo-areas-datos">
+				<div class="nombre-inst"><?= strtoupper($informacion_inst["info_nombre"] ?? '') ?></div>
+				<div><b>NIT: </b><?= htmlspecialchars($informacion_inst["info_nit"] ?? '') ?></div>
+				<div><b>DIR: </b><?= htmlspecialchars($informacion_inst["info_direccion"] ?? '') ?></div>
+				<div><b>TEL: </b><?= htmlspecialchars($informacion_inst["info_telefono"] ?? '') ?></div>
+			</div>
+			<div class="encabezado-estilo-areas-titulo" style="color:<?= htmlspecialchars($colorTituloCert) ?>">
+				CERTIFICADO DE ESTUDIOS<br>No. <?= $estampilla ? htmlspecialchars($estampilla) : '—' ?>
+			</div>
+		</div>
+		<?php 
+		}
 		// Calcular número de años (lista explícita o rango desde-hasta)
 		$restaAgnos = count($arrayAnios);
 		
@@ -1188,7 +1293,7 @@ $tiposNotas = [];
 				$matriculaUnAnio = Estudiantes::obtenerDatosEstudiante($id, $unicoAnio);
 				if (!empty($matriculaUnAnio) && is_array($matriculaUnAnio)) {
 					$documentoEstudiante = $matriculaUnAnio["mat_documento"] ?? 'N/A';
-					$gradosTexto = strtoupper($matriculaUnAnio["gra_nombre"]);
+					$gradosTexto = strtoupper((string)($matriculaUnAnio["gra_nombre"] ?? ''));
 					$aniosTexto = $unicoAnio;
 					switch ($matriculaUnAnio["gra_nivel"]) {
 						case PREESCOLAR: 
@@ -1222,7 +1327,7 @@ $tiposNotas = [];
 			}
 		?>
 			<div class="texto-estudiante">
-				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($documentoEstudiante); ?>, cursó y aprobó, en esta
+				Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper((string)($documentoEstudiante ?? '')); ?>, cursó y aprobó, en esta
 				Institución Educativa, el grado <b><?= $gradosTexto ?></b> en año lectivo <?= $aniosTexto ?> de Educación <?= $educacionConsolidada ?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
 			</div>
 		<?php
@@ -1333,20 +1438,20 @@ $tiposNotas = [];
 				if (!$esUnSoloAnio) {
 				?>
 				<div class="texto-estudiante">
-					Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper($matricula["mat_documento"] ?? 'N/A'); ?>, cursó y aprobó, en esta
-					Institución Educativa, el grado <b><?= strtoupper($matricula["gra_nombre"]); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
+					Que <b><?= $nombre ?></b>, identificado con documento número <?= strtoupper((string)($matricula["mat_documento"] ?? 'N/A')); ?>, cursó y aprobó, en esta
+					Institución Educativa, el grado <b><?= strtoupper((string)($matricula["gra_nombre"] ?? '')); ?></b> en año lectivo <?= $inicio; ?> de Educación <?= $educacion?> en la sede PRINCIPAL, con intensidad horaria de acuerdo al <?= $informacion_inst["info_decreto_plan_estudio"] ?? 'decreto vigente' ?>.
 				</div>
 				<?php } ?>
 
 				<div class="titulo-grado">
-					<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
+					<?= strtoupper((string)($matricula["gra_nombre"] ?? '')); ?> <?= $inicio; ?>
 				</div>
 		<?php
 			} else {
 				// Si está consolidado, solo mostrar título del grado
 		?>
 				<div class="titulo-grado">
-					<?= strtoupper($matricula["gra_nombre"]); ?> <?= $inicio; ?>
+					<?= strtoupper((string)($matricula["gra_nombre"] ?? '')); ?> <?= $inicio; ?>
 				</div>
 		<?php
 			}
@@ -1932,6 +2037,15 @@ $tiposNotas = [];
 			if(incluirLogoCheck) {
 				incluirLogoCheck.addEventListener('change', function() {
 					logoConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar espacio entre logo y texto del encabezado estilo áreas
+			var incluirEncabezadoEstiloAreasCheck = document.getElementById('incluir_encabezado_estilo_areas_check');
+			var espacioEncabezadoEstiloAreasConfig = document.getElementById('espacio_encabezado_estilo_areas_config');
+			if(incluirEncabezadoEstiloAreasCheck && espacioEncabezadoEstiloAreasConfig) {
+				incluirEncabezadoEstiloAreasCheck.addEventListener('change', function() {
+					espacioEncabezadoEstiloAreasConfig.style.display = this.checked ? 'block' : 'none';
 				});
 			}
 

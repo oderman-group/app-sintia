@@ -569,13 +569,16 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				continue;
 			}
 			
+			$gradoActual = (string)($matricula['mat_grado'] ?? '');
+			$grupoActual = (string)($matricula['mat_grupo'] ?? '');
+			
 			// Optimización: Obtener configuración del año una sola vez
 			$consultaConfig = mysqli_query($conexion, "SELECT * FROM " . BD_ADMIN . ".configuracion WHERE conf_id_institucion='" . $_SESSION["idInstitucion"] . "' AND conf_agno='" . $inicio . "'");
 			$configAA = mysqli_fetch_array($consultaConfig, MYSQLI_BOTH);
 			?>
 
 			<div class="titulo-periodo">
-				<?= strtoupper($matricula["gra_nombre"]); ?> GRADO DE EDUCACIÓN <?=$educacion." ".$inicio?><br>
+				<?= strtoupper((string)($matricula["gra_nombre"] ?? '')); ?> GRADO DE EDUCACIÓN <?=$educacion." ".$inicio?><br>
 				MATRÍCULA <?= strtoupper($matricula["mat_matricula"] ?? 'N/A'); ?> FOLIO <?= strtoupper($matricula["mat_folio"] ?? 'N/A'); ?>
 			</div>
 
@@ -592,7 +595,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 					<tbody>
 						<?php
 						// Optimización: Obtener todas las cargas de una vez
-						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 						$materiasPerdidas = 0;
 
 						while ($cargas = mysqli_fetch_array($cargasAcademicas, MYSQLI_BOTH)) {
@@ -602,7 +605,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 							for($p = 1; $p <= $periodosMaximos; $p++){
 								$periodosArray[] = $p;
 							}
-							$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArray, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+							$promedioAreaCompleto = Boletin::calcularPromedioAreaCompleto($configAA, $id, $cargas["ar_id"], $periodosArray, $gradoActual, $grupoActual, $inicio);
 							$notaArea = $promedioAreaCompleto['acumulado'];
 							
 							// Usar directamente el valor calculado (ya considera ponderado/simple según configuración)
@@ -632,8 +635,8 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 									AND ipc.ipc_materia = am.mat_id 
 									AND ipc.institucion = car.institucion 
 									AND ipc.year = car.year
-								WHERE car.car_curso = '" . $matricula["mat_grado"] . "' 
-									AND car.car_grupo = '" . $matricula["mat_grupo"] . "' 
+								WHERE car.car_curso = '" . mysqli_real_escape_string($conexion, $gradoActual) . "' 
+									AND car.car_grupo = '" . mysqli_real_escape_string($conexion, $grupoActual) . "' 
 									AND am.mat_area = '" . $cargas["ar_id"] . "'
 									AND car.institucion = {$config['conf_id_institucion']} 
 									AND car.year = {$inicio}
@@ -849,7 +852,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				}
 
 				// Determinar promoción
-				$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 				$materiasPerdidas = 0;
 				$vectorMP = array();
 				$periodoFinal = $config['conf_periodos_maximos'];
@@ -882,7 +885,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				// Verificar si hay notas en el último periodo configurado
 				$tieneNotasUltimoPeriodo = false;
 				$ultimoPeriodo = $config["conf_periodos_maximos"];
-				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
 					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
 					if (!empty($notaUltimoPeriodo['bol_nota'])) {
@@ -929,7 +932,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 					<tbody>
 						<?php
 						// Obtener todas las materias (sin agrupar por área) para mostrar todas las asignaturas
-						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio, "");
+						$cargasAcademicas = CargaAcademica::traerCargasMateriasAreaPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio, "");
 						$materiasPerdidas = 0;
 						$periodoFinal = $config['conf_periodos_maximos'];
 
@@ -954,7 +957,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 							
 							// Obtener intensidad horaria (intentar de academico_intensidad_curso, si no usar car_ih)
 							$consultaIntensidad = mysqli_query($conexion, "SELECT ipc_intensidad FROM ".BD_ACADEMICA.".academico_intensidad_curso 
-								WHERE ipc_curso='" . $matricula["mat_grado"] . "' 
+								WHERE ipc_curso='" . mysqli_real_escape_string($conexion, $gradoActual) . "' 
 								AND ipc_materia='" . $cargas["car_materia"] . "' 
 								AND institucion={$config['conf_id_institucion']} 
 								AND year={$inicio} 
@@ -1055,7 +1058,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				// Verificar si hay notas en el último periodo configurado
 				$tieneNotasUltimoPeriodo = false;
 				$ultimoPeriodo = $config["conf_periodos_maximos"];
-				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+				$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 				while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
 					$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
 					if (!empty($notaUltimoPeriodo['bol_nota'])) {
@@ -1123,12 +1126,6 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 				</td>
 			</tr>
 		</table>
-
-		<!-- Footer SINTIA -->
-		<div class="footer-sintia">
-			<img src="<?=$Plataforma->logo?>" alt="SINTIA">
-			<div>SINTIA - SISTEMA INTEGRAL DE GESTIÓN INSTITUCIONAL - <?=date("l, d-M-Y");?></div>
-		</div>
 	</div>
 
 	<?php 
