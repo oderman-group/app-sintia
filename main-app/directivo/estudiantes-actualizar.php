@@ -76,22 +76,23 @@ if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_API_SION_ACADEMICA)) 
 $fechaNacimiento  = "";
 $fechaNacimientoU = "";
 
-if (!empty($_POST["fNac"])) {
-	// Validar que la fecha de nacimiento no sea futura ni menor de 1 año
-	$fechaTimestamp = strtotime($_POST["fNac"]);
-	if ($fechaTimestamp === false) {
-		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('Formato de fecha de nacimiento inválido').'";</script>';
-		exit();
-	}
-	
+$fNacNorm = Utilidades::normalizarFechaParaBD($_POST["fNac"] ?? '');
+
+if ($fNacNorm === false) {
+	echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('Formato de fecha de nacimiento inválido. Use dd-mm-aaaa o aaaa-mm-dd.').'";</script>';
+	exit();
+}
+
+if ($fNacNorm !== null) {
+	$fechaTimestamp = strtotime($fNacNorm);
 	$fechaMinima = strtotime('-1 year');
 	if ($fechaTimestamp > $fechaMinima) {
 		echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_17&message='.urlencode('La fecha de nacimiento no puede ser futura ni menor de 1 año').'";</script>';
 		exit();
 	}
-	
-	$fechaNacimiento  = "mat_fecha_nacimiento='" . $_POST["fNac"] . "', ";
-	$fechaNacimientoU = "uss_fecha_nacimiento='" . $_POST["fNac"] . "', ";
+	$fechaNacimiento  = "mat_fecha_nacimiento='" . mysqli_real_escape_string($conexion, $fNacNorm) . "', ";
+	$fechaNacimientoU = "uss_fecha_nacimiento='" . mysqli_real_escape_string($conexion, $fNacNorm) . "', ";
+	$_POST["fNac"] = $fNacNorm;
 }
 
 $_POST["ciudadR"] = trim($_POST["ciudadR"]);
@@ -152,7 +153,7 @@ try {
 
 // Sincronizar campos compartidos con la tabla usuarios
 $update = [
-	'uss_fecha_nacimiento'	=> !empty($_POST["fNac"]) ? $_POST["fNac"] : NULL,
+	'uss_fecha_nacimiento'	=> $fNacNorm !== null ? $fNacNorm : NULL,
 	'uss_usuario'			=> $_POST["nDoc"],
     "uss_documento"			=> $_POST["nDoc"],
     "uss_nombre"			=> mysqli_real_escape_string($conexion, $_POST["nombres"]),
@@ -206,7 +207,9 @@ if ($_POST["documentoA"]!="") {
 		UsuariosPadre::actualizarUsuarios($config, $acudiente['uss_id'], $update);
 		$idAcudiente = $acudiente['uss_id'];
 	} else {
-		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $_POST["fechaNA"], 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
+		$fechaNANorm = Utilidades::normalizarFechaParaBD($_POST["fechaNA"] ?? '');
+		$fechaNACol = ($fechaNANorm !== null && $fechaNANorm !== false) ? $fechaNANorm : '2000-01-01';
+		$idAcudiente = UsuariosPadre::guardarUsuario($conexionPDO, "uss_usuario, uss_clave, uss_tipo, uss_nombre, uss_estado, uss_ocupacion, uss_email, uss_fecha_nacimiento, uss_permiso1, uss_genero, uss_celular, uss_foto, uss_idioma, uss_tipo_documento, uss_lugar_expedicion, uss_direccion, uss_apellido1, uss_apellido2, uss_nombre2, uss_documento, uss_tema_sidebar, uss_tema_header, uss_tema_logo, institucion, year, uss_id", [$_POST["documentoA"], $clavePorDefectoUsuarios, 3, mysqli_real_escape_string($conexion,$_POST["nombreA"]), 0, $_POST["ocupacionA"], $_POST["email"], $fechaNACol, 0, $_POST["generoA"], $_POST["celular"], 'default.png', 1, $_POST["tipoDAcudiente"], $_POST["lugardA"], $_POST["direccion"], mysqli_real_escape_string($conexion,$_POST["apellido1A"]), mysqli_real_escape_string($conexion,$_POST["apellido2A"]), mysqli_real_escape_string($conexion,$_POST["nombre2A"]), $_POST["documentoA"], 'white-sidebar-color', 'header-white', 'logo-white', $config['conf_id_institucion'], $_SESSION["bd"]]);
 	}
 
 	$update = ['mat_acudiente' => $idAcudiente];
