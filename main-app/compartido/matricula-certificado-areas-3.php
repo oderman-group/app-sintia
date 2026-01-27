@@ -870,10 +870,11 @@ $tiposNotas = [];
 		<h4>⚙️ Configuración del Certificado</h4>
 		<form method="GET" id="formConfigCertificado">
 			<?php
-			// Mantener todos los parámetros GET existentes
+			// Mantener todos los parámetros GET existentes (incluido anios para no perder los años seleccionados)
 			if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
 			if(!empty($_GET["desde"])) echo '<input type="hidden" name="desde" value="'.htmlspecialchars($_GET["desde"]).'">';
 			if(!empty($_GET["hasta"])) echo '<input type="hidden" name="hasta" value="'.htmlspecialchars($_GET["hasta"]).'">';
+			if(!empty($_GET["anios"])) echo '<input type="hidden" name="anios" value="'.htmlspecialchars($_GET["anios"]).'">';
 			if(!empty($_GET["estampilla"])) echo '<input type="hidden" name="estampilla" value="'.htmlspecialchars($_GET["estampilla"]).'">';
 			if(!empty($_GET["sin_encabezado"])) echo '<input type="hidden" name="sin_encabezado" value="'.htmlspecialchars($_GET["sin_encabezado"]).'">';
 			// Campo hidden para detectar que el formulario fue enviado
