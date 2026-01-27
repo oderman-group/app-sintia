@@ -1566,7 +1566,7 @@ $tiposNotas = [];
 			}
 
 			// Determinar promoción
-			$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+			$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 			$materiasPerdidas = 0;
 			$vectorMP = array();
 			$periodoFinal = $config['conf_periodos_maximos'];
@@ -1599,7 +1599,7 @@ $tiposNotas = [];
 			// Verificar si hay notas en el último period configurado
 			$tieneNotasUltimoPeriodo = false;
 			$ultimoPeriodo = $config["conf_periodos_maximos"];
-			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 			while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
 				$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
 				if (!empty($notaUltimoPeriodo['bol_nota'])) {
@@ -1746,7 +1746,9 @@ $tiposNotas = [];
 			// Obtener datos del estudiante para el mensaje de promoción
 			$matriculaPromocion = Estudiantes::obtenerDatosEstudiante($id, $anioPromocion);
 			if (!empty($matriculaPromocion) && is_array($matriculaPromocion)) {
-				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
+				$gradoPromocion = (string)($matriculaPromocion["mat_grado"] ?? '');
+				$grupoPromocion = (string)($matriculaPromocion["mat_grupo"] ?? '');
+				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoPromocion, $grupoPromocion, $anioPromocion);
 				$materiasPerdidasPromocion = 0;
 				$vectorMPPromocion = array();
 				$periodoFinalPromocion = $config['conf_periodos_maximos'];
@@ -1779,7 +1781,7 @@ $tiposNotas = [];
 				// Verificar si hay notas en el último periodo configurado
 				$tieneNotasUltimoPeriodoPromocion = false;
 				$ultimoPeriodoPromocion = $config["conf_periodos_maximos"];
-				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
+				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoPromocion, $grupoPromocion, $anioPromocion);
 				while ($cargaVerificarPromocion = mysqli_fetch_array($cargasParaVerificarPromocion, MYSQLI_BOTH)) {
 					$notaUltimoPeriodoPromocion = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodoPromocion, $id, $cargaVerificarPromocion["car_id"], $anioPromocion);
 					if (!empty($notaUltimoPeriodoPromocion['bol_nota'])) {
