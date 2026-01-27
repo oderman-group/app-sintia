@@ -2094,4 +2094,138 @@ class Estudiantes {
         return $resultado;
     }
 
+    /**
+     * Busca estudiantes en todos los años de la institución por nombre, documento o matrícula
+     * 
+     * @param string $busqueda Término de búsqueda (mínimo 3 caracteres)
+     * @param int $institucion ID de la institución
+     * @param array $yearArray Array con años [inicio, fin] de la institución
+     * @return array Array con estudiantes encontrados agrupados por mat_id_usuario o documento
+     */
+    public static function buscarEstudianteTodosAnios($busqueda, $institucion, $yearArray = [])
+    {
+        global $conexion;
+        
+        $resultado = [];
+        
+        if (strlen($busqueda) < 3) {
+            return $resultado;
+        }
+        
+        $busquedaEsc = mysqli_real_escape_string($conexion, $busqueda);
+        $institucion = (int)$institucion;
+        
+        // Si no se proporcionan años, obtenerlos de la sesión
+        if (empty($yearArray)) {
+            $insYears = $_SESSION["datosUnicosInstitucion"]["ins_years"] ?? '';
+            if (empty($insYears)) {
+                return $resultado;
+            }
+            $yearArray = explode(",", $insYears);
+        }
+        
+        $yearStart = (int)trim($yearArray[0]);
+        $yearEnd = (int)trim($yearArray[1] ?? $yearArray[0]);
+        
+        // Construir lista de años
+        $aniosConsulta = [];
+        for ($y = $yearStart; $y <= $yearEnd; $y++) {
+            $aniosConsulta[] = "'" . mysqli_real_escape_string($conexion, $y) . "'";
+        }
+        $aniosIn = implode(',', $aniosConsulta);
+        
+        $sql = "SELECT DISTINCT
+                    COALESCE(mat.mat_id_usuario, CONCAT('doc_', mat.mat_documento)) as identificador,
+                    mat.mat_id_usuario,
+                    mat.mat_documento,
+                    mat.mat_id,
+                    mat.year
+                FROM " . BD_ACADEMICA . ".academico_matriculas mat
+                WHERE mat.mat_eliminado = 0 
+                AND mat.institucion = {$institucion}
+                AND mat.year IN ({$aniosIn})
+                AND (
+                    mat.mat_id LIKE '%{$busquedaEsc}%' 
+                    OR mat.mat_nombres LIKE '%{$busquedaEsc}%' 
+                    OR mat.mat_primer_apellido LIKE '%{$busquedaEsc}%' 
+                    OR mat.mat_documento LIKE '%{$busquedaEsc}%' 
+                    OR mat.mat_matricula LIKE '%{$busquedaEsc}%'
+                    OR CONCAT(TRIM(mat.mat_primer_apellido), ' ', TRIM(mat.mat_nombres)) LIKE '%{$busquedaEsc}%'
+                )
+                ORDER BY mat.year DESC
+                LIMIT 100";
+        
+        $consulta = mysqli_query($conexion, $sql);
+        
+        if ($consulta) {
+            while ($row = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+                $identificador = $row['identificador'];
+                if (!isset($resultado[$identificador])) {
+                    $resultado[$identificador] = [
+                        'mat_id_usuario' => $row['mat_id_usuario'],
+                        'mat_documento' => $row['mat_documento'],
+                        'mat_id' => $row['mat_id'],
+                        'anios' => []
+                    ];
+                }
+                $year = (int)$row['year'];
+                if (!in_array($year, $resultado[$identificador]['anios'])) {
+                    $resultado[$identificador]['anios'][] = $year;
+                }
+            }
+        }
+        
+        return $resultado;
+    }
+
+    /**
+     * Obtiene todos los años donde un estudiante estuvo matriculado en la institución
+     * 
+     * @param string $identificador mat_id_usuario o mat_documento del estudiante
+     * @param int $institucion ID de la institución
+     * @param string $tipo Tipo de identificador: 'usuario' o 'documento'
+     * @return array Array de años ordenados donde el estudiante tiene matrícula
+     */
+    public static function obtenerAniosMatriculadoEstudiante($identificador, $institucion, $tipo = 'usuario')
+    {
+        global $conexion;
+        
+        $resultado = [];
+        $identificadorEsc = mysqli_real_escape_string($conexion, $identificador);
+        $institucion = (int)$institucion;
+        
+        // Construir condición WHERE según el tipo
+        $whereCondition = '';
+        if ($tipo === 'usuario') {
+            $whereCondition = "mat.mat_id_usuario = '{$identificadorEsc}'";
+        } else if ($tipo === 'documento') {
+            $whereCondition = "mat.mat_documento = '{$identificadorEsc}'";
+        } else {
+            // Si viene el identificador compuesto
+            if (strpos($identificadorEsc, 'doc_') === 0) {
+                $doc = str_replace('doc_', '', $identificadorEsc);
+                $whereCondition = "mat.mat_documento = '{$doc}' AND mat.mat_id_usuario IS NULL";
+            } else {
+                $whereCondition = "mat.mat_id_usuario = '{$identificadorEsc}'";
+            }
+        }
+        
+        $sql = "SELECT DISTINCT mat.year
+                FROM " . BD_ACADEMICA . ".academico_matriculas mat
+                WHERE mat.mat_eliminado = 0 
+                AND mat.institucion = {$institucion}
+                AND {$whereCondition}
+                ORDER BY mat.year ASC";
+        
+        $consulta = mysqli_query($conexion, $sql);
+        
+        if ($consulta) {
+            while ($row = mysqli_fetch_array($consulta, MYSQLI_BOTH)) {
+                $resultado[] = (int)$row['year'];
+            }
+        }
+        
+        return $resultado;
+    }
+
 }

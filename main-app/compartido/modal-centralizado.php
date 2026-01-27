@@ -43,6 +43,11 @@
 					window.autoCargarLibro();
 				}
 			}
+			if (url && url.includes('estudiantes-certificados-modal')) {
+				if (typeof window.inicializarBusquedaGlobalCertificados === 'function') {
+					window.inicializarBusquedaGlobalCertificados();
+				}
+			}
 		}, 100);
 
 		if (timeout) {
