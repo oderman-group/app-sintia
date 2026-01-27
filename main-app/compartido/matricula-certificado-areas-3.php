@@ -41,6 +41,7 @@ if(!empty($_REQUEST["anios"])){
 if(empty($arrayAnios) && $desde !== '' && $desde !== false && $hasta !== '' && $hasta !== false){
 	$arrayAnios = range((int)$desde, (int)$hasta);
 }
+sort($arrayAnios); // Años siempre en orden ascendente para que los grados aparezcan ordenados (ej. cuarto, sexto, séptimo)
 $estampilla="";
 if(isset($_REQUEST["estampilla"])){$estampilla=base64_decode($_REQUEST["estampilla"]);}
 
@@ -870,10 +871,11 @@ $tiposNotas = [];
 		<h4>⚙️ Configuración del Certificado</h4>
 		<form method="GET" id="formConfigCertificado">
 			<?php
-			// Mantener todos los parámetros GET existentes
+			// Mantener todos los parámetros GET existentes (incluido anios para no perder los años seleccionados)
 			if(!empty($_GET["id"])) echo '<input type="hidden" name="id" value="'.htmlspecialchars($_GET["id"]).'">';
 			if(!empty($_GET["desde"])) echo '<input type="hidden" name="desde" value="'.htmlspecialchars($_GET["desde"]).'">';
 			if(!empty($_GET["hasta"])) echo '<input type="hidden" name="hasta" value="'.htmlspecialchars($_GET["hasta"]).'">';
+			if(!empty($_GET["anios"])) echo '<input type="hidden" name="anios" value="'.htmlspecialchars($_GET["anios"]).'">';
 			if(!empty($_GET["estampilla"])) echo '<input type="hidden" name="estampilla" value="'.htmlspecialchars($_GET["estampilla"]).'">';
 			if(!empty($_GET["sin_encabezado"])) echo '<input type="hidden" name="sin_encabezado" value="'.htmlspecialchars($_GET["sin_encabezado"]).'">';
 			// Campo hidden para detectar que el formulario fue enviado
@@ -1136,9 +1138,10 @@ $tiposNotas = [];
 		// $restaAgnos ya se calculó antes
 		$hayMultiplesAnios = $restaAgnos > 1;
 		
-		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años
+		// Si hay múltiples años y está configurado para consolidar, recopilar información de todos los años (orden = año ascendente)
 		$gradosAnios = [];
 		$aniosLectivos = [];
+		$nivelesEducacion = []; // Tipos de educación únicos por nivel (preescolar, básica primaria, bachillerato, media)
 		$educacionConsolidada = '';
 		$documentoEstudiante = '';
 		
@@ -1151,26 +1154,28 @@ $tiposNotas = [];
 					if (empty($documentoEstudiante)) {
 						$documentoEstudiante = $matriculaTemp["mat_documento"] ?? 'N/A';
 					}
-					if (empty($educacionConsolidada)) {
-						switch ($matriculaTemp["gra_nivel"]) {
-							case PREESCOLAR: 
-								$educacionConsolidada = "preescolar"; 
-							break;
-							case BASICA_PRIMARIA: 
-								$educacionConsolidada = "básica primaria"; 
-							break;
-							case BASICA_SECUNDARIA: 
-								$educacionConsolidada = "básica secundaria"; 
-							break;
-							case MEDIA: 
-								$educacionConsolidada = "media"; 
-							break;
-							default: 
-								$educacionConsolidada = "básica"; 
-							break;
-						}
+					$nivelStr = '';
+					switch ($matriculaTemp["gra_nivel"]) {
+						case PREESCOLAR: $nivelStr = "preescolar"; break;
+						case BASICA_PRIMARIA: $nivelStr = "básica primaria"; break;
+						case BASICA_SECUNDARIA: $nivelStr = "bachillerato"; break;
+						case MEDIA: $nivelStr = "media"; break;
+						default: $nivelStr = "básica"; break;
+					}
+					if ($nivelStr !== '' && !in_array($nivelStr, $nivelesEducacion, true)) {
+						$nivelesEducacion[] = $nivelStr;
 					}
 				}
+			}
+			// Orden fijo: preescolar, básica primaria, bachillerato, media
+			$ordenNiveles = ['preescolar' => 1, 'básica primaria' => 2, 'bachillerato' => 3, 'media' => 4, 'básica' => 0];
+			usort($nivelesEducacion, function ($a, $b) use ($ordenNiveles) {
+				return ($ordenNiveles[$a] ?? 5) <=> ($ordenNiveles[$b] ?? 5);
+			});
+			if (!empty($nivelesEducacion)) {
+				$educacionConsolidada = count($nivelesEducacion) === 1
+					? $nivelesEducacion[0]
+					: implode(', ', array_slice($nivelesEducacion, 0, -1)) . ' y ' . end($nivelesEducacion);
 			}
 		}
 		
@@ -1204,7 +1209,10 @@ $tiposNotas = [];
 					}
 				}
 			} else {
-				$gradosTexto = implode(' y ', array_unique($gradosAnios));
+				// Grados en orden de años (ya viene ordenado): "CUARTO, SEXTO, SEPTIMO, OCTAVO y DECIMO"
+				$gradosTexto = count($gradosAnios) === 1
+					? $gradosAnios[0]
+					: implode(', ', array_slice($gradosAnios, 0, -1)) . ' y ' . end($gradosAnios);
 				$aniosTexto = '';
 				if (count($aniosLectivos) == 2) {
 					$aniosTexto = $aniosLectivos[0] . ' y ' . $aniosLectivos[1] . ' respectivamente';
@@ -1239,8 +1247,8 @@ $tiposNotas = [];
 					}
 				}
 			}
-			$gradoActual = $matricula['mat_grado'];
-			$grupoActual = $matricula['mat_grupo'];
+			$gradoActual = (string)($matricula['mat_grado'] ?? '');
+			$grupoActual = (string)($matricula['mat_grupo'] ?? '');
 
 			// Determinar tipo de educación
 			switch ($matricula["gra_nivel"]) {
@@ -1566,7 +1574,7 @@ $tiposNotas = [];
 			}
 
 			// Determinar promoción
-			$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+			$cargasAcademicasC = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 			$materiasPerdidas = 0;
 			$vectorMP = array();
 			$periodoFinal = $config['conf_periodos_maximos'];
@@ -1599,7 +1607,7 @@ $tiposNotas = [];
 			// Verificar si hay notas en el último period configurado
 			$tieneNotasUltimoPeriodo = false;
 			$ultimoPeriodo = $config["conf_periodos_maximos"];
-			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matricula["mat_grado"], $matricula["mat_grupo"], $inicio);
+			$cargasParaVerificar = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoActual, $grupoActual, $inicio);
 			while ($cargaVerificar = mysqli_fetch_array($cargasParaVerificar, MYSQLI_BOTH)) {
 				$notaUltimoPeriodo = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodo, $id, $cargaVerificar["car_id"], $inicio);
 				if (!empty($notaUltimoPeriodo['bol_nota'])) {
@@ -1746,7 +1754,9 @@ $tiposNotas = [];
 			// Obtener datos del estudiante para el mensaje de promoción
 			$matriculaPromocion = Estudiantes::obtenerDatosEstudiante($id, $anioPromocion);
 			if (!empty($matriculaPromocion) && is_array($matriculaPromocion)) {
-				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
+				$gradoPromocion = (string)($matriculaPromocion["mat_grado"] ?? '');
+				$grupoPromocion = (string)($matriculaPromocion["mat_grupo"] ?? '');
+				$cargasAcademicasPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoPromocion, $grupoPromocion, $anioPromocion);
 				$materiasPerdidasPromocion = 0;
 				$vectorMPPromocion = array();
 				$periodoFinalPromocion = $config['conf_periodos_maximos'];
@@ -1779,7 +1789,7 @@ $tiposNotas = [];
 				// Verificar si hay notas en el último periodo configurado
 				$tieneNotasUltimoPeriodoPromocion = false;
 				$ultimoPeriodoPromocion = $config["conf_periodos_maximos"];
-				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $matriculaPromocion["mat_grado"], $matriculaPromocion["mat_grupo"], $anioPromocion);
+				$cargasParaVerificarPromocion = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $gradoPromocion, $grupoPromocion, $anioPromocion);
 				while ($cargaVerificarPromocion = mysqli_fetch_array($cargasParaVerificarPromocion, MYSQLI_BOTH)) {
 					$notaUltimoPeriodoPromocion = Boletin::traerNotaBoletinCargaPeriodo($config, $ultimoPeriodoPromocion, $id, $cargaVerificarPromocion["car_id"], $anioPromocion);
 					if (!empty($notaUltimoPeriodoPromocion['bol_nota'])) {
