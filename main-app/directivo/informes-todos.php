@@ -1147,6 +1147,307 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 				}
 			});
 		};
+		
+		// ============================================
+		// FUNCIONES PARA BÚSQUEDA GLOBAL DE ESTUDIANTES EN CERTIFICADOS
+		// ============================================
+		
+		// Inicializar búsqueda global cuando se abre el modal de certificados
+		window.inicializarBusquedaGlobalCertificados = function() {
+			var $buscarEstudianteGlobal = $('#buscarEstudianteGlobal');
+			
+			if ($buscarEstudianteGlobal.length && !$buscarEstudianteGlobal.data('select2')) {
+				$buscarEstudianteGlobal.select2({
+					dropdownParent: $('#ModalCentralizado .modal-content'),
+					width: '100%',
+					placeholder: 'Escriba para buscar estudiante (mínimo 3 caracteres)...',
+					minimumInputLength: 3,
+					allowClear: true,
+					ajax: {
+						url: 'ajax-buscar-estudiante-todos-anios.php',
+						dataType: 'json',
+						delay: 300,
+						data: function (params) {
+							return {
+								busqueda: params.term
+							};
+						},
+						processResults: function (data) {
+							if (data.success && data.data.length > 0) {
+								var results = data.data.map(function(estudiante) {
+									return {
+										id: estudiante.identificador,
+										text: estudiante.texto_display,
+										mat_id: estudiante.id,
+										mat_id_usuario: estudiante.mat_id_usuario,
+										mat_documento: estudiante.mat_documento,
+										nombre_completo: estudiante.nombre_completo,
+										anios_matriculado: estudiante.anios_matriculado,
+										anio_minimo: estudiante.anio_minimo,
+										anio_maximo: estudiante.anio_maximo
+									};
+								});
+								return { results: results };
+							}
+							return { results: [] };
+						},
+						cache: true
+					}
+				});
+				
+				// Evento cuando se selecciona un estudiante
+				$buscarEstudianteGlobal.on('select2:select', function (e) {
+					var data = e.params.data;
+					window.cargarAniosEstudianteSeleccionado(data);
+				});
+				
+				// Evento cuando se limpia la selección
+				$buscarEstudianteGlobal.on('select2:clear', function () {
+					window.limpiarFormularioCertificado();
+				});
+			}
+		};
+		
+		// Cargar años del estudiante seleccionado y actualizar formularios
+		window.cargarAniosEstudianteSeleccionado = function(estudianteData) {
+			var identificador = estudianteData.id;
+			var tipo = estudianteData.mat_id_usuario ? 'usuario' : 'documento';
+			
+			// Mostrar información del estudiante
+			$('#nombreEstudianteSeleccionado').text(estudianteData.nombre_completo);
+			$('#aniosDisponiblesEstudiante').text(estudianteData.anios_matriculado.join(', '));
+			$('#infoEstudianteSeleccionado').show();
+			
+			// Si ya tenemos los años en los datos, usarlos directamente
+			if (estudianteData.anios_matriculado && estudianteData.anios_matriculado.length > 0) {
+				window.actualizarSelectsAniosCertificado(
+					estudianteData.anios_matriculado,
+					estudianteData.anio_minimo,
+					estudianteData.anio_maximo,
+					estudianteData.mat_id
+				);
+			} else {
+				// Si no, hacer petición AJAX para obtener los años
+				$.ajax({
+					url: 'ajax-obtener-anios-estudiante.php',
+					type: 'POST',
+					data: {
+						identificador: identificador,
+						tipo: tipo
+					},
+					dataType: 'json',
+					success: function(response) {
+						if (response.success && response.anios.length > 0) {
+							window.actualizarSelectsAniosCertificado(
+								response.anios,
+								response.anio_minimo,
+								response.anio_maximo,
+								estudianteData.mat_id
+							);
+						} else {
+							alert('No se encontraron años para este estudiante');
+						}
+					},
+					error: function() {
+						alert('Error al cargar los años del estudiante');
+					}
+				});
+			}
+		};
+		
+		// Actualizar los selects de años en ambos formularios
+		window.actualizarSelectsAniosCertificado = function(anios, anioMin, anioMax, matId) {
+			// Actualizar selects "desde" y "hasta" en ambos formularios
+			var selectsDesde = ['#desdeAnio1', '#desdeAnio2'];
+			var selectsHasta = ['#hastaAnio1', '#hastaAnio2'];
+			
+			// Actualizar selects "desde"
+			selectsDesde.forEach(function(selectId) {
+				var $select = $(selectId);
+				if ($select.length) {
+					$select.empty();
+					$select.append('<option value="">Seleccione...</option>');
+					
+					anios.forEach(function(anio) {
+						var selected = (anio == anioMin) ? 'selected' : '';
+						$select.append('<option value="' + anio + '" ' + selected + '>' + anio + '</option>');
+					});
+					
+					// Reinicializar Select2
+					if ($select.data('select2')) {
+						$select.select2('destroy');
+					}
+					$select.select2({
+						dropdownParent: $('#ModalCentralizado .modal-content'),
+						width: '100%'
+					});
+				}
+			});
+			
+			// Actualizar selects "hasta"
+			selectsHasta.forEach(function(selectId) {
+				var $select = $(selectId);
+				if ($select.length) {
+					$select.empty();
+					$select.append('<option value="">Seleccione...</option>');
+					
+					anios.forEach(function(anio) {
+						var selected = (anio == anioMax) ? 'selected' : '';
+						$select.append('<option value="' + anio + '" ' + selected + '>' + anio + '</option>');
+					});
+					
+					// Reinicializar Select2
+					if ($select.data('select2')) {
+						$select.select2('destroy');
+					}
+					$select.select2({
+						dropdownParent: $('#ModalCentralizado .modal-content'),
+						width: '100%'
+					});
+				}
+			});
+			
+			// Actualizar los campos de estudiante en ambos formularios
+			$('#selectEstudiantes1, #selectEstudiantes2').each(function() {
+				var $select = $(this);
+				if ($select.length) {
+					// Agregar o actualizar la opción del estudiante
+					var nombreEstudiante = $('#nombreEstudianteSeleccionado').text();
+					
+					// Verificar si ya existe una opción con este valor
+					var optionExists = $select.find('option[value="' + matId + '"]').length > 0;
+					
+					if (!optionExists) {
+						// Si no existe, agregarla
+						$select.append('<option value="' + matId + '">' + nombreEstudiante + '</option>');
+					}
+					
+					// Seleccionar el estudiante
+					$select.val(matId).trigger('change');
+					$select.prop('disabled', false);
+					
+					// Reinicializar Select2 si es necesario
+					if ($select.data('select2')) {
+						$select.select2('destroy');
+					}
+					$select.select2({
+						dropdownParent: $('#ModalCentralizado .modal-content'),
+						width: '100%'
+					});
+				}
+			});
+		};
+		
+		// Limpiar formulario cuando se deselecciona el estudiante
+		window.limpiarFormularioCertificado = function() {
+			$('#infoEstudianteSeleccionado').hide();
+			$('#nombreEstudianteSeleccionado').text('');
+			$('#aniosDisponiblesEstudiante').text('');
+			
+			// Restaurar selects de años a su estado original (todos los años de la institución)
+			// Esto se hace recargando la página o restaurando los valores originales
+			// Por ahora, solo ocultamos la información
+		};
+		
+		// Función para cargar estudiantes por rango de años
+		window.cargarEstudiantesPorRangoAnios = function() {
+			var desde = $('#desdeAnio').val();
+			var hasta = $('#hastaAnio').val();
+			var $selectEstudiante = $('#selectEstudiante');
+			var $loading = $('#loadingEstudiantes');
+			
+			if (!desde || !hasta) {
+				alert('Por favor seleccione el rango de años completo');
+				return;
+			}
+			
+			if (parseInt(desde) > parseInt(hasta)) {
+				alert('El año "desde" debe ser menor o igual al año "hasta"');
+				return;
+			}
+			
+			$selectEstudiante.empty().prop('disabled', true);
+			$selectEstudiante.append('<option value="">Cargando...</option>');
+			$loading.show();
+			
+			$.ajax({
+				url: 'ajax-cargar-estudiantes-por-rango-anios.php',
+				type: 'POST',
+				data: {
+					desde: desde,
+					hasta: hasta
+				},
+				dataType: 'json',
+				success: function(response) {
+					$loading.hide();
+					$selectEstudiante.empty();
+					
+					if (response.success && response.data.length > 0) {
+						$selectEstudiante.append('<option value="">Seleccione un estudiante</option>');
+						
+						response.data.forEach(function(estudiante) {
+							$selectEstudiante.append(
+								$('<option></option>')
+									.attr('value', estudiante.id)
+									.text(estudiante.texto_completo)
+							);
+						});
+						
+						$selectEstudiante.prop('disabled', false);
+						
+						// Reinicializar Select2
+						if ($selectEstudiante.data('select2')) {
+							$selectEstudiante.select2('destroy');
+						}
+						$selectEstudiante.select2({
+							dropdownParent: $('#ModalCentralizado .modal-content'),
+							width: '100%',
+							minimumResultsForSearch: 0,
+							placeholder: 'Seleccione un estudiante',
+							language: {
+								noResults: function() { return 'No se encontraron resultados'; },
+								searching: function() { return 'Buscando...'; }
+							}
+						});
+					} else {
+						$selectEstudiante.append('<option value="">No se encontraron estudiantes en el rango de años seleccionado</option>');
+						alert(response.message || 'No se encontraron estudiantes en el rango de años seleccionado');
+					}
+				},
+				error: function() {
+					$loading.hide();
+					$selectEstudiante.empty();
+					$selectEstudiante.append('<option value="">Error al cargar estudiantes</option>');
+					alert('Error al cargar los estudiantes. Por favor intente nuevamente.');
+				}
+			});
+		};
+		
+		// Auto-inicializar cuando se abre el modal de certificados
+		$(document).on('shown.bs.modal', '#ModalCentralizado', function() {
+			// Verificar si es el modal de certificados por el contenido
+			var tieneFormCertificado = $('#formCertificado').length > 0;
+			if (tieneFormCertificado) {
+				// Inicializar Select2 en los campos del formulario
+				setTimeout(function() {
+					$('#desdeAnio, #hastaAnio, #selectEstudiante, #tipoCertificado').each(function() {
+						var $select = $(this);
+						if (!$select.data('select2')) {
+							$select.select2({
+								dropdownParent: $('#ModalCentralizado .modal-content'),
+								width: '100%',
+								minimumResultsForSearch: 0
+							});
+						}
+					});
+					
+					// Inicializar funciones del modal
+					if (typeof window.inicializarModalCertificados === 'function') {
+						window.inicializarModalCertificados();
+					}
+				}, 300);
+			}
+		});
 	</script>
 	
     <!-- end js include path -->

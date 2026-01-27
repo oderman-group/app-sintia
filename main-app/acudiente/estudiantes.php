@@ -3,6 +3,8 @@
 <?php $idPaginaInterna = 'AC0005';?>
 <?php include("../compartido/historial-acciones-guardar.php");?>
 <?php include("../compartido/head.php");?>
+	<!-- full calendar -->
+    <link href="../../config-general/assets/plugins/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />
 <?php
 require_once("../class/Estudiantes.php");
 require_once("../compartido/sintia-funciones.php");
@@ -446,6 +448,62 @@ require_once("../compartido/sintia-funciones.php");
             min-width: 200px;
         }
     }
+    
+    /* Modal de Cronograma */
+    .modal-cronograma .modal-dialog {
+        max-width: 95%;
+        width: 95%;
+        margin: 20px auto;
+        height: 90vh;
+    }
+    .modal-cronograma .modal-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .modal-cronograma .modal-header {
+        flex-shrink: 0;
+    }
+    .modal-cronograma .modal-body {
+        flex: 1;
+        overflow: hidden;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+    .modal-cronograma .modal-footer {
+        flex-shrink: 0;
+    }
+    #calendarModal {
+        flex: 1;
+        min-height: 500px;
+        width: 100%;
+    }
+    
+    /* Asegurar que FullCalendar se renderice correctamente */
+    .modal-cronograma .fc {
+        direction: ltr;
+        text-align: left;
+    }
+    
+    .modal-cronograma .fc table {
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+    
+    .modal-cronograma .fc-header {
+        margin-bottom: 1em;
+    }
+    
+    .modal-cronograma .fc-button {
+        position: relative;
+        display: inline-block;
+        padding: 0 .6em;
+        overflow: hidden;
+        line-height: 1.9em;
+        white-space: nowrap;
+        cursor: pointer;
+    }
 </style>
 </head>
 <!-- END HEAD -->
@@ -734,6 +792,12 @@ require_once("../compartido/sintia-funciones.php");
                                                                 <i class="fa fa-paperclip"></i> <?=$frases[434][$datosUsuarioActual['uss_idioma']];?>
                                                             </a></li>
                                                             <?php }?>
+                                                            
+                                                            <?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)) {?>
+                                                            <li><a href="#" onclick="abrirCronogramaModal('<?=base64_encode($resultado['mat_id_usuario']);?>', '<?=addslashes($nombreCompleto);?>'); return false;">
+                                                                <i class="fa fa-calendar-alt"></i> Ver Cronograma
+                                                            </a></li>
+                                                            <?php }?>
                                                         <?php }?>
                                                     </ul>
                                                 </div>
@@ -804,6 +868,53 @@ require_once("../compartido/sintia-funciones.php");
         <!-- end page container -->
         <?php include("../compartido/footer.php");?>
     </div>
+    
+    <!-- Modal para Cronograma del Estudiante -->
+    <div class="modal fade modal-cronograma" id="modalCronograma" tabindex="-1" role="dialog" aria-labelledby="modalCronogramaLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalCronogramaLabel">
+                        <i class="fa fa-calendar-alt"></i> Cronograma de <span id="nombreEstudianteModal"></span>
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="calendarModal" class="has-toolbar"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Detalles de Actividad -->
+    <div class="modal fade" id="modalDetalleActividad" tabindex="-1" role="dialog" aria-labelledby="modalDetalleActividadLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h4 class="modal-title" id="modalDetalleActividadLabel">
+                        <i class="fa fa-info-circle"></i> Detalles de la Actividad
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white; opacity: 0.8;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="contenidoDetalleActividad" style="padding: 25px;">
+                    <div class="text-center" style="padding: 50px;">
+                        <i class="fa fa-spinner fa-spin fa-3x text-primary"></i>
+                        <p style="margin-top: 20px; color: #666;">Cargando información...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- start js include path -->
     <script src="../../config-general/assets/plugins/jquery/jquery.min.js" ></script>
     <script src="../../config-general/assets/plugins/popper/popper.js" ></script>
@@ -812,6 +923,9 @@ require_once("../compartido/sintia-funciones.php");
     <!-- bootstrap -->
     <script src="../../config-general/assets/plugins/bootstrap/js/bootstrap.min.js" ></script>
     <script src="../../config-general/assets/plugins/bootstrap-switch/js/bootstrap-switch.min.js" ></script>
+    <!-- calendar -->
+    <script src="../../config-general/assets/plugins/moment/moment.min.js" ></script>
+    <script src="../../config-general/assets/plugins/fullcalendar/fullcalendar.min.js" ></script>
     <!-- Common js-->
 	<script src="../../config-general/assets/js/app.js" ></script>
     <script src="../../config-general/assets/js/layout.js" ></script>
@@ -952,6 +1066,319 @@ require_once("../compartido/sintia-funciones.php");
         console.log('✨ Sistema de estudiantes para acudientes cargado correctamente');
         if (allCards) {
             console.log('👥 Total de estudiantes:', allCards.length);
+        }
+        
+        // ============================================
+        // FUNCIÓN PARA ABRIR MODAL DE CRONOGRAMA
+        // ============================================
+        var calendarioModalInicializado = false;
+        var usrEstudActual = ''; // Variable global para almacenar el usrEstud actual
+        
+        function abrirCronogramaModal(usrEstudEncoded, nombreEstudiante) {
+            usrEstudActual = usrEstudEncoded; // Guardar el usrEstud actual
+            $('#nombreEstudianteModal').text(nombreEstudiante);
+            
+            // Limpiar calendario anterior si existe
+            if (calendarioModalInicializado && $('#calendarModal').fullCalendar) {
+                $('#calendarModal').fullCalendar('destroy');
+                calendarioModalInicializado = false;
+            }
+            
+            // Mostrar loading
+            $('#calendarModal').html('<div class="text-center" style="padding: 50px;"><i class="fa fa-spinner fa-spin fa-3x"></i><p style="margin-top: 20px;">Cargando calendario...</p></div>');
+            
+            $('#modalCronograma').modal('show');
+            
+            // Cargar el calendario cuando el modal esté completamente visible
+            $('#modalCronograma').one('shown.bs.modal', function() {
+                cargarCalendarioEstudiante(usrEstudEncoded);
+            });
+            
+            // Limpiar cuando se cierre el modal
+            $('#modalCronograma').on('hidden.bs.modal', function() {
+                if (calendarioModalInicializado && $('#calendarModal').fullCalendar) {
+                    $('#calendarModal').fullCalendar('destroy');
+                    calendarioModalInicializado = false;
+                }
+            });
+        }
+        
+        // ============================================
+        // FUNCIÓN PARA CARGAR CALENDARIO DEL ESTUDIANTE
+        // ============================================
+        function cargarCalendarioEstudiante(usrEstudEncoded) {
+            console.log('Cargando calendario para estudiante:', usrEstudEncoded);
+            
+            // Cargar eventos del estudiante vía AJAX
+            $.ajax({
+                url: '../estudiante/ajax-calendario-estudiante.php',
+                type: 'GET',
+                data: { usrEstud: usrEstudEncoded },
+                dataType: 'json',
+                timeout: 30000, // 30 segundos de timeout
+                success: function(response) {
+                    console.log('Respuesta recibida:', response);
+                    
+                    if (response && response.success) {
+                        if (response.eventos && Array.isArray(response.eventos)) {
+                            console.log('Eventos recibidos:', response.eventos.length);
+                            
+                            // Verificar que los eventos tengan las propiedades necesarias
+                            if (response.eventos.length > 0) {
+                                console.log('Primer evento de ejemplo:', response.eventos[0]);
+                                console.log('¿Tiene URL?', response.eventos[0].url);
+                                console.log('¿Tiene tipo?', response.eventos[0].tipo);
+                            }
+                            
+                            inicializarCalendarioModal(response.eventos);
+                        } else {
+                            console.warn('No hay eventos o el formato es incorrecto:', response);
+                            $('#calendarModal').html('<div class="alert alert-info">No hay actividades programadas para este estudiante.</div>');
+                        }
+                    } else {
+                        var mensaje = response && response.message ? response.message : 'No se pudieron cargar los eventos del calendario.';
+                        console.error('Error en la respuesta:', mensaje);
+                        $('#calendarModal').html('<div class="alert alert-warning">' + mensaje + '</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error AJAX:', {
+                        status: status,
+                        error: error,
+                        responseText: xhr.responseText,
+                        statusCode: xhr.status
+                    });
+                    
+                    var mensajeError = 'Error al cargar el calendario. ';
+                    if (xhr.status === 0) {
+                        mensajeError += 'No se pudo conectar al servidor.';
+                    } else if (xhr.status === 404) {
+                        mensajeError += 'El archivo no se encontró.';
+                    } else if (xhr.status === 500) {
+                        mensajeError += 'Error del servidor.';
+                    } else {
+                        mensajeError += 'Por favor, intente nuevamente.';
+                    }
+                    
+                    $('#calendarModal').html('<div class="alert alert-danger">' + mensajeError + '</div>');
+                }
+            });
+        }
+        
+        // ============================================
+        // FUNCIÓN PARA INICIALIZAR CALENDARIO EN MODAL
+        // ============================================
+        function inicializarCalendarioModal(eventos) {
+            // Verificar que FullCalendar esté disponible
+            if (typeof jQuery === 'undefined' || !jQuery().fullCalendar) {
+                console.error('FullCalendar no está disponible');
+                $('#calendarModal').html('<div class="alert alert-danger">FullCalendar no está disponible. Por favor, recargue la página.</div>');
+                return;
+            }
+            
+            // Limpiar el contenido anterior
+            $('#calendarModal').empty();
+            
+            // Esperar un momento para asegurar que el DOM esté listo
+            setTimeout(function() {
+                try {
+                    var r = {
+                        left: "prev,next,today",
+                        center: "title",
+                        right: "month,agendaWeek,agendaDay"
+                    };
+                    
+                    // Verificar que eventos sea un array válido
+                    if (!Array.isArray(eventos)) {
+                        console.error('Los eventos no son un array válido:', eventos);
+                        $('#calendarModal').html('<div class="alert alert-warning">No se pudieron cargar los eventos del calendario.</div>');
+                        return;
+                    }
+                    
+                    console.log('Inicializando calendario con', eventos.length, 'eventos');
+                    
+                    $('#calendarModal').fullCalendar({
+                        header: r,
+                        defaultView: "month",
+                        slotMinutes: 15,
+                        editable: false,
+                        droppable: false,
+                        events: eventos,
+                        eventClick: function(calEvent, jsEvent, view) {
+                            // Prevenir el comportamiento por defecto
+                            jsEvent.preventDefault();
+                            
+                            // Log para depuración
+                            console.log('Evento clickeado en FullCalendar:', calEvent);
+                            
+                            // Abrir modal con detalles en lugar de nueva pestaña
+                            mostrarDetalleActividad(calEvent);
+                            return false;
+                        },
+                        eventRender: function(event, element) {
+                            // Asegurar que los eventos se rendericen correctamente
+                            element.css({
+                                'cursor': 'pointer'
+                            });
+                            
+                            // Log para verificar que los eventos tienen URL
+                            if (event.url) {
+                                console.log('Evento renderizado con URL:', event.title, 'URL:', event.url);
+                            } else {
+                                console.warn('Evento sin URL:', event.title, 'Tipo:', event.tipo);
+                            }
+                        }
+                    });
+                    
+            calendarioModalInicializado = true;
+            console.log('Calendario inicializado correctamente');
+        } catch (error) {
+            console.error('Error al inicializar el calendario:', error);
+            $('#calendarModal').html('<div class="alert alert-danger">Error al inicializar el calendario: ' + error.message + '</div>');
+        }
+    }, 100);
+        }
+        
+        // ============================================
+        // FUNCIÓN PARA MOSTRAR DETALLES DE ACTIVIDAD
+        // ============================================
+        function mostrarDetalleActividad(calEvent) {
+            console.log('Evento clickeado:', calEvent);
+            
+            // Obtener tipo y detalle del evento
+            var tipo = calEvent.tipo || '';
+            var detalle = calEvent.detalle || null;
+            
+            // Si el detalle ya está en el evento, usarlo directamente
+            if (detalle) {
+                $('#modalDetalleActividadLabel').html('<i class="fa fa-info-circle"></i> ' + (detalle.titulo || calEvent.title || 'Actividad'));
+                $('#contenidoDetalleActividad').html('<div class="text-center" style="padding: 50px;"><i class="fa fa-spinner fa-spin fa-3x text-primary"></i><p style="margin-top: 20px; color: #666;">Cargando información...</p></div>');
+                $('#modalDetalleActividad').modal('show');
+                
+                // Mostrar el contenido inmediatamente (ya está cargado)
+                setTimeout(function() {
+                    mostrarContenidoDetalle(detalle, tipo);
+                }, 100);
+            } else {
+                // Fallback: si no hay detalle, intentar obtenerlo vía AJAX
+                console.warn('El evento no tiene detalle precargado, intentando obtenerlo vía AJAX');
+                $('#modalDetalleActividadLabel').html('<i class="fa fa-info-circle"></i> ' + (calEvent.title || 'Actividad'));
+                $('#contenidoDetalleActividad').html('<div class="text-center" style="padding: 50px;"><i class="fa fa-spinner fa-spin fa-3x text-primary"></i><p style="margin-top: 20px; color: #666;">Cargando información...</p></div>');
+                $('#modalDetalleActividad').modal('show');
+                
+                // Intentar obtener detalles vía AJAX como respaldo
+                var url = calEvent.url || '';
+                var params = {};
+                if (url) {
+                    try {
+                        var urlParts = url.split('?');
+                        if (urlParts.length > 1) {
+                            var queryString = urlParts[1];
+                            var pairs = queryString.split('&');
+                            pairs.forEach(function(pair) {
+                                var keyValue = pair.split('=');
+                                if (keyValue.length >= 2) {
+                                    var key = keyValue[0];
+                                    var value = decodeURIComponent(keyValue.slice(1).join('=').replace(/\+/g, ' '));
+                                    params[key] = value;
+                                }
+                            });
+                        }
+                    } catch(e) {
+                        console.error('Error al extraer parámetros:', e);
+                    }
+                }
+                
+                var usrEstud = usrEstudActual || '';
+                if (!params.usrEstud && usrEstud) {
+                    params.usrEstud = usrEstud;
+                }
+                
+                $.ajax({
+                    url: '../estudiante/ajax-detalle-actividad.php',
+                    type: 'GET',
+                    data: {
+                        tipo: tipo,
+                        params: JSON.stringify(params),
+                        usrEstud: usrEstud
+                    },
+                    dataType: 'json',
+                    timeout: 15000,
+                    success: function(response) {
+                        if (response && response.success) {
+                            mostrarContenidoDetalle(response.detalle, tipo);
+                        } else {
+                            var mensaje = response && response.message ? response.message : 'No se pudieron cargar los detalles de la actividad.';
+                            $('#contenidoDetalleActividad').html('<div class="alert alert-warning">' + mensaje + '</div>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', error);
+                        $('#contenidoDetalleActividad').html('<div class="alert alert-danger">Error al cargar los detalles. Por favor, intente nuevamente.</div>');
+                    }
+                });
+            }
+        }
+        
+        // ============================================
+        // FUNCIÓN PARA MOSTRAR CONTENIDO DEL DETALLE
+        // ============================================
+        function mostrarContenidoDetalle(detalle, tipo) {
+            console.log('Mostrando detalle:', detalle, 'Tipo:', tipo);
+            
+            var html = '';
+            
+            html += '<div class="card" style="border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+            html += '<div class="card-body" style="padding: 25px;">';
+            
+            // Título
+            if (detalle.titulo) {
+                html += '<h4 style="color: #2d3e50; margin-bottom: 25px; font-weight: 600;">';
+                html += '<i class="fa fa-info-circle" style="color: #41c1ba; margin-right: 10px;"></i>';
+                html += detalle.titulo;
+                html += '</h4>';
+            }
+            
+            // Descripción (si tiene)
+            if (detalle.descripcion && detalle.descripcion.trim() !== '') {
+                html += '<div class="mb-4">';
+                html += '<h6 class="text-muted mb-2" style="font-weight: 600; color: #7f8c8d;">';
+                html += '<i class="fa fa-align-left" style="margin-right: 8px;"></i>Descripción:';
+                html += '</h6>';
+                html += '<p style="background: #f8f9fa; padding: 15px; border-radius: 8px; line-height: 1.6; color: #555; margin: 0;">';
+                html += detalle.descripcion;
+                html += '</p>';
+                html += '</div>';
+            }
+            
+            // Fecha
+            if (detalle.fecha && detalle.fecha.trim() !== '') {
+                html += '<div class="mb-4">';
+                html += '<h6 class="text-muted mb-2" style="font-weight: 600; color: #7f8c8d;">';
+                html += '<i class="fa fa-calendar" style="margin-right: 8px;"></i>Fecha:';
+                html += '</h6>';
+                html += '<p style="background: #f8f9fa; padding: 15px; border-radius: 8px; color: #555; margin: 0; font-size: 16px; font-weight: 500;">';
+                html += detalle.fecha;
+                html += '</p>';
+                html += '</div>';
+            }
+            
+            // Recursos (solo para cronograma)
+            if (tipo === 'cronograma' && detalle.recursos && detalle.recursos.trim() !== '') {
+                html += '<div class="mb-3">';
+                html += '<h6 class="text-muted mb-2" style="font-weight: 600; color: #7f8c8d;">';
+                html += '<i class="fa fa-bookmark" style="margin-right: 8px;"></i>Recursos:';
+                html += '</h6>';
+                html += '<p style="background: #f8f9fa; padding: 15px; border-radius: 8px; color: #555; margin: 0; line-height: 1.6;">';
+                html += detalle.recursos;
+                html += '</p>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            html += '</div>';
+            
+            $('#contenidoDetalleActividad').html(html);
         }
     </script>
     <!-- end js include path -->

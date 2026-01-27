@@ -193,7 +193,7 @@ $estadosCuentas = array("", "Fact. Venta", "Fact. Compra");
                     $prefijoPorCobrar = ($resultado['fcu_tipo'] == 2 && $porCobrar > 0) ? '-$' : '$';
 									?>
   <tr style="font-size:13px;">
-      <td><?=$resultado['fcu_id'];?></td>
+      <td><?= (isset($resultado['fcu_consecutivo']) && $resultado['fcu_consecutivo'] !== '' && $resultado['fcu_consecutivo'] !== null) ? (int)$resultado['fcu_consecutivo'] : $resultado['fcu_id']; ?></td>
       <td><?=$nombreCompleto;?></td>
       <td><?=$resultado['fcu_fecha'];?></td>
       <td><?=$resultado['fcu_detalle'];?></td>

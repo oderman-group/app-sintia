@@ -49,6 +49,8 @@ if ($contactoCliente === '') {
 $numeroFactura = $resultado['numeroFactura'] ?? 'N/A';
 $valorAbono    = (float)($resultado['valorAbono'] ?? 0);
 $observacion   = strip_tags($resultado['observation'] ?? ''); // Limpiar HTML
+$displayConsecutivoAbono = (isset($resultado['pi_consecutivo']) && $resultado['pi_consecutivo'] !== '' && $resultado['pi_consecutivo'] !== null)
+    ? (int)$resultado['pi_consecutivo'] : ($resultado['id'] ?? $resultado['cod_payment'] ?? 'N/A');
 
 // Datos de la cuenta bancaria
 $cuentaBancaria = 'N/A';
@@ -138,7 +140,7 @@ switch ($resultado['payment_method']) {
         <meta content="width=device-width, initial-scale=1" name="viewport" />
         <meta name="description" content="Plataforma Educativa SINTIA | Para Colegios y Universidades" />
         <meta name="author" content="ODERMAN" />
-        <title>RECIBO DE CAJA NO. <?=$resultado["id"]?></title>
+        <title>RECIBO DE CAJA NO. <?= $displayConsecutivoAbono; ?></title>
         <meta name="tipo_contenido" content="text/html;" http-equiv="content-type" charset="utf-8">
         <!-- favicon -->
         <link rel="shortcut icon" href="../sintia-icono.png" />
@@ -202,7 +204,7 @@ switch ($resultado['payment_method']) {
                     </td>
                     <td align="center" width="30%">
                         <h2 style="margin: 0px; padding: 10px; background-color: #a8a8a8;">RECIBO DE CAJA</h2>
-                        <h3 class="borde_inferior_izquierdo borde_inferior_derecho" style="margin: 0px; padding: 20px; background-color: #e3e3e3; font-weight:bold;"><b>No. <?=$resultado["id"]?></b></h3>
+                        <h3 class="borde_inferior_izquierdo borde_inferior_derecho" style="margin: 0px; padding: 20px; background-color: #e3e3e3; font-weight:bold;"><b>No. <?= $displayConsecutivoAbono; ?></b></h3>
                     </td>
                 </tr>
             </table>

@@ -399,10 +399,20 @@
 							<?php }?>
 
 							<?php
+								// Validar institución según ambiente
+								$institucionPermitida = false;
+								if (ENVIROMENT === 'LOCAL' && $_SESSION["idInstitucion"] == 1) {
+									$institucionPermitida = true;
+								} elseif (ENVIROMENT === 'TEST' && $_SESSION["idInstitucion"] == DEVELOPER) {
+									$institucionPermitida = true;
+								} elseif (ENVIROMENT === 'PROD' && $_SESSION["idInstitucion"] == DEVELOPER_PROD) {
+									$institucionPermitida = true;
+								}
+								
 								if (
 									$datosUsuarioActual['uss_permiso1'] == CODE_DEV_MODULE_PERMISSION &&
-									$datosUsuarioActual['uss_tipo'] == TIPO_DEV 
-									/*($_SESSION["idInstitucion"] == DEVELOPER_PROD || $_SESSION["idInstitucion"] == DEVELOPER)*/ 
+									$datosUsuarioActual['uss_tipo'] == TIPO_DEV &&
+									$institucionPermitida
 								) {
 							?>
 								<li  <?php agregarClass(MENU_PADRE,["DV0038","DV0039", "DV0074", "DV0075", "DV0002 "]) ?> >

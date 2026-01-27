@@ -66,7 +66,7 @@ if ($numFacturas > 0) {
             <i class="fa fa-chevron-right expand-btn" onclick="toggleFacturaDetails('<?=$resultado['fcu_id'];?>')" id="expand<?=$resultado['fcu_id'];?>"></i>
         </td>
         <td title="<?=$detalleFactura;?>">
-            <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=$resultado['fcu_id'] ?? '';?></span>
+            <span style="border-bottom: 0.5px dashed #000; cursor:help;"><?=(isset($resultado['fcu_consecutivo']) && $resultado['fcu_consecutivo'] !== '' && $resultado['fcu_consecutivo'] !== null) ? (int)$resultado['fcu_consecutivo'] : ($resultado['fcu_id'] ?? '');?></span>
         </td>
         <td><?=$resultado['fcu_fecha'] ?? '';?></td>
         <td id="totalNeto<?=$resultado['fcu_id'];?>" data-total-neto="<?=$totalNeto?>">$<?=number_format($totalNeto, 0, ",", ".")?></td>

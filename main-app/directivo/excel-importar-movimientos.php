@@ -35,15 +35,31 @@ if($extension == 'xlsx'){
 			$f=3;
 			$arrayTodos = [];
 			$claves_validar = array('fcu_usuario', 'fcu_valor', 'fcu_tipo');
-			$sql = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_id, fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_status, fcu_created_by, fcu_origen, institucion, year)VALUES";
-			
+			$sql = "INSERT INTO ".BD_FINANCIERA.".finanzas_cuentas(fcu_id, fcu_fecha, fcu_detalle, fcu_valor, fcu_tipo, fcu_observaciones, fcu_usuario, fcu_anulado, fcu_consecutivo, fcu_status, fcu_created_by, fcu_origen, institucion, year) VALUES ";
+
 			$movimientosCreados     = array();
 			$movimientosNoCreados   = array();
 			$usuariosBloqueados    	= array();
-			
-			// Crear conexión PDO para las eliminaciones
+
+			// Crear conexión PDO para las eliminaciones y consultas
 			$conexionPDO = Conexion::newConnection('PDO');
 			$conexionPDO->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+			// Siguiente consecutivo por tipo (ingreso=1, egreso=2) para institución y año
+			$nextIngreso = (int)($config['conf_inicio_recibos_ingreso'] ?? 1);
+			$nextEgreso  = (int)($config['conf_inicio_recibos_egreso'] ?? 1);
+			$inst = (int)$config['conf_id_institucion'];
+			$year = $_SESSION['bd'];
+			foreach ([1 => 'nextIngreso', 2 => 'nextEgreso'] as $tipoVal => $var) {
+				$stmtMax = $conexionPDO->prepare("SELECT COALESCE(MAX(fcu_consecutivo), 0) AS m FROM ".BD_FINANCIERA.".finanzas_cuentas WHERE fcu_tipo=? AND institucion=? AND year=?");
+				$stmtMax->execute([$tipoVal, $inst, $year]);
+				$row = $stmtMax->fetch(PDO::FETCH_ASSOC);
+				$max = $row ? (int)$row['m'] : 0;
+				if ($max > 0) {
+					if ($tipoVal === 1) $nextIngreso = $max + 1;
+					else $nextEgreso = $max + 1;
+				}
+			}
 
 			while($f<=$numFilas){
 
@@ -148,7 +164,8 @@ if($extension == 'xlsx'){
 
 					// Usar directamente el tipo de movimiento (1 o 2)
 					$tipo = $tipoMovimiento;
-					
+					$consecutivo = ($tipo == 1) ? $nextIngreso++ : $nextEgreso++;
+
 					if($_POST["accion"]==2){//Bloquear a los que deben
 						// Solo bloquear si es tipo 1 (FACTURA_VENTA/DEUDA)
 						if($tipoMovimiento == FACTURA_VENTA){
@@ -169,7 +186,7 @@ if($extension == 'xlsx'){
 						$observacionesEscapadas = mysqli_real_escape_string($conexion, $arrayIndividual['fcu_observaciones'] ?? '');
 						$createdByEscapado = mysqli_real_escape_string($conexion, $_SESSION["id"]);
 						$origen = 'NORMAL';
-						$sql .="('" .$idInsercion . "', now(), '".$detalleEscapado."', '".$valorEscapado."', '".$tipo."', '".$observacionesEscapadas."', '".$idUsuario."', 0, '".POR_COBRAR."', '".$createdByEscapado."', '".$origen."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
+						$sql .="('" .$idInsercion . "', now(), '".$detalleEscapado."', '".$valorEscapado."', '".$tipo."', '".$observacionesEscapadas."', '".$idUsuario."', 0, ".(int)$consecutivo.", '".POR_COBRAR."', '".$createdByEscapado."', '".$origen."', {$config['conf_id_institucion']}, {$_SESSION["bd"]}),";
 
 						$movimientosCreados["FILA_".$f] = $arrayIndividual['fcu_usuario'];
 					} else {

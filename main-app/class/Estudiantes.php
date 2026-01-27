@@ -777,7 +777,30 @@ class Estudiantes {
     {
         global $config;
 
-        $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_estado_matricula=? WHERE mat_id=? AND institucion=? AND year=?";
+        // Obtener datos actuales del estudiante para verificar cambio de estado
+        $datosEstudianteActual = self::obtenerDatosEstudiante($idEstudiante);
+        $estadoActual = !empty($datosEstudianteActual) ? (int)$datosEstudianteActual['mat_estado_matricula'] : null;
+        $estadoNuevo = (int)$estadoMatricula;
+        
+        // Detectar cambio de estado de no matriculado (4) a matriculado (1)
+        // o si mat_fecha está vacío/inválido y el estado es matriculado
+        $actualizarFechaMatricula = false;
+        if ($estadoActual === self::ESTADO_NO_MATRICULADO && $estadoNuevo === self::ESTADO_MATRICULADO) {
+            $actualizarFechaMatricula = true;
+        } elseif ($estadoNuevo === self::ESTADO_MATRICULADO && !empty($datosEstudianteActual)) {
+            // Si el estado nuevo es matriculado y la fecha está vacía o es inválida, actualizarla
+            $fechaMatriculaActual = $datosEstudianteActual['mat_fecha'] ?? '';
+            if (empty($fechaMatriculaActual) || $fechaMatriculaActual === '0000-00-00' || $fechaMatriculaActual === '0000-00-00 00:00:00') {
+                $actualizarFechaMatricula = true;
+            }
+        }
+        
+        // Construir la consulta SQL
+        if ($actualizarFechaMatricula) {
+            $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_estado_matricula=?, mat_fecha=NOW() WHERE mat_id=? AND institucion=? AND year=?";
+        } else {
+            $sql = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET mat_estado_matricula=? WHERE mat_id=? AND institucion=? AND year=?";
+        }
 
         $parametros = [$estadoMatricula, $idEstudiante, $config['conf_id_institucion'], $_SESSION["bd"]];
         
@@ -1330,6 +1353,10 @@ class Estudiantes {
 
         try {
             // Validar cambio de estado si se está modificando
+            $estadoActual = null;
+            $estadoNuevo = null;
+            $actualizarFechaMatricula = false;
+            
             if (!empty($id) && !empty($matestM)) {
                 $datosEstudianteActual = self::obtenerDatosEstudiante($id);
                 if (!empty($datosEstudianteActual)) {
@@ -1341,7 +1368,25 @@ class Estudiantes {
                     if (!$validacion['valido']) {
                         throw new Exception($validacion['mensaje']);
                     }
+                    
+                    // Detectar cambio de estado de no matriculado (4) a matriculado (1)
+                    // o si mat_fecha está vacío/inválido y el estado es matriculado
+                    if ($estadoActual === self::ESTADO_NO_MATRICULADO && $estadoNuevo === self::ESTADO_MATRICULADO) {
+                        $actualizarFechaMatricula = true;
+                    } elseif ($estadoNuevo === self::ESTADO_MATRICULADO) {
+                        // Si el estado nuevo es matriculado y la fecha está vacía o es inválida, actualizarla
+                        $fechaMatriculaActual = $datosEstudianteActual['mat_fecha'] ?? '';
+                        if (empty($fechaMatriculaActual) || $fechaMatriculaActual === '0000-00-00' || $fechaMatriculaActual === '0000-00-00 00:00:00') {
+                            $actualizarFechaMatricula = true;
+                        }
+                    }
                 }
+            }
+            
+            // Construir la parte de actualización de fecha de matrícula si es necesario
+            $actualizarFechaMatriculaSql = '';
+            if ($actualizarFechaMatricula) {
+                $actualizarFechaMatriculaSql = "mat_fecha = NOW(), ";
             }
             
             $consulta = "UPDATE ".BD_ACADEMICA.".academico_matriculas SET 
@@ -1376,6 +1421,7 @@ class Estudiantes {
             mat_celular2          = :celular2, 
             mat_ciudad_residencia = :ciudadR,
             mat_lugar_nacimiento  = :procedencia,
+            $actualizarFechaMatriculaSql
             $pasosMatricula
             $fechaNacimiento
             mat_nombre2            = :nombre2,

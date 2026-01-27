@@ -74,7 +74,7 @@ ob_start();
         <div style="flex: 1; min-width: 220px;">
             <h5 style="font-weight: 600; color: #667eea;">Información de la factura</h5>
             <ul style="list-style:none; padding:0; margin:0;">
-                <li><strong>Código:</strong> <?= htmlspecialchars($factura['id_nuevo_movimientos'] ?? $factura['fcu_id'] ?? '') ?></li>
+                <li><strong>Código:</strong> <?= htmlspecialchars((isset($factura['fcu_consecutivo']) && $factura['fcu_consecutivo'] !== '' && $factura['fcu_consecutivo'] !== null) ? $factura['fcu_consecutivo'] : ($factura['id_nuevo_movimientos'] ?? $factura['fcu_id'] ?? '')) ?></li>
                 <li><strong>Fecha:</strong> <?= htmlspecialchars($factura['fcu_fecha'] ?? '') ?></li>
                 <li><strong>Detalle:</strong> <?= htmlspecialchars($factura['fcu_detalle'] ?? 'N/A') ?></li>
                 <li><strong>Usuario:</strong> <?= $responsable ?: 'N/A' ?></li>

@@ -68,10 +68,6 @@
 										<li class="nav-item"><a href="ausencias.php" class="nav-link "> <span class="title"><?=$frases[7][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
 									
-									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)){?>
-										<li class="nav-item"><a href="cronograma-calendario.php" class="nav-link "> <span class="title"><?=$frases[111][$datosUsuarioActual['uss_idioma']];?></span></a></li>
-									<?php }?>
-									
 									<?php if(Modulos::verificarModulosDeInstitucion(Modulos::MODULO_ACTIVIDAES)){?>
 										<li class="nav-item"><a href="actividades.php" class="nav-link "> <span class="title"><?=$frases[112][$datosUsuarioActual['uss_idioma']];?></span></a></li>
 									<?php }?>
@@ -87,6 +83,37 @@
 	                            </ul>
 	                        </li>
 							<?php }?>
+							<?php } ?>
+							
+							<?php 
+							// Mi Cronograma - Verificar módulo y que el estudiante tenga al menos una carga académica
+							$tieneCargas = false;
+							if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA)) {
+								global $conexion;
+								require_once(ROOT_PATH."/main-app/class/CargaAcademica.php");
+								$idGrado = !empty($datosEstudianteActual['mat_grado']) ? (string)$datosEstudianteActual['mat_grado'] : '';
+								$idGrupo = !empty($datosEstudianteActual['mat_grupo']) ? (string)$datosEstudianteActual['mat_grupo'] : '';
+								$cCargasMenu = CargaAcademica::traerCargasMateriasPorCursoGrupo($config, $idGrado, $idGrupo);
+								$contadorCargas = 0;
+								while($cargaMenu = mysqli_fetch_array($cCargasMenu, MYSQLI_BOTH)){
+									if($cargaMenu['car_curso_extension']==1){
+										$cursoExt = CargaAcademica::validarCursosComplementario($conexion, $config, $datosEstudianteActual['mat_id'], $cargaMenu['car_id']);
+										if($cursoExt==0){continue;}
+									}
+									$contadorCargas++;
+								}
+								$tieneCargas = ($contadorCargas > 0);
+							}
+							?>
+							<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_CRONOGRAMA) && $tieneCargas) { ?>
+								<li class="nav-item">
+									<a href="cronograma-calendario.php" class="nav-link nav-toggle">
+										<div class="menu-icon icon-academic">
+											<i class="fa fa-calendar-alt"></i>
+										</div>
+										<span class="title">Mi cronograma</span> 
+									</a>
+								</li>
 							<?php } ?>
 							
 							<?php if (Modulos::verificarModulosDeInstitucion(Modulos::MODULO_MATRICULAS)) { ?>

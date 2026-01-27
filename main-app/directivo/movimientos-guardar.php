@@ -64,17 +64,16 @@ if ($_POST["tipo"] == 1) {
     try{
         $sql = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas 
                 WHERE fcu_tipo=1 AND institucion=? AND year=? 
-                ORDER BY fcu_id DESC LIMIT 1";
+                ORDER BY fcu_consecutivo DESC LIMIT 1";
         $stmt = $conexionPDO->prepare($sql);
         $stmt->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
         $stmt->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
         $stmt->execute();
         $consecutivoActual = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (empty($consecutivoActual['fcu_consecutivo'])) {
-            $consecutivo = $config['conf_inicio_recibos_ingreso'];
+        if (!$consecutivoActual || $consecutivoActual['fcu_consecutivo'] === '' || $consecutivoActual['fcu_consecutivo'] === null) {
+            $consecutivo = (int)($config['conf_inicio_recibos_ingreso'] ?? 1);
         } else {
-            $consecutivo = $consecutivoActual['fcu_consecutivo'] + 1;
+            $consecutivo = (int)$consecutivoActual['fcu_consecutivo'] + 1;
         }
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
@@ -84,21 +83,26 @@ if ($_POST["tipo"] == 2) {
     try{
         $sql = "SELECT * FROM ".BD_FINANCIERA.".finanzas_cuentas 
                 WHERE fcu_tipo=2 AND institucion=? AND year=? 
-                ORDER BY fcu_id DESC LIMIT 1";
+                ORDER BY fcu_consecutivo DESC LIMIT 1";
         $stmt = $conexionPDO->prepare($sql);
         $stmt->bindParam(1, $config['conf_id_institucion'], PDO::PARAM_INT);
         $stmt->bindParam(2, $_SESSION["bd"], PDO::PARAM_INT);
         $stmt->execute();
         $consecutivoActual = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (empty($consecutivoActual['fcu_consecutivo'])) {
-            $consecutivo = $config['conf_inicio_recibos_egreso'];
+        if (!$consecutivoActual || $consecutivoActual['fcu_consecutivo'] === '' || $consecutivoActual['fcu_consecutivo'] === null) {
+            $consecutivo = (int)($config['conf_inicio_recibos_egreso'] ?? 1);
         } else {
-            $consecutivo = $consecutivoActual['fcu_consecutivo'] + 1;
+            $consecutivo = (int)$consecutivoActual['fcu_consecutivo'] + 1;
         }
     } catch (Exception $e) {
         include(ROOT_PATH."/main-app/compartido/error-catch-to-report.php");
     }
+}
+
+if ($consecutivo === '' || $consecutivo === null) {
+    include(ROOT_PATH."/main-app/compartido/guardar-historial-acciones.php");
+    echo '<script type="text/javascript">window.location.href="movimientos-agregar.php?error=ER_DT_4";</script>';
+    exit();
 }
 
 // fcu_id es AUTO_INCREMENT, no necesitamos generarlo manualmente
