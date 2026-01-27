@@ -578,7 +578,7 @@ if (!empty($informacion_inst["info_ciudad"]) && is_numeric($informacion_inst["in
 			?>
 
 			<div class="titulo-periodo">
-				<?= strtoupper($matricula["gra_nombre"]); ?> GRADO DE EDUCACIÓN <?=$educacion." ".$inicio?><br>
+				<?= strtoupper((string)($matricula["gra_nombre"] ?? '')); ?> GRADO DE EDUCACIÓN <?=$educacion." ".$inicio?><br>
 				MATRÍCULA <?= strtoupper($matricula["mat_matricula"] ?? 'N/A'); ?> FOLIO <?= strtoupper($matricula["mat_folio"] ?? 'N/A'); ?>
 			</div>
 
