@@ -34,6 +34,7 @@ try {
 
     $sql = "SELECT 
                 pi.id,
+                pi.pi_consecutivo,
                 pi.fecha_registro,
                 pi.payment_method,
                 pi.observation,
@@ -73,7 +74,7 @@ try {
         $abonos[] = [
             'id' => $row['id'],
             'registration_date' => $row['fecha_registro'],
-            'cod_payment' => $row['id'],
+            'cod_payment' => (isset($row['pi_consecutivo']) && $row['pi_consecutivo'] !== '' && $row['pi_consecutivo'] !== null) ? (int)$row['pi_consecutivo'] : $row['id'],
             'payment_method' => $row['payment_method'],
             'observation' => $row['observation'],
             'note' => $row['note'],

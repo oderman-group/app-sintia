@@ -75,11 +75,12 @@ try {
     
 
     // Insertar con todos los campos necesarios siguiendo el patrón de Movimientos::guardarAbonos()
+    $consecutivo = Movimientos::siguienteConsecutivoAbono($conexionPDO, $config);
     $sqlPaymentInvoiced = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced (
         responsible_user, payment_user, type_payments, payment_tipo, payment_method, 
         payment_cuenta_bancaria_id, invoiced, payment, observation, attachment, 
-        fecha_registro, institucion, year
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        fecha_registro, institucion, year, pi_consecutivo
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmtPaymentInv = $conexionPDO->prepare($sqlPaymentInvoiced);
     
     $fechaRegistro = date('Y-m-d H:i:s');
@@ -99,6 +100,7 @@ try {
     $stmtPaymentInv->bindValue(11, $fechaRegistro, PDO::PARAM_STR); // fecha_registro
     $stmtPaymentInv->bindValue(12, $config['conf_id_institucion'], PDO::PARAM_INT); // institucion
     $stmtPaymentInv->bindValue(13, $_SESSION['bd'], PDO::PARAM_INT); // year
+    $stmtPaymentInv->bindValue(14, $consecutivo, PDO::PARAM_INT); // pi_consecutivo
     $stmtPaymentInv->execute();
 
     $totalAbonadoNuevo = $totalAbonos + $valorAbono;

@@ -7,7 +7,10 @@ require_once(ROOT_PATH."/main-app/compartido/historial-acciones-guardar.php");
 
 // Migrado a PDO - Consultas preparadas
 require_once(ROOT_PATH."/main-app/class/Conexion.php");
+require_once(ROOT_PATH."/main-app/class/Movimientos.php");
 $conexionPDO = Conexion::newConnection('PDO');
+
+$idInsercion = null;
 
 if($_REQUEST['type'] == INVOICE){
     if($_REQUEST['abonoAnterior'] > 0){
@@ -26,13 +29,15 @@ if($_REQUEST['type'] == INVOICE){
         }
     }else{
         try {
-            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, institucion, year) 
-                    VALUES (?, ?, ?, ?)";
+            $consecutivo = Movimientos::siguienteConsecutivoAbono($conexionPDO, $config);
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(payment, invoiced, institucion, year, pi_consecutivo) 
+                    VALUES (?, ?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['abono'], PDO::PARAM_STR);
             $stmt->bindParam(2, $_REQUEST['idFactura'], PDO::PARAM_STR);
             $stmt->bindParam(3, $config['conf_id_institucion'], PDO::PARAM_INT);
             $stmt->bindParam(4, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(5, $consecutivo, PDO::PARAM_INT);
             $stmt->execute();
         } catch(Exception $e) {
             echo $e->getMessage();
@@ -63,12 +68,14 @@ if($_REQUEST['type'] == ACCOUNT){
         }
     }else{
         try {
-            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, institucion, year) 
-                    VALUES (?, ?, ?)";
+            $consecutivo = Movimientos::siguienteConsecutivoAbono($conexionPDO, $config);
+            $sql = "INSERT INTO ".BD_FINANCIERA.".payments_invoiced(invoiced, institucion, year, pi_consecutivo) 
+                    VALUES (?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $_REQUEST['concepto'], PDO::PARAM_STR);
             $stmt->bindParam(2, $config['conf_id_institucion'], PDO::PARAM_INT);
             $stmt->bindParam(3, $_SESSION["bd"], PDO::PARAM_INT);
+            $stmt->bindParam(4, $consecutivo, PDO::PARAM_INT);
             $stmt->execute();
             $idInsercion = $conexionPDO->lastInsertId();
         } catch(Exception $e) {

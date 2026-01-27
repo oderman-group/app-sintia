@@ -90,7 +90,7 @@ if (!empty($datosAbono['is_deleted']) && $datosAbono['is_deleted'] == 1) {
                                         <h5 style="margin-top: 0; color: #333;">Información del Abono</h5>
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <p><strong>Código:</strong> <?=htmlspecialchars($datosAbono['cod_payment'] ?? 'N/A')?></p>
+                                                <p><strong>Código:</strong> <?=(isset($datosAbono['pi_consecutivo']) && $datosAbono['pi_consecutivo'] !== '' && $datosAbono['pi_consecutivo'] !== null) ? (int)$datosAbono['pi_consecutivo'] : htmlspecialchars($datosAbono['cod_payment'] ?? 'N/A');?></p>
                                                 <p><strong>Fecha:</strong> <?=htmlspecialchars($datosAbono['registration_date'] ?? 'N/A')?></p>
                                                 <p><strong>Cliente:</strong> <?=htmlspecialchars($datosAbono['cliente_nombre'] ?? 'N/A')?></p>
                                             </div>

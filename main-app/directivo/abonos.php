@@ -636,6 +636,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
 													$abonoAnulado = (!empty($resultado['is_deleted']) && $resultado['is_deleted'] == 1);
 													$claseFilaAnulada = $abonoAnulado ? 'abono-anulado' : '';
 													$estiloFilaAnulada = $abonoAnulado ? 'style="opacity: 0.6; background-color: #fff3cd;"' : '';
+													$displayConsecutivoAbono = (isset($resultado['pi_consecutivo']) && $resultado['pi_consecutivo'] !== '' && $resultado['pi_consecutivo'] !== null) ? (int)$resultado['pi_consecutivo'] : ($resultado['id'] ?? $resultado['cod_payment'] ?? '');
 													?>
 													<?php
 													// Determinar el tipo de factura para el footer (solo para facturas de tipo INVOICE)
@@ -649,8 +650,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <td>
                                                             <i class="fa fa-chevron-right expand-btn" id="expand<?=$resultado['id'];?>"></i>
                                                         </td>
-                                                        <td data-order="<?=$resultado['id'];?>">
-                                                            <strong style="color: #667eea;">#<?=$resultado['id'];?></strong>
+                                                        <td data-order="<?= is_numeric($displayConsecutivoAbono) ? $displayConsecutivoAbono : $resultado['id']; ?>">
+                                                            <strong style="color: #667eea;">#<?= $displayConsecutivoAbono; ?></strong>
                                                             <?php if ($abonoAnulado) { ?>
                                                                 <br><span class="badge badge-warning" style="margin-top: 5px;" title="Abono anulado">ANULADO</span>
                                                             <?php } ?>
@@ -661,7 +662,8 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                         <td>
                                                             <?php if (!empty($facturasAsociadas) && count($facturasAsociadas) == 1) {
                                                                 $facturaId = $facturasAsociadas[0]['datos']['fcu_id'];
-                                                                $facturaCodigo = $facturasAsociadas[0]['datos']['fcu_id'] ?? 'N/A';
+                                                                $d = $facturasAsociadas[0]['datos'];
+                                                                $facturaCodigo = (isset($d['fcu_consecutivo']) && $d['fcu_consecutivo'] !== '' && $d['fcu_consecutivo'] !== null) ? $d['fcu_consecutivo'] : ($d['fcu_id'] ?? 'N/A');
                                                             ?>
                                                                 <a href="movimientos-editar.php?id=<?=base64_encode($facturaId)?>" style="text-decoration: underline; color: #667eea; font-weight: 600;" title="Ver detalle de factura">
                                                                     <?=$facturaCodigo?>
@@ -730,7 +732,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                             <div class="col-md-6 abono-details-section">
                                                                 <h6>Información del Abono</h6>
                                                                 <ul class="detalle-item-list">
-                                                                    <li><span>Código único:</span> <?=$resultado['id'] ?? $resultado['cod_payment'] ?? 'N/A';?></li>
+                                                                    <li><span>Código único:</span> <?=(isset($resultado['pi_consecutivo']) && $resultado['pi_consecutivo'] !== '' && $resultado['pi_consecutivo'] !== null) ? (int)$resultado['pi_consecutivo'] : ($resultado['id'] ?? $resultado['cod_payment'] ?? 'N/A');?></li>
                                                                     <li><span>Fecha de registro:</span> <?=$fechaRegistro ?? 'N/A';?></li>
                                                                     <li><span>Responsable:</span> <?=UsuariosPadre::nombreCompletoDelUsuario($resultado);?></li>
                                                                     <li><span>Tipo de transacción:</span> <?=($tipoTransaccion === INVOICE ? 'Factura de venta' : 'Cuenta contable');?></li>
@@ -802,7 +804,7 @@ if(!Modulos::validarSubRol([$idPaginaInterna])){
                                                                     </thead>
                                                                     <tbody>
                                                                         <tr>
-                                                                            <td><strong><?=$datosFactura['fcu_id'] ?? 'N/A';?></strong></td>
+                                                                            <td><strong><?=(isset($datosFactura['fcu_consecutivo']) && $datosFactura['fcu_consecutivo'] !== '' && $datosFactura['fcu_consecutivo'] !== null) ? (int)$datosFactura['fcu_consecutivo'] : ($datosFactura['fcu_id'] ?? 'N/A');?></strong></td>
                                                                             <td><?=$datosFactura['fcu_fecha'] ?? 'N/A';?></td>
                                                                             <td><?=htmlspecialchars($datosFactura['fcu_detalle'] ?? 'Sin concepto');?></td>
                                                                             <td><strong>$<?=number_format(floatval($factura['total_neto'] ?? 0), 0, ",", ".");?></strong></td>
