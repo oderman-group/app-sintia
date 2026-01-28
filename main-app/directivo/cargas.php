@@ -468,7 +468,9 @@ if($config['conf_doble_buscador'] == 1) {
                                         <?php
                                         $idModal = "nuevaCargModal";
                                         $contenido = "../directivo/cargas-agregar-modal.php";
+                                        $modalBackdropStatic = true;
                                         include("../compartido/contenido-modal.php");
+                                        unset($modalBackdropStatic);
                                         } ?>
                                     
                                     <?php if($totalCargas > 0 && Modulos::validarPermisoEdicion() && Modulos::validarSubRol(['DT0032'])) { ?>
