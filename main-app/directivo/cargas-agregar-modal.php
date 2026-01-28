@@ -12,9 +12,11 @@ if (!Modulos::validarPermisoEdicion()) {
     $disabledPermiso = "disabled";
 } ?>
 
-<div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-    <h4 class="modal-title"><i class="fa fa-plus-circle"></i> <?= $frases[119][$datosUsuarioActual['uss_idioma']]; ?></h4>
-    <button type="button" class="close" data-dismiss="modal" style="color: white;">&times;</button>
+<div class="modal-header d-flex align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+    <h4 class="modal-title flex-grow-1 mb-0"><i class="fa fa-plus-circle"></i> <?= $frases[119][$datosUsuarioActual['uss_idioma']]; ?></h4>
+    <button type="button" class="close ml-auto p-0 border-0 bg-transparent" data-dismiss="modal" aria-label="Cerrar" style="color: white; font-size: 1.75rem; line-height: 1; opacity: 0.9;">
+        <span aria-hidden="true">&times;</span>
+    </button>
 </div>
 
 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
@@ -82,8 +84,8 @@ if (!Modulos::validarPermisoEdicion()) {
         <div class="row">
             <div class="col-md-12">
                 <div class="form-group">
-                    <label>Asignatura(s) (ร�rea) <span class="text-danger">*</span></label>
-                    <select class="form-control select2-modal" name="asignatura[]" required multiple <?= $disabledPermiso; ?>>
+                    <label>Asignatura(s) (ร�rea) <span class="text-danger">*</span> <span id="contadorAsignaturas" class="badge badge-info ml-2" style="font-size: 0.85rem;">0 seleccionadas</span></label>
+                    <select id="selectAsignaturas" class="form-control select2-modal" name="asignatura[]" required multiple <?= $disabledPermiso; ?>>
                         <option value="">Seleccione una o mรกs asignaturas</option>
                         <?php
                         $opcionesConsulta = Asignaturas::consultarTodasAsignaturas($conexion, $config);
@@ -92,12 +94,13 @@ if (!Modulos::validarPermisoEdicion()) {
                             <option value="<?= $opcionesDatos['mat_id']; ?>"><?= $opcionesDatos['mat_nombre'] . " (" . $opcionesDatos['mat_valor'] . "%) - " . $opcionesDatos['ar_nombre']; ?></option>
                         <?php } ?>
                     </select>
+                    <small class="form-text text-muted">Asignaturas que se vincularán al docente en cada combinación</small>
                 </div>
             </div>
         </div>
         
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-12">
                 <div class="form-group">
                     <label>Periodo <span class="text-danger">*</span></label>
                     <select class="form-control select2-modal" name="periodo" required <?= $disabledPermiso; ?>>
@@ -112,23 +115,16 @@ if (!Modulos::validarPermisoEdicion()) {
                     </select>
                 </div>
             </div>
-            
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>Director de Grupo <span class="text-danger">*</span></label>
-                    <select class="form-control select2-modal" name="dg" required <?= $disabledPermiso; ?>>
-                        <option value="0" selected>NO</option>
-                        <option value="1">SI</option>
-                    </select>
-                </div>
+        </div>
+
+        <!-- Lista de combinaciones (curso × grupo × asignatura) con I.H y Director de grupo por fila -->
+        <h5 class="mb-2 mt-3"><i class="fa fa-list"></i> Combinaciones a crear</h5>
+        <p class="text-muted small mb-2">Se generan al seleccionar cursos, grupos y asignaturas. Defina I.H y si es director de grupo para cada una.</p>
+        <div id="listaCombinaciones" class="mb-3" style="max-height: 220px; overflow-y: auto;">
+            <div id="listaCombinacionesVacia" class="alert alert-secondary py-3 mb-0">
+                <i class="fa fa-info-circle"></i> Seleccione al menos un curso, un grupo y una asignatura para ver las combinaciones.
             </div>
-            
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>Intensidad Horaria <span class="text-danger">*</span></label>
-                    <input type="number" name="ih" class="form-control" min="1" required <?= $disabledPermiso; ?>>
-                </div>
-            </div>
+            <div id="listaCombinacionesFilas" class="list-group list-group-flush" style="display: none;"></div>
         </div>
 
             <div style="display:none">
@@ -280,11 +276,55 @@ if (!Modulos::validarPermisoEdicion()) {
 
 <script>
 $(document).ready(function() {
+    function actualizarContadorAsignaturas() {
+        var sel = $('#selectAsignaturas');
+        var n = (sel.val() || []).length;
+        $('#contadorAsignaturas').text(n + (n === 1 ? ' seleccionada' : ' seleccionadas'));
+    }
+
+    function obtenerOpciones(selector) {
+        var data = $(selector).select2('data') || [];
+        return data.filter(function(o) { return o.id && o.id !== ''; }).map(function(o) { return { id: o.id, text: o.text }; });
+    }
+
+    function construirListaCombinaciones() {
+        var cursos = obtenerOpciones('#multiple1');
+        var grupos = obtenerOpciones('#multiple');
+        var asignaturas = obtenerOpciones('#selectAsignaturas');
+        var $vacia = $('#listaCombinacionesVacia');
+        var $filas = $('#listaCombinacionesFilas');
+        $filas.empty();
+
+        if (cursos.length === 0 || grupos.length === 0 || asignaturas.length === 0) {
+            $vacia.show();
+            $filas.hide();
+            return;
+        }
+        $vacia.hide();
+        $filas.show();
+
+        var index = 0;
+        cursos.forEach(function(curso) {
+            grupos.forEach(function(grupo) {
+                asignaturas.forEach(function(asig) {
+                    var label = curso.text + ' · ' + grupo.text + ' · ' + asig.text;
+                    var $item = $('<div class="list-group-item list-group-item-action d-flex flex-wrap align-items-center py-2"></div>');
+                    $item.append('<span class="mr-2 mb-1 flex-grow-1 text-truncate" title="' + label.replace(/"/g, '&quot;') + '">' + (index + 1) + '. ' + label + '</span>');
+                    var $ih = $('<input type="number" name="ih[]" class="form-control form-control-sm mx-1" min="1" placeholder="I.H" style="width: 70px;" required>');
+                    var $dg = $('<select name="dg[]" class="form-control form-control-sm mx-1" required style="width: 80px;"><option value="0">NO</option><option value="1">SÍ</option></select>');
+                    $item.append('<label class="mb-0 mr-1 small">I.H:</label>').append($ih).append('<label class="mb-0 mr-1 small">Dir. grupo:</label>').append($dg);
+                    $filas.append($item);
+                    index++;
+                });
+            });
+        });
+    }
+
     // Inicializar Select2 en el modal cuando se abre
     $('#nuevaCargModal').on('shown.bs.modal', function () {
         $('.select2-modal').select2({
             dropdownParent: $('#nuevaCargModal'),
-            placeholder: "Seleccione una opciรณn",
+            placeholder: "Seleccione una opción",
             allowClear: true,
             language: {
                 noResults: function() {
@@ -295,12 +335,29 @@ $(document).ready(function() {
                 }
             }
         });
+        actualizarContadorAsignaturas();
+        construirListaCombinaciones();
+        $('#multiple1, #multiple, #selectAsignaturas').off('change.agregarCarga').on('change.agregarCarga', function() {
+            actualizarContadorAsignaturas();
+            construirListaCombinaciones();
+        });
     });
-    
+
+    $('#formAgregarCarga').on('submit', function() {
+        var $filas = $('#listaCombinacionesFilas');
+        if ($filas.is(':visible') && $filas.children().length === 0) {
+            alert('Seleccione al menos un curso, un grupo y una asignatura.');
+            return false;
+        }
+    });
+
     // Limpiar Select2 al cerrar el modal
     $('#nuevaCargModal').on('hidden.bs.modal', function () {
         $('.select2-modal').select2('destroy');
         $('#formAgregarCarga')[0].reset();
+        $('#contadorAsignaturas').text('0 seleccionadas');
+        $('#listaCombinacionesVacia').show();
+        $('#listaCombinacionesFilas').hide().empty();
     });
 });
 </script>
