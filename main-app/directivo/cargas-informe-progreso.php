@@ -520,10 +520,10 @@ header('Content-Type: text/html; charset=utf-8');
                     ?>
                     <tr class="<?=$claseFila;?>">
                         <td><?=$contReg;?></td>
-                        <td><strong><?=strtoupper($carga['docente_nombre']);?></strong></td>
-                        <td><?=strtoupper($carga['gra_nombre']);?></td>
-                        <td><?=strtoupper($carga['gru_nombre']);?></td>
-                        <td><?=strtoupper($carga['mat_nombre']);?></td>
+                        <td><strong><?=strtoupper((string)($carga['docente_nombre'] ?? ''));?></strong></td>
+                        <td><?=strtoupper((string)($carga['gra_nombre'] ?? ''));?></td>
+                        <td><?=strtoupper((string)($carga['gru_nombre'] ?? ''));?></td>
+                        <td><?=strtoupper((string)($carga['mat_nombre'] ?? ''));?></td>
                         <td class="text-center"><?=$carga['car_periodo'];?></td>
                         <td class="text-center"><?=$carga['actividades_declaradas'];?>%</td>
                         <td class="text-center">
