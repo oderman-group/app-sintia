@@ -386,7 +386,7 @@ class Movimientos {
         }
         
         try {
-            // id_order es AUTO_INCREMENT, no se incluye en el INSERT
+            // item_id es AUTO_INCREMENT, no se incluye en el INSERT
             $sql = "INSERT INTO ".BD_FINANCIERA.".items (name, price, description, item_type, application_time, institucion, year) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conexionPDO->prepare($sql);
             $stmt->bindParam(1, $POST["nombre"], PDO::PARAM_STR);
@@ -402,7 +402,7 @@ class Movimientos {
             $stmt->bindParam(7, $_SESSION["bd"], PDO::PARAM_INT);
             $stmt->execute();
             
-            // Retornar el id_order generado (AUTO_INCREMENT)
+            // Retornar el item_id generado (AUTO_INCREMENT)
             $codigo = $conexionPDO->lastInsertId();
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
@@ -538,9 +538,11 @@ class Movimientos {
     )
     {
         try {
-            // idItem ahora es id_order (INT)
-            $idOrder = (int)$idItem;
-            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".items SET status=1 WHERE id_order={$idOrder} AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
+            $idItemInt = (int)$idItem;
+            if ($idItemInt <= 0) {
+                return;
+            }
+            mysqli_query($conexion, "UPDATE ".BD_FINANCIERA.".items SET status=1 WHERE item_id={$idItemInt} AND institucion={$config['conf_id_institucion']} AND year={$_SESSION["bd"]}");
         } catch (Exception $e) {
             include("../compartido/error-catch-to-report.php");
         }
@@ -1960,6 +1962,29 @@ class Movimientos {
         }
 
         return $resultado;
+    }
+
+    /**
+     * Verifica si un usuario (uss_id) está a paz y salvo en BD_FINANCIERA:
+     * sin saldo pendiente por cobrar (totalPorCobrar <= 0).
+     * Reutilizable para exenciones acumulativas y otros flujos.
+     *
+     * @param mysqli $conexion
+     * @param array  $config
+     * @param string|int $uss_id ID del usuario en finanzas_cuentas.fcu_usuario
+     * @return bool true si está a paz y salvo, false si tiene saldo pendiente o error
+     */
+    public static function verificarPazYSalvoUsuario(mysqli $conexion, array $config, $uss_id): bool
+    {
+        if (empty($uss_id)) {
+            return false;
+        }
+        $kpis = self::calcularKPIsResumen($conexion, $config, [
+            'usuario' => (string) $uss_id,
+            'excluirEnProceso' => true,
+            'mostrarAnuladas' => false
+        ]);
+        return isset($kpis['totalPorCobrar']) && (float) $kpis['totalPorCobrar'] <= 0;
     }
 
     /**
