@@ -1313,6 +1313,8 @@ if($config['conf_doble_buscador'] == 1) {
 		
 		// Variables globales para edición masiva
 		var selectedEstudiantes = [];
+		var usuarioEsDev = <?= (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) ? 'true' : 'false'; ?>;
+		if (typeof window !== 'undefined') { window.usuarioEsDev = usuarioEsDev; }
 		
 		try {
 			console.log('Inicializando funcionalidad de edición masiva de estudiantes...');
@@ -1545,9 +1547,12 @@ if($config['conf_doble_buscador'] == 1) {
 								opcionesDeshabilitar = [1, 2, 3, 4]; // Todos excepto 5
 								mensajesValidacion.push('Algunos estudiantes están en estado "En inscripción" y no pueden cambiar de estado.');
 							} else {
-								// Si hay estudiantes "Matriculados" (1), deshabilitar "No matriculado" (4) y "Asistente" (2)
+								// Si hay estudiantes "Matriculados" (1): deshabilitar "Asistente" (2). "No matriculado" (4) solo se deshabilita si NO es usuario DEV.
 								if (response.tieneMatriculados) {
-									opcionesDeshabilitar.push(2, 4); // Asistente y No matriculado
+									opcionesDeshabilitar.push(2); // Asistente siempre deshabilitado para matriculados
+									if (!usuarioEsDev) {
+										opcionesDeshabilitar.push(4); // No matriculado deshabilitado solo para no-DEV
+									}
 								}
 								
 								// Si hay estudiantes "Asistentes" (2), solo permitir "Matriculado" (1)
@@ -1638,7 +1643,11 @@ if($config['conf_doble_buscador'] == 1) {
 									} else {
 										mensajeEstado += response.cantidadMatriculados + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados están en estado "Matriculado". ';
 									}
-									mensajeEstado += 'Las opciones "Asistente" y "No matriculado" aparecen deshabilitadas (solo lectura) para estudiantes que ya están matriculados.';
+									if (usuarioEsDev) {
+										mensajeEstado += 'Los usuarios DEV pueden cambiarlos a "No matriculado". La opción "Asistente" sigue deshabilitada.';
+									} else {
+										mensajeEstado += 'Las opciones "Asistente" y "No matriculado" aparecen deshabilitadas (solo lectura) para estudiantes que ya están matriculados.';
+									}
 								}
 								
 								mensajeEstado += '</div>';
@@ -2753,7 +2762,7 @@ if($config['conf_doble_buscador'] == 1) {
 								<?php } ?>
 							</select>
 							<small class="form-text text-muted">
-								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".
+								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".<?php if (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) { ?> <strong>Los usuarios DEV</strong> pueden cambiar Matriculado → No matriculado.<?php } ?>
 							</small>
 						</div>
 						

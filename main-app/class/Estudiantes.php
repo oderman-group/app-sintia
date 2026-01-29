@@ -690,17 +690,18 @@ class Estudiantes {
      * - En Inscripción (5): No puede modificarse (se gestiona automáticamente)
      * - Asistente (2): Solo puede cambiar a Matriculado (1)
      * - No matriculado (4): Solo puede cambiar a Matriculado (1)
-     * - Matriculado (1): No puede cambiar a No matriculado (4)
+     * - Matriculado (1): No puede cambiar a No matriculado (4), salvo si $permisoDev (solo usuarios DEV)
      * - Cancelado (3): Se gestiona automáticamente desde otros módulos
      * 
      * @param int $estadoActual Estado actual de la matrícula del estudiante
      * @param int $estadoNuevo Estado nuevo que se desea asignar
+     * @param bool $permisoDev Si true, permite Matriculado (1) → No matriculado (4). Solo usuarios tipo DEV.
      * 
      * @return array Array con las claves:
      *               - 'valido' (bool): true si el cambio es permitido, false en caso contrario
      *               - 'mensaje' (string): Mensaje descriptivo del error si el cambio no es permitido, vacío si es válido
      */
-    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo): array
+    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo, bool $permisoDev = false): array
     {
         // Si el estado no cambia, es válido
         if ($estadoActual === $estadoNuevo) {
@@ -745,9 +746,12 @@ class Estudiantes {
             return ['valido' => true, 'mensaje' => ''];
         }
 
-        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2)
+        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2). Excepción: usuarios DEV pueden Matriculado → No matriculado.
         if ($estadoActual === self::ESTADO_MATRICULADO) {
             if ($estadoNuevo === self::ESTADO_NO_MATRICULADO) {
+                if ($permisoDev) {
+                    return ['valido' => true, 'mensaje' => ''];
+                }
                 return [
                     'valido' => false,
                     'mensaje' => 'Un estudiante en estado "Matriculado" no puede cambiar a estado "No matriculado".'

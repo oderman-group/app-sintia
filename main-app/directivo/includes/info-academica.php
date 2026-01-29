@@ -95,11 +95,12 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 					<select class="form-control" name="matestM" <?= $disabledPermiso; ?>>
 						<?php 
 						$estadoActualEstudiante = (int)$datosEstudianteActual["mat_estado_matricula"];
+						$permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
 						foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
 							$estadoNuevo = (int)$clave;
 							
-							// Usar el método centralizado para validar el cambio de estado
-							$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActualEstudiante, $estadoNuevo);
+							// Usar el método centralizado para validar el cambio de estado (DEV puede Matriculado → No matriculado)
+							$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActualEstudiante, $estadoNuevo, $permisoDev);
 							
 							// Determinar si la opción debe estar deshabilitada
 							$disabledEstado = '';

@@ -730,10 +730,13 @@ function cambiarEstadoMatricula(data) {
         // No matriculado: Solo puede cambiar a Matriculado (1)
         nuevoEstado = 1;
     } else if (estadoActual === 1) {
-        // Matriculado: NO puede cambiar a Asistente (2) ni a No matriculado (4)
-        // No se permite cambiar desde Matriculado a otros estados desde aquí
-        alert('El estado "Matriculado" no puede cambiarse desde aquí. Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".');
-        return;
+        // Matriculado: NO puede cambiar a Asistente (2) ni a No matriculado (4), salvo usuarios DEV (Matriculado → No matriculado)
+        if (typeof window !== 'undefined' && window.usuarioEsDev === true) {
+            nuevoEstado = 4;
+        } else {
+            alert('El estado "Matriculado" no puede cambiarse desde aquí. Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".');
+            return;
+        }
     } else {
         // Para cualquier otro estado, intentar cambiar a Matriculado
         nuevoEstado = 1;
