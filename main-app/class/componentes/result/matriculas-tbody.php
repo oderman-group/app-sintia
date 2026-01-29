@@ -391,7 +391,7 @@ $opcionesGenero = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD
 $opcionesEstrato = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=3 ORDER BY CAST(ogen_nombre AS UNSIGNED)");
 $opcionesTipoSangre = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=14 ORDER BY ogen_nombre");
 $opcionesTipoEstudiante = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=5 ORDER BY ogen_nombre");
-$opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=8 ORDER BY ogen_nombre");
+$opcionesReligion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre FROM ".BD_ADMIN.".opciones_generales WHERE ogen_grupo=2 ORDER BY ogen_nombre");
 
 // Consultar ciudades para los selects de lugar de expedición y lugar de nacimiento
 $catalogoCiudades = [];

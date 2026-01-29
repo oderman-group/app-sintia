@@ -170,6 +170,29 @@ if (!Modulos::validarSubRol([$idPaginaInterna])) {
 
                 <div class="form-group row">
                     <label class="col-sm-3 control-label">
+                        <i class="fas fa-pray"></i> Religión
+                    </label>
+                    <div class="col-sm-9">
+                        <select class="form-control  select2" name="religionR">
+                            <option value="">Todas las religiones</option>
+                            <?php
+                            try {
+                                $c_religion = mysqli_query($conexion, "SELECT ogen_id, ogen_nombre, ogen_grupo FROM " . $baseDatosServicios . ".opciones_generales WHERE ogen_grupo=2 ORDER BY ogen_nombre;");
+                            } catch (Exception $e) {
+                                include("../compartido/error-catch-to-report.php");
+                            }
+                            if ($c_religion) {
+                                while ($r_religion = mysqli_fetch_array($c_religion, MYSQLI_BOTH)) {
+                                    echo '<option value="' . $r_religion["ogen_id"] . '">' . htmlspecialchars($r_religion["ogen_nombre"]) . '</option>';
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-3 control-label">
                         <i class="fas fa-building"></i> Estrato
                     </label>
                     <div class="col-sm-9">
