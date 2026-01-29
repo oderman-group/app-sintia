@@ -1586,7 +1586,13 @@ $tiposNotas = [];
 									$notaArea += round($datosMaterias['notaArea'], 1);
 								}
 							}
-							$ih = $mostrarIhAreaMaterias ? (string)$ihArea : '';
+							// Área con 1 materia: siempre mostrar I.H. en la fila del área.
+							// Área con 2+ materias: mostrar sumatoria solo si el checkbox está marcado; si no, omitir (en blanco).
+							if ($datosAreas['numMaterias'] > 1) {
+								$ih = $mostrarIhAreaMaterias ? (string)$ihArea : '';
+							} else {
+								$ih = (string)$ihArea;
+							}
 						} else {
 							// Si no se muestran materias, obtener solo el IH del área (primera materia)
 							$datosMateriasPrimera = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH);
