@@ -24,8 +24,10 @@ if (empty($datosEstudiante)) {
 $estadoActual = (int)$datosEstudiante['mat_estado_matricula'];
 $estadoNuevo = (int)$_POST["nuevoEstado"];
 
-// Validar el cambio de estado usando el método centralizado
-$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+$permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+
+// Validar el cambio de estado usando el método centralizado (DEV puede Matriculado → No matriculado)
+$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
 
 if (!$validacion['valido']) {
 	echo '<div class="alert alert-danger">';

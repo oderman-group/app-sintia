@@ -408,28 +408,37 @@ class Utilidades {
      */
     public static function logError(Exception $e): int
     {
-        $numError     = $e->getCode();
-        $lineaError   = $e->getLine();
-        $aRemplezar   = array("'", '"', "#", "´");
-        $enRemplezo   = array("\'", "\"", "\#", "\´");
-        $detalleError = str_replace($aRemplezar, $enRemplezo, $e->getMessage());
-        $request_data = json_encode($_REQUEST);
+        $numError   = (int) $e->getCode();
+        $lineaError = (int) $e->getLine();
 
         global $conexion;
         global $baseDatosServicios;
         global $config;
 
-        $request_data_sanitizado = mysqli_real_escape_string($conexion, $request_data);
+        $esc = function ($v) use ($conexion) {
+            return mysqli_real_escape_string($conexion, (string) ($v ?? ''));
+        };
 
-        $_SESSION["id"] ??=null;
-        $_SESSION["bd"] ??=date("Y");
+        $detalleError    = $esc($e->getMessage());
+        $requestData     = $esc(json_encode($_REQUEST));
+        $tracePhp        = $esc(json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
 
-        mysqli_query($conexion, "INSERT INTO ".$baseDatosServicios.".reporte_errores(rperr_numero, rperr_fecha, rperr_ip, rperr_usuario, rperr_pagina_referencia, rperr_pagina_actual, rperr_so, rperr_linea, rperr_institucion, rperr_error, rerr_request, rperr_year, rperr_trace_php)
-        VALUES('".$numError."', now(), '".$_SERVER["REMOTE_ADDR"]."', '".$_SESSION["id"]."', '".$_SERVER['HTTP_REFERER']."', '".$_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING']."', '".$_SERVER['HTTP_USER_AGENT']."', '".$lineaError."', '".$config['conf_id_institucion']."','".$detalleError."', '".$request_data_sanitizado."', '".$_SESSION["bd"]."', '".json_encode(debug_backtrace())."')");
+        $_SESSION["id"]  = $_SESSION["id"] ?? null;
+        $_SESSION["bd"]  = $_SESSION["bd"] ?? date("Y");
+        $rUsuario        = $esc($_SESSION["id"]);
+        $rYear           = $esc($_SESSION["bd"]);
+        $rIp             = $esc($_SERVER["REMOTE_ADDR"] ?? '');
+        $rReferer        = $esc($_SERVER['HTTP_REFERER'] ?? '');
+        $rSelf           = $esc(($_SERVER['PHP_SELF'] ?? '') . (isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : ''));
+        $rUserAgent      = $esc($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $rInstitucion    = $esc($config['conf_id_institucion'] ?? '');
 
-        $idReporteError = mysqli_insert_id($conexion);
+        $sql = "INSERT INTO " . $baseDatosServicios . ".reporte_errores(rperr_numero, rperr_fecha, rperr_ip, rperr_usuario, rperr_pagina_referencia, rperr_pagina_actual, rperr_so, rperr_linea, rperr_institucion, rperr_error, rerr_request, rperr_year, rperr_trace_php)
+                VALUES ('{$numError}', NOW(), '{$rIp}', '{$rUsuario}', '{$rReferer}', '{$rSelf}', '{$rUserAgent}', " . $lineaError . ", '{$rInstitucion}', '{$detalleError}', '{$requestData}', '{$rYear}', '{$tracePhp}')";
 
-        return $idReporteError;
+        mysqli_query($conexion, $sql);
+
+        return (int) mysqli_insert_id($conexion);
     }
 
     /**

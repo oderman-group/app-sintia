@@ -22,12 +22,13 @@ if (!empty($_POST["id"])) {
 		exit();
 	}
 	
-	// Validar cambio de estado usando el método centralizado
+	// Validar cambio de estado usando el método centralizado (DEV puede Matriculado → No matriculado)
+	$permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
 	if (!empty($datosEstudianteActual) && !empty($_POST["matestM"])) {
 		$estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
 		$estadoNuevo = (int)$_POST["matestM"];
 		
-		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
 		
 		if (!$validacion['valido']) {
 			echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($validacion['mensaje']).'";</script>';
@@ -101,7 +102,7 @@ if ($_POST["va_matricula"] == "") {
 	$_POST["va_matricula"] = 0;
 }
 
-$esMediaTecnica = !is_null($_POST["tipoMatricula"]);
+$esMediaTecnica = isset($_POST["tipoMatricula"]) && $_POST["tipoMatricula"] !== '';
 
 if (!$esMediaTecnica) {
 	$datosEstudianteActual = Estudiantes::obtenerDatosEstudiante($_POST["id"]);
