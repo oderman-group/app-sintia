@@ -154,6 +154,7 @@ try {
     $errores = [];
     $estudiantesConNotas = 0;
     $permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+    $permisoDirectivo = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO;
 
     // Actualizar cada estudiante (solo si hay campos para actualizar)
     foreach ($estudiantes as $idEstudiante) {
@@ -190,7 +191,7 @@ try {
                 $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
                 $estadoNuevo = (int)$datosActualizar['mat_estado_matricula'];
                 
-                $validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
+                $validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev, $permisoDirectivo);
                 
                 if (!$validacion['valido']) {
                     $mensaje = "Estudiante $idEstudiante: " . $validacion['mensaje'];

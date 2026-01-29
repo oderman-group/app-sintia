@@ -685,23 +685,21 @@ class Estudiantes {
 
     /**
      * Valida si un cambio de estado de matrícula es permitido según las reglas de negocio.
-     * 
+     *
      * Reglas de validación:
      * - En Inscripción (5): No puede modificarse (se gestiona automáticamente)
      * - Asistente (2): Solo puede cambiar a Matriculado (1)
      * - No matriculado (4): Solo puede cambiar a Matriculado (1)
-     * - Matriculado (1): No puede cambiar a No matriculado (4), salvo si $permisoDev (solo usuarios DEV)
-     * - Cancelado (3): Se gestiona automáticamente desde otros módulos
-     * 
+     * - Matriculado (1): No puede cambiar a No matriculado (4), salvo si $permisoDev o $permisoDirectivo (DEV o Directivo)
+     * - Cancelado (3): Se gestiona automáticamente; solo usuarios DEV pueden cambiar a otro estado
+     *
      * @param int $estadoActual Estado actual de la matrícula del estudiante
      * @param int $estadoNuevo Estado nuevo que se desea asignar
-     * @param bool $permisoDev Si true, permite Matriculado (1) → No matriculado (4). Solo usuarios tipo DEV.
-     * 
-     * @return array Array con las claves:
-     *               - 'valido' (bool): true si el cambio es permitido, false en caso contrario
-     *               - 'mensaje' (string): Mensaje descriptivo del error si el cambio no es permitido, vacío si es válido
+     * @param bool $permisoDev Si true (usuarios DEV), permite Matriculado → No matriculado y Cancelado → otro estado
+     * @param bool $permisoDirectivo Si true (usuarios Directivo), permite Matriculado → No matriculado
+     * @return array Array con las claves 'valido' (bool) y 'mensaje' (string)
      */
-    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo, bool $permisoDev = false): array
+    public static function validarCambioEstadoMatricula(int $estadoActual, int $estadoNuevo, bool $permisoDev = false, bool $permisoDirectivo = false): array
     {
         // Si el estado no cambia, es válido
         if ($estadoActual === $estadoNuevo) {
@@ -749,10 +747,10 @@ class Estudiantes {
             return ['valido' => true, 'mensaje' => ''];
         }
 
-        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2). Excepción: usuarios DEV pueden Matriculado → No matriculado.
+        // Matriculado (1): No puede cambiar a No matriculado (4) ni a Asistente (2). Excepción: usuarios DEV o Directivo pueden Matriculado → No matriculado.
         if ($estadoActual === self::ESTADO_MATRICULADO) {
             if ($estadoNuevo === self::ESTADO_NO_MATRICULADO) {
-                if ($permisoDev) {
+                if ($permisoDev || $permisoDirectivo) {
                     return ['valido' => true, 'mensaje' => ''];
                 }
                 return [
@@ -1309,7 +1307,8 @@ class Estudiantes {
      * @param string $fechaNacimiento
      * @param string $procedencia
      * @param string $pasosMatricula
-     * @param bool $permisoDev Si true, permite Matriculado → No matriculado (solo usuarios tipo DEV)
+     * @param bool $permisoDev Si true (DEV), permite Matriculado → No matriculado y Cancelado → otro
+     * @param bool $permisoDirectivo Si true (Directivo), permite Matriculado → No matriculado
      */
     public static function actualizarEstudiantes(
         $conexionPDO, 
@@ -1317,7 +1316,8 @@ class Estudiantes {
         $fechaNacimiento = '', 
         $procedencia = '', 
         $pasosMatricula = '',
-        $permisoDev = false
+        $permisoDev = false,
+        $permisoDirectivo = false
     ) {
         global $config, $conexion;
 
@@ -1372,7 +1372,7 @@ class Estudiantes {
                     $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
                     $estadoNuevo = (int)$matestM;
                     
-                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
+                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev, $permisoDirectivo);
                     
                     if (!$validacion['valido']) {
                         throw new Exception($validacion['mensaje']);
