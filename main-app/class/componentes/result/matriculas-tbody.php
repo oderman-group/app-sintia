@@ -111,6 +111,8 @@ $permisoFinanzas          = Modulos::validarSubRol(['DT0093']);
 $permisoReportes          = Modulos::validarSubRol(['DT0117']);
 $permisoAdjuntarDocumento = Modulos::validarSubRol(['DT0352']);
 $esDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+$esDirectivo = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO;
+$puedeMatriculadoANoMatriculado = $esDev || $esDirectivo;
 
 foreach ($data["data"] as $resultado) {
 
@@ -184,14 +186,14 @@ foreach ($data["data"] as $resultado) {
 			$estadoActual = (int)$resultado['mat_estado_matricula'];
 			$estadoMatriculado = ($estadoActual == Estudiantes::ESTADO_MATRICULADO);
 			
-			// No permitir cambiar estado si está en "En inscripción", "Cancelado" o "Matriculado" (salvo DEV: Matriculado→No matriculado, Cancelado→Matriculado)
-			// Matriculado no puede cambiar a Asistente ni a No Matriculado mediante click; usuarios DEV sí pueden Matriculado→No matriculado
-			// Cancelado no puede cambiarse desde el badge (se gestiona automáticamente); usuarios DEV sí pueden Cancelado→Matriculado
-			if ($permisoCambiarEstado && !$estadoNoModificable && (!$estadoCancelado || $esDev) && (!$estadoMatriculado || $esDev)) {
+			// No permitir cambiar estado si está en "En inscripción", "Cancelado" o "Matriculado" (salvo DEV/Directivo: Matriculado→No matriculado; solo DEV: Cancelado→Matriculado)
+			// Matriculado: Directivos y DEV pueden pasar a No matriculado mediante clic
+			// Cancelado: solo usuarios DEV pueden restaurar a Matriculado
+			if ($permisoCambiarEstado && !$estadoNoModificable && (!$estadoCancelado || $esDev) && (!$estadoMatriculado || $puedeMatriculadoANoMatriculado)) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
 				$cursorStyle = "cursor: pointer;";
-				if ($estadoMatriculado && $esDev) {
-					$titleEstado = 'Clic para pasar a No matriculado (solo usuarios DEV)';
+				if ($estadoMatriculado && $puedeMatriculadoANoMatriculado) {
+					$titleEstado = 'Clic para pasar a No matriculado';
 				} elseif ($estadoCancelado && $esDev) {
 					$titleEstado = 'Clic para restaurar a Matriculado (solo usuarios DEV)';
 				}
@@ -201,7 +203,7 @@ foreach ($data["data"] as $resultado) {
 					$titleEstado = 'Estudiante en proceso de inscripción - No se puede cambiar el estado';
 				} elseif ($estadoCancelado && !$esDev) {
 					$titleEstado = 'Estudiante cancelado - No se puede cambiar el estado desde aquí';
-				} elseif ($estadoMatriculado && !$esDev) {
+				} elseif ($estadoMatriculado && !$puedeMatriculadoANoMatriculado) {
 					$titleEstado = 'Un estudiante en estado "Matriculado" no puede cambiar a "Asistente" ni a "No matriculado" mediante este botón.';
 				}
 			}
@@ -263,7 +265,7 @@ foreach ($data["data"] as $resultado) {
 							<li><a href="javascript:void(0);" onClick="sweetConfirmacion('Alerta!','Esta seguro que desea transferir este estudiante a SION?','question','estudiantes-crear-sion.php?id=<?= base64_encode($resultado['mat_id']); ?>')">Transferir a SION</a></li>
 						<?php } ?>
 
-						<?php if (array_key_exists(4, $arregloModulos) && $moduloAdministrativo && !empty($resultado['uss_id']) && $permisoEditarUsuario) { ?>
+						<?php if ($permisoEditarUsuario && !empty($resultado['uss_id'])) { ?>
 							<li><a href="usuarios-editar.php?id=<?= base64_encode($resultado['uss_id']); ?>"><?= $frases[165][$datosUsuarioActual['uss_idioma']]; ?> usuario</a></li>
 						<?php } ?>
 

@@ -96,11 +96,12 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 						<?php 
 						$estadoActualEstudiante = (int)$datosEstudianteActual["mat_estado_matricula"];
 						$permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+						$permisoDirectivo = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO;
 						foreach ($estadosMatriculasEstudiantes as $clave => $valor) { 
 							$estadoNuevo = (int)$clave;
 							
-							// Usar el método centralizado para validar el cambio de estado (DEV puede Matriculado → No matriculado)
-							$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActualEstudiante, $estadoNuevo, $permisoDev);
+							// Usar el método centralizado para validar el cambio de estado (DEV y Directivo pueden Matriculado → No matriculado)
+							$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActualEstudiante, $estadoNuevo, $permisoDev, $permisoDirectivo);
 							
 							// Determinar si la opción debe estar deshabilitada
 							$disabledEstado = '';
@@ -156,7 +157,12 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 					<?php } ?>
 					<?php if ($estadoActual == Estudiantes::ESTADO_MATRICULADO && empty($disabledPermiso)) { ?>
 						<small class="form-text text-muted">
-							<i class="fa fa-info-circle"></i> Las opciones "No matriculado" y "Asistente" aparecen deshabilitadas (solo lectura) porque el estudiante está en estado "Matriculado". Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".
+							<i class="fa fa-info-circle"></i>
+							<?php if ($permisoDev || $permisoDirectivo) { ?>
+								Directivos y usuarios DEV pueden cambiar a "No matriculado". La opción "Asistente" sigue deshabilitada.
+							<?php } else { ?>
+								Las opciones "No matriculado" y "Asistente" aparecen deshabilitadas (solo lectura) porque el estudiante está en estado "Matriculado". Solo los estudiantes en estado "Asistente" o "No matriculado" pueden cambiar a "Matriculado".
+							<?php } ?>
 						</small>
 					<?php } ?>
 				</div>

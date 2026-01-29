@@ -1314,7 +1314,13 @@ if($config['conf_doble_buscador'] == 1) {
 		// Variables globales para edición masiva
 		var selectedEstudiantes = [];
 		var usuarioEsDev = <?= (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) ? 'true' : 'false'; ?>;
-		if (typeof window !== 'undefined') { window.usuarioEsDev = usuarioEsDev; }
+		var usuarioEsDirectivo = <?= (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO) ? 'true' : 'false'; ?>;
+		var usuarioPuedeMatriculadoANoMatriculado = usuarioEsDev || usuarioEsDirectivo;
+		if (typeof window !== 'undefined') {
+			window.usuarioEsDev = usuarioEsDev;
+			window.usuarioEsDirectivo = usuarioEsDirectivo;
+			window.usuarioPuedeMatriculadoANoMatriculado = usuarioPuedeMatriculadoANoMatriculado;
+		}
 		
 		try {
 			console.log('Inicializando funcionalidad de edición masiva de estudiantes...');
@@ -1550,8 +1556,8 @@ if($config['conf_doble_buscador'] == 1) {
 								// Si hay estudiantes "Matriculados" (1): deshabilitar "Asistente" (2). "No matriculado" (4) solo se deshabilita si NO es usuario DEV.
 								if (response.tieneMatriculados) {
 									opcionesDeshabilitar.push(2); // Asistente siempre deshabilitado para matriculados
-									if (!usuarioEsDev) {
-										opcionesDeshabilitar.push(4); // No matriculado deshabilitado solo para no-DEV
+									if (!usuarioPuedeMatriculadoANoMatriculado) {
+										opcionesDeshabilitar.push(4); // No matriculado deshabilitado si no es DEV ni Directivo
 									}
 								}
 								
@@ -1643,8 +1649,8 @@ if($config['conf_doble_buscador'] == 1) {
 									} else {
 										mensajeEstado += response.cantidadMatriculados + ' de ' + selectedEstudiantes.length + ' estudiantes seleccionados están en estado "Matriculado". ';
 									}
-									if (usuarioEsDev) {
-										mensajeEstado += 'Los usuarios DEV pueden cambiarlos a "No matriculado". La opción "Asistente" sigue deshabilitada.';
+									if (usuarioPuedeMatriculadoANoMatriculado) {
+										mensajeEstado += 'Directivos y usuarios DEV pueden cambiarlos a "No matriculado". La opción "Asistente" sigue deshabilitada.';
 									} else {
 										mensajeEstado += 'Las opciones "Asistente" y "No matriculado" aparecen deshabilitadas (solo lectura) para estudiantes que ya están matriculados.';
 									}
@@ -2762,7 +2768,10 @@ if($config['conf_doble_buscador'] == 1) {
 								<?php } ?>
 							</select>
 							<small class="form-text text-muted">
-								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".<?php if (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) { ?> <strong>Los usuarios DEV</strong> pueden cambiar Matriculado → No matriculado y Cancelado → otro estado.<?php } ?>
+								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".<?php 
+$usuarioPuedeMatriculadoANoMatriculado = (isset($datosUsuarioActual['uss_tipo']) && ((int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV || (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO));
+$usuarioEsDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+if ($usuarioPuedeMatriculadoANoMatriculado || $usuarioEsDev) { ?> <strong><?= $usuarioPuedeMatriculadoANoMatriculado ? 'Directivos y usuarios DEV' : 'Los usuarios DEV'; ?></strong> pueden cambiar Matriculado → No matriculado.<?php if ($usuarioEsDev) { ?> Los usuarios DEV además pueden Cancelado → otro estado.<?php } ?><?php } ?>
 							</small>
 						</div>
 						

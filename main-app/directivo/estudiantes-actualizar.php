@@ -22,13 +22,14 @@ if (!empty($_POST["id"])) {
 		exit();
 	}
 	
-	// Validar cambio de estado usando el método centralizado (DEV puede Matriculado → No matriculado)
+	// Validar cambio de estado usando el método centralizado (DEV y Directivo pueden Matriculado → No matriculado)
 	$permisoDev = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV;
+	$permisoDirectivo = isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DIRECTIVO;
 	if (!empty($datosEstudianteActual) && !empty($_POST["matestM"])) {
 		$estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
 		$estadoNuevo = (int)$_POST["matestM"];
 		
-		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
+		$validacion = Estudiantes::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev, $permisoDirectivo);
 		
 		if (!$validacion['valido']) {
 			echo '<script type="text/javascript">window.location.href="estudiantes-editar.php?id='.base64_encode($_POST["id"]).'&error=ER_DT_19&message='.urlencode($validacion['mensaje']).'";</script>';
@@ -140,7 +141,7 @@ if (!empty($_FILES['fotoMat']['name'])) {
 }
 
 try {
-	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula, $permisoDev);
+	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula, $permisoDev, $permisoDirectivo);
 } catch (Exception $e) {
 	// Si hay una excepción relacionada con validación de estado, redirigir con el mensaje
 	if (strpos($e->getMessage(), 'estado') !== false || strpos($e->getMessage(), 'Matriculado') !== false || 
