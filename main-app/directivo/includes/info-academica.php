@@ -136,7 +136,12 @@ $colorTexto = $Plataforma->colorTres ?? ($config['conf_color_boton_texto'] ?? '#
 					
 					if (($estadoActual == Estudiantes::ESTADO_EN_INSCRIPCION || $estadoActual == Estudiantes::ESTADO_CANCELADO) && empty($disabledPermiso)) { ?>
 						<small class="form-text text-muted">
-							<i class="fa fa-info-circle"></i> Este estado se gestiona desde otros módulos del sistema y no puede ser modificado desde aquí.
+							<i class="fa fa-info-circle"></i>
+							<?php if ($estadoActual == Estudiantes::ESTADO_CANCELADO && $permisoDev) { ?>
+								Los usuarios DEV pueden cambiar este estado a Matriculado u otro.
+							<?php } else { ?>
+								Este estado se gestiona desde otros módulos del sistema y no puede ser modificado desde aquí.
+							<?php } ?>
 						</small>
 					<?php } ?>
 					<?php if ($estadoActual == Estudiantes::ESTADO_ASISTENTE && empty($disabledPermiso)) { ?>

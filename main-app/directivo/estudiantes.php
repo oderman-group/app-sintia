@@ -2762,7 +2762,7 @@ if($config['conf_doble_buscador'] == 1) {
 								<?php } ?>
 							</select>
 							<small class="form-text text-muted">
-								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".<?php if (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) { ?> <strong>Los usuarios DEV</strong> pueden cambiar Matriculado → No matriculado.<?php } ?>
+								<i class="fa fa-info-circle"></i> <strong>Reglas de cambio de estado:</strong> Los estados "En inscripción" y "Cancelado" no pueden modificarse. Los estudiantes en estado "Asistente" o "No matriculado" solo pueden cambiar a "Matriculado". Los estudiantes en estado "Matriculado" no pueden cambiar a "Asistente" ni a "No matriculado".<?php if (isset($datosUsuarioActual['uss_tipo']) && (int)$datosUsuarioActual['uss_tipo'] === TIPO_DEV) { ?> <strong>Los usuarios DEV</strong> pueden cambiar Matriculado → No matriculado y Cancelado → otro estado.<?php } ?>
 							</small>
 						</div>
 						

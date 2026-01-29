@@ -140,7 +140,7 @@ if (!empty($_FILES['fotoMat']['name'])) {
 }
 
 try {
-	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula);
+	Estudiantes::actualizarEstudiantes($conexionPDO, $_POST, $fechaNacimiento, $procedencia, $pasosMatricula, $permisoDev);
 } catch (Exception $e) {
 	// Si hay una excepción relacionada con validación de estado, redirigir con el mensaje
 	if (strpos($e->getMessage(), 'estado') !== false || strpos($e->getMessage(), 'Matriculado') !== false || 
