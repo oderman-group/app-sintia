@@ -150,6 +150,9 @@ if ($formularioEnviado) {
 	$incluirEncabezadoEstiloAreas = isset($_GET['incluir_encabezado_estilo_areas']) ? (int)$_GET['incluir_encabezado_estilo_areas'] : 0;
 	$espacioEncabezadoEstiloAreas = isset($_GET['espacio_encabezado_estilo_areas']) ? max(5, min(80, (int)$_GET['espacio_encabezado_estilo_areas'])) : max(5, min(80, (int)($preferenciasGuardadas['espacio_encabezado_estilo_areas'] ?? 10)));
 	$mostrarTextoEncabezado = isset($_GET['mostrar_texto_encabezado']) ? 1 : 0;
+	$mostrarIhAreaMaterias = isset($_GET['mostrar_materias']) && $_GET['mostrar_materias']
+		? (isset($_GET['mostrar_ih_area_materias']) ? 1 : 0)
+		: ($preferenciasGuardadas['mostrar_ih_area_materias'] ?? 1);
 	
 	// Guardar preferencias
 	$preferenciasParaGuardar = [
@@ -178,6 +181,7 @@ if ($formularioEnviado) {
 		'incluir_encabezado_estilo_areas' => $incluirEncabezadoEstiloAreas,
 		'espacio_encabezado_estilo_areas' => $espacioEncabezadoEstiloAreas,
 		'mostrar_texto_encabezado' => $mostrarTextoEncabezado,
+		'mostrar_ih_area_materias' => $mostrarIhAreaMaterias,
 	];
 	guardarPreferenciasCertificado($preferenciasParaGuardar);
 	$mostrarEncabezado = (bool)$mostrarTextoEncabezado;
@@ -209,6 +213,7 @@ if ($formularioEnviado) {
 	$espacioEncabezadoEstiloAreas = max(5, min(80, (int)($preferenciasGuardadas['espacio_encabezado_estilo_areas'] ?? 10)));
 	$mostrarTextoEncabezado = isset($preferenciasGuardadas['mostrar_texto_encabezado']) ? (int)$preferenciasGuardadas['mostrar_texto_encabezado'] : ($mostrarEncabezado ? 1 : 0);
 	$mostrarEncabezado = (bool)$mostrarTextoEncabezado;
+	$mostrarIhAreaMaterias = $preferenciasGuardadas['mostrar_ih_area_materias'] ?? 1;
 }
 
 // Optimización: Cachear tipos de notas para evitar consultas repetidas
@@ -549,7 +554,7 @@ $tiposNotas = [];
 		   ============================ */
 		.encabezado-estilo-areas {
 			display: flex;
-			align-items: flex-start;
+			align-items: center;
 			gap: <?= max(5, min(80, (int)($espacioEncabezadoEstiloAreas ?? 10))) ?>px;
 			margin-bottom: 25px;
 			padding-bottom: 15px;
@@ -560,10 +565,15 @@ $tiposNotas = [];
 		}
 		.encabezado-estilo-areas-logo {
 			flex: 0 0 auto;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 		}
 		.encabezado-estilo-areas-logo img {
-			width: 200px;
-			height: 200px;
+			max-width: 120px;
+			max-height: 100px;
+			width: auto;
+			height: auto;
 			object-fit: contain;
 			border: 1px solid #ddd;
 			border-radius: 4px;
@@ -975,9 +985,17 @@ $tiposNotas = [];
 
 			<div class="form-group">
 				<label class="checkbox-label">
-					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?>>
+					<input type="checkbox" name="mostrar_materias" value="1" <?= $mostrarMaterias ? 'checked' : '' ?> id="mostrar_materias_check">
 					Incluir materias (si no, solo áreas)
 				</label>
+			</div>
+
+			<div class="form-group" id="mostrar_ih_area_materias_config" style="display: <?= $mostrarMaterias ? 'block' : 'none' ?>;">
+				<label class="checkbox-label">
+					<input type="checkbox" name="mostrar_ih_area_materias" value="1" <?= $mostrarIhAreaMaterias ? 'checked' : '' ?>>
+					Mostrar sumatoria de I.H. del área (cuando se incluyen materias)
+				</label>
+				<small style="display: block; color: #666; margin-top: 5px;">La I.H. del área será la suma de las I.H. de sus materias. Desmarcar para no mostrar ese total en la fila del área.</small>
 			</div>
 
 			<div class="form-group">
@@ -1147,7 +1165,7 @@ $tiposNotas = [];
 				<?php if ($logoPathEncabezadoAreas && file_exists($logoPathFullEncabezadoAreas)) { ?>
 				<img src="<?= $logoPathEncabezadoAreas ?>" alt="Logo institución" onerror="this.style.display='none'">
 				<?php } else { ?>
-				<div style="width:200px;height:200px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;display:flex;align-items:center;justify-content:center;font-size:10pt;color:#999;">Logo</div>
+				<div style="width:120px;height:100px;border:1px solid #ddd;border-radius:4px;background:#f9f9f9;display:flex;align-items:center;justify-content:center;font-size:10pt;color:#999;">Logo</div>
 				<?php } ?>
 			</div>
 			<div class="encabezado-estilo-areas-datos">
@@ -1157,7 +1175,7 @@ $tiposNotas = [];
 				<div><b>TEL: </b><?= htmlspecialchars($informacion_inst["info_telefono"] ?? '') ?></div>
 			</div>
 			<div class="encabezado-estilo-areas-titulo" style="color:<?= htmlspecialchars($colorTituloCert) ?>">
-				CERTIFICADO DE ESTUDIOS<br>No. <?= $estampilla ? htmlspecialchars($estampilla) : '—' ?>
+				CERTIFICADO DE ESTUDIOS
 			</div>
 		</div>
 		<?php 
@@ -1489,6 +1507,7 @@ $tiposNotas = [];
 						
 						$notaArea = 0;
 						$ih = "";
+						$ihArea = 0;
 
 						// Mostrar materias solo si está configurado
 						if($mostrarMaterias) {
@@ -1498,7 +1517,7 @@ $tiposNotas = [];
 									$idDirector=$datosMaterias["car_docente"];
 								}
 
-								$ih = $datosMaterias["car_ih"];
+								$ihArea += (int)($datosMaterias["car_ih"] ?? 0);
 								
 								// Si hay múltiples materias en el área, mostrarlas
 								if($datosAreas['numMaterias'] > 1){
@@ -1567,8 +1586,9 @@ $tiposNotas = [];
 									$notaArea += round($datosMaterias['notaArea'], 1);
 								}
 							}
+							$ih = $mostrarIhAreaMaterias ? (string)$ihArea : '';
 						} else {
-							// Si no se muestran materias, obtener solo el IH del área
+							// Si no se muestran materias, obtener solo el IH del área (primera materia)
 							$datosMateriasPrimera = mysqli_fetch_array($consultaMaterias, MYSQLI_BOTH);
 							if($datosMateriasPrimera) {
 								$ih = $datosMateriasPrimera["car_ih"];
@@ -1578,7 +1598,7 @@ $tiposNotas = [];
 						<!-- Fila del área -->
 						<tr class="fila-area">
 							<td><?=$datosAreas['ar_nombre']?></td>
-							<td style="text-align: center;"><?=$ih?></td>
+							<td style="text-align: center;"><?= $ih ?></td>
 							<?php
 								// Usar el promedio calculado con calcularPromedioAreaCompleto (ya considera ponderado/simple)
 								$notaAcomuladoArea = $notaAreaAcumulada;
@@ -2037,6 +2057,15 @@ $tiposNotas = [];
 			if(incluirLogoCheck) {
 				incluirLogoCheck.addEventListener('change', function() {
 					logoConfig.style.display = this.checked ? 'block' : 'none';
+				});
+			}
+
+			// Mostrar/ocultar opción de sumatoria I.H. del área (solo cuando se incluyen materias)
+			var mostrarMateriasCheck = document.getElementById('mostrar_materias_check');
+			var mostrarIhAreaMateriasConfig = document.getElementById('mostrar_ih_area_materias_config');
+			if(mostrarMateriasCheck && mostrarIhAreaMateriasConfig) {
+				mostrarMateriasCheck.addEventListener('change', function() {
+					mostrarIhAreaMateriasConfig.style.display = this.checked ? 'block' : 'none';
 				});
 			}
 
