@@ -716,8 +716,11 @@ class Estudiantes {
             ];
         }
 
-        // Cancelado (3): Se gestiona automáticamente desde otros módulos
+        // Cancelado (3): Se gestiona automáticamente desde otros módulos. Excepción: usuarios DEV pueden cambiar a otro estado.
         if ($estadoActual === self::ESTADO_CANCELADO) {
+            if ($permisoDev) {
+                return ['valido' => true, 'mensaje' => ''];
+            }
             return [
                 'valido' => false,
                 'mensaje' => 'El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.'
@@ -1300,19 +1303,21 @@ class Estudiantes {
 
     /**
      * Esta función permite actualizar los datos de los estudiantes
-     * 
-     * @param $conexionPDO ConexionPDO
-     * @param $POST Array
-     * @param $fechaNacimiento String
-     * @param $procedencia String
-     * @param $pasosMatricula String
+     *
+     * @param \PDO $conexionPDO
+     * @param array $POST
+     * @param string $fechaNacimiento
+     * @param string $procedencia
+     * @param string $pasosMatricula
+     * @param bool $permisoDev Si true, permite Matriculado → No matriculado (solo usuarios tipo DEV)
      */
     public static function actualizarEstudiantes(
         $conexionPDO, 
         $POST, 
         $fechaNacimiento = '', 
         $procedencia = '', 
-        $pasosMatricula = ''
+        $pasosMatricula = '',
+        $permisoDev = false
     ) {
         global $config, $conexion;
 
@@ -1367,7 +1372,7 @@ class Estudiantes {
                     $estadoActual = (int)$datosEstudianteActual['mat_estado_matricula'];
                     $estadoNuevo = (int)$matestM;
                     
-                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo);
+                    $validacion = self::validarCambioEstadoMatricula($estadoActual, $estadoNuevo, $permisoDev);
                     
                     if (!$validacion['valido']) {
                         throw new Exception($validacion['mensaje']);

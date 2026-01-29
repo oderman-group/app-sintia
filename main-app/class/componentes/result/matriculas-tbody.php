@@ -184,20 +184,22 @@ foreach ($data["data"] as $resultado) {
 			$estadoActual = (int)$resultado['mat_estado_matricula'];
 			$estadoMatriculado = ($estadoActual == Estudiantes::ESTADO_MATRICULADO);
 			
-			// No permitir cambiar estado si está en "En inscripción", "Cancelado" o "Matriculado" (salvo DEV: Matriculado→No matriculado)
+			// No permitir cambiar estado si está en "En inscripción", "Cancelado" o "Matriculado" (salvo DEV: Matriculado→No matriculado, Cancelado→Matriculado)
 			// Matriculado no puede cambiar a Asistente ni a No Matriculado mediante click; usuarios DEV sí pueden Matriculado→No matriculado
-			// Cancelado no puede cambiarse desde el badge (se gestiona automáticamente), pero el menú de acciones sí está habilitado
-			if ($permisoCambiarEstado && !$estadoNoModificable && !$estadoCancelado && (!$estadoMatriculado || $esDev)) {
+			// Cancelado no puede cambiarse desde el badge (se gestiona automáticamente); usuarios DEV sí pueden Cancelado→Matriculado
+			if ($permisoCambiarEstado && !$estadoNoModificable && (!$estadoCancelado || $esDev) && (!$estadoMatriculado || $esDev)) {
 				$cambiarEstado = "onclick='cambiarEstadoMatricula(" . $dataParaJavascript . ")'";
 				$cursorStyle = "cursor: pointer;";
 				if ($estadoMatriculado && $esDev) {
 					$titleEstado = 'Clic para pasar a No matriculado (solo usuarios DEV)';
+				} elseif ($estadoCancelado && $esDev) {
+					$titleEstado = 'Clic para restaurar a Matriculado (solo usuarios DEV)';
 				}
 			} else {
 				$cursorStyle = "cursor: not-allowed;";
 				if ($estadoEnInscripcion) {
 					$titleEstado = 'Estudiante en proceso de inscripción - No se puede cambiar el estado';
-				} elseif ($estadoCancelado) {
+				} elseif ($estadoCancelado && !$esDev) {
 					$titleEstado = 'Estudiante cancelado - No se puede cambiar el estado desde aquí';
 				} elseif ($estadoMatriculado && !$esDev) {
 					$titleEstado = 'Un estudiante en estado "Matriculado" no puede cambiar a "Asistente" ni a "No matriculado" mediante este botón.';

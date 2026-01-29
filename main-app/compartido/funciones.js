@@ -718,9 +718,13 @@ function cambiarEstadoMatricula(data) {
     }
 
     if (estadoActual === 3) {
-        // Cancelado: Se gestiona automáticamente
-        alert('El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.');
-        return;
+        // Cancelado: Se gestiona automáticamente; usuarios DEV pueden restaurar a Matriculado (1)
+        if (typeof window !== 'undefined' && window.usuarioEsDev === true) {
+            nuevoEstado = 1;
+        } else {
+            alert('El estado "Cancelado" no puede modificarse desde aquí. Se gestiona desde otros módulos del sistema.');
+            return;
+        }
     }
 
     if (estadoActual === 2) {
