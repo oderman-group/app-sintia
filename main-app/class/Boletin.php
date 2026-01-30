@@ -100,18 +100,24 @@ class Boletin {
      */
     public static function obtenerDatosTipoDeNotas($categoria, $nota, string $yearBd    = ''){
         global $config;
-        $resultado = [];
-        $year= !empty($yearBd) ? $yearBd : $_SESSION["bd"];
+        $year = !empty($yearBd) ? $yearBd : $_SESSION["bd"];
 
-        $sql = "SELECT * FROM ".BD_ACADEMICA.".academico_notas_tipos WHERE notip_categoria=? AND ?>=notip_desde AND ?<=notip_hasta AND institucion=? AND year=?";
+        $sql = "SELECT * FROM " . BD_ACADEMICA . ".academico_notas_tipos WHERE notip_categoria=? AND institucion=? AND year=? ORDER BY notip_desde";
+        $parametros = [$categoria, $config['conf_id_institucion'], $year];
+        $res = BindSQL::prepararSQL($sql, $parametros);
+        if (!$res) {
+            return false;
+        }
 
-        $parametros = [$categoria, $nota, $nota, $config['conf_id_institucion'], $year];
-        
-        $resultado = BindSQL::prepararSQL($sql, $parametros);
-
-        $resultado = mysqli_fetch_array($resultado, MYSQLI_BOTH);
-
-        return $resultado;
+        $notaR = round((float) $nota, 2);
+        while ($row = mysqli_fetch_array($res, MYSQLI_BOTH)) {
+            $desde = round((float) ($row['notip_desde'] ?? 0), 2);
+            $hasta = round((float) ($row['notip_hasta'] ?? 0), 2);
+            if ($notaR >= $desde && $notaR <= $hasta) {
+                return $row;
+            }
+        }
+        return false;
     }
         /**
      * Obtiene los datos asociados a un tipo de notas basados en la categoría y la nota proporcionadas dependeindo de una lista ya cargada.
@@ -120,14 +126,15 @@ class Boletin {
      * @param string $nota La nota para la cual se desea obtener información.
      */
     public static function obtenerDatosTipoDeNotasCargadas($listaDesemp, $nota) {
-        $encontrado = null;
+        $notaR = round((float) $nota, 2);
         foreach ($listaDesemp as $item) {
-            if ($nota >= $item['notip_desde'] && $nota <= $item['notip_hasta']) {
-                $encontrado = $item;
-                break;  // Detenemos la búsqueda una vez encontrado
+            $desde = round((float) ($item['notip_desde'] ?? 0), 2);
+            $hasta = round((float) ($item['notip_hasta'] ?? 0), 2);
+            if ($notaR >= $desde && $notaR <= $hasta) {
+                return $item;
             }
         }
-        return $encontrado;
+        return null;
     }
 
     /**
@@ -1994,14 +2001,16 @@ class Boletin {
 
         return $resultado;
     }
-    public static function determinarRango($valor ,$data) {
+    public static function determinarRango($valor, $data) {
+        $valorR = round((float) $valor, 2);
         foreach ($data as $array) {
-            if ($valor >= $array['notip_desde'] && $valor <= $array['notip_hasta']) {
-                return $array; // Devuelve el array que contiene el valor en su rango
+            $desde = round((float) ($array['notip_desde'] ?? 0), 2);
+            $hasta = round((float) ($array['notip_hasta'] ?? 0), 2);
+            if ($valorR >= $desde && $valorR <= $hasta) {
+                return $array;
             }
         }
-        return $array=["notip_nombre"  => "N/A",
-                        "notip_imagen" => "bajo.png"]; //
+        return ["notip_nombre" => "N/A", "notip_imagen" => "bajo.png"];
     }
 
 /**
